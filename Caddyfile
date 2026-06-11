@@ -1,0 +1,9 @@
+# HTTPS automatique (Let's Encrypt) — postgenius.network
+postgenius.network {
+	reverse_proxy app:3000
+}
+
+# Redirection www → apex
+www.postgenius.network {
+	redir https://postgenius.network{uri} permanent
+}

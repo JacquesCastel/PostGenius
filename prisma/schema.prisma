@@ -1,0 +1,148 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String           @id @default(cuid())
+  email     String           @unique
+  password  String // hash bcrypt
+  name      String?
+  createdAt DateTime         @default(now())
+  role     String  @default("user") // user | admin
+  disabled Boolean @default(false) // compte suspendu par un admin
+
+  linkedin  LinkedInAccount?
+  drafts    Draft[]
+  resetTokens PasswordResetToken[]
+  campaigns Campaign[]
+  sources   ContentSource[]
+  usage     UsageEvent[]
+
+  // --- Profil de rédaction ---
+  headline        String? // titre pro, ex : "Consultant SEO @ Acme"
+  expertise       String? // "Je suis un(e)..." — pré-rempli dans le générateur
+  themes          String? // thématiques favorites, séparées par des virgules
+  tone            String? // ton par défaut (Professionnel, Inspirant, ...)
+  styleNotes      String? // consignes libres : tutoiement, emojis, longueur de phrases...
+  defaultMaxChars Int? // longueur par défaut des posts
+  onboardedAt     DateTime? // null = doit passer par l'onboarding en étapes
+
+  // --- Contexte métier & communication (outil de campagne) ---
+  companyName         String? // nom de l'entreprise ou de la marque personnelle
+  businessDescription String? // activité, produits/services, proposition de valeur
+  targetAudience      String? // audience cible sur LinkedIn
+  market              String? // marché, concurrence, positionnement
+  commGoals           String? // objectifs de communication (CSV)
+
+  // --- Rythme de publication ---
+  postsPerWeek      Int? // déduit des jours choisis
+  publishDays       String? // jours préférés, CSV "1,3,5" (1 = lundi)
+  publishTime       String? // heure de publication "09:00"
+  requireValidation Boolean @default(true) // valider les posts de série avant publication
+  autoGenerate      Boolean @default(false) // pilote auto : générer chaque semaine les posts des créneaux à venir
+
+  // --- Phyllo : statistiques du profil personnel ---
+  phylloUserId    String? // utilisateur Phyllo lié à ce compte
+  phylloAccountId String? // compte LinkedIn connecté via Phyllo Connect
+}
+
+// Tokens LinkedIn du client (app perso + app pages entreprise)
+model LinkedInAccount {
+  id              String    @id @default(cuid())
+  userId          String    @unique
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  personToken     String?
+  personSub       String?
+  personName      String?
+  personExpiresAt DateTime?
+  orgToken        String?
+  orgExpiresAt    DateTime?
+}
+
+// Jetons de réinitialisation de mot de passe (hash SHA-256, usage unique, 1 h)
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+}
+
+// Consommation IA de la plateforme (tokens Claude, images OpenAI)
+model UsageEvent {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kind         String   @default("claude") // claude | image
+  context      String? // post, série, variantes, retouche, campagne, cadrage, sources, image...
+  inputTokens  Int      @default(0)
+  outputTokens Int      @default(0)
+  images       Int      @default(0)
+  createdAt    DateTime @default(now())
+
+  @@index([userId, createdAt])
+}
+
+// Source de veille : site/flux RSS en affinité avec le profil du client
+model ContentSource {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  url       String // URL du flux RSS (ou de la page si flux découvert)
+  title     String
+  createdAt DateTime @default(now())
+
+  @@unique([userId, url])
+}
+
+// Campagne LinkedIn : un thème + un brief qui contextualisent la génération
+model Campaign {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  theme     String // thème principal de la campagne
+  objective String? // objectif spécifique (leads, notoriété...)
+  context   String? // brief enrichi : réponses aux questions IA + exemple validé
+  status    String   @default("active") // active | archivée
+  createdAt DateTime @default(now())
+  drafts    Draft[]
+}
+
+model Draft {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String // simple | carrousel | video
+  theme     String
+  expertise String
+  tone      String
+  maxChars  Int
+  text      String
+  extra     String? // JSON (plan carrousel / script vidéo)
+  status    String   @default("brouillon") // brouillon | programmé | publié | erreur
+  postId    String? // x-restli-id LinkedIn après publication
+  createdAt DateTime @default(now())
+
+  // --- Programmation ---
+  scheduledAt  DateTime? // date/heure de publication automatique
+  publishedAt  DateTime? // date de publication effective
+  target       String    @default("person") // "person" ou "urn:li:organization:ID"
+  publishError String? // message d'erreur si la publication automatique a échoué
+  auto         Boolean   @default(false) // généré par le moteur de campagne
+
+  campaignId String?
+  campaign   Campaign? @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+
+  inspirationUrl String? // article de veille sur lequel le post s'appuie
+
+  imageUrl    String? // image générée pour le post (/api/images/...)
+  imagePrompt String? // prompt utilisé pour générer l'image
+}
