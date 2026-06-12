@@ -34,12 +34,20 @@ export async function POST(req) {
   const appUrl = process.env.APP_URL || "http://localhost:3000";
   const link = `${appUrl}/reset-password?token=${token}`;
 
-  const sent = await sendMail({
-    to: user.email,
-    subject: "PostGenius — Réinitialisation de votre mot de passe",
-    text: `Bonjour,\n\nPour choisir un nouveau mot de passe, ouvrez ce lien (valable 1 heure) :\n${link}\n\nSi vous n'êtes pas à l'origine de cette demande, ignorez cet email.`,
-    html: `<p>Bonjour,</p><p>Pour choisir un nouveau mot de passe, cliquez sur ce lien (valable 1 heure) :</p><p><a href="${link}">Réinitialiser mon mot de passe</a></p><p>Si vous n'êtes pas à l'origine de cette demande, ignorez cet email.</p>`,
-  });
+  // L'échec d'envoi ne doit jamais faire échouer la requête : on logue la
+  // cause exacte (auth SMTP, expéditeur non vérifié...) et on bascule sur
+  // l'affichage du lien dans les logs serveur.
+  let sent = false;
+  try {
+    sent = await sendMail({
+      to: user.email,
+      subject: "PostGenius — Réinitialisation de votre mot de passe",
+      text: `Bonjour,\n\nPour choisir un nouveau mot de passe, ouvrez ce lien (valable 1 heure) :\n${link}\n\nSi vous n'êtes pas à l'origine de cette demande, ignorez cet email.`,
+      html: `<p>Bonjour,</p><p>Pour choisir un nouveau mot de passe, cliquez sur ce lien (valable 1 heure) :</p><p><a href="${link}">Réinitialiser mon mot de passe</a></p><p>Si vous n'êtes pas à l'origine de cette demande, ignorez cet email.</p>`,
+    });
+  } catch (e) {
+    console.error("[mail] Envoi SMTP échoué :", e.message);
+  }
 
   if (!sent) {
     // Dev sans SMTP : le lien est affiché dans le terminal du serveur
