@@ -14,15 +14,15 @@ export async function GET(req) {
   const appUrl = process.env.APP_URL || "http://localhost:3000";
 
   const userId = await getUserId(req);
-  if (!userId) return NextResponse.redirect(`${appUrl}?linkedin=not_logged_in`);
+  if (!userId) return NextResponse.redirect(`${appUrl}/app?linkedin=not_logged_in`);
 
   if (error || !code) {
-    return NextResponse.redirect(`${appUrl}?linkedin=refused`);
+    return NextResponse.redirect(`${appUrl}/app?linkedin=refused`);
   }
 
   const savedState = req.cookies.get("li_oauth_state")?.value;
   if (!savedState || savedState !== state) {
-    return NextResponse.redirect(`${appUrl}?linkedin=state_mismatch`);
+    return NextResponse.redirect(`${appUrl}/app?linkedin=state_mismatch`);
   }
 
   try {
@@ -58,11 +58,11 @@ export async function GET(req) {
       create: { userId, ...data },
     });
 
-    const res = NextResponse.redirect(`${appUrl}?linkedin=connected`);
+    const res = NextResponse.redirect(`${appUrl}/app?linkedin=connected`);
     res.cookies.delete("li_oauth_state");
     return res;
   } catch (e) {
     console.error("Erreur callback LinkedIn:", e);
-    return NextResponse.redirect(`${appUrl}?linkedin=error`);
+    return NextResponse.redirect(`${appUrl}/app?linkedin=error`);
   }
 }

@@ -40,7 +40,7 @@ export default function ResetPassword() {
       }
       if (!res.ok) throw new Error(data.error || "Erreur");
       setDone(true);
-      setTimeout(() => (window.location.href = "/"), 1500);
+      setTimeout(() => (window.location.href = "/app"), 1500);
     } catch (err) {
       setError(err.message);
     } finally {
