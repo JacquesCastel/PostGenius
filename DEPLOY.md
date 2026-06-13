@@ -92,10 +92,14 @@ Caddy obtient le certificat HTTPS automatiquement dès que le DNS pointe.
   puis `docker compose up -d`.
 - **Mises à jour** (commande de référence) :
   ```bash
-  git pull && docker compose up -d --build --force-recreate app
+  cd /opt/postgenius && ./deploy.sh
   ```
-  Le `--force-recreate` garantit que le conteneur repart bien sur l'image
-  fraîchement construite (un simple `up -d` peut redémarrer l'ancien conteneur).
+  ⚠️ NE PAS faire `docker compose up -d --build` seul : sur ce serveur,
+  `next build` exécuté par `docker build` (ou directement sur le volume monté)
+  prérend la page d'accueil À VIDE (~5,9 Ko au lieu de ~71 Ko ; la page bascule
+  en rendu client). Le `deploy.sh` contourne le bug en buildant dans l'overlay
+  interne d'un `docker run`, puis l'image ne fait que copier le build. Le script
+  inclut un garde-fou qui annule le déploiement si la landing ressort vide.
 - **Vérifier qu'un déploiement a pris effet** :
   ```bash
   curl -s https://postgenius.network | grep -o '<title>[^<]*'
