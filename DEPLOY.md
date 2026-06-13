@@ -89,8 +89,16 @@ Caddy obtient le certificat HTTPS automatiquement dès que le DNS pointe.
   emails/jour gratuits) → SMTP & API → remplir `SMTP_HOST=smtp-relay.brevo.com`,
   `SMTP_PORT=587`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM` dans le .env serveur,
   puis `docker compose up -d`.
-- **Mises à jour** : `git pull && docker compose up -d --build`
-  (ou re-rsync puis rebuild).
+- **Mises à jour** (commande de référence) :
+  ```bash
+  git pull && docker compose up -d --build --force-recreate app
+  ```
+  Le `--force-recreate` garantit que le conteneur repart bien sur l'image
+  fraîchement construite (un simple `up -d` peut redémarrer l'ancien conteneur).
+- **Vérifier qu'un déploiement a pris effet** :
+  ```bash
+  curl -s https://postgenius.network | grep -o '<title>[^<]*'
+  ```
 - **Sauvegardes** : Neon gère les snapshots ; le dossier `/opt/postgenius/data`
   (images) à sauvegarder via les snapshots Hetzner.
 
@@ -98,3 +106,21 @@ Caddy obtient le certificat HTTPS automatiquement dès que le DNS pointe.
 - Certificat HTTPS absent → DNS pas encore propagé (`dig postgenius.network`)
 - OAuth LinkedIn "Bummer" → redirect URI manquante ou différente dans l'app LinkedIn
 - 502 → `docker compose logs app` (souvent variable .env manquante)
+- **Le site sert une ancienne version malgré les rebuilds** (vécu !) :
+  1. S'assurer que buildx est installé : `apt install -y docker-buildx`
+     (le builder « legacy » a un cache fantôme que `builder prune` ne purge pas)
+  2. `docker compose up -d --build --force-recreate app`
+  3. Si ça persiste, stockage du démon corrompu → réinitialisation totale
+     (sans risque : .env, data/ et la base Neon sont hors de Docker) :
+     ```bash
+     docker compose down
+     systemctl stop docker docker.socket
+     rm -rf /var/lib/docker
+     systemctl start docker
+     docker compose up -d --build
+     ```
+  4. Test discriminant si doute sur la source : build hors pipeline Docker
+     ```bash
+     docker run --rm -v /opt/postgenius:/src -w /src node:22-alpine \
+       sh -c "npm ci >/dev/null 2>&1 && npx prisma generate >/dev/null 2>&1 && rm -rf .next && DATABASE_URL=postgresql://x:x@localhost/x npx next build >/dev/null 2>&1; grep -c 'Essai gratuit' .next/server/app/index.html"
+     ```
