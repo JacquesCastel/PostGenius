@@ -38,7 +38,7 @@ export default function ContactForm() {
   }
 
   const input =
-    "w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500";
+    "w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]";
 
   return (
     <form onSubmit={submit} className="space-y-3">
@@ -59,7 +59,7 @@ export default function ContactForm() {
       <button
         type="submit"
         disabled={state === "sending"}
-        className="bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300 text-white font-medium px-6 py-2.5 rounded-xl"
+        className="bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white font-medium px-6 py-2.5 rounded-xl"
       >
         {state === "sending" ? "Envoi…" : "Envoyer le message"}
       </button>

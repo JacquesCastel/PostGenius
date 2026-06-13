@@ -418,7 +418,7 @@ function ScheduleModal({ draft, linkedin, orgs, profile, onClose, onScheduled, s
       >
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-semibold text-base flex items-center gap-2">
-            <Clock size={18} className="text-indigo-600" /> Programmer la publication
+            <Clock size={18} className="text-[#ff5a5f]" /> Programmer la publication
           </h3>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 p-1">
             <X size={18} />
@@ -437,10 +437,10 @@ function ScheduleModal({ draft, linkedin, orgs, profile, onClose, onScheduled, s
               type="datetime-local"
               value={when}
               onChange={(e) => setWhen(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
             />
             {preferredSlot && when === toDatetimeLocal(preferredSlot) && (
-              <p className="text-xs text-indigo-600 mt-1">
+              <p className="text-xs text-[#ff5a5f] mt-1">
                 ✓ Prochain créneau selon votre rythme de publication
               </p>
             )}
@@ -450,7 +450,7 @@ function ScheduleModal({ draft, linkedin, orgs, profile, onClose, onScheduled, s
             <select
               value={tgt}
               onChange={(e) => setTgt(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
             >
               <option value="person">Profil personnel{linkedin.name ? ` (${linkedin.name})` : ""}</option>
               {linkedin.orgConnected &&
@@ -471,7 +471,7 @@ function ScheduleModal({ draft, linkedin, orgs, profile, onClose, onScheduled, s
           <button
             onClick={submit}
             disabled={saving}
-            className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300 text-white font-medium py-2.5 rounded-lg flex items-center justify-center gap-2 text-sm"
+            className="w-full bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white font-medium py-2.5 rounded-lg flex items-center justify-center gap-2 text-sm"
           >
             {saving ? <RefreshCw size={16} className="animate-spin" /> : <Clock size={16} />}
             Programmer
@@ -557,10 +557,10 @@ function CalendarMonth({ drafts }) {
             <div
               key={i}
               className={`min-h-16 p-1.5 text-xs ${inMonth ? "bg-white" : "bg-gray-50 text-gray-300"} ${
-                sameDay(d, today) ? "ring-2 ring-inset ring-indigo-500" : ""
+                sameDay(d, today) ? "ring-2 ring-inset ring-[#ff5a5f]" : ""
               }`}
             >
-              <span className={sameDay(d, today) ? "font-bold text-indigo-600" : ""}>{d.getDate()}</span>
+              <span className={sameDay(d, today) ? "font-bold text-[#ff5a5f]" : ""}>{d.getDate()}</span>
               <div className="mt-0.5 space-y-0.5">
                 {dayEvents.slice(0, 2).map((e, j) => (
                   <div
@@ -732,7 +732,7 @@ function CampaignWizard({ profile, linkedin, orgs, onClose, onLaunched, showToas
   )?.length;
 
   const inputCls =
-    "w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500";
+    "w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]";
 
   return (
     <div
@@ -749,7 +749,7 @@ function CampaignWizard({ profile, linkedin, orgs, onClose, onLaunched, showToas
       >
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-semibold text-base flex items-center gap-2">
-            <Sparkles size={18} className="text-indigo-600" /> Nouvelle campagne LinkedIn
+            <Sparkles size={18} className="text-[#ff5a5f]" /> Nouvelle campagne LinkedIn
           </h3>
           {!inline && (
             <button onClick={onClose} className="text-gray-400 hover:text-gray-600 p-1">
@@ -762,8 +762,8 @@ function CampaignWizard({ profile, linkedin, orgs, onClose, onLaunched, showToas
         <div className="flex items-center gap-2 mb-5">
           {STEPS.map((s, i) => (
             <div key={s} className="flex-1">
-              <div className={`h-1.5 rounded-full ${i <= step ? "bg-indigo-600" : "bg-gray-200"}`} />
-              <p className={`text-xs mt-1 ${i === step ? "text-indigo-600 font-medium" : "text-gray-400"}`}>{s}</p>
+              <div className={`h-1.5 rounded-full ${i <= step ? "bg-[#ff5a5f]" : "bg-gray-200"}`} />
+              <p className={`text-xs mt-1 ${i === step ? "text-[#ff5a5f] font-medium" : "text-gray-400"}`}>{s}</p>
             </div>
           ))}
         </div>
@@ -824,7 +824,7 @@ function CampaignWizard({ profile, linkedin, orgs, onClose, onLaunched, showToas
                     onClick={() => setObjective(objective === g ? "" : g)}
                     className={`text-xs px-3 py-1.5 rounded-full border ${
                       objective === g
-                        ? "bg-indigo-600 text-white border-indigo-600"
+                        ? "bg-[#ff5a5f] text-white border-[#ff5a5f]"
                         : "border-gray-200 text-gray-600 hover:border-gray-300"
                     }`}
                   >
@@ -837,7 +837,7 @@ function CampaignWizard({ profile, linkedin, orgs, onClose, onLaunched, showToas
             {veille?.length > 0 && (
               <div>
                 <label className="text-sm font-medium text-gray-700 block mb-1.5 flex items-center gap-1.5">
-                  <Eye size={14} className="text-indigo-600" /> Ou partez d'un article de votre veille
+                  <Eye size={14} className="text-[#ff5a5f]" /> Ou partez d'un article de votre veille
                 </label>
                 <div className="space-y-1.5 max-h-44 overflow-y-auto pr-1">
                   {veille.slice(0, 8).map((it, i) => {
@@ -849,15 +849,15 @@ function CampaignWizard({ profile, linkedin, orgs, onClose, onLaunched, showToas
                         onClick={() => pickArticle(it)}
                         className={`w-full text-left p-2.5 rounded-lg border transition-colors ${
                           active
-                            ? "border-indigo-500 bg-indigo-50 ring-1 ring-indigo-300"
-                            : "border-gray-200 hover:border-indigo-300"
+                            ? "border-[#ff5a5f] bg-[#fff1f1] ring-1 ring-[#ffb3b5]"
+                            : "border-gray-200 hover:border-[#ffb3b5]"
                         }`}
                       >
                         <p className="text-xs font-medium truncate">{it.title}</p>
                         <p className="text-[11px] text-gray-400">
                           {it.source}
                           {it.date && ` · ${new Date(it.date).toLocaleDateString("fr-FR")}`}
-                          {active && <span className="text-indigo-600 font-medium"> · sélectionné ✓</span>}
+                          {active && <span className="text-[#ff5a5f] font-medium"> · sélectionné ✓</span>}
                         </p>
                       </button>
                     );
@@ -873,7 +873,7 @@ function CampaignWizard({ profile, linkedin, orgs, onClose, onLaunched, showToas
                   loadQuestions();
                 }}
                 disabled={!theme.trim()}
-                className="bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300 text-white text-sm font-medium px-5 py-2 rounded-lg flex items-center gap-1.5"
+                className="bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white text-sm font-medium px-5 py-2 rounded-lg flex items-center gap-1.5"
               >
                 Continuer <ChevronRight size={15} />
               </button>
@@ -886,7 +886,7 @@ function CampaignWizard({ profile, linkedin, orgs, onClose, onLaunched, showToas
           <div className="space-y-3">
             {busy && !questions ? (
               <div className="text-center py-8 text-gray-400">
-                <RefreshCw size={24} className="mx-auto mb-2 animate-spin text-indigo-500" />
+                <RefreshCw size={24} className="mx-auto mb-2 animate-spin text-[#ff5a5f]" />
                 <p className="text-sm">L'IA analyse votre thème et prépare ses questions…</p>
               </div>
             ) : (
@@ -915,7 +915,7 @@ function CampaignWizard({ profile, linkedin, orgs, onClose, onLaunched, showToas
                       setStep(2);
                       loadSample();
                     }}
-                    className="text-sm text-gray-500 hover:text-indigo-600 px-3 py-2"
+                    className="text-sm text-gray-500 hover:text-[#ff5a5f] px-3 py-2"
                   >
                     Laisser l'IA décider →
                   </button>
@@ -924,7 +924,7 @@ function CampaignWizard({ profile, linkedin, orgs, onClose, onLaunched, showToas
                       setStep(2);
                       loadSample();
                     }}
-                    className="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-5 py-2 rounded-lg flex items-center gap-1.5"
+                    className="bg-[#ff5a5f] hover:bg-[#f63d44] text-white text-sm font-medium px-5 py-2 rounded-lg flex items-center gap-1.5"
                   >
                     Continuer <ChevronRight size={15} />
                   </button>
@@ -939,7 +939,7 @@ function CampaignWizard({ profile, linkedin, orgs, onClose, onLaunched, showToas
           <div className="space-y-3">
             {busy && !sample ? (
               <div className="text-center py-8 text-gray-400">
-                <RefreshCw size={24} className="mx-auto mb-2 animate-spin text-indigo-500" />
+                <RefreshCw size={24} className="mx-auto mb-2 animate-spin text-[#ff5a5f]" />
                 <p className="text-sm">L'IA rédige un post d'exemple…</p>
               </div>
             ) : sample ? (
@@ -966,7 +966,7 @@ function CampaignWizard({ profile, linkedin, orgs, onClose, onLaunched, showToas
                       value={feedback}
                       onChange={(e) => setFeedback(e.target.value)}
                       placeholder="Ajustement : « plus direct », « cite un chiffre », …"
-                      className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
                     />
                     <button
                       onClick={() => loadSample(true)}
@@ -984,7 +984,7 @@ function CampaignWizard({ profile, linkedin, orgs, onClose, onLaunched, showToas
                       setSampleApproved(false);
                       setStep(3);
                     }}
-                    className="text-sm text-gray-500 hover:text-indigo-600 px-3 py-2"
+                    className="text-sm text-gray-500 hover:text-[#ff5a5f] px-3 py-2"
                   >
                     Passer →
                   </button>
@@ -999,7 +999,7 @@ function CampaignWizard({ profile, linkedin, orgs, onClose, onLaunched, showToas
                     )}
                     <button
                       onClick={() => setStep(3)}
-                      className="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-5 py-2 rounded-lg flex items-center gap-1.5"
+                      className="bg-[#ff5a5f] hover:bg-[#f63d44] text-white text-sm font-medium px-5 py-2 rounded-lg flex items-center gap-1.5"
                     >
                       Continuer <ChevronRight size={15} />
                     </button>
@@ -1008,7 +1008,7 @@ function CampaignWizard({ profile, linkedin, orgs, onClose, onLaunched, showToas
               </>
             ) : (
               <div className="text-center py-6">
-                <button onClick={() => loadSample()} className="text-sm text-indigo-600 underline">
+                <button onClick={() => loadSample()} className="text-sm text-[#ff5a5f] underline">
                   Réessayer la génération de l'exemple
                 </button>
               </div>
@@ -1025,7 +1025,7 @@ function CampaignWizard({ profile, linkedin, orgs, onClose, onLaunched, showToas
                 <select
                   value={periodDays}
                   onChange={(e) => setPeriodDays(Number(e.target.value))}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
                 >
                   <option value={7}>Semaine à venir</option>
                   <option value={14}>2 semaines</option>
@@ -1037,7 +1037,7 @@ function CampaignWizard({ profile, linkedin, orgs, onClose, onLaunched, showToas
                 <select
                   value={target}
                   onChange={(e) => setTarget(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
                 >
                   <option value="person">Profil personnel</option>
                   {linkedin?.orgConnected &&
@@ -1049,7 +1049,7 @@ function CampaignWizard({ profile, linkedin, orgs, onClose, onLaunched, showToas
                 </select>
               </div>
             </div>
-            <div className="bg-indigo-50 rounded-lg p-3 text-sm text-indigo-900">
+            <div className="bg-[#fff1f1] rounded-lg p-3 text-sm text-[#1b2a4a]">
               <p className="font-medium mb-1">Récapitulatif</p>
               <p className="text-xs leading-relaxed">
                 {slotsCount ?? 0} post{(slotsCount ?? 0) > 1 ? "s" : ""} seront générés sur le thème «{" "}
@@ -1067,7 +1067,7 @@ function CampaignWizard({ profile, linkedin, orgs, onClose, onLaunched, showToas
               <button
                 onClick={launch}
                 disabled={busy || !slotsCount}
-                className="bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300 text-white text-sm font-medium px-5 py-2 rounded-lg flex items-center gap-1.5"
+                className="bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white text-sm font-medium px-5 py-2 rounded-lg flex items-center gap-1.5"
               >
                 {busy ? <RefreshCw size={15} className="animate-spin" /> : <Sparkles size={15} />}
                 {busy ? "Génération en cours…" : "Lancer la campagne"}
@@ -1188,7 +1188,7 @@ function CampaignsView({ profile, linkedin, orgs, showToast, onPlanned, openWiza
         </p>
         <button
           onClick={() => setShowWizard(true)}
-          className="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-2.5 rounded-lg flex items-center gap-2"
+          className="bg-[#ff5a5f] hover:bg-[#f63d44] text-white text-sm font-medium px-4 py-2.5 rounded-lg flex items-center gap-2"
         >
           <Sparkles size={15} /> Nouvelle campagne
         </button>
@@ -1200,7 +1200,7 @@ function CampaignsView({ profile, linkedin, orgs, showToast, onPlanned, openWiza
           <select
             value={periodDays}
             onChange={(e) => setPeriodDays(Number(e.target.value))}
-            className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
           >
             <option value={7}>Semaine à venir</option>
             <option value={14}>2 semaines</option>
@@ -1209,7 +1209,7 @@ function CampaignsView({ profile, linkedin, orgs, showToast, onPlanned, openWiza
           <select
             value={planTarget}
             onChange={(e) => setPlanTarget(e.target.value)}
-            className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
           >
             <option value="person">Profil personnel</option>
             {linkedin?.orgConnected &&
@@ -1226,7 +1226,7 @@ function CampaignsView({ profile, linkedin, orgs, showToast, onPlanned, openWiza
         <div className="bg-white rounded-xl border border-dashed border-gray-300 p-12 text-center text-gray-400">
           <Megaphone size={32} className="mx-auto mb-3" />
           <p className="text-sm mb-2">Aucune campagne pour l'instant.</p>
-          <button onClick={() => setShowWizard(true)} className="text-sm text-indigo-600 hover:underline">
+          <button onClick={() => setShowWizard(true)} className="text-sm text-[#ff5a5f] hover:underline">
             Créer ma première campagne →
           </button>
         </div>
@@ -1241,7 +1241,7 @@ function CampaignsView({ profile, linkedin, orgs, showToast, onPlanned, openWiza
                     <div className="flex items-center gap-2 flex-wrap">
                       <h3 className="font-semibold text-base truncate">{c.name}</h3>
                       {c.objective && (
-                        <span className="text-xs bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full">
+                        <span className="text-xs bg-[#fff1f1] text-[#f63d44] px-2 py-0.5 rounded-full">
                           {c.objective}
                         </span>
                       )}
@@ -1252,7 +1252,7 @@ function CampaignsView({ profile, linkedin, orgs, showToast, onPlanned, openWiza
                     <button
                       onClick={() => planForCampaign(c)}
                       disabled={planningId !== null || !slotsPreview?.length}
-                      className="bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300 text-white text-xs font-medium px-3 py-1.5 rounded-lg flex items-center gap-1.5"
+                      className="bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white text-xs font-medium px-3 py-1.5 rounded-lg flex items-center gap-1.5"
                     >
                       {planningId === c.id ? (
                         <RefreshCw size={12} className="animate-spin" />
@@ -1292,7 +1292,7 @@ function CampaignsView({ profile, linkedin, orgs, showToast, onPlanned, openWiza
                   <div className="mt-3">
                     <button
                       onClick={() => setExpandedId(expandedId === c.id ? null : c.id)}
-                      className="text-xs text-gray-500 hover:text-indigo-600 flex items-center gap-1"
+                      className="text-xs text-gray-500 hover:text-[#ff5a5f] flex items-center gap-1"
                     >
                       <ChevronDown
                         size={13}
@@ -1394,13 +1394,13 @@ function VeilleBlock({ showToast, onInspire, onCampaign }) {
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
       <div className="flex items-center justify-between flex-wrap gap-2 mb-1">
         <h2 className="font-semibold text-base flex items-center gap-2">
-          <Eye size={17} className="text-indigo-600" /> Inspirations & veille
+          <Eye size={17} className="text-[#ff5a5f]" /> Inspirations & veille
         </h2>
         <div className="flex items-center gap-1.5">
           <button
             onClick={suggest}
             disabled={suggesting}
-            className="border border-indigo-300 text-indigo-700 hover:bg-indigo-50 disabled:opacity-50 text-xs font-medium px-3 py-1.5 rounded-lg flex items-center gap-1.5"
+            className="border border-[#ffb3b5] text-[#f63d44] hover:bg-[#fff1f1] disabled:opacity-50 text-xs font-medium px-3 py-1.5 rounded-lg flex items-center gap-1.5"
           >
             {suggesting ? <RefreshCw size={12} className="animate-spin" /> : <Sparkles size={12} />}
             {suggesting ? "Recherche de sources…" : "Suggérer des sources (IA)"}
@@ -1409,7 +1409,7 @@ function VeilleBlock({ showToast, onInspire, onCampaign }) {
             <button
               onClick={() => loadItems(true)}
               disabled={loading}
-              className="text-gray-400 hover:text-indigo-600 p-1.5 rounded hover:bg-gray-100"
+              className="text-gray-400 hover:text-[#ff5a5f] p-1.5 rounded hover:bg-gray-100"
               title="Actualiser la veille"
             >
               <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
@@ -1438,9 +1438,9 @@ function VeilleBlock({ showToast, onInspire, onCampaign }) {
             value={addUrl}
             onChange={(e) => setAddUrl(e.target.value)}
             placeholder="Ajouter un site ou flux RSS…"
-            className="border border-gray-300 rounded-full px-3 py-1 text-xs w-52 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="border border-gray-300 rounded-full px-3 py-1 text-xs w-52 focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
           />
-          <button type="submit" className="text-xs text-indigo-600 hover:underline px-1">
+          <button type="submit" className="text-xs text-[#ff5a5f] hover:underline px-1">
             Ajouter
           </button>
         </form>
@@ -1465,7 +1465,7 @@ function VeilleBlock({ showToast, onInspire, onCampaign }) {
                 <div className="min-w-0">
                   <p className="text-sm font-medium truncate">
                     {it.link ? (
-                      <a href={it.link} target="_blank" rel="noreferrer" className="hover:text-indigo-700">
+                      <a href={it.link} target="_blank" rel="noreferrer" className="hover:text-[#f63d44]">
                         {it.title}
                       </a>
                     ) : (
@@ -1480,7 +1480,7 @@ function VeilleBlock({ showToast, onInspire, onCampaign }) {
                 <div className="flex items-center gap-1.5 shrink-0">
                   <button
                     onClick={() => onInspire(it)}
-                    className="border border-indigo-300 text-indigo-700 hover:bg-indigo-50 text-xs font-medium px-3 py-1.5 rounded-lg flex items-center gap-1.5"
+                    className="border border-[#ffb3b5] text-[#f63d44] hover:bg-[#fff1f1] text-xs font-medium px-3 py-1.5 rounded-lg flex items-center gap-1.5"
                   >
                     <Sparkles size={12} /> Post
                   </button>
@@ -1498,7 +1498,7 @@ function VeilleBlock({ showToast, onInspire, onCampaign }) {
           {items.length > 6 && (
             <button
               onClick={() => setShowAll(!showAll)}
-              className="text-xs text-gray-500 hover:text-indigo-600 mt-2"
+              className="text-xs text-gray-500 hover:text-[#ff5a5f] mt-2"
             >
               {showAll ? "Réduire" : `Voir les ${items.length - 6} autres articles`}
             </button>
@@ -1584,7 +1584,7 @@ function AdminView({ showToast }) {
     return (
       <main className="max-w-6xl mx-auto p-6">
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-12 text-center text-gray-400">
-          <RefreshCw size={24} className="mx-auto mb-2 animate-spin text-indigo-500" />
+          <RefreshCw size={24} className="mx-auto mb-2 animate-spin text-[#ff5a5f]" />
           <p className="text-sm">Chargement des données plateforme…</p>
         </div>
       </main>
@@ -1596,7 +1596,7 @@ function AdminView({ showToast }) {
     <main className="max-w-6xl mx-auto p-6 space-y-6">
       {/* Totaux plateforme */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="rounded-2xl p-5 text-white bg-gradient-to-br from-indigo-500 to-violet-600 shadow-lg shadow-indigo-200">
+        <div className="rounded-2xl p-5 text-white bg-gradient-to-br from-[#ff5a5f] to-pink-500 shadow-lg shadow-[#ffd5d6]">
           <p className="text-3xl font-bold">{data.totals.users}</p>
           <p className="text-sm text-white/80 mt-1">Comptes clients</p>
         </div>
@@ -1644,7 +1644,7 @@ function AdminView({ showToast }) {
                   <p className="font-medium flex items-center gap-1.5">
                     {u.name || u.email}
                     {u.isAdmin && (
-                      <span className="text-[10px] bg-indigo-50 text-indigo-700 px-1.5 py-0.5 rounded-full font-semibold">
+                      <span className="text-[10px] bg-[#fff1f1] text-[#f63d44] px-1.5 py-0.5 rounded-full font-semibold">
                         ADMIN
                       </span>
                     )}
@@ -1658,7 +1658,7 @@ function AdminView({ showToast }) {
                   <select
                     value={u.plan || "pro"}
                     onChange={(e) => setPlan(u, e.target.value)}
-                    className="text-xs border border-gray-200 rounded-lg px-1.5 py-1 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="text-xs border border-gray-200 rounded-lg px-1.5 py-1 bg-white focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
                   >
                     {PLAN_IDS.map((p) => (
                       <option key={p} value={p}>
@@ -1845,34 +1845,34 @@ function BlogAdmin({ showToast }) {
           placeholder="Titre"
           value={editing.title}
           onChange={(e) => set("title", e.target.value)}
-          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
         />
         {editing.id && (
           <input
             placeholder="slug-de-l-article"
             value={editing.slug || ""}
             onChange={(e) => set("slug", e.target.value)}
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm font-mono text-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm font-mono text-gray-600 focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
           />
         )}
         <input
           placeholder="Résumé (méta description, carte)"
           value={editing.excerpt || ""}
           onChange={(e) => set("excerpt", e.target.value)}
-          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
         />
         <input
           placeholder="URL de l'image de couverture (optionnel)"
           value={editing.coverImage || ""}
           onChange={(e) => set("coverImage", e.target.value)}
-          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
         />
         <textarea
           placeholder="Contenu de l'article (Markdown : # titres, **gras**, - listes, [lien](url))"
           value={editing.content}
           onChange={(e) => set("content", e.target.value)}
           rows={16}
-          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
         />
         <div className="flex items-center justify-between">
           <label className="flex items-center gap-2 text-sm">
@@ -1882,7 +1882,7 @@ function BlogAdmin({ showToast }) {
           <button
             onClick={save}
             disabled={saving}
-            className="bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300 text-white text-sm font-medium px-5 py-2 rounded-lg flex items-center gap-2"
+            className="bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white text-sm font-medium px-5 py-2 rounded-lg flex items-center gap-2"
           >
             {saving && <RefreshCw size={14} className="animate-spin" />} Enregistrer
           </button>
@@ -1897,7 +1897,7 @@ function BlogAdmin({ showToast }) {
         <p className="text-sm text-gray-500">{articles.length} article(s)</p>
         <button
           onClick={() => setEditing({ ...EMPTY_ARTICLE })}
-          className="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-2 rounded-lg flex items-center gap-1.5"
+          className="bg-[#ff5a5f] hover:bg-[#f63d44] text-white text-sm font-medium px-4 py-2 rounded-lg flex items-center gap-1.5"
         >
           <PenLine size={14} /> Nouvel article
         </button>
@@ -1964,7 +1964,7 @@ function LandingAdmin({ showToast }) {
   if (!content) {
     return (
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-12 text-center text-gray-400">
-        <RefreshCw size={22} className="mx-auto mb-2 animate-spin text-indigo-500" />
+        <RefreshCw size={22} className="mx-auto mb-2 animate-spin text-[#ff5a5f]" />
       </div>
     );
   }
@@ -1975,7 +1975,7 @@ function LandingAdmin({ showToast }) {
   const setFaq = (i, k, v) =>
     setContent((c) => ({ ...c, faq: c.faq.map((f, j) => (j === i ? { ...f, [k]: v } : f)) }));
 
-  const field = "w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500";
+  const field = "w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]";
 
   return (
     <div className="space-y-6">
@@ -2027,7 +2027,7 @@ function LandingAdmin({ showToast }) {
         <button
           onClick={save}
           disabled={saving}
-          className="bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300 text-white text-sm font-medium px-6 py-2.5 rounded-lg flex items-center gap-2"
+          className="bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white text-sm font-medium px-6 py-2.5 rounded-lg flex items-center gap-2"
         >
           {saving && <RefreshCw size={15} className="animate-spin" />} Enregistrer la page d'accueil
         </button>
@@ -2091,7 +2091,7 @@ function ContactAdminView({ showToast }) {
     return (
       <main className="max-w-4xl mx-auto p-6">
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-12 text-center text-gray-400">
-          <RefreshCw size={22} className="mx-auto mb-2 animate-spin text-indigo-500" />
+          <RefreshCw size={22} className="mx-auto mb-2 animate-spin text-[#ff5a5f]" />
         </div>
       </main>
     );
@@ -2112,13 +2112,13 @@ function ContactAdminView({ showToast }) {
         {data.messages.map((m) => (
           <div
             key={m.id}
-            className={`bg-white rounded-2xl border shadow-sm p-4 ${m.handled ? "border-gray-100 opacity-70" : "border-indigo-100"}`}
+            className={`bg-white rounded-2xl border shadow-sm p-4 ${m.handled ? "border-gray-100 opacity-70" : "border-[#ffe0e0]"}`}
           >
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <p className="font-medium text-sm">
                   {m.name}{" "}
-                  <a href={`mailto:${m.email}`} className="text-indigo-600 font-normal">
+                  <a href={`mailto:${m.email}`} className="text-[#ff5a5f] font-normal">
                     &lt;{m.email}&gt;
                   </a>
                 </p>
@@ -2421,17 +2421,17 @@ function DashboardView({ drafts, onGoCreate, onGoHistory, onApprove, profile, li
           }}
         />
       )}
-      <div className="bg-gradient-to-r from-indigo-50 to-white rounded-xl border border-indigo-200 p-5">
+      <div className="bg-gradient-to-r from-[#fff1f1] to-white rounded-xl border border-[#ffd5d6] p-5">
         <div className="flex items-center justify-between flex-wrap gap-2 mb-1">
           <h2 className="font-semibold text-base flex items-center gap-2">
-            <Sparkles size={17} className="text-indigo-600" /> Mes campagnes
+            <Sparkles size={17} className="text-[#ff5a5f]" /> Mes campagnes
           </h2>
           <label className="flex items-center gap-2 text-xs text-gray-600 cursor-pointer">
             <input
               type="checkbox"
               checked={profile?.autoGenerate ?? false}
               onChange={(e) => toggleAutopilot(e.target.checked)}
-              className="accent-indigo-600"
+              className="accent-[#ff5a5f]"
             />
             Pilote automatique{" "}
             <span className="text-gray-400">(alimente chaque semaine la dernière campagne)</span>
@@ -2471,7 +2471,7 @@ function DashboardView({ drafts, onGoCreate, onGoHistory, onApprove, profile, li
                       <button
                         onClick={() => planForCampaign(c)}
                         disabled={planningId !== null || !slotsPreview?.length}
-                        className="bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300 text-white text-xs font-medium px-3 py-1.5 rounded-lg flex items-center gap-1.5"
+                        className="bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white text-xs font-medium px-3 py-1.5 rounded-lg flex items-center gap-1.5"
                       >
                         {planningId === c.id ? (
                           <RefreshCw size={12} className="animate-spin" />
@@ -2498,7 +2498,7 @@ function DashboardView({ drafts, onGoCreate, onGoHistory, onApprove, profile, li
             <div className="flex items-center gap-2 flex-wrap">
               <button
                 onClick={() => setWizardInit({})}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-2.5 rounded-lg flex items-center gap-2"
+                className="bg-[#ff5a5f] hover:bg-[#f63d44] text-white text-sm font-medium px-4 py-2.5 rounded-lg flex items-center gap-2"
               >
                 <Sparkles size={15} /> Nouvelle campagne
               </button>
@@ -2507,7 +2507,7 @@ function DashboardView({ drafts, onGoCreate, onGoHistory, onApprove, profile, li
                   <select
                     value={periodDays}
                     onChange={(e) => setPeriodDays(Number(e.target.value))}
-                    className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
                   >
                     <option value={7}>Semaine à venir</option>
                     <option value={14}>2 semaines</option>
@@ -2516,7 +2516,7 @@ function DashboardView({ drafts, onGoCreate, onGoHistory, onApprove, profile, li
                   <select
                     value={planTarget}
                     onChange={(e) => setPlanTarget(e.target.value)}
-                    className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
                   >
                     <option value="person">Profil personnel</option>
                     {linkedin?.orgConnected &&
@@ -2626,7 +2626,7 @@ function DashboardView({ drafts, onGoCreate, onGoHistory, onApprove, profile, li
           <div className="bg-white rounded-xl border border-dashed border-gray-300 p-10 text-center text-gray-400">
             <Clock size={28} className="mx-auto mb-2" />
             <p className="text-sm">Aucun post programmé.</p>
-            <button onClick={onGoCreate} className="text-sm text-indigo-600 hover:underline mt-1">
+            <button onClick={onGoCreate} className="text-sm text-[#ff5a5f] hover:underline mt-1">
               Générer un post →
             </button>
           </div>
@@ -2670,7 +2670,7 @@ function DashboardView({ drafts, onGoCreate, onGoHistory, onApprove, profile, li
                     href={`https://www.linkedin.com/feed/update/${d.postId}/`}
                     target="_blank"
                     rel="noreferrer"
-                    className="text-xs text-indigo-600 hover:underline flex items-center gap-1 shrink-0"
+                    className="text-xs text-[#ff5a5f] hover:underline flex items-center gap-1 shrink-0"
                   >
                     Voir sur LinkedIn <ExternalLink size={12} />
                   </a>
@@ -2777,7 +2777,7 @@ function StatsView({ linkedin, orgs, profile, drafts }) {
           <select
             value={org}
             onChange={(e) => setOrg(e.target.value)}
-            className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
           >
             {orgs.map((o) => (
               <option key={o.urn} value={o.urn}>
@@ -2793,7 +2793,7 @@ function StatsView({ linkedin, orgs, profile, drafts }) {
         <div>
           <div className="flex items-center justify-between flex-wrap gap-2 mb-3">
             <h3 className="font-semibold text-base flex items-center gap-2">
-              <Megaphone size={16} className="text-indigo-600" /> Suivi des campagnes
+              <Megaphone size={16} className="text-[#ff5a5f]" /> Suivi des campagnes
             </h3>
             <div className="flex gap-1 bg-gray-100 p-1 rounded-lg">
               {[
@@ -2831,7 +2831,7 @@ function StatsView({ linkedin, orgs, profile, drafts }) {
                       <div className="flex items-center gap-2 flex-wrap">
                         <h4 className="font-semibold truncate">{c.name}</h4>
                         {c.objective && (
-                          <span className="text-xs bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full">
+                          <span className="text-xs bg-[#fff1f1] text-[#f63d44] px-2 py-0.5 rounded-full">
                             {c.objective}
                           </span>
                         )}
@@ -2903,7 +2903,7 @@ function StatsView({ linkedin, orgs, profile, drafts }) {
                     <div className="mt-2">
                       <button
                         onClick={() => setExpandedId(expandedId === c.id ? null : c.id)}
-                        className="text-xs text-gray-500 hover:text-indigo-600 flex items-center gap-1"
+                        className="text-xs text-gray-500 hover:text-[#ff5a5f] flex items-center gap-1"
                       >
                         <ChevronDown
                           size={13}
@@ -2929,13 +2929,13 @@ function StatsView({ linkedin, orgs, profile, drafts }) {
       {profile?.phylloAccountId ? (
         <div>
           <h3 className="font-semibold text-base mb-3 flex items-center gap-2">
-            <UserRound size={16} className="text-indigo-600" /> Profil personnel
+            <UserRound size={16} className="text-[#ff5a5f]" /> Profil personnel
             {pStats?.profile?.name && <span className="text-gray-400 font-normal text-sm">— {pStats.profile.name}</span>}
             <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full font-normal">via Phyllo</span>
           </h3>
           {pLoading ? (
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center text-gray-400">
-              <RefreshCw size={22} className="mx-auto mb-2 animate-spin text-indigo-500" />
+              <RefreshCw size={22} className="mx-auto mb-2 animate-spin text-[#ff5a5f]" />
               <p className="text-sm">Récupération des statistiques du profil…</p>
             </div>
           ) : pStats ? (
@@ -2985,7 +2985,7 @@ function StatsView({ linkedin, orgs, profile, drafts }) {
                           ))}
                           <td className="p-3">
                             {c.url && (
-                              <a href={c.url} target="_blank" rel="noreferrer" className="text-indigo-600 hover:text-indigo-800">
+                              <a href={c.url} target="_blank" rel="noreferrer" className="text-[#ff5a5f] hover:text-[#d12d33]">
                                 <ExternalLink size={14} />
                               </a>
                             )}
@@ -3008,7 +3008,7 @@ function StatsView({ linkedin, orgs, profile, drafts }) {
           )}
         </div>
       ) : (
-        <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-4 text-sm text-indigo-900 flex items-start gap-2">
+        <div className="bg-[#fff1f1] border border-[#ffe0e0] rounded-xl p-4 text-sm text-[#1b2a4a] flex items-start gap-2">
           <AlertCircle size={16} className="mt-0.5 shrink-0" />
           <span>
             Statistiques du <strong>profil personnel</strong> : connectez-les via Phyllo dans
@@ -3026,7 +3026,7 @@ function StatsView({ linkedin, orgs, profile, drafts }) {
         </div>
       ) : loading ? (
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-12 text-center text-gray-400">
-          <RefreshCw size={28} className="mx-auto mb-2 animate-spin text-indigo-500" />
+          <RefreshCw size={28} className="mx-auto mb-2 animate-spin text-[#ff5a5f]" />
           <p className="text-sm">Récupération des statistiques…</p>
         </div>
       ) : error ? (
@@ -3039,7 +3039,7 @@ function StatsView({ linkedin, orgs, profile, drafts }) {
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
             {CARDS.map(({ label, value, icon: Icon }) => (
               <div key={label} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
-                <Icon size={16} className="text-indigo-500 mb-2" />
+                <Icon size={16} className="text-[#ff5a5f] mb-2" />
                 <p className="text-xl font-bold">{value}</p>
                 <p className="text-xs text-gray-500">{label}</p>
               </div>
@@ -3089,7 +3089,7 @@ function StatsView({ linkedin, orgs, profile, drafts }) {
                               href={`https://www.linkedin.com/feed/update/${p.postId}/`}
                               target="_blank"
                               rel="noreferrer"
-                              className="text-indigo-600 hover:text-indigo-800"
+                              className="text-[#ff5a5f] hover:text-[#d12d33]"
                               title="Voir sur LinkedIn"
                             >
                               <ExternalLink size={14} />
@@ -3205,13 +3205,13 @@ function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast 
   };
 
   const inputCls =
-    "w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500";
+    "w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]";
 
   return (
     <div className="min-h-screen flex items-center justify-center p-6">
       <div className="w-full max-w-lg">
         <div className="flex items-center justify-center gap-2 mb-6">
-          <div className="bg-indigo-600 text-white p-2.5 rounded-xl">
+          <div className="bg-[#ff5a5f] text-white p-2.5 rounded-xl">
             <Linkedin size={24} />
           </div>
           <h1 className="font-bold text-xl">PostGenius</h1>
@@ -3222,13 +3222,13 @@ function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast 
           {STEPS.map((_, i) => (
             <div
               key={i}
-              className={`h-1.5 flex-1 rounded-full ${i <= step ? "bg-indigo-600" : "bg-gray-200"}`}
+              className={`h-1.5 flex-1 rounded-full ${i <= step ? "bg-[#ff5a5f]" : "bg-gray-200"}`}
             />
           ))}
         </div>
 
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-          <p className="text-xs font-medium text-indigo-600 mb-1">
+          <p className="text-xs font-medium text-[#ff5a5f] mb-1">
             Étape {step + 1} sur {STEPS.length}
           </p>
           <h2 className="font-semibold text-lg">{STEPS[step].title}</h2>
@@ -3335,7 +3335,7 @@ function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast 
                     <button
                       key={s}
                       onClick={() => set("expertise", s)}
-                      className="text-xs bg-gray-100 hover:bg-indigo-50 hover:text-indigo-700 text-gray-600 px-2 py-1 rounded-full"
+                      className="text-xs bg-gray-100 hover:bg-[#fff1f1] hover:text-[#f63d44] text-gray-600 px-2 py-1 rounded-full"
                     >
                       {s}
                     </button>
@@ -3368,7 +3368,7 @@ function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast 
                         onClick={() => toggleCsv("commGoals", g)}
                         className={`text-xs px-3 py-1.5 rounded-full border ${
                           active
-                            ? "bg-indigo-600 text-white border-indigo-600"
+                            ? "bg-[#ff5a5f] text-white border-[#ff5a5f]"
                             : "border-gray-200 text-gray-600 hover:border-gray-300"
                         }`}
                       >
@@ -3392,7 +3392,7 @@ function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast 
                       onClick={() => set("tone", t)}
                       className={`text-xs px-3 py-1.5 rounded-full border ${
                         fields.tone === t
-                          ? "bg-indigo-600 text-white border-indigo-600"
+                          ? "bg-[#ff5a5f] text-white border-[#ff5a5f]"
                           : "border-gray-200 text-gray-600 hover:border-gray-300"
                       }`}
                     >
@@ -3417,7 +3417,7 @@ function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast 
               <div>
                 <label className="text-sm font-medium text-gray-700 block mb-1.5">
                   Longueur par défaut :{" "}
-                  <span className="text-indigo-600 font-semibold">{fields.defaultMaxChars} caractères</span>
+                  <span className="text-[#ff5a5f] font-semibold">{fields.defaultMaxChars} caractères</span>
                 </label>
                 <input
                   type="range"
@@ -3426,7 +3426,7 @@ function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast 
                   step="100"
                   value={fields.defaultMaxChars}
                   onChange={(e) => set("defaultMaxChars", Number(e.target.value))}
-                  className="w-full accent-indigo-600"
+                  className="w-full accent-[#ff5a5f]"
                 />
               </div>
             </div>
@@ -3438,7 +3438,7 @@ function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast 
                 <label className="text-sm font-medium text-gray-700 block mb-2">
                   Vos jours de publication
                   {(fields.publishDays ?? "").split(",").filter(Boolean).length > 0 && (
-                    <span className="text-indigo-600 font-semibold">
+                    <span className="text-[#ff5a5f] font-semibold">
                       {" "}
                       — {(fields.publishDays ?? "").split(",").filter(Boolean).length} post
                       {(fields.publishDays ?? "").split(",").filter(Boolean).length > 1 ? "s" : ""}/semaine
@@ -3454,7 +3454,7 @@ function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast 
                         onClick={() => toggleCsv("publishDays", n)}
                         className={`flex-1 py-2 rounded-lg border text-xs font-medium ${
                           active
-                            ? "bg-indigo-600 text-white border-indigo-600"
+                            ? "bg-[#ff5a5f] text-white border-[#ff5a5f]"
                             : "border-gray-200 text-gray-600 hover:border-gray-300"
                         }`}
                       >
@@ -3482,7 +3482,7 @@ function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast 
                     type="checkbox"
                     checked={fields.requireValidation}
                     onChange={(e) => set("requireValidation", e.target.checked)}
-                    className="accent-indigo-600 mt-0.5"
+                    className="accent-[#ff5a5f] mt-0.5"
                   />
                   <span className="text-sm text-gray-700">
                     <span className="font-medium">Valider mes posts avant publication</span>
@@ -3532,7 +3532,7 @@ function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast 
               <button
                 onClick={() => setStep(step + 1)}
                 disabled={!canNext}
-                className="bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300 text-white text-sm font-medium px-5 py-2 rounded-lg flex items-center gap-1.5"
+                className="bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white text-sm font-medium px-5 py-2 rounded-lg flex items-center gap-1.5"
               >
                 Continuer <ChevronRight size={15} />
               </button>
@@ -3540,7 +3540,7 @@ function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast 
               <button
                 onClick={finish}
                 disabled={saving}
-                className="bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300 text-white text-sm font-medium px-5 py-2 rounded-lg flex items-center gap-1.5"
+                className="bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white text-sm font-medium px-5 py-2 rounded-lg flex items-center gap-1.5"
               >
                 {saving && <RefreshCw size={14} className="animate-spin" />}
                 Terminer <Check size={15} />
@@ -3665,11 +3665,11 @@ function ProfileView({ profile, onSaved, showToast, linkedin, onDisconnect }) {
   };
 
   const input =
-    "w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500";
+    "w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]";
   const label = "text-sm font-medium text-gray-700 block mb-1.5";
   const cardTitle = (Icon, title) => (
     <div className="flex items-center gap-2.5 mb-4">
-      <div className="p-2 rounded-xl bg-indigo-50 text-indigo-600">
+      <div className="p-2 rounded-xl bg-[#fff1f1] text-[#ff5a5f]">
         <Icon size={16} />
       </div>
       <h3 className="text-sm font-semibold">{title}</h3>
@@ -3729,7 +3729,7 @@ function ProfileView({ profile, onSaved, showToast, linkedin, onDisconnect }) {
                         onClick={() => toggleCsv("commGoals", g)}
                         className={`text-xs px-3 py-1.5 rounded-full border ${
                           active
-                            ? "bg-indigo-600 text-white border-indigo-600"
+                            ? "bg-[#ff5a5f] text-white border-[#ff5a5f]"
                             : "border-gray-200 text-gray-600 hover:border-gray-300"
                         }`}
                       >
@@ -3778,7 +3778,7 @@ function ProfileView({ profile, onSaved, showToast, linkedin, onDisconnect }) {
                       onClick={() => set("tone", t)}
                       className={`text-xs px-3 py-1.5 rounded-full border ${
                         fields.tone === t
-                          ? "bg-indigo-600 text-white border-indigo-600"
+                          ? "bg-[#ff5a5f] text-white border-[#ff5a5f]"
                           : "border-gray-200 text-gray-600 hover:border-gray-300"
                       }`}
                     >
@@ -3802,7 +3802,7 @@ function ProfileView({ profile, onSaved, showToast, linkedin, onDisconnect }) {
               <div>
                 <label className={label}>
                   Longueur par défaut :{" "}
-                  <span className="text-indigo-600 font-semibold">{fields.defaultMaxChars} caractères</span>
+                  <span className="text-[#ff5a5f] font-semibold">{fields.defaultMaxChars} caractères</span>
                 </label>
                 <input
                   type="range"
@@ -3811,7 +3811,7 @@ function ProfileView({ profile, onSaved, showToast, linkedin, onDisconnect }) {
                   step="100"
                   value={fields.defaultMaxChars}
                   onChange={(e) => set("defaultMaxChars", Number(e.target.value))}
-                  className="w-full accent-indigo-600"
+                  className="w-full accent-[#ff5a5f]"
                 />
               </div>
             </div>
@@ -3823,7 +3823,7 @@ function ProfileView({ profile, onSaved, showToast, linkedin, onDisconnect }) {
           {/* Identité */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
             <div className="flex flex-col items-center text-center mb-4">
-              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 text-white flex items-center justify-center text-2xl font-bold shadow-lg shadow-indigo-200 mb-2">
+              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#ff5a5f] to-pink-500 text-white flex items-center justify-center text-2xl font-bold shadow-lg shadow-[#ffd5d6] mb-2">
                 {(fields.name || profile?.email || "?").slice(0, 1).toUpperCase()}
               </div>
               <p className="text-sm font-semibold">{fields.name || "Votre nom"}</p>
@@ -3871,7 +3871,7 @@ function ProfileView({ profile, onSaved, showToast, linkedin, onDisconnect }) {
                 <label className={label}>
                   Jours
                   {(fields.publishDays ?? "").split(",").filter(Boolean).length > 0 && (
-                    <span className="text-indigo-600 font-semibold">
+                    <span className="text-[#ff5a5f] font-semibold">
                       {" "}
                       — {(fields.publishDays ?? "").split(",").filter(Boolean).length}/semaine
                     </span>
@@ -3887,7 +3887,7 @@ function ProfileView({ profile, onSaved, showToast, linkedin, onDisconnect }) {
                         onClick={() => toggleCsv("publishDays", n)}
                         className={`py-2 rounded-lg border text-[11px] font-medium ${
                           active
-                            ? "bg-indigo-600 text-white border-indigo-600"
+                            ? "bg-[#ff5a5f] text-white border-[#ff5a5f]"
                             : "border-gray-200 text-gray-600 hover:border-gray-300"
                         }`}
                       >
@@ -3911,7 +3911,7 @@ function ProfileView({ profile, onSaved, showToast, linkedin, onDisconnect }) {
                   type="checkbox"
                   checked={fields.requireValidation}
                   onChange={(e) => set("requireValidation", e.target.checked)}
-                  className="accent-indigo-600"
+                  className="accent-[#ff5a5f]"
                 />
                 Valider avant publication
               </label>
@@ -3923,7 +3923,7 @@ function ProfileView({ profile, onSaved, showToast, linkedin, onDisconnect }) {
             <button
               type="submit"
               disabled={saving}
-              className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300 text-white font-medium py-3 rounded-2xl shadow-lg shadow-indigo-200 flex items-center justify-center gap-2"
+              className="w-full bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white font-medium py-3 rounded-2xl shadow-lg shadow-[#ffd5d6] flex items-center justify-center gap-2"
             >
               {saving ? <RefreshCw size={16} className="animate-spin" /> : <Save size={16} />}
               Enregistrer mon profil
@@ -3935,7 +3935,7 @@ function ProfileView({ profile, onSaved, showToast, linkedin, onDisconnect }) {
       {/* Connexions */}
       <div className="mt-6">
         <div className="flex items-center gap-2.5 mb-3">
-          <div className="p-2 rounded-xl bg-indigo-50 text-indigo-600">
+          <div className="p-2 rounded-xl bg-[#fff1f1] text-[#ff5a5f]">
             <Linkedin size={16} />
           </div>
           <div>
@@ -3966,7 +3966,7 @@ function ProfileView({ profile, onSaved, showToast, linkedin, onDisconnect }) {
             </div>
             {linkedin.connected ? (
               <div className="flex gap-2">
-                <a href="/api/linkedin/auth" className="text-xs border border-gray-200 hover:border-indigo-500 text-gray-700 px-3 py-1.5 rounded-xl">
+                <a href="/api/linkedin/auth" className="text-xs border border-gray-200 hover:border-[#ff5a5f] text-gray-700 px-3 py-1.5 rounded-xl">
                   Reconnecter
                 </a>
                 <button
@@ -4006,8 +4006,8 @@ function ProfileView({ profile, onSaved, showToast, linkedin, onDisconnect }) {
               href="/api/linkedin/auth-org"
               className={
                 linkedin.orgConnected
-                  ? "text-xs border border-gray-200 hover:border-indigo-500 text-gray-700 px-3 py-1.5 rounded-xl"
-                  : "border border-[#0a66c2] text-[#0a66c2] hover:bg-indigo-50 text-xs font-medium px-4 py-2 rounded-xl flex items-center gap-1.5"
+                  ? "text-xs border border-gray-200 hover:border-[#ff5a5f] text-gray-700 px-3 py-1.5 rounded-xl"
+                  : "border border-[#0a66c2] text-[#0a66c2] hover:bg-[#fff1f1] text-xs font-medium px-4 py-2 rounded-xl flex items-center gap-1.5"
               }
             >
               {linkedin.orgConnected ? "Reconnecter" : "Connecter"}
@@ -4041,7 +4041,7 @@ function ProfileView({ profile, onSaved, showToast, linkedin, onDisconnect }) {
               <button
                 onClick={connectPhyllo}
                 type="button"
-                className="border border-[#0a66c2] text-[#0a66c2] hover:bg-indigo-50 text-xs font-medium px-4 py-2 rounded-xl flex items-center gap-1.5"
+                className="border border-[#0a66c2] text-[#0a66c2] hover:bg-[#fff1f1] text-xs font-medium px-4 py-2 rounded-xl flex items-center gap-1.5"
               >
                 <BarChart3 size={14} /> Connecter
               </button>
@@ -4622,7 +4622,7 @@ export default function Home() {
       onClick={() => handleNav(item)}
       className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors ${
         view === item.id
-          ? "bg-indigo-600 text-white shadow-md shadow-indigo-200"
+          ? "bg-[#ff5a5f] text-white shadow-md shadow-[#ffd5d6]"
           : "text-gray-500 hover:bg-gray-50 hover:text-gray-800"
       }`}
     >
@@ -4631,7 +4631,7 @@ export default function Home() {
       {item.badge && (
         <span
           className={`text-xs px-1.5 py-0.5 rounded-full ${
-            view === item.id ? "bg-white/20 text-white" : "bg-indigo-50 text-indigo-600"
+            view === item.id ? "bg-white/20 text-white" : "bg-[#fff1f1] text-[#ff5a5f]"
           }`}
         >
           {item.badge}
@@ -4645,7 +4645,7 @@ export default function Home() {
       {/* Sidebar */}
       <aside className="w-60 bg-white h-screen sticky top-0 hidden md:flex flex-col shrink-0 border-r border-gray-100">
         <div className="flex items-center gap-2.5 px-5 py-6">
-          <div className="bg-indigo-600 text-white p-2 rounded-xl shadow-md shadow-indigo-200">
+          <div className="bg-[#ff5a5f] text-white p-2 rounded-xl shadow-md shadow-[#ffd5d6]">
             <Linkedin size={20} />
           </div>
           <div>
@@ -4656,7 +4656,7 @@ export default function Home() {
         <nav className="flex-1 px-3 space-y-1 mt-2">{NAV.map(navBtn)}</nav>
         <div className="px-3 pb-5 pt-3 border-t border-gray-100 mx-3 mb-1">
           <div className="flex items-center gap-2.5 px-2">
-            <div className="w-9 h-9 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-sm font-bold shrink-0">
+            <div className="w-9 h-9 rounded-full bg-[#ffe0e0] text-[#f63d44] flex items-center justify-center text-sm font-bold shrink-0">
               {(user.name || user.email).slice(0, 1).toUpperCase()}
             </div>
             <div className="min-w-0 flex-1">
@@ -4679,7 +4679,7 @@ export default function Home() {
               key={item.id}
               onClick={() => handleNav(item)}
               className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap flex items-center gap-1.5 ${
-                view === item.id ? "bg-indigo-600 text-white" : "text-gray-500"
+                view === item.id ? "bg-[#ff5a5f] text-white" : "text-gray-500"
               }`}
             >
               <item.icon size={14} /> {item.label}
@@ -4711,7 +4711,7 @@ export default function Home() {
               ) : (
                 <a
                   href="/api/linkedin/auth-org"
-                  className="border border-[#0a66c2] text-[#0a66c2] hover:bg-indigo-50 text-xs font-medium px-3 py-1.5 rounded-full"
+                  className="border border-[#0a66c2] text-[#0a66c2] hover:bg-[#fff1f1] text-xs font-medium px-3 py-1.5 rounded-full"
                   title="Connecter la page entreprise (2e app LinkedIn, Community Management API)"
                 >
                   + Connecter la page
@@ -4825,7 +4825,7 @@ export default function Home() {
             {genMode === "series" && (
               <div>
                 <label className="text-sm font-medium text-gray-700 block mb-2">
-                  Nombre de posts : <span className="text-indigo-600 font-semibold">{seriesCount}</span>
+                  Nombre de posts : <span className="text-[#ff5a5f] font-semibold">{seriesCount}</span>
                 </label>
                 <input
                   type="range"
@@ -4833,7 +4833,7 @@ export default function Home() {
                   max="10"
                   value={seriesCount}
                   onChange={(e) => setSeriesCount(Number(e.target.value))}
-                  className="w-full accent-indigo-600"
+                  className="w-full accent-[#ff5a5f]"
                 />
                 <p className="text-xs text-gray-400 mt-1">
                   Montée en tension graduée : teaser → indices → reveal au dernier post.
@@ -4850,11 +4850,11 @@ export default function Home() {
                     onClick={() => set("type", id)}
                     className={`p-3 rounded-lg border text-left ${
                       form.type === id
-                        ? "border-indigo-600 bg-indigo-50 ring-1 ring-indigo-600"
+                        ? "border-[#ff5a5f] bg-[#fff1f1] ring-1 ring-[#ff5a5f]"
                         : "border-gray-200 hover:border-gray-300"
                     }`}
                   >
-                    <Icon size={18} className={form.type === id ? "text-indigo-600" : "text-gray-400"} />
+                    <Icon size={18} className={form.type === id ? "text-[#ff5a5f]" : "text-gray-400"} />
                     <div className="text-sm font-medium mt-1">{label}</div>
                     <div className="text-xs text-gray-500">{desc}</div>
                   </button>
@@ -4871,14 +4871,14 @@ export default function Home() {
                 value={form.expertise}
                 onChange={(e) => set("expertise", e.target.value)}
                 placeholder="ex : consultant en marketing digital"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
               />
               <div className="flex flex-wrap gap-1.5 mt-2">
                 {EXPERTISE_SUGGESTIONS.map((s) => (
                   <button
                     key={s}
                     onClick={() => set("expertise", s)}
-                    className="text-xs bg-gray-100 hover:bg-indigo-50 hover:text-indigo-700 text-gray-600 px-2 py-1 rounded-full"
+                    className="text-xs bg-gray-100 hover:bg-[#fff1f1] hover:text-[#f63d44] text-gray-600 px-2 py-1 rounded-full"
                   >
                     {s}
                   </button>
@@ -4893,7 +4893,7 @@ export default function Home() {
                 value={form.theme}
                 onChange={(e) => set("theme", e.target.value)}
                 placeholder="ex : La prospection sur LinkedIn"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
               />
               {profile?.themes && (
                 <div className="flex flex-wrap gap-1.5 mt-2">
@@ -4905,7 +4905,7 @@ export default function Home() {
                       <button
                         key={t}
                         onClick={() => set("theme", t)}
-                        className="text-xs bg-gray-100 hover:bg-indigo-50 hover:text-indigo-700 text-gray-600 px-2 py-1 rounded-full"
+                        className="text-xs bg-gray-100 hover:bg-[#fff1f1] hover:text-[#f63d44] text-gray-600 px-2 py-1 rounded-full"
                       >
                         {t}
                       </button>
@@ -4938,7 +4938,7 @@ export default function Home() {
                     onClick={() => set("tone", t)}
                     className={`text-xs px-3 py-1.5 rounded-full border ${
                       form.tone === t
-                        ? "bg-indigo-600 text-white border-indigo-600"
+                        ? "bg-[#ff5a5f] text-white border-[#ff5a5f]"
                         : "border-gray-200 text-gray-600 hover:border-gray-300"
                     }`}
                   >
@@ -4950,7 +4950,7 @@ export default function Home() {
 
             <div>
               <label className="text-sm font-medium text-gray-700 block mb-2">
-                Longueur max : <span className="text-indigo-600 font-semibold">{form.maxChars} caractères</span>
+                Longueur max : <span className="text-[#ff5a5f] font-semibold">{form.maxChars} caractères</span>
               </label>
               <input
                 type="range"
@@ -4959,7 +4959,7 @@ export default function Home() {
                 step="100"
                 value={form.maxChars}
                 onChange={(e) => set("maxChars", Number(e.target.value))}
-                className="w-full accent-indigo-600"
+                className="w-full accent-[#ff5a5f]"
               />
               <div className="flex justify-between text-xs text-gray-400">
                 <span>300</span>
@@ -4973,7 +4973,7 @@ export default function Home() {
                   type="checkbox"
                   checked={wantVariants}
                   onChange={(e) => setWantVariants(e.target.checked)}
-                  className="accent-indigo-600"
+                  className="accent-[#ff5a5f]"
                 />
                 Générer 3 variantes (angles différents) au choix
               </label>
@@ -4982,7 +4982,7 @@ export default function Home() {
             <button
               onClick={handleGenerate}
               disabled={!canGenerate || loading}
-              className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300 text-white font-medium py-3 rounded-lg flex items-center justify-center gap-2"
+              className="w-full bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white font-medium py-3 rounded-lg flex items-center justify-center gap-2"
             >
               {loading ? <RefreshCw size={18} className="animate-spin" /> : <Sparkles size={18} />}
               {loading
@@ -5015,7 +5015,7 @@ export default function Home() {
             )}
             {loading && (
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-12 text-center text-gray-400">
-                <RefreshCw size={32} className="mx-auto mb-3 animate-spin text-indigo-500" />
+                <RefreshCw size={32} className="mx-auto mb-3 animate-spin text-[#ff5a5f]" />
                 <p className="text-sm">
                   {genMode === "series"
                     ? `Claude construit votre série de ${seriesCount} posts…`
@@ -5025,7 +5025,7 @@ export default function Home() {
             )}
             {/* Barre d'actions — en haut à droite dès la génération */}
             {result && (
-              <div className="sticky top-4 z-20 bg-white/95 backdrop-blur rounded-xl border border-indigo-200 ring-1 ring-indigo-100 shadow-md p-3 flex items-center justify-between flex-wrap gap-2">
+              <div className="sticky top-4 z-20 bg-white/95 backdrop-blur rounded-xl border border-[#ffd5d6] ring-1 ring-[#ffe0e0] shadow-md p-3 flex items-center justify-between flex-wrap gap-2">
                 <span className="text-sm font-medium text-green-700 flex items-center gap-1.5">
                   <Check size={15} /> Post prêt
                 </span>
@@ -5034,7 +5034,7 @@ export default function Home() {
                     <select
                       value={target}
                       onChange={(e) => setTarget(e.target.value)}
-                      className="border border-gray-300 rounded-lg px-2 py-1.5 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="border border-gray-300 rounded-lg px-2 py-1.5 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
                       title="Compte de publication"
                     >
                       <option value="person">Profil perso</option>
@@ -5051,13 +5051,13 @@ export default function Home() {
                       setEditingResult(true);
                     }}
                     disabled={editingResult}
-                    className="border border-gray-300 hover:border-indigo-500 hover:text-indigo-600 disabled:opacity-50 text-gray-700 text-xs font-medium px-3 py-1.5 rounded-lg flex items-center gap-1.5"
+                    className="border border-gray-300 hover:border-[#ff5a5f] hover:text-[#ff5a5f] disabled:opacity-50 text-gray-700 text-xs font-medium px-3 py-1.5 rounded-lg flex items-center gap-1.5"
                   >
                     <PenLine size={13} /> Modifier
                   </button>
                   <button
                     onClick={saveDraftFlow}
-                    className="border border-gray-300 hover:border-indigo-500 hover:text-indigo-600 text-gray-700 text-xs font-medium px-3 py-1.5 rounded-lg flex items-center gap-1.5"
+                    className="border border-gray-300 hover:border-[#ff5a5f] hover:text-[#ff5a5f] text-gray-700 text-xs font-medium px-3 py-1.5 rounded-lg flex items-center gap-1.5"
                   >
                     <Save size={13} /> Brouillon
                   </button>
@@ -5098,8 +5098,8 @@ export default function Home() {
                     }}
                     className={`text-xs px-3 py-1.5 rounded-full border font-medium ${
                       i === activeVariant
-                        ? "bg-indigo-600 text-white border-indigo-600"
-                        : "border-gray-300 text-gray-600 hover:border-indigo-400"
+                        ? "bg-[#ff5a5f] text-white border-[#ff5a5f]"
+                        : "border-gray-300 text-gray-600 hover:border-[#ff8a8d]"
                     }`}
                   >
                     Variante {i + 1}
@@ -5133,14 +5133,14 @@ export default function Home() {
                       )}
                       <button
                         onClick={() => handleCopy(result.text)}
-                        className="text-gray-500 hover:text-indigo-600 p-1.5 rounded hover:bg-gray-100"
+                        className="text-gray-500 hover:text-[#ff5a5f] p-1.5 rounded hover:bg-gray-100"
                         title="Copier"
                       >
                         {copied ? <Check size={16} className="text-green-600" /> : <Copy size={16} />}
                       </button>
                       <button
                         onClick={handleGenerate}
-                        className="text-gray-500 hover:text-indigo-600 p-1.5 rounded hover:bg-gray-100"
+                        className="text-gray-500 hover:text-[#ff5a5f] p-1.5 rounded hover:bg-gray-100"
                         title="Tout régénérer"
                       >
                         <RefreshCw size={16} />
@@ -5155,7 +5155,7 @@ export default function Home() {
                         onChange={(e) => setResultDraftText(e.target.value)}
                         rows={12}
                         autoFocus
-                        className="w-full border border-gray-300 rounded-lg p-3 text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        className="w-full border border-gray-300 rounded-lg p-3 text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
                       />
                       <div className="flex gap-2">
                         <button
@@ -5164,7 +5164,7 @@ export default function Home() {
                             setResult((r) => ({ ...r, text: resultDraftText }));
                             setEditingResult(false);
                           }}
-                          className="bg-indigo-600 text-white text-sm px-4 py-1.5 rounded-lg flex items-center gap-1.5"
+                          className="bg-[#ff5a5f] text-white text-sm px-4 py-1.5 rounded-lg flex items-center gap-1.5"
                         >
                           <Check size={14} /> Valider
                         </button>
@@ -5186,7 +5186,7 @@ export default function Home() {
                 {!editingResult && (
                   <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
                     <p className="text-sm font-semibold mb-3 flex items-center gap-2">
-                      <ImageIcon size={15} className="text-indigo-600" /> Image du post
+                      <ImageIcon size={15} className="text-[#ff5a5f]" /> Image du post
                       <span className="text-xs text-gray-400 font-normal">(optionnelle — publiée avec le post)</span>
                     </p>
                     {postImage ? (
@@ -5205,7 +5205,7 @@ export default function Home() {
                             value={imagePromptInput}
                             onChange={(e) => setImagePromptInput(e.target.value)}
                             placeholder="Ajustement ou nouveau prompt — vide = l'IA redécide"
-                            className="flex-1 border border-gray-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            className="flex-1 border border-gray-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
                           />
                           <button
                             onClick={generateImage}
@@ -5230,12 +5230,12 @@ export default function Home() {
                           value={imagePromptInput}
                           onChange={(e) => setImagePromptInput(e.target.value)}
                           placeholder="Décrivez l'image souhaitée — vide = l'IA la déduit du post"
-                          className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                          className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
                         />
                         <button
                           onClick={generateImage}
                           disabled={imageLoading}
-                          className="bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300 text-white text-xs font-medium px-4 py-2 rounded-lg flex items-center gap-1.5"
+                          className="bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white text-xs font-medium px-4 py-2 rounded-lg flex items-center gap-1.5"
                         >
                           {imageLoading ? <RefreshCw size={13} className="animate-spin" /> : <ImageIcon size={13} />}
                           {imageLoading ? "Génération… (~30 s)" : "Générer une image"}
@@ -5254,7 +5254,7 @@ export default function Home() {
                     <ul className="space-y-2">
                       {result.extra.items?.map((item, i) => (
                         <li key={i} className="flex items-start gap-2 text-sm text-gray-700">
-                          <ChevronRight size={14} className="text-indigo-500 mt-0.5 shrink-0" />
+                          <ChevronRight size={14} className="text-[#ff5a5f] mt-0.5 shrink-0" />
                           {item}
                         </li>
                       ))}
@@ -5274,7 +5274,7 @@ export default function Home() {
                           key={s}
                           onClick={() => handleRefine(s)}
                           disabled={loading}
-                          className="text-xs bg-gray-100 hover:bg-indigo-50 hover:text-indigo-700 disabled:opacity-50 text-gray-600 px-2.5 py-1 rounded-full"
+                          className="text-xs bg-gray-100 hover:bg-[#fff1f1] hover:text-[#f63d44] disabled:opacity-50 text-gray-600 px-2.5 py-1 rounded-full"
                         >
                           {s}
                         </button>
@@ -5292,7 +5292,7 @@ export default function Home() {
                         value={refineInput}
                         onChange={(e) => setRefineInput(e.target.value)}
                         placeholder="Consigne libre : « insiste sur le ROI », « termine par une question »…"
-                        className="flex-1 border border-gray-300 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        className="flex-1 border border-gray-300 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
                       />
                       <button
                         type="submit"
@@ -5345,7 +5345,7 @@ export default function Home() {
                       </button>
                       <button
                         onClick={() => setView("history")}
-                        className="border border-gray-300 hover:border-indigo-500 text-gray-700 text-xs font-medium px-3 py-2 rounded-lg"
+                        className="border border-gray-300 hover:border-[#ff5a5f] text-gray-700 text-xs font-medium px-3 py-2 rounded-lg"
                       >
                         Voir mes posts
                       </button>
@@ -5354,7 +5354,7 @@ export default function Home() {
                   {nextStep.type === "scheduled" && (
                     <button
                       onClick={() => setView("dashboard")}
-                      className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium px-3 py-2 rounded-lg flex items-center gap-1.5"
+                      className="bg-[#ff5a5f] hover:bg-[#f63d44] text-white text-xs font-medium px-3 py-2 rounded-lg flex items-center gap-1.5"
                     >
                       <LayoutDashboard size={13} /> Voir le tableau de bord
                     </button>
@@ -5374,7 +5374,7 @@ export default function Home() {
                       setNextStep(null);
                       set("theme", "");
                     }}
-                    className="border border-gray-300 hover:border-indigo-500 text-gray-700 text-xs font-medium px-3 py-2 rounded-lg flex items-center gap-1.5"
+                    className="border border-gray-300 hover:border-[#ff5a5f] text-gray-700 text-xs font-medium px-3 py-2 rounded-lg flex items-center gap-1.5"
                   >
                     <Sparkles size={13} /> Créer un nouveau post
                   </button>
@@ -5387,12 +5387,12 @@ export default function Home() {
               <>
                 <div className="flex items-center justify-between">
                   <h3 className="font-semibold text-base flex items-center gap-2">
-                    <LayersIcon size={16} className="text-indigo-600" />
+                    <LayersIcon size={16} className="text-[#ff5a5f]" />
                     Série : {seriesResult.length} posts
                   </h3>
                   <button
                     onClick={handleGenerate}
-                    className="text-gray-500 hover:text-indigo-600 p-1.5 rounded hover:bg-gray-100"
+                    className="text-gray-500 hover:text-[#ff5a5f] p-1.5 rounded hover:bg-gray-100"
                     title="Régénérer la série"
                   >
                     <RefreshCw size={16} />
@@ -5405,8 +5405,8 @@ export default function Home() {
                       <span
                         className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
                           i === seriesResult.length - 1
-                            ? "bg-indigo-600 text-white"
-                            : "bg-indigo-50 text-indigo-700"
+                            ? "bg-[#ff5a5f] text-white"
+                            : "bg-[#fff1f1] text-[#f63d44]"
                         }`}
                       >
                         {p.title || `Post ${i + 1}`}
@@ -5415,7 +5415,7 @@ export default function Home() {
                         <span className="text-xs text-gray-400">{p.text.length} car.</span>
                         <button
                           onClick={() => handleCopy(p.text)}
-                          className="text-gray-400 hover:text-indigo-600 p-1 rounded hover:bg-gray-100"
+                          className="text-gray-400 hover:text-[#ff5a5f] p-1 rounded hover:bg-gray-100"
                           title="Copier"
                         >
                           <Copy size={14} />
@@ -5429,12 +5429,12 @@ export default function Home() {
                 {/* Actions série */}
                 <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-3">
                   {profile?.publishDays && (
-                    <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer bg-indigo-50 rounded-lg p-2.5">
+                    <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer bg-[#fff1f1] rounded-lg p-2.5">
                       <input
                         type="checkbox"
                         checked={seriesUseRhythm}
                         onChange={(e) => setSeriesUseRhythm(e.target.checked)}
-                        className="accent-indigo-600"
+                        className="accent-[#ff5a5f]"
                       />
                       <span>
                         Suivre mon rythme de publication{" "}
@@ -5459,7 +5459,7 @@ export default function Home() {
                         type="datetime-local"
                         value={seriesStart}
                         onChange={(e) => setSeriesStart(e.target.value)}
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
                       />
                     </div>
                     {!(seriesUseRhythm && profile?.publishDays) && (
@@ -5468,7 +5468,7 @@ export default function Home() {
                         <select
                           value={seriesInterval}
                           onChange={(e) => setSeriesInterval(Number(e.target.value))}
-                          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
                         >
                           <option value={1}>Tous les jours</option>
                           <option value={2}>Tous les 2 jours</option>
@@ -5490,7 +5490,7 @@ export default function Home() {
                       <select
                         value={target}
                         onChange={(e) => setTarget(e.target.value)}
-                        className="border border-gray-300 rounded-lg px-2 py-1 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        className="border border-gray-300 rounded-lg px-2 py-1 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
                       >
                         <option value="person">
                           Profil personnel{linkedin.name ? ` (${linkedin.name})` : ""}
@@ -5508,7 +5508,7 @@ export default function Home() {
                     <button
                       onClick={() => saveSeries(null)}
                       disabled={savingSeries}
-                      className="border border-gray-300 hover:border-indigo-500 hover:text-indigo-600 disabled:opacity-50 font-medium py-2.5 rounded-lg flex items-center justify-center gap-2 text-sm"
+                      className="border border-gray-300 hover:border-[#ff5a5f] hover:text-[#ff5a5f] disabled:opacity-50 font-medium py-2.5 rounded-lg flex items-center justify-center gap-2 text-sm"
                     >
                       <Save size={15} /> Tout en brouillons
                     </button>
@@ -5580,7 +5580,7 @@ export default function Home() {
                 <select
                   value={target}
                   onChange={(e) => setTarget(e.target.value)}
-                  className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
                 >
                   <option value="person">Profil personnel{linkedin.name ? ` (${linkedin.name})` : ""}</option>
                   {linkedin.orgConnected &&
@@ -5634,7 +5634,7 @@ export default function Home() {
                           : undefined
                       }
                       className={`w-80 shrink-0 rounded-2xl p-3 transition-colors ${
-                        dragOverCol === col.id ? "bg-indigo-100 ring-2 ring-indigo-400" : "bg-gray-200/50"
+                        dragOverCol === col.id ? "bg-[#ffe0e0] ring-2 ring-[#ff8a8d]" : "bg-gray-200/50"
                       }`}
                     >
                       <div className="flex items-center gap-2 px-1 mb-3">
@@ -5676,14 +5676,14 @@ export default function Home() {
                                 <div className="flex gap-0.5 shrink-0">
                                   <button
                                     onClick={() => handleCopy(p.text)}
-                                    className="text-gray-300 hover:text-indigo-600 p-1"
+                                    className="text-gray-300 hover:text-[#ff5a5f] p-1"
                                     title="Copier"
                                   >
                                     <Copy size={13} />
                                   </button>
                                   <button
                                     onClick={() => startEdit(p)}
-                                    className="text-gray-300 hover:text-indigo-600 p-1"
+                                    className="text-gray-300 hover:text-[#ff5a5f] p-1"
                                     title="Modifier"
                                   >
                                     <PenLine size={13} />
@@ -5704,12 +5704,12 @@ export default function Home() {
                                     value={editText}
                                     onChange={(e) => setEditText(e.target.value)}
                                     rows={10}
-                                    className="w-full border border-gray-200 rounded-lg p-2 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    className="w-full border border-gray-200 rounded-lg p-2 text-xs focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
                                   />
                                   <div className="flex gap-1.5">
                                     <button
                                       onClick={saveEdit}
-                                      className="flex-1 bg-indigo-600 text-white text-xs px-2 py-1.5 rounded-lg flex items-center justify-center gap-1"
+                                      className="flex-1 bg-[#ff5a5f] text-white text-xs px-2 py-1.5 rounded-lg flex items-center justify-center gap-1"
                                     >
                                       <Check size={12} /> Enregistrer
                                     </button>
@@ -5847,7 +5847,7 @@ export default function Home() {
                                         href={`https://www.linkedin.com/feed/update/${p.postId}/`}
                                         target="_blank"
                                         rel="noreferrer"
-                                        className="text-indigo-600 hover:underline flex items-center gap-1"
+                                        className="text-[#ff5a5f] hover:underline flex items-center gap-1"
                                       >
                                         Voir sur LinkedIn <ExternalLink size={11} />
                                       </a>
@@ -5874,7 +5874,7 @@ export default function Home() {
                                           showToast(e.message);
                                         }
                                       }}
-                                      className="w-full text-xs border border-gray-200 hover:border-indigo-500 text-gray-500 py-1.5 rounded-lg"
+                                      className="w-full text-xs border border-gray-200 hover:border-[#ff5a5f] text-gray-500 py-1.5 rounded-lg"
                                     >
                                       Repasser en brouillon
                                     </button>

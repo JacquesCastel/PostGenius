@@ -52,7 +52,7 @@ export default function ResetPassword() {
     <div className="min-h-screen flex items-center justify-center p-6">
       <div className="w-full max-w-md">
         <div className="flex items-center justify-center gap-2 mb-6">
-          <div className="bg-indigo-600 text-white p-2.5 rounded-xl">
+          <div className="bg-[#ff5a5f] text-white p-2.5 rounded-xl">
             <Linkedin size={24} />
           </div>
           <h1 className="font-bold text-xl">PostGenius</h1>
@@ -60,7 +60,7 @@ export default function ResetPassword() {
 
         <div className="bg-white rounded-xl border border-gray-200 p-6">
           <h2 className="font-semibold text-base mb-4 flex items-center gap-2">
-            <KeyRound size={18} className="text-indigo-600" /> Nouveau mot de passe
+            <KeyRound size={18} className="text-[#ff5a5f]" /> Nouveau mot de passe
           </h2>
 
           {done ? (
@@ -85,7 +85,7 @@ export default function ResetPassword() {
                 placeholder="Nouveau mot de passe (8 caractères min.)"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
               />
               <input
                 type="password"
@@ -94,7 +94,7 @@ export default function ResetPassword() {
                 placeholder="Confirmer le mot de passe"
                 value={confirm}
                 onChange={(e) => setConfirm(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
               />
               {error && (
                 <p className="text-sm text-red-600 flex items-center gap-1.5">
@@ -104,7 +104,7 @@ export default function ResetPassword() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300 text-white font-medium py-2.5 rounded-lg flex items-center justify-center gap-2"
+                className="w-full bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white font-medium py-2.5 rounded-lg flex items-center justify-center gap-2"
               >
                 {loading && <RefreshCw size={16} className="animate-spin" />}
                 Changer mon mot de passe

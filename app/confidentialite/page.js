@@ -17,7 +17,7 @@ export default function Confidentialite() {
           <h2 className="font-semibold text-base mb-2">Responsable de traitement</h2>
           <p>
             [À COMPLÉTER : raison sociale] — contact :{" "}
-            <a href="mailto:contact@postgenius.network" className="text-indigo-600">contact@postgenius.network</a>
+            <a href="mailto:contact@postgenius.network" className="text-[#ff5a5f]">contact@postgenius.network</a>
           </p>
         </div>
         <div>
@@ -60,7 +60,7 @@ export default function Confidentialite() {
           <p>
             Conformément au RGPD, vous disposez de droits d'accès, de rectification, d'effacement,
             de portabilité et d'opposition. Exercez-les par email à{" "}
-            <a href="mailto:contact@postgenius.network" className="text-indigo-600">contact@postgenius.network</a>.
+            <a href="mailto:contact@postgenius.network" className="text-[#ff5a5f]">contact@postgenius.network</a>.
             Vous pouvez introduire une réclamation auprès de la CNIL (cnil.fr).
           </p>
         </div>

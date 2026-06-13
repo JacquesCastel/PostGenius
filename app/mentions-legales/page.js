@@ -27,7 +27,7 @@ export default function MentionsLegales() {
             <br />
             Directeur de la publication : [À COMPLÉTER : nom]
             <br />
-            Contact : <a href="mailto:contact@postgenius.network" className="text-indigo-600">contact@postgenius.network</a>
+            Contact : <a href="mailto:contact@postgenius.network" className="text-[#ff5a5f]">contact@postgenius.network</a>
           </p>
         </div>
         <div>
@@ -52,7 +52,7 @@ export default function MentionsLegales() {
           <h2 className="font-semibold text-base mb-2">Données personnelles</h2>
           <p>
             Les modalités de traitement des données personnelles sont détaillées dans la{" "}
-            <Link href="/confidentialite" className="text-indigo-600">politique de confidentialité</Link>.
+            <Link href="/confidentialite" className="text-[#ff5a5f]">politique de confidentialité</Link>.
           </p>
         </div>
       </section>
