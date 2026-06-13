@@ -1,5 +1,7 @@
 # ---- Build ----
-FROM node:22-alpine AS builder
+# IMPORTANT : node:22-slim (Debian/glibc), PAS alpine (musl).
+# Sous node:22-alpine, Next.js 15.5.19 prérendait la landing (/) à vide.
+FROM node:22-slim AS builder
 WORKDIR /app
 
 COPY package.json package-lock.json* ./
@@ -12,13 +14,17 @@ ENV DATABASE_URL="postgresql://build:build@localhost:5432/build"
 RUN npx prisma generate && npm run build
 
 # ---- Runtime ----
-FROM node:22-alpine AS runner
+FROM node:22-slim AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
 
-RUN addgroup -S app && adduser -S app -G app
+# openssl requis par le moteur Prisma ; création d'un utilisateur non-root (syntaxe Debian)
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends openssl \
+    && rm -rf /var/lib/apt/lists/* \
+    && groupadd -r app && useradd -r -g app app
 
 # Build standalone Next.js + assets + client Prisma généré
 COPY --from=builder --chown=app:app /app/.next/standalone ./

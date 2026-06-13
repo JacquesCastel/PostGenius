@@ -5,6 +5,7 @@ Runbook complet. Temps estimé : ~45 min (hors propagation DNS).
 ## 0. Prérequis
 - Domaine **postgenius.network** acheté, accès à la zone DNS
 - Serveur Hetzner (Ubuntu/Debian) accessible en SSH, IP notée ci-après `IP_SERVEUR`
+  - **IP du serveur : `46.225.15.150`** → `ssh root@46.225.15.150`
 - Le projet fonctionne en local
 
 ## 1. DNS (à faire en premier — propagation 5 min à quelques heures)
