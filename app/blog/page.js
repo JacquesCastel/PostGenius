@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
+import SiteHeader from "@/components/SiteHeader";
+import SiteFooter from "@/components/SiteFooter";
 
 // Rendu à la requête : pas de lecture base au build (DB factice en build Docker)
 export const dynamic = "force-dynamic";
@@ -25,31 +27,22 @@ export default async function BlogIndex() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="bg-white border-b border-gray-100">
-        <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Link href="/" className="font-bold text-lg">
-            PostGenius
-          </Link>
-          <Link href="/app" className="text-sm font-medium bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700">
-            Essai gratuit
-          </Link>
-        </div>
-      </header>
+    <div className="min-h-screen bg-gradient-to-b from-rose-50 via-orange-50/40 to-sky-50 text-[#1b2a4a] flex flex-col">
+      <SiteHeader />
 
-      <main className="max-w-4xl mx-auto px-6 py-12">
-        <h1 className="text-4xl font-bold mb-2">Le blog</h1>
-        <p className="text-gray-500 mb-10">Conseils et stratégies pour réussir sur LinkedIn.</p>
+      <main className="max-w-6xl mx-auto px-6 py-12 flex-1 w-full">
+        <h1 className="text-4xl font-extrabold mb-2">Le blog</h1>
+        <p className="text-[#5a6b85] mb-10">Conseils et stratégies pour réussir sur LinkedIn.</p>
 
         {articles.length === 0 ? (
           <p className="text-gray-400">Aucun article pour le moment. Revenez bientôt !</p>
         ) : (
-          <div className="grid gap-6 md:grid-cols-2">
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {articles.map((a) => (
               <Link
                 key={a.id}
                 href={`/blog/${a.slug}`}
-                className="block bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-md transition-shadow"
+                className="block bg-white rounded-3xl border border-white shadow-lg shadow-rose-100/40 overflow-hidden hover:-translate-y-1 transition-transform"
               >
                 {a.coverImage && (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -57,15 +50,17 @@ export default async function BlogIndex() {
                 )}
                 <div className="p-5">
                   <p className="text-xs text-gray-400">{a.publishedAt && fmtDate(a.publishedAt)}</p>
-                  <h2 className="font-semibold text-lg mt-1">{a.title}</h2>
-                  {a.excerpt && <p className="text-sm text-gray-600 mt-2 line-clamp-3">{a.excerpt}</p>}
-                  <span className="text-sm text-indigo-600 font-medium mt-3 inline-block">Lire →</span>
+                  <h2 className="font-bold text-lg mt-1">{a.title}</h2>
+                  {a.excerpt && <p className="text-sm text-[#5a6b85] mt-2 line-clamp-3">{a.excerpt}</p>}
+                  <span className="text-sm text-[#ff5a5f] font-semibold mt-3 inline-block">Lire →</span>
                 </div>
               </Link>
             ))}
           </div>
         )}
       </main>
+
+      <SiteFooter />
     </div>
   );
 }

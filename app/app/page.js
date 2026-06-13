@@ -8,7 +8,9 @@ import {
   BarChart3, Eye, MousePointerClick, ThumbsUp, MessageSquare, Share2, Undo2, Layers as LayersIcon,
   Megaphone, ChevronDown, Image as ImageIcon, ShieldCheck
 } from "lucide-react";
-import { PLAN_IDS, planLabel } from "@/lib/plans";
+import { PLANS, PLAN_IDS, planLabel } from "@/lib/plans";
+import SiteHeader from "@/components/SiteHeader";
+import SiteFooter from "@/components/SiteFooter";
 
 // Format compact des tokens : 12 500 → "12,5k", 3 200 000 → "3,2M"
 function fmtTokens(n) {
@@ -114,7 +116,7 @@ async function readJson(res) {
 // Écran de connexion / inscription
 // ----------------------------------------------------------------
 function AuthScreen({ onAuth }) {
-  const [mode, setMode] = useState("login"); // login | register | forgot
+  const [mode, setMode] = useState("register"); // register | login | forgot
   const [fields, setFields] = useState({ name: "", email: "", password: "" });
   const [error, setError] = useState(null);
   const [info, setInfo] = useState(null);
@@ -123,10 +125,13 @@ function AuthScreen({ onAuth }) {
 
   // Si on arrive depuis un bouton d'offre (?plan=pro), pré-sélectionner l'inscription
   useEffect(() => {
-    const p = new URLSearchParams(window.location.search).get("plan");
+    const params = new URLSearchParams(window.location.search);
+    const p = params.get("plan");
     if (p && PLAN_IDS.includes(p)) {
       setPlan(p);
       setMode("register");
+    } else if (params.get("mode") === "login") {
+      setMode("login");
     }
   }, []);
 
@@ -162,55 +167,116 @@ function AuthScreen({ onAuth }) {
     }
   };
 
+  const planInfo = plan ? PLANS[plan] : null;
+  const planBullets = planInfo
+    ? [
+        planInfo.postsPerMonth == null ? "Posts illimités" : `${planInfo.postsPerMonth} posts par mois`,
+        planInfo.imagesPerMonth == null
+          ? "Images IA illimitées"
+          : planInfo.imagesPerMonth === 0
+          ? null
+          : `${planInfo.imagesPerMonth} images IA / mois`,
+        planInfo.campaigns ? "Campagnes guidées par l'IA" : null,
+        planInfo.veille ? "Veille connectée" : null,
+        planInfo.orgPublish ? "Publication page entreprise" : null,
+      ].filter(Boolean)
+    : [];
+
   return (
-    <div className="min-h-screen flex items-center justify-center p-6">
-      <div className="w-full max-w-md">
-        <div className="flex items-center justify-center gap-2 mb-6">
-          <div className="bg-indigo-600 text-white p-2.5 rounded-xl">
-            <Linkedin size={24} />
-          </div>
-          <div>
-            <h1 className="font-bold text-xl leading-tight">PostGenius</h1>
-            <p className="text-xs text-gray-500">Générateur de posts LinkedIn</p>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-          {mode !== "forgot" && (
-            <div className="grid grid-cols-2 gap-1 bg-gray-100 p-1 rounded-lg mb-5">
-              <button
-                onClick={() => setMode("login")}
-                className={`py-2 rounded-md text-sm font-medium flex items-center justify-center gap-1.5 ${
-                  mode === "login" ? "bg-white shadow-sm" : "text-gray-500"
-                }`}
-              >
-                <LogIn size={14} /> Connexion
-              </button>
-              <button
-                onClick={() => setMode("register")}
-                className={`py-2 rounded-md text-sm font-medium flex items-center justify-center gap-1.5 ${
-                  mode === "register" ? "bg-white shadow-sm" : "text-gray-500"
-                }`}
-              >
-                <UserPlus size={14} /> Inscription
-              </button>
-            </div>
-          )}
-
-          {mode === "forgot" && (
-            <p className="text-sm text-gray-600 mb-4">
-              Indiquez votre email : nous vous enverrons un lien pour choisir un nouveau mot de passe.
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-rose-50 via-orange-50/40 to-sky-50 text-[#1b2a4a]">
+      <SiteHeader />
+      <main className="flex-1 flex items-center">
+        <div className="w-full max-w-6xl mx-auto grid lg:grid-cols-2 gap-10 lg:gap-16 items-center px-6 py-12">
+          {/* Gauche — communication centrée + visuel */}
+          <div className="flex flex-col items-center text-center">
+            <h1 className="text-4xl md:text-5xl font-extrabold leading-tight max-w-lg">
+              Créez vos posts et <span className="text-[#ff5a5f]">campagnes LinkedIn</span> avec l'IA
+            </h1>
+            <p className="text-[#5a6b85] mt-4 leading-relaxed max-w-md">
+              PostGenius rédige des posts à votre image, programme vos publications et suit vos
+              statistiques — en pilote automatique.
             </p>
-          )}
 
-          {mode === "register" && plan && (
-            <div className="mb-4 flex items-center gap-2 text-sm bg-indigo-50 text-indigo-700 rounded-lg p-3">
-              <Sparkles size={15} className="shrink-0" />
-              <span>
-                Offre <strong>{planLabel(plan)}</strong> — 14 jours d'essai gratuit, sans carte bancaire.
-              </span>
+            {/* Visuel illustratif */}
+            <div className="relative mt-12 mb-4 w-full max-w-sm">
+              <div className="pointer-events-none absolute -top-8 -left-8 w-32 h-32 bg-rose-200/50 rounded-full blur-2xl" />
+              <div className="pointer-events-none absolute -bottom-8 -right-8 w-32 h-32 bg-sky-200/50 rounded-full blur-2xl" />
+
+              <div className="relative bg-white rounded-3xl shadow-2xl shadow-rose-200/40 border border-white p-5 text-left">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#ff5a5f] to-pink-500" />
+                  <div>
+                    <div className="h-2.5 w-24 bg-gray-200 rounded-full" />
+                    <div className="h-2 w-16 bg-gray-100 rounded-full mt-1.5" />
+                  </div>
+                  <span className="ml-auto text-[10px] font-semibold text-[#ff5a5f] bg-[#fff1f1] px-2 py-0.5 rounded-full flex items-center gap-1">
+                    <Sparkles size={10} /> IA
+                  </span>
+                </div>
+                <div className="space-y-2 mt-4">
+                  <div className="h-2 w-full bg-gray-100 rounded-full" />
+                  <div className="h-2 w-11/12 bg-gray-100 rounded-full" />
+                  <div className="h-2 w-3/4 bg-gray-100 rounded-full" />
+                </div>
+                <div className="h-24 rounded-2xl mt-4 bg-gradient-to-br from-orange-300 via-[#ff5a5f] to-pink-400" />
+                <div className="flex items-center gap-4 mt-4 text-gray-300">
+                  <ThumbsUp size={16} />
+                  <MessageSquare size={16} />
+                  <Share2 size={16} />
+                </div>
+              </div>
+
+              <div className="absolute -top-4 -right-4 bg-white rounded-2xl shadow-xl shadow-rose-200/40 px-3 py-2 flex items-center gap-2">
+                <CalendarDays size={16} className="text-[#ff5a5f]" />
+                <div className="text-left">
+                  <p className="text-[9px] text-gray-400 leading-none">Programmé</p>
+                  <p className="text-xs font-bold leading-tight">jeu. 09:00</p>
+                </div>
+              </div>
+              <div className="absolute -bottom-4 -left-4 bg-white rounded-2xl shadow-xl shadow-sky-200/40 px-3 py-2 flex items-center gap-2">
+                <BarChart3 size={16} className="text-sky-500" />
+                <div className="text-left">
+                  <p className="text-[9px] text-gray-400 leading-none">Engagement</p>
+                  <p className="text-xs font-bold leading-tight">+38 %</p>
+                </div>
+              </div>
             </div>
-          )}
+
+            {planInfo ? (
+              <div className="mt-10 rounded-2xl border border-[#ffd5d6] bg-white/70 backdrop-blur p-4 max-w-sm w-full text-left">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-xs font-semibold text-[#ff5a5f] flex items-center gap-1">
+                      <Sparkles size={12} /> Votre offre
+                    </p>
+                    <p className="font-extrabold text-lg leading-tight">{planLabel(plan)}</p>
+                  </div>
+                  <p className="text-right leading-none">
+                    <span className="text-2xl font-extrabold">{planInfo.price} €</span>
+                    <span className="text-[11px] text-gray-400 block mt-0.5">/mois HT</span>
+                  </p>
+                </div>
+                <p className="text-xs text-[#5a6b85] mt-1.5">14 jours d'essai gratuit, sans carte bancaire.</p>
+              </div>
+            ) : (
+              <p className="mt-6 inline-flex items-center gap-1.5 text-sm font-semibold text-[#ff5a5f] bg-[#fff1f1] px-3 py-1.5 rounded-full">
+                <Sparkles size={13} /> 14 jours d'essai gratuit — sans carte bancaire
+              </p>
+            )}
+          </div>
+
+          {/* Droite — formulaire */}
+          <div className="bg-white rounded-3xl border border-white shadow-xl shadow-rose-100/40 p-7 w-full max-w-md lg:justify-self-end">
+            <h2 className="text-xl font-extrabold">
+              {mode === "login" ? "Connexion" : mode === "forgot" ? "Mot de passe oublié" : "Créer votre compte"}
+            </h2>
+            <p className="text-sm text-[#5a6b85] mt-1 mb-5">
+              {mode === "login"
+                ? "Content de vous revoir."
+                : mode === "forgot"
+                ? "Indiquez votre email, on vous envoie un lien."
+                : "Gratuit pendant 14 jours, sans carte bancaire."}
+            </p>
 
           <form onSubmit={submit} className="space-y-3">
             {mode === "register" && (
@@ -219,7 +285,7 @@ function AuthScreen({ onAuth }) {
                 placeholder="Votre nom"
                 value={fields.name}
                 onChange={(e) => setFields((f) => ({ ...f, name: e.target.value }))}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
               />
             )}
             <input
@@ -228,7 +294,7 @@ function AuthScreen({ onAuth }) {
               placeholder="Email"
               value={fields.email}
               onChange={(e) => setFields((f) => ({ ...f, email: e.target.value }))}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
             />
             {mode !== "forgot" && (
               <input
@@ -238,7 +304,7 @@ function AuthScreen({ onAuth }) {
                 placeholder={mode === "register" ? "Mot de passe (8 caractères min.)" : "Mot de passe"}
                 value={fields.password}
                 onChange={(e) => setFields((f) => ({ ...f, password: e.target.value }))}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
               />
             )}
             {error && (
@@ -254,13 +320,15 @@ function AuthScreen({ onAuth }) {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300 text-white font-medium py-2.5 rounded-lg flex items-center justify-center gap-2"
+              className="w-full bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white font-semibold py-3 rounded-full flex items-center justify-center gap-2 shadow-lg shadow-rose-300/40 transition-colors"
             >
               {loading && <RefreshCw size={16} className="animate-spin" />}
               {mode === "login"
                 ? "Se connecter"
                 : mode === "register"
-                ? "Créer mon compte"
+                ? plan
+                  ? "Démarrer mon essai gratuit"
+                  : "Créer mon compte"
                 : "Envoyer le lien"}
             </button>
           </form>
@@ -271,7 +339,7 @@ function AuthScreen({ onAuth }) {
                 setMode("forgot");
                 setError(null);
               }}
-              className="text-xs text-gray-500 hover:text-indigo-600 mt-3 block mx-auto"
+              className="text-xs text-gray-500 hover:text-[#ff5a5f] mt-3 block mx-auto"
             >
               Mot de passe oublié ?
             </button>
@@ -283,13 +351,15 @@ function AuthScreen({ onAuth }) {
                 setError(null);
                 setInfo(null);
               }}
-              className="text-xs text-gray-500 hover:text-indigo-600 mt-3 block mx-auto"
+              className="text-xs text-gray-500 hover:text-[#ff5a5f] mt-3 block mx-auto"
             >
               ← Retour à la connexion
             </button>
           )}
         </div>
       </div>
+      </main>
+      <SiteFooter />
     </div>
   );
 }
@@ -1963,6 +2033,127 @@ function LandingAdmin({ showToast }) {
         </button>
       </div>
     </div>
+  );
+}
+
+// ----------------------------------------------------------------
+// Messages de contact (admin)
+// ----------------------------------------------------------------
+function ContactAdminView({ showToast }) {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  const load = () => {
+    setLoading(true);
+    fetch("/api/admin/contact")
+      .then(readJson)
+      .then((d) => {
+        if (d.error) throw new Error(d.error);
+        setData(d);
+      })
+      .catch((e) => showToast(e.message))
+      .finally(() => setLoading(false));
+  };
+  useEffect(() => {
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const setHandled = async (m, handled) => {
+    try {
+      const res = await fetch(`/api/admin/contact/${m.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ handled }),
+      });
+      const d = await readJson(res);
+      if (!res.ok) throw new Error(d.error);
+      load();
+    } catch (e) {
+      showToast(e.message);
+    }
+  };
+
+  const remove = async (m) => {
+    if (!window.confirm(`Supprimer le message de ${m.email} ?`)) return;
+    try {
+      const res = await fetch(`/api/admin/contact/${m.id}`, { method: "DELETE" });
+      const d = await readJson(res);
+      if (!res.ok) throw new Error(d.error);
+      showToast("Message supprimé");
+      load();
+    } catch (e) {
+      showToast(e.message);
+    }
+  };
+
+  if (loading && !data) {
+    return (
+      <main className="max-w-4xl mx-auto p-6">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-12 text-center text-gray-400">
+          <RefreshCw size={22} className="mx-auto mb-2 animate-spin text-indigo-500" />
+        </div>
+      </main>
+    );
+  }
+  if (!data) return null;
+
+  return (
+    <main className="max-w-4xl mx-auto p-6 space-y-4">
+      <p className="text-sm text-gray-500">
+        {data.messages.length} message(s){data.unhandled > 0 && ` · ${data.unhandled} non traité(s)`}
+      </p>
+      {data.messages.length === 0 && (
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-12 text-center text-gray-400 text-sm">
+          Aucune demande de contact pour l'instant.
+        </div>
+      )}
+      <div className="space-y-3">
+        {data.messages.map((m) => (
+          <div
+            key={m.id}
+            className={`bg-white rounded-2xl border shadow-sm p-4 ${m.handled ? "border-gray-100 opacity-70" : "border-indigo-100"}`}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="font-medium text-sm">
+                  {m.name}{" "}
+                  <a href={`mailto:${m.email}`} className="text-indigo-600 font-normal">
+                    &lt;{m.email}&gt;
+                  </a>
+                </p>
+                {m.subject && <p className="text-xs text-gray-500 mt-0.5">Sujet : {m.subject}</p>}
+              </div>
+              <span className="text-xs text-gray-400 shrink-0">
+                {new Date(m.createdAt).toLocaleString("fr-FR")}
+              </span>
+            </div>
+            <p className="text-sm text-gray-700 mt-2 whitespace-pre-wrap">{m.message}</p>
+            <div className="flex items-center gap-2 mt-3">
+              <button
+                onClick={() => setHandled(m, !m.handled)}
+                className={`text-[11px] border px-2 py-1 rounded-lg ${
+                  m.handled
+                    ? "border-gray-200 text-gray-500 hover:bg-gray-50"
+                    : "border-green-300 text-green-700 hover:bg-green-50"
+                }`}
+              >
+                {m.handled ? "Marquer non traité" : "Marquer traité"}
+              </button>
+              <a
+                href={`mailto:${m.email}${m.subject ? `?subject=Re: ${encodeURIComponent(m.subject)}` : ""}`}
+                className="text-[11px] border border-gray-200 px-2 py-1 rounded-lg hover:bg-gray-50"
+              >
+                Répondre
+              </a>
+              <button onClick={() => remove(m)} className="text-gray-300 hover:text-red-600 p-1 ml-auto" title="Supprimer">
+                <Trash2 size={14} />
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </main>
   );
 }
 
@@ -4402,6 +4593,7 @@ export default function Home() {
       ? [
           { id: "admin", label: "Administration", icon: ShieldCheck },
           { id: "content", label: "Contenu du site", icon: PenLine },
+          { id: "messages", label: "Messages", icon: MessageSquare },
         ]
       : []),
   ];
@@ -4414,6 +4606,7 @@ export default function Home() {
     profile: "Mon profil",
     admin: "Administration",
     content: "Contenu du site",
+    messages: "Messages de contact",
   };
   const handleNav = (item) => {
     if (item.id === "new-campaign") {
@@ -5356,6 +5549,8 @@ export default function Home() {
         <AdminView showToast={showToast} />
       ) : view === "content" && user.isAdmin ? (
         <ContentAdminView showToast={showToast} />
+      ) : view === "messages" && user.isAdmin ? (
+        <ContactAdminView showToast={showToast} />
       ) : view === "stats" ? (
         <StatsView linkedin={linkedin} orgs={orgs} profile={profile} drafts={drafts} />
       ) : view === "profile" ? (

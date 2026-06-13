@@ -1,14 +1,18 @@
 import Link from "next/link";
+import SiteHeader from "@/components/SiteHeader";
+import SiteFooter from "@/components/SiteFooter";
 
 export const metadata = { title: "Conditions générales d'utilisation — PostGenius" };
 
 export default function CGU() {
   return (
-    <main className="max-w-2xl mx-auto px-6 py-14 bg-white text-gray-800">
-      <Link href="/" className="text-sm text-indigo-600 hover:underline">← Retour à l'accueil</Link>
-      <h1 className="text-2xl font-bold mt-4 mb-8">Conditions générales d'utilisation</h1>
+    <div className="bg-gradient-to-b from-rose-50/60 via-white to-white text-[#1b2a4a] min-h-screen flex flex-col">
+      <SiteHeader />
+      <main className="max-w-4xl mx-auto px-6 py-14 flex-1 w-full">
+        <Link href="/" className="text-sm text-[#ff5a5f] hover:underline">← Retour à l'accueil</Link>
+        <h1 className="text-3xl font-bold mt-4 mb-8">Conditions générales d'utilisation</h1>
 
-      <section className="space-y-6 text-sm leading-relaxed">
+        <section className="space-y-6 text-sm leading-relaxed">
         <div>
           <h2 className="font-semibold text-base mb-2">1. Objet</h2>
           <p>
@@ -66,6 +70,8 @@ export default function CGU() {
           </p>
         </div>
       </section>
-    </main>
+      </main>
+      <SiteFooter />
+    </div>
   );
 }

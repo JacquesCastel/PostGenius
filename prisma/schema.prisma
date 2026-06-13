@@ -15,6 +15,19 @@ model SiteContent {
   updatedAt DateTime @updatedAt
 }
 
+// Demandes envoyées via le formulaire de contact public.
+model ContactMessage {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  subject   String?
+  message   String
+  handled   Boolean  @default(false) // marqué comme traité par un admin
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+
 // Articles de blog (SEO) — gérés depuis l'admin.
 model Article {
   id          String    @id @default(cuid())

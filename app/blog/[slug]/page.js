@@ -2,6 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { markdownToHtml } from "@/lib/markdown";
+import SiteHeader from "@/components/SiteHeader";
+import SiteFooter from "@/components/SiteFooter";
 
 export const dynamic = "force-dynamic";
 
@@ -36,20 +38,11 @@ export default async function ArticlePage({ params }) {
   const html = markdownToHtml(a.content);
 
   return (
-    <div className="min-h-screen bg-white">
-      <header className="border-b border-gray-100">
-        <div className="max-w-3xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Link href="/" className="font-bold text-lg">
-            PostGenius
-          </Link>
-          <Link href="/app" className="text-sm font-medium bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700">
-            Essai gratuit
-          </Link>
-        </div>
-      </header>
+    <div className="min-h-screen bg-gradient-to-b from-rose-50/60 via-white to-white text-[#1b2a4a]">
+      <SiteHeader />
 
-      <article className="max-w-3xl mx-auto px-6 py-12">
-        <Link href="/blog" className="text-sm text-indigo-600 hover:underline">
+      <article className="max-w-4xl mx-auto px-6 py-12">
+        <Link href="/blog" className="text-sm text-[#ff5a5f] font-medium hover:underline">
           ← Tous les articles
         </Link>
         <h1 className="text-4xl font-bold mt-4 leading-tight">{a.title}</h1>
@@ -60,16 +53,18 @@ export default async function ArticlePage({ params }) {
         )}
         <div className="mt-6" dangerouslySetInnerHTML={{ __html: html }} />
 
-        <div className="mt-12 border-t border-gray-100 pt-8 text-center">
-          <p className="font-semibold text-lg">Prêt à passer à l'action sur LinkedIn ?</p>
+        <div className="mt-12 border-t border-rose-100 pt-8 text-center">
+          <p className="font-bold text-lg">Prêt à passer à l'action sur LinkedIn ?</p>
           <Link
             href="/app"
-            className="inline-block mt-3 bg-indigo-600 text-white font-medium px-6 py-2.5 rounded-xl hover:bg-indigo-700"
+            className="inline-block mt-3 bg-[#ff5a5f] text-white font-semibold px-7 py-3 rounded-full hover:bg-[#f63d44] shadow-lg shadow-rose-300/40"
           >
             Démarrer l'essai gratuit
           </Link>
         </div>
       </article>
+
+      <SiteFooter />
     </div>
   );
 }
