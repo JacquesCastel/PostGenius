@@ -1,7 +1,13 @@
-node_modules
-.next
+# Secrets / divers
 .env
 .env.local
 *.db
 *.log
 .git
+
+# On COPIE le build déjà produit sur l'hôte : ne garder que le nécessaire
+.next/*
+!.next/standalone
+!.next/static
+node_modules/*
+!node_modules/.prisma
