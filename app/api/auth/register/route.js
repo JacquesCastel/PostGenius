@@ -3,12 +3,13 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/db";
 import { createSessionToken, SESSION_COOKIE, sessionCookieOptions } from "@/lib/session";
 import { rateLimit, clientIp } from "@/lib/ratelimit";
+import { isPlanId, DEFAULT_PLAN, TRIAL_DAYS } from "@/lib/plans";
 
 export async function POST(req) {
   if (!rateLimit(`register:${clientIp(req)}`, { limit: 5, windowMs: 60_000 })) {
     return NextResponse.json({ error: "Trop de tentatives. Réessayez dans une minute." }, { status: 429 });
   }
-  const { email, password, name } = await req.json();
+  const { email, password, name, plan } = await req.json();
 
   if (!email?.includes("@") || !password || password.length < 8) {
     return NextResponse.json(
@@ -22,11 +23,17 @@ export async function POST(req) {
     return NextResponse.json({ error: "Un compte existe déjà avec cet email." }, { status: 409 });
   }
 
+  const chosenPlan = isPlanId(plan) ? plan : DEFAULT_PLAN;
+  const trialEndsAt = new Date(Date.now() + TRIAL_DAYS * 86400000);
+
   const user = await prisma.user.create({
     data: {
       email: email.toLowerCase(),
       password: await bcrypt.hash(password, 12),
       name: name?.trim() || null,
+      plan: chosenPlan,
+      trialEndsAt,
+      planUpdatedAt: new Date(),
     },
   });
 

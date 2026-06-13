@@ -8,6 +8,7 @@ import {
   BarChart3, Eye, MousePointerClick, ThumbsUp, MessageSquare, Share2, Undo2, Layers as LayersIcon,
   Megaphone, ChevronDown, Image as ImageIcon, ShieldCheck
 } from "lucide-react";
+import { PLAN_IDS, planLabel } from "@/lib/plans";
 
 // Format compact des tokens : 12 500 → "12,5k", 3 200 000 → "3,2M"
 function fmtTokens(n) {
@@ -118,6 +119,16 @@ function AuthScreen({ onAuth }) {
   const [error, setError] = useState(null);
   const [info, setInfo] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [plan, setPlan] = useState(null); // offre choisie depuis la landing (?plan=)
+
+  // Si on arrive depuis un bouton d'offre (?plan=pro), pré-sélectionner l'inscription
+  useEffect(() => {
+    const p = new URLSearchParams(window.location.search).get("plan");
+    if (p && PLAN_IDS.includes(p)) {
+      setPlan(p);
+      setMode("register");
+    }
+  }, []);
 
   const submit = async (e) => {
     e.preventDefault();
@@ -139,7 +150,7 @@ function AuthScreen({ onAuth }) {
       const res = await fetch(`/api/auth/${mode === "login" ? "login" : "register"}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(fields),
+        body: JSON.stringify(mode === "register" ? { ...fields, plan } : fields),
       });
       const data = await readJson(res);
       if (!res.ok) throw new Error(data.error || "Erreur");
@@ -190,6 +201,15 @@ function AuthScreen({ onAuth }) {
             <p className="text-sm text-gray-600 mb-4">
               Indiquez votre email : nous vous enverrons un lien pour choisir un nouveau mot de passe.
             </p>
+          )}
+
+          {mode === "register" && plan && (
+            <div className="mb-4 flex items-center gap-2 text-sm bg-indigo-50 text-indigo-700 rounded-lg p-3">
+              <Sparkles size={15} className="shrink-0" />
+              <span>
+                Offre <strong>{planLabel(plan)}</strong> — 14 jours d'essai gratuit, sans carte bancaire.
+              </span>
+            </div>
           )}
 
           <form onSubmit={submit} className="space-y-3">
@@ -1459,6 +1479,22 @@ function AdminView({ showToast }) {
     }
   };
 
+  const setPlan = async (u, plan) => {
+    try {
+      const res = await fetch(`/api/admin/users/${u.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plan }),
+      });
+      const d = await readJson(res);
+      if (!res.ok) throw new Error(d.error);
+      showToast(`${u.email} → offre ${planLabel(plan)}`);
+      load();
+    } catch (e) {
+      showToast(e.message);
+    }
+  };
+
   const deleteUser = async (u) => {
     if (!window.confirm(`Supprimer définitivement le compte ${u.email} et toutes ses données ?`)) return;
     try {
@@ -1520,6 +1556,7 @@ function AdminView({ showToast }) {
             <tr className="text-left text-xs text-gray-500 border-b border-gray-100">
               <th className="p-3 font-medium">Client</th>
               <th className="p-3 font-medium">Inscrit le</th>
+              <th className="p-3 font-medium">Offre</th>
               <th className="p-3 font-medium text-right">Posts</th>
               <th className="p-3 font-medium text-right">Campagnes</th>
               <th className="p-3 font-medium text-right">Tokens 30 j</th>
@@ -1546,6 +1583,24 @@ function AdminView({ showToast }) {
                 </td>
                 <td className="p-3 text-xs text-gray-500">
                   {new Date(u.createdAt).toLocaleDateString("fr-FR")}
+                </td>
+                <td className="p-3">
+                  <select
+                    value={u.plan || "pro"}
+                    onChange={(e) => setPlan(u, e.target.value)}
+                    className="text-xs border border-gray-200 rounded-lg px-1.5 py-1 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  >
+                    {PLAN_IDS.map((p) => (
+                      <option key={p} value={p}>
+                        {planLabel(p)}
+                      </option>
+                    ))}
+                  </select>
+                  {u.trialEndsAt && new Date(u.trialEndsAt) > new Date() && (
+                    <p className="text-[10px] text-amber-600 mt-0.5">
+                      essai · {Math.ceil((new Date(u.trialEndsAt) - Date.now()) / 86400000)} j
+                    </p>
+                  )}
                 </td>
                 <td className="p-3 text-right">
                   <span className="font-medium">{u.published}</span>
@@ -1608,6 +1663,306 @@ function AdminView({ showToast }) {
         (gpt-image-1) — à ajuster dans lib/usage.js si les tarifs évoluent.
       </p>
     </main>
+  );
+}
+
+// ----------------------------------------------------------------
+// Contenu du site (admin) : blog + landing éditable
+// ----------------------------------------------------------------
+function ContentAdminView({ showToast }) {
+  const [tab, setTab] = useState("blog"); // blog | landing
+  return (
+    <main className="max-w-5xl mx-auto p-6 space-y-6">
+      <div className="inline-flex bg-gray-100 p-1 rounded-lg">
+        <button
+          onClick={() => setTab("blog")}
+          className={`px-4 py-1.5 rounded-md text-sm font-medium ${tab === "blog" ? "bg-white shadow-sm" : "text-gray-500"}`}
+        >
+          Blog
+        </button>
+        <button
+          onClick={() => setTab("landing")}
+          className={`px-4 py-1.5 rounded-md text-sm font-medium ${tab === "landing" ? "bg-white shadow-sm" : "text-gray-500"}`}
+        >
+          Page d'accueil
+        </button>
+      </div>
+      {tab === "blog" ? <BlogAdmin showToast={showToast} /> : <LandingAdmin showToast={showToast} />}
+    </main>
+  );
+}
+
+const EMPTY_ARTICLE = { title: "", slug: "", excerpt: "", coverImage: "", content: "", published: false };
+
+function BlogAdmin({ showToast }) {
+  const [articles, setArticles] = useState([]);
+  const [editing, setEditing] = useState(null); // article en cours d'édition (ou EMPTY_ARTICLE)
+  const [saving, setSaving] = useState(false);
+
+  const load = () => {
+    fetch("/api/admin/articles")
+      .then(readJson)
+      .then((d) => setArticles(d.articles ?? []))
+      .catch((e) => showToast(e.message));
+  };
+  useEffect(() => {
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const save = async () => {
+    setSaving(true);
+    try {
+      const isNew = !editing.id;
+      const res = await fetch(isNew ? "/api/admin/articles" : `/api/admin/articles/${editing.id}`, {
+        method: isNew ? "POST" : "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(editing),
+      });
+      const d = await readJson(res);
+      if (!res.ok) throw new Error(d.error);
+      showToast(isNew ? "Article créé" : "Article enregistré");
+      setEditing(null);
+      load();
+    } catch (e) {
+      showToast(e.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const togglePublish = async (a) => {
+    try {
+      const res = await fetch(`/api/admin/articles/${a.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ published: !a.published }),
+      });
+      const d = await readJson(res);
+      if (!res.ok) throw new Error(d.error);
+      showToast(a.published ? "Article dépublié" : "Article publié");
+      load();
+    } catch (e) {
+      showToast(e.message);
+    }
+  };
+
+  const remove = async (a) => {
+    if (!window.confirm(`Supprimer l'article « ${a.title} » ?`)) return;
+    try {
+      const res = await fetch(`/api/admin/articles/${a.id}`, { method: "DELETE" });
+      const d = await readJson(res);
+      if (!res.ok) throw new Error(d.error);
+      showToast("Article supprimé");
+      load();
+    } catch (e) {
+      showToast(e.message);
+    }
+  };
+
+  const set = (k, v) => setEditing((e) => ({ ...e, [k]: v }));
+
+  if (editing) {
+    return (
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-3">
+        <div className="flex items-center justify-between">
+          <h3 className="font-semibold">{editing.id ? "Modifier l'article" : "Nouvel article"}</h3>
+          <button onClick={() => setEditing(null)} className="text-gray-400 hover:text-gray-700 text-sm">
+            ← Retour
+          </button>
+        </div>
+        <input
+          placeholder="Titre"
+          value={editing.title}
+          onChange={(e) => set("title", e.target.value)}
+          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        />
+        {editing.id && (
+          <input
+            placeholder="slug-de-l-article"
+            value={editing.slug || ""}
+            onChange={(e) => set("slug", e.target.value)}
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm font-mono text-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          />
+        )}
+        <input
+          placeholder="Résumé (méta description, carte)"
+          value={editing.excerpt || ""}
+          onChange={(e) => set("excerpt", e.target.value)}
+          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        />
+        <input
+          placeholder="URL de l'image de couverture (optionnel)"
+          value={editing.coverImage || ""}
+          onChange={(e) => set("coverImage", e.target.value)}
+          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        />
+        <textarea
+          placeholder="Contenu de l'article (Markdown : # titres, **gras**, - listes, [lien](url))"
+          value={editing.content}
+          onChange={(e) => set("content", e.target.value)}
+          rows={16}
+          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        />
+        <div className="flex items-center justify-between">
+          <label className="flex items-center gap-2 text-sm">
+            <input type="checkbox" checked={editing.published} onChange={(e) => set("published", e.target.checked)} />
+            Publié (visible sur le blog public)
+          </label>
+          <button
+            onClick={save}
+            disabled={saving}
+            className="bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300 text-white text-sm font-medium px-5 py-2 rounded-lg flex items-center gap-2"
+          >
+            {saving && <RefreshCw size={14} className="animate-spin" />} Enregistrer
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-gray-500">{articles.length} article(s)</p>
+        <button
+          onClick={() => setEditing({ ...EMPTY_ARTICLE })}
+          className="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-2 rounded-lg flex items-center gap-1.5"
+        >
+          <PenLine size={14} /> Nouvel article
+        </button>
+      </div>
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm divide-y divide-gray-50">
+        {articles.length === 0 && <p className="p-6 text-sm text-gray-400">Aucun article. Créez le premier.</p>}
+        {articles.map((a) => (
+          <div key={a.id} className="p-4 flex items-center gap-3">
+            <div className="flex-1 min-w-0">
+              <p className="font-medium text-sm truncate">{a.title}</p>
+              <p className="text-xs text-gray-400">
+                /blog/{a.slug} ·{" "}
+                <span className={a.published ? "text-green-600" : "text-amber-600"}>
+                  {a.published ? "publié" : "brouillon"}
+                </span>
+              </p>
+            </div>
+            <button onClick={() => togglePublish(a)} className="text-[11px] border border-gray-200 px-2 py-1 rounded-lg hover:bg-gray-50">
+              {a.published ? "Dépublier" : "Publier"}
+            </button>
+            <button onClick={() => setEditing(a)} className="text-[11px] border border-gray-200 px-2 py-1 rounded-lg hover:bg-gray-50">
+              Modifier
+            </button>
+            <button onClick={() => remove(a)} className="text-gray-300 hover:text-red-600 p-1" title="Supprimer">
+              <Trash2 size={14} />
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function LandingAdmin({ showToast }) {
+  const [content, setContent] = useState(null);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/admin/site-content")
+      .then(readJson)
+      .then((d) => setContent(d.content))
+      .catch((e) => showToast(e.message));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const save = async () => {
+    setSaving(true);
+    try {
+      const res = await fetch("/api/admin/site-content", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(content),
+      });
+      const d = await readJson(res);
+      if (!res.ok) throw new Error(d.error);
+      showToast("Page d'accueil enregistrée");
+    } catch (e) {
+      showToast(e.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (!content) {
+    return (
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-12 text-center text-gray-400">
+        <RefreshCw size={22} className="mx-auto mb-2 animate-spin text-indigo-500" />
+      </div>
+    );
+  }
+
+  const setHero = (k, v) => setContent((c) => ({ ...c, hero: { ...c.hero, [k]: v } }));
+  const setPlan = (i, k, v) =>
+    setContent((c) => ({ ...c, plans: c.plans.map((p, j) => (j === i ? { ...p, [k]: v } : p)) }));
+  const setFaq = (i, k, v) =>
+    setContent((c) => ({ ...c, faq: c.faq.map((f, j) => (j === i ? { ...f, [k]: v } : f)) }));
+
+  const field = "w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500";
+
+  return (
+    <div className="space-y-6">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-3">
+        <h3 className="font-semibold text-sm">Accroche (hero)</h3>
+        <input className={field} value={content.hero.badge} onChange={(e) => setHero("badge", e.target.value)} placeholder="Badge" />
+        <div className="grid grid-cols-2 gap-3">
+          <input className={field} value={content.hero.title} onChange={(e) => setHero("title", e.target.value)} placeholder="Titre" />
+          <input className={field} value={content.hero.titleAccent} onChange={(e) => setHero("titleAccent", e.target.value)} placeholder="Fin du titre (en couleur)" />
+        </div>
+        <textarea className={field} rows={3} value={content.hero.subtitle} onChange={(e) => setHero("subtitle", e.target.value)} placeholder="Sous-titre" />
+      </div>
+
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
+        <h3 className="font-semibold text-sm">Offres</h3>
+        {content.plans.map((p, i) => (
+          <div key={i} className="border border-gray-100 rounded-xl p-3 space-y-2">
+            <div className="grid grid-cols-3 gap-2">
+              <input className={field} value={p.name} onChange={(e) => setPlan(i, "name", e.target.value)} placeholder="Nom" />
+              <input className={field} value={p.price} onChange={(e) => setPlan(i, "price", e.target.value)} placeholder="Prix (€)" />
+              <label className="flex items-center gap-2 text-xs text-gray-600">
+                <input type="checkbox" checked={!!p.highlight} onChange={(e) => setPlan(i, "highlight", e.target.checked)} />
+                Mis en avant
+              </label>
+            </div>
+            <input className={field} value={p.desc} onChange={(e) => setPlan(i, "desc", e.target.value)} placeholder="Description" />
+            <textarea
+              className={field}
+              rows={4}
+              value={(p.features || []).join("\n")}
+              onChange={(e) => setPlan(i, "features", e.target.value.split("\n").filter(Boolean))}
+              placeholder="Une caractéristique par ligne"
+            />
+          </div>
+        ))}
+      </div>
+
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-3">
+        <h3 className="font-semibold text-sm">FAQ</h3>
+        {content.faq.map((f, i) => (
+          <div key={i} className="space-y-1.5">
+            <input className={field} value={f.q} onChange={(e) => setFaq(i, "q", e.target.value)} placeholder="Question" />
+            <textarea className={field} rows={2} value={f.a} onChange={(e) => setFaq(i, "a", e.target.value)} placeholder="Réponse" />
+          </div>
+        ))}
+      </div>
+
+      <div className="flex justify-end">
+        <button
+          onClick={save}
+          disabled={saving}
+          className="bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300 text-white text-sm font-medium px-6 py-2.5 rounded-lg flex items-center gap-2"
+        >
+          {saving && <RefreshCw size={15} className="animate-spin" />} Enregistrer la page d'accueil
+        </button>
+      </div>
+    </div>
   );
 }
 
@@ -4043,7 +4398,12 @@ export default function Home() {
     { id: "campaigns", label: "Campagnes", icon: LayersIcon },
     { id: "stats", label: "Statistiques", icon: BarChart3 },
     { id: "profile", label: "Profil", icon: UserRound },
-    ...(user.isAdmin ? [{ id: "admin", label: "Administration", icon: ShieldCheck }] : []),
+    ...(user.isAdmin
+      ? [
+          { id: "admin", label: "Administration", icon: ShieldCheck },
+          { id: "content", label: "Contenu du site", icon: PenLine },
+        ]
+      : []),
   ];
   const VIEW_TITLES = {
     dashboard: "Tableau de bord",
@@ -4053,6 +4413,7 @@ export default function Home() {
     stats: "Statistiques",
     profile: "Mon profil",
     admin: "Administration",
+    content: "Contenu du site",
   };
   const handleNav = (item) => {
     if (item.id === "new-campaign") {
@@ -4993,6 +5354,8 @@ export default function Home() {
         />
       ) : view === "admin" && user.isAdmin ? (
         <AdminView showToast={showToast} />
+      ) : view === "content" && user.isAdmin ? (
+        <ContentAdminView showToast={showToast} />
       ) : view === "stats" ? (
         <StatsView linkedin={linkedin} orgs={orgs} profile={profile} drafts={drafts} />
       ) : view === "profile" ? (

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getUserId } from "@/lib/session";
+import { checkPostQuota } from "@/lib/gating";
 
 // Brouillons de l'utilisateur connecté
 
@@ -24,6 +25,9 @@ export async function POST(req) {
   const { type, theme, expertise, tone, maxChars, text, extra, inspirationUrl, imageUrl, imagePrompt } =
     await req.json();
   if (!text?.trim()) return NextResponse.json({ error: "Texte requis." }, { status: 400 });
+
+  const quota = await checkPostQuota(userId);
+  if (!quota.ok) return NextResponse.json({ error: quota.error }, { status: 403 });
 
   const draft = await prisma.draft.create({
     data: {

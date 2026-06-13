@@ -3,9 +3,12 @@ import {
   Linkedin, Sparkles, Megaphone, Eye, Clock, BarChart3, Image as ImageIcon,
   Check, ChevronRight, ShieldCheck, CalendarDays, Layers
 } from "lucide-react";
+import { getLanding } from "@/lib/landing";
 
 // Page vitrine publique — postgenius.network
 // L'application vit sur /app
+// Rendu à la requête : le contenu (offres, hero, FAQ) est éditable depuis l'admin.
+export const dynamic = "force-dynamic";
 
 export const metadata = {
   title: "PostGenius — Vos campagnes LinkedIn en pilote automatique",
@@ -115,7 +118,11 @@ const FAQ = [
   },
 ];
 
-export default function Landing() {
+export default async function Landing() {
+  const content = await getLanding();
+  const PLANS = content.plans;
+  const FAQ = content.faq;
+  const hero = content.hero;
   return (
     <div className="bg-white text-gray-900">
       {/* Header */}
@@ -148,16 +155,12 @@ export default function Landing() {
       {/* Hero */}
       <section className="max-w-6xl mx-auto px-6 pt-16 pb-20 text-center">
         <p className="inline-flex items-center gap-1.5 text-xs font-medium text-indigo-700 bg-indigo-50 px-3 py-1.5 rounded-full mb-5">
-          <Sparkles size={13} /> 14 jours d'essai gratuit — sans carte bancaire
+          <Sparkles size={13} /> {hero.badge}
         </p>
         <h1 className="text-4xl md:text-5xl font-bold leading-tight max-w-3xl mx-auto">
-          Vos campagnes LinkedIn en <span className="text-indigo-600">pilote automatique</span>
+          {hero.title} <span className="text-indigo-600">{hero.titleAccent}</span>
         </h1>
-        <p className="text-lg text-gray-500 mt-5 max-w-2xl mx-auto">
-          PostGenius transforme votre expertise en posts qui vous ressemblent : campagnes guidées par
-          l'IA, veille de votre secteur, publication programmée à votre rythme — vous ne faites plus
-          que valider.
-        </p>
+        <p className="text-lg text-gray-500 mt-5 max-w-2xl mx-auto">{hero.subtitle}</p>
         <div className="flex items-center justify-center gap-3 mt-8">
           <Link
             href="/app"
@@ -299,7 +302,7 @@ export default function Landing() {
                   ))}
                 </ul>
                 <Link
-                  href="/app"
+                  href={`/app?plan=${p.name.toLowerCase()}`}
                   className={`mt-6 block text-center font-medium px-4 py-2.5 rounded-xl ${
                     p.highlight
                       ? "bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-200"

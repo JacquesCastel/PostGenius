@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getUserId } from "@/lib/session";
+import { checkFeature } from "@/lib/gating";
 
 // Campagnes LinkedIn du client
 
@@ -49,6 +50,9 @@ export async function GET(req) {
 export async function POST(req) {
   const userId = await getUserId(req);
   if (!userId) return NextResponse.json({ error: "Non connecté." }, { status: 401 });
+
+  const feat = await checkFeature(userId, "campaigns", "L'outil de campagne");
+  if (!feat.ok) return NextResponse.json({ error: feat.error }, { status: 403 });
 
   const { name, theme, objective, context } = await req.json();
   if (!theme?.trim()) return NextResponse.json({ error: "Thème requis." }, { status: 400 });

@@ -9,10 +9,16 @@ export async function GET(req) {
 
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { email: true, name: true, role: true, disabled: true },
+    select: { email: true, name: true, role: true, disabled: true, plan: true, trialEndsAt: true },
   });
   if (!user || user.disabled) return NextResponse.json({ user: null });
   return NextResponse.json({
-    user: { email: user.email, name: user.name, isAdmin: isAdminUser(user) },
+    user: {
+      email: user.email,
+      name: user.name,
+      isAdmin: isAdminUser(user),
+      plan: user.plan,
+      trialEndsAt: user.trialEndsAt,
+    },
   });
 }
