@@ -9,6 +9,7 @@ const STRING_FIELDS = [
   "themes",
   "tone",
   "styleNotes",
+  "website",
   "companyName",
   "businessDescription",
   "targetAudience",

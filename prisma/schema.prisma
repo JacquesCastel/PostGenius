@@ -64,6 +64,8 @@ model User {
   campaigns Campaign[]
   sources   ContentSource[]
   usage     UsageEvent[]
+  events    Event[]
+  pushSubs  PushSubscription[]
 
   // --- Profil de rédaction ---
   headline        String? // titre pro, ex : "Consultant SEO @ Acme"
@@ -75,6 +77,7 @@ model User {
   onboardedAt     DateTime? // null = doit passer par l'onboarding en étapes
 
   // --- Contexte métier & communication (outil de campagne) ---
+  website             String? // site internet de la marque (analysé par l'IA pour nourrir le profil)
   companyName         String? // nom de l'entreprise ou de la marque personnelle
   businessDescription String? // activité, produits/services, proposition de valeur
   targetAudience      String? // audience cible sur LinkedIn
@@ -183,8 +186,45 @@ model Draft {
   campaignId String?
   campaign   Campaign? @relation(fields: [campaignId], references: [id], onDelete: SetNull)
 
+  eventId String?
+  event   Event? @relation(fields: [eventId], references: [id], onDelete: SetNull)
+
   inspirationUrl String? // article de veille sur lequel le post s'appuie
 
   imageUrl    String? // image générée pour le post (/api/images/...)
   imagePrompt String? // prompt utilisé pour générer l'image
+}
+
+// Événement (salon, forum…) auquel le client participe : sert à générer
+// des posts de rappel sur les jours qui encadrent l'événement.
+model Event {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String // nom du salon / forum
+  location  String? // lieu, ville, n° de stand
+  url       String? // lien de l'événement
+  imageUrl  String? // image du salon (récupérée depuis le lien)
+  details   String? // description récupérée depuis le lien (contexte pour l'IA)
+  startDate DateTime
+  endDate   DateTime
+  createdAt DateTime @default(now())
+  remindedAt DateTime? // dernière notification jour-J envoyée (évite les doublons)
+
+  drafts Draft[]
+
+  @@index([userId, startDate])
+}
+
+// Abonnement Web Push (notifications) d'un appareil du client
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+
+  @@index([userId])
 }

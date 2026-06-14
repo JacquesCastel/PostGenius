@@ -1,7 +1,7 @@
 import Link from "next/link";
 import {
   Sparkles, Megaphone, Eye, Clock, BarChart3, Image as ImageIcon, Check, ChevronRight,
-  ShieldCheck, CalendarDays, Layers, UserRound, Send, ThumbsUp, MessageSquare, Share2, Rss, ArrowRight,
+  ShieldCheck, CalendarDays, Layers, UserRound, Send, ThumbsUp, MessageSquare, Share2, Rss, ArrowRight, MapPin, Bell,
 } from "lucide-react";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
@@ -293,6 +293,33 @@ export default function FonctionnalitesPage() {
               ))}
             </div>
             <p className="text-xs text-[#5a6b85] mt-3 flex items-center gap-1.5"><BarChart3 size={13} className="text-[#ff5a5f]" /> Engagement en hausse, semaine après semaine</p>
+          </Card>
+        </Feature>
+
+        {/* Événements (offre Agence) */}
+        <Feature
+          reverse
+          tag="Événements · offre Agence"
+          title="Ne ratez plus aucun salon"
+          text="Ajoutez vos salons et forums : LinkeePost génère et programme des posts de présence autour des dates (« Nous serons au salon X du A au B, venez nous rencontrer ! »), à partir du lien et de l'image de l'événement. Le jour J, une notification vous rappelle de poster — et de prendre une photo sur place avec votre téléphone."
+          points={[
+            "Posts de présence générés et programmés automatiquement",
+            "Image et contexte récupérés depuis le lien de l'événement",
+            "Notification jour-J + post photo en direct depuis le téléphone",
+          ]}
+        >
+          <Card>
+            <div className="flex items-center gap-3">
+              <div className="bg-[#fff1f1] text-[#ff5a5f] p-2.5 rounded-xl"><MapPin size={20} /></div>
+              <div>
+                <p className="font-bold text-sm">Salon Big Data &amp; AI Paris</p>
+                <p className="text-xs text-gray-400 flex items-center gap-1"><CalendarDays size={12} /> 12 → 14 mars · Hall 1 · B12</p>
+              </div>
+            </div>
+            <div className="mt-3 rounded-xl bg-[#fff1f1] p-3 flex items-center gap-2">
+              <Bell size={15} className="text-[#ff5a5f] shrink-0" />
+              <p className="text-xs text-[#1b2a4a]">« Vous êtes au salon ! Prenez une photo et postez 📸 »</p>
+            </div>
           </Card>
         </Feature>
 

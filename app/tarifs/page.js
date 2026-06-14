@@ -26,6 +26,7 @@ const COMPARE = [
   { label: "Statistiques détaillées", value: (p) => p.campaigns },
   { label: "Publication sur page entreprise", value: (p) => p.orgPublish },
   { label: "Statistiques de page (impressions…)", value: (p) => p.orgStats },
+  { label: "Module Événements (salons, forums)", value: (p) => p.events },
   { label: "Support prioritaire", value: (p) => p.id === "agence" },
 ];
 

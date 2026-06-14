@@ -6,7 +6,7 @@ import {
   Clock, PenLine, History, RefreshCw, Linkedin, ChevronRight, ChevronLeft, X, LogOut,
   AlertCircle, UserPlus, LogIn, UserRound, Save, LayoutDashboard, CalendarDays, List, ExternalLink,
   BarChart3, Eye, MousePointerClick, ThumbsUp, MessageSquare, Share2, Undo2, Layers as LayersIcon,
-  Megaphone, ChevronDown, Image as ImageIcon, ShieldCheck, Lock, ArrowUpCircle
+  Megaphone, ChevronDown, Image as ImageIcon, ShieldCheck, Lock, ArrowUpCircle, MapPin, Bell, Camera
 } from "lucide-react";
 import { PLANS, PLAN_IDS, planLabel, planAllows, planOf } from "@/lib/plans";
 import SiteHeader from "@/components/SiteHeader";
@@ -2159,6 +2159,372 @@ function ContactAdminView({ showToast }) {
 }
 
 // ----------------------------------------------------------------
+// Module Événements : salons / forums + génération de posts de présence
+// ----------------------------------------------------------------
+const EMPTY_EVENT = { name: "", location: "", startDate: "", endDate: "", url: "", imageUrl: "", details: "" };
+
+function urlBase64ToUint8Array(base64String) {
+  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const raw = atob(base64);
+  return Uint8Array.from([...raw].map((c) => c.charCodeAt(0)));
+}
+
+function EventsView({ profile, showToast, onGenerated }) {
+  const [events, setEvents] = useState([]);
+  const [form, setForm] = useState({ ...EMPTY_EVENT });
+  const [analyzing, setAnalyzing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [genId, setGenId] = useState(null);
+  const [pushState, setPushState] = useState("idle"); // idle | working | enabled | unsupported | denied
+  const [photoBusy, setPhotoBusy] = useState(null);
+
+  const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+
+  // Prise de photo depuis le téléphone → crée un post avec l'image
+  const takePhoto = (ev) => {
+    const inp = document.createElement("input");
+    inp.type = "file";
+    inp.accept = "image/*";
+    inp.capture = "environment";
+    inp.onchange = async () => {
+      const file = inp.files?.[0];
+      if (!file) return;
+      setPhotoBusy(ev.id);
+      try {
+        // Réduction de la photo (max 1280 px, JPEG) pour un envoi léger et fiable
+        const dataUrl = await new Promise((resolve, reject) => {
+          const img = new Image();
+          const url = URL.createObjectURL(file);
+          img.onload = () => {
+            URL.revokeObjectURL(url);
+            const max = 1280;
+            let { width, height } = img;
+            if (width > max || height > max) {
+              const r = Math.min(max / width, max / height);
+              width = Math.round(width * r);
+              height = Math.round(height * r);
+            }
+            const canvas = document.createElement("canvas");
+            canvas.width = width;
+            canvas.height = height;
+            canvas.getContext("2d").drawImage(img, 0, 0, width, height);
+            resolve(canvas.toDataURL("image/jpeg", 0.85));
+          };
+          img.onerror = reject;
+          img.src = url;
+        });
+        const res = await fetch(`/api/events/${ev.id}/photo`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ image: dataUrl }),
+        });
+        const d = await readJson(res);
+        if (!res.ok) throw new Error(d.error);
+        showToast("Post créé avec votre photo — validez-le dans « Mes posts » ✓");
+        onGenerated?.();
+        load();
+      } catch (e) {
+        showToast(e.message);
+      } finally {
+        setPhotoBusy(null);
+      }
+    };
+    inp.click();
+  };
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !("serviceWorker" in navigator) || !("PushManager" in window)) {
+      setPushState("unsupported");
+      return;
+    }
+    navigator.serviceWorker.getRegistration().then((reg) => {
+      reg?.pushManager.getSubscription().then((sub) => {
+        if (sub) setPushState("enabled");
+      });
+    });
+  }, []);
+
+  const enablePush = async () => {
+    if (!vapidKey) {
+      showToast("Notifications non configurées (clé VAPID manquante).");
+      return;
+    }
+    setPushState("working");
+    try {
+      const perm = await Notification.requestPermission();
+      if (perm !== "granted") {
+        setPushState("denied");
+        showToast("Notifications refusées par le navigateur.");
+        return;
+      }
+      const reg = await navigator.serviceWorker.register("/sw.js");
+      await navigator.serviceWorker.ready;
+      const sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(vapidKey),
+      });
+      const res = await fetch("/api/push/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ subscription: sub }),
+      });
+      if (!res.ok) throw new Error("Enregistrement de l'abonnement échoué");
+      setPushState("enabled");
+      showToast("Notifications activées ✓ Vous serez alerté le jour de l'événement.");
+    } catch (e) {
+      setPushState("idle");
+      showToast(e.message || "Activation impossible.");
+    }
+  };
+
+  const load = () =>
+    fetch("/api/events")
+      .then(readJson)
+      .then((d) => setEvents(d.events ?? []))
+      .catch((e) => showToast(e.message));
+  useEffect(() => {
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
+
+  const analyze = async () => {
+    if (!form.url?.trim()) return showToast("Indiquez d'abord le lien de l'événement.");
+    setAnalyzing(true);
+    try {
+      const res = await fetch("/api/events/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: form.url }),
+      });
+      const d = await readJson(res);
+      if (!res.ok) throw new Error(d.error);
+      const f = d.fields || {};
+      setForm((prev) => ({
+        ...prev,
+        name: prev.name || f.name || "",
+        imageUrl: f.imageUrl || prev.imageUrl,
+        details: f.details || prev.details,
+      }));
+      showToast("Lien analysé — image et contexte récupérés ✓");
+    } catch (e) {
+      showToast(e.message);
+    } finally {
+      setAnalyzing(false);
+    }
+  };
+
+  const save = async () => {
+    if (!form.name.trim() || !form.startDate) return showToast("Nom et date de début requis.");
+    setSaving(true);
+    try {
+      const res = await fetch("/api/events", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...form, endDate: form.endDate || form.startDate }),
+      });
+      const d = await readJson(res);
+      if (!res.ok) throw new Error(d.error);
+      showToast("Événement ajouté ✓");
+      setForm({ ...EMPTY_EVENT });
+      load();
+    } catch (e) {
+      showToast(e.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const generate = async (ev) => {
+    setGenId(ev.id);
+    try {
+      const res = await fetch(`/api/events/${ev.id}/generate`, { method: "POST" });
+      const d = await readJson(res);
+      if (!res.ok) throw new Error(d.error);
+      showToast(`${d.count} post(s) programmé(s) autour de l'événement ✓`);
+      onGenerated?.();
+      load();
+    } catch (e) {
+      showToast(e.message);
+    } finally {
+      setGenId(null);
+    }
+  };
+
+  const remove = async (ev) => {
+    if (!window.confirm(`Supprimer l'événement « ${ev.name} » ?`)) return;
+    try {
+      const res = await fetch(`/api/events/${ev.id}`, { method: "DELETE" });
+      const d = await readJson(res);
+      if (!res.ok) throw new Error(d.error);
+      showToast("Événement supprimé");
+      load();
+    } catch (e) {
+      showToast(e.message);
+    }
+  };
+
+  const fmt = (d) => new Date(d).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" });
+  const input = "w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]";
+  const label = "text-xs font-medium text-gray-500";
+
+  return (
+    <main className="max-w-5xl mx-auto p-6 space-y-6">
+      {/* Notifications jour-J */}
+      {pushState !== "unsupported" && (
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="bg-[#fff1f1] text-[#ff5a5f] p-2.5 rounded-xl">
+              <Bell size={18} />
+            </div>
+            <div>
+              <p className="font-semibold text-sm">Rappels le jour de l'événement</p>
+              <p className="text-xs text-gray-500">Une notification pour poster et prendre une photo sur place.</p>
+            </div>
+          </div>
+          {pushState === "enabled" ? (
+            <span className="text-xs font-semibold text-green-600 flex items-center gap-1 shrink-0">
+              <Check size={14} /> Activées
+            </span>
+          ) : (
+            <button
+              onClick={enablePush}
+              disabled={pushState === "working"}
+              className="shrink-0 bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white text-xs font-medium px-4 py-2 rounded-lg flex items-center gap-1.5"
+            >
+              {pushState === "working" ? <RefreshCw size={13} className="animate-spin" /> : <Bell size={13} />}
+              Activer
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Formulaire d'ajout */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
+        <h2 className="font-semibold flex items-center gap-2">
+          <MapPin size={17} className="text-[#ff5a5f]" /> Ajouter un événement
+        </h2>
+        <div>
+          <label className={label}>Lien de l'événement (salon, forum…)</label>
+          <div className="flex gap-2 mt-1">
+            <input className={input} value={form.url} onChange={(e) => set("url", e.target.value)} placeholder="https://www.salon-exemple.com" />
+            <button
+              type="button"
+              onClick={analyze}
+              disabled={analyzing}
+              className="shrink-0 bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white text-sm font-medium px-4 py-2 rounded-lg flex items-center gap-1.5"
+            >
+              {analyzing ? <RefreshCw size={14} className="animate-spin" /> : <Sparkles size={14} />}
+              {analyzing ? "Analyse…" : "Analyser"}
+            </button>
+          </div>
+        </div>
+        {form.imageUrl && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={form.imageUrl} alt="" className="rounded-xl w-full max-h-40 object-cover" />
+        )}
+        <div>
+          <label className={label}>Nom de l'événement</label>
+          <input className={input} value={form.name} onChange={(e) => set("name", e.target.value)} placeholder="ex : Salon Big Data & AI Paris" />
+        </div>
+        <div className="grid sm:grid-cols-3 gap-3">
+          <div>
+            <label className={label}>Du</label>
+            <input type="date" className={input} value={form.startDate} onChange={(e) => set("startDate", e.target.value)} />
+          </div>
+          <div>
+            <label className={label}>Au</label>
+            <input type="date" className={input} value={form.endDate} onChange={(e) => set("endDate", e.target.value)} />
+          </div>
+          <div>
+            <label className={label}>Lieu / stand</label>
+            <input className={input} value={form.location} onChange={(e) => set("location", e.target.value)} placeholder="Paris · Hall 1 · Stand B12" />
+          </div>
+        </div>
+        <div className="flex justify-end">
+          <button
+            onClick={save}
+            disabled={saving}
+            className="bg-[#1b2a4a] hover:bg-[#0f1830] disabled:bg-gray-300 text-white text-sm font-medium px-5 py-2 rounded-lg flex items-center gap-1.5"
+          >
+            {saving && <RefreshCw size={14} className="animate-spin" />} Ajouter l'événement
+          </button>
+        </div>
+      </div>
+
+      {/* Liste */}
+      <div className="space-y-3">
+        {events.length === 0 && (
+          <p className="text-sm text-gray-400 text-center py-6">Aucun événement pour l'instant.</p>
+        )}
+        {events.map((ev) => {
+          const now = new Date();
+          const past = new Date(ev.endDate) < now;
+          const live = !past && new Date(ev.startDate) <= now;
+          return (
+            <div key={ev.id} className={`bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex gap-4 ${past ? "opacity-60" : ""}`}>
+              {ev.imageUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={ev.imageUrl} alt="" className="w-24 h-24 rounded-xl object-cover shrink-0" />
+              ) : (
+                <div className="w-24 h-24 rounded-xl bg-[#fff1f1] text-[#ff5a5f] flex items-center justify-center shrink-0">
+                  <MapPin size={28} />
+                </div>
+              )}
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold">{ev.name}</p>
+                <p className="text-xs text-gray-500 flex items-center gap-1.5 mt-0.5">
+                  <CalendarDays size={13} /> {fmt(ev.startDate)} → {fmt(ev.endDate)}
+                  {ev.location && <span className="flex items-center gap-1"><MapPin size={12} /> {ev.location}</span>}
+                </p>
+                {ev.url && (
+                  <a href={ev.url} target="_blank" rel="noopener" className="text-xs text-[#ff5a5f] hover:underline inline-flex items-center gap-1 mt-1">
+                    Voir l'événement <ExternalLink size={11} />
+                  </a>
+                )}
+                <p className="text-[11px] text-gray-400 mt-1">
+                  {ev.postCount > 0 ? `${ev.postCount} post(s) liés · ${ev.published} publié(s)` : "Aucun post généré"}
+                </p>
+                <div className="flex items-center gap-2 mt-2">
+                  <button
+                    onClick={() => generate(ev)}
+                    disabled={genId === ev.id}
+                    className="bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white text-xs font-medium px-3 py-1.5 rounded-lg flex items-center gap-1.5"
+                  >
+                    {genId === ev.id ? <RefreshCw size={12} className="animate-spin" /> : <Sparkles size={12} />}
+                    {genId === ev.id ? "Génération…" : "Générer les posts"}
+                  </button>
+                  {live && (
+                    <button
+                      onClick={() => takePhoto(ev)}
+                      disabled={photoBusy === ev.id}
+                      className="bg-[#1b2a4a] hover:bg-[#0f1830] disabled:bg-gray-300 text-white text-xs font-medium px-3 py-1.5 rounded-lg flex items-center gap-1.5"
+                    >
+                      {photoBusy === ev.id ? <RefreshCw size={12} className="animate-spin" /> : <Camera size={12} />}
+                      Poster une photo
+                    </button>
+                  )}
+                  <button onClick={() => remove(ev)} className="text-gray-300 hover:text-red-600 p-1.5" title="Supprimer">
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <p className="text-xs text-gray-400">
+        Les posts générés sont programmés (à valider si l'option est activée dans votre profil) sur les jours qui
+        encadrent l'événement, avec l'image du salon. Retrouvez-les dans « Mes posts ».
+      </p>
+    </main>
+  );
+}
+
+// ----------------------------------------------------------------
 // Mini-graphiques SVG (donut, barres) — sans dépendance
 // ----------------------------------------------------------------
 function DonutChart({ data, size = 110, thickness = 16 }) {
@@ -3602,6 +3968,7 @@ function ProfileView({ profile, onSaved, showToast, linkedin, onDisconnect }) {
   const [fields, setFields] = useState({
     name: profile?.name ?? "",
     headline: profile?.headline ?? "",
+    website: profile?.website ?? "",
     companyName: profile?.companyName ?? "",
     businessDescription: profile?.businessDescription ?? "",
     targetAudience: profile?.targetAudience ?? "",
@@ -3617,8 +3984,43 @@ function ProfileView({ profile, onSaved, showToast, linkedin, onDisconnect }) {
     requireValidation: profile?.requireValidation ?? true,
   });
   const [saving, setSaving] = useState(false);
+  const [analyzing, setAnalyzing] = useState(false);
 
   const set = (k, v) => setFields((f) => ({ ...f, [k]: v }));
+
+  // Analyse le site internet et pré-remplit les champs de contexte métier
+  const analyzeSite = async () => {
+    if (!fields.website?.trim()) {
+      showToast("Indiquez d'abord l'adresse de votre site.");
+      return;
+    }
+    setAnalyzing(true);
+    try {
+      const res = await fetch("/api/profile/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: fields.website }),
+      });
+      const d = await readJson(res);
+      if (!res.ok) throw new Error(d.error || "Analyse impossible");
+      const f = d.fields || {};
+      setFields((prev) => ({
+        ...prev,
+        companyName: f.companyName?.trim() || prev.companyName,
+        businessDescription: f.businessDescription?.trim() || prev.businessDescription,
+        targetAudience: f.targetAudience?.trim() || prev.targetAudience,
+        market: f.market?.trim() || prev.market,
+        expertise: f.expertise?.trim() || prev.expertise,
+        themes: f.themes?.trim() || prev.themes,
+        commGoals: f.commGoals?.trim() || prev.commGoals,
+      }));
+      showToast("Profil pré-rempli depuis votre site ✓ Vérifiez et enregistrez.");
+    } catch (e) {
+      showToast(e.message);
+    } finally {
+      setAnalyzing(false);
+    }
+  };
   const toggleCsv = (key, value) => {
     const list = (fields[key] ?? "").split(",").filter(Boolean);
     const v = String(value);
@@ -3718,6 +4120,31 @@ function ProfileView({ profile, onSaved, showToast, linkedin, onDisconnect }) {
           {/* Contexte métier */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
             {cardTitle(Megaphone, "Contexte métier & communication")}
+            {/* Site internet + analyse IA */}
+            <div className="bg-[#fff1f1] rounded-xl p-3 mb-4">
+              <label className={label}>Votre site internet</label>
+              <div className="flex gap-2 mt-1">
+                <input
+                  type="text"
+                  value={fields.website}
+                  onChange={(e) => set("website", e.target.value)}
+                  placeholder="https://votre-site.fr"
+                  className={input}
+                />
+                <button
+                  type="button"
+                  onClick={analyzeSite}
+                  disabled={analyzing}
+                  className="shrink-0 bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white text-sm font-medium px-4 py-2 rounded-lg flex items-center gap-1.5"
+                >
+                  {analyzing ? <RefreshCw size={14} className="animate-spin" /> : <Sparkles size={14} />}
+                  {analyzing ? "Analyse…" : "Analyser"}
+                </button>
+              </div>
+              <p className="text-[11px] text-gray-500 mt-1.5">
+                L'IA lit votre site et pré-remplit les champs ci-dessous — vérifiez puis enregistrez.
+              </p>
+            </div>
             <div className="space-y-4">
               <div>
                 <label className={label}>Activité — que faites-vous, pour qui, avec quelle valeur ajoutée ?</label>
@@ -4096,6 +4523,12 @@ export default function Home() {
 
   const [view, setView] = useState("dashboard");
   const [upgrade, setUpgrade] = useState(null); // { feature } quand on clique une fonctionnalité verrouillée
+
+  // Lien profond depuis une notification (ex : /app?view=events)
+  useEffect(() => {
+    const v = new URLSearchParams(window.location.search).get("view");
+    if (v === "events") setView("events");
+  }, []);
   const [scheduleDraft, setScheduleDraft] = useState(null);
   const [scheduleStatus, setScheduleStatus] = useState("programmé"); // statut après la modal de date
   const [dragOverCol, setDragOverCol] = useState(null); // colonne kanban survolée pendant un drag
@@ -4629,6 +5062,7 @@ export default function Home() {
     { id: "new-campaign", label: "Créer une campagne", icon: Megaphone, requires: "campaigns", featureLabel: "L'outil de campagne" },
     { id: "history", label: "Mes posts", icon: History, badge: drafts.length || null },
     { id: "campaigns", label: "Campagnes", icon: LayersIcon, requires: "campaigns", featureLabel: "Les campagnes" },
+    { id: "events", label: "Événements", icon: MapPin, requires: "events", featureLabel: "Le module Événements" },
     { id: "stats", label: "Statistiques", icon: BarChart3 },
     { id: "profile", label: "Profil", icon: UserRound },
     ...(user.isAdmin
@@ -4644,6 +5078,7 @@ export default function Home() {
     create: "Créer un post",
     history: "Mes posts",
     campaigns: "Campagnes",
+    events: "Événements",
     stats: "Statistiques",
     profile: "Mon profil",
     admin: "Administration",
@@ -5679,6 +6114,17 @@ export default function Home() {
         <ContentAdminView showToast={showToast} />
       ) : view === "messages" && user.isAdmin ? (
         <ContactAdminView showToast={showToast} />
+      ) : view === "events" ? (
+        <EventsView
+          profile={profile}
+          showToast={showToast}
+          onGenerated={() =>
+            fetch("/api/drafts")
+              .then((r) => r.json())
+              .then((d) => setDrafts(d.drafts ?? []))
+              .catch(() => {})
+          }
+        />
       ) : view === "stats" ? (
         <StatsView linkedin={linkedin} orgs={orgs} profile={profile} drafts={drafts} />
       ) : view === "profile" ? (

@@ -32,6 +32,8 @@ docker run --rm -v /opt/postgenius:/host node:22-slim bash -c '
   DATABASE_URL="$DBURL" npx prisma db push --skip-generate
   # Build avec une base factice (landing/blog sont rendus à la requête).
   export DATABASE_URL="postgresql://build:build@localhost:5432/build"
+  # Clé VAPID PUBLIQUE : doit être inlinée au build (variable NEXT_PUBLIC_*).
+  export NEXT_PUBLIC_VAPID_PUBLIC_KEY=$(grep -E "^NEXT_PUBLIC_VAPID_PUBLIC_KEY=" /host/.env | head -1 | cut -d= -f2- | tr -d "\"")
   npx prisma generate
   npx next build
   # Copier le build vers l hôte (la copie préserve le rendu).
