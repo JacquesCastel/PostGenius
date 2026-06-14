@@ -12,6 +12,7 @@ import { PLANS, PLAN_IDS, planLabel, planAllows, planOf } from "@/lib/plans";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 import LpMark from "@/components/LpMark";
+import { scorePost } from "@/lib/score";
 
 // Format compact des tokens : 12 500 → "12,5k", 3 200 000 → "3,2M"
 function fmtTokens(n) {
@@ -2525,6 +2526,133 @@ function EventsView({ profile, showToast, onGenerated }) {
 }
 
 // ----------------------------------------------------------------
+// Score de potentiel d'engagement (heuristique instantanée + conseils IA)
+// ----------------------------------------------------------------
+function ScorePanel({ text, type, recomputing }) {
+  const heur = scorePost({ text, type });
+  const [tips, setTips] = useState(null);
+  const [display, setDisplay] = useState(heur.score);
+
+  // Anime la jauge vers le nouveau score quand le texte change (réécriture)
+  useEffect(() => {
+    const start = display;
+    const t0 = performance.now();
+    let raf;
+    const tick = (t) => {
+      const p = Math.min(1, (t - t0) / 700);
+      setDisplay(Math.round(start + (heur.score - start) * p));
+      if (p < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [heur.score]);
+
+  useEffect(() => {
+    let cancel = false;
+    setTips(null);
+    fetch("/api/score", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text, type }),
+    })
+      .then(readJson)
+      .then((d) => {
+        if (!cancel) setTips(d.tips || []);
+      })
+      .catch(() => {
+        if (!cancel) setTips([]);
+      });
+    return () => {
+      cancel = true;
+    };
+  }, [text, type]);
+
+  const colorFor = (s) => (s >= 80 ? "#16a34a" : s >= 60 ? "#ff5a5f" : s >= 40 ? "#f59e0b" : "#ef4444");
+  const color = colorFor(display);
+
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 md:p-8 space-y-7">
+      {/* En-tête de l'étape */}
+      <div className="flex items-start gap-3">
+        <div className="w-9 h-9 rounded-xl bg-[#ff5a5f] text-white flex items-center justify-center font-extrabold shrink-0">2</div>
+        <div>
+          <h3 className="font-extrabold text-lg leading-tight">Optimisez le potentiel d'engagement</h3>
+          <p className="text-sm text-gray-400 mt-0.5">Des pistes concrètes, élément par élément, pour améliorer votre post avant de le publier.</p>
+        </div>
+      </div>
+
+      {/* Jauge */}
+      <div className="flex items-center gap-6">
+        <div className="text-center shrink-0">
+          <p className="text-5xl font-extrabold leading-none tabular-nums transition-colors duration-300" style={{ color }}>{display}</p>
+          <p className="text-xs text-gray-400 mt-1.5">/ 100</p>
+        </div>
+        <div className="flex-1">
+          <div className="flex items-center justify-between mb-1.5">
+            <p className="text-sm font-semibold">Potentiel d'engagement</p>
+            {recomputing ? (
+              <span className="text-sm font-medium text-gray-400 flex items-center gap-1.5">
+                <RefreshCw size={13} className="animate-spin" /> Recalcul…
+              </span>
+            ) : (
+              <span className="text-sm font-bold" style={{ color }}>{heur.level}</span>
+            )}
+          </div>
+          <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
+            <div className="h-full rounded-full transition-[width,background-color] duration-300" style={{ width: `${display}%`, background: color }} />
+          </div>
+          <p className="text-[11px] text-gray-400 mt-2">Estimation indicative basée sur les bonnes pratiques — ce n'est pas une prédiction de performance réelle.</p>
+        </div>
+      </div>
+
+      {/* Critères, un par un, avec conseil pédagogique */}
+      <div className="space-y-3">
+        {heur.factors.map((f) => (
+          <div
+            key={f.label}
+            className={`rounded-2xl border p-4 flex items-start gap-3 ${f.ok ? "border-green-100 bg-green-50/40" : "border-[#ffd5d6] bg-[#fff1f1]/60"}`}
+          >
+            <div className={`mt-0.5 shrink-0 ${f.ok ? "text-green-600" : "text-[#ff5a5f]"}`}>
+              {f.ok ? <Check size={18} /> : <PenLine size={18} />}
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-bold flex items-center gap-2">
+                {f.label}
+                <span className="text-[11px] font-medium text-gray-400">{f.value}/{f.max}</span>
+              </p>
+              <p className="text-sm text-[#5a6b85] leading-relaxed mt-1">{f.advice}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Conseils personnalisés IA */}
+      <div className="rounded-2xl bg-[#1b2a4a] text-white p-5">
+        <p className="text-sm font-semibold flex items-center gap-1.5 mb-3">
+          <Sparkles size={14} className="text-[#ff8a8d]" /> Conseils personnalisés (IA)
+        </p>
+        {tips === null ? (
+          <p className="text-sm text-white/70 flex items-center gap-1.5">
+            <RefreshCw size={13} className="animate-spin" /> Analyse de votre post en cours…
+          </p>
+        ) : tips.length === 0 ? (
+          <p className="text-sm text-white/60">Aucune suggestion supplémentaire — votre post est déjà solide. 👍</p>
+        ) : (
+          <ul className="space-y-2.5">
+            {tips.map((t, i) => (
+              <li key={i} className="text-sm text-white/90 flex items-start gap-2 leading-relaxed">
+                <ChevronRight size={16} className="text-[#ff8a8d] mt-0.5 shrink-0" /> {t}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ----------------------------------------------------------------
 // Mini-graphiques SVG (donut, barres) — sans dépendance
 // ----------------------------------------------------------------
 function DonutChart({ data, size = 110, thickness = 16 }) {
@@ -2587,7 +2715,7 @@ function MiniBars({ values, labels }) {
 // ----------------------------------------------------------------
 // Tableau de bord : stats, file d'attente, calendrier
 // ----------------------------------------------------------------
-function DashboardView({ drafts, canVeille = true, postsLimit = null, onGoCreate, onGoHistory, onApprove, profile, linkedin, orgs, onPlanned, onProfileSaved, showToast, onInspire }) {
+function DashboardView({ drafts, canVeille = true, canEvents = false, postsLimit = null, onGoCreate, onGoHistory, onGoEvents, onGoProfile, onApprove, profile, linkedin, orgs, onPlanned, onProfileSaved, showToast, onInspire }) {
   const [mode, setMode] = useState("list"); // list | calendar
   const [periodDays, setPeriodDays] = useState(7);
   const [planTarget, setPlanTarget] = useState("person");
@@ -2715,6 +2843,21 @@ function DashboardView({ drafts, canVeille = true, postsLimit = null, onGoCreate
     d.toLocaleDateString("fr-FR", { weekday: "short" }).replace(".", "")
   );
 
+  // Score d'engagement moyen des posts rédigés
+  const scoredPosts = drafts.filter((d) => d.text && d.text.trim());
+  const scores = scoredPosts.map((d) => scorePost({ text: d.text, type: d.type }).score);
+  const avgScore = scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : null;
+  const avgColor =
+    avgScore == null ? "#94a3b8" : avgScore >= 80 ? "#16a34a" : avgScore >= 60 ? "#ff5a5f" : avgScore >= 40 ? "#f59e0b" : "#ef4444";
+  const avgLevel =
+    avgScore == null ? "" : avgScore >= 80 ? "Excellent" : avgScore >= 60 ? "Bon" : avgScore >= 40 ? "Moyen" : "À retravailler";
+  const scoreBuckets = [
+    { label: "Excellent", color: "#16a34a", count: scores.filter((s) => s >= 80).length },
+    { label: "Bon", color: "#ff5a5f", count: scores.filter((s) => s >= 60 && s < 80).length },
+    { label: "Moyen", color: "#f59e0b", count: scores.filter((s) => s >= 40 && s < 60).length },
+    { label: "À retravailler", color: "#ef4444", count: scores.filter((s) => s < 40).length },
+  ];
+
   return (
     <main className="max-w-5xl mx-auto p-6 space-y-6">
       {/* KPI + graphiques */}
@@ -2788,6 +2931,96 @@ function DashboardView({ drafts, canVeille = true, postsLimit = null, onGoCreate
           <p className="text-sm font-semibold mb-3">Publications à venir (7 jours)</p>
           <MiniBars values={weekValues} labels={weekLabels} />
         </div>
+      </div>
+
+      {/* Score d'engagement moyen */}
+      {avgScore != null && (
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+          <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+            <p className="text-sm font-semibold flex items-center gap-1.5">
+              <BarChart3 size={15} className="text-[#ff5a5f]" /> Score d'engagement moyen de vos posts
+            </p>
+            <span className="text-xs text-gray-400">
+              {scores.length} post{scores.length > 1 ? "s" : ""} analysé{scores.length > 1 ? "s" : ""}
+            </span>
+          </div>
+          <div className="flex items-center gap-6">
+            <div className="text-center shrink-0">
+              <p className="text-4xl font-extrabold leading-none" style={{ color: avgColor }}>{avgScore}</p>
+              <p className="text-[11px] text-gray-400 mt-1">/ 100</p>
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-sm font-semibold">Potentiel moyen</span>
+                <span className="text-sm font-bold" style={{ color: avgColor }}>{avgLevel}</span>
+              </div>
+              <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
+                <div className="h-full rounded-full" style={{ width: `${avgScore}%`, background: avgColor }} />
+              </div>
+              <div className="flex flex-wrap gap-x-4 gap-y-1 mt-3">
+                {scoreBuckets.filter((b) => b.count > 0).map((b) => (
+                  <span key={b.label} className="flex items-center gap-1.5 text-[11px] text-gray-500">
+                    <span className="w-2 h-2 rounded-full shrink-0" style={{ background: b.color }} />
+                    {b.count} {b.label}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+          <button onClick={onGoHistory} className="text-xs text-[#ff5a5f] hover:underline mt-4 inline-flex items-center gap-1">
+            Optimiser mes posts <ChevronRight size={13} />
+          </button>
+        </div>
+      )}
+
+      {/* Raccourcis vers les fonctionnalités */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <button
+          onClick={onGoCreate}
+          className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 text-left hover:-translate-y-0.5 hover:shadow-md transition-all"
+        >
+          <div className="p-2.5 rounded-xl bg-[#fff1f1] text-[#ff5a5f] w-fit mb-3"><PenLine size={18} /></div>
+          <p className="font-semibold text-sm">Générer un post</p>
+          <p className="text-xs text-gray-400 mt-0.5">Avec son score d'engagement</p>
+        </button>
+
+        <button
+          onClick={onGoHistory}
+          className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 text-left hover:-translate-y-0.5 hover:shadow-md transition-all"
+        >
+          <div className="p-2.5 rounded-xl bg-[#fff1f1] text-[#ff5a5f] w-fit mb-3"><BarChart3 size={18} /></div>
+          <p className="font-semibold text-sm">Optimiser mes posts</p>
+          <p className="text-xs text-gray-400 mt-0.5">Score, réécriture & historique</p>
+        </button>
+
+        {canEvents ? (
+          <button
+            onClick={onGoEvents}
+            className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 text-left hover:-translate-y-0.5 hover:shadow-md transition-all"
+          >
+            <div className="p-2.5 rounded-xl bg-[#fff1f1] text-[#ff5a5f] w-fit mb-3"><MapPin size={18} /></div>
+            <p className="font-semibold text-sm">Événements</p>
+            <p className="text-xs text-gray-400 mt-0.5">Salons & forums, notif. jour-J</p>
+          </button>
+        ) : (
+          <a
+            href="/tarifs"
+            className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 text-left hover:-translate-y-0.5 hover:shadow-md transition-all block relative"
+          >
+            <div className="p-2.5 rounded-xl bg-gray-100 text-gray-400 w-fit mb-3"><MapPin size={18} /></div>
+            <p className="font-semibold text-sm flex items-center gap-1.5">Événements <Lock size={12} className="text-gray-400" /></p>
+            <p className="text-xs text-[#ff5a5f] font-medium mt-0.5">Inclus dans l'offre Agence</p>
+          </a>
+        )}
+
+        <button
+          onClick={onGoProfile}
+          className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 text-left hover:-translate-y-0.5 hover:shadow-md transition-all"
+        >
+          <div className="p-2.5 rounded-xl bg-[#fff1f1] text-[#ff5a5f] w-fit mb-3"><UserRound size={18} /></div>
+          <p className="font-semibold text-sm">Mon profil</p>
+          <p className="text-xs text-gray-400 mt-0.5">Votre site web nourrit la rédaction</p>
+        </button>
       </div>
 
       {/* Campagnes LinkedIn */}
@@ -4515,6 +4748,77 @@ function ProfileView({ profile, onSaved, showToast, linkedin, onDisconnect }) {
 }
 
 // ----------------------------------------------------------------
+// Tutoriel de première connexion
+// ----------------------------------------------------------------
+function TutorialOverlay({ canEvents, onClose }) {
+  const steps = [
+    { icon: Sparkles, title: "Bienvenue sur LinkeePost 👋", text: "Quelques minutes par semaine suffisent pour garder une présence LinkedIn régulière. Voici l'essentiel pour bien démarrer." },
+    { icon: PenLine, title: "1 · Générez un post", text: "Dans « Créer », donnez un thème : l'IA rédige un post à votre image. Vous pouvez aussi partir d'une idée repérée par la veille." },
+    { icon: BarChart3, title: "2 · Lisez son score d'engagement", text: "Chaque post reçoit une note sur 100, avec des conseils concrets critère par critère pour l'améliorer avant de publier." },
+    { icon: History, title: "3 · Optimisez en un clic", text: "Sur la page d'optimisation, réécrivez l'accroche, le corps ou la signature. Le score se recalcule en direct et l'historique conserve chaque version." },
+    { icon: Megaphone, title: "4 · Lancez des campagnes", text: "Un thème, un brief, et une série de posts se planifie sur vos créneaux. La veille transforme l'actualité de votre secteur en posts." },
+    { icon: Clock, title: "5 · Publiez automatiquement", text: "Choisissez vos jours et votre heure : les posts partent seuls sur LinkedIn, après votre validation si vous le souhaitez." },
+    ...(canEvents
+      ? [{ icon: MapPin, title: "6 · Couvrez vos événements", text: "Ajoutez vos salons et forums : LinkeePost génère des posts de présence et vous notifie le jour J pour poster une photo en direct." }]
+      : []),
+    { icon: Check, title: "Tout est prêt 🚀", text: "Commencez par générer votre premier post. Vous pourrez revoir ce guide à tout moment via le bouton « ? » en bas de l'écran." },
+  ];
+  const [i, setI] = useState(0);
+  const step = steps[i];
+  const last = i === steps.length - 1;
+  const Icon = step.icon;
+
+  return (
+    <div className="fixed inset-0 z-[60] bg-[#1b2a4a]/60 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full overflow-hidden">
+        <div className="bg-gradient-to-br from-orange-400 via-[#ff5a5f] to-pink-500 p-8 text-white text-center">
+          <div className="w-16 h-16 rounded-2xl bg-white/20 flex items-center justify-center mx-auto mb-4">
+            <Icon size={30} />
+          </div>
+          <h3 className="text-xl font-extrabold">{step.title}</h3>
+        </div>
+        <div className="p-6">
+          <p className="text-[#5a6b85] leading-relaxed text-center min-h-16">{step.text}</p>
+
+          {/* Points de progression */}
+          <div className="flex items-center justify-center gap-1.5 mt-5">
+            {steps.map((_, n) => (
+              <button
+                key={n}
+                onClick={() => setI(n)}
+                className={`h-2 rounded-full transition-all ${n === i ? "w-6 bg-[#ff5a5f]" : "w-2 bg-gray-200"}`}
+                aria-label={`Étape ${n + 1}`}
+              />
+            ))}
+          </div>
+
+          <div className="flex items-center justify-between gap-3 mt-6">
+            {i > 0 ? (
+              <button onClick={() => setI(i - 1)} className="text-sm font-medium text-[#5a6b85] hover:text-[#1b2a4a] flex items-center gap-1">
+                <ChevronLeft size={16} /> Précédent
+              </button>
+            ) : (
+              <button onClick={onClose} className="text-sm font-medium text-gray-400 hover:text-gray-600">
+                Passer
+              </button>
+            )}
+            {last ? (
+              <button onClick={onClose} className="bg-[#ff5a5f] hover:bg-[#f63d44] text-white font-semibold px-6 py-2.5 rounded-full flex items-center gap-2">
+                C'est parti <Check size={16} />
+              </button>
+            ) : (
+              <button onClick={() => setI(i + 1)} className="bg-[#ff5a5f] hover:bg-[#f63d44] text-white font-semibold px-6 py-2.5 rounded-full flex items-center gap-2">
+                Suivant <ChevronRight size={16} />
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ----------------------------------------------------------------
 // Application
 // ----------------------------------------------------------------
 export default function Home() {
@@ -4523,12 +4827,77 @@ export default function Home() {
 
   const [view, setView] = useState("dashboard");
   const [upgrade, setUpgrade] = useState(null); // { feature } quand on clique une fonctionnalité verrouillée
+  const [optimizeText, setOptimizeText] = useState(null); // { text, type } → page Étape 2 plein écran
+  const [rewriting, setRewriting] = useState(false);
+  const [rewriteScope, setRewriteScope] = useState("all"); // all | hook | body | signature
+  const [versions, setVersions] = useState([]); // historique de versions { id, text, label, score }
+  const [showTutorial, setShowTutorial] = useState(false); // tutoriel de première connexion
 
   // Lien profond depuis une notification (ex : /app?view=events)
   useEffect(() => {
     const v = new URLSearchParams(window.location.search).get("view");
     if (v === "events") setView("events");
   }, []);
+
+
+  // Ouvre la page Étape 2 et initialise l'historique
+  // draftId : si fourni, les modifications sont enregistrées dans le brouillon
+  const openOptimize = (text, type, draftId = null) => {
+    setRewriteScope("all");
+    setVersions([{ id: Date.now(), text, label: "Version initiale", score: scorePost({ text, type }).score }]);
+    setOptimizeText({ text, type, draftId });
+  };
+
+  // Répercute un nouveau texte : brouillon (si draftId) ou post en cours de création
+  const persistOptimized = (newText) => {
+    if (optimizeText?.draftId) {
+      patchDraft(optimizeText.draftId, { text: newText }).catch(() => {});
+      setDrafts((ds) => ds.map((p) => (p.id === optimizeText.draftId ? { ...p, text: newText } : p)));
+    } else {
+      setResult((r) => (r ? { ...r, text: newText } : { text: newText }));
+    }
+    setOptimizeText((o) => ({ ...o, text: newText }));
+  };
+
+  // Édition manuelle dans l'aperçu (recalcule le score en direct, sans enregistrer)
+  const editOptimizeText = (newText) => setOptimizeText((o) => ({ ...o, text: newText }));
+
+  // Enregistre l'édition manuelle courante
+  const saveOptimize = () => {
+    persistOptimized(optimizeText.text);
+    setVersions((vs) =>
+      vs[vs.length - 1]?.text === optimizeText.text
+        ? vs
+        : [...vs, { id: Date.now(), text: optimizeText.text, label: "Édition manuelle", score: scorePost({ text: optimizeText.text, type: optimizeText.type }).score }]
+    );
+    showToast(optimizeText?.draftId ? "Brouillon enregistré ✓" : "Modifications appliquées ✓");
+  };
+
+  // Restaure une version de l'historique
+  const restoreVersion = (v) => persistOptimized(v.text);
+
+  // Réécrit le post (selon le périmètre choisi) en appliquant les conseils
+  const rewriteOptimized = async () => {
+    if (!optimizeText) return;
+    setRewriting(true);
+    try {
+      const res = await fetch("/api/score/rewrite", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: optimizeText.text, type: optimizeText.type, scope: rewriteScope }),
+      });
+      const d = await readJson(res);
+      if (!res.ok) throw new Error(d.error);
+      const label = { all: "Réécriture complète", hook: "Accroche", body: "Corps", signature: "Signature" }[rewriteScope] || "Réécriture";
+      persistOptimized(d.text);
+      setVersions((vs) => [...vs, { id: Date.now(), text: d.text, label, score: scorePost({ text: d.text, type: optimizeText.type }).score }]);
+      showToast("Post réécrit ✓");
+    } catch (e) {
+      showToast(e.message);
+    } finally {
+      setRewriting(false);
+    }
+  };
   const [scheduleDraft, setScheduleDraft] = useState(null);
   const [scheduleStatus, setScheduleStatus] = useState("programmé"); // statut après la modal de date
   const [dragOverCol, setDragOverCol] = useState(null); // colonne kanban survolée pendant un drag
@@ -4593,6 +4962,21 @@ export default function Home() {
   const showToast = (msg) => {
     setToast(msg);
     setTimeout(() => setToast(null), 3000);
+  };
+
+  // Tutoriel à la première connexion (une fois le profil configuré)
+  useEffect(() => {
+    if (!user?.id || !profile?.onboardedAt) return;
+    try {
+      if (!localStorage.getItem(`lp_tuto_${user.id}`)) setShowTutorial(true);
+    } catch {}
+  }, [user?.id, profile?.onboardedAt]);
+
+  const closeTutorial = () => {
+    setShowTutorial(false);
+    try {
+      if (user?.id) localStorage.setItem(`lp_tuto_${user.id}`, "1");
+    } catch {}
   };
 
   // Session utilisateur
@@ -5131,6 +5515,133 @@ export default function Home() {
 
   return (
     <div className="min-h-screen flex">
+      {/* Tutoriel de première connexion */}
+      {showTutorial && <TutorialOverlay canEvents={planAllows(user, "events")} onClose={closeTutorial} />}
+
+      {/* Bouton d'aide : revoir le tutoriel */}
+      <button
+        onClick={() => setShowTutorial(true)}
+        title="Revoir le tutoriel"
+        aria-label="Revoir le tutoriel"
+        className="fixed bottom-5 left-5 z-40 w-11 h-11 rounded-full bg-white border border-gray-200 shadow-lg text-[#ff5a5f] hover:bg-[#fff1f1] font-extrabold text-lg flex items-center justify-center"
+      >
+        ?
+      </button>
+
+      {/* Étape 2 — page plein écran d'optimisation */}
+      {optimizeText && (
+        <div className="fixed inset-0 z-50 bg-slate-50 overflow-y-auto">
+          <div className="sticky top-0 bg-white border-b border-gray-100 px-6 py-3">
+            <button
+              onClick={() => setOptimizeText(null)}
+              className="flex items-center gap-1.5 text-sm font-medium text-[#1b2a4a] hover:text-[#ff5a5f]"
+            >
+              <ChevronLeft size={18} /> Fermer
+            </button>
+          </div>
+          <div className="max-w-6xl mx-auto p-6 grid lg:grid-cols-2 gap-6 items-start">
+            {/* Gauche : aperçu du post + actions (collés au scroll) */}
+            <div className="lg:sticky lg:top-20 space-y-4">
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-xs font-semibold text-gray-400">Votre post (modifiable)</p>
+                  <button
+                    onClick={saveOptimize}
+                    className="text-xs font-semibold text-[#ff5a5f] hover:underline flex items-center gap-1"
+                  >
+                    <Check size={13} /> {optimizeText.draftId ? "Enregistrer le brouillon" : "Appliquer"}
+                  </button>
+                </div>
+                <textarea
+                  value={optimizeText.text}
+                  onChange={(e) => editOptimizeText(e.target.value)}
+                  rows={12}
+                  className="w-full text-sm leading-relaxed border border-gray-200 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-[#ff5a5f] resize-y"
+                />
+              </div>
+              {/* Niveau de réécriture (comme le choix du format) */}
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+                <p className="text-xs font-semibold text-gray-500 mb-2">Niveau de réécriture</p>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  {[
+                    { id: "all", label: "Tout le post" },
+                    { id: "hook", label: "Accroche" },
+                    { id: "body", label: "Corps" },
+                    { id: "signature", label: "Signature" },
+                  ].map((s) => (
+                    <button
+                      key={s.id}
+                      onClick={() => setRewriteScope(s.id)}
+                      className={`text-sm font-medium px-3 py-2 rounded-xl border transition-colors ${
+                        rewriteScope === s.id
+                          ? "bg-[#ff5a5f] text-white border-[#ff5a5f]"
+                          : "bg-white text-[#1b2a4a] border-gray-200 hover:border-[#ffd5d6]"
+                      }`}
+                    >
+                      {s.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-3">
+                <button
+                  onClick={rewriteOptimized}
+                  disabled={rewriting}
+                  className="flex-1 bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white font-semibold px-5 py-3 rounded-full flex items-center justify-center gap-2"
+                >
+                  {rewriting ? <RefreshCw size={16} className="animate-spin" /> : <Sparkles size={16} />}
+                  {rewriting ? "Réécriture…" : "Réécrire avec ces conseils"}
+                </button>
+                <button
+                  onClick={() => setOptimizeText(null)}
+                  className="flex-1 border-2 border-[#ffd5d6] hover:border-[#ff5a5f] text-[#1b2a4a] font-semibold px-5 py-3 rounded-full"
+                >
+                  Fermer
+                </button>
+              </div>
+
+              {/* Historique des versions */}
+              {versions.length > 1 && (
+                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+                  <p className="text-xs font-semibold text-gray-500 mb-2 flex items-center gap-1.5">
+                    <History size={13} /> Historique des versions
+                  </p>
+                  <div className="space-y-1.5">
+                    {versions.map((v, i) => {
+                      const current = v.text === optimizeText.text;
+                      return (
+                        <div
+                          key={v.id}
+                          className={`flex items-center justify-between gap-2 rounded-xl px-3 py-2 ${current ? "bg-[#fff1f1]" : "hover:bg-gray-50"}`}
+                        >
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium truncate">V{i + 1} · {v.label}</p>
+                            <p className="text-[11px] text-gray-400">Score {v.score}/100</p>
+                          </div>
+                          {current ? (
+                            <span className="text-[11px] font-semibold text-[#ff5a5f] shrink-0">Affichée</span>
+                          ) : (
+                            <button
+                              onClick={() => restoreVersion(v)}
+                              className="text-xs font-semibold text-[#ff5a5f] hover:underline shrink-0"
+                            >
+                              Restaurer
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+            {/* Droite : module d'optimisation */}
+            <ScorePanel text={optimizeText.text} type={optimizeText.type} recomputing={rewriting} />
+          </div>
+        </div>
+      )}
+
       {/* Pop-up : fonctionnalité réservée à une offre supérieure */}
       {upgrade && (
         <div
@@ -5321,6 +5832,7 @@ export default function Home() {
         <DashboardView
           drafts={drafts}
           canVeille={planAllows(user, "veille")}
+          canEvents={planAllows(user, "events")}
           postsLimit={plan.postsPerMonth}
           profile={profile}
           linkedin={linkedin}
@@ -5342,6 +5854,8 @@ export default function Home() {
           }}
           onGoCreate={() => setView("create")}
           onGoHistory={() => setView("history")}
+          onGoEvents={() => setView("events")}
+          onGoProfile={() => setView("profile")}
           onApprove={async (d) => {
             try {
               await patchDraft(d.id, { status: "programmé" });
@@ -5736,6 +6250,24 @@ export default function Home() {
                   )}
 
                 </div>
+
+                {!editingResult && result?.text && (
+                  <button
+                    onClick={() => openOptimize(result.text, form?.type)}
+                    className="w-full flex items-center justify-between gap-2 bg-[#fff1f1] hover:bg-[#ffe0e0] text-[#1b2a4a] rounded-2xl px-5 py-4 transition-colors"
+                  >
+                    <span className="flex items-center gap-2.5 text-left">
+                      <span className="bg-[#ff5a5f] text-white p-2 rounded-xl shrink-0">
+                        <BarChart3 size={18} />
+                      </span>
+                      <span>
+                        <span className="block font-bold text-sm">Voir et optimiser le potentiel d'engagement</span>
+                        <span className="block text-xs text-[#5a6b85]">Étape 2 — score détaillé + conseils pour améliorer votre post</span>
+                      </span>
+                    </span>
+                    <ChevronRight size={20} className="text-[#ff5a5f] shrink-0" />
+                  </button>
+                )}
 
                 {/* Image du post */}
                 {!editingResult && (
@@ -6256,9 +6788,9 @@ export default function Home() {
                                     <Copy size={13} />
                                   </button>
                                   <button
-                                    onClick={() => startEdit(p)}
+                                    onClick={() => openOptimize(p.text, p.type, p.id)}
                                     className="text-gray-300 hover:text-[#ff5a5f] p-1"
-                                    title="Modifier"
+                                    title="Modifier et optimiser"
                                   >
                                     <PenLine size={13} />
                                   </button>

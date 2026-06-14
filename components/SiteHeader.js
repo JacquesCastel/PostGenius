@@ -16,6 +16,7 @@ export default function SiteHeader() {
         <nav className="hidden lg:flex items-center gap-6 text-sm font-medium text-[#5a6b85] mx-auto">
           <Link href="/fonctionnalites" className="hover:text-[#ff5a5f] transition-colors">Fonctionnalités</Link>
           <Link href="/comment-ca-marche" className="hover:text-[#ff5a5f] transition-colors">Comment ça marche</Link>
+          <Link href="/scoring" className="hover:text-[#ff5a5f] transition-colors">Scoring</Link>
           <Link href="/tarifs" className="hover:text-[#ff5a5f] transition-colors">Tarifs</Link>
           <Link href="/blog" className="hover:text-[#ff5a5f] transition-colors">Blog</Link>
           <Link href="/contact" className="hover:text-[#ff5a5f] transition-colors">Contact</Link>

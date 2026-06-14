@@ -2,6 +2,7 @@ import Link from "next/link";
 import {
   Sparkles, Megaphone, Eye, Clock, BarChart3, Image as ImageIcon,
   Check, ChevronRight, ShieldCheck, CalendarDays, Layers, PlayCircle, ArrowUp, MapPin, UserRound,
+  Gauge, PenLine,
 } from "lucide-react";
 import { getLanding } from "@/lib/landing";
 import SiteHeader from "@/components/SiteHeader";
@@ -164,6 +165,86 @@ export default async function Landing() {
             >
               Découvrir toutes les fonctionnalités en détail <ChevronRight size={17} className="text-[#ff5a5f]" />
             </Link>
+          </div>
+        </section>
+
+        {/* Atout : Score d'engagement */}
+        <section className="max-w-6xl mx-auto px-6 py-10">
+          <div className="rounded-[2.5rem] bg-gradient-to-br from-[#1b2a4a] to-[#2b3f6b] text-white p-8 md:p-12 shadow-2xl shadow-sky-200/40 grid lg:grid-cols-2 gap-10 items-center relative overflow-hidden">
+            <div className="pointer-events-none absolute -top-16 -right-16 w-64 h-64 bg-[#ff5a5f]/20 rounded-full blur-3xl" />
+            <div className="relative">
+              <p className="inline-flex items-center gap-1.5 text-xs font-semibold text-white bg-[#ff5a5f] px-3 py-1.5 rounded-full mb-5">
+                <Gauge size={13} /> Exclusivité LinkeePost
+              </p>
+              <h2 className="text-3xl md:text-4xl font-extrabold leading-tight">
+                Un <span className="text-[#ff8a8d]">score d'engagement</span> sur chaque post, avant de publier
+              </h2>
+              <p className="text-white/80 mt-4 leading-relaxed">
+                LinkeePost note le potentiel de votre post sur 100 et vous explique, critère par critère, comment l'améliorer.
+                Réécrivez l'accroche, le corps ou la signature en un clic — et voyez le score grimper en direct.
+              </p>
+              <ul className="mt-5 space-y-2.5">
+                {[
+                  "Score instantané + conseils personnalisés par l'IA",
+                  "Réécriture ciblée : accroche, corps ou signature",
+                  "Historique des versions, restaurables à tout moment",
+                ].map((t) => (
+                  <li key={t} className="flex items-start gap-2 text-sm text-white/90">
+                    <Check size={16} className="text-[#ff8a8d] mt-0.5 shrink-0" /> {t}
+                  </li>
+                ))}
+              </ul>
+              <div className="flex flex-col sm:flex-row gap-3 mt-7">
+                <Link
+                  href="/scoring"
+                  className="bg-white text-[#1b2a4a] font-semibold px-6 py-3 rounded-full hover:bg-rose-50 transition-colors inline-flex items-center justify-center gap-2"
+                >
+                  Comment on calcule votre score <ChevronRight size={16} />
+                </Link>
+                <Link
+                  href="/app"
+                  className="border border-white/40 text-white font-semibold px-6 py-3 rounded-full hover:bg-white/10 transition-colors text-center"
+                >
+                  L'essayer gratuitement
+                </Link>
+              </div>
+            </div>
+
+            {/* Aperçu de la jauge */}
+            <div className="relative">
+              <div className="bg-white text-[#1b2a4a] rounded-3xl p-6 shadow-2xl">
+                <div className="flex items-center gap-5">
+                  <div className="text-center shrink-0">
+                    <p className="text-5xl font-extrabold text-[#16a34a] leading-none">82</p>
+                    <p className="text-xs text-gray-400 mt-1">/ 100</p>
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <p className="text-sm font-semibold">Potentiel d'engagement</p>
+                      <span className="text-sm font-bold text-[#16a34a]">Excellent</span>
+                    </div>
+                    <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
+                      <div className="h-full rounded-full bg-[#16a34a]" style={{ width: "82%" }} />
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-5 space-y-2">
+                  {[
+                    { label: "Accroche percutante", ok: true },
+                    { label: "Question pour engager", ok: true },
+                    { label: "Hashtags à ajouter", ok: false },
+                    { label: "Appel à l'action", ok: true },
+                  ].map((f) => (
+                    <div
+                      key={f.label}
+                      className={`flex items-center gap-2 rounded-xl px-3 py-2 text-sm ${f.ok ? "bg-green-50 text-green-700" : "bg-[#fff1f1] text-[#ff5a5f]"}`}
+                    >
+                      {f.ok ? <Check size={15} /> : <PenLine size={15} />} {f.label}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
         </section>
 

@@ -19,6 +19,7 @@ export default function SiteFooter() {
           <nav className="flex flex-wrap items-center justify-center gap-5">
             <Link href="/fonctionnalites" className="hover:text-[#ff5a5f]">Fonctionnalités</Link>
             <Link href="/comment-ca-marche" className="hover:text-[#ff5a5f]">Comment ça marche</Link>
+            <Link href="/scoring" className="hover:text-[#ff5a5f]">Score d'engagement</Link>
             <Link href="/tarifs" className="hover:text-[#ff5a5f]">Tarifs</Link>
             <Link href="/blog" className="hover:text-[#ff5a5f]">Blog</Link>
             <Link href="/contact" className="hover:text-[#ff5a5f]">Contact</Link>
