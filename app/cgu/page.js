@@ -2,7 +2,7 @@ import Link from "next/link";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 
-export const metadata = { title: "Conditions générales d'utilisation — PostGenius" };
+export const metadata = { title: "Conditions générales d'utilisation — LinkeePost" };
 
 export default function CGU() {
   return (
@@ -16,7 +16,7 @@ export default function CGU() {
         <div>
           <h2 className="font-semibold text-base mb-2">1. Objet</h2>
           <p>
-            PostGenius est un service SaaS d'aide à la création et à la gestion de campagnes de
+            LinkeePost est un service SaaS d'aide à la création et à la gestion de campagnes de
             publication LinkedIn : génération de contenus assistée par IA, programmation,
             publication via l'API officielle LinkedIn et statistiques.
           </p>

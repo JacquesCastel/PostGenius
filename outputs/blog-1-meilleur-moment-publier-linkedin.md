@@ -31,14 +31,14 @@ Le rythme pèse lourd : les pages qui publient **4 fois par semaine** voient leu
 
 1. **Bloquez vos créneaux** : visez mardi, mercredi ou jeudi, en matinée (10 h–12 h) ou en fin d'après-midi.
 2. **Tenez le rythme** : 3 à 4 posts par semaine valent mieux qu'un marathon ponctuel suivi de silence.
-3. **Programmez à l'avance** : décider une fois, publier automatiquement. C'est exactement ce que fait [PostGenius](/app) — vous choisissez vos jours et votre heure, les posts partent seuls, avec validation si vous le souhaitez.
+3. **Programmez à l'avance** : décider une fois, publier automatiquement. C'est exactement ce que fait [LinkeePost](/app) — vous choisissez vos jours et votre heure, les posts partent seuls, avec validation si vous le souhaitez.
 4. **Mesurez et ajustez** : ces moyennes sont un point de départ. Votre audience a ses propres habitudes — suivez vos statistiques et recalez vos créneaux sur ce qui marche **pour vous**.
 
 ## L'essentiel
 
 Mardi–jeudi, 10 h–12 h (ou 15 h–20 h), 3 à 4 fois par semaine, avec régularité : c'est la base statistique la plus sûre pour 2026. Le reste, c'est votre contenu — et la constance, que la programmation rend enfin tenable.
 
-**[Programmez vos posts LinkedIn au bon moment avec PostGenius →](/app)**
+**[Programmez vos posts LinkedIn au bon moment avec LinkeePost →](/app)**
 
 ---
 *Sources : [Sprout Social](https://sproutsocial.com/insights/best-times-to-post-on-linkedin/), [Buffer (4,8 M de posts analysés)](https://buffer.com/resources/best-time-to-post-on-linkedin/), [Supergrow](https://www.supergrow.ai/blog/best-time-to-post-on-linkedin).*

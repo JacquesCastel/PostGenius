@@ -22,9 +22,9 @@ async function getArticle(slug) {
 export async function generateMetadata({ params }) {
   const { slug } = await params;
   const a = await getArticle(slug);
-  if (!a || !a.published) return { title: "Article — PostGenius" };
+  if (!a || !a.published) return { title: "Article — LinkeePost" };
   return {
-    title: `${a.title} — PostGenius`,
+    title: `${a.title} — LinkeePost`,
     description: a.excerpt || undefined,
     openGraph: a.coverImage ? { images: [a.coverImage] } : undefined,
   };

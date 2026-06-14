@@ -29,7 +29,7 @@ Pour donner l'ordre de grandeur : un carrousel engage en moyenne **près de 6 fo
 
 ## Comment l'appliquer sans y passer des heures
 
-Produire un carrousel par semaine demande du temps : structurer le propos, rédiger chaque slide, soigner le visuel. C'est précisément ce que PostGenius automatise — vous donnez un thème, l'IA rédige le post **et** le plan de carrousel slide par slide, génère une image cohérente, puis programme la publication au bon créneau.
+Produire un carrousel par semaine demande du temps : structurer le propos, rédiger chaque slide, soigner le visuel. C'est précisément ce que LinkeePost automatise — vous donnez un thème, l'IA rédige le post **et** le plan de carrousel slide par slide, génère une image cohérente, puis programme la publication au bon créneau.
 
 La bonne stratégie n'est pas de tout miser sur un format, mais de **varier intelligemment** : des carrousels pour la pédagogie et la portée, du texte court pour réagir à l'actualité, de la vidéo quand le sujet s'y prête.
 
@@ -37,7 +37,7 @@ La bonne stratégie n'est pas de tout miser sur un format, mais de **varier inte
 
 En 2026, si vous cherchez de l'engagement : **carrousel d'abord**, multi-images et vidéo ensuite, texte seul en complément. Le format ne sauve pas un contenu faible, mais il fait décoller un bon contenu.
 
-**[Générez vos carrousels LinkedIn en quelques minutes avec PostGenius →](/app)**
+**[Générez vos carrousels LinkedIn en quelques minutes avec LinkeePost →](/app)**
 
 ---
 *Sources : [Vulse — Which post format drives most engagement 2026](https://vulse.co/blog/linkedin-content-benchmarks-2026-which-post-format-drives-most-engagement), [Postunreel — Carousel engagement 2026](https://postunreel.com/blog/linkedin-carousel-engagement-rate-statistics-2026), [Dataslayer — LinkedIn algorithm 2026](https://www.dataslayer.ai/blog/linkedin-algorithm-february-2026-whats-working-now).*

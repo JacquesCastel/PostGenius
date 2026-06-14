@@ -7,9 +7,9 @@ import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 
 export const metadata = {
-  title: "Fonctionnalités — PostGenius",
+  title: "Fonctionnalités — LinkeePost",
   description:
-    "Profil de rédaction, campagnes guidées par l'IA, veille connectée, images générées, programmation automatique, publication LinkedIn et statistiques. Toutes les fonctionnalités de PostGenius en détail.",
+    "Profil de rédaction, campagnes guidées par l'IA, veille connectée, images générées, programmation automatique, publication LinkedIn et statistiques. Toutes les fonctionnalités de LinkeePost en détail.",
 };
 
 const PIPELINE = [
@@ -71,7 +71,7 @@ export default function FonctionnalitesPage() {
             Tout ce qu'il faut pour piloter votre <span className="text-[#ff5a5f]">LinkedIn</span>
           </h1>
           <p className="text-lg text-[#5a6b85] mt-4 max-w-2xl mx-auto">
-            De votre contexte métier à la statistique finale, PostGenius couvre toute la chaîne — vous ne
+            De votre contexte métier à la statistique finale, LinkeePost couvre toute la chaîne — vous ne
             faites plus que valider.
           </p>
           <Link
@@ -201,7 +201,7 @@ export default function FonctionnalitesPage() {
           reverse
           tag="Veille"
           title="Une veille connectée à votre secteur"
-          text="Branchez vos sources (sites, flux RSS) : PostGenius surveille l'actualité de votre domaine et vous propose des inspirations. Un article pertinent devient un post — ou une campagne entière."
+          text="Branchez vos sources (sites, flux RSS) : LinkeePost surveille l'actualité de votre domaine et vous propose des inspirations. Un article pertinent devient un post — ou une campagne entière."
           points={[
             "Sources RSS de votre secteur, agrégées automatiquement",
             "Inspirations prêtes à transformer en post",
@@ -276,7 +276,7 @@ export default function FonctionnalitesPage() {
         <Feature
           tag="Mesure"
           title="Des statistiques qui guident vos décisions"
-          text="Suivez impressions, vues, engagement et progression de vos campagnes. PostGenius met en évidence ce qui fonctionne pour que vous reproduisiez vos meilleurs posts — sur votre profil comme sur vos pages entreprise."
+          text="Suivez impressions, vues, engagement et progression de vos campagnes. LinkeePost met en évidence ce qui fonctionne pour que vous reproduisiez vos meilleurs posts — sur votre profil comme sur vos pages entreprise."
           points={[
             "Impressions, engagement et taux par post",
             "Progression par campagne",

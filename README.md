@@ -1,4 +1,4 @@
-# PostGenius — Générateur de posts LinkedIn (SaaS)
+# LinkeePost — Générateur de posts LinkedIn (SaaS)
 
 Application Next.js multi-clients : comptes utilisateurs (email + mot de passe), génération de posts avec l'API Claude, publication sur profil personnel et pages entreprise via l'API LinkedIn.
 
@@ -28,7 +28,7 @@ connection string dans `DATABASE_URL`. En dev, utilisez une branche Neon dédié
 ## 3. App LinkedIn n°1 — profil personnel
 
 1. Aller sur https://www.linkedin.com/developers/apps → **Create app**
-2. Renseigner le nom (ex : PostGenius), associer une **Page LinkedIn** et un logo
+2. Renseigner le nom (ex : LinkeePost), associer une **Page LinkedIn** et un logo
 3. Onglet **Products** : demander l'accès à
    - **Share on LinkedIn** (publication, scope `w_member_social`)
    - **Sign In with LinkedIn using OpenID Connect** (identité, scopes `openid profile`)

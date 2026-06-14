@@ -1,7 +1,7 @@
 import "./globals.css";
 
 export const metadata = {
-  title: "PostGenius — Générateur de posts LinkedIn",
+  title: "LinkeePost — Générateur de posts LinkedIn",
   description: "Générez des posts LinkedIn percutants avec l'IA et publiez-les en un clic.",
 };
 

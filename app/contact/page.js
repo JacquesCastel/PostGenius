@@ -4,9 +4,9 @@ import SiteFooter from "@/components/SiteFooter";
 import ContactForm from "./ContactForm";
 
 export const metadata = {
-  title: "Contact — PostGenius",
+  title: "Contact — LinkeePost",
   description:
-    "Une question sur PostGenius, une demande de démo ou un besoin spécifique ? Écrivez-nous, nous répondons rapidement.",
+    "Une question sur LinkeePost, une demande de démo ou un besoin spécifique ? Écrivez-nous, nous répondons rapidement.",
 };
 
 const POINTS = [
@@ -35,7 +35,7 @@ export default function ContactPage() {
               Écrivez-nous : une vraie personne vous lit et vous répond.
             </p>
             <p className="text-[#5a6b85] mt-3 leading-relaxed">
-              Pas besoin d'attendre pour tester PostGenius — l'essai est gratuit pendant 14 jours, sans carte
+              Pas besoin d'attendre pour tester LinkeePost — l'essai est gratuit pendant 14 jours, sans carte
               bancaire. Le formulaire est là pour tout le reste.
             </p>
 

@@ -7,7 +7,7 @@ import SiteFooter from "@/components/SiteFooter";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Blog — PostGenius",
+  title: "Blog — LinkeePost",
   description: "Conseils et stratégies pour réussir sur LinkedIn : contenu, campagnes, régularité et engagement.",
 };
 

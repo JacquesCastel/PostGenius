@@ -6,11 +6,12 @@ import {
   Clock, PenLine, History, RefreshCw, Linkedin, ChevronRight, ChevronLeft, X, LogOut,
   AlertCircle, UserPlus, LogIn, UserRound, Save, LayoutDashboard, CalendarDays, List, ExternalLink,
   BarChart3, Eye, MousePointerClick, ThumbsUp, MessageSquare, Share2, Undo2, Layers as LayersIcon,
-  Megaphone, ChevronDown, Image as ImageIcon, ShieldCheck
+  Megaphone, ChevronDown, Image as ImageIcon, ShieldCheck, Lock, ArrowUpCircle
 } from "lucide-react";
-import { PLANS, PLAN_IDS, planLabel } from "@/lib/plans";
+import { PLANS, PLAN_IDS, planLabel, planAllows, planOf } from "@/lib/plans";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
+import LpMark from "@/components/LpMark";
 
 // Format compact des tokens : 12 500 → "12,5k", 3 200 000 → "3,2M"
 function fmtTokens(n) {
@@ -193,7 +194,7 @@ function AuthScreen({ onAuth }) {
               Créez vos posts et <span className="text-[#ff5a5f]">campagnes LinkedIn</span> avec l'IA
             </h1>
             <p className="text-[#5a6b85] mt-4 leading-relaxed max-w-md">
-              PostGenius rédige des posts à votre image, programme vos publications et suit vos
+              LinkeePost rédige des posts à votre image, programme vos publications et suit vos
               statistiques — en pilote automatique.
             </p>
 
@@ -2220,7 +2221,7 @@ function MiniBars({ values, labels }) {
 // ----------------------------------------------------------------
 // Tableau de bord : stats, file d'attente, calendrier
 // ----------------------------------------------------------------
-function DashboardView({ drafts, onGoCreate, onGoHistory, onApprove, profile, linkedin, orgs, onPlanned, onProfileSaved, showToast, onInspire }) {
+function DashboardView({ drafts, canVeille = true, postsLimit = null, onGoCreate, onGoHistory, onApprove, profile, linkedin, orgs, onPlanned, onProfileSaved, showToast, onInspire }) {
   const [mode, setMode] = useState("list"); // list | calendar
   const [periodDays, setPeriodDays] = useState(7);
   const [planTarget, setPlanTarget] = useState("person");
@@ -2304,6 +2305,7 @@ function DashboardView({ drafts, onGoCreate, onGoHistory, onApprove, profile, li
   const publishedThisMonth = drafts.filter(
     (d) => d.status === "publié" && new Date(d.publishedAt ?? d.createdAt) >= monthStart
   ).length;
+  const postsThisMonth = drafts.filter((d) => new Date(d.createdAt) >= monthStart).length;
   const scheduled = drafts
     .filter((d) => d.status === "programmé" && d.scheduledAt)
     .sort((a, b) => new Date(a.scheduledAt) - new Date(b.scheduledAt));
@@ -2356,6 +2358,22 @@ function DashboardView({ drafts, onGoCreate, onGoHistory, onApprove, profile, li
           <div>
             <p className="text-sm font-medium text-white/90">Publiés ce mois-ci</p>
             <p className="text-4xl font-bold mt-1">{publishedThisMonth}</p>
+            {postsLimit != null && (
+              <div className="mt-3">
+                <div className="flex justify-between text-[11px] text-white/85 mb-1">
+                  <span>Posts générés ce mois</span>
+                  <span className="font-semibold">
+                    {postsThisMonth}/{postsLimit}
+                  </span>
+                </div>
+                <div className="h-1.5 bg-white/30 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-white rounded-full"
+                    style={{ width: `${Math.min(100, (postsThisMonth / postsLimit) * 100)}%` }}
+                  />
+                </div>
+              </div>
+            )}
           </div>
           <div className="flex gap-6 pt-3 border-t border-white/25">
             <div>
@@ -2534,6 +2552,7 @@ function DashboardView({ drafts, onGoCreate, onGoHistory, onApprove, profile, li
       </div>
 
       {/* Inspirations & veille */}
+      {canVeille ? (
       <VeilleBlock
         showToast={showToast}
         onInspire={onInspire}
@@ -2547,6 +2566,21 @@ function DashboardView({ drafts, onGoCreate, onGoHistory, onApprove, profile, li
           })
         }
       />
+      ) : (
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 text-center">
+          <Lock size={22} className="text-[#ff5a5f] mx-auto mb-2" />
+          <p className="text-sm font-semibold">Veille connectée & inspirations</p>
+          <p className="text-xs text-gray-500 mt-1 max-w-md mx-auto">
+            Surveillez les sources de votre secteur et transformez l'actualité en posts. Inclus à partir de l'offre Pro.
+          </p>
+          <a
+            href="/tarifs"
+            className="inline-flex items-center gap-1.5 mt-3 text-xs font-semibold text-white bg-[#ff5a5f] hover:bg-[#f63d44] px-4 py-2 rounded-full transition-colors"
+          >
+            <ArrowUpCircle size={13} /> Faire évoluer mon offre
+          </a>
+        </div>
+      )}
 
       {/* Posts en attente de validation */}
       {toValidate.length > 0 && (
@@ -3048,7 +3082,7 @@ function StatsView({ linkedin, orgs, profile, drafts }) {
 
           {/* Par post */}
           <div>
-            <h3 className="font-semibold text-base mb-3">Posts publiés via PostGenius</h3>
+            <h3 className="font-semibold text-base mb-3">Posts publiés via LinkeePost</h3>
             {data.posts.length === 0 ? (
               <div className="bg-white rounded-xl border border-dashed border-gray-300 p-10 text-center text-gray-400 text-sm">
                 Aucun post publié sur cette page depuis l'application pour l'instant.
@@ -3146,7 +3180,7 @@ function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast 
     { title: "Bienvenue ! Qui êtes-vous ?", subtitle: "Ces informations personnalisent toutes vos campagnes." },
     {
       title: "Votre environnement",
-      subtitle: "PostGenius gère vos campagnes LinkedIn : décrivez votre activité, votre marché et votre cible.",
+      subtitle: "LinkeePost gère vos campagnes LinkedIn : décrivez votre activité, votre marché et votre cible.",
     },
     { title: "Expertise et objectifs", subtitle: "Ce que vous incarnez, et ce que votre communication doit accomplir." },
     { title: "Votre façon d'écrire", subtitle: "L'IA imitera votre style à chaque génération." },
@@ -3212,9 +3246,9 @@ function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast 
       <div className="w-full max-w-lg">
         <div className="flex items-center justify-center gap-2 mb-6">
           <div className="bg-[#ff5a5f] text-white p-2.5 rounded-xl">
-            <Linkedin size={24} />
+            <LpMark size={24} />
           </div>
-          <h1 className="font-bold text-xl">PostGenius</h1>
+          <h1 className="font-bold text-xl">LinkeePost</h1>
         </div>
 
         {/* Progression */}
@@ -3607,7 +3641,7 @@ function ProfileView({ profile, onSaved, showToast, linkedin, onDisconnect }) {
         });
       }
       const pc = window.PhylloConnect.initialize({
-        clientDisplayName: "PostGenius",
+        clientDisplayName: "LinkeePost",
         environment: d.environment,
         userId: d.phylloUserId,
         token: d.token,
@@ -4061,6 +4095,7 @@ export default function Home() {
   const [authChecked, setAuthChecked] = useState(false);
 
   const [view, setView] = useState("dashboard");
+  const [upgrade, setUpgrade] = useState(null); // { feature } quand on clique une fonctionnalité verrouillée
   const [scheduleDraft, setScheduleDraft] = useState(null);
   const [scheduleStatus, setScheduleStatus] = useState("programmé"); // statut après la modal de date
   const [dragOverCol, setDragOverCol] = useState(null); // colonne kanban survolée pendant un drag
@@ -4180,7 +4215,7 @@ export default function Home() {
       refused: "Vous avez refusé l'autorisation LinkedIn",
       org_refused: "Autorisation refusée pour la page entreprise",
       state_mismatch: "Session OAuth expirée — réessayez la connexion",
-      not_logged_in: "Connectez-vous d'abord à votre compte PostGenius",
+      not_logged_in: "Connectez-vous d'abord à votre compte LinkeePost",
       error: "Erreur LinkedIn — consultez le terminal du serveur pour le détail",
       org_error: "Erreur LinkedIn (page entreprise) — consultez le terminal du serveur",
     };
@@ -4581,12 +4616,19 @@ export default function Home() {
     );
   }
 
+  const plan = planOf(user);
+  const canImages = plan.imagesPerMonth !== 0; // Essentiel = 0 → pas d'images
+  // Compteur de posts du mois (limite null = illimité)
+  const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+  const postsThisMonth = drafts.filter((d) => new Date(d.createdAt) >= monthStart).length;
+  const postsLimit = plan.postsPerMonth;
+  const postsReached = postsLimit != null && postsThisMonth >= postsLimit;
   const NAV = [
     { id: "dashboard", label: "Tableau de bord", icon: LayoutDashboard },
     { id: "create", label: "Créer un post", icon: Sparkles },
-    { id: "new-campaign", label: "Créer une campagne", icon: Megaphone },
+    { id: "new-campaign", label: "Créer une campagne", icon: Megaphone, requires: "campaigns", featureLabel: "L'outil de campagne" },
     { id: "history", label: "Mes posts", icon: History, badge: drafts.length || null },
-    { id: "campaigns", label: "Campagnes", icon: LayersIcon },
+    { id: "campaigns", label: "Campagnes", icon: LayersIcon, requires: "campaigns", featureLabel: "Les campagnes" },
     { id: "stats", label: "Statistiques", icon: BarChart3 },
     { id: "profile", label: "Profil", icon: UserRound },
     ...(user.isAdmin
@@ -4616,44 +4658,116 @@ export default function Home() {
       setView(item.id);
     }
   };
-  const navBtn = (item) => (
-    <button
-      key={item.id}
-      onClick={() => handleNav(item)}
-      className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors ${
-        view === item.id
-          ? "bg-[#ff5a5f] text-white shadow-md shadow-[#ffd5d6]"
-          : "text-gray-500 hover:bg-gray-50 hover:text-gray-800"
-      }`}
-    >
-      <item.icon size={17} />
-      <span className="flex-1 text-left">{item.label}</span>
-      {item.badge && (
-        <span
-          className={`text-xs px-1.5 py-0.5 rounded-full ${
-            view === item.id ? "bg-white/20 text-white" : "bg-[#fff1f1] text-[#ff5a5f]"
-          }`}
-        >
-          {item.badge}
-        </span>
-      )}
-    </button>
-  );
+  const isLocked = (item) => item.requires && !planAllows(user, item.requires);
+  const onNav = (item) =>
+    isLocked(item) ? setUpgrade({ feature: item.featureLabel, requires: item.requires }) : handleNav(item);
+
+  const navBtn = (item) => {
+    const locked = isLocked(item);
+    return (
+      <button
+        key={item.id}
+        onClick={() => onNav(item)}
+        title={locked ? `${item.featureLabel} — réservé à une offre supérieure` : undefined}
+        className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors ${
+          view === item.id
+            ? "bg-[#ff5a5f] text-white shadow-md shadow-[#ffd5d6]"
+            : locked
+            ? "text-gray-300 hover:bg-gray-50"
+            : "text-gray-500 hover:bg-gray-50 hover:text-gray-800"
+        }`}
+      >
+        <item.icon size={17} />
+        <span className="flex-1 text-left">{item.label}</span>
+        {locked ? (
+          <Lock size={14} className="text-gray-300" />
+        ) : item.badge ? (
+          <span
+            className={`text-xs px-1.5 py-0.5 rounded-full ${
+              view === item.id ? "bg-white/20 text-white" : "bg-[#fff1f1] text-[#ff5a5f]"
+            }`}
+          >
+            {item.badge}
+          </span>
+        ) : null}
+      </button>
+    );
+  };
 
   return (
     <div className="min-h-screen flex">
+      {/* Pop-up : fonctionnalité réservée à une offre supérieure */}
+      {upgrade && (
+        <div
+          className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-6"
+          onClick={() => setUpgrade(null)}
+        >
+          <div className="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-6 text-center" onClick={(e) => e.stopPropagation()}>
+            <div className="w-14 h-14 rounded-2xl bg-[#fff1f1] text-[#ff5a5f] flex items-center justify-center mx-auto mb-4">
+              <Lock size={26} />
+            </div>
+            <h3 className="text-lg font-extrabold">{upgrade.feature} n'est pas dans votre offre</h3>
+            <p className="text-sm text-gray-500 mt-2">
+              Votre offre actuelle : <strong>{plan.name}</strong>. Passez à une offre supérieure pour débloquer cette fonctionnalité.
+            </p>
+            <a
+              href="/tarifs"
+              className="mt-5 flex items-center justify-center gap-2 bg-[#ff5a5f] hover:bg-[#f63d44] text-white font-semibold px-5 py-3 rounded-full transition-colors"
+            >
+              <ArrowUpCircle size={17} /> Voir les offres
+            </a>
+            <button onClick={() => setUpgrade(null)} className="mt-3 text-xs text-gray-400 hover:text-gray-600">
+              Plus tard
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Sidebar */}
       <aside className="w-60 bg-white h-screen sticky top-0 hidden md:flex flex-col shrink-0 border-r border-gray-100">
         <div className="flex items-center gap-2.5 px-5 py-6">
           <div className="bg-[#ff5a5f] text-white p-2 rounded-xl shadow-md shadow-[#ffd5d6]">
-            <Linkedin size={20} />
+            <LpMark size={20} />
           </div>
           <div>
-            <p className="font-bold leading-tight">PostGenius</p>
+            <p className="font-bold leading-tight">LinkeePost</p>
             <p className="text-xs text-gray-400">Campagnes LinkedIn</p>
           </div>
         </div>
         <nav className="flex-1 px-3 space-y-1 mt-2">{NAV.map(navBtn)}</nav>
+        <div className="px-3 mt-2">
+          <div className="rounded-2xl bg-[#fff1f1] p-3">
+            <p className="text-[11px] text-gray-500">Votre offre</p>
+            <p className="font-bold text-[#ff5a5f] flex items-center gap-1.5">
+              <Sparkles size={13} /> {plan.name}
+            </p>
+            {postsLimit != null && (
+              <div className="mt-2">
+                <div className="flex justify-between text-[11px] mb-1">
+                  <span className="text-gray-500">Posts ce mois</span>
+                  <span className={`font-semibold ${postsReached ? "text-red-600" : "text-[#ff5a5f]"}`}>
+                    {postsThisMonth}/{postsLimit}
+                  </span>
+                </div>
+                <div className="h-1.5 bg-white rounded-full overflow-hidden">
+                  <div
+                    className={`h-full rounded-full ${postsReached ? "bg-red-500" : "bg-[#ff5a5f]"}`}
+                    style={{ width: `${Math.min(100, (postsThisMonth / postsLimit) * 100)}%` }}
+                  />
+                </div>
+                {postsReached && <p className="text-[10px] text-red-600 mt-1">Limite mensuelle atteinte.</p>}
+              </div>
+            )}
+            {plan.id !== "agence" && (
+              <a
+                href="/tarifs"
+                className="mt-2 flex items-center justify-center gap-1.5 text-xs font-semibold text-white bg-[#ff5a5f] hover:bg-[#f63d44] rounded-full py-1.5 transition-colors"
+              >
+                <ArrowUpCircle size={14} /> Faire évoluer mon offre
+              </a>
+            )}
+          </div>
+        </div>
         <div className="px-3 pb-5 pt-3 border-t border-gray-100 mx-3 mb-1">
           <div className="flex items-center gap-2.5 px-2">
             <div className="w-9 h-9 rounded-full bg-[#ffe0e0] text-[#f63d44] flex items-center justify-center text-sm font-bold shrink-0">
@@ -4674,17 +4788,21 @@ export default function Home() {
       <div className="flex-1 min-w-0">
         {/* Navigation mobile */}
         <div className="md:hidden bg-white border-b border-gray-100 px-3 py-2 flex gap-1 overflow-x-auto">
-          {NAV.map((item) => (
-            <button
-              key={item.id}
-              onClick={() => handleNav(item)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap flex items-center gap-1.5 ${
-                view === item.id ? "bg-[#ff5a5f] text-white" : "text-gray-500"
-              }`}
-            >
-              <item.icon size={14} /> {item.label}
-            </button>
-          ))}
+          {NAV.map((item) => {
+            const locked = isLocked(item);
+            return (
+              <button
+                key={item.id}
+                onClick={() => onNav(item)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap flex items-center gap-1.5 ${
+                  view === item.id ? "bg-[#ff5a5f] text-white" : locked ? "text-gray-300" : "text-gray-500"
+                }`}
+              >
+                <item.icon size={14} /> {item.label}
+                {locked && <Lock size={11} />}
+              </button>
+            );
+          })}
           <button onClick={logout} className="text-gray-400 p-1.5 ml-auto">
             <LogOut size={15} />
           </button>
@@ -4767,6 +4885,8 @@ export default function Home() {
       {view === "dashboard" ? (
         <DashboardView
           drafts={drafts}
+          canVeille={planAllows(user, "veille")}
+          postsLimit={plan.postsPerMonth}
           profile={profile}
           linkedin={linkedin}
           orgs={orgs}
@@ -5189,7 +5309,15 @@ export default function Home() {
                       <ImageIcon size={15} className="text-[#ff5a5f]" /> Image du post
                       <span className="text-xs text-gray-400 font-normal">(optionnelle — publiée avec le post)</span>
                     </p>
-                    {postImage ? (
+                    {!canImages ? (
+                      <div className="rounded-xl bg-[#fff1f1] p-4 text-center">
+                        <Lock size={20} className="text-[#ff5a5f] mx-auto mb-1.5" />
+                        <p className="text-sm font-medium">Les images générées par IA sont incluses à partir de l'offre Pro.</p>
+                        <a href="/tarifs" className="inline-flex items-center gap-1.5 mt-2 text-xs font-semibold text-[#ff5a5f] hover:underline">
+                          <ArrowUpCircle size={13} /> Faire évoluer mon offre
+                        </a>
+                      </div>
+                    ) : postImage ? (
                       <>
                         <img
                           src={postImage.url}

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Déploiement PostGenius (serveur Hetzner /opt/postgenius)
+# Déploiement LinkeePost (serveur Hetzner /opt/postgenius)
 #
 # POURQUOI CE SCRIPT : sur ce serveur, `next build` lancé par `docker build`
 # (ou directement sur le volume monté) prérend les grandes pages À VIDE,

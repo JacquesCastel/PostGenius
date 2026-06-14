@@ -2,7 +2,7 @@ import Link from "next/link";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 
-export const metadata = { title: "Politique de confidentialité — PostGenius" };
+export const metadata = { title: "Politique de confidentialité — LinkeePost" };
 
 export default function Confidentialite() {
   return (
@@ -67,7 +67,7 @@ export default function Confidentialite() {
         <div>
           <h2 className="font-semibold text-base mb-2">Cookies</h2>
           <p>
-            PostGenius n'utilise que des cookies strictement nécessaires au fonctionnement
+            LinkeePost n'utilise que des cookies strictement nécessaires au fonctionnement
             (session d'authentification). Aucun cookie publicitaire ou de mesure d'audience tierce.
           </p>
         </div>

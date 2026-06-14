@@ -41,7 +41,7 @@ export async function POST(req) {
   try {
     sent = await sendMail({
       to: user.email,
-      subject: "PostGenius — Réinitialisation de votre mot de passe",
+      subject: "LinkeePost — Réinitialisation de votre mot de passe",
       text: `Bonjour,\n\nPour choisir un nouveau mot de passe, ouvrez ce lien (valable 1 heure) :\n${link}\n\nSi vous n'êtes pas à l'origine de cette demande, ignorez cet email.`,
       html: `<p>Bonjour,</p><p>Pour choisir un nouveau mot de passe, cliquez sur ce lien (valable 1 heure) :</p><p><a href="${link}">Réinitialiser mon mot de passe</a></p><p>Si vous n'êtes pas à l'origine de cette demande, ignorez cet email.</p>`,
     });

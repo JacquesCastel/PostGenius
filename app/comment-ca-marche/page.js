@@ -7,9 +7,9 @@ import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 
 export const metadata = {
-  title: "Comment ça marche — PostGenius",
+  title: "Comment ça marche — LinkeePost",
   description:
-    "De l'inscription à la statistique : découvrez étape par étape comment PostGenius transforme votre expertise en campagnes LinkedIn publiées en pilote automatique.",
+    "De l'inscription à la statistique : découvrez étape par étape comment LinkeePost transforme votre expertise en campagnes LinkedIn publiées en pilote automatique.",
 };
 
 const STEPS = [
@@ -59,7 +59,7 @@ const STEPS = [
   {
     icon: ShieldCheck,
     title: "Validez — ou laissez le pilote automatique",
-    text: "Activez la validation et chaque post attend votre feu vert avant de partir. Ou laissez PostGenius gérer de bout en bout : c'est vous qui décidez.",
+    text: "Activez la validation et chaque post attend votre feu vert avant de partir. Ou laissez LinkeePost gérer de bout en bout : c'est vous qui décidez.",
   },
   {
     icon: Send,
@@ -72,7 +72,7 @@ const STEPS = [
   {
     icon: BarChart3,
     title: "Suivez vos statistiques et améliorez",
-    text: "Impressions, engagement, progression de chaque campagne : PostGenius met en évidence ce qui fonctionne pour que vous reproduisiez vos meilleurs posts.",
+    text: "Impressions, engagement, progression de chaque campagne : LinkeePost met en évidence ce qui fonctionne pour que vous reproduisiez vos meilleurs posts.",
     visual: (
       <div className="flex items-end gap-1.5 h-16 max-w-[10rem]">
         {[40, 60, 50, 80, 95].map((h, i) => (

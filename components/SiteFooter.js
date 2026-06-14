@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { Linkedin } from "lucide-react";
 import ChatWidget from "./ChatWidget";
+import LpMark from "./LpMark";
 
 // Pied de page public partagé (landing, blog, contact, pages légales)
 export default function SiteFooter() {
@@ -11,9 +11,9 @@ export default function SiteFooter() {
         <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-[#7c8aa3]">
           <div className="flex items-center gap-2">
             <div className="bg-[#ff5a5f] text-white p-1.5 rounded-lg">
-              <Linkedin size={14} />
+              <LpMark size={14} />
             </div>
-            <span className="font-bold text-[#1b2a4a]">PostGenius</span>
+            <span className="font-bold text-[#1b2a4a]">LinkeePost</span>
             <span>© {new Date().getFullYear()}</span>
           </div>
           <nav className="flex flex-wrap items-center justify-center gap-5">
@@ -30,7 +30,7 @@ export default function SiteFooter() {
 
         {/* Contenu SEO (petit) */}
         <p className="text-[11px] leading-relaxed text-gray-400 mt-8 max-w-4xl mx-auto text-center">
-          <strong className="font-semibold text-gray-500">PostGenius</strong> est l'outil tout-en-un pour gérer
+          <strong className="font-semibold text-gray-500">LinkeePost</strong> est l'outil tout-en-un pour gérer
           votre présence sur <Link href="/fonctionnalites" className="hover:text-[#ff5a5f] underline">LinkedIn</Link> :
           génération de posts par intelligence artificielle, création de carrousels et de scripts vidéo, campagnes
           éditoriales guidées par l'IA, veille de votre secteur et inspirations, programmation et publication

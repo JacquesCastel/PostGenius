@@ -12,14 +12,14 @@ import SiteFooter from "@/components/SiteFooter";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "PostGenius — Vos campagnes LinkedIn en pilote automatique",
+  title: "LinkeePost — Vos campagnes LinkedIn en pilote automatique",
   description:
     "L'IA qui transforme votre expertise en campagnes LinkedIn : posts contextualisés, veille connectée, programmation automatique et statistiques. Essai gratuit 14 jours.",
 };
 
 const FEATURES = [
   { icon: Megaphone, title: "Campagnes guidées par l'IA", text: "Un thème, un brief cadré par l'IA, un post d'exemple à valider — puis une série de posts qui progressent vers votre message clé." },
-  { icon: Eye, title: "Veille connectée", text: "PostGenius surveille les sources de votre secteur et ancre vos posts dans l'actualité. Un article pertinent devient un post." },
+  { icon: Eye, title: "Veille connectée", text: "LinkeePost surveille les sources de votre secteur et ancre vos posts dans l'actualité. Un article pertinent devient un post." },
   { icon: Sparkles, title: "Votre style, pas un robot", text: "Contexte métier, cible, positionnement, consignes d'écriture : chaque post est rédigé avec votre ADN." },
   { icon: ImageIcon, title: "Illustrations générées", text: "Une image cohérente avec le contenu, générée par IA et publiée avec le post. Prompt automatique ou personnalisé." },
   { icon: Clock, title: "Publication à votre rythme", text: "Choisissez vos jours et votre heure : les posts partent seuls, après votre validation si vous le souhaitez." },
@@ -140,7 +140,7 @@ export default async function Landing() {
         {/* Fonctionnalités */}
         <section id="fonctionnalites" className="max-w-6xl mx-auto px-6 py-20">
           <BackToTop />
-          <p className="text-center text-sm font-semibold text-[#ff5a5f]">Ce que fait PostGenius</p>
+          <p className="text-center text-sm font-semibold text-[#ff5a5f]">Ce que fait LinkeePost</p>
           <h2 className="text-3xl md:text-4xl font-extrabold text-center mt-2">Bien plus qu'un générateur de posts</h2>
           <p className="text-[#5a6b85] text-center mt-3 max-w-2xl mx-auto">Un outil de gestion de campagne complet, du brief à la statistique.</p>
           <div className="grid md:grid-cols-3 gap-6 mt-12">

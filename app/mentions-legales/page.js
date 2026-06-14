@@ -2,7 +2,7 @@ import Link from "next/link";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 
-export const metadata = { title: "Mentions légales — PostGenius" };
+export const metadata = { title: "Mentions légales — LinkeePost" };
 
 // ⚠️ Compléter les champs [À COMPLÉTER] avant ouverture commerciale.
 
@@ -18,7 +18,7 @@ export default function MentionsLegales() {
         <div>
           <h2 className="font-semibold text-base mb-2">Éditeur du site</h2>
           <p>
-            PostGenius est édité par <strong>[À COMPLÉTER : raison sociale]</strong>,{" "}
+            LinkeePost est édité par <strong>[À COMPLÉTER : raison sociale]</strong>,{" "}
             [À COMPLÉTER : forme juridique, ex. SASU au capital de X €], immatriculée au RCS de{" "}
             [À COMPLÉTER : ville] sous le numéro [À COMPLÉTER : SIREN], dont le siège social est
             situé [À COMPLÉTER : adresse].
@@ -44,7 +44,7 @@ export default function MentionsLegales() {
           <p>
             L'ensemble des éléments du site (textes, interface, marque, logo) est protégé par le
             droit de la propriété intellectuelle. Toute reproduction sans autorisation est interdite.
-            LinkedIn est une marque déposée de LinkedIn Corporation ; PostGenius est un service
+            LinkedIn est une marque déposée de LinkedIn Corporation ; LinkeePost est un service
             indépendant, non affilié à LinkedIn.
           </p>
         </div>

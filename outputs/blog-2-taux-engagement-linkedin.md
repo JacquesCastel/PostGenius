@@ -44,9 +44,9 @@ Un chiffre brut ne veut rien dire hors contexte : comparez-vous à **vous-même*
 
 ## Mesurer, sinon rien
 
-On n'améliore que ce que l'on suit. PostGenius affiche pour chaque post et chaque campagne vos impressions, réactions et taux d'engagement, et met en évidence ce qui fonctionne — pour que vous arrêtiez de deviner et que vous reproduisiez vos meilleurs posts.
+On n'améliore que ce que l'on suit. LinkeePost affiche pour chaque post et chaque campagne vos impressions, réactions et taux d'engagement, et met en évidence ce qui fonctionne — pour que vous arrêtiez de deviner et que vous reproduisiez vos meilleurs posts.
 
-**[Suivez votre taux d'engagement LinkedIn avec PostGenius →](/app)**
+**[Suivez votre taux d'engagement LinkedIn avec LinkeePost →](/app)**
 
 ---
 *Sources : [Socialinsider — LinkedIn Organic Benchmarks 2026](https://www.socialinsider.io/social-media-benchmarks/linkedin), [Grow with Ghost — Engagement Rate Benchmarks by Industry 2026](https://www.growwithghost.io/blog/linkedin-engagement-rate-benchmarks-by-industry-2026-data-insights/), [Cleverly — LinkedIn Benchmarks](https://www.cleverly.co/blog/linkedin-benchmarks).*

@@ -8,7 +8,7 @@ import SiteFooter from "@/components/SiteFooter";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Tarifs — PostGenius",
+  title: "Tarifs — LinkeePost",
   description:
     "Trois offres simples pour piloter votre présence LinkedIn : Essentiel, Pro et Agence. 14 jours d'essai gratuit, sans carte bancaire.",
 };

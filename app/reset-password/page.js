@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Linkedin, RefreshCw, AlertCircle, Check, KeyRound } from "lucide-react";
+import { RefreshCw, AlertCircle, Check, KeyRound } from "lucide-react";
+import LpMark from "@/components/LpMark";
 
 // Page ouverte depuis le lien email : /reset-password?token=...
 
@@ -53,9 +54,9 @@ export default function ResetPassword() {
       <div className="w-full max-w-md">
         <div className="flex items-center justify-center gap-2 mb-6">
           <div className="bg-[#ff5a5f] text-white p-2.5 rounded-xl">
-            <Linkedin size={24} />
+            <LpMark size={24} />
           </div>
-          <h1 className="font-bold text-xl">PostGenius</h1>
+          <h1 className="font-bold text-xl">LinkeePost</h1>
         </div>
 
         <div className="bg-white rounded-xl border border-gray-200 p-6">

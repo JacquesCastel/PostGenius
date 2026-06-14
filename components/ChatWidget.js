@@ -6,7 +6,7 @@ import { MessageCircle, X, Send, Sparkles } from "lucide-react";
 const GREETING = {
   role: "assistant",
   content:
-    "Bonjour 👋 Je suis l'assistant PostGenius. Posez-moi vos questions sur le fonctionnement, les fonctionnalités ou les offres — je vous explique tout !",
+    "Bonjour 👋 Je suis l'assistant LinkeePost. Posez-moi vos questions sur le fonctionnement, les fonctionnalités ou les offres — je vous explique tout !",
 };
 
 const SUGGESTIONS = ["Comment ça marche ?", "Quelle offre choisir ?", "Qu'est-ce qu'une campagne ?"];
@@ -90,7 +90,7 @@ export default function ChatWidget() {
               <X size={14} />
             </button>
             <button onClick={openChat} className="text-left w-full">
-              <p className="text-sm font-semibold text-[#1b2a4a]">Une question sur PostGenius ? 👋</p>
+              <p className="text-sm font-semibold text-[#1b2a4a]">Une question sur LinkeePost ? 👋</p>
               <p className="text-xs text-[#5a6b85] mt-0.5">
                 Je peux vous expliquer le fonctionnement et vous aider à choisir votre offre. Cliquez pour discuter.
               </p>
@@ -117,7 +117,7 @@ export default function ChatWidget() {
           <div className="bg-gradient-to-br from-[#ff5a5f] to-pink-500 text-white p-4 flex items-center gap-2">
             <Sparkles size={18} />
             <div>
-              <p className="font-bold leading-tight">Assistant PostGenius</p>
+              <p className="font-bold leading-tight">Assistant LinkeePost</p>
               <p className="text-[11px] text-white/80">Réponses instantanées</p>
             </div>
           </div>
