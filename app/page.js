@@ -1,7 +1,7 @@
 import Link from "next/link";
 import {
   Sparkles, Megaphone, Eye, Clock, BarChart3, Image as ImageIcon,
-  Check, ChevronRight, ShieldCheck, CalendarDays, Layers, PlayCircle, ArrowUp,
+  Check, ChevronRight, ShieldCheck, CalendarDays, Layers, PlayCircle, ArrowUp, MapPin, UserRound,
 } from "lucide-react";
 import { getLanding } from "@/lib/landing";
 import SiteHeader from "@/components/SiteHeader";
@@ -18,11 +18,14 @@ export const metadata = {
 };
 
 const FEATURES = [
+  { icon: UserRound, title: "Profil de rédaction", text: "Activité, cible, marché, ton et rythme — décrits une fois (ou déduits de votre site par l'IA), et chaque contenu est calibré à votre image." },
   { icon: Megaphone, title: "Campagnes guidées par l'IA", text: "Un thème, un brief cadré par l'IA, un post d'exemple à valider — puis une série de posts qui progressent vers votre message clé." },
   { icon: Eye, title: "Veille connectée", text: "LinkeePost surveille les sources de votre secteur et ancre vos posts dans l'actualité. Un article pertinent devient un post." },
   { icon: Sparkles, title: "Votre style, pas un robot", text: "Contexte métier, cible, positionnement, consignes d'écriture : chaque post est rédigé avec votre ADN." },
   { icon: ImageIcon, title: "Illustrations générées", text: "Une image cohérente avec le contenu, générée par IA et publiée avec le post. Prompt automatique ou personnalisé." },
   { icon: Clock, title: "Publication à votre rythme", text: "Choisissez vos jours et votre heure : les posts partent seuls, après votre validation si vous le souhaitez." },
+  { icon: MapPin, title: "Module Événements", text: "Salons et forums : posts de présence générés et programmés autour des dates. Le jour J, une notification vous invite à poster une photo en direct. (Offre Agence)" },
+  { icon: Layers, title: "Carrousels & vidéos", text: "Au-delà du post simple : carrousels (plan de slides) et scripts vidéo générés par l'IA, prêts à publier — les formats qui engagent le plus." },
   { icon: BarChart3, title: "Statistiques et suivi", text: "Progression de chaque campagne, posts publiés et à venir, vues et engagement — pour savoir ce qui fonctionne." },
 ];
 

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import {
   Sparkles, Megaphone, BarChart3, Check, ChevronRight, ShieldCheck,
-  CalendarDays, UserRound, Send, Linkedin, Eye,
+  CalendarDays, UserRound, Send, Linkedin, Eye, MapPin,
 } from "lucide-react";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
@@ -67,6 +67,16 @@ const STEPS = [
     text: "Les posts partent seuls sur LinkedIn aux créneaux prévus, image comprise. Vous ne faites plus rien — votre présence tourne toute seule.",
     visual: (
       <p className="text-xs text-[#5a6b85] flex items-center gap-1.5"><CalendarDays size={13} className="text-[#ff5a5f]" /> Mar. · Jeu. à 09:00</p>
+    ),
+  },
+  {
+    icon: MapPin,
+    title: "Couvrez vos salons et événements",
+    text: "Avec l'offre Agence, ajoutez vos salons et forums : LinkeePost génère des posts de présence autour des dates, et le jour J vous notifie pour poster — et prendre une photo en direct sur place.",
+    visual: (
+      <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#ff5a5f] bg-[#fff1f1] px-3 py-1.5 rounded-full">
+        <MapPin size={12} /> Offre Agence
+      </span>
     ),
   },
   {
