@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { getUserId } from "@/lib/session";
 import { logUsage } from "@/lib/usage";
 import { scorePost } from "@/lib/score";
+import { checkFeature } from "@/lib/gating";
 
 // Réécrit un post en appliquant les améliorations d'engagement détectées.
 export const maxDuration = 60;
@@ -12,6 +13,9 @@ export async function POST(req) {
   if (!userId) return NextResponse.json({ error: "Non connecté." }, { status: 401 });
   if (!process.env.ANTHROPIC_API_KEY)
     return NextResponse.json({ error: "Clé IA manquante." }, { status: 500 });
+
+  const gate = await checkFeature(userId, "scoring", "L'optimisation du post");
+  if (!gate.ok) return NextResponse.json({ error: gate.error }, { status: 403 });
 
   const { text, type, scope = "all" } = await req.json();
   if (!text?.trim()) return NextResponse.json({ error: "Texte requis." }, { status: 400 });

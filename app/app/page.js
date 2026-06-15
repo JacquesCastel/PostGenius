@@ -2715,7 +2715,7 @@ function MiniBars({ values, labels }) {
 // ----------------------------------------------------------------
 // Tableau de bord : stats, file d'attente, calendrier
 // ----------------------------------------------------------------
-function DashboardView({ drafts, canVeille = true, canEvents = false, postsLimit = null, onGoCreate, onGoHistory, onGoEvents, onGoProfile, onApprove, profile, linkedin, orgs, onPlanned, onProfileSaved, showToast, onInspire }) {
+function DashboardView({ drafts, canVeille = true, canEvents = false, canScore = true, postsLimit = null, onGoCreate, onGoHistory, onGoEvents, onGoProfile, onApprove, profile, linkedin, orgs, onPlanned, onProfileSaved, showToast, onInspire }) {
   const [mode, setMode] = useState("list"); // list | calendar
   const [periodDays, setPeriodDays] = useState(7);
   const [planTarget, setPlanTarget] = useState("person");
@@ -2933,8 +2933,29 @@ function DashboardView({ drafts, canVeille = true, canEvents = false, postsLimit
         </div>
       </div>
 
-      {/* Score d'engagement moyen */}
-      {avgScore != null && (
+      {/* Score d'engagement moyen — verrouillé pour Essentiel */}
+      {!canScore && (
+        <a
+          href="/tarifs"
+          className="block bg-white rounded-2xl border border-gray-100 shadow-sm p-5 hover:shadow-md transition-shadow"
+        >
+          <div className="flex items-center justify-between gap-4 flex-wrap">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="p-2.5 rounded-xl bg-gray-100 text-gray-400 shrink-0"><BarChart3 size={18} /></div>
+              <div className="min-w-0">
+                <p className="text-sm font-semibold flex items-center gap-1.5">
+                  Score d'engagement de vos posts <Lock size={13} className="text-gray-400" />
+                </p>
+                <p className="text-xs text-gray-500 mt-0.5">Notez et optimisez vos posts — inclus à partir de l'offre Pro.</p>
+              </div>
+            </div>
+            <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-white bg-[#ff5a5f] px-4 py-2 rounded-full shrink-0">
+              <ArrowUpCircle size={13} /> Faire évoluer
+            </span>
+          </div>
+        </a>
+      )}
+      {canScore && avgScore != null && (
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
           <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
             <p className="text-sm font-semibold flex items-center gap-1.5">
@@ -2984,14 +3005,25 @@ function DashboardView({ drafts, canVeille = true, canEvents = false, postsLimit
           <p className="text-xs text-gray-400 mt-0.5">Avec son score d'engagement</p>
         </button>
 
-        <button
-          onClick={onGoHistory}
-          className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 text-left hover:-translate-y-0.5 hover:shadow-md transition-all"
-        >
-          <div className="p-2.5 rounded-xl bg-[#fff1f1] text-[#ff5a5f] w-fit mb-3"><BarChart3 size={18} /></div>
-          <p className="font-semibold text-sm">Optimiser mes posts</p>
-          <p className="text-xs text-gray-400 mt-0.5">Score, réécriture & historique</p>
-        </button>
+        {canScore ? (
+          <button
+            onClick={onGoHistory}
+            className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 text-left hover:-translate-y-0.5 hover:shadow-md transition-all"
+          >
+            <div className="p-2.5 rounded-xl bg-[#fff1f1] text-[#ff5a5f] w-fit mb-3"><BarChart3 size={18} /></div>
+            <p className="font-semibold text-sm">Optimiser mes posts</p>
+            <p className="text-xs text-gray-400 mt-0.5">Score, réécriture & historique</p>
+          </button>
+        ) : (
+          <a
+            href="/tarifs"
+            className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 text-left hover:-translate-y-0.5 hover:shadow-md transition-all block"
+          >
+            <div className="p-2.5 rounded-xl bg-gray-100 text-gray-400 w-fit mb-3"><BarChart3 size={18} /></div>
+            <p className="font-semibold text-sm flex items-center gap-1.5">Optimiser mes posts <Lock size={12} className="text-gray-400" /></p>
+            <p className="text-xs text-[#ff5a5f] font-medium mt-0.5">Inclus à partir de l'offre Pro</p>
+          </a>
+        )}
 
         {canEvents ? (
           <button
@@ -5435,6 +5467,7 @@ export default function Home() {
 
   const plan = planOf(user);
   const canImages = plan.imagesPerMonth !== 0; // Essentiel = 0 → pas d'images
+  const canScore = planAllows(user, "scoring"); // score d'engagement : Pro/Agence
   // Compteur de posts du mois (limite null = illimité)
   const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
   const postsThisMonth = drafts.filter((d) => new Date(d.createdAt) >= monthStart).length;
@@ -5559,40 +5592,44 @@ export default function Home() {
                   className="w-full text-sm leading-relaxed border border-gray-200 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-[#ff5a5f] resize-y"
                 />
               </div>
-              {/* Niveau de réécriture (comme le choix du format) */}
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
-                <p className="text-xs font-semibold text-gray-500 mb-2">Niveau de réécriture</p>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                  {[
-                    { id: "all", label: "Tout le post" },
-                    { id: "hook", label: "Accroche" },
-                    { id: "body", label: "Corps" },
-                    { id: "signature", label: "Signature" },
-                  ].map((s) => (
-                    <button
-                      key={s.id}
-                      onClick={() => setRewriteScope(s.id)}
-                      className={`text-sm font-medium px-3 py-2 rounded-xl border transition-colors ${
-                        rewriteScope === s.id
-                          ? "bg-[#ff5a5f] text-white border-[#ff5a5f]"
-                          : "bg-white text-[#1b2a4a] border-gray-200 hover:border-[#ffd5d6]"
-                      }`}
-                    >
-                      {s.label}
-                    </button>
-                  ))}
+              {/* Niveau de réécriture (comme le choix du format) — réservé Pro/Agence */}
+              {canScore && (
+                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+                  <p className="text-xs font-semibold text-gray-500 mb-2">Niveau de réécriture</p>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    {[
+                      { id: "all", label: "Tout le post" },
+                      { id: "hook", label: "Accroche" },
+                      { id: "body", label: "Corps" },
+                      { id: "signature", label: "Signature" },
+                    ].map((s) => (
+                      <button
+                        key={s.id}
+                        onClick={() => setRewriteScope(s.id)}
+                        className={`text-sm font-medium px-3 py-2 rounded-xl border transition-colors ${
+                          rewriteScope === s.id
+                            ? "bg-[#ff5a5f] text-white border-[#ff5a5f]"
+                            : "bg-white text-[#1b2a4a] border-gray-200 hover:border-[#ffd5d6]"
+                        }`}
+                      >
+                        {s.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
 
               <div className="flex flex-col sm:flex-row gap-3">
-                <button
-                  onClick={rewriteOptimized}
-                  disabled={rewriting}
-                  className="flex-1 bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white font-semibold px-5 py-3 rounded-full flex items-center justify-center gap-2"
-                >
-                  {rewriting ? <RefreshCw size={16} className="animate-spin" /> : <Sparkles size={16} />}
-                  {rewriting ? "Réécriture…" : "Réécrire avec ces conseils"}
-                </button>
+                {canScore && (
+                  <button
+                    onClick={rewriteOptimized}
+                    disabled={rewriting}
+                    className="flex-1 bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white font-semibold px-5 py-3 rounded-full flex items-center justify-center gap-2"
+                  >
+                    {rewriting ? <RefreshCw size={16} className="animate-spin" /> : <Sparkles size={16} />}
+                    {rewriting ? "Réécriture…" : "Réécrire avec ces conseils"}
+                  </button>
+                )}
                 <button
                   onClick={() => setOptimizeText(null)}
                   className="flex-1 border-2 border-[#ffd5d6] hover:border-[#ff5a5f] text-[#1b2a4a] font-semibold px-5 py-3 rounded-full"
@@ -5636,8 +5673,32 @@ export default function Home() {
                 </div>
               )}
             </div>
-            {/* Droite : module d'optimisation */}
-            <ScorePanel text={optimizeText.text} type={optimizeText.type} recomputing={rewriting} />
+            {/* Droite : module d'optimisation (réservé Pro/Agence) */}
+            {canScore ? (
+              <ScorePanel text={optimizeText.text} type={optimizeText.type} recomputing={rewriting} />
+            ) : (
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 md:p-8 text-center">
+                <div className="w-14 h-14 rounded-2xl bg-[#fff1f1] text-[#ff5a5f] flex items-center justify-center mx-auto mb-4">
+                  <Lock size={26} />
+                </div>
+                <h3 className="font-extrabold text-lg">Score & optimisation d'engagement</h3>
+                <p className="text-sm text-gray-500 mt-2 max-w-sm mx-auto">
+                  Notez le potentiel de chaque post sur 100, recevez des conseils par l'IA et réécrivez l'accroche, le corps ou la signature en un clic.
+                  Cette fonctionnalité est incluse à partir de l'offre <strong>Pro</strong>.
+                </p>
+                <div className="mt-5 flex flex-col items-center gap-2">
+                  <a
+                    href="/tarifs"
+                    className="inline-flex items-center gap-2 bg-[#ff5a5f] hover:bg-[#f63d44] text-white font-semibold px-6 py-3 rounded-full transition-colors"
+                  >
+                    <ArrowUpCircle size={17} /> Faire évoluer mon offre
+                  </a>
+                  <a href="/scoring" className="text-xs font-medium text-[#ff5a5f] hover:underline">
+                    En savoir plus sur le score d'engagement
+                  </a>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -5833,6 +5894,7 @@ export default function Home() {
           drafts={drafts}
           canVeille={planAllows(user, "veille")}
           canEvents={planAllows(user, "events")}
+          canScore={canScore}
           postsLimit={plan.postsPerMonth}
           profile={profile}
           linkedin={linkedin}
@@ -6251,7 +6313,7 @@ export default function Home() {
 
                 </div>
 
-                {!editingResult && result?.text && (
+                {!editingResult && result?.text && canScore && (
                   <button
                     onClick={() => openOptimize(result.text, form?.type)}
                     className="w-full flex items-center justify-between gap-2 bg-[#fff1f1] hover:bg-[#ffe0e0] text-[#1b2a4a] rounded-2xl px-5 py-4 transition-colors"
@@ -6266,6 +6328,25 @@ export default function Home() {
                       </span>
                     </span>
                     <ChevronRight size={20} className="text-[#ff5a5f] shrink-0" />
+                  </button>
+                )}
+                {!editingResult && result?.text && !canScore && (
+                  <button
+                    onClick={() => setUpgrade({ feature: "Le score d'engagement" })}
+                    className="w-full flex items-center justify-between gap-2 bg-gray-50 hover:bg-gray-100 text-gray-500 rounded-2xl px-5 py-4 transition-colors"
+                  >
+                    <span className="flex items-center gap-2.5 text-left">
+                      <span className="bg-gray-200 text-gray-400 p-2 rounded-xl shrink-0">
+                        <BarChart3 size={18} />
+                      </span>
+                      <span>
+                        <span className="block font-bold text-sm flex items-center gap-1.5">
+                          Score & optimisation d'engagement <Lock size={13} />
+                        </span>
+                        <span className="block text-xs text-gray-400">Inclus à partir de l'offre Pro — cliquez pour découvrir</span>
+                      </span>
+                    </span>
+                    <ArrowUpCircle size={20} className="text-[#ff5a5f] shrink-0" />
                   </button>
                 )}
 

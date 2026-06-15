@@ -20,6 +20,7 @@ const COMPARE = [
   { label: "Profil de rédaction (style, contexte)", value: () => true },
   { label: "Publication sur profil personnel", value: () => true },
   { label: "Programmation & pilote automatique", value: () => true },
+  { label: "Score d'engagement & optimisation des posts", value: (p) => p.scoring },
   { label: "Campagnes guidées par l'IA", value: (p) => p.campaigns },
   { label: "Veille connectée & inspirations", value: (p) => p.veille },
   { label: "Validation avant publication", value: (p) => p.campaigns },
