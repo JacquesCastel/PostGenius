@@ -58,6 +58,13 @@ model User {
   trialEndsAt   DateTime? // fin de la période d'essai (14 j)
   planUpdatedAt DateTime? // dernière modification du plan
 
+  // --- Abonnement Stripe ---
+  stripeCustomerId     String?   @unique // identifiant client Stripe
+  stripeSubscriptionId String?   // identifiant de l'abonnement en cours
+  subscriptionStatus   String?   // active | trialing | past_due | canceled | ...
+  subscriptionInterval String?   // month | year
+  currentPeriodEnd     DateTime? // fin de la période payée en cours
+
   linkedin  LinkedInAccount?
   drafts    Draft[]
   resetTokens PasswordResetToken[]

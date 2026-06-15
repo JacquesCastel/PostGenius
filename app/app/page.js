@@ -6,9 +6,10 @@ import {
   Clock, PenLine, History, RefreshCw, Linkedin, ChevronRight, ChevronLeft, X, LogOut,
   AlertCircle, UserPlus, LogIn, UserRound, Save, LayoutDashboard, CalendarDays, List, ExternalLink,
   BarChart3, Eye, MousePointerClick, ThumbsUp, MessageSquare, Share2, Undo2, Layers as LayersIcon,
-  Megaphone, ChevronDown, Image as ImageIcon, ShieldCheck, Lock, ArrowUpCircle, MapPin, Bell, Camera
+  Megaphone, ChevronDown, Image as ImageIcon, ShieldCheck, Lock, ArrowUpCircle, MapPin, Bell, Camera,
+  CreditCard, Gauge
 } from "lucide-react";
-import { PLANS, PLAN_IDS, planLabel, planAllows, planOf } from "@/lib/plans";
+import { PLANS, PLAN_IDS, planLabel, planAllows, planOf, trialDaysLeft, accessState } from "@/lib/plans";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 import LpMark from "@/components/LpMark";
@@ -2715,6 +2716,194 @@ function MiniBars({ values, labels }) {
 // ----------------------------------------------------------------
 // Tableau de bord : stats, file d'attente, calendrier
 // ----------------------------------------------------------------
+// ----------------------------------------------------------------
+// Abonnement / facturation (Stripe Checkout + portail)
+// ----------------------------------------------------------------
+function BillingView({ user, showToast }) {
+  const [billingInterval, setBillingInterval] = useState(user?.subscriptionInterval === "year" ? "year" : "month");
+  const [busy, setBusy] = useState(null); // id de l'action en cours
+  const currentPlan = planOf(user).id;
+  const status = user?.subscriptionStatus;
+  const active = ["active", "trialing", "past_due"].includes(status || "");
+  const trial = trialDaysLeft(user);
+
+  const STATUS_LABEL = {
+    active: "Actif",
+    trialing: "Essai Stripe en cours",
+    past_due: "Paiement en retard",
+    canceled: "Annulé",
+    unpaid: "Impayé",
+    incomplete: "Incomplet",
+  };
+
+  const subscribe = async (plan) => {
+    setBusy(plan);
+    try {
+      const res = await fetch("/api/stripe/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plan, interval: billingInterval }),
+      });
+      const d = await readJson(res);
+      if (!res.ok) throw new Error(d.error);
+      window.location.href = d.url;
+    } catch (e) {
+      showToast(e.message);
+      setBusy(null);
+    }
+  };
+
+  const openPortal = async () => {
+    setBusy("portal");
+    try {
+      const res = await fetch("/api/stripe/portal", { method: "POST" });
+      const d = await readJson(res);
+      if (!res.ok) throw new Error(d.error);
+      window.location.href = d.url;
+    } catch (e) {
+      showToast(e.message);
+      setBusy(null);
+    }
+  };
+
+  return (
+    <main className="max-w-5xl mx-auto p-6 space-y-6">
+      {/* État actuel */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+        <div className="flex items-start justify-between gap-4 flex-wrap">
+          <div>
+            <p className="text-sm text-gray-500">Votre offre actuelle</p>
+            <p className="text-2xl font-extrabold mt-0.5">{planLabel(currentPlan)}</p>
+            {active ? (
+              <p className="text-sm text-gray-500 mt-1">
+                {STATUS_LABEL[status] || status}
+                {user?.subscriptionInterval ? ` · facturation ${user.subscriptionInterval === "year" ? "annuelle" : "mensuelle"}` : ""}
+                {user?.currentPeriodEnd ? ` · prochaine échéance le ${new Date(user.currentPeriodEnd).toLocaleDateString("fr-FR")}` : ""}
+              </p>
+            ) : trial != null && trial > 0 ? (
+              <p className="text-sm text-amber-600 mt-1">
+                Essai gratuit — {trial} jour{trial > 1 ? "s" : ""} restant{trial > 1 ? "s" : ""}. Abonnez-vous pour continuer après l'essai.
+              </p>
+            ) : (
+              <p className="text-sm text-gray-500 mt-1">Aucun abonnement actif.</p>
+            )}
+          </div>
+          {user?.hasBilling && (
+            <button
+              onClick={openPortal}
+              disabled={busy === "portal"}
+              className="border-2 border-[#ffd5d6] hover:border-[#ff5a5f] text-[#1b2a4a] font-semibold px-5 py-2.5 rounded-full flex items-center gap-2"
+            >
+              {busy === "portal" ? <RefreshCw size={15} className="animate-spin" /> : <CreditCard size={15} />} Gérer mon abonnement
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Sélecteur mensuel / annuel */}
+      <div className="flex items-center justify-center">
+        <div className="bg-gray-100 p-1 rounded-full flex">
+          <button
+            onClick={() => setBillingInterval("month")}
+            className={`px-5 py-2 rounded-full text-sm font-semibold ${billingInterval === "month" ? "bg-white shadow-sm text-[#1b2a4a]" : "text-gray-500"}`}
+          >
+            Mensuel
+          </button>
+          <button
+            onClick={() => setBillingInterval("year")}
+            className={`px-5 py-2 rounded-full text-sm font-semibold flex items-center gap-1.5 ${billingInterval === "year" ? "bg-white shadow-sm text-[#1b2a4a]" : "text-gray-500"}`}
+          >
+            Annuel <span className="text-[10px] font-bold text-[#ff5a5f] bg-[#fff1f1] px-1.5 py-0.5 rounded-full">2 mois offerts</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Cartes d'offres */}
+      <div className="grid md:grid-cols-3 gap-4 items-start">
+        {PLAN_IDS.map((id) => {
+          const p = PLANS[id];
+          const monthly = p.price;
+          const yearly = p.price * 10;
+          const price = billingInterval === "year" ? yearly : monthly;
+          const isCurrent = id === currentPlan && active;
+          return (
+            <div
+              key={id}
+              className={`bg-white rounded-2xl p-6 relative ${id === "pro" ? "ring-2 ring-[#ff5a5f] shadow-lg" : "border border-gray-100 shadow-sm"}`}
+            >
+              {id === "pro" && (
+                <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#ff5a5f] text-white text-xs font-semibold px-3 py-1 rounded-full">
+                  Le plus choisi
+                </span>
+              )}
+              <h3 className="font-bold text-lg">{p.name}</h3>
+              <p className="mt-3">
+                <span className="text-3xl font-extrabold">{price} €</span>
+                <span className="text-gray-400 text-sm"> /{billingInterval === "year" ? "an" : "mois"} HT</span>
+              </p>
+              {billingInterval === "year" && (
+                <p className="text-xs text-[#ff5a5f] font-medium mt-1">soit {(yearly / 12).toFixed(2)} €/mois</p>
+              )}
+              {isCurrent ? (
+                <div className="mt-5 text-center text-sm font-semibold text-[#ff5a5f] border-2 border-[#ffd5d6] rounded-full py-2.5">
+                  Offre actuelle
+                </div>
+              ) : (
+                <button
+                  onClick={() => subscribe(id)}
+                  disabled={busy === id}
+                  className={`mt-5 w-full font-semibold px-4 py-2.5 rounded-full flex items-center justify-center gap-2 ${
+                    id === "pro" ? "bg-[#ff5a5f] hover:bg-[#f63d44] text-white" : "border-2 border-[#ffd5d6] hover:border-[#ff5a5f] text-[#1b2a4a]"
+                  }`}
+                >
+                  {busy === id ? <RefreshCw size={15} className="animate-spin" /> : <CreditCard size={15} />}
+                  {active ? "Choisir cette offre" : "S'abonner"}
+                </button>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      <p className="text-xs text-gray-400 text-center">
+        Paiement sécurisé par Stripe. Sans engagement, résiliable à tout moment depuis « Gérer mon abonnement ».
+      </p>
+    </main>
+  );
+}
+
+// Écran de blocage affiché quand l'essai est terminé sans abonnement actif
+function PaywallScreen({ user, showToast, onLogout }) {
+  return (
+    <div className="min-h-screen bg-slate-50">
+      <header className="bg-white border-b border-gray-100 px-6 py-3 flex items-center justify-between">
+        <div className="flex items-center gap-2.5">
+          <div className="bg-[#ff5a5f] text-white p-2 rounded-xl">
+            <LpMark size={18} />
+          </div>
+          <span className="font-extrabold text-[#1b2a4a]">LinkeePost</span>
+        </div>
+        <button onClick={onLogout} className="text-sm text-gray-500 hover:text-[#ff5a5f] flex items-center gap-1.5">
+          <LogOut size={15} /> Se déconnecter
+        </button>
+      </header>
+      <div className="max-w-3xl mx-auto px-6">
+        <div className="text-center mt-10 mb-2">
+          <div className="w-14 h-14 rounded-2xl bg-[#fff1f1] text-[#ff5a5f] flex items-center justify-center mx-auto mb-4">
+            <Lock size={26} />
+          </div>
+          <h1 className="text-2xl md:text-3xl font-extrabold">Votre essai gratuit est terminé</h1>
+          <p className="text-[#5a6b85] mt-2 max-w-xl mx-auto">
+            Abonnez-vous pour continuer à utiliser LinkeePost. Vos posts, campagnes et réglages sont conservés —
+            tout reprend dès l'abonnement activé.
+          </p>
+        </div>
+        <BillingView user={user} showToast={showToast} />
+      </div>
+    </div>
+  );
+}
+
 function DashboardView({ drafts, canVeille = true, canEvents = false, canScore = true, postsLimit = null, onGoCreate, onGoHistory, onGoEvents, onGoProfile, onApprove, profile, linkedin, orgs, onPlanned, onProfileSaved, showToast, onInspire }) {
   const [mode, setMode] = useState("list"); // list | calendar
   const [periodDays, setPeriodDays] = useState(7);
@@ -4865,10 +5054,36 @@ export default function Home() {
   const [versions, setVersions] = useState([]); // historique de versions { id, text, label, score }
   const [showTutorial, setShowTutorial] = useState(false); // tutoriel de première connexion
 
-  // Lien profond depuis une notification (ex : /app?view=events)
+  // Lien profond (notifications, retour Stripe) — ex : /app?view=events, /app?billing=success
   useEffect(() => {
-    const v = new URLSearchParams(window.location.search).get("view");
+    const params = new URLSearchParams(window.location.search);
+    const v = params.get("view");
+    const billing = params.get("billing");
     if (v === "events") setView("events");
+    if (v === "billing") setView("billing");
+    if (billing === "success") {
+      setView("billing");
+      showToast("Merci ! Votre abonnement est en cours d'activation ✓");
+      // le webhook met à jour le plan en arrière-plan : on interroge /me plusieurs fois
+      let tries = 0;
+      const poll = () => {
+        fetch("/api/auth/me")
+          .then((r) => r.json())
+          .then((d) => {
+            if (d.user) setUser(d.user);
+            tries += 1;
+            if (tries < 5 && !["active", "trialing"].includes(d.user?.subscriptionStatus || "")) {
+              setTimeout(poll, 2000);
+            }
+          })
+          .catch(() => {});
+      };
+      setTimeout(poll, 1500);
+    } else if (billing === "cancel") {
+      setView("billing");
+      showToast("Paiement annulé — vous pouvez réessayer quand vous voulez.");
+    }
+    if (v || billing) window.history.replaceState({}, "", "/app");
   }, []);
 
 
@@ -5436,6 +5651,12 @@ export default function Home() {
 
   if (!user) return <AuthScreen onAuth={setUser} />;
 
+  // Essai terminé sans abonnement actif → blocage (paywall), avant même l'onboarding.
+  // Les admins ne sont jamais bloqués.
+  if (!user.isAdmin && accessState(user) === "expired") {
+    return <PaywallScreen user={user} showToast={showToast} onLogout={logout} />;
+  }
+
   // Première connexion : configuration du profil en étapes
   // (on attend aussi le statut LinkedIn pour que le wizard reprenne à la bonne étape)
   if (!profileLoaded || !linkedinLoaded) {
@@ -5481,6 +5702,7 @@ export default function Home() {
     { id: "campaigns", label: "Campagnes", icon: LayersIcon, requires: "campaigns", featureLabel: "Les campagnes" },
     { id: "events", label: "Événements", icon: MapPin, requires: "events", featureLabel: "Le module Événements" },
     { id: "stats", label: "Statistiques", icon: BarChart3 },
+    { id: "billing", label: "Abonnement", icon: CreditCard },
     { id: "profile", label: "Profil", icon: UserRound },
     ...(user.isAdmin
       ? [
@@ -5497,6 +5719,7 @@ export default function Home() {
     campaigns: "Campagnes",
     events: "Événements",
     stats: "Statistiques",
+    billing: "Abonnement",
     profile: "Mon profil",
     admin: "Administration",
     content: "Contenu du site",
@@ -5717,12 +5940,12 @@ export default function Home() {
             <p className="text-sm text-gray-500 mt-2">
               Votre offre actuelle : <strong>{plan.name}</strong>. Passez à une offre supérieure pour débloquer cette fonctionnalité.
             </p>
-            <a
-              href="/tarifs"
-              className="mt-5 flex items-center justify-center gap-2 bg-[#ff5a5f] hover:bg-[#f63d44] text-white font-semibold px-5 py-3 rounded-full transition-colors"
+            <button
+              onClick={() => { setUpgrade(null); setView("billing"); }}
+              className="mt-5 w-full flex items-center justify-center gap-2 bg-[#ff5a5f] hover:bg-[#f63d44] text-white font-semibold px-5 py-3 rounded-full transition-colors"
             >
-              <ArrowUpCircle size={17} /> Voir les offres
-            </a>
+              <ArrowUpCircle size={17} /> Voir les offres et s'abonner
+            </button>
             <button onClick={() => setUpgrade(null)} className="mt-3 text-xs text-gray-400 hover:text-gray-600">
               Plus tard
             </button>
@@ -5888,6 +6111,33 @@ export default function Home() {
           }}
         />
       )}
+
+      {/* Bandeau d'essai / incident de paiement */}
+      {(() => {
+        const st = accessState(user);
+        const left = trialDaysLeft(user);
+        if (st === "past_due") {
+          return (
+            <div className="max-w-5xl mx-auto px-6 mt-3">
+              <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm flex items-center justify-between gap-3 flex-wrap">
+                <span className="flex items-center gap-2"><AlertCircle size={16} /> Votre dernier paiement a échoué. Mettez à jour votre moyen de paiement pour ne pas perdre l'accès.</span>
+                <button onClick={() => setView("billing")} className="font-semibold underline shrink-0">Régulariser</button>
+              </div>
+            </div>
+          );
+        }
+        if (st === "trial" && left != null && left <= 5) {
+          return (
+            <div className="max-w-5xl mx-auto px-6 mt-3">
+              <div className="bg-[#fff1f1] border border-[#ffd5d6] text-[#1b2a4a] rounded-xl px-4 py-3 text-sm flex items-center justify-between gap-3 flex-wrap">
+                <span className="flex items-center gap-2"><Clock size={16} className="text-[#ff5a5f]" /> Il vous reste {left} jour{left > 1 ? "s" : ""} d'essai gratuit. Abonnez-vous pour ne pas être interrompu.</span>
+                <button onClick={() => setView("billing")} className="font-semibold text-[#ff5a5f] underline shrink-0">Choisir une offre</button>
+              </div>
+            </div>
+          );
+        }
+        return null;
+      })()}
 
       {view === "dashboard" ? (
         <DashboardView
@@ -6740,6 +6990,8 @@ export default function Home() {
         />
       ) : view === "stats" ? (
         <StatsView linkedin={linkedin} orgs={orgs} profile={profile} drafts={drafts} />
+      ) : view === "billing" ? (
+        <BillingView user={user} showToast={showToast} />
       ) : view === "profile" ? (
         <ProfileView
           key={profile?.email ?? "profile"}

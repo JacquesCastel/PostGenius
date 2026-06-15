@@ -4,6 +4,7 @@ import { getLanding } from "@/lib/landing";
 import { PLANS, PLAN_IDS } from "@/lib/plans";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
+import PricingCards from "@/components/PricingCards";
 
 export const dynamic = "force-dynamic";
 
@@ -59,43 +60,20 @@ export default async function TarifsPage() {
             </p>
           </div>
 
-          {/* Cartes d'offres */}
-          <div className="grid md:grid-cols-3 gap-6 mt-12 items-start">
-            {PLAN_IDS.map((id) => {
+          {/* Cartes d'offres avec bascule mensuel / annuel */}
+          <PricingCards
+            plans={PLAN_IDS.map((id) => {
               const plan = PLANS[id];
-              const card = cardByName[id] || { name: plan.name, price: plan.price, desc: "", features: [], highlight: id === "pro" };
-              return (
-                <div
-                  key={id}
-                  className={`bg-white rounded-3xl p-7 relative ${
-                    card.highlight ? "ring-2 ring-[#ff5a5f] shadow-2xl shadow-rose-200/50 md:-translate-y-2" : "border border-white shadow-lg shadow-rose-100/30"
-                  }`}
-                >
-                  {card.highlight && (
-                    <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#ff5a5f] text-white text-xs font-semibold px-3 py-1 rounded-full shadow">
-                      Le plus choisi
-                    </span>
-                  )}
-                  <h3 className="font-bold text-lg">{card.name}</h3>
-                  {card.desc && <p className="text-sm text-[#5a6b85] mt-1 min-h-10">{card.desc}</p>}
-                  <p className="mt-4">
-                    <span className="text-4xl font-extrabold">{card.price} €</span>
-                    <span className="text-gray-400 text-sm"> /mois HT</span>
-                  </p>
-                  <Link
-                    href={`/app?plan=${id}`}
-                    className={`mt-6 block text-center font-semibold px-4 py-3 rounded-full transition-colors ${
-                      card.highlight
-                        ? "bg-[#ff5a5f] hover:bg-[#f63d44] text-white shadow-lg shadow-rose-300/40"
-                        : "border-2 border-[#ffd5d6] hover:border-[#ff5a5f] text-[#1b2a4a]"
-                    }`}
-                  >
-                    Commencer l'essai
-                  </Link>
-                </div>
-              );
+              const card = cardByName[id] || {};
+              return {
+                id,
+                name: card.name || plan.name,
+                price: card.price ?? plan.price,
+                desc: card.desc || "",
+                highlight: card.highlight ?? id === "pro",
+              };
             })}
-          </div>
+          />
 
           {/* Comparatif détaillé */}
           <div className="mt-16">

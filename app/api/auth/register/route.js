@@ -38,7 +38,17 @@ export async function POST(req) {
   });
 
   const res = NextResponse.json({
-    user: { email: user.email, name: user.name, plan: user.plan, trialEndsAt: user.trialEndsAt },
+    user: {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      plan: user.plan,
+      trialEndsAt: user.trialEndsAt,
+      subscriptionStatus: user.subscriptionStatus,
+      subscriptionInterval: user.subscriptionInterval,
+      currentPeriodEnd: user.currentPeriodEnd,
+      hasBilling: Boolean(user.stripeCustomerId),
+    },
   });
   res.cookies.set(SESSION_COOKIE, await createSessionToken(user.id), sessionCookieOptions());
   return res;

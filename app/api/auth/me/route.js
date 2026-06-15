@@ -9,16 +9,33 @@ export async function GET(req) {
 
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { email: true, name: true, role: true, disabled: true, plan: true, trialEndsAt: true },
+    select: {
+      id: true,
+      email: true,
+      name: true,
+      role: true,
+      disabled: true,
+      plan: true,
+      trialEndsAt: true,
+      subscriptionStatus: true,
+      subscriptionInterval: true,
+      currentPeriodEnd: true,
+      stripeCustomerId: true,
+    },
   });
   if (!user || user.disabled) return NextResponse.json({ user: null });
   return NextResponse.json({
     user: {
+      id: user.id,
       email: user.email,
       name: user.name,
       isAdmin: isAdminUser(user),
       plan: user.plan,
       trialEndsAt: user.trialEndsAt,
+      subscriptionStatus: user.subscriptionStatus,
+      subscriptionInterval: user.subscriptionInterval,
+      currentPeriodEnd: user.currentPeriodEnd,
+      hasBilling: Boolean(user.stripeCustomerId),
     },
   });
 }

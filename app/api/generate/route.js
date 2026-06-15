@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getUserId } from "@/lib/session";
 import { logUsage } from "@/lib/usage";
+import { checkAccess } from "@/lib/gating";
 
 // Génération du post via l'API Claude (Messages API).
 // Le profil de rédaction du client (titre, consignes de style) enrichit le prompt.
@@ -129,6 +130,10 @@ export async function POST(req) {
   // Profil de rédaction du client (consignes de style, titre pro)
   let profile = null;
   const userId = await getUserId(req);
+  if (userId) {
+    const access = await checkAccess(userId);
+    if (!access.ok) return NextResponse.json({ error: access.error, code: access.code }, { status: 403 });
+  }
   if (userId) {
     profile = await prisma.user.findUnique({
       where: { id: userId },

@@ -3,6 +3,7 @@ import "./globals.css";
 export const metadata = {
   title: "LinkeePost — Générateur de posts LinkedIn",
   description: "Générez des posts LinkedIn percutants avec l'IA et publiez-les en un clic.",
+  icons: { icon: "/icon.svg", shortcut: "/icon.svg", apple: "/icon.svg" },
 };
 
 export default function RootLayout({ children }) {

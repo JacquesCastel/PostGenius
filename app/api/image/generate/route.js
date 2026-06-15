@@ -3,7 +3,7 @@ import { prisma } from "@/lib/db";
 import { getUserId } from "@/lib/session";
 import { saveImage } from "@/lib/image";
 import { logUsage } from "@/lib/usage";
-import { checkImageQuota } from "@/lib/gating";
+import { checkImageQuota, checkAccess } from "@/lib/gating";
 
 // Génère une image pour un post : prompt fourni par le client,
 // ou rédigé par Claude à partir du contenu du post + contexte de marque.
@@ -56,6 +56,8 @@ Réponds UNIQUEMENT en JSON : {"prompt": "..."}`;
 export async function POST(req) {
   const userId = await getUserId(req);
   if (!userId) return NextResponse.json({ error: "Non connecté." }, { status: 401 });
+  const access = await checkAccess(userId);
+  if (!access.ok) return NextResponse.json({ error: access.error, code: access.code }, { status: 403 });
   const imgQuota = await checkImageQuota(userId);
   if (!imgQuota.ok) return NextResponse.json({ error: imgQuota.error }, { status: 403 });
   if (!process.env.OPENAI_API_KEY) {
