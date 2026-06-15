@@ -164,6 +164,50 @@ export default function FonctionnalitesPage() {
           </Card>
         </Feature>
 
+        {/* Score d'engagement (offre Pro) */}
+        <Feature
+          tag="Score d'engagement · offre Pro"
+          title="Un score d'engagement, et l'optimisation en un clic"
+          text="Chaque post reçoit une note sur 100, avec des conseils concrets critère par critère. Réécrivez l'accroche, le corps ou la signature : le score se recalcule en direct, et l'historique conserve chaque version. Inclus à partir de l'offre Pro."
+          points={[
+            "Note sur 100 + conseils personnalisés par l'IA",
+            "Réécriture ciblée : accroche, corps ou signature",
+            "Score en direct et historique des versions restaurables",
+          ]}
+        >
+          <Card>
+            <div className="flex items-center gap-5">
+              <div className="text-center shrink-0">
+                <p className="text-4xl font-extrabold text-[#16a34a] leading-none">82</p>
+                <p className="text-[11px] text-gray-400 mt-1">/ 100</p>
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-sm font-semibold">Potentiel d'engagement</span>
+                  <span className="text-sm font-bold text-[#16a34a]">Excellent</span>
+                </div>
+                <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
+                  <div className="h-full rounded-full bg-[#16a34a]" style={{ width: "82%" }} />
+                </div>
+              </div>
+            </div>
+            <div className="mt-4 space-y-2">
+              {[
+                { label: "Accroche percutante", ok: true },
+                { label: "Question pour engager", ok: true },
+                { label: "Ajouter 2-3 hashtags", ok: false },
+              ].map((f) => (
+                <div key={f.label} className={`flex items-center gap-2 rounded-xl px-3 py-2 text-xs ${f.ok ? "bg-green-50 text-green-700" : "bg-[#fff1f1] text-[#ff5a5f]"}`}>
+                  <Check size={13} /> {f.label}
+                </div>
+              ))}
+            </div>
+            <Link href="/scoring" className="text-xs font-semibold text-[#ff5a5f] hover:underline mt-3 inline-flex items-center gap-1">
+              Comment on calcule votre score <ChevronRight size={13} />
+            </Link>
+          </Card>
+        </Feature>
+
         {/* 3. Campagnes */}
         <Feature
           tag="Campagnes"
