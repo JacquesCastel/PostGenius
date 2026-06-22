@@ -115,8 +115,9 @@ model LinkedInAccount {
   personExpiresAt DateTime?
   orgToken        String?
   orgExpiresAt    DateTime?
-  orgUrn          String?   // urn:li:organization:ID de la première page admin
-  orgName         String?   // nom de la page (cache)
+  orgUrn          String?   // urn:li:organization:ID de la première page (compat)
+  orgName         String?   // nom de la première page (compat)
+  orgAccounts     String?   // JSON : [{urn, name}, ...] — toutes les pages admin
 }
 
 // Compte Instagram Business connecté (via Facebook Graph API)

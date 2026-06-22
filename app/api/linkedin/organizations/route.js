@@ -4,8 +4,9 @@ import { getUserId } from "@/lib/session";
 import { decryptToken } from "@/lib/crypto";
 
 // Liste les pages entreprise dont le membre est admin.
-// Priorité : orgUrn stocké en base (résolu au moment de la connexion OAuth).
-// Fallback : appel live organizationAcls (requiert rw_organization_admin approuvé).
+// Priorité : orgAccounts (JSON) stocké au moment du callback OAuth.
+// Fallback 1 : orgUrn unique (ancienne version).
+// Fallback 2 : appel live organizationAcls.
 
 export async function GET(req) {
   const userId = await getUserId(req);
@@ -15,14 +16,24 @@ export async function GET(req) {
   const token = decryptToken(acc?.orgToken);
   if (!token) return NextResponse.json({ organizations: [] });
 
-  // 1) Org URN déjà stocké en base → retour immédiat
+  // 1) Tous les comptes stockés en base
+  if (acc.orgAccounts) {
+    try {
+      const organizations = JSON.parse(acc.orgAccounts);
+      if (Array.isArray(organizations) && organizations.length > 0) {
+        return NextResponse.json({ organizations });
+      }
+    } catch {}
+  }
+
+  // 2) Compat : org unique stocké (ancienne version)
   if (acc.orgUrn) {
     return NextResponse.json({
       organizations: [{ urn: acc.orgUrn, name: acc.orgName ?? `Page ${acc.orgUrn.split(":").pop()}` }],
     });
   }
 
-  // 2) Fallback : appel live (peut échouer si rw_organization_admin non approuvé)
+  // 3) Fallback live
   const headers = {
     Authorization: `Bearer ${token}`,
     "LinkedIn-Version": process.env.LINKEDIN_VERSION || "202604",
@@ -55,11 +66,15 @@ export async function GET(req) {
       })
     );
 
-    // Persist le premier résultat pour éviter les appels futurs
+    // Persist pour les prochains appels
     if (organizations.length > 0) {
       await prisma.linkedInAccount.update({
         where: { userId },
-        data: { orgUrn: organizations[0].urn, orgName: organizations[0].name },
+        data: {
+          orgAccounts: JSON.stringify(organizations),
+          orgUrn: organizations[0].urn,
+          orgName: organizations[0].name,
+        },
       });
     }
 

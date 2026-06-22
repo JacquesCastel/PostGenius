@@ -51,9 +51,8 @@ export async function GET(req) {
       "X-Restli-Protocol-Version": "2.0.0",
     };
 
-    // Résolution de l'org URN au moment de la connexion
-    let orgUrn = null;
-    let orgName = null;
+    // Résolution de toutes les pages admin au moment de la connexion
+    let orgAccounts = [];
     try {
       const aclRes = await fetch(
         "https://api.linkedin.com/rest/organizationAcls?q=roleAssignee&role=ADMINISTRATOR&state=APPROVED",
@@ -61,23 +60,32 @@ export async function GET(req) {
       );
       if (aclRes.ok) {
         const acls = await aclRes.json();
-        orgUrn = acls.elements?.[0]?.organization ?? null;
-        if (orgUrn) {
-          const id = orgUrn.split(":").pop();
-          const orgRes = await fetch(`https://api.linkedin.com/rest/organizations/${id}`, { headers: liHeaders });
-          if (orgRes.ok) orgName = (await orgRes.json()).localizedName ?? null;
-        }
+        const urns = (acls.elements ?? []).map((e) => e.organization).filter(Boolean);
+        orgAccounts = await Promise.all(
+          urns.map(async (urn) => {
+            const id = urn.split(":").pop();
+            try {
+              const orgRes = await fetch(`https://api.linkedin.com/rest/organizations/${id}`, { headers: liHeaders });
+              const name = orgRes.ok ? ((await orgRes.json()).localizedName ?? `Page ${id}`) : `Page ${id}`;
+              return { urn, name };
+            } catch {
+              return { urn, name: `Page ${id}` };
+            }
+          })
+        );
       } else {
         console.warn("organizationAcls:", aclRes.status, await aclRes.text());
       }
     } catch (e) {
-      console.warn("Org URN non résolu:", e.message);
+      console.warn("Org URNs non résolus:", e.message);
     }
 
+    const firstOrg = orgAccounts[0] ?? null;
     const data = {
       orgToken: encryptToken(access_token),
       orgExpiresAt: new Date(Date.now() + (expires_in ?? 5184000) * 1000),
-      ...(orgUrn ? { orgUrn, orgName } : {}),
+      ...(firstOrg ? { orgUrn: firstOrg.urn, orgName: firstOrg.name } : {}),
+      ...(orgAccounts.length > 0 ? { orgAccounts: JSON.stringify(orgAccounts) } : {}),
     };
     await prisma.linkedInAccount.upsert({
       where: { userId },
