@@ -1740,28 +1740,182 @@ function AdminView({ showToast }) {
 }
 
 // ----------------------------------------------------------------
-// Contenu du site (admin) : blog + landing éditable
+// Contenu du site (admin) : blog + landing + pages légales
 // ----------------------------------------------------------------
 function ContentAdminView({ showToast }) {
-  const [tab, setTab] = useState("blog"); // blog | landing
+  const [tab, setTab] = useState("blog"); // blog | landing | legal
+  const tabs = [
+    { id: "blog", label: "Blog" },
+    { id: "landing", label: "Page d'accueil" },
+    { id: "legal", label: "Pages légales" },
+  ];
   return (
     <main className="max-w-5xl mx-auto p-6 space-y-6">
       <div className="inline-flex bg-gray-100 p-1 rounded-lg">
-        <button
-          onClick={() => setTab("blog")}
-          className={`px-4 py-1.5 rounded-md text-sm font-medium ${tab === "blog" ? "bg-white shadow-sm" : "text-gray-500"}`}
-        >
-          Blog
-        </button>
-        <button
-          onClick={() => setTab("landing")}
-          className={`px-4 py-1.5 rounded-md text-sm font-medium ${tab === "landing" ? "bg-white shadow-sm" : "text-gray-500"}`}
-        >
-          Page d'accueil
-        </button>
+        {tabs.map((t) => (
+          <button
+            key={t.id}
+            onClick={() => setTab(t.id)}
+            className={`px-4 py-1.5 rounded-md text-sm font-medium ${tab === t.id ? "bg-white shadow-sm" : "text-gray-500"}`}
+          >
+            {t.label}
+          </button>
+        ))}
       </div>
-      {tab === "blog" ? <BlogAdmin showToast={showToast} /> : <LandingAdmin showToast={showToast} />}
+      {tab === "blog" && <BlogAdmin showToast={showToast} />}
+      {tab === "landing" && <LandingAdmin showToast={showToast} />}
+      {tab === "legal" && <FooterPagesAdmin showToast={showToast} />}
     </main>
+  );
+}
+
+// ----------------------------------------------------------------
+// Pages légales (admin) : CGU, confidentialité, mentions légales
+// ----------------------------------------------------------------
+const FOOTER_PAGE_OPTIONS = [
+  { key: "cgu", label: "CGU" },
+  { key: "confidentialite", label: "Confidentialité" },
+  { key: "mentions-legales", label: "Mentions légales" },
+];
+
+function FooterPagesAdmin({ showToast }) {
+  const [selectedKey, setSelectedKey] = useState("cgu");
+  const [page, setPage] = useState(null); // { title, sections: [{heading, body}] }
+  const [saving, setSaving] = useState(false);
+
+  const load = (key) => {
+    setPage(null);
+    fetch(`/api/admin/footer-pages/${key}`)
+      .then(readJson)
+      .then((d) => setPage(d.page))
+      .catch((e) => showToast(e.message));
+  };
+
+  useEffect(() => { load(selectedKey); }, [selectedKey]); // eslint-disable-line
+
+  const save = async () => {
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/admin/footer-pages/${selectedKey}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(page),
+      });
+      const d = await readJson(res);
+      if (!res.ok) throw new Error(d.error);
+      showToast("Page enregistrée");
+    } catch (e) {
+      showToast(e.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const setSection = (i, field, value) =>
+    setPage((p) => ({ ...p, sections: p.sections.map((s, j) => j === i ? { ...s, [field]: value } : s) }));
+
+  const addSection = () =>
+    setPage((p) => ({ ...p, sections: [...p.sections, { heading: "", body: "" }] }));
+
+  const removeSection = (i) => {
+    if (!window.confirm("Supprimer cette section ?")) return;
+    setPage((p) => ({ ...p, sections: p.sections.filter((_, j) => j !== i) }));
+  };
+
+  const field = "w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]";
+
+  return (
+    <div className="space-y-5">
+      {/* Sélecteur de page */}
+      <div className="inline-flex bg-gray-100 p-1 rounded-lg">
+        {FOOTER_PAGE_OPTIONS.map((o) => (
+          <button
+            key={o.key}
+            onClick={() => setSelectedKey(o.key)}
+            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${selectedKey === o.key ? "bg-white shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
+          >
+            {o.label}
+          </button>
+        ))}
+      </div>
+
+      {!page ? (
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-12 text-center text-gray-400">
+          <RefreshCw size={22} className="mx-auto mb-2 animate-spin text-[#ff5a5f]" />
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {/* Titre de la page */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-2">
+            <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Titre de la page</label>
+            <input
+              className={field}
+              value={page.title}
+              onChange={(e) => setPage((p) => ({ ...p, title: e.target.value }))}
+              placeholder="Titre affiché en h1"
+            />
+          </div>
+
+          {/* Sections */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="font-semibold text-sm">Sections</h3>
+              <button
+                onClick={addSection}
+                className="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1.5 rounded-lg flex items-center gap-1"
+              >
+                + Ajouter une section
+              </button>
+            </div>
+            {page.sections.map((s, i) => (
+              <div key={i} className="border border-gray-100 rounded-xl p-4 space-y-2 relative">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-400 font-mono w-5 shrink-0">{i + 1}.</span>
+                  <input
+                    className={field}
+                    value={s.heading}
+                    onChange={(e) => setSection(i, "heading", e.target.value)}
+                    placeholder="Titre de la section (h2)"
+                  />
+                  <button
+                    onClick={() => removeSection(i)}
+                    className="text-gray-300 hover:text-red-400 transition-colors shrink-0"
+                    title="Supprimer"
+                  >
+                    <Trash2 size={15} />
+                  </button>
+                </div>
+                <textarea
+                  className={`${field} ml-7`}
+                  rows={4}
+                  value={s.body}
+                  onChange={(e) => setSection(i, "body", e.target.value)}
+                  placeholder="Contenu (un saut de ligne = nouveau paragraphe)"
+                />
+              </div>
+            ))}
+          </div>
+
+          <div className="flex items-center justify-between">
+            <a
+              href={`/${selectedKey}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs text-[#ff5a5f] hover:underline"
+            >
+              Voir la page ↗
+            </a>
+            <button
+              onClick={save}
+              disabled={saving}
+              className="bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white text-sm font-medium px-6 py-2.5 rounded-lg flex items-center gap-2"
+            >
+              {saving && <RefreshCw size={15} className="animate-spin" />} Enregistrer
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 
