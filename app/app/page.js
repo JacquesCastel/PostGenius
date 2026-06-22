@@ -4411,7 +4411,7 @@ function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast 
 // ----------------------------------------------------------------
 // Page profil : identité, expertise, style de rédaction
 // ----------------------------------------------------------------
-function ProfileView({ profile, onSaved, showToast, linkedin, onDisconnect, instagram, onDisconnectInstagram }) {
+function ProfileView({ profile, onSaved, showToast, linkedin, onDisconnect, instagram, onDisconnectInstagram, canOrgPublish = true }) {
   const [fields, setFields] = useState({
     name: profile?.name ?? "",
     headline: profile?.headline ?? "",
@@ -4905,24 +4905,24 @@ function ProfileView({ profile, onSaved, showToast, linkedin, onDisconnect, inst
                     Connectée
                     {linkedin.orgExpiresAt && <> · expire le {new Date(linkedin.orgExpiresAt).toLocaleDateString("fr-FR")}</>}
                   </p>
-                ) : (
+                ) : canOrgPublish ? (
                   <p className="text-xs text-gray-400">Connectez votre page entreprise LinkedIn pour publier en son nom.</p>
+                ) : (
+                  <p className="text-xs text-gray-400">Disponible à partir du plan <strong>Agence</strong>.</p>
                 )}
               </div>
             </div>
             {linkedin.orgConnected ? (
-              <a
-                href="/api/linkedin/auth-org"
-                className="text-xs border border-gray-200 hover:border-[#ff5a5f] text-gray-700 px-3 py-1.5 rounded-xl shrink-0"
-              >
+              <a href="/api/linkedin/auth-org" className="text-xs border border-gray-200 hover:border-[#ff5a5f] text-gray-700 px-3 py-1.5 rounded-xl shrink-0">
                 Reconnecter
               </a>
-            ) : (
-              <a
-                href="/api/linkedin/auth-org"
-                className="text-xs bg-[#0a66c2] hover:bg-[#004182] text-white px-3 py-1.5 rounded-xl shrink-0 transition-colors"
-              >
+            ) : canOrgPublish ? (
+              <a href="/api/linkedin/auth-org" className="text-xs bg-[#0a66c2] hover:bg-[#004182] text-white px-3 py-1.5 rounded-xl shrink-0 transition-colors">
                 Connecter
+              </a>
+            ) : (
+              <a href="/tarifs" className="text-xs bg-gray-100 hover:bg-gray-200 text-gray-600 px-3 py-1.5 rounded-xl shrink-0 flex items-center gap-1">
+                <Lock size={11} /> Agence
               </a>
             )}
           </div>
@@ -7134,6 +7134,7 @@ export default function Home() {
           instagram={instagram}
           onDisconnect={disconnect}
           onDisconnectInstagram={disconnectInstagram}
+          canOrgPublish={plan.orgPublish}
           showToast={showToast}
           onSaved={(p) => {
             setProfile(p);
