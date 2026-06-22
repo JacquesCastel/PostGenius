@@ -3539,7 +3539,7 @@ function DashboardView({ drafts, canVeille = true, canEvents = false, canScore =
 }
 
 // ----------------------------------------------------------------
-// Statistiques des posts (pages entreprise)
+// Statistiques : profil personnel (Phyllo) + page entreprise (LinkedIn API)
 // ----------------------------------------------------------------
 function StatsView({ linkedin, orgs, profile, drafts }) {
   const [org, setOrg] = useState(orgs[0]?.urn ?? "");
@@ -3547,11 +3547,10 @@ function StatsView({ linkedin, orgs, profile, drafts }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [campaigns, setCampaigns] = useState([]);
-  const [campTab, setCampTab] = useState("active"); // active | archived
+  const [campTab, setCampTab] = useState("active");
   const [expandedId, setExpandedId] = useState(null);
   const [pStats, setPStats] = useState(null);
   const [pLoading, setPLoading] = useState(false);
-  const [statsTab, setStatsTab] = useState(linkedin.orgConnected ? "org" : "personal");
 
   useEffect(() => {
     fetch("/api/campaigns?all=1")
@@ -3631,243 +3630,296 @@ function StatsView({ linkedin, orgs, profile, drafts }) {
     : [];
 
   return (
-    <main className="max-w-5xl mx-auto p-6 space-y-6">
+    <main className="max-w-5xl mx-auto p-6 space-y-8">
+
+      {/* En-tête */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h2 className="font-semibold text-lg">Statistiques</h2>
           <p className="text-sm text-gray-500">Performance de vos publications</p>
         </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          {/* Onglets Profil / Page entreprise */}
-          <div className="flex gap-1 bg-gray-100 p-1 rounded-lg">
-            <button
-              onClick={() => setStatsTab("personal")}
-              className={`px-3 py-1.5 rounded-md text-xs font-medium flex items-center gap-1.5 ${statsTab === "personal" ? "bg-white shadow-sm" : "text-gray-500"}`}
-            >
-              <UserRound size={13} /> Profil personnel
-            </button>
-            {linkedin.orgConnected && (
-              <button
-                onClick={() => setStatsTab("org")}
-                className={`px-3 py-1.5 rounded-md text-xs font-medium flex items-center gap-1.5 ${statsTab === "org" ? "bg-white shadow-sm" : "text-gray-500"}`}
-              >
-                <Linkedin size={13} /> Page entreprise
-              </button>
-            )}
-          </div>
-          {/* Sélecteur de page (visible uniquement onglet org) */}
-          {statsTab === "org" && orgs.length > 1 && (
-            <select
-              value={org}
-              onChange={(e) => setOrg(e.target.value)}
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
-            >
-              {orgs.map((o) => (
-                <option key={o.urn} value={o.urn}>{o.name}</option>
-              ))}
-            </select>
-          )}
-        </div>
+        {linkedin.orgConnected && orgs.length > 0 && (
+          <select
+            value={org}
+            onChange={(e) => setOrg(e.target.value)}
+            className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
+          >
+            {orgs.map((o) => (
+              <option key={o.urn} value={o.urn}>{o.name}</option>
+            ))}
+          </select>
+        )}
       </div>
 
-      {/* Suivi des campagnes */}
+      {/* ── 1. Suivi des campagnes ── */}
       {campaigns.length > 0 && (
-        <div>
+        <section>
           <div className="flex items-center justify-between flex-wrap gap-2 mb-3">
             <h3 className="font-semibold text-base flex items-center gap-2">
               <Megaphone size={16} className="text-[#ff5a5f]" /> Suivi des campagnes
             </h3>
             <div className="flex gap-1 bg-gray-100 p-1 rounded-lg">
               {[
-                ["active", `Actives (${campaigns.filter((c) => c.status === "active").length})`],
+                ["active",   `Actives (${campaigns.filter((c) => c.status === "active").length})`],
                 ["archived", `Archivées (${campaigns.filter((c) => c.status === "archivée").length})`],
               ].map(([id, lbl]) => (
-                <button
-                  key={id}
-                  onClick={() => setCampTab(id)}
-                  className={`px-3 py-1.5 rounded-md text-xs font-medium ${
-                    campTab === id ? "bg-white shadow-sm" : "text-gray-500"
-                  }`}
-                >
+                <button key={id} onClick={() => setCampTab(id)}
+                  className={`px-3 py-1.5 rounded-md text-xs font-medium ${campTab === id ? "bg-white shadow-sm" : "text-gray-500"}`}>
                   {lbl}
                 </button>
               ))}
             </div>
           </div>
-          {campaigns.filter((c) => (campTab === "active" ? c.status === "active" : c.status === "archivée"))
-            .length === 0 && (
-            <p className="text-sm text-gray-400 bg-white rounded-2xl border border-dashed border-gray-200 p-6 text-center mb-3">
-              {campTab === "active" ? "Aucune campagne active." : "Aucune campagne archivée."}
-            </p>
-          )}
           <div className="space-y-3">
             {campaigns
-              .filter((c) => (campTab === "active" ? c.status === "active" : c.status === "archivée"))
+              .filter((c) => campTab === "active" ? c.status === "active" : c.status === "archivée")
               .map((c) => {
-              const progress = c.postCount > 0 ? Math.round((c.published / c.postCount) * 100) : 0;
-              const quality = campaignQuality(c);
-              return (
-                <div key={c.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-                  <div className="flex items-start justify-between gap-3 flex-wrap mb-3">
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <h4 className="font-semibold truncate">{c.name}</h4>
-                        {c.objective && (
-                          <span className="text-xs bg-[#fff1f1] text-[#f63d44] px-2 py-0.5 rounded-full">
-                            {c.objective}
-                          </span>
-                        )}
-                        {c.status === "archivée" && (
-                          <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">
-                            archivée
-                          </span>
+                const progress = c.postCount > 0 ? Math.round((c.published / c.postCount) * 100) : 0;
+                const quality = campaignQuality(c);
+                return (
+                  <div key={c.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+                    <div className="flex items-start justify-between gap-3 flex-wrap mb-3">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h4 className="font-semibold truncate">{c.name}</h4>
+                          {c.objective && <span className="text-xs bg-[#fff1f1] text-[#f63d44] px-2 py-0.5 rounded-full">{c.objective}</span>}
+                          {c.status === "archivée" && <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">archivée</span>}
+                        </div>
+                        <p className="text-xs text-gray-500 mt-0.5">
+                          {c.theme} · ton {profile?.tone ?? "Professionnel"}
+                          {profile?.targetAudience ? ` · cible : ${profile.targetAudience}` : ""}
+                        </p>
+                      </div>
+                      <span className="text-xs text-gray-400 shrink-0">créée le {new Date(c.createdAt).toLocaleDateString("fr-FR")}</span>
+                    </div>
+                    <div className="mb-3">
+                      <div className="flex items-center justify-between text-xs text-gray-500 mb-1">
+                        <span>
+                          <span className="font-semibold text-green-600">{c.published}</span> publié{c.published > 1 ? "s" : ""} ·{" "}
+                          <span className="font-semibold text-amber-600">{c.scheduled + c.toValidate}</span> à publier
+                          {c.toValidate > 0 && ` (dont ${c.toValidate} à valider)`}
+                          {c.errors > 0 && <span className="text-red-600"> · {c.errors} en erreur</span>}
+                        </span>
+                        <span>{progress} %{c.nextScheduledAt && ` · prochain : ${fmtDateTime(c.nextScheduledAt)}`}</span>
+                      </div>
+                      <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                        <div className="h-full bg-green-500 rounded-full" style={{ width: `${progress}%` }} />
+                      </div>
+                    </div>
+                    {quality ? (
+                      <div className="grid grid-cols-5 gap-2 text-center bg-gray-50 rounded-lg p-3">
+                        {[["Impressions", quality.impressions], ["Clics", quality.clicks], ["Réactions", quality.likes], ["Comm.", quality.comments], ["Partages", quality.shares]].map(([label, v]) => (
+                          <div key={label}>
+                            <p className="text-sm font-bold">{new Intl.NumberFormat("fr-FR").format(v)}</p>
+                            <p className="text-xs text-gray-500">{label}</p>
+                          </div>
+                        ))}
+                      </div>
+                    ) : c.published > 0 && (
+                      <p className="text-xs text-gray-400">Qualité disponible pour les posts publiés sur une page entreprise connectée.</p>
+                    )}
+                    {c.context && (
+                      <div className="mt-2">
+                        <button onClick={() => setExpandedId(expandedId === c.id ? null : c.id)}
+                          className="text-xs text-gray-500 hover:text-[#ff5a5f] flex items-center gap-1">
+                          <ChevronDown size={13} className={`transition-transform ${expandedId === c.id ? "rotate-180" : ""}`} />
+                          Détail de la campagne
+                        </button>
+                        {expandedId === c.id && (
+                          <pre className="whitespace-pre-wrap text-xs text-gray-600 bg-gray-50 rounded-lg p-3 mt-2 max-h-48 overflow-y-auto font-sans">{c.context}</pre>
                         )}
                       </div>
-                      <p className="text-xs text-gray-500 mt-0.5">
-                        {c.theme} · ton {profile?.tone ?? "Professionnel"}
-                        {profile?.targetAudience ? ` · cible : ${profile.targetAudience}` : ""}
-                      </p>
-                    </div>
-                    <span className="text-xs text-gray-400 shrink-0">
-                      créée le {new Date(c.createdAt).toLocaleDateString("fr-FR")}
-                    </span>
+                    )}
                   </div>
-
-                  {/* Progression */}
-                  <div className="mb-3">
-                    <div className="flex items-center justify-between text-xs text-gray-500 mb-1">
-                      <span>
-                        <span className="font-semibold text-green-600">{c.published}</span> publié
-                        {c.published > 1 ? "s" : ""} ·{" "}
-                        <span className="font-semibold text-amber-600">{c.scheduled + c.toValidate}</span>{" "}
-                        à publier
-                        {c.toValidate > 0 && ` (dont ${c.toValidate} à valider)`}
-                        {c.errors > 0 && (
-                          <span className="text-red-600"> · {c.errors} en erreur</span>
-                        )}
-                      </span>
-                      <span>
-                        {progress} %{c.nextScheduledAt && ` · prochain : ${fmtDateTime(c.nextScheduledAt)}`}
-                      </span>
-                    </div>
-                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                      <div className="h-full bg-green-500 rounded-full" style={{ width: `${progress}%` }} />
-                    </div>
-                  </div>
-
-                  {/* Qualité (stats LinkedIn) */}
-                  {quality ? (
-                    <div className="grid grid-cols-5 gap-2 text-center bg-gray-50 rounded-lg p-3">
-                      {[
-                        ["Impressions", quality.impressions],
-                        ["Clics", quality.clicks],
-                        ["Réactions", quality.likes],
-                        ["Comm.", quality.comments],
-                        ["Partages", quality.shares],
-                      ].map(([label, v]) => (
-                        <div key={label}>
-                          <p className="text-sm font-bold">{new Intl.NumberFormat("fr-FR").format(v)}</p>
-                          <p className="text-xs text-gray-500">{label}</p>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    c.published > 0 && (
-                      <p className="text-xs text-gray-400">
-                        Qualité (vues, engagement) : disponible pour les posts publiés sur une page
-                        entreprise connectée.
-                      </p>
-                    )
-                  )}
-
-                  {/* Détail / brief */}
-                  {c.context && (
-                    <div className="mt-2">
-                      <button
-                        onClick={() => setExpandedId(expandedId === c.id ? null : c.id)}
-                        className="text-xs text-gray-500 hover:text-[#ff5a5f] flex items-center gap-1"
-                      >
-                        <ChevronDown
-                          size={13}
-                          className={`transition-transform ${expandedId === c.id ? "rotate-180" : ""}`}
-                        />
-                        Détail de la campagne (brief, descriptions)
-                      </button>
-                      {expandedId === c.id && (
-                        <pre className="whitespace-pre-wrap text-xs text-gray-600 bg-gray-50 rounded-lg p-3 mt-2 max-h-48 overflow-y-auto font-sans">
-                          {c.context}
-                        </pre>
-                      )}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+                );
+              })}
+            {campaigns.filter((c) => campTab === "active" ? c.status === "active" : c.status === "archivée").length === 0 && (
+              <p className="text-sm text-gray-400 bg-white rounded-2xl border border-dashed border-gray-200 p-6 text-center">
+                {campTab === "active" ? "Aucune campagne active." : "Aucune campagne archivée."}
+              </p>
+            )}
           </div>
-        </div>
+        </section>
       )}
 
-      {/* ===== ONGLET PROFIL PERSONNEL ===== */}
-      {statsTab === "personal" && profile?.phylloAccountId && (
-        <div>
-          <h3 className="font-semibold text-base mb-3 flex items-center gap-2">
-            <UserRound size={16} className="text-[#ff5a5f]" /> Profil personnel
-            {pStats?.profile?.name && <span className="text-gray-400 font-normal text-sm">— {pStats.profile.name}</span>}
-            <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full font-normal">via Phyllo</span>
-          </h3>
-          {pLoading ? (
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center text-gray-400">
-              <RefreshCw size={22} className="mx-auto mb-2 animate-spin text-[#ff5a5f]" />
-              <p className="text-sm">Récupération des statistiques du profil…</p>
+      {/* ── 2. Profil personnel (Phyllo) ── */}
+      <section>
+        <h3 className="font-semibold text-base mb-3 flex items-center gap-2">
+          <UserRound size={16} className="text-[#ff5a5f]" /> Profil personnel
+          {pStats?.profile?.name && <span className="text-gray-400 font-normal text-sm">— {pStats.profile.name}</span>}
+          {profile?.phylloAccountId && <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full font-normal">via Phyllo</span>}
+        </h3>
+        {!profile?.phylloAccountId ? (
+          <div className="bg-[#fff1f1] border border-[#ffe0e0] rounded-xl p-4 text-sm text-[#1b2a4a] flex items-start gap-2">
+            <AlertCircle size={16} className="mt-0.5 shrink-0" />
+            <span>Connectez Phyllo dans l'onglet Profil pour voir les statistiques de votre profil personnel.</span>
+          </div>
+        ) : pLoading ? (
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center text-gray-400">
+            <RefreshCw size={22} className="mx-auto mb-2 animate-spin text-[#ff5a5f]" />
+            <p className="text-sm">Récupération des statistiques du profil…</p>
+          </div>
+        ) : pStats ? (
+          <>
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-3">
+              {[
+                ["Abonnés", pStats.profile?.followers],
+                ["Vues", pStats.aggregate?.views],
+                ["Réactions", pStats.aggregate?.likes],
+                ["Commentaires", pStats.aggregate?.comments],
+                ["Partages", pStats.aggregate?.shares],
+              ].map(([label, v]) => (
+                <div key={label} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+                  <p className="text-xl font-bold">{v == null ? "—" : new Intl.NumberFormat("fr-FR").format(v)}</p>
+                  <p className="text-xs text-gray-500">{label}</p>
+                </div>
+              ))}
             </div>
-          ) : pStats ? (
-            <>
-              <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-3">
+            {pStats.contents?.length > 0 ? (
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-left text-xs text-gray-500 border-b border-gray-100">
+                      <th className="p-3 font-medium">Post</th>
+                      <th className="p-3 font-medium text-right">Vues</th>
+                      <th className="p-3 font-medium text-right">Réactions</th>
+                      <th className="p-3 font-medium text-right">Comm.</th>
+                      <th className="p-3 font-medium text-right">Partages</th>
+                      <th className="p-3" />
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-50">
+                    {pStats.contents.slice(0, 10).map((c) => (
+                      <tr key={c.id}>
+                        <td className="p-3 max-w-xs">
+                          <p className="truncate">{c.title || "Post"}</p>
+                          <p className="text-xs text-gray-400">{c.publishedAt ? fmtDateTime(c.publishedAt) : ""}</p>
+                        </td>
+                        {["views", "likes", "comments", "shares"].map((k) => (
+                          <td key={k} className="p-3 text-right">
+                            {c[k] == null ? "—" : new Intl.NumberFormat("fr-FR").format(c[k])}
+                          </td>
+                        ))}
+                        <td className="p-3">
+                          {c.url && <a href={c.url} target="_blank" rel="noreferrer" className="text-[#ff5a5f] hover:text-[#d12d33]"><ExternalLink size={14} /></a>}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <p className="text-sm text-gray-400 bg-white rounded-xl border border-dashed border-gray-300 p-6 text-center">
+                Première synchronisation Phyllo en cours — les posts apparaîtront d'ici quelques minutes.
+              </p>
+            )}
+          </>
+        ) : (
+          <p className="text-sm text-gray-400 bg-white rounded-xl border border-dashed border-gray-300 p-6 text-center">
+            Données indisponibles — réessayez dans quelques minutes.
+          </p>
+        )}
+      </section>
+
+      {/* ── 3. Page entreprise ── */}
+      <section>
+        <h3 className="font-semibold text-base mb-3 flex items-center gap-2">
+          <Linkedin size={16} className="text-[#0a66c2]" /> Page entreprise
+          {org && orgs.find((o) => o.urn === org) && (
+            <span className="text-gray-400 font-normal text-sm">— {orgs.find((o) => o.urn === org).name}</span>
+          )}
+        </h3>
+        {!linkedin.orgConnected ? (
+          <div className="bg-white rounded-xl border border-dashed border-gray-300 p-10 text-center text-gray-400">
+            <BarChart3 size={28} className="mx-auto mb-2" />
+            <p className="text-sm">Connectez votre page entreprise (onglet Profil) pour voir ses statistiques.</p>
+          </div>
+        ) : loading ? (
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-10 text-center text-gray-400">
+            <RefreshCw size={24} className="mx-auto mb-2 animate-spin text-[#ff5a5f]" />
+            <p className="text-sm">Récupération des statistiques…</p>
+          </div>
+        ) : error ? (
+          <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl p-4 text-sm flex items-start gap-2">
+            <AlertCircle size={16} className="mt-0.5 shrink-0" /> {error}
+          </div>
+        ) : data ? (
+          <div className="space-y-6">
+            {/* Vues de la page */}
+            {data.pageStats && (
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 {[
-                  ["Abonnés", pStats.profile?.followers],
-                  ["Vues (posts récents)", pStats.aggregate?.views],
-                  ["Réactions", pStats.aggregate?.likes],
-                  ["Commentaires", pStats.aggregate?.comments],
-                  ["Partages", pStats.aggregate?.shares],
-                ].map(([label, v]) => (
+                  ["Vues totales", data.pageStats.totalPageViews, Eye],
+                  ["Visiteurs uniques", data.pageStats.uniquePageViews, Users],
+                  ["Vues mobile", data.pageStats.mobilePageViews, Smartphone],
+                  ["Vues desktop", data.pageStats.desktopPageViews, Monitor],
+                ].map(([label, v, Icon]) => (
                   <div key={label} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
-                    <p className="text-xl font-bold">
-                      {v == null ? "—" : new Intl.NumberFormat("fr-FR").format(v)}
-                    </p>
+                    <Icon size={16} className="text-[#0a66c2] mb-2" />
+                    <p className="text-xl font-bold">{v == null ? "—" : new Intl.NumberFormat("fr-FR").format(v)}</p>
                     <p className="text-xs text-gray-500">{label}</p>
                   </div>
                 ))}
               </div>
-              {pStats.contents?.length > 0 ? (
+            )}
+            {/* Performance des publications */}
+            {data.aggregate && (
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                {[
+                  ["Impressions", data.aggregate.impressionCount, Eye],
+                  ["Clics", data.aggregate.clickCount, MousePointerClick],
+                  ["Réactions", data.aggregate.likeCount, ThumbsUp],
+                  ["Commentaires", data.aggregate.commentCount, MessageSquare],
+                  ["Partages", data.aggregate.shareCount, Share2],
+                  ["Engagement", data.aggregate.engagement != null ? `${(data.aggregate.engagement * 100).toFixed(2)} %` : "—", BarChart3],
+                ].map(([label, v, Icon]) => (
+                  <div key={label} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+                    <Icon size={16} className="text-[#ff5a5f] mb-2" />
+                    <p className="text-xl font-bold">{typeof v === "string" ? v : v == null ? "—" : new Intl.NumberFormat("fr-FR").format(v)}</p>
+                    <p className="text-xs text-gray-500">{label}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+            {/* Posts publiés via LinkeePost */}
+            <div>
+              <h4 className="font-medium text-sm mb-2 text-gray-700">Posts publiés via LinkeePost</h4>
+              {data.posts.length === 0 ? (
+                <div className="bg-white rounded-xl border border-dashed border-gray-300 p-8 text-center text-gray-400 text-sm">
+                  Aucun post publié sur cette page depuis l'application.
+                </div>
+              ) : (
                 <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="text-left text-xs text-gray-500 border-b border-gray-100">
                         <th className="p-3 font-medium">Post</th>
-                        <th className="p-3 font-medium text-right">Vues</th>
+                        <th className="p-3 font-medium text-right">Impressions</th>
+                        <th className="p-3 font-medium text-right">Clics</th>
                         <th className="p-3 font-medium text-right">Réactions</th>
                         <th className="p-3 font-medium text-right">Comm.</th>
                         <th className="p-3 font-medium text-right">Partages</th>
+                        <th className="p-3 font-medium text-right">Engag.</th>
                         <th className="p-3" />
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-50">
-                      {pStats.contents.slice(0, 10).map((c) => (
-                        <tr key={c.id}>
+                      {data.posts.map((p) => (
+                        <tr key={p.id}>
                           <td className="p-3 max-w-xs">
-                            <p className="truncate">{c.title || "Post"}</p>
-                            <p className="text-xs text-gray-400">
-                              {c.publishedAt ? fmtDateTime(c.publishedAt) : ""}
-                            </p>
+                            <p className="font-medium truncate">{p.theme || "Post"}</p>
+                            <p className="text-xs text-gray-400">{p.publishedAt ? fmtDateTime(p.publishedAt) : ""}</p>
                           </td>
-                          {["views", "likes", "comments", "shares"].map((k) => (
-                            <td key={k} className="p-3 text-right">
-                              {c[k] == null ? "—" : new Intl.NumberFormat("fr-FR").format(c[k])}
-                            </td>
-                          ))}
+                          <td className="p-3 text-right">{p.stats?.impressionCount ?? "—"}</td>
+                          <td className="p-3 text-right">{p.stats?.clickCount ?? "—"}</td>
+                          <td className="p-3 text-right">{p.stats?.likeCount ?? "—"}</td>
+                          <td className="p-3 text-right">{p.stats?.commentCount ?? "—"}</td>
+                          <td className="p-3 text-right">{p.stats?.shareCount ?? "—"}</td>
+                          <td className="p-3 text-right">{p.stats?.engagement != null ? `${(p.stats.engagement * 100).toFixed(2)} %` : "—"}</td>
                           <td className="p-3">
-                            {c.url && (
-                              <a href={c.url} target="_blank" rel="noreferrer" className="text-[#ff5a5f] hover:text-[#d12d33]">
+                            {p.postId && (
+                              <a href={`https://www.linkedin.com/feed/update/${p.postId}/`} target="_blank" rel="noreferrer"
+                                className="text-[#ff5a5f] hover:text-[#d12d33]" title="Voir sur LinkedIn">
                                 <ExternalLink size={14} />
                               </a>
                             )}
@@ -3877,142 +3929,12 @@ function StatsView({ linkedin, orgs, profile, drafts }) {
                     </tbody>
                   </table>
                 </div>
-              ) : (
-                <p className="text-sm text-gray-400 bg-white rounded-xl border border-dashed border-gray-300 p-6 text-center">
-                  Première synchronisation Phyllo en cours — les posts apparaîtront d'ici quelques minutes.
-                </p>
               )}
-            </>
-          ) : (
-            <p className="text-sm text-gray-400 bg-white rounded-xl border border-dashed border-gray-300 p-6 text-center">
-              Données indisponibles pour l'instant — réessayez dans quelques minutes.
-            </p>
-          )}
-        </div>
-      )}
-
-      {statsTab === "personal" && !profile?.phylloAccountId && (
-        <div className="bg-[#fff1f1] border border-[#ffe0e0] rounded-xl p-4 text-sm text-[#1b2a4a] flex items-start gap-2">
-          <AlertCircle size={16} className="mt-0.5 shrink-0" />
-          <span>
-            Statistiques du <strong>profil personnel</strong> : connectez-les via Phyllo dans
-            l'onglet Profil → Connexions LinkedIn (l'API publique LinkedIn ne les fournit pas).
-          </span>
-        </div>
-      )}
-      {statsTab === "org" && !linkedin.orgConnected ? (
-        <div className="bg-white rounded-xl border border-dashed border-gray-300 p-12 text-center text-gray-400">
-          <BarChart3 size={32} className="mx-auto mb-3" />
-          <p className="text-sm">
-            Connectez votre page entreprise (onglet Profil) pour voir les statistiques de ses posts.
-          </p>
-        </div>
-      ) : statsTab === "org" && loading ? (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-12 text-center text-gray-400">
-          <RefreshCw size={28} className="mx-auto mb-2 animate-spin text-[#ff5a5f]" />
-          <p className="text-sm">Récupération des statistiques…</p>
-        </div>
-      ) : statsTab === "org" && error ? (
-        <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl p-4 text-sm flex items-start gap-2">
-          <AlertCircle size={16} className="mt-0.5 shrink-0" /> {error}
-        </div>
-      ) : statsTab === "org" && data ? (
-        <>
-          {/* Vues de la page entreprise */}
-          {PAGE_CARDS.length > 0 && (
-            <div>
-              <h3 className="font-semibold text-base mb-3 flex items-center gap-2">
-                <Monitor size={15} className="text-[#0a66c2]" /> Vues de la page entreprise
-              </h3>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                {PAGE_CARDS.map(({ label, value, icon: Icon }) => (
-                  <div key={label} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
-                    <Icon size={16} className="text-[#0a66c2] mb-2" />
-                    <p className="text-xl font-bold">{value}</p>
-                    <p className="text-xs text-gray-500">{label}</p>
-                  </div>
-                ))}
-              </div>
             </div>
-          )}
-
-          {/* Agrégat posts */}
-          {CARDS.length > 0 && (
-            <div>
-              <h3 className="font-semibold text-base mb-3 flex items-center gap-2">
-                <Share2 size={15} className="text-[#ff5a5f]" /> Performance des publications
-              </h3>
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-                {CARDS.map(({ label, value, icon: Icon }) => (
-                  <div key={label} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
-                    <Icon size={16} className="text-[#ff5a5f] mb-2" />
-                    <p className="text-xl font-bold">{value}</p>
-                    <p className="text-xs text-gray-500">{label}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Par post */}
-          <div>
-            <h3 className="font-semibold text-base mb-3">Posts publiés via LinkeePost</h3>
-            {data.posts.length === 0 ? (
-              <div className="bg-white rounded-xl border border-dashed border-gray-300 p-10 text-center text-gray-400 text-sm">
-                Aucun post publié sur cette page depuis l'application pour l'instant.
-              </div>
-            ) : (
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="text-left text-xs text-gray-500 border-b border-gray-100">
-                      <th className="p-3 font-medium">Post</th>
-                      <th className="p-3 font-medium text-right">Impressions</th>
-                      <th className="p-3 font-medium text-right">Clics</th>
-                      <th className="p-3 font-medium text-right">Réactions</th>
-                      <th className="p-3 font-medium text-right">Comm.</th>
-                      <th className="p-3 font-medium text-right">Partages</th>
-                      <th className="p-3 font-medium text-right">Engag.</th>
-                      <th className="p-3" />
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-50">
-                    {data.posts.map((p) => (
-                      <tr key={p.id}>
-                        <td className="p-3 max-w-xs">
-                          <p className="font-medium truncate">{p.theme || "Post"}</p>
-                          <p className="text-xs text-gray-400">
-                            {p.publishedAt ? fmtDateTime(p.publishedAt) : ""}
-                          </p>
-                        </td>
-                        <td className="p-3 text-right">{fmt(p.stats?.impressionCount)}</td>
-                        <td className="p-3 text-right">{fmt(p.stats?.clickCount)}</td>
-                        <td className="p-3 text-right">{fmt(p.stats?.likeCount)}</td>
-                        <td className="p-3 text-right">{fmt(p.stats?.commentCount)}</td>
-                        <td className="p-3 text-right">{fmt(p.stats?.shareCount)}</td>
-                        <td className="p-3 text-right">{pct(p.stats?.engagement)}</td>
-                        <td className="p-3">
-                          {p.postId && (
-                            <a
-                              href={`https://www.linkedin.com/feed/update/${p.postId}/`}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="text-[#ff5a5f] hover:text-[#d12d33]"
-                              title="Voir sur LinkedIn"
-                            >
-                              <ExternalLink size={14} />
-                            </a>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
           </div>
-        </>
-      ) : null}
+        ) : null}
+      </section>
+
     </main>
   );
 }
