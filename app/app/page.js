@@ -2904,7 +2904,7 @@ function PaywallScreen({ user, showToast, onLogout }) {
   );
 }
 
-function DashboardView({ drafts, canVeille = true, canEvents = false, canScore = true, postsLimit = null, onGoCreate, onGoHistory, onGoEvents, onGoProfile, onApprove, profile, linkedin, orgs, onPlanned, onProfileSaved, showToast, onInspire }) {
+function DashboardView({ drafts, canVeille = true, canEvents = false, canScore = true, canCampaigns = true, postsLimit = null, onGoCreate, onGoHistory, onGoEvents, onGoProfile, onApprove, profile, linkedin, orgs, onPlanned, onProfileSaved, showToast, onInspire }) {
   const [mode, setMode] = useState("list"); // list | calendar
   const [periodDays, setPeriodDays] = useState(7);
   const [planTarget, setPlanTarget] = useState("person");
@@ -3259,6 +3259,22 @@ function DashboardView({ drafts, canVeille = true, canEvents = false, canScore =
           }}
         />
       )}
+      {!canCampaigns ? (
+        <div className="bg-gradient-to-r from-[#fff1f1] to-white rounded-xl border border-[#ffd5d6] p-5 flex items-center justify-between flex-wrap gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-[#fff1f1] rounded-xl flex items-center justify-center shrink-0">
+              <Megaphone size={20} className="text-[#ff5a5f]" />
+            </div>
+            <div>
+              <p className="font-semibold text-sm">Campagnes LinkedIn</p>
+              <p className="text-xs text-gray-500">Planifiez des séries de posts et laissez l'IA générer votre calendrier éditorial — inclus à partir du plan Pro.</p>
+            </div>
+          </div>
+          <a href="/tarifs" className="shrink-0 inline-flex items-center gap-1.5 bg-[#ff5a5f] hover:bg-[#d12d33] text-white text-xs font-medium px-4 py-2 rounded-lg transition-colors">
+            <ArrowUpCircle size={14} /> Passer au plan Pro
+          </a>
+        </div>
+      ) : (
       <div className="bg-gradient-to-r from-[#fff1f1] to-white rounded-xl border border-[#ffd5d6] p-5">
         <div className="flex items-center justify-between flex-wrap gap-2 mb-1">
           <h2 className="font-semibold text-base flex items-center gap-2">
@@ -3370,6 +3386,7 @@ function DashboardView({ drafts, canVeille = true, canEvents = false, canScore =
           </>
         )}
       </div>
+      )}
 
       {/* Inspirations & veille */}
       {canVeille ? (
@@ -6214,6 +6231,7 @@ export default function Home() {
           canVeille={planAllows(user, "veille")}
           canEvents={planAllows(user, "events")}
           canScore={canScore}
+          canCampaigns={plan.campaigns}
           postsLimit={plan.postsPerMonth}
           profile={profile}
           linkedin={linkedin}
