@@ -36,6 +36,7 @@ export async function GET(req) {
       subscriptionInterval: user.subscriptionInterval,
       currentPeriodEnd: user.currentPeriodEnd,
       hasBilling: Boolean(user.stripeCustomerId),
+      billingEnabled: Boolean(process.env.STRIPE_SECRET_KEY),
     },
   });
 }

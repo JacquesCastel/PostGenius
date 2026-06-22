@@ -32,6 +32,7 @@ export async function POST(req) {
       subscriptionInterval: user.subscriptionInterval,
       currentPeriodEnd: user.currentPeriodEnd,
       hasBilling: Boolean(user.stripeCustomerId),
+      billingEnabled: Boolean(process.env.STRIPE_SECRET_KEY),
     },
   });
   res.cookies.set(SESSION_COOKIE, await createSessionToken(user.id), sessionCookieOptions());

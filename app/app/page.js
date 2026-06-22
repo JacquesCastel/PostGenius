@@ -7,7 +7,7 @@ import {
   AlertCircle, UserPlus, LogIn, UserRound, Save, LayoutDashboard, CalendarDays, List, ExternalLink,
   BarChart3, Eye, MousePointerClick, ThumbsUp, MessageSquare, Share2, Undo2, Layers as LayersIcon,
   Megaphone, ChevronDown, Image as ImageIcon, ShieldCheck, Lock, ArrowUpCircle, MapPin, Bell, Camera,
-  CreditCard, Gauge
+  CreditCard, Gauge, Users, Smartphone, Monitor
 } from "lucide-react";
 import { PLANS, PLAN_IDS, planLabel, planAllows, planOf, trialDaysLeft, accessState } from "@/lib/plans";
 import SiteHeader from "@/components/SiteHeader";
@@ -3551,6 +3551,7 @@ function StatsView({ linkedin, orgs, profile, drafts }) {
   const [expandedId, setExpandedId] = useState(null);
   const [pStats, setPStats] = useState(null);
   const [pLoading, setPLoading] = useState(false);
+  const [statsTab, setStatsTab] = useState(linkedin.orgConnected ? "org" : "personal");
 
   useEffect(() => {
     fetch("/api/campaigns?all=1")
@@ -3620,26 +3621,53 @@ function StatsView({ linkedin, orgs, profile, drafts }) {
       ]
     : [];
 
+  const PAGE_CARDS = data?.pageStats
+    ? [
+        { label: "Vues totales", value: fmt(data.pageStats.totalPageViews), icon: Eye },
+        { label: "Visiteurs uniques", value: fmt(data.pageStats.uniquePageViews), icon: Users },
+        { label: "Vues mobile", value: fmt(data.pageStats.mobilePageViews), icon: Smartphone },
+        { label: "Vues desktop", value: fmt(data.pageStats.desktopPageViews), icon: Monitor },
+      ]
+    : [];
+
   return (
     <main className="max-w-5xl mx-auto p-6 space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h2 className="font-semibold text-lg">Statistiques</h2>
-          <p className="text-sm text-gray-500">Performance de vos publications (12 derniers mois)</p>
+          <p className="text-sm text-gray-500">Performance de vos publications</p>
         </div>
-        {orgs.length > 0 && (
-          <select
-            value={org}
-            onChange={(e) => setOrg(e.target.value)}
-            className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
-          >
-            {orgs.map((o) => (
-              <option key={o.urn} value={o.urn}>
-                Page : {o.name}
-              </option>
-            ))}
-          </select>
-        )}
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Onglets Profil / Page entreprise */}
+          <div className="flex gap-1 bg-gray-100 p-1 rounded-lg">
+            <button
+              onClick={() => setStatsTab("personal")}
+              className={`px-3 py-1.5 rounded-md text-xs font-medium flex items-center gap-1.5 ${statsTab === "personal" ? "bg-white shadow-sm" : "text-gray-500"}`}
+            >
+              <UserRound size={13} /> Profil personnel
+            </button>
+            {linkedin.orgConnected && (
+              <button
+                onClick={() => setStatsTab("org")}
+                className={`px-3 py-1.5 rounded-md text-xs font-medium flex items-center gap-1.5 ${statsTab === "org" ? "bg-white shadow-sm" : "text-gray-500"}`}
+              >
+                <Linkedin size={13} /> Page entreprise
+              </button>
+            )}
+          </div>
+          {/* Sélecteur de page (visible uniquement onglet org) */}
+          {statsTab === "org" && orgs.length > 1 && (
+            <select
+              value={org}
+              onChange={(e) => setOrg(e.target.value)}
+              className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
+            >
+              {orgs.map((o) => (
+                <option key={o.urn} value={o.urn}>{o.name}</option>
+              ))}
+            </select>
+          )}
+        </div>
       </div>
 
       {/* Suivi des campagnes */}
@@ -3779,8 +3807,8 @@ function StatsView({ linkedin, orgs, profile, drafts }) {
         </div>
       )}
 
-      {/* Profil personnel — via Phyllo */}
-      {profile?.phylloAccountId ? (
+      {/* ===== ONGLET PROFIL PERSONNEL ===== */}
+      {statsTab === "personal" && profile?.phylloAccountId && (
         <div>
           <h3 className="font-semibold text-base mb-3 flex items-center gap-2">
             <UserRound size={16} className="text-[#ff5a5f]" /> Profil personnel
@@ -3861,7 +3889,9 @@ function StatsView({ linkedin, orgs, profile, drafts }) {
             </p>
           )}
         </div>
-      ) : (
+      )}
+
+      {statsTab === "personal" && !profile?.phylloAccountId && (
         <div className="bg-[#fff1f1] border border-[#ffe0e0] rounded-xl p-4 text-sm text-[#1b2a4a] flex items-start gap-2">
           <AlertCircle size={16} className="mt-0.5 shrink-0" />
           <span>
@@ -3870,35 +3900,59 @@ function StatsView({ linkedin, orgs, profile, drafts }) {
           </span>
         </div>
       )}
-
-      {!linkedin.orgConnected ? (
+      {statsTab === "org" && !linkedin.orgConnected ? (
         <div className="bg-white rounded-xl border border-dashed border-gray-300 p-12 text-center text-gray-400">
           <BarChart3 size={32} className="mx-auto mb-3" />
           <p className="text-sm">
             Connectez votre page entreprise (onglet Profil) pour voir les statistiques de ses posts.
           </p>
         </div>
-      ) : loading ? (
+      ) : statsTab === "org" && loading ? (
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-12 text-center text-gray-400">
           <RefreshCw size={28} className="mx-auto mb-2 animate-spin text-[#ff5a5f]" />
           <p className="text-sm">Récupération des statistiques…</p>
         </div>
-      ) : error ? (
+      ) : statsTab === "org" && error ? (
         <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl p-4 text-sm flex items-start gap-2">
           <AlertCircle size={16} className="mt-0.5 shrink-0" /> {error}
         </div>
-      ) : data ? (
+      ) : statsTab === "org" && data ? (
         <>
-          {/* Agrégat de la page */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-            {CARDS.map(({ label, value, icon: Icon }) => (
-              <div key={label} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
-                <Icon size={16} className="text-[#ff5a5f] mb-2" />
-                <p className="text-xl font-bold">{value}</p>
-                <p className="text-xs text-gray-500">{label}</p>
+          {/* Vues de la page entreprise */}
+          {PAGE_CARDS.length > 0 && (
+            <div>
+              <h3 className="font-semibold text-base mb-3 flex items-center gap-2">
+                <Monitor size={15} className="text-[#0a66c2]" /> Vues de la page entreprise
+              </h3>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {PAGE_CARDS.map(({ label, value, icon: Icon }) => (
+                  <div key={label} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+                    <Icon size={16} className="text-[#0a66c2] mb-2" />
+                    <p className="text-xl font-bold">{value}</p>
+                    <p className="text-xs text-gray-500">{label}</p>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+            </div>
+          )}
+
+          {/* Agrégat posts */}
+          {CARDS.length > 0 && (
+            <div>
+              <h3 className="font-semibold text-base mb-3 flex items-center gap-2">
+                <Share2 size={15} className="text-[#ff5a5f]" /> Performance des publications
+              </h3>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                {CARDS.map(({ label, value, icon: Icon }) => (
+                  <div key={label} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+                    <Icon size={16} className="text-[#ff5a5f] mb-2" />
+                    <p className="text-xl font-bold">{value}</p>
+                    <p className="text-xs text-gray-500">{label}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Par post */}
           <div>
@@ -4418,7 +4472,7 @@ function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast 
 // ----------------------------------------------------------------
 // Page profil : identité, expertise, style de rédaction
 // ----------------------------------------------------------------
-function ProfileView({ profile, onSaved, showToast, linkedin, onDisconnect }) {
+function ProfileView({ profile, onSaved, showToast, linkedin, onDisconnect, instagram, onDisconnectInstagram }) {
   const [fields, setFields] = useState({
     name: profile?.name ?? "",
     headline: profile?.headline ?? "",
@@ -4900,9 +4954,9 @@ function ProfileView({ profile, onSaved, showToast, linkedin, onDisconnect }) {
           </div>
 
           {/* Page entreprise */}
-          <div className="p-5 flex items-center justify-between gap-3 flex-wrap">
-            <div className="flex items-center gap-3">
-              <div className={`p-2 rounded-xl ${linkedin.orgConnected ? "bg-green-50 text-green-600" : "bg-gray-100 text-gray-400"}`}>
+          <div className="p-5 flex items-start justify-between gap-3 flex-wrap">
+            <div className="flex items-start gap-3 flex-1">
+              <div className={`p-2 rounded-xl shrink-0 mt-0.5 ${linkedin.orgConnected ? "bg-green-50 text-green-600" : "bg-gray-100 text-gray-400"}`}>
                 <Linkedin size={18} />
               </div>
               <div>
@@ -4913,20 +4967,25 @@ function ProfileView({ profile, onSaved, showToast, linkedin, onDisconnect }) {
                     {linkedin.orgExpiresAt && <> · expire le {new Date(linkedin.orgExpiresAt).toLocaleDateString("fr-FR")}</>}
                   </p>
                 ) : (
-                  <p className="text-xs text-gray-400">Nécessite l'app LinkedIn « Community Management API » (voir README)</p>
+                  <p className="text-xs text-gray-400">Connectez votre page entreprise LinkedIn pour publier en son nom.</p>
                 )}
               </div>
             </div>
-            <a
-              href="/api/linkedin/auth-org"
-              className={
-                linkedin.orgConnected
-                  ? "text-xs border border-gray-200 hover:border-[#ff5a5f] text-gray-700 px-3 py-1.5 rounded-xl"
-                  : "border border-[#0a66c2] text-[#0a66c2] hover:bg-[#fff1f1] text-xs font-medium px-4 py-2 rounded-xl flex items-center gap-1.5"
-              }
-            >
-              {linkedin.orgConnected ? "Reconnecter" : "Connecter"}
-            </a>
+            {linkedin.orgConnected ? (
+              <a
+                href="/api/linkedin/auth-org"
+                className="text-xs border border-gray-200 hover:border-[#ff5a5f] text-gray-700 px-3 py-1.5 rounded-xl shrink-0"
+              >
+                Reconnecter
+              </a>
+            ) : (
+              <a
+                href="/api/linkedin/auth-org"
+                className="text-xs bg-[#0a66c2] hover:bg-[#004182] text-white px-3 py-1.5 rounded-xl shrink-0 transition-colors"
+              >
+                Connecter
+              </a>
+            )}
           </div>
 
           {/* Statistiques du profil personnel via Phyllo */}
@@ -4960,6 +5019,57 @@ function ProfileView({ profile, onSaved, showToast, linkedin, onDisconnect }) {
               >
                 <BarChart3 size={14} /> Connecter
               </button>
+            )}
+          </div>
+
+          {/* Instagram */}
+          <div className="p-5 flex items-center justify-between gap-3 flex-wrap">
+            <div className="flex items-center gap-3">
+              <div className={`p-2 rounded-xl ${instagram ? "bg-pink-50 text-pink-500" : "bg-gray-100 text-gray-400"}`}>
+                {/* Icône Instagram inline (lucide ne l'a pas) */}
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+                  <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
+                  <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
+                </svg>
+              </div>
+              <div>
+                <p className="text-sm font-medium">Instagram</p>
+                {instagram ? (
+                  <p className="text-xs text-gray-500">
+                    Connecté{instagram.igUsername ? ` en tant que @${instagram.igUsername}` : ""}
+                    {instagram.igName ? ` (${instagram.igName})` : ""}
+                  </p>
+                ) : (
+                  <p className="text-xs text-gray-400">Compte Business requis · publiez vos posts avec image sur Instagram</p>
+                )}
+              </div>
+            </div>
+            {instagram ? (
+              <div className="flex gap-2">
+                <a href="/api/instagram/auth" className="text-xs border border-gray-200 hover:border-pink-400 text-gray-700 px-3 py-1.5 rounded-xl">
+                  Reconnecter
+                </a>
+                <button
+                  onClick={onDisconnectInstagram}
+                  type="button"
+                  className="text-xs border border-gray-200 hover:border-red-400 hover:text-red-600 text-gray-700 px-3 py-1.5 rounded-xl"
+                >
+                  Déconnecter
+                </button>
+              </div>
+            ) : (
+              <a
+                href="/api/instagram/auth"
+                className="bg-gradient-to-r from-pink-500 to-orange-400 hover:from-pink-600 hover:to-orange-500 text-white text-xs font-medium px-4 py-2 rounded-xl flex items-center gap-1.5"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+                  <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
+                  <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
+                </svg>
+                Connecter
+              </a>
             )}
           </div>
         </div>
@@ -5196,6 +5306,7 @@ export default function Home() {
   const [editText, setEditText] = useState("");
   const [toast, setToast] = useState(null);
   const [linkedin, setLinkedin] = useState({ connected: false, name: "", orgConnected: false });
+  const [instagram, setInstagram] = useState(null); // null = chargement, false = non connecté, objet = connecté
   const [publishingId, setPublishingId] = useState(null);
   const [orgs, setOrgs] = useState([]);
   const [target, setTarget] = useState("person");
@@ -5251,6 +5362,10 @@ export default function Home() {
       })
       .catch(() => {})
       .finally(() => setLinkedinLoaded(true));
+    fetch("/api/instagram/me")
+      .then((r) => r.json())
+      .then((d) => setInstagram(d.account || false))
+      .catch(() => setInstagram(false));
     fetch("/api/drafts")
       .then((r) => r.json())
       .then((d) => setDrafts(d.drafts ?? []))
@@ -5273,18 +5388,43 @@ export default function Home() {
 
     const params = new URLSearchParams(window.location.search);
     const li = params.get("linkedin");
+    const liMsg = params.get("msg") ? decodeURIComponent(params.get("msg")) : null;
     const LI_MESSAGES = {
       connected: "LinkedIn connecté ✓",
       org_connected: "Page entreprise connectée ✓",
-      refused: "Vous avez refusé l'autorisation LinkedIn",
-      org_refused: "Autorisation refusée pour la page entreprise",
+      refused: liMsg || "Vous avez refusé l'autorisation LinkedIn",
+      org_refused: liMsg ? `Page entreprise refusée : ${liMsg}` : "Autorisation refusée pour la page entreprise",
       state_mismatch: "Session OAuth expirée — réessayez la connexion",
       not_logged_in: "Connectez-vous d'abord à votre compte LinkeePost",
-      error: "Erreur LinkedIn — consultez le terminal du serveur pour le détail",
-      org_error: "Erreur LinkedIn (page entreprise) — consultez le terminal du serveur",
+      error: liMsg ? `Erreur LinkedIn : ${liMsg}` : "Erreur LinkedIn — consultez le terminal du serveur",
+      org_error: liMsg ? `Erreur page entreprise : ${liMsg}` : "Erreur LinkedIn (page entreprise) — consultez le terminal du serveur",
     };
     if (li) {
       showToast(LI_MESSAGES[li] ?? "Connexion LinkedIn échouée");
+      // Recharger le statut LinkedIn si connexion réussie (perso ou org)
+      if (li === "connected" || li === "org_connected") {
+        fetch("/api/linkedin/me").then((r) => r.json()).then((d) => {
+          setLinkedin(d);
+          if (d.orgConnected) {
+            fetch("/api/linkedin/organizations").then((r) => r.json()).then((o) => setOrgs(o.organizations ?? [])).catch(() => {});
+          }
+        }).catch(() => {});
+      }
+      window.history.replaceState({}, "", "/app");
+    }
+    const ig = params.get("instagram");
+    const IG_MESSAGES = {
+      connected: "Instagram connecté ✓",
+      refused: "Vous avez refusé l'autorisation Instagram",
+      state_mismatch: "Session OAuth expirée — réessayez la connexion",
+      not_logged_in: "Connectez-vous d'abord à votre compte LinkeePost",
+      error: "Erreur Instagram — " + (params.get("msg") || "consultez le terminal du serveur"),
+    };
+    if (ig) {
+      showToast(IG_MESSAGES[ig] ?? "Connexion Instagram échouée");
+      if (ig === "connected") {
+        fetch("/api/instagram/me").then((r) => r.json()).then((d) => setInstagram(d.account || false)).catch(() => {});
+      }
       window.history.replaceState({}, "", "/app");
     }
   }, [user]);
@@ -5294,6 +5434,13 @@ export default function Home() {
     setUser(null);
     setDrafts([]);
     setLinkedin({ connected: false, name: "", orgConnected: false });
+    setInstagram(false);
+  };
+
+  const disconnectInstagram = async () => {
+    await fetch("/api/instagram/logout", { method: "POST" });
+    setInstagram(false);
+    showToast("Instagram déconnecté");
   };
 
   const handleGenerate = async () => {
@@ -5652,8 +5799,8 @@ export default function Home() {
   if (!user) return <AuthScreen onAuth={setUser} />;
 
   // Essai terminé sans abonnement actif → blocage (paywall), avant même l'onboarding.
-  // Les admins ne sont jamais bloqués.
-  if (!user.isAdmin && accessState(user) === "expired") {
+  // Bloque uniquement si le paiement est configuré (sinon déploiement non bloquant). Admins exemptés.
+  if (user.billingEnabled && !user.isAdmin && accessState(user) === "expired") {
     return <PaywallScreen user={user} showToast={showToast} onLogout={logout} />;
   }
 
@@ -6112,8 +6259,8 @@ export default function Home() {
         />
       )}
 
-      {/* Bandeau d'essai / incident de paiement */}
-      {(() => {
+      {/* Bandeau d'essai / incident de paiement (seulement si le paiement est actif) */}
+      {user.billingEnabled && (() => {
         const st = accessState(user);
         const left = trialDaysLeft(user);
         if (st === "past_due") {
@@ -6461,6 +6608,32 @@ export default function Home() {
                     )}
                     Publier
                   </button>
+                  {instagram && postImage && (
+                    <button
+                      onClick={async () => {
+                        const d = await saveDraft({ silent: true });
+                        if (!d) return;
+                        try {
+                          const res = await fetch("/api/instagram/publish", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ draftId: d.id }),
+                          });
+                          const data = await readJson(res);
+                          if (!res.ok) throw new Error(data.error || "Erreur Instagram");
+                          setDrafts((prev) => prev.map((x) => x.id === d.id ? { ...x, igPostId: data.igPostId, igStatus: "published" } : x));
+                          showToast("Publié sur Instagram ✓");
+                        } catch (e) {
+                          showToast("Instagram : " + e.message);
+                        }
+                      }}
+                      className="bg-gradient-to-r from-pink-500 to-orange-400 hover:from-pink-600 hover:to-orange-500 text-white text-xs font-medium px-3 py-1.5 rounded-lg flex items-center gap-1.5"
+                      title="Publier ce post (avec son image) sur Instagram"
+                    >
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+                      Instagram
+                    </button>
+                  )}
                 </div>
               </div>
             )}
@@ -6997,7 +7170,9 @@ export default function Home() {
           key={profile?.email ?? "profile"}
           profile={profile}
           linkedin={linkedin}
+          instagram={instagram}
           onDisconnect={disconnect}
+          onDisconnectInstagram={disconnectInstagram}
           showToast={showToast}
           onSaved={(p) => {
             setProfile(p);
@@ -7279,17 +7454,25 @@ export default function Home() {
                                   </>
                                 )}
                                 {p.status === "publié" && (
-                                  <div className="flex items-center justify-between text-[11px] text-gray-400">
-                                    <span>{p.publishedAt ? fmtDateTime(p.publishedAt) : "Publié"}</span>
-                                    {p.postId && (
-                                      <a
-                                        href={`https://www.linkedin.com/feed/update/${p.postId}/`}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        className="text-[#ff5a5f] hover:underline flex items-center gap-1"
-                                      >
-                                        Voir sur LinkedIn <ExternalLink size={11} />
-                                      </a>
+                                  <div className="flex flex-col gap-1 text-[11px] text-gray-400">
+                                    <div className="flex items-center justify-between">
+                                      <span>{p.publishedAt ? fmtDateTime(p.publishedAt) : "Publié"}</span>
+                                      {p.postId && (
+                                        <a
+                                          href={`https://www.linkedin.com/feed/update/${p.postId}/`}
+                                          target="_blank"
+                                          rel="noreferrer"
+                                          className="text-[#0a66c2] hover:underline flex items-center gap-1"
+                                        >
+                                          <Linkedin size={11} /> LinkedIn <ExternalLink size={11} />
+                                        </a>
+                                      )}
+                                    </div>
+                                    {p.igPostId && (
+                                      <div className="flex items-center justify-end gap-1 text-pink-500">
+                                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+                                        Publié sur Instagram ✓
+                                      </div>
                                     )}
                                   </div>
                                 )}

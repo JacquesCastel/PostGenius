@@ -66,6 +66,7 @@ model User {
   currentPeriodEnd     DateTime? // fin de la période payée en cours
 
   linkedin  LinkedInAccount?
+  instagram InstagramAccount?
   drafts    Draft[]
   resetTokens PasswordResetToken[]
   campaigns Campaign[]
@@ -114,6 +115,25 @@ model LinkedInAccount {
   personExpiresAt DateTime?
   orgToken        String?
   orgExpiresAt    DateTime?
+  orgUrn          String?   // urn:li:organization:ID de la première page admin
+  orgName         String?   // nom de la page (cache)
+}
+
+// Compte Instagram Business connecté (via Facebook Graph API)
+// token = Page Access Token long-lived (ne s'expire pas tant que le user ne révoque pas)
+model InstagramAccount {
+  id          String    @id @default(cuid())
+  userId      String    @unique
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  igUserId    String    // Instagram Business Account ID
+  igUsername  String?   // @username Instagram
+  igName      String?   // nom affiché
+  igPicture   String?   // URL de la photo de profil
+  pageId      String    // Facebook Page ID
+  pageToken   String    // Page Access Token chiffré (AES-256-GCM)
+  expiresAt   DateTime? // null = pas d'expiration connue (page token long-lived)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 }
 
 // Jetons de réinitialisation de mot de passe (hash SHA-256, usage unique, 1 h)
@@ -200,6 +220,10 @@ model Draft {
 
   imageUrl    String? // image générée pour le post (/api/images/...)
   imagePrompt String? // prompt utilisé pour générer l'image
+
+  // --- Instagram ---
+  igPostId  String? // media ID Instagram après publication
+  igStatus  String? // published | error
 }
 
 // Événement (salon, forum…) auquel le client participe : sert à générer
