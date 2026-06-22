@@ -7052,20 +7052,41 @@ export default function Home() {
           </section>
         </main>
       ) : view === "campaigns" ? (
-        <CampaignsView
-          profile={profile}
-          linkedin={linkedin}
-          orgs={orgs}
-          showToast={showToast}
-          openWizard={campaignWizardOpen}
-          onWizardConsumed={() => setCampaignWizardOpen(false)}
-          onPlanned={() =>
-            fetch("/api/drafts")
-              .then((r) => r.json())
-              .then((d) => setDrafts(d.drafts ?? []))
-              .catch(() => {})
-          }
-        />
+        plan.campaigns ? (
+          <CampaignsView
+            profile={profile}
+            linkedin={linkedin}
+            orgs={orgs}
+            showToast={showToast}
+            openWizard={campaignWizardOpen}
+            onWizardConsumed={() => setCampaignWizardOpen(false)}
+            onPlanned={() =>
+              fetch("/api/drafts")
+                .then((r) => r.json())
+                .then((d) => setDrafts(d.drafts ?? []))
+                .catch(() => {})
+            }
+          />
+        ) : (
+          <main className="max-w-3xl mx-auto p-6">
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-12 text-center">
+              <div className="w-14 h-14 bg-[#fff1f1] rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <Megaphone size={28} className="text-[#ff5a5f]" />
+              </div>
+              <h2 className="font-semibold text-xl mb-2">Campagnes LinkedIn</h2>
+              <p className="text-gray-500 text-sm mb-1 max-w-md mx-auto">
+                Planifiez des séries de posts cohérentes sur plusieurs semaines, suivez leur performance et laissez l'IA générer votre calendrier éditorial.
+              </p>
+              <p className="text-gray-400 text-xs mb-6">Disponible à partir du plan <strong>Pro</strong>.</p>
+              <a
+                href="/tarifs"
+                className="inline-flex items-center gap-2 bg-[#ff5a5f] hover:bg-[#d12d33] text-white px-6 py-3 rounded-xl font-medium text-sm transition-colors"
+              >
+                <ArrowUpCircle size={16} /> Passer au plan Pro
+              </a>
+            </div>
+          </main>
+        )
       ) : view === "admin" && user.isAdmin ? (
         <AdminView showToast={showToast} />
       ) : view === "content" && user.isAdmin ? (
