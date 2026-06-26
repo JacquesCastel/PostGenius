@@ -29,6 +29,8 @@ export async function GET(req) {
   const state = crypto.randomBytes(16).toString("hex");
 
   const url = new URL("https://www.instagram.com/oauth/authorize");
+  url.searchParams.set("enable_fb_login", "0");
+  url.searchParams.set("force_authentication", "1");
   url.searchParams.set("client_id", appId);
   url.searchParams.set("redirect_uri", redirectUri);
   url.searchParams.set("state", state);
