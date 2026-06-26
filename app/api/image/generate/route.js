@@ -76,35 +76,39 @@ export async function POST(req) {
     const user = await prisma.user.findUnique({ where: { id: userId } });
     const finalPrompt = customPrompt?.trim() || (await writeImagePrompt(user, text));
 
-    const res = await fetch("https://api.openai.com/v1/images/generations", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "gpt-image-1",
-        prompt: finalPrompt,
-        size: "1536x1024",
-        quality: "medium",
-        n: 1,
-      }),
-    });
-    if (!res.ok) {
-      const err = await res.text();
-      console.error("OpenAI images:", res.status, err.slice(0, 300));
-      let detail = "";
-      try {
-        detail = JSON.parse(err).error?.message ?? "";
-      } catch {}
-      return NextResponse.json(
-        { error: `Génération d'image refusée (${res.status})${detail ? " : " + detail : ""}` },
-        { status: 502 }
-      );
+    // Essaie gpt-image-1 (accès org requis), sinon bascule sur dall-e-3
+    let b64 = null;
+    for (const cfg of [
+      { model: "gpt-image-1", size: "1536x1024", quality: "medium" },
+      { model: "dall-e-3",    size: "1792x1024", quality: "standard", response_format: "b64_json" },
+    ]) {
+      const res = await fetch("https://api.openai.com/v1/images/generations", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ prompt: finalPrompt, n: 1, ...cfg }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        b64 = data.data?.[0]?.b64_json ?? null;
+        if (b64) break;
+      } else {
+        const err = await res.text();
+        console.warn(`OpenAI ${cfg.model}:`, res.status, err.slice(0, 200));
+        // Si le modèle n'est pas disponible (403/404), on essaie le suivant
+        if (res.status === 403 || res.status === 404 || res.status === 400) continue;
+        // Autre erreur : remonte directement
+        let detail = "";
+        try { detail = JSON.parse(err).error?.message ?? ""; } catch {}
+        return NextResponse.json(
+          { error: `Génération d'image refusée (${res.status})${detail ? " : " + detail : ""}` },
+          { status: 502 }
+        );
+      }
     }
-    const data = await res.json();
-    const b64 = data.data?.[0]?.b64_json;
-    if (!b64) throw new Error("Réponse OpenAI sans image.");
+    if (!b64) throw new Error("Aucun modèle d'image disponible — vérifiez votre clé OpenAI.");
 
     const { url } = await saveImage(b64);
     logUsage(userId, { kind: "image", context: "image", images: 1 });
