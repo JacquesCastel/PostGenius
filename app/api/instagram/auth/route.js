@@ -37,6 +37,13 @@ export async function GET(req) {
   url.searchParams.set("response_type", "code");
 
   const res = NextResponse.redirect(url.toString());
-  res.cookies.set("ig_oauth_state", state, { httpOnly: true, maxAge: 600, path: "/" });
+  res.cookies.set("ig_oauth_state", state, {
+    httpOnly: true,
+    maxAge: 600,
+    path: "/",
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+  });
+  console.log("Instagram auth: state=", state, "redirectUri=", redirectUri, "appId=", appId);
   return res;
 }

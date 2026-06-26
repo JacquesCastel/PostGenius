@@ -22,7 +22,16 @@ export async function GET(req) {
   if (error || !code) return NextResponse.redirect(`${appUrl}/app?instagram=refused`);
 
   const savedState = req.cookies.get("ig_oauth_state")?.value;
+  console.log("Instagram callback:", {
+    hasCode: !!code,
+    state,
+    savedState,
+    error,
+    userId,
+    url: req.url,
+  });
   if (!savedState || savedState !== state) {
+    console.error("Instagram state mismatch:", { state, savedState });
     return NextResponse.redirect(`${appUrl}/app?instagram=state_mismatch`);
   }
 
