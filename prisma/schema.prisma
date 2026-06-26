@@ -120,19 +120,19 @@ model LinkedInAccount {
   orgAccounts     String?   // JSON : [{urn, name}, ...] — toutes les pages admin
 }
 
-// Compte Instagram Business connecté (via Facebook Graph API)
-// token = Page Access Token long-lived (ne s'expire pas tant que le user ne révoque pas)
+// Compte Instagram Business/Creator connecté (via Instagram Login)
+// igToken = Instagram User Access Token long-lived (~60 j, renouvelable)
 model InstagramAccount {
   id          String    @id @default(cuid())
   userId      String    @unique
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  igUserId    String    // Instagram Business Account ID
+  igUserId    String    // Instagram User ID (renvoyé par l'échange de code)
   igUsername  String?   // @username Instagram
   igName      String?   // nom affiché
   igPicture   String?   // URL de la photo de profil
-  pageId      String    // Facebook Page ID
-  pageToken   String    // Page Access Token chiffré (AES-256-GCM)
-  expiresAt   DateTime? // null = pas d'expiration connue (page token long-lived)
+  pageId      String?   // obsolète (Facebook Login) — nullable depuis Instagram Login
+  pageToken   String    // Instagram User Access Token chiffré (AES-256-GCM)
+  expiresAt   DateTime? // expiration du long-lived token (~60 j)
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 }
