@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import crypto from "crypto";
-import { getUserId } from "@/lib/session";
+import { getEffectiveUserId as getUserId } from "@/lib/session";
 
 // Étape 1 : redirection vers Instagram Login (Business Login for Instagram).
 // L'utilisateur se connecte avec ses identifiants Instagram directement —
@@ -38,7 +38,14 @@ export async function GET(req) {
   url.searchParams.set("scope", "instagram_business_basic,instagram_business_content_publish");
   url.searchParams.set("response_type", "code");
 
-  const res = NextResponse.redirect(url.toString());
+  const finalUrl = url.toString();
+
+  // Mode debug : retourner l'URL sans rediriger
+  if (new URL(req.url).searchParams.get("debug") === "1") {
+    return NextResponse.json({ url: finalUrl, appId, redirectUri });
+  }
+
+  const res = NextResponse.redirect(finalUrl);
   res.cookies.set("ig_oauth_state", state, {
     httpOnly: true,
     maxAge: 600,
@@ -46,6 +53,5 @@ export async function GET(req) {
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
   });
-  console.log("Instagram auth: state=", state, "redirectUri=", redirectUri, "appId=", appId);
   return res;
 }

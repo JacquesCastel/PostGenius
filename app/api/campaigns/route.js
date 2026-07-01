@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { getUserId } from "@/lib/session";
+import { getEffectiveUserId as getUserId } from "@/lib/session";
 import { checkFeature } from "@/lib/gating";
 
 // Campagnes LinkedIn du client

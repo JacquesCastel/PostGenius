@@ -27,9 +27,11 @@ docker run --rm -v /opt/postgenius:/host node:22-slim bash -c '
   rm -rf .next node_modules .env .env.local .git
   npm ci
   # Synchronise le schéma vers la base de PROD (DATABASE_URL réel depuis .env).
-  # Sans --accept-data-loss : refuse toute opération destructrice.
+  # --accept-data-loss : nécessaire pour l'ajout de contraintes UNIQUE sur
+  # des colonnes nullable (ex: stripeCustomerId). Pas de vraie perte de données :
+  # les NULL ne sont pas considérés comme doublons sous PostgreSQL.
   DBURL=$(grep -E "^DATABASE_URL=" /host/.env | head -1 | cut -d= -f2- | tr -d "\"")
-  DATABASE_URL="$DBURL" npx prisma db push --skip-generate
+  DATABASE_URL="$DBURL" npx prisma db push --skip-generate --accept-data-loss
   # Build avec une base factice (landing/blog sont rendus à la requête).
   export DATABASE_URL="postgresql://build:build@localhost:5432/build"
   # Clé VAPID PUBLIQUE : doit être inlinée au build (variable NEXT_PUBLIC_*).

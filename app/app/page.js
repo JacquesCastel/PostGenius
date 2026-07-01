@@ -4563,6 +4563,181 @@ function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast 
 }
 
 // ----------------------------------------------------------------
+// Vue Clients — multi-compte Agence
+// ----------------------------------------------------------------
+function ClientsView({ showToast, onManage }) {
+  const [clients, setClients] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [creating, setCreating] = useState(false);
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState({ name: "", companyName: "", email: "" });
+  const [deleting, setDeleting] = useState(null);
+
+  useEffect(() => {
+    fetch("/api/agency/clients")
+      .then((r) => r.json())
+      .then((d) => setClients(d.clients ?? []))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  const createClient = async (e) => {
+    e.preventDefault();
+    if (!form.name.trim()) return;
+    setCreating(true);
+    try {
+      const res = await fetch("/api/agency/clients", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error || "Erreur");
+      setClients((c) => [...c, d.client]);
+      setForm({ name: "", companyName: "", email: "" });
+      setShowForm(false);
+      showToast("Client créé ✓");
+    } catch (err) {
+      showToast(err.message);
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const deleteClient = async (id) => {
+    if (!confirm("Supprimer ce client et toutes ses données ? Cette action est irréversible.")) return;
+    setDeleting(id);
+    try {
+      const res = await fetch(`/api/agency/clients/${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Erreur suppression");
+      setClients((c) => c.filter((cl) => cl.id !== id));
+      showToast("Client supprimé");
+    } catch (err) {
+      showToast(err.message);
+    } finally {
+      setDeleting(null);
+    }
+  };
+
+  return (
+    <main className="max-w-3xl mx-auto p-6 space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-xl font-bold text-[#1b2a4a]">Mes clients</h2>
+          <p className="text-sm text-gray-500 mt-0.5">Gérez les comptes de vos clients et publiez en leur nom.</p>
+        </div>
+        <button
+          onClick={() => setShowForm(true)}
+          className="flex items-center gap-2 bg-[#ff5a5f] text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-[#e5454a] transition-colors"
+        >
+          <UserPlus size={15} /> Ajouter un client
+        </button>
+      </div>
+
+      {/* Formulaire de création */}
+      {showForm && (
+        <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-5">
+          <h3 className="font-semibold text-sm mb-4">Nouveau client</h3>
+          <form onSubmit={createClient} className="space-y-3">
+            <div className="grid sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">Nom du contact *</label>
+                <input
+                  value={form.name}
+                  onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                  placeholder="Marie Dupont"
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">Entreprise</label>
+                <input
+                  value={form.companyName}
+                  onChange={(e) => setForm((f) => ({ ...f, companyName: e.target.value }))}
+                  placeholder="Acme SAS"
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">E-mail (optionnel)</label>
+              <input
+                type="email"
+                value={form.email}
+                onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+                placeholder="marie@acme.fr"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
+              />
+            </div>
+            <div className="flex gap-2 pt-1">
+              <button
+                type="submit"
+                disabled={creating}
+                className="bg-[#ff5a5f] text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-[#e5454a] disabled:opacity-50"
+              >
+                {creating ? "Création…" : "Créer le client"}
+              </button>
+              <button
+                type="button"
+                onClick={() => { setShowForm(false); setForm({ name: "", companyName: "", email: "" }); }}
+                className="px-4 py-2 rounded-lg text-sm text-gray-500 hover:bg-gray-50"
+              >
+                Annuler
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* Liste des clients */}
+      {loading ? (
+        <div className="text-center py-12 text-gray-400 text-sm">Chargement…</div>
+      ) : clients.length === 0 ? (
+        <div className="bg-white border border-dashed border-gray-200 rounded-2xl p-12 text-center">
+          <Users size={32} className="mx-auto mb-3 text-gray-300" />
+          <p className="text-sm text-gray-400">Aucun client pour l'instant.</p>
+          <p className="text-xs text-gray-300 mt-1">Cliquez "Ajouter un client" pour commencer.</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {clients.map((client) => (
+            <div key={client.id} className="bg-white border border-gray-100 rounded-2xl shadow-sm p-4 flex items-center gap-4">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#ff5a5f] to-orange-400 flex items-center justify-center text-white font-bold text-sm shrink-0">
+                {(client.name?.[0] ?? "?").toUpperCase()}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-sm text-[#1b2a4a] truncate">{client.name}</p>
+                <p className="text-xs text-gray-400 truncate">
+                  {client.companyName ? `${client.companyName} · ` : ""}
+                  {client.linkedin?.personName ? `LinkedIn : ${client.linkedin.personName}` : "LinkedIn non connecté"}
+                </p>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  onClick={() => onManage(client)}
+                  className="bg-[#ff5a5f] text-white px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-[#e5454a]"
+                >
+                  Gérer
+                </button>
+                <button
+                  onClick={() => deleteClient(client.id)}
+                  disabled={deleting === client.id}
+                  className="p-1.5 rounded-lg text-gray-300 hover:text-red-400 hover:bg-red-50 transition-colors"
+                  title="Supprimer ce client"
+                >
+                  <Trash2 size={15} />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </main>
+  );
+}
+
+// ----------------------------------------------------------------
 // Page profil : identité, expertise, style de rédaction
 // ----------------------------------------------------------------
 function ProfileView({ profile, onSaved, showToast, linkedin, onDisconnect, instagram, onDisconnectInstagram, canOrgPublish = true }) {
@@ -5247,6 +5422,7 @@ function TutorialOverlay({ canEvents, onClose }) {
 // ----------------------------------------------------------------
 export default function Home() {
   const [user, setUser] = useState(null);
+  const [impersonating, setImpersonating] = useState(null); // { id, name, companyName } du client géré
   const [authChecked, setAuthChecked] = useState(false);
 
   const [view, setView] = useState("dashboard");
@@ -5434,7 +5610,7 @@ export default function Home() {
   useEffect(() => {
     fetch("/api/auth/me")
       .then((r) => r.json())
-      .then((d) => setUser(d.user))
+      .then((d) => { setUser(d.user); setImpersonating(d.impersonating ?? null); })
       .catch(() => {})
       .finally(() => setAuthChecked(true));
   }, []);
@@ -5944,6 +6120,9 @@ export default function Home() {
     { id: "stats", label: "Statistiques", icon: BarChart3 },
     { id: "billing", label: "Abonnement", icon: CreditCard },
     { id: "profile", label: "Profil", icon: UserRound },
+    ...(user.plan === "agence"
+      ? [{ id: "clients", label: "Mes clients", icon: Users }]
+      : []),
     ...(user.isAdmin
       ? [
           { id: "admin", label: "Administration", icon: ShieldCheck },
@@ -5961,6 +6140,7 @@ export default function Home() {
     stats: "Statistiques",
     billing: "Abonnement",
     profile: "Mon profil",
+    clients: "Mes clients",
     admin: "Administration",
     content: "Contenu du site",
     messages: "Messages de contact",
@@ -6378,6 +6558,30 @@ export default function Home() {
         }
         return null;
       })()}
+
+      {/* Bandeau mode client (impersonation agence) */}
+      {impersonating && (
+        <div className="max-w-5xl mx-auto px-6 mt-3">
+          <div className="bg-amber-50 border border-amber-200 text-amber-800 rounded-xl px-4 py-2.5 text-sm flex items-center justify-between gap-3 flex-wrap">
+            <span className="flex items-center gap-2 font-medium">
+              <Users size={15} />
+              Mode client — <span className="font-semibold">{impersonating.companyName || impersonating.name}</span>
+            </span>
+            <button
+              onClick={async () => {
+                await fetch("/api/agency/impersonate", { method: "DELETE" });
+                setImpersonating(null);
+                setView("clients");
+                // Recharger les données pour revenir sur le compte agence
+                window.location.reload();
+              }}
+              className="text-xs font-semibold underline hover:no-underline"
+            >
+              ← Revenir à mon compte
+            </button>
+          </div>
+        </div>
+      )}
 
       {view === "dashboard" ? (
         <DashboardView
@@ -7298,6 +7502,24 @@ export default function Home() {
               tone: p.tone || f.tone,
               maxChars: p.defaultMaxChars || f.maxChars,
             }));
+          }}
+        />
+      ) : view === "clients" ? (
+        <ClientsView
+          showToast={showToast}
+          onManage={async (client) => {
+            const res = await fetch("/api/agency/impersonate", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ clientId: client.id }),
+            });
+            if (res.ok) {
+              setImpersonating(client);
+              setView("dashboard");
+              window.location.reload();
+            } else {
+              showToast("Erreur lors du changement de compte");
+            }
           }}
         />
       ) : (

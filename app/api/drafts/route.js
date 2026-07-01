@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { getUserId } from "@/lib/session";
+import { getEffectiveUserId as getUserId } from "@/lib/session";
 import { checkPostQuota, checkAccess } from "@/lib/gating";
 
 // Brouillons de l'utilisateur connecté

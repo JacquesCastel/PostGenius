@@ -1,29 +1,32 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { getUserId } from "@/lib/session";
+import { getSessionData } from "@/lib/session";
 import { isAdminUser } from "@/lib/admin";
 
 export async function GET(req) {
-  const userId = await getUserId(req);
-  if (!userId) return NextResponse.json({ user: null });
+  const session = await getSessionData(req);
+  if (!session?.userId) return NextResponse.json({ user: null });
 
   const user = await prisma.user.findUnique({
-    where: { id: userId },
+    where: { id: session.userId },
     select: {
-      id: true,
-      email: true,
-      name: true,
-      role: true,
-      disabled: true,
-      plan: true,
-      trialEndsAt: true,
-      subscriptionStatus: true,
-      subscriptionInterval: true,
-      currentPeriodEnd: true,
-      stripeCustomerId: true,
+      id: true, email: true, name: true, role: true, disabled: true,
+      plan: true, trialEndsAt: true, subscriptionStatus: true,
+      subscriptionInterval: true, currentPeriodEnd: true, stripeCustomerId: true,
     },
   });
   if (!user || user.disabled) return NextResponse.json({ user: null });
+
+  // Infos sur le client impersonné (mode agence)
+  let impersonating = null;
+  if (session.clientId) {
+    const client = await prisma.user.findUnique({
+      where: { id: session.clientId },
+      select: { id: true, name: true, companyName: true, email: true },
+    });
+    if (client) impersonating = client;
+  }
+
   return NextResponse.json({
     user: {
       id: user.id,
@@ -38,5 +41,6 @@ export async function GET(req) {
       hasBilling: Boolean(user.stripeCustomerId),
       billingEnabled: Boolean(process.env.STRIPE_SECRET_KEY),
     },
+    impersonating, // null si pas en mode client
   });
 }

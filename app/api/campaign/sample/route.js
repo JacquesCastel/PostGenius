@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { getUserId } from "@/lib/session";
+import { getEffectiveUserId as getUserId } from "@/lib/session";
 import { generateText } from "@/lib/campaign";
 
 // Post d'exemple pour valider la direction d'une campagne avant

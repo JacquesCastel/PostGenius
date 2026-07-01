@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { getUserId } from "@/lib/session";
+import { getEffectiveUserId as getUserId } from "@/lib/session";
 
 // PATCH : modifier texte/statut — DELETE : supprimer
 // La clause where inclut toujours userId : un client ne touche que SES brouillons.

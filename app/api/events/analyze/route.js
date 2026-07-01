@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getUserId } from "@/lib/session";
+import { getEffectiveUserId as getUserId } from "@/lib/session";
 
 // Analyse le lien d'un événement : récupère le titre, l'image (og:image)
 // et une description pour nourrir la génération des posts.

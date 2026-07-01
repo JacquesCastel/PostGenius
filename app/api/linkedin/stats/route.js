@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { getUserId } from "@/lib/session";
+import { getEffectiveUserId as getUserId } from "@/lib/session";
 import { decryptToken } from "@/lib/crypto";
 
 // Statistiques des posts d'une page entreprise.
@@ -95,7 +95,32 @@ export async function GET(req) {
       stats: statsByUrn[d.postId] ?? null,
     }));
 
-    return NextResponse.json({ aggregate, posts });
+    // 3) Vues de la page entreprise
+    let pageStats = null;
+    try {
+      const pageRes = await fetch(
+        `https://api.linkedin.com/rest/organizationPageStatistics?q=organization&organization=${encodeURIComponent(org)}`,
+        { headers: liHeaders(orgToken) }
+      );
+      if (pageRes.ok) {
+        const pageData = await pageRes.json();
+        const views = pageData.elements?.[0]?.totalPageStatistics?.views;
+        if (views) {
+          pageStats = {
+            totalPageViews: views.allPageViews ?? views.totalPageViews ?? null,
+            uniquePageViews: views.uniquePageViews ?? null,
+            mobilePageViews: views.allMobilePageViews ?? views.mobilePageViews ?? null,
+            desktopPageViews: views.allDesktopPageViews ?? views.desktopPageViews ?? null,
+          };
+        }
+      } else {
+        console.warn("organizationPageStatistics:", pageRes.status, await pageRes.text());
+      }
+    } catch (e) {
+      console.warn("Vues de page non disponibles:", e.message);
+    }
+
+    return NextResponse.json({ aggregate, posts, pageStats });
   } catch (e) {
     console.error("Erreur stats:", e);
     return NextResponse.json({ error: "Échec de la récupération des statistiques." }, { status: 500 });

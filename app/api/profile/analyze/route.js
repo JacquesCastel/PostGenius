@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getUserId } from "@/lib/session";
+import { getEffectiveUserId as getUserId } from "@/lib/session";
 import { logUsage } from "@/lib/usage";
 
 // Analyse le site internet du client et en déduit les champs du profil

@@ -102,6 +102,13 @@ model User {
   // --- Phyllo : statistiques du profil personnel ---
   phylloUserId    String? // utilisateur Phyllo lié à ce compte
   phylloAccountId String? // compte LinkedIn connecté via Phyllo Connect
+
+  // --- Multi-compte Agence ---
+  // Si managedByUserId est renseigné, ce compte est un client géré par une agence.
+  // Le client n'a pas de mot de passe utilisable et n'accède jamais à l'outil.
+  managedByUserId String?
+  managedBy       User?   @relation("AgencyClients", fields: [managedByUserId], references: [id], onDelete: SetNull)
+  clients         User[]  @relation("AgencyClients")
 }
 
 // Tokens LinkedIn du client (app perso + app pages entreprise)

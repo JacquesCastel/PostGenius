@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { getUserId } from "@/lib/session";
+import { getEffectiveUserId as getUserId } from "@/lib/session";
 
 // Enregistre l'abonnement Web Push d'un appareil pour l'utilisateur connecté.
 export async function POST(req) {

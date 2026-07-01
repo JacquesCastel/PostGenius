@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getUserId } from "@/lib/session";
+import { getEffectiveUserId as getUserId } from "@/lib/session";
 import { planCampaignForUser } from "@/lib/campaign";
 import { checkFeature } from "@/lib/gating";
 
