@@ -109,6 +109,37 @@ model User {
   managedByUserId String?
   managedBy       User?   @relation("AgencyClients", fields: [managedByUserId], references: [id], onDelete: SetNull)
   clients         User[]  @relation("AgencyClients")
+
+  // --- Charte graphique ---
+  brandKit BrandKit?
+}
+
+// Charte graphique : couleurs, logo, police, style de fond
+// Utilisée par le moteur Satori pour générer les visuels des posts et carrousels.
+model BrandKit {
+  id             String   @id @default(cuid())
+  userId         String   @unique
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Couleurs
+  primaryColor   String   @default("#0a66c2") // fond principal
+  secondaryColor String   @default("#ffffff") // texte / éléments clairs
+  accentColor    String   @default("#ff5a5f") // accents, barres, séparateurs
+
+  // Logo (fichier stocké dans ./data/logos/, URL servie par /api/images/logos/:file)
+  logoUrl        String?
+
+  // Typographie
+  fontFamily     String   @default("Inter") // Inter | Poppins | Montserrat | Raleway
+
+  // Style de fond des visuels
+  bgStyle        String   @default("solid") // solid | gradient
+
+  // Tagline optionnelle affichée en bas des visuels
+  tagline        String?
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 }
 
 // Tokens LinkedIn du client (app perso + app pages entreprise)

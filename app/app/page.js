@@ -4563,7 +4563,7 @@ function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast 
 }
 
 // ----------------------------------------------------------------
-// Vue Clients — multi-compte Agence
+// Vue Clients — tableau de bord agence multi-compte
 // ----------------------------------------------------------------
 // ── Étapes du wizard de création client ────────────────────────────
 const WIZARD_STEPS = [
@@ -4574,8 +4574,6 @@ const WIZARD_STEPS = [
   { id: 5, label: "Style",       icon: "✍️" },
   { id: 6, label: "Récapitulatif", icon: "✅" },
 ];
-
-const TONES = ["Professionnel", "Inspirant", "Pédagogue", "Authentique", "Humoristique", "Engagé"];
 
 function WizardStepBar({ step }) {
   return (
@@ -4602,21 +4600,239 @@ function WizardStepBar({ step }) {
   );
 }
 
+// ── Indicateur de complétion du profil ─────────────────────────────
+function CompletionRing({ percent }) {
+  const color = percent === 100 ? "#22c55e" : percent >= 60 ? "#f59e0b" : "#ef4444";
+  return (
+    <div className="relative w-10 h-10 shrink-0">
+      <svg viewBox="0 0 36 36" className="w-10 h-10 -rotate-90">
+        <circle cx="18" cy="18" r="15" fill="none" stroke="#f3f4f6" strokeWidth="3" />
+        <circle cx="18" cy="18" r="15" fill="none" stroke={color} strokeWidth="3"
+          strokeDasharray={`${(percent / 100) * 94.2} 94.2`} strokeLinecap="round" />
+      </svg>
+      <span className="absolute inset-0 flex items-center justify-center text-[9px] font-bold" style={{ color }}>
+        {percent}%
+      </span>
+    </div>
+  );
+}
+
+// ── Panel brouillons (slide-in) ─────────────────────────────────────
+function DraftsPanel({ client, onClose, showToast, onGenerate }) {
+  return (
+    <>
+      {/* Backdrop */}
+      <div className="fixed inset-0 bg-black/20 z-40" onClick={onClose} />
+      {/* Panel */}
+      <div className="fixed right-0 top-0 bottom-0 w-full max-w-md bg-white shadow-2xl z-50 flex flex-col">
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+          <div>
+            <p className="text-xs text-gray-400">Brouillons en attente</p>
+            <h3 className="font-bold text-[#1b2a4a]">{client.name}</h3>
+          </div>
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400">
+            <X size={18} />
+          </button>
+        </div>
+
+        {/* Liste des brouillons */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-3">
+          {client.pendingDrafts.length === 0 ? (
+            <div className="text-center py-12 text-gray-300 text-sm">
+              Aucun brouillon en attente
+            </div>
+          ) : (
+            client.pendingDrafts.map((draft) => (
+              <div key={draft.id} className="bg-gray-50 rounded-xl p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full
+                    ${draft.type === "carrousel" ? "bg-purple-100 text-purple-600" :
+                      draft.type === "video" ? "bg-blue-100 text-blue-600" :
+                      "bg-gray-100 text-gray-500"}`}>
+                    {draft.type ?? "post"}
+                  </span>
+                  <span className="text-[10px] text-gray-400">
+                    {new Date(draft.createdAt).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}
+                  </span>
+                </div>
+                <p className="text-sm text-[#1b2a4a] leading-relaxed line-clamp-4">{draft.text}</p>
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="p-4 border-t border-gray-100">
+          <button onClick={onGenerate}
+            className="w-full bg-[#ff5a5f] text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-[#e5454a] transition-colors flex items-center justify-center gap-2">
+            <Sparkles size={15} /> Générer un post pour ce client
+          </button>
+        </div>
+      </div>
+    </>
+  );
+}
+
+// ── Ligne de tableau client (avec accordéon) ────────────────────────
+function ClientTableRow({ client, onManage, onViewDrafts, onDelete, deleting }) {
+  const [open, setOpen] = useState(false);
+  const { completion, linkedin } = client;
+  const linkedInOk = Boolean(linkedin?.personName);
+
+  const timeAgo = (dateStr) => {
+    if (!dateStr) return "—";
+    const days = Math.floor((Date.now() - new Date(dateStr).getTime()) / 86400000);
+    if (days === 0) return "aujourd'hui";
+    if (days === 1) return "hier";
+    if (days < 30) return `${days}j`;
+    return `${Math.floor(days / 30)}mois`;
+  };
+
+  const completionColor = completion.percent === 100 ? "text-green-500" :
+    completion.percent >= 60 ? "text-amber-500" : "text-red-400";
+
+  return (
+    <>
+      {/* Ligne principale */}
+      <tr className={`border-b border-gray-100 hover:bg-gray-50 transition-colors ${open ? "bg-gray-50" : ""}`}>
+        {/* Client */}
+        <td className="px-4 py-3">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#ff5a5f] to-orange-400 flex items-center justify-center text-white font-bold text-xs shrink-0">
+              {(client.name?.[0] ?? "?").toUpperCase()}
+            </div>
+            <div className="min-w-0">
+              <p className="font-semibold text-sm text-[#1b2a4a] truncate">{client.name}</p>
+              {client.companyName && <p className="text-xs text-gray-400 truncate">{client.companyName}</p>}
+            </div>
+          </div>
+        </td>
+
+        {/* LinkedIn */}
+        <td className="px-4 py-3">
+          <div className="flex items-center gap-1.5">
+            <Linkedin size={13} className={linkedInOk ? "text-[#0a66c2]" : "text-gray-200"} />
+            <span className={`text-xs truncate max-w-[120px] ${linkedInOk ? "text-gray-600" : "text-gray-300"}`}>
+              {linkedInOk ? linkedin.personName : "Non connecté"}
+            </span>
+          </div>
+        </td>
+
+        {/* Profil */}
+        <td className="px-4 py-3">
+          <span className={`text-sm font-bold ${completionColor}`}>{completion.percent}%</span>
+        </td>
+
+        {/* En attente */}
+        <td className="px-4 py-3 text-center">
+          {client.pendingCount > 0
+            ? <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-amber-100 text-amber-700 text-xs font-bold">{client.pendingCount}</span>
+            : <span className="text-gray-200 text-sm">—</span>}
+        </td>
+
+        {/* Programmés */}
+        <td className="px-4 py-3 text-center">
+          {client.scheduledCount > 0
+            ? <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 text-blue-600 text-xs font-bold">{client.scheduledCount}</span>
+            : <span className="text-gray-200 text-sm">—</span>}
+        </td>
+
+        {/* Dernier post */}
+        <td className="px-4 py-3">
+          <span className="text-xs text-gray-400">{timeAgo(client.lastPublished?.publishedAt)}</span>
+        </td>
+
+        {/* Actions */}
+        <td className="px-4 py-3">
+          <div className="flex items-center gap-1.5">
+            <button onClick={() => onManage(client, "generate")}
+              className="flex items-center gap-1 bg-[#ff5a5f] text-white px-2.5 py-1.5 rounded-lg text-xs font-semibold hover:bg-[#e5454a] transition-colors">
+              <Sparkles size={11} /> Générer
+            </button>
+            <button onClick={() => onViewDrafts(client)}
+              className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition-colors
+                ${client.pendingCount > 0 ? "bg-amber-50 border-amber-200 text-amber-700" : "border-gray-200 text-gray-400 hover:bg-gray-50"}`}>
+              <FileText size={11} />{client.pendingCount > 0 ? client.pendingCount : ""}
+            </button>
+            <button onClick={() => onManage(client, "dashboard")}
+              className="p-1.5 rounded-lg border border-gray-200 text-gray-400 hover:bg-gray-50 transition-colors" title="Accès complet">
+              <ChevronRight size={13} />
+            </button>
+            <button onClick={() => onDelete(client.id)} disabled={deleting === client.id}
+              className="p-1.5 rounded-lg text-gray-200 hover:text-red-400 hover:bg-red-50 transition-colors" title="Supprimer">
+              <Trash2 size={13} />
+            </button>
+            <button onClick={() => setOpen((o) => !o)}
+              className="p-1.5 rounded-lg text-gray-300 hover:text-gray-500 hover:bg-gray-100 transition-colors" title="Détails">
+              <ChevronDown size={13} className={`transition-transform ${open ? "rotate-180" : ""}`} />
+            </button>
+          </div>
+        </td>
+      </tr>
+
+      {/* Ligne dépliée */}
+      {open && (
+        <tr className="border-b border-gray-100 bg-gray-50">
+          <td colSpan={7} className="px-6 py-4">
+            <div className="grid sm:grid-cols-2 gap-4">
+              {/* Profil à compléter */}
+              <div>
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Profil</p>
+                {completion.missing.length === 0 ? (
+                  <p className="text-xs text-green-500 font-medium">✓ Profil complet</p>
+                ) : (
+                  <div className="flex flex-wrap gap-1.5">
+                    {completion.missing.map((m) => (
+                      <span key={m} className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">{m}</span>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Dernier post */}
+              <div>
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Dernier post publié</p>
+                {client.lastPublished
+                  ? <p className="text-xs text-gray-500 leading-relaxed line-clamp-3">{client.lastPublished.text}</p>
+                  : <p className="text-xs text-gray-300">Aucun post publié</p>}
+              </div>
+
+              {/* Brouillons en attente */}
+              {client.pendingDrafts.length > 0 && (
+                <div className="sm:col-span-2">
+                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
+                    Brouillons en attente ({client.pendingCount})
+                  </p>
+                  <div className="space-y-2">
+                    {client.pendingDrafts.map((d) => (
+                      <div key={d.id} className="bg-white border border-gray-100 rounded-xl px-3 py-2 text-xs text-gray-500 leading-relaxed line-clamp-2">
+                        {d.text}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </td>
+        </tr>
+      )}
+    </>
+  );
+}
+
+// ── Vue principale Clients ──────────────────────────────────────────
 function ClientsView({ showToast, onManage }) {
   const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [step, setStep] = useState(0); // 0 = liste, 1-6 = wizard
+  const [step, setStep] = useState(0); // 0 = dashboard, 1-6 = wizard
+  const [panelClient, setPanelClient] = useState(null); // client pour le panel brouillons
   const [form, setForm] = useState({
-    // Étape 1 — Identité
     name: "", email: "",
-    // Étape 2 — Entreprise
     companyName: "", website: "",
-    // Étape 3 — Activité
     headline: "", businessDescription: "",
-    // Étape 4 — Audience
     targetAudience: "",
-    // Étape 5 — Style
     tone: "Professionnel", themes: "", styleNotes: "",
   });
   const [formError, setFormError] = useState(null);
@@ -4625,7 +4841,7 @@ function ClientsView({ showToast, onManage }) {
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
   useEffect(() => {
-    fetch("/api/agency/clients")
+    fetch("/api/agency/dashboard")
       .then((r) => r.json())
       .then((d) => setClients(d.clients ?? []))
       .catch(() => {})
@@ -4658,7 +4874,9 @@ function ClientsView({ showToast, onManage }) {
       });
       const d = await res.json();
       if (!res.ok) { setFormError(d.error || "Erreur"); return; }
-      setClients((c) => [...c, d.client]);
+      // Recharger le dashboard pour avoir les données agrégées
+      const dash = await fetch("/api/agency/dashboard").then((r) => r.json());
+      setClients(dash.clients ?? []);
       closeWizard();
       showToast("Client créé ✓");
     } catch (err) {
@@ -4881,79 +5099,371 @@ function ClientsView({ showToast, onManage }) {
     );
   }
 
-  // ── LISTE des clients ────────────────────────────────────────────
+  // ── TABLEAU DE BORD ──────────────────────────────────────────────
   return (
-    <main className="max-w-4xl mx-auto p-6">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h2 className="text-xl font-bold text-[#1b2a4a]">Mes clients</h2>
-          <p className="text-sm text-gray-400 mt-0.5">
-            {clients.length ? `${clients.length} client${clients.length > 1 ? "s" : ""}` : "Gérez les comptes de vos clients"}
-          </p>
-        </div>
-        {clients.length > 0 && (
+    <>
+      <main className="max-w-5xl mx-auto p-6">
+        {/* En-tête */}
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="text-xl font-bold text-[#1b2a4a]">Tableau de bord clients</h2>
+            <p className="text-sm text-gray-400 mt-0.5">
+              {loading ? "Chargement…" : clients.length
+                ? `${clients.length} client${clients.length > 1 ? "s" : ""} · vue synthétique`
+                : "Ajoutez vos premiers clients"}
+            </p>
+          </div>
           <button onClick={openWizard}
             className="flex items-center gap-2 bg-[#ff5a5f] text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-[#e5454a] transition-colors">
             <UserPlus size={15} /> Ajouter un client
           </button>
-        )}
-      </div>
+        </div>
 
-      {loading ? (
-        <div className="text-center py-16 text-gray-300 text-sm">Chargement…</div>
-      ) : clients.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-10">
-          <div className="w-16 h-16 rounded-2xl bg-[#fff1f1] flex items-center justify-center mb-5">
-            <Users size={28} className="text-[#ff5a5f]" />
-          </div>
-          <h3 className="font-bold text-lg text-[#1b2a4a] mb-1">Ajoutez votre premier client</h3>
-          <p className="text-sm text-gray-400 text-center max-w-xs mb-6">
-            Chaque client dispose de son propre espace : profil, posts, campagnes et connexion LinkedIn.
-          </p>
-          <button onClick={openWizard}
-            className="flex items-center gap-2 bg-[#ff5a5f] text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-[#e5454a] transition-colors">
-            <UserPlus size={16} /> Créer le premier compte client
-          </button>
-        </div>
-      ) : (
-        <div className="grid sm:grid-cols-2 gap-4">
-          {clients.map((client) => (
-            <div key={client.id}
-              className="bg-white border border-gray-100 rounded-2xl shadow-sm p-5 flex flex-col gap-4 hover:border-[#ffd5d6] transition-colors">
-              <div className="flex items-center gap-3">
-                <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-[#ff5a5f] to-orange-400 flex items-center justify-center text-white font-bold text-base shrink-0">
-                  {(client.name?.[0] ?? "?").toUpperCase()}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-sm text-[#1b2a4a] truncate">{client.name}</p>
-                  {client.companyName && <p className="text-xs text-gray-400 truncate">{client.companyName}</p>}
-                </div>
-              </div>
-              <div className="text-xs text-gray-400 flex items-center gap-1.5">
-                <Linkedin size={13} className={client.linkedin?.personName ? "text-[#0a66c2]" : "text-gray-200"} />
-                {client.linkedin?.personName
-                  ? <span className="text-gray-600">{client.linkedin.personName}</span>
-                  : <span>LinkedIn non connecté</span>}
-              </div>
-              <div className="flex items-center gap-2 pt-1 border-t border-gray-50">
-                <button onClick={() => onManage(client)}
-                  className="flex-1 bg-[#ff5a5f] text-white py-1.5 rounded-lg text-xs font-semibold hover:bg-[#e5454a] transition-colors">
-                  Gérer ce client
-                </button>
-                <button onClick={() => deleteClient(client.id)} disabled={deleting === client.id}
-                  className="p-1.5 rounded-lg text-gray-300 hover:text-red-400 hover:bg-red-50 transition-colors" title="Supprimer">
-                  <Trash2 size={14} />
-                </button>
-              </div>
+        {loading ? (
+          <div className="text-center py-20 text-gray-300 text-sm">Chargement…</div>
+        ) : clients.length === 0 ? (
+          /* État vide */
+          <div className="flex flex-col items-center justify-center py-16">
+            <div className="w-16 h-16 rounded-2xl bg-[#fff1f1] flex items-center justify-center mb-5">
+              <Users size={28} className="text-[#ff5a5f]" />
             </div>
-          ))}
-          <button onClick={openWizard}
-            className="border-2 border-dashed border-gray-200 rounded-2xl p-5 flex flex-col items-center justify-center gap-2 text-gray-300 hover:border-[#ff5a5f] hover:text-[#ff5a5f] transition-colors min-h-[140px]">
-            <UserPlus size={22} />
-            <span className="text-xs font-medium">Ajouter un client</span>
+            <h3 className="font-bold text-lg text-[#1b2a4a] mb-1">Ajoutez votre premier client</h3>
+            <p className="text-sm text-gray-400 text-center max-w-xs mb-6">
+              Chaque client dispose de son propre espace : profil, posts, campagnes et connexion LinkedIn.
+            </p>
+            <button onClick={openWizard}
+              className="flex items-center gap-2 bg-[#ff5a5f] text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-[#e5454a] transition-colors">
+              <UserPlus size={16} /> Créer le premier compte client
+            </button>
+          </div>
+        ) : (
+          <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-gray-100 bg-gray-50">
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">Client</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">LinkedIn</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">Profil</th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold text-gray-400 uppercase tracking-wide">En attente</th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold text-gray-400 uppercase tracking-wide">Programmés</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">Dernier post</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {clients.map((client) => (
+                  <ClientTableRow
+                    key={client.id}
+                    client={client}
+                    onManage={onManage}
+                    onViewDrafts={setPanelClient}
+                    onDelete={deleteClient}
+                    deleting={deleting}
+                  />
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </main>
+
+      {/* Panel brouillons */}
+      {panelClient && (
+        <DraftsPanel
+          client={panelClient}
+          onClose={() => setPanelClient(null)}
+          showToast={showToast}
+          onGenerate={() => { setPanelClient(null); onManage(panelClient, "generate"); }}
+        />
+      )}
+    </>
+  );
+}
+
+// ----------------------------------------------------------------
+// Charte graphique — couleurs, logo, police, style de fond
+// ----------------------------------------------------------------
+const BRAND_FONTS = ["Inter", "Poppins", "Montserrat", "Raleway"];
+const BG_STYLES = [
+  { id: "solid",    label: "Couleur unie" },
+  { id: "gradient", label: "Dégradé" },
+];
+
+function BrandKitView({ showToast }) {
+  const [kit, setKit] = useState({
+    primaryColor:   "#0a66c2",
+    secondaryColor: "#ffffff",
+    accentColor:    "#ff5a5f",
+    logoUrl:        null,
+    fontFamily:     "Inter",
+    bgStyle:        "solid",
+    tagline:        "",
+  });
+  const [loading, setLoading]       = useState(true);
+  const [saving, setSaving]         = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [preview, setPreview]       = useState(null); // URL de l'aperçu PNG généré
+  const [generating, setGenerating] = useState(false);
+
+  const set = (k, v) => setKit((f) => ({ ...f, [k]: v }));
+
+  useEffect(() => {
+    fetch("/api/brand-kit")
+      .then((r) => r.json())
+      .then((d) => { if (d.brandKit) setKit({ tagline: "", ...d.brandKit }); })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  const save = async () => {
+    setSaving(true);
+    try {
+      const res = await fetch("/api/brand-kit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(kit),
+      });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error || "Erreur");
+      showToast("Charte enregistrée ✓");
+    } catch (e) {
+      showToast(e.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const uploadLogo = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingLogo(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/brand-kit/logo", { method: "POST", body: fd });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error || "Erreur upload");
+      set("logoUrl", d.logoUrl);
+      showToast("Logo chargé ✓");
+    } catch (e) {
+      showToast(e.message);
+    } finally {
+      setUploadingLogo(false);
+    }
+  };
+
+  const generatePreview = async () => {
+    setGenerating(true);
+    setPreview(null);
+    try {
+      // Sauvegarde d'abord pour que l'API template lise la bonne charte
+      await fetch("/api/brand-kit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(kit),
+      });
+      const res = await fetch("/api/image/template", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "post",
+          text: "Voici un aperçu de votre charte graphique sur un post LinkedIn. Personnalisez les couleurs, la police et le logo pour refléter votre marque.",
+        }),
+      });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error || "Erreur génération");
+      setPreview(d.urls?.[0] ?? null);
+    } catch (e) {
+      showToast(e.message);
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const inputCls = "w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]";
+  const sectionTitle = (title) => (
+    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">{title}</p>
+  );
+
+  if (loading) return <div className="text-center py-20 text-gray-300 text-sm">Chargement…</div>;
+
+  return (
+    <main className="max-w-4xl mx-auto p-6">
+      <div className="grid lg:grid-cols-2 gap-6 items-start">
+
+        {/* Colonne gauche — formulaire */}
+        <div className="space-y-5">
+
+          {/* Couleurs */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+            {sectionTitle("Couleurs de marque")}
+            <div className="space-y-4">
+              {[
+                { key: "primaryColor",   label: "Couleur principale",   hint: "Fond des visuels" },
+                { key: "secondaryColor", label: "Couleur secondaire",   hint: "Texte sur fond coloré" },
+                { key: "accentColor",    label: "Couleur d'accent",     hint: "Barres, séparateurs, guillemets" },
+              ].map(({ key, label, hint }) => (
+                <div key={key} className="flex items-center gap-3">
+                  <input
+                    type="color"
+                    value={kit[key]}
+                    onChange={(e) => set(key, e.target.value)}
+                    className="w-10 h-10 rounded-xl border border-gray-200 cursor-pointer p-0.5 shrink-0"
+                  />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-gray-700">{label}</p>
+                    <p className="text-xs text-gray-400">{hint}</p>
+                  </div>
+                  <input
+                    type="text"
+                    value={kit[key]}
+                    onChange={(e) => { if (/^#[0-9a-fA-F]{0,6}$/.test(e.target.value)) set(key, e.target.value); }}
+                    className="w-24 border border-gray-200 rounded-lg px-2 py-1.5 text-xs font-mono text-center focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Style de fond */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+            {sectionTitle("Style de fond")}
+            <div className="flex gap-2">
+              {BG_STYLES.map((s) => (
+                <button
+                  key={s.id}
+                  type="button"
+                  onClick={() => set("bgStyle", s.id)}
+                  className={`flex-1 py-2.5 rounded-xl text-sm font-medium border transition-colors
+                    ${kit.bgStyle === s.id
+                      ? "bg-[#ff5a5f] text-white border-[#ff5a5f]"
+                      : "border-gray-200 text-gray-500 hover:border-gray-300"}`}
+                >
+                  {s.label}
+                </button>
+              ))}
+            </div>
+            {/* Mini-aperçu couleur */}
+            <div
+              className="mt-3 h-8 rounded-xl"
+              style={{
+                background: kit.bgStyle === "gradient"
+                  ? `linear-gradient(135deg, ${kit.primaryColor}, ${kit.accentColor})`
+                  : kit.primaryColor,
+              }}
+            />
+          </div>
+
+          {/* Police */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+            {sectionTitle("Police de caractères")}
+            <div className="flex flex-wrap gap-2">
+              {BRAND_FONTS.map((f) => (
+                <button
+                  key={f}
+                  type="button"
+                  onClick={() => set("fontFamily", f)}
+                  className={`px-4 py-2 rounded-xl text-sm border transition-colors
+                    ${kit.fontFamily === f
+                      ? "bg-[#1b2a4a] text-white border-[#1b2a4a]"
+                      : "border-gray-200 text-gray-600 hover:border-gray-300"}`}
+                >
+                  {f}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Logo */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+            {sectionTitle("Logo")}
+            <div className="flex items-center gap-4">
+              {kit.logoUrl ? (
+                <div className="w-24 h-16 rounded-xl border border-gray-100 bg-gray-50 flex items-center justify-center p-2 shrink-0">
+                  <img src={kit.logoUrl} alt="Logo" className="max-h-12 max-w-20 object-contain" />
+                </div>
+              ) : (
+                <div className="w-24 h-16 rounded-xl border-2 border-dashed border-gray-200 flex items-center justify-center shrink-0">
+                  <ImageIcon size={20} className="text-gray-200" />
+                </div>
+              )}
+              <div className="flex-1">
+                <label className="block">
+                  <span className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium border border-gray-200 cursor-pointer hover:border-[#ff5a5f] transition-colors ${uploadingLogo ? "opacity-50 pointer-events-none" : ""}`}>
+                    {uploadingLogo ? "Upload…" : "Choisir un fichier"}
+                  </span>
+                  <input type="file" accept="image/png,image/jpeg,image/svg+xml,image/webp" className="hidden" onChange={uploadLogo} />
+                </label>
+                <p className="text-xs text-gray-400 mt-1.5">PNG, SVG ou JPG · max 2 Mo</p>
+              </div>
+              {kit.logoUrl && (
+                <button type="button" onClick={() => set("logoUrl", null)} className="text-gray-300 hover:text-red-400 transition-colors">
+                  <X size={16} />
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Tagline */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+            {sectionTitle("Tagline (optionnel)")}
+            <input
+              value={kit.tagline ?? ""}
+              onChange={(e) => set("tagline", e.target.value)}
+              placeholder="ex : Consultant RH · Bordeaux"
+              className={inputCls}
+              maxLength={80}
+            />
+            <p className="text-xs text-gray-400 mt-1.5">Affiché en bas de vos visuels.</p>
+          </div>
+
+          {/* Bouton enregistrer */}
+          <button
+            type="button"
+            onClick={save}
+            disabled={saving}
+            className="w-full bg-[#ff5a5f] text-white py-3 rounded-xl font-semibold text-sm hover:bg-[#e5454a] disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
+          >
+            <Save size={15} /> {saving ? "Enregistrement…" : "Enregistrer la charte"}
           </button>
         </div>
-      )}
+
+        {/* Colonne droite — aperçu */}
+        <div className="space-y-4 sticky top-6">
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+            {sectionTitle("Aperçu du visuel")}
+            <div className="aspect-square rounded-xl overflow-hidden bg-gray-50 border border-gray-100 flex items-center justify-center mb-4">
+              {preview ? (
+                <img src={preview} alt="Aperçu" className="w-full h-full object-cover" />
+              ) : (
+                <div className="text-center p-6">
+                  <div
+                    className="w-20 h-20 rounded-2xl mx-auto mb-3 flex items-center justify-center"
+                    style={{ background: kit.primaryColor }}
+                  >
+                    <ImageIcon size={32} style={{ color: kit.secondaryColor }} />
+                  </div>
+                  <p className="text-sm text-gray-400">Cliquez sur "Aperçu" pour<br />générer un exemple</p>
+                </div>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={generatePreview}
+              disabled={generating}
+              className="w-full border border-[#ff5a5f] text-[#ff5a5f] py-2.5 rounded-xl text-sm font-semibold hover:bg-[#fff1f1] disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
+            >
+              {generating ? <><RefreshCw size={14} className="animate-spin" /> Génération…</> : <><Eye size={14} /> Aperçu</>}
+            </button>
+          </div>
+
+          <div className="bg-[#fff8f1] border border-orange-100 rounded-2xl p-4 text-xs text-orange-700 leading-relaxed">
+            <p className="font-semibold mb-1">Comment ça marche ?</p>
+            Après avoir enregistré votre charte, chaque post généré sera automatiquement accompagné d'un visuel respectant vos couleurs, votre police et votre logo.
+            Pour les carrousels, chaque slide sera également générée à partir de vos gabarits.
+          </div>
+        </div>
+      </div>
     </main>
   );
 }
@@ -6341,6 +6851,7 @@ export default function Home() {
     { id: "stats", label: "Statistiques", icon: BarChart3 },
     { id: "billing", label: "Abonnement", icon: CreditCard },
     { id: "profile", label: "Profil", icon: UserRound },
+    { id: "brand-kit", label: "Charte graphique", icon: ImageIcon },
     ...(user.plan === "agence"
       ? [{ id: "clients", label: "Mes clients", icon: Users }]
       : []),
@@ -6361,6 +6872,7 @@ export default function Home() {
     stats: "Statistiques",
     billing: "Abonnement",
     profile: "Mon profil",
+    "brand-kit": "Charte graphique",
     clients: "Mes clients",
     admin: "Administration",
     content: "Contenu du site",
@@ -7705,6 +8217,8 @@ export default function Home() {
         <StatsView linkedin={linkedin} orgs={orgs} profile={profile} drafts={drafts} />
       ) : view === "billing" ? (
         <BillingView user={user} showToast={showToast} />
+      ) : view === "brand-kit" ? (
+        <BrandKitView showToast={showToast} />
       ) : view === "profile" ? (
         <ProfileView
           key={profile?.email ?? "profile"}
@@ -7728,7 +8242,7 @@ export default function Home() {
       ) : view === "clients" ? (
         <ClientsView
           showToast={showToast}
-          onManage={async (client) => {
+          onManage={async (client, targetView = "dashboard") => {
             const res = await fetch("/api/agency/impersonate", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -7736,7 +8250,7 @@ export default function Home() {
             });
             if (res.ok) {
               setImpersonating(client);
-              setView("dashboard");
+              setView(targetView === "generate" ? "generate" : "dashboard");
               window.location.reload();
             } else {
               showToast("Erreur lors du changement de compte");
