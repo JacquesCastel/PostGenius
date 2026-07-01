@@ -18,21 +18,25 @@ export async function GET(req) {
   const auth = await requireAgency(req);
   if (auth.error) return NextResponse.json({ error: auth.error }, { status: auth.status });
 
-  const clients = await prisma.user.findMany({
-    where: { managedByUserId: auth.userId },
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      companyName: true,
-      headline: true,
-      createdAt: true,
-      linkedin: { select: { personName: true, orgName: true } },
-    },
-    orderBy: { createdAt: "asc" },
-  });
-
-  return NextResponse.json({ clients });
+  try {
+    const clients = await prisma.user.findMany({
+      where: { managedByUserId: auth.userId },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        companyName: true,
+        headline: true,
+        createdAt: true,
+        linkedin: { select: { personName: true, orgName: true } },
+      },
+      orderBy: { createdAt: "asc" },
+    });
+    return NextResponse.json({ clients });
+  } catch (e) {
+    console.error("GET /api/agency/clients:", e.message);
+    return NextResponse.json({ error: e.message }, { status: 500 });
+  }
 }
 
 // POST /api/agency/clients — crée un compte client
@@ -40,27 +44,32 @@ export async function POST(req) {
   const auth = await requireAgency(req);
   if (auth.error) return NextResponse.json({ error: auth.error }, { status: auth.status });
 
-  const { name, companyName, email } = await req.json();
-  if (!name?.trim()) return NextResponse.json({ error: "Nom requis" }, { status: 400 });
+  try {
+    const { name, companyName, email } = await req.json();
+    if (!name?.trim()) return NextResponse.json({ error: "Nom requis" }, { status: 400 });
 
-  // Email : soit fourni, soit généré (le client ne se connecte jamais)
-  const clientEmail = email?.trim() ||
-    `client-${Date.now()}-${Math.random().toString(36).slice(2)}@managed.postgenius.internal`;
+    // Email : soit fourni, soit généré (le client ne se connecte jamais)
+    const clientEmail = email?.trim() ||
+      `client-${Date.now()}-${Math.random().toString(36).slice(2)}@managed.postgenius.internal`;
 
-  // Mot de passe aléatoire inutilisable (le client ne se connecte pas)
-  const password = await bcrypt.hash(Math.random().toString(36) + Math.random().toString(36), 10);
+    // Mot de passe aléatoire inutilisable (le client ne se connecte pas)
+    const password = await bcrypt.hash(Math.random().toString(36) + Math.random().toString(36), 10);
 
-  const client = await prisma.user.create({
-    data: {
-      name: name.trim(),
-      email: clientEmail,
-      password,
-      companyName: companyName?.trim() || null,
-      plan: "agence", // hérite des capacités de l'agence
-      managedByUserId: auth.userId,
-    },
-    select: { id: true, name: true, email: true, companyName: true, createdAt: true },
-  });
+    const client = await prisma.user.create({
+      data: {
+        name: name.trim(),
+        email: clientEmail,
+        password,
+        companyName: companyName?.trim() || null,
+        plan: "agence",
+        managedByUserId: auth.userId,
+      },
+      select: { id: true, name: true, email: true, companyName: true, createdAt: true },
+    });
 
-  return NextResponse.json({ client }, { status: 201 });
+    return NextResponse.json({ client }, { status: 201 });
+  } catch (e) {
+    console.error("POST /api/agency/clients:", e.message);
+    return NextResponse.json({ error: e.message }, { status: 500 });
+  }
 }
