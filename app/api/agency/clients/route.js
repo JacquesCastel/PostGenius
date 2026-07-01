@@ -45,7 +45,11 @@ export async function POST(req) {
   if (auth.error) return NextResponse.json({ error: auth.error }, { status: auth.status });
 
   try {
-    const { name, companyName, email } = await req.json();
+    const {
+      name, email, companyName, website,
+      headline, businessDescription, targetAudience,
+      tone, themes, styleNotes,
+    } = await req.json();
     if (!name?.trim()) return NextResponse.json({ error: "Nom requis" }, { status: 400 });
 
     // Email : soit fourni, soit généré (le client ne se connecte jamais)
@@ -60,11 +64,19 @@ export async function POST(req) {
         name: name.trim(),
         email: clientEmail,
         password,
-        companyName: companyName?.trim() || null,
+        companyName:         companyName?.trim()         || null,
+        website:             website?.trim()              || null,
+        headline:            headline?.trim()             || null,
+        businessDescription: businessDescription?.trim()  || null,
+        targetAudience:      targetAudience?.trim()       || null,
+        tone:                tone?.trim()                 || "Professionnel",
+        themes:              themes?.trim()               || null,
+        styleNotes:          styleNotes?.trim()           || null,
         plan: "agence",
         managedByUserId: auth.userId,
+        onboardedAt: new Date(), // profil déjà rempli par l'agence — pas besoin d'onboarding
       },
-      select: { id: true, name: true, email: true, companyName: true, createdAt: true },
+      select: { id: true, name: true, email: true, companyName: true, headline: true, createdAt: true },
     });
 
     return NextResponse.json({ client }, { status: 201 });
