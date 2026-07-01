@@ -4568,9 +4568,10 @@ function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast 
 function ClientsView({ showToast, onManage }) {
   const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [creating, setCreating] = useState(false);
-  const [showForm, setShowForm] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [wizard, setWizard] = useState(false); // true = mode création
   const [form, setForm] = useState({ name: "", companyName: "", email: "" });
+  const [formError, setFormError] = useState(null);
   const [deleting, setDeleting] = useState(null);
 
   useEffect(() => {
@@ -4581,10 +4582,14 @@ function ClientsView({ showToast, onManage }) {
       .finally(() => setLoading(false));
   }, []);
 
+  const openWizard = () => { setForm({ name: "", companyName: "", email: "" }); setFormError(null); setWizard(true); };
+  const closeWizard = () => setWizard(false);
+
   const createClient = async (e) => {
     e.preventDefault();
+    setFormError(null);
     if (!form.name.trim()) return;
-    setCreating(true);
+    setSubmitting(true);
     try {
       const res = await fetch("/api/agency/clients", {
         method: "POST",
@@ -4592,15 +4597,14 @@ function ClientsView({ showToast, onManage }) {
         body: JSON.stringify(form),
       });
       const d = await res.json();
-      if (!res.ok) throw new Error(d.error || "Erreur");
+      if (!res.ok) { setFormError(d.error || "Erreur"); return; }
       setClients((c) => [...c, d.client]);
-      setForm({ name: "", companyName: "", email: "" });
-      setShowForm(false);
+      closeWizard();
       showToast("Client créé ✓");
     } catch (err) {
-      showToast(err.message);
+      setFormError(err.message);
     } finally {
-      setCreating(false);
+      setSubmitting(false);
     }
   };
 
@@ -4619,118 +4623,183 @@ function ClientsView({ showToast, onManage }) {
     }
   };
 
-  return (
-    <main className="max-w-3xl mx-auto p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-xl font-bold text-[#1b2a4a]">Mes clients</h2>
-          <p className="text-sm text-gray-500 mt-0.5">Gérez les comptes de vos clients et publiez en leur nom.</p>
-        </div>
+  /* ── Mode wizard (création) ── */
+  if (wizard) {
+    return (
+      <main className="max-w-xl mx-auto p-6">
+        {/* Fil d'Ariane */}
         <button
-          onClick={() => setShowForm(true)}
-          className="flex items-center gap-2 bg-[#ff5a5f] text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-[#e5454a] transition-colors"
+          onClick={closeWizard}
+          className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-600 mb-6"
         >
-          <UserPlus size={15} /> Ajouter un client
+          <ChevronLeft size={16} /> Mes clients
         </button>
-      </div>
 
-      {/* Formulaire de création */}
-      {showForm && (
-        <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-5">
-          <h3 className="font-semibold text-sm mb-4">Nouveau client</h3>
-          <form onSubmit={createClient} className="space-y-3">
-            <div className="grid sm:grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs text-gray-500 mb-1">Nom du contact *</label>
-                <input
-                  value={form.name}
-                  onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                  placeholder="Marie Dupont"
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-xs text-gray-500 mb-1">Entreprise</label>
-                <input
-                  value={form.companyName}
-                  onChange={(e) => setForm((f) => ({ ...f, companyName: e.target.value }))}
-                  placeholder="Acme SAS"
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
-                />
-              </div>
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
+          <div className="w-12 h-12 rounded-2xl bg-[#fff1f1] flex items-center justify-center mb-4">
+            <UserPlus size={22} className="text-[#ff5a5f]" />
+          </div>
+          <h2 className="text-xl font-bold text-[#1b2a4a] mb-1">Nouveau client</h2>
+          <p className="text-sm text-gray-400 mb-7">
+            Ces informations permettent de personnaliser la génération de contenu.
+            Vous pourrez compléter le profil et connecter LinkedIn depuis son espace.
+          </p>
+
+          <form onSubmit={createClient} className="space-y-4">
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1.5">Nom du contact *</label>
+              <input
+                autoFocus
+                value={form.name}
+                onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                placeholder="Marie Dupont"
+                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
+                required
+              />
             </div>
             <div>
-              <label className="block text-xs text-gray-500 mb-1">E-mail (optionnel)</label>
+              <label className="block text-xs font-medium text-gray-500 mb-1.5">Entreprise</label>
+              <input
+                value={form.companyName}
+                onChange={(e) => setForm((f) => ({ ...f, companyName: e.target.value }))}
+                placeholder="Acme SAS"
+                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1.5">
+                E-mail <span className="text-gray-300 font-normal">(optionnel — pour référence uniquement)</span>
+              </label>
               <input
                 type="email"
                 value={form.email}
                 onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
                 placeholder="marie@acme.fr"
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
+                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
               />
             </div>
-            <div className="flex gap-2 pt-1">
+
+            {formError && (
+              <div className="bg-red-50 border border-red-100 text-red-600 rounded-xl px-4 py-3 text-sm flex items-center gap-2">
+                <AlertCircle size={15} /> {formError}
+              </div>
+            )}
+
+            <div className="flex gap-3 pt-2">
               <button
                 type="submit"
-                disabled={creating}
-                className="bg-[#ff5a5f] text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-[#e5454a] disabled:opacity-50"
+                disabled={submitting || !form.name.trim()}
+                className="flex-1 bg-[#ff5a5f] text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-[#e5454a] disabled:opacity-50 transition-colors"
               >
-                {creating ? "Création…" : "Créer le client"}
+                {submitting ? "Création…" : "Créer le compte client"}
               </button>
               <button
                 type="button"
-                onClick={() => { setShowForm(false); setForm({ name: "", companyName: "", email: "" }); }}
-                className="px-4 py-2 rounded-lg text-sm text-gray-500 hover:bg-gray-50"
+                onClick={closeWizard}
+                className="px-4 py-2.5 rounded-xl text-sm text-gray-400 hover:bg-gray-50 border border-gray-100"
               >
                 Annuler
               </button>
             </div>
           </form>
         </div>
-      )}
+      </main>
+    );
+  }
 
-      {/* Liste des clients */}
+  /* ── Mode liste ── */
+  return (
+    <main className="max-w-4xl mx-auto p-6">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 className="text-xl font-bold text-[#1b2a4a]">Mes clients</h2>
+          <p className="text-sm text-gray-400 mt-0.5">
+            {clients.length ? `${clients.length} client${clients.length > 1 ? "s" : ""}` : "Gérez les comptes de vos clients"}
+          </p>
+        </div>
+        {clients.length > 0 && (
+          <button
+            onClick={openWizard}
+            className="flex items-center gap-2 bg-[#ff5a5f] text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-[#e5454a] transition-colors"
+          >
+            <UserPlus size={15} /> Ajouter un client
+          </button>
+        )}
+      </div>
+
       {loading ? (
-        <div className="text-center py-12 text-gray-400 text-sm">Chargement…</div>
+        <div className="text-center py-16 text-gray-300 text-sm">Chargement…</div>
       ) : clients.length === 0 ? (
-        <div className="bg-white border border-dashed border-gray-200 rounded-2xl p-12 text-center">
-          <Users size={32} className="mx-auto mb-3 text-gray-300" />
-          <p className="text-sm text-gray-400">Aucun client pour l'instant.</p>
-          <p className="text-xs text-gray-300 mt-1">Cliquez "Ajouter un client" pour commencer.</p>
+        /* État vide — wizard intégré dans la page */
+        <div className="flex flex-col items-center justify-center py-10">
+          <div className="w-16 h-16 rounded-2xl bg-[#fff1f1] flex items-center justify-center mb-5">
+            <Users size={28} className="text-[#ff5a5f]" />
+          </div>
+          <h3 className="font-bold text-lg text-[#1b2a4a] mb-1">Ajoutez votre premier client</h3>
+          <p className="text-sm text-gray-400 text-center max-w-xs mb-6">
+            Chaque client dispose de son propre espace : profil, posts, campagnes et connexions LinkedIn.
+          </p>
+          <button
+            onClick={openWizard}
+            className="flex items-center gap-2 bg-[#ff5a5f] text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-[#e5454a] transition-colors"
+          >
+            <UserPlus size={16} /> Créer le premier compte client
+          </button>
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="grid sm:grid-cols-2 gap-4">
           {clients.map((client) => (
-            <div key={client.id} className="bg-white border border-gray-100 rounded-2xl shadow-sm p-4 flex items-center gap-4">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#ff5a5f] to-orange-400 flex items-center justify-center text-white font-bold text-sm shrink-0">
-                {(client.name?.[0] ?? "?").toUpperCase()}
+            <div
+              key={client.id}
+              className="bg-white border border-gray-100 rounded-2xl shadow-sm p-5 flex flex-col gap-4 hover:border-[#ffd5d6] transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-[#ff5a5f] to-orange-400 flex items-center justify-center text-white font-bold text-base shrink-0">
+                  {(client.name?.[0] ?? "?").toUpperCase()}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-sm text-[#1b2a4a] truncate">{client.name}</p>
+                  {client.companyName && (
+                    <p className="text-xs text-gray-400 truncate">{client.companyName}</p>
+                  )}
+                </div>
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-semibold text-sm text-[#1b2a4a] truncate">{client.name}</p>
-                <p className="text-xs text-gray-400 truncate">
-                  {client.companyName ? `${client.companyName} · ` : ""}
-                  {client.linkedin?.personName ? `LinkedIn : ${client.linkedin.personName}` : "LinkedIn non connecté"}
-                </p>
+
+              <div className="text-xs text-gray-400 flex items-center gap-1.5">
+                <Linkedin size={13} className={client.linkedin?.personName ? "text-[#0a66c2]" : "text-gray-200"} />
+                {client.linkedin?.personName
+                  ? <span className="text-gray-600">{client.linkedin.personName}</span>
+                  : <span>LinkedIn non connecté</span>
+                }
               </div>
-              <div className="flex items-center gap-2 shrink-0">
+
+              <div className="flex items-center gap-2 pt-1 border-t border-gray-50">
                 <button
                   onClick={() => onManage(client)}
-                  className="bg-[#ff5a5f] text-white px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-[#e5454a]"
+                  className="flex-1 bg-[#ff5a5f] text-white py-1.5 rounded-lg text-xs font-semibold hover:bg-[#e5454a] transition-colors"
                 >
-                  Gérer
+                  Gérer ce client
                 </button>
                 <button
                   onClick={() => deleteClient(client.id)}
                   disabled={deleting === client.id}
                   className="p-1.5 rounded-lg text-gray-300 hover:text-red-400 hover:bg-red-50 transition-colors"
-                  title="Supprimer ce client"
+                  title="Supprimer"
                 >
-                  <Trash2 size={15} />
+                  <Trash2 size={14} />
                 </button>
               </div>
             </div>
           ))}
+
+          {/* Carte "Ajouter" toujours visible dans la grille */}
+          <button
+            onClick={openWizard}
+            className="border-2 border-dashed border-gray-200 rounded-2xl p-5 flex flex-col items-center justify-center gap-2 text-gray-300 hover:border-[#ff5a5f] hover:text-[#ff5a5f] transition-colors min-h-[140px]"
+          >
+            <UserPlus size={22} />
+            <span className="text-xs font-medium">Ajouter un client</span>
+          </button>
         </div>
       )}
     </main>

@@ -70,6 +70,9 @@ export async function POST(req) {
     return NextResponse.json({ client }, { status: 201 });
   } catch (e) {
     console.error("POST /api/agency/clients:", e.message);
+    if (e.code === "P2002") {
+      return NextResponse.json({ error: "Un compte avec cet e-mail existe déjà." }, { status: 409 });
+    }
     return NextResponse.json({ error: e.message }, { status: 500 });
   }
 }
