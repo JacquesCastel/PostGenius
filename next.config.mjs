@@ -3,6 +3,9 @@ const nextConfig = {
   // Build autonome pour Docker (copie minimale dans l'image finale)
   output: "standalone",
 
+  // Packages avec addons natifs (.node) — exclus du bundle webpack, chargés par Node à l'exécution
+  serverExternalPackages: ["@resvg/resvg-js", "satori"],
+
   async headers() {
     return [
       {
