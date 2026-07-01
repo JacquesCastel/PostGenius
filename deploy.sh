@@ -20,7 +20,7 @@ echo "==> 1/5  git pull"
 git pull
 
 echo "==> 2/5  build (overlay conteneur) + sync schéma base de prod"
-docker run --rm -v /opt/postgenius:/host node:22-slim bash -c '
+docker run --rm --user root -v /opt/postgenius:/host node:22-slim bash -c '
   set -e
   mkdir /b && cd /b
   cp -r /host/. .
