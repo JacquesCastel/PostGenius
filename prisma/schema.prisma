@@ -135,6 +135,9 @@ model BrandKit {
   // Style de fond des visuels
   bgStyle        String   @default("solid") // solid | gradient
 
+  // Image de fond personnalisée (fichier dans ./data/backgrounds/, URL /api/images/backgrounds/:file)
+  backgroundUrl  String?
+
   // Tagline optionnelle affichée en bas des visuels
   tagline        String?
 

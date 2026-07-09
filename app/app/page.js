@@ -5195,6 +5195,7 @@ function BrandKitView({ showToast }) {
     secondaryColor: "#ffffff",
     accentColor:    "#ff5a5f",
     logoUrl:        null,
+    backgroundUrl:  null,
     fontFamily:     "Inter",
     bgStyle:        "solid",
     tagline:        "",
@@ -5202,6 +5203,7 @@ function BrandKitView({ showToast }) {
   const [loading, setLoading]       = useState(true);
   const [saving, setSaving]         = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [uploadingBg, setUploadingBg]     = useState(false);
   const [preview, setPreview]       = useState(null); // URL de l'aperçu PNG généré
   const [generating, setGenerating] = useState(false);
 
@@ -5250,6 +5252,30 @@ function BrandKitView({ showToast }) {
     } finally {
       setUploadingLogo(false);
     }
+  };
+
+  const uploadBg = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingBg(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/brand-kit/background", { method: "POST", body: fd });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error || "Erreur upload");
+      set("backgroundUrl", d.backgroundUrl);
+      showToast("Image de fond chargée ✓");
+    } catch (e) {
+      showToast(e.message);
+    } finally {
+      setUploadingBg(false);
+    }
+  };
+
+  const removeBg = async () => {
+    set("backgroundUrl", null);
+    await fetch("/api/brand-kit/background", { method: "DELETE" }).catch(() => {});
   };
 
   const generatePreview = async () => {
@@ -5402,6 +5428,41 @@ function BrandKitView({ showToast }) {
                 </button>
               )}
             </div>
+          </div>
+
+          {/* Image de fond */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+            {sectionTitle("Image de fond (optionnel)")}
+            <div className="flex items-center gap-4">
+              {kit.backgroundUrl ? (
+                <div className="w-16 h-16 rounded-xl border border-gray-100 overflow-hidden shrink-0">
+                  <img src={kit.backgroundUrl} alt="Fond" className="w-full h-full object-cover" />
+                </div>
+              ) : (
+                <div className="w-16 h-16 rounded-xl border-2 border-dashed border-gray-200 flex items-center justify-center shrink-0">
+                  <ImageIcon size={20} className="text-gray-200" />
+                </div>
+              )}
+              <div className="flex-1">
+                <label className="block">
+                  <span className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium border border-gray-200 cursor-pointer hover:border-[#ff5a5f] transition-colors ${uploadingBg ? "opacity-50 pointer-events-none" : ""}`}>
+                    {uploadingBg ? "Upload…" : "Choisir un fichier"}
+                  </span>
+                  <input type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={uploadBg} />
+                </label>
+                <p className="text-xs text-gray-400 mt-1.5">PNG, JPG ou WEBP · max 5 Mo · idéalement carré (1080×1080)</p>
+              </div>
+              {kit.backgroundUrl && (
+                <button type="button" onClick={removeBg} className="text-gray-300 hover:text-red-400 transition-colors">
+                  <X size={16} />
+                </button>
+              )}
+            </div>
+            {kit.backgroundUrl && (
+              <p className="text-xs text-gray-400 mt-3">
+                Un voile semi-transparent à votre couleur principale est appliqué par-dessus pour garder le texte lisible.
+              </p>
+            )}
           </div>
 
           {/* Tagline */}
