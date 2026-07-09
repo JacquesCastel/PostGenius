@@ -11,3 +11,4 @@
 !.next/static
 node_modules/*
 !node_modules/.prisma
+!node_modules/@fontsource
