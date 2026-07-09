@@ -25,6 +25,9 @@ RUN apt-get update \
 COPY --chown=app:app .next/standalone ./
 COPY --chown=app:app .next/static ./.next/static
 COPY --chown=app:app node_modules/.prisma ./node_modules/.prisma
+# Fonts @fontsource lues via fs.readFileSync à l'exécution (non tracées par le
+# build standalone) — copie explicite, sinon ENOENT sur les .woff en prod
+COPY --chown=app:app node_modules/@fontsource ./node_modules/@fontsource
 COPY --chown=app:app prisma ./prisma
 
 USER app

@@ -41,6 +41,8 @@ docker run --rm --user root -v /opt/postgenius:/host node:22-slim bash -c '
   # Copier le build vers l hôte (la copie préserve le rendu).
   rm -rf /host/.next && cp -r .next /host/.next
   mkdir -p /host/node_modules && rm -rf /host/node_modules/.prisma && cp -r node_modules/.prisma /host/node_modules/.prisma
+  # Fonts @fontsource : requises à l exécution (fs.readFileSync), copiées dans l image
+  rm -rf /host/node_modules/@fontsource && cp -r node_modules/@fontsource /host/node_modules/@fontsource
 '
 
 echo "==> 3/5  image (copie du build) + redémarrage"
