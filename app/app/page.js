@@ -4052,12 +4052,12 @@ function StatsView({ linkedin, orgs, profile, drafts }) {
                 ))}
               </div>
             )}
-            {/* Posts publiés via LinkeePost */}
+            {/* Posts publiés & programmés via LinkeePost */}
             <div>
-              <h4 className="font-medium text-sm mb-2 text-gray-700">Posts publiés via LinkeePost</h4>
+              <h4 className="font-medium text-sm mb-2 text-gray-700">Posts publiés & programmés via LinkeePost</h4>
               {data.posts.length === 0 ? (
                 <div className="bg-white rounded-xl border border-dashed border-gray-300 p-8 text-center text-gray-400 text-sm">
-                  Aucun post publié sur cette page depuis l'application.
+                  Aucun post publié ou programmé sur cette page depuis l'application.
                 </div>
               ) : (
                 <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-x-auto">
@@ -4076,10 +4076,21 @@ function StatsView({ linkedin, orgs, profile, drafts }) {
                     </thead>
                     <tbody className="divide-y divide-gray-50">
                       {data.posts.map((p) => (
-                        <tr key={p.id}>
+                        <tr key={p.id} className={p.status === "programmé" ? "bg-amber-50/40" : ""}>
                           <td className="p-3 max-w-xs">
-                            <p className="font-medium truncate">{p.theme || "Post"}</p>
-                            <p className="text-xs text-gray-400">{p.publishedAt ? fmtDateTime(p.publishedAt) : ""}</p>
+                            <div className="flex items-center gap-2">
+                              <p className="font-medium truncate">{p.theme || "Post"}</p>
+                              {p.status === "programmé" && (
+                                <span className="text-[10px] font-semibold uppercase tracking-wide bg-amber-100 text-amber-700 rounded-full px-2 py-0.5 shrink-0">
+                                  Programmé
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-xs text-gray-400">
+                              {p.status === "programmé"
+                                ? p.scheduledAt ? `Prévu le ${fmtDateTime(p.scheduledAt)}` : "Programmé"
+                                : p.publishedAt ? fmtDateTime(p.publishedAt) : ""}
+                            </p>
                           </td>
                           <td className="p-3 text-right">{p.stats?.impressionCount ?? "—"}</td>
                           <td className="p-3 text-right">{p.stats?.clickCount ?? "—"}</td>

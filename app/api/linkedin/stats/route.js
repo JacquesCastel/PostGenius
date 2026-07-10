@@ -60,6 +60,13 @@ export async function GET(req) {
       take: 50,
     });
 
+    // 2bis) Posts programmés sur cette page (campagnes ou programmation manuelle)
+    const scheduled = await prisma.draft.findMany({
+      where: { userId, status: "programmé", target: org },
+      orderBy: { scheduledAt: "asc" },
+      take: 50,
+    });
+
     const shareUrns = published.map((d) => d.postId).filter((id) => /^urn:li:(share|ugcPost):/.test(id));
     const statsByUrn = {};
 
@@ -86,14 +93,29 @@ export async function GET(req) {
       }
     }
 
-    const posts = published.map((d) => ({
-      id: d.id,
-      theme: d.theme,
-      text: d.text.slice(0, 120),
-      postId: d.postId,
-      publishedAt: d.publishedAt,
-      stats: statsByUrn[d.postId] ?? null,
-    }));
+    // Programmés d'abord (le prochain en tête), puis publiés (le plus récent en tête)
+    const posts = [
+      ...scheduled.map((d) => ({
+        id: d.id,
+        theme: d.theme,
+        text: d.text.slice(0, 120),
+        postId: null,
+        status: "programmé",
+        scheduledAt: d.scheduledAt,
+        publishedAt: null,
+        stats: null,
+      })),
+      ...published.map((d) => ({
+        id: d.id,
+        theme: d.theme,
+        text: d.text.slice(0, 120),
+        postId: d.postId,
+        status: "publié",
+        scheduledAt: null,
+        publishedAt: d.publishedAt,
+        stats: statsByUrn[d.postId] ?? null,
+      })),
+    ];
 
     // 3) Vues de la page entreprise
     let pageStats = null;
