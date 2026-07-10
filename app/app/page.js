@@ -3747,6 +3747,17 @@ function StatsView({ linkedin, orgs, profile, drafts }) {
     if (p.stats) statsByDraftId[p.id] = p.stats;
   }
 
+  // Tous les posts créés via l'app (profil perso + page entreprise) :
+  // programmés d'abord (prochain en tête), puis publiés (plus récent en tête)
+  const appPosts = [
+    ...(drafts ?? [])
+      .filter((d) => d.status === "programmé")
+      .sort((a, b) => new Date(a.scheduledAt ?? 0) - new Date(b.scheduledAt ?? 0)),
+    ...(drafts ?? [])
+      .filter((d) => d.status === "publié")
+      .sort((a, b) => new Date(b.publishedAt ?? 0) - new Date(a.publishedAt ?? 0)),
+  ];
+
   // Qualité agrégée d'une campagne (sur les posts dont LinkedIn fournit les stats)
   const campaignQuality = (c) => {
     const cDrafts = (drafts ?? []).filter((d) => d.campaignId === c.id);
@@ -3992,6 +4003,78 @@ function StatsView({ linkedin, orgs, profile, drafts }) {
         )}
       </section>
 
+      {/* ── Posts publiés & programmés via LinkeePost (toutes cibles) ── */}
+      <section>
+        <h3 className="font-semibold text-base mb-3 flex items-center gap-2">
+          <Send size={16} className="text-[#ff5a5f]" /> Posts publiés & programmés via LinkeePost
+        </h3>
+        {appPosts.length === 0 ? (
+          <div className="bg-white rounded-xl border border-dashed border-gray-300 p-8 text-center text-gray-400 text-sm">
+            Aucun post publié ou programmé depuis l'application.
+          </div>
+        ) : (
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-xs text-gray-500 border-b border-gray-100">
+                  <th className="p-3 font-medium">Post</th>
+                  <th className="p-3 font-medium">Cible</th>
+                  <th className="p-3 font-medium text-right">Impressions</th>
+                  <th className="p-3 font-medium text-right">Clics</th>
+                  <th className="p-3 font-medium text-right">Réactions</th>
+                  <th className="p-3 font-medium text-right">Comm.</th>
+                  <th className="p-3 font-medium text-right">Partages</th>
+                  <th className="p-3" />
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {appPosts.map((p) => {
+                  const s = statsByDraftId[p.id];
+                  return (
+                    <tr key={p.id} className={p.status === "programmé" ? "bg-amber-50/40" : ""}>
+                      <td className="p-3 max-w-xs">
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium truncate">{p.theme || "Post"}</p>
+                          {p.status === "programmé" && (
+                            <span className="text-[10px] font-semibold uppercase tracking-wide bg-amber-100 text-amber-700 rounded-full px-2 py-0.5 shrink-0">
+                              Programmé
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-gray-400">
+                          {p.status === "programmé"
+                            ? p.scheduledAt ? `Prévu le ${fmtDateTime(p.scheduledAt)}` : "Programmé"
+                            : p.publishedAt ? fmtDateTime(p.publishedAt) : ""}
+                        </p>
+                      </td>
+                      <td className="p-3 text-xs text-gray-500 whitespace-nowrap">
+                        {p.target === "person" ? "Profil perso" : "Page entreprise"}
+                      </td>
+                      <td className="p-3 text-right">{s?.impressionCount ?? "—"}</td>
+                      <td className="p-3 text-right">{s?.clickCount ?? "—"}</td>
+                      <td className="p-3 text-right">{s?.likeCount ?? "—"}</td>
+                      <td className="p-3 text-right">{s?.commentCount ?? "—"}</td>
+                      <td className="p-3 text-right">{s?.shareCount ?? "—"}</td>
+                      <td className="p-3">
+                        {p.postId && (
+                          <a href={`https://www.linkedin.com/feed/update/${p.postId}/`} target="_blank" rel="noreferrer"
+                            className="text-[#ff5a5f] hover:text-[#d12d33]" title="Voir sur LinkedIn">
+                            <ExternalLink size={14} />
+                          </a>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+        <p className="text-xs text-gray-400 mt-2">
+          Les statistiques détaillées ne sont disponibles que pour les posts de page entreprise (limitation LinkedIn).
+        </p>
+      </section>
+
       {/* ── 3. Page entreprise ── */}
       <section>
         <h3 className="font-semibold text-base mb-3 flex items-center gap-2">
@@ -4052,67 +4135,6 @@ function StatsView({ linkedin, orgs, profile, drafts }) {
                 ))}
               </div>
             )}
-            {/* Posts publiés & programmés via LinkeePost */}
-            <div>
-              <h4 className="font-medium text-sm mb-2 text-gray-700">Posts publiés & programmés via LinkeePost</h4>
-              {data.posts.length === 0 ? (
-                <div className="bg-white rounded-xl border border-dashed border-gray-300 p-8 text-center text-gray-400 text-sm">
-                  Aucun post publié ou programmé sur cette page depuis l'application.
-                </div>
-              ) : (
-                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="text-left text-xs text-gray-500 border-b border-gray-100">
-                        <th className="p-3 font-medium">Post</th>
-                        <th className="p-3 font-medium text-right">Impressions</th>
-                        <th className="p-3 font-medium text-right">Clics</th>
-                        <th className="p-3 font-medium text-right">Réactions</th>
-                        <th className="p-3 font-medium text-right">Comm.</th>
-                        <th className="p-3 font-medium text-right">Partages</th>
-                        <th className="p-3 font-medium text-right">Engag.</th>
-                        <th className="p-3" />
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-50">
-                      {data.posts.map((p) => (
-                        <tr key={p.id} className={p.status === "programmé" ? "bg-amber-50/40" : ""}>
-                          <td className="p-3 max-w-xs">
-                            <div className="flex items-center gap-2">
-                              <p className="font-medium truncate">{p.theme || "Post"}</p>
-                              {p.status === "programmé" && (
-                                <span className="text-[10px] font-semibold uppercase tracking-wide bg-amber-100 text-amber-700 rounded-full px-2 py-0.5 shrink-0">
-                                  Programmé
-                                </span>
-                              )}
-                            </div>
-                            <p className="text-xs text-gray-400">
-                              {p.status === "programmé"
-                                ? p.scheduledAt ? `Prévu le ${fmtDateTime(p.scheduledAt)}` : "Programmé"
-                                : p.publishedAt ? fmtDateTime(p.publishedAt) : ""}
-                            </p>
-                          </td>
-                          <td className="p-3 text-right">{p.stats?.impressionCount ?? "—"}</td>
-                          <td className="p-3 text-right">{p.stats?.clickCount ?? "—"}</td>
-                          <td className="p-3 text-right">{p.stats?.likeCount ?? "—"}</td>
-                          <td className="p-3 text-right">{p.stats?.commentCount ?? "—"}</td>
-                          <td className="p-3 text-right">{p.stats?.shareCount ?? "—"}</td>
-                          <td className="p-3 text-right">{p.stats?.engagement != null ? `${(p.stats.engagement * 100).toFixed(2)} %` : "—"}</td>
-                          <td className="p-3">
-                            {p.postId && (
-                              <a href={`https://www.linkedin.com/feed/update/${p.postId}/`} target="_blank" rel="noreferrer"
-                                className="text-[#ff5a5f] hover:text-[#d12d33]" title="Voir sur LinkedIn">
-                                <ExternalLink size={14} />
-                              </a>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
           </div>
         ) : null}
       </section>
