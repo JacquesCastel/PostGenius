@@ -19,12 +19,25 @@ export async function GET(req) {
 
   try {
     const accountId = user.phylloAccountId;
-    const [profileRes, contentsRes] = await Promise.all([
+    const [accountRes, profileRes, contentsRes] = await Promise.all([
+      phylloFetch(`/v1/accounts/${accountId}`).catch(() => null),
       phylloFetch(`/v1/profiles?account_id=${accountId}`).catch(() => null),
       phylloFetch(`/v1/social/contents?account_id=${accountId}&limit=25`).catch(() => null),
     ]);
 
     const profile = profileRes?.data?.[0] ?? null;
+
+    // Détection d'une synchronisation morte :
+    // - compte introuvable avec les credentials actuels (changement de clés/env), ou
+    // - statut Phyllo ≠ CONNECTED (session LinkedIn expirée), ou
+    // - profil non rafraîchi depuis plus de 7 jours
+    const accountStatus = accountRes?.status ?? accountRes?.data?.status ?? null;
+    const lastSync = profile?.updated_at ?? null;
+    const staleProfile = lastSync ? Date.now() - new Date(lastSync).getTime() > 7 * 24 * 3600 * 1000 : false;
+    const needsReconnect =
+      !accountRes ||
+      (accountStatus != null && accountStatus !== "CONNECTED") ||
+      staleProfile;
     const contents = (contentsRes?.data ?? [])
       .map((c) => ({
         id: c.id,
@@ -42,6 +55,8 @@ export async function GET(req) {
 
     return NextResponse.json({
       connected: true,
+      needsReconnect,
+      lastSync,
       profile: profile
         ? {
             name: profile.full_name ?? null,

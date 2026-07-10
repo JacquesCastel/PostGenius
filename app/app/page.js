@@ -3943,6 +3943,16 @@ function StatsView({ linkedin, orgs, profile, drafts }) {
           </div>
         ) : pStats ? (
           <>
+            {pStats.needsReconnect && (
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-800 flex items-start gap-2 mb-3">
+                <AlertCircle size={16} className="mt-0.5 shrink-0" />
+                <span>
+                  La synchronisation avec LinkedIn est interrompue
+                  {pStats.lastSync ? ` (dernière mise à jour le ${fmtDateTime(pStats.lastSync)})` : ""}.
+                  {" "}Reconnectez votre compte dans l'onglet <strong>Profil</strong> pour relancer la remontée des statistiques.
+                </span>
+              </div>
+            )}
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-3">
               {[
                 ["Abonnés", pStats.profile?.followers],
@@ -3992,7 +4002,9 @@ function StatsView({ linkedin, orgs, profile, drafts }) {
               </div>
             ) : (
               <p className="text-sm text-gray-400 bg-white rounded-xl border border-dashed border-gray-300 p-6 text-center">
-                Première synchronisation Phyllo en cours — les posts apparaîtront d'ici quelques minutes.
+                {pStats.needsReconnect
+                  ? "Aucun post remonté — reconnectez votre compte LinkedIn (onglet Profil) pour relancer la synchronisation."
+                  : "Première synchronisation Phyllo en cours — les posts apparaîtront d'ici quelques minutes."}
               </p>
             )}
           </>
