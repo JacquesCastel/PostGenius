@@ -4,7 +4,7 @@ const nextConfig = {
   output: "standalone",
 
   // Packages avec addons natifs (.node) — exclus du bundle webpack, chargés par Node à l'exécution
-  serverExternalPackages: ["@resvg/resvg-js", "satori"],
+  serverExternalPackages: ["@resvg/resvg-js", "satori", "sharp"],
 
   // Les fonts @fontsource sont lues via fs.readFileSync (chemin dynamique) :
   // le tracing du build standalone ne les détecte pas. On les inclut explicitement

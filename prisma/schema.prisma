@@ -111,7 +111,8 @@ model User {
   clients         User[]  @relation("AgencyClients")
 
   // --- Charte graphique ---
-  brandKit BrandKit?
+  brandKit    BrandKit?
+  mediaAssets MediaAsset[]
 }
 
 // Charte graphique : couleurs, logo, police, style de fond
@@ -143,6 +144,28 @@ model BrandKit {
 
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+}
+
+// Médiathèque : images uploadées, générées par IA, ou transformées (recadrage, filtres, texte)
+// Catégories : background | generated | logo | asset
+// Stockées dans ./data/media/, servies par /api/images/media/:file
+model MediaAsset {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  category  String   @default("asset") // background | generated | asset | logo
+  fileName  String   // fichier sur disque (data/media/)
+  url       String   // URL publique /api/images/media/:fileName
+  width     Int?
+  height    Int?
+  mimeType  String   @default("image/png")
+  sizeBytes Int?
+  prompt    String?  // prompt IA utilisé pour la generation (ou null)
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, category])
 }
 
 // Tokens LinkedIn du client (app perso + app pages entreprise)

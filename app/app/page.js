@@ -7,7 +7,8 @@ import {
   AlertCircle, UserPlus, LogIn, UserRound, Save, LayoutDashboard, CalendarDays, List, ExternalLink,
   BarChart3, Eye, MousePointerClick, ThumbsUp, MessageSquare, Share2, Undo2, Layers as LayersIcon,
   Megaphone, ChevronDown, Image as ImageIcon, ShieldCheck, Lock, ArrowUpCircle, MapPin, Bell, Camera,
-  CreditCard, Gauge, Users, Smartphone, Monitor
+  CreditCard, Gauge, Users, Smartphone, Monitor,
+  Upload, Wand2, SlidersHorizontal, Type, Crop, Download, Pencil, GripHorizontal
 } from "lucide-react";
 import { PLANS, PLAN_IDS, planLabel, planAllows, planOf, trialDaysLeft, accessState } from "@/lib/plans";
 import SiteHeader from "@/components/SiteHeader";
@@ -5226,6 +5227,515 @@ function ClientsView({ showToast, onManage }) {
 }
 
 // ----------------------------------------------------------------
+// ----------------------------------------------------------------
+// Médiathèque — bibliothèque d'images, éditeur, génération IA
+// ----------------------------------------------------------------
+const MEDIA_CATEGORIES = [
+  { id: "all",        label: "Tous" },
+  { id: "background", label: "Fonds" },
+  { id: "generated",  label: "Générés" },
+  { id: "asset",      label: "Assets" },
+];
+
+const CROP_PRESETS = [
+  { id: "1:1",    label: "Carré",          ratio: 1 },
+  { id: "1.91:1", label: "LinkedIn Post",  ratio: 1.91 },
+  { id: "16:9",   label: "16:9",           ratio: 16 / 9 },
+  { id: "4:5",    label: "4:5 Portrait",   ratio: 4 / 5 },
+];
+
+function MediaLibraryView({ showToast }) {
+  const [assets, setAssets]             = useState([]);
+  const [category, setCategory]         = useState("all");
+  const [loading, setLoading]           = useState(true);
+  const [uploading, setUploading]       = useState(false);
+  const [generating, setGenerating]     = useState(false);
+  const [genPrompt, setGenPrompt]       = useState("");
+  const [showGenForm, setShowGenForm]   = useState(false);
+  const [editAsset, setEditAsset]       = useState(null);
+  const [editorTab, setEditorTab]       = useState("crop");
+  const [applying, setApplying]         = useState(false);
+  const [removingBg, setRemovingBg]     = useState(false);
+
+  // Crop params
+  const [cropPreset, setCropPreset]     = useState(null);
+  const [crop, setCrop]                 = useState({ left: 0, top: 0, width: "", height: "" });
+
+  // Filter params (1.0 = inchangé)
+  const [filter, setFilter] = useState({ brightness: 1, contrast: 1, saturation: 1, blur: 0 });
+
+  // Text overlay params
+  const [textOvl, setTextOvl] = useState({
+    text: "", fontSize: 72, color: "#ffffff", posH: "center", posV: "bottom",
+  });
+
+  const filterCSS = `brightness(${filter.brightness}) contrast(${filter.contrast}) saturate(${filter.saturation})${filter.blur > 0 ? ` blur(${filter.blur}px)` : ""}`;
+
+  const fetchAssets = async (cat) => {
+    setLoading(true);
+    const q = cat && cat !== "all" ? `?category=${cat}` : "";
+    const res = await fetch(`/api/media${q}`).catch(() => null);
+    const d = await res?.json().catch(() => ({}));
+    setAssets(d?.assets ?? []);
+    setLoading(false);
+  };
+
+  useEffect(() => { fetchAssets(category); }, [category]);
+
+  const handleUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    const fd = new FormData();
+    fd.append("file", file);
+    fd.append("category", category === "all" ? "asset" : category);
+    const res = await fetch("/api/media", { method: "POST", body: fd }).catch(() => null);
+    const d = await res?.json().catch(() => ({}));
+    if (res?.ok) { setAssets((a) => [d.asset, ...a]); showToast("Image ajoutée ✓"); }
+    else showToast(d?.error || "Erreur upload");
+    setUploading(false);
+    e.target.value = "";
+  };
+
+  const handleGenerate = async () => {
+    if (!genPrompt.trim()) return;
+    setGenerating(true);
+    const res = await fetch("/api/media/generate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ prompt: genPrompt, category: "generated" }),
+    }).catch(() => null);
+    const d = await res?.json().catch(() => ({}));
+    if (res?.ok) {
+      setAssets((a) => [d.asset, ...a]);
+      setGenPrompt(""); setShowGenForm(false);
+      showToast("Image générée ✓");
+    } else showToast(d?.error || "Erreur génération");
+    setGenerating(false);
+  };
+
+  const handleDelete = async (asset) => {
+    if (!confirm("Supprimer cette image ?")) return;
+    const res = await fetch(`/api/media/${asset.id}`, { method: "DELETE" }).catch(() => null);
+    if (res?.ok) {
+      setAssets((a) => a.filter((x) => x.id !== asset.id));
+      if (editAsset?.id === asset.id) setEditAsset(null);
+      showToast("Supprimé ✓");
+    } else showToast("Erreur suppression");
+  };
+
+  const useAsBg = async (asset) => {
+    const res = await fetch("/api/brand-kit", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ backgroundUrl: asset.url }),
+    }).catch(() => null);
+    showToast(res?.ok ? "Image de fond mise à jour ✓" : "Erreur");
+  };
+
+  const applyCropPreset = (preset) => {
+    setCropPreset(preset.id);
+    if (!editAsset?.width || !editAsset?.height) return;
+    const w = editAsset.width, h = editAsset.height;
+    let cw, ch;
+    if (w / h > preset.ratio) { ch = h; cw = Math.round(h * preset.ratio); }
+    else { cw = w; ch = Math.round(w / preset.ratio); }
+    const left = Math.round((w - cw) / 2);
+    const top  = Math.round((h - ch) / 2);
+    setCrop({ left, top, width: cw, height: ch });
+  };
+
+  const applyTransform = async () => {
+    if (!editAsset) return;
+    const body = {};
+    if (editorTab === "crop" && crop.width && crop.height) {
+      body.crop = { left: Number(crop.left) || 0, top: Number(crop.top) || 0, width: Number(crop.width), height: Number(crop.height) };
+    } else if (editorTab === "filter") {
+      body.filter = { brightness: filter.brightness, contrast: filter.contrast, saturation: filter.saturation, blur: filter.blur };
+    } else if (editorTab === "text" && textOvl.text.trim()) {
+      body.text = textOvl;
+    }
+    if (!Object.keys(body).length) { showToast("Aucun paramètre saisi."); return; }
+    setApplying(true);
+    const res = await fetch(`/api/media/${editAsset.id}/transform`, {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
+    }).catch(() => null);
+    const d = await res?.json().catch(() => ({}));
+    if (res?.ok) {
+      setAssets((a) => [d.asset, ...a]); setEditAsset(d.asset);
+      showToast("Transformation appliquée ✓");
+    } else showToast(d?.error || "Erreur transformation");
+    setApplying(false);
+  };
+
+  const handleRemoveBg = async () => {
+    if (!editAsset) return;
+    setRemovingBg(true);
+    const res = await fetch(`/api/media/${editAsset.id}/remove-bg`, { method: "POST" }).catch(() => null);
+    const d = await res?.json().catch(() => ({}));
+    if (res?.ok) {
+      setAssets((a) => [d.asset, ...a]); setEditAsset(d.asset);
+      showToast("Fond supprimé ✓");
+    } else showToast(d?.error || "Erreur suppression du fond");
+    setRemovingBg(false);
+  };
+
+  const editorTabs = [
+    { id: "crop",     label: "Recadrage",  icon: Crop },
+    { id: "filter",   label: "Filtres",    icon: SlidersHorizontal },
+    { id: "text",     label: "Texte",      icon: Type },
+    { id: "removebg", label: "Fond IA",   icon: Wand2 },
+  ];
+
+  const btnCls = (active) =>
+    `px-4 py-2 rounded-xl text-sm font-medium border transition-colors ${active ? "bg-[#ff5a5f] text-white border-[#ff5a5f]" : "border-gray-200 text-gray-500 hover:border-gray-300"}`;
+
+  return (
+    <div>
+      {/* Barre d'action */}
+      <div className="flex flex-wrap items-center gap-3 mb-5">
+        {/* Catégories */}
+        <div className="flex gap-1 bg-gray-100 p-1 rounded-xl">
+          {MEDIA_CATEGORIES.map((c) => (
+            <button
+              key={c.id}
+              onClick={() => setCategory(c.id)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${category === c.id ? "bg-white shadow-sm text-[#1b2a4a]" : "text-gray-500 hover:text-gray-700"}`}
+            >
+              {c.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="ml-auto flex gap-2">
+          {/* Upload */}
+          <label className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium border border-gray-200 cursor-pointer hover:border-[#ff5a5f] transition-colors ${uploading ? "opacity-50 pointer-events-none" : ""}`}>
+            <Upload size={14} /> {uploading ? "Upload…" : "Importer"}
+            <input type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={handleUpload} />
+          </label>
+
+          {/* Générer IA */}
+          <button
+            onClick={() => setShowGenForm((v) => !v)}
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium bg-[#1b2a4a] text-white hover:bg-[#253a60] transition-colors"
+          >
+            <Wand2 size={14} /> Générer via IA
+          </button>
+        </div>
+      </div>
+
+      {/* Formulaire génération IA */}
+      {showGenForm && (
+        <div className="mb-5 bg-[#f0f4ff] border border-blue-100 rounded-2xl p-4">
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Prompt de génération</p>
+          <textarea
+            value={genPrompt}
+            onChange={(e) => setGenPrompt(e.target.value)}
+            rows={3}
+            placeholder="Ex : Abstract geometric background in dark blue and coral tones, professional and modern, no text"
+            className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#ff5a5f] resize-none"
+          />
+          <div className="flex justify-end gap-2 mt-2">
+            <button onClick={() => setShowGenForm(false)} className="px-3 py-1.5 text-sm text-gray-500 hover:text-gray-700">Annuler</button>
+            <button
+              onClick={handleGenerate}
+              disabled={generating || !genPrompt.trim()}
+              className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-sm font-medium bg-[#ff5a5f] text-white hover:bg-[#e5454a] disabled:opacity-50 transition-colors"
+            >
+              {generating ? <><RefreshCw size={13} className="animate-spin" /> Génération…</> : <><Sparkles size={13} /> Générer</>}
+            </button>
+          </div>
+          <p className="text-xs text-gray-400 mt-1">Rédigez votre prompt en anglais pour de meilleurs résultats.</p>
+        </div>
+      )}
+
+      {/* Grille d'assets */}
+      {loading ? (
+        <div className="text-center py-16 text-gray-300 text-sm">Chargement…</div>
+      ) : assets.length === 0 ? (
+        <div className="text-center py-16 border-2 border-dashed border-gray-200 rounded-2xl">
+          <ImageIcon size={36} className="text-gray-200 mx-auto mb-3" />
+          <p className="text-sm text-gray-400">Aucune image dans cette catégorie.</p>
+          <p className="text-xs text-gray-300 mt-1">Importez une image ou générez-en une via IA.</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+          {assets.map((asset) => (
+            <div key={asset.id} className="group relative bg-gray-50 rounded-xl overflow-hidden border border-gray-100 aspect-square">
+              <img src={asset.url} alt="" className="w-full h-full object-cover" />
+              {/* Overlay actions */}
+              <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2 p-2">
+                <button
+                  onClick={() => { setEditAsset(asset); setEditorTab("crop"); }}
+                  className="w-full flex items-center justify-center gap-1.5 px-2 py-1.5 bg-white text-[#1b2a4a] rounded-lg text-xs font-medium hover:bg-gray-50"
+                >
+                  <Pencil size={11} /> Éditer
+                </button>
+                <button
+                  onClick={() => useAsBg(asset)}
+                  className="w-full flex items-center justify-center gap-1.5 px-2 py-1.5 bg-white text-[#1b2a4a] rounded-lg text-xs font-medium hover:bg-gray-50"
+                >
+                  <ImageIcon size={11} /> Utiliser comme fond
+                </button>
+                <button
+                  onClick={() => handleDelete(asset)}
+                  className="w-full flex items-center justify-center gap-1.5 px-2 py-1.5 bg-red-50 text-red-500 rounded-lg text-xs font-medium hover:bg-red-100"
+                >
+                  <Trash2 size={11} /> Supprimer
+                </button>
+              </div>
+              {/* Badge catégorie */}
+              {asset.category === "generated" && (
+                <span className="absolute top-1.5 left-1.5 bg-[#1b2a4a]/80 text-white text-[10px] px-1.5 py-0.5 rounded-md font-medium">IA</span>
+              )}
+              {/* Dimensions */}
+              {asset.width && asset.height && (
+                <span className="absolute bottom-1 right-1.5 bg-black/50 text-white text-[10px] px-1.5 py-0.5 rounded">{asset.width}×{asset.height}</span>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Modal éditeur */}
+      {editAsset && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white rounded-2xl w-full max-w-3xl shadow-2xl my-4">
+            {/* Header modal */}
+            <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-gray-100">
+              <h3 className="text-base font-semibold text-[#1b2a4a]">Éditer l'image</h3>
+              <button onClick={() => setEditAsset(null)} className="text-gray-400 hover:text-gray-600 transition-colors">
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-6 p-6">
+              {/* Prévisualisation */}
+              <div className="space-y-3">
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Aperçu</p>
+                <div className="relative rounded-xl overflow-hidden bg-gray-100 aspect-square flex items-center justify-center">
+                  <img
+                    src={editAsset.url}
+                    alt="Prévisualisation"
+                    className="max-w-full max-h-full object-contain"
+                    style={{ filter: editorTab === "filter" ? filterCSS : "none" }}
+                  />
+                  {/* Texte overlay preview */}
+                  {editorTab === "text" && textOvl.text && (
+                    <div className={`absolute inset-0 flex items-${textOvl.posV === "top" ? "start" : textOvl.posV === "bottom" ? "end" : "center"} justify-${textOvl.posH === "left" ? "start" : textOvl.posH === "right" ? "end" : "center"} p-4 pointer-events-none`}>
+                      <p className="font-bold drop-shadow-lg text-center" style={{ color: textOvl.color, fontSize: `${Math.max(12, Math.round(textOvl.fontSize / 8))}px` }}>
+                        {textOvl.text}
+                      </p>
+                    </div>
+                  )}
+                </div>
+                {editAsset.width && editAsset.height && (
+                  <p className="text-xs text-gray-400 text-center">{editAsset.width} × {editAsset.height} px</p>
+                )}
+                {/* Boutons utiliser */}
+                <button
+                  onClick={() => useAsBg(editAsset)}
+                  className="w-full flex items-center justify-center gap-1.5 py-2 border border-gray-200 rounded-xl text-xs font-medium text-gray-600 hover:border-[#ff5a5f] hover:text-[#ff5a5f] transition-colors"
+                >
+                  <ImageIcon size={12} /> Utiliser comme fond de charte
+                </button>
+              </div>
+
+              {/* Contrôles éditeur */}
+              <div className="space-y-4">
+                {/* Onglets éditeur */}
+                <div className="grid grid-cols-4 gap-1 bg-gray-100 p-1 rounded-xl">
+                  {editorTabs.map((t) => {
+                    const Icon = t.icon;
+                    return (
+                      <button
+                        key={t.id}
+                        onClick={() => setEditorTab(t.id)}
+                        className={`flex flex-col items-center gap-0.5 py-2 rounded-lg text-xs font-medium transition-colors ${editorTab === t.id ? "bg-white shadow-sm text-[#1b2a4a]" : "text-gray-400 hover:text-gray-600"}`}
+                      >
+                        <Icon size={14} />
+                        <span className="leading-none">{t.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Tab: Recadrage */}
+                {editorTab === "crop" && (
+                  <div className="space-y-4">
+                    <div>
+                      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Format prédéfini</p>
+                      <div className="grid grid-cols-2 gap-2">
+                        {CROP_PRESETS.map((p) => (
+                          <button
+                            key={p.id}
+                            onClick={() => applyCropPreset(p)}
+                            className={btnCls(cropPreset === p.id)}
+                          >
+                            {p.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Recadrage personnalisé (pixels)</p>
+                      <div className="grid grid-cols-2 gap-2">
+                        {[
+                          { k: "left",   label: "Gauche" },
+                          { k: "top",    label: "Haut" },
+                          { k: "width",  label: "Largeur" },
+                          { k: "height", label: "Hauteur" },
+                        ].map(({ k, label }) => (
+                          <div key={k}>
+                            <label className="text-xs text-gray-400 mb-0.5 block">{label}</label>
+                            <input
+                              type="number"
+                              min={0}
+                              value={crop[k]}
+                              onChange={(e) => { setCropPreset(null); setCrop((c) => ({ ...c, [k]: e.target.value })); }}
+                              className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Tab: Filtres */}
+                {editorTab === "filter" && (
+                  <div className="space-y-3">
+                    {[
+                      { k: "brightness", label: "Luminosité",  min: 0.2, max: 2.5, step: 0.05 },
+                      { k: "contrast",   label: "Contraste",   min: 0.2, max: 2.5, step: 0.05 },
+                      { k: "saturation", label: "Saturation",  min: 0,   max: 3,   step: 0.05 },
+                      { k: "blur",       label: "Flou (px)",   min: 0,   max: 20,  step: 0.5  },
+                    ].map(({ k, label, min, max, step }) => (
+                      <div key={k}>
+                        <div className="flex justify-between mb-1">
+                          <label className="text-xs text-gray-500">{label}</label>
+                          <span className="text-xs text-gray-400 font-mono">{filter[k]}</span>
+                        </div>
+                        <input
+                          type="range"
+                          min={min} max={max} step={step}
+                          value={filter[k]}
+                          onChange={(e) => setFilter((f) => ({ ...f, [k]: Number(e.target.value) }))}
+                          className="w-full accent-[#ff5a5f]"
+                        />
+                      </div>
+                    ))}
+                    <button
+                      onClick={() => setFilter({ brightness: 1, contrast: 1, saturation: 1, blur: 0 })}
+                      className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
+                    >
+                      Réinitialiser
+                    </button>
+                  </div>
+                )}
+
+                {/* Tab: Texte */}
+                {editorTab === "text" && (
+                  <div className="space-y-3">
+                    <div>
+                      <label className="text-xs text-gray-500 mb-1 block">Texte</label>
+                      <textarea
+                        value={textOvl.text}
+                        onChange={(e) => setTextOvl((t) => ({ ...t, text: e.target.value }))}
+                        rows={2}
+                        placeholder="Votre texte ici…"
+                        className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f] resize-none"
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="text-xs text-gray-500 mb-1 block">Taille (px)</label>
+                        <input
+                          type="number" min={12} max={300}
+                          value={textOvl.fontSize}
+                          onChange={(e) => setTextOvl((t) => ({ ...t, fontSize: Number(e.target.value) }))}
+                          className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs text-gray-500 mb-1 block">Couleur</label>
+                        <input
+                          type="color" value={textOvl.color}
+                          onChange={(e) => setTextOvl((t) => ({ ...t, color: e.target.value }))}
+                          className="w-full h-9 rounded-lg border border-gray-200 cursor-pointer p-0.5"
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="text-xs text-gray-500 mb-1 block">Horizontal</label>
+                        <select
+                          value={textOvl.posH}
+                          onChange={(e) => setTextOvl((t) => ({ ...t, posH: e.target.value }))}
+                          className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
+                        >
+                          <option value="left">Gauche</option>
+                          <option value="center">Centre</option>
+                          <option value="right">Droite</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="text-xs text-gray-500 mb-1 block">Vertical</label>
+                        <select
+                          value={textOvl.posV}
+                          onChange={(e) => setTextOvl((t) => ({ ...t, posV: e.target.value }))}
+                          className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
+                        >
+                          <option value="top">Haut</option>
+                          <option value="center">Centre</option>
+                          <option value="bottom">Bas</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Tab: Fond IA (remove.bg) */}
+                {editorTab === "removebg" && (
+                  <div className="space-y-4">
+                    <div className="bg-[#f0f4ff] border border-blue-100 rounded-xl p-4">
+                      <p className="text-sm font-medium text-[#1b2a4a] mb-1">Suppression du fond</p>
+                      <p className="text-xs text-gray-500">
+                        L'IA va détourer automatiquement le sujet et supprimer l'arrière-plan.
+                        Le résultat est sauvegardé comme nouvel asset (PNG transparent).
+                      </p>
+                      <p className="text-xs text-gray-400 mt-2">Propulsé par remove.bg — nécessite la variable <code className="bg-gray-100 px-1 rounded">REMOVE_BG_API_KEY</code>.</p>
+                    </div>
+                    <button
+                      onClick={handleRemoveBg}
+                      disabled={removingBg}
+                      className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-[#1b2a4a] text-white text-sm font-medium hover:bg-[#253a60] disabled:opacity-50 transition-colors"
+                    >
+                      {removingBg ? <><RefreshCw size={14} className="animate-spin" /> Traitement…</> : <><Wand2 size={14} /> Supprimer le fond</>}
+                    </button>
+                  </div>
+                )}
+
+                {/* Bouton Appliquer (sauf remove-bg qui a son propre bouton) */}
+                {editorTab !== "removebg" && (
+                  <button
+                    onClick={applyTransform}
+                    disabled={applying}
+                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-[#ff5a5f] text-white text-sm font-semibold hover:bg-[#e5454a] disabled:opacity-50 transition-colors mt-2"
+                  >
+                    {applying ? <><RefreshCw size={14} className="animate-spin" /> Application…</> : <><Check size={14} /> Appliquer et sauvegarder</>}
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ----------------------------------------------------------------
 // Charte graphique — couleurs, logo, police, style de fond
 // ----------------------------------------------------------------
 const BRAND_FONTS = ["Inter", "Poppins", "Montserrat", "Raleway"];
@@ -5235,6 +5745,7 @@ const BG_STYLES = [
 ];
 
 function BrandKitView({ showToast }) {
+  const [activeTab, setActiveTab] = useState("charte"); // "charte" | "mediatheque"
   const [kit, setKit] = useState({
     primaryColor:   "#0a66c2",
     secondaryColor: "#ffffff",
@@ -5360,6 +5871,25 @@ function BrandKitView({ showToast }) {
 
   return (
     <main className="max-w-4xl mx-auto p-6">
+      {/* Onglets Charte / Médiathèque */}
+      <div className="flex gap-1 mb-6 bg-gray-100 p-1 rounded-xl w-fit">
+        {[
+          { id: "charte",       label: "Charte graphique" },
+          { id: "mediatheque",  label: "Médiathèque" },
+        ].map((t) => (
+          <button
+            key={t.id}
+            onClick={() => setActiveTab(t.id)}
+            className={`px-5 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === t.id ? "bg-white shadow-sm text-[#1b2a4a]" : "text-gray-500 hover:text-gray-700"}`}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {activeTab === "mediatheque" ? (
+        <MediaLibraryView showToast={showToast} />
+      ) : (
       <div className="grid lg:grid-cols-2 gap-6 items-start">
 
         {/* Colonne gauche — formulaire */}
@@ -5570,6 +6100,7 @@ function BrandKitView({ showToast }) {
           </div>
         </div>
       </div>
+      )}
     </main>
   );
 }
