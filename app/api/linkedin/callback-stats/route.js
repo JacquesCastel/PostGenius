@@ -19,6 +19,13 @@ export async function GET(req) {
 
   if (error || !code) {
     console.error("LinkedIn stats OAuth refusé:", error, errorDescription);
+    // invalid_scope_error : LinkedIn refuse le scope r_member_postAnalytics tant que
+    // le produit "Community Management API" n'est pas approuvé sur cette app dédiée
+    // (revue manuelle LinkedIn — pas un bug côté app). On évite d'exposer le texte
+    // brut LinkedIn (en anglais, peu clair) et on redirige vers un statut dédié.
+    if (error === "invalid_scope_error") {
+      return NextResponse.redirect(`${appUrl}/app?linkedin=stats_pending`);
+    }
     const msg = encodeURIComponent(errorDescription || error || "Autorisation refusée");
     return NextResponse.redirect(`${appUrl}/app?linkedin=stats_refused&msg=${msg}`);
   }

@@ -3932,7 +3932,71 @@ function StatsView({ linkedin, orgs, profile, drafts }) {
         </section>
       )}
 
-      {/* ── 2. Profil personnel ── */}
+      {/* ── 2. Page entreprise ── */}
+      <section>
+        <h3 className="font-semibold text-base mb-3 flex items-center gap-2">
+          <Linkedin size={16} className="text-[#0a66c2]" /> Page entreprise
+          {org && orgs.find((o) => o.urn === org) && (
+            <span className="text-gray-400 font-normal text-sm">— {orgs.find((o) => o.urn === org).name}</span>
+          )}
+        </h3>
+        {!linkedin.orgConnected ? (
+          <div className="bg-white rounded-xl border border-dashed border-gray-300 p-10 text-center text-gray-400">
+            <BarChart3 size={28} className="mx-auto mb-2" />
+            <p className="text-sm">Connectez votre page entreprise (onglet Profil) pour voir ses statistiques.</p>
+          </div>
+        ) : loading ? (
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-10 text-center text-gray-400">
+            <RefreshCw size={24} className="mx-auto mb-2 animate-spin text-[#ff5a5f]" />
+            <p className="text-sm">Récupération des statistiques…</p>
+          </div>
+        ) : error ? (
+          <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl p-4 text-sm flex items-start gap-2">
+            <AlertCircle size={16} className="mt-0.5 shrink-0" /> {error}
+          </div>
+        ) : data ? (
+          <div className="space-y-6">
+            {/* Vues de la page */}
+            {data.pageStats && (
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {[
+                  ["Vues totales", data.pageStats.totalPageViews, Eye],
+                  ["Visiteurs uniques", data.pageStats.uniquePageViews, Users],
+                  ["Vues mobile", data.pageStats.mobilePageViews, Smartphone],
+                  ["Vues desktop", data.pageStats.desktopPageViews, Monitor],
+                ].map(([label, v, Icon]) => (
+                  <div key={label} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+                    <Icon size={16} className="text-[#0a66c2] mb-2" />
+                    <p className="text-xl font-bold">{v == null ? "—" : new Intl.NumberFormat("fr-FR").format(v)}</p>
+                    <p className="text-xs text-gray-500">{label}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+            {/* Performance des publications */}
+            {data.aggregate && (
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                {[
+                  ["Impressions", data.aggregate.impressionCount, Eye],
+                  ["Clics", data.aggregate.clickCount, MousePointerClick],
+                  ["Réactions", data.aggregate.likeCount, ThumbsUp],
+                  ["Commentaires", data.aggregate.commentCount, MessageSquare],
+                  ["Partages", data.aggregate.shareCount, Share2],
+                  ["Engagement", data.aggregate.engagement != null ? `${(data.aggregate.engagement * 100).toFixed(2)} %` : "—", BarChart3],
+                ].map(([label, v, Icon]) => (
+                  <div key={label} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+                    <Icon size={16} className="text-[#ff5a5f] mb-2" />
+                    <p className="text-xl font-bold">{typeof v === "string" ? v : v == null ? "—" : new Intl.NumberFormat("fr-FR").format(v)}</p>
+                    <p className="text-xs text-gray-500">{label}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        ) : null}
+      </section>
+
+      {/* ── 3. Profil personnel ── */}
       <section>
         <h3 className="font-semibold text-base mb-3 flex items-center gap-2">
           <UserRound size={16} className="text-[#ff5a5f]" /> Profil personnel
@@ -3941,7 +4005,11 @@ function StatsView({ linkedin, orgs, profile, drafts }) {
         {!linkedin.statsConnected ? (
           <div className="bg-[#fff1f1] border border-[#ffe0e0] rounded-xl p-4 text-sm text-[#1b2a4a] flex items-start gap-2">
             <AlertCircle size={16} className="mt-0.5 shrink-0" />
-            <span>Connectez les statistiques de votre profil (onglet Profil) pour les voir ici.</span>
+            <span>
+              Connectez les statistiques de votre profil (onglet Profil) pour les voir ici. Cette
+              fonctionnalité dépend d'une approbation de LinkedIn (revue en cours) : l'autorisation
+              peut échouer tant qu'elle n'est pas accordée.
+            </span>
           </div>
         ) : pLoading ? (
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center text-gray-400">
@@ -4049,70 +4117,6 @@ function StatsView({ linkedin, orgs, profile, drafts }) {
         <p className="text-xs text-gray-400 mt-2">
           Statistiques par post limitées aux 10 dernières publications de chaque cible (quota d'appels LinkedIn).
         </p>
-      </section>
-
-      {/* ── 3. Page entreprise ── */}
-      <section>
-        <h3 className="font-semibold text-base mb-3 flex items-center gap-2">
-          <Linkedin size={16} className="text-[#0a66c2]" /> Page entreprise
-          {org && orgs.find((o) => o.urn === org) && (
-            <span className="text-gray-400 font-normal text-sm">— {orgs.find((o) => o.urn === org).name}</span>
-          )}
-        </h3>
-        {!linkedin.orgConnected ? (
-          <div className="bg-white rounded-xl border border-dashed border-gray-300 p-10 text-center text-gray-400">
-            <BarChart3 size={28} className="mx-auto mb-2" />
-            <p className="text-sm">Connectez votre page entreprise (onglet Profil) pour voir ses statistiques.</p>
-          </div>
-        ) : loading ? (
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-10 text-center text-gray-400">
-            <RefreshCw size={24} className="mx-auto mb-2 animate-spin text-[#ff5a5f]" />
-            <p className="text-sm">Récupération des statistiques…</p>
-          </div>
-        ) : error ? (
-          <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl p-4 text-sm flex items-start gap-2">
-            <AlertCircle size={16} className="mt-0.5 shrink-0" /> {error}
-          </div>
-        ) : data ? (
-          <div className="space-y-6">
-            {/* Vues de la page */}
-            {data.pageStats && (
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                {[
-                  ["Vues totales", data.pageStats.totalPageViews, Eye],
-                  ["Visiteurs uniques", data.pageStats.uniquePageViews, Users],
-                  ["Vues mobile", data.pageStats.mobilePageViews, Smartphone],
-                  ["Vues desktop", data.pageStats.desktopPageViews, Monitor],
-                ].map(([label, v, Icon]) => (
-                  <div key={label} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
-                    <Icon size={16} className="text-[#0a66c2] mb-2" />
-                    <p className="text-xl font-bold">{v == null ? "—" : new Intl.NumberFormat("fr-FR").format(v)}</p>
-                    <p className="text-xs text-gray-500">{label}</p>
-                  </div>
-                ))}
-              </div>
-            )}
-            {/* Performance des publications */}
-            {data.aggregate && (
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-                {[
-                  ["Impressions", data.aggregate.impressionCount, Eye],
-                  ["Clics", data.aggregate.clickCount, MousePointerClick],
-                  ["Réactions", data.aggregate.likeCount, ThumbsUp],
-                  ["Commentaires", data.aggregate.commentCount, MessageSquare],
-                  ["Partages", data.aggregate.shareCount, Share2],
-                  ["Engagement", data.aggregate.engagement != null ? `${(data.aggregate.engagement * 100).toFixed(2)} %` : "—", BarChart3],
-                ].map(([label, v, Icon]) => (
-                  <div key={label} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
-                    <Icon size={16} className="text-[#ff5a5f] mb-2" />
-                    <p className="text-xl font-bold">{typeof v === "string" ? v : v == null ? "—" : new Intl.NumberFormat("fr-FR").format(v)}</p>
-                    <p className="text-xs text-gray-500">{label}</p>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        ) : null}
       </section>
 
     </main>
@@ -6944,6 +6948,7 @@ export default function Home() {
       refused: liMsg || "Vous avez refusé l'autorisation LinkedIn",
       org_refused: liMsg ? `Page entreprise refusée : ${liMsg}` : "Autorisation refusée pour la page entreprise",
       stats_refused: liMsg ? `Statistiques refusées : ${liMsg}` : "Autorisation refusée pour les statistiques du profil",
+      stats_pending: "Statistiques du profil personnel en attente d'approbation par LinkedIn — réessayez plus tard.",
       state_mismatch: "Session OAuth expirée — réessayez la connexion",
       not_logged_in: "Connectez-vous d'abord à votre compte LinkeePost",
       error: liMsg ? `Erreur LinkedIn : ${liMsg}` : "Erreur LinkedIn — consultez le terminal du serveur",
