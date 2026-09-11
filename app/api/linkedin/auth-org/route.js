@@ -3,10 +3,9 @@ import crypto from "crypto";
 
 // OAuth app dédiée pages entreprise (Community Management API).
 // App ID : LINKEDIN_ORG_CLIENT_ID — distincte de l'app personnelle
-// (Community Management API doit être seul produit sur son app LinkedIn).
-// Scopes : w_organization_social rw_organization_admin r_member_postAnalytics
-// — ce dernier sert aux statistiques du PROFIL PERSONNEL (memberCreatorPostAnalytics),
-// la seule permission LinkedIn qui les rend disponibles étant sous ce produit.
+// (Community Management API doit être seul produit sur son app LinkedIn)
+// et de l'app "PostGenius Stats" (statistiques du profil perso, auth-stats).
+// Scopes : w_organization_social rw_organization_admin
 // Redirect URI : LINKEDIN_ORG_REDIRECT_URI → /api/linkedin/callback-org
 //   (doit être déclarée dans l'app LinkedIn 786qkg73bkqdvj, onglet Auth)
 

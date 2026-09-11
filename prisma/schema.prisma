@@ -178,6 +178,8 @@ model LinkedInAccount {
   orgUrn          String?   // urn:li:organization:ID de la première page (compat)
   orgName         String?   // nom de la première page (compat)
   orgAccounts     String?   // JSON : [{urn, name}, ...] — toutes les pages admin
+  statsToken      String?   // app dédiée "PostGenius Stats" (Community Management API,
+  statsExpiresAt  DateTime? // seule permission possible pour r_member_postAnalytics)
 }
 
 // Compte Instagram Business/Creator connecté (via Instagram Login)

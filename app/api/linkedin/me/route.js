@@ -11,6 +11,7 @@ export async function GET(req) {
   const now = new Date();
   const personValid = acc?.personToken && (!acc.personExpiresAt || acc.personExpiresAt > now);
   const orgValid = acc?.orgToken && (!acc.orgExpiresAt || acc.orgExpiresAt > now);
+  const statsValid = acc?.statsToken && (!acc.statsExpiresAt || acc.statsExpiresAt > now);
 
   return NextResponse.json({
     connected: Boolean(personValid),
@@ -18,5 +19,7 @@ export async function GET(req) {
     personExpiresAt: personValid ? acc.personExpiresAt : null,
     orgConnected: Boolean(orgValid),
     orgExpiresAt: orgValid ? acc.orgExpiresAt : null,
+    statsConnected: Boolean(statsValid),
+    statsExpiresAt: statsValid ? acc.statsExpiresAt : null,
   });
 }
