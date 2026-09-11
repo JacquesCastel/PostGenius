@@ -3731,9 +3731,12 @@ function StatsView({ linkedin, orgs, profile, drafts }) {
       .catch(() => {});
   }, []);
 
-  // Stats du profil personnel — memberCreatorPostAnalytics (LinkedIn)
+  // Stats du profil personnel — memberCreatorPostAnalytics (LinkedIn).
+  // Nécessite le token de la Page entreprise (orgConnected) : c'est la seule
+  // app LinkedIn qui porte la permission r_member_postAnalytics (Community
+  // Management API, incompatible avec l'app de connexion "Profil personnel").
   useEffect(() => {
-    if (!linkedin.connected) return;
+    if (!linkedin.orgConnected) return;
     setPLoading(true);
     fetch("/api/linkedin/stats-personal")
       .then(readJson)
@@ -3743,7 +3746,7 @@ function StatsView({ linkedin, orgs, profile, drafts }) {
       })
       .catch((e) => setPStats({ error: e.message }))
       .finally(() => setPLoading(false));
-  }, [linkedin.connected]);
+  }, [linkedin.orgConnected]);
 
   // Stats LinkedIn par draft (page entreprise + profil personnel)
   const statsByDraftId = {};
@@ -3937,10 +3940,14 @@ function StatsView({ linkedin, orgs, profile, drafts }) {
           <UserRound size={16} className="text-[#ff5a5f]" /> Profil personnel
           {linkedin.name && <span className="text-gray-400 font-normal text-sm">— {linkedin.name}</span>}
         </h3>
-        {!linkedin.connected ? (
+        {!linkedin.orgConnected ? (
           <div className="bg-[#fff1f1] border border-[#ffe0e0] rounded-xl p-4 text-sm text-[#1b2a4a] flex items-start gap-2">
             <AlertCircle size={16} className="mt-0.5 shrink-0" />
-            <span>Connectez votre compte LinkedIn (onglet Profil) pour voir les statistiques de votre profil personnel.</span>
+            <span>
+              Connectez la <strong>Page entreprise</strong> (onglet Profil) pour voir les statistiques de votre profil
+              personnel — LinkedIn ne rend cette donnée disponible que via cette app, même si vous ne publiez pas sur
+              de page.
+            </span>
           </div>
         ) : pLoading ? (
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center text-gray-400">
@@ -6475,10 +6482,9 @@ function ProfileView({ profile, onSaved, showToast, linkedin, onDisconnect, inst
                     {linkedin.personExpiresAt && (
                       <> · expire le {new Date(linkedin.personExpiresAt).toLocaleDateString("fr-FR")}</>
                     )}
-                    {" "}· si les statistiques du profil (onglet Statistiques) n'apparaissent pas, cliquez sur « Reconnecter »
                   </p>
                 ) : (
-                  <p className="text-xs text-gray-400">Non connecté — requis pour publier sur votre profil et voir ses statistiques</p>
+                  <p className="text-xs text-gray-400">Non connecté — requis pour publier sur votre profil</p>
                 )}
               </div>
             </div>
@@ -6514,11 +6520,15 @@ function ProfileView({ profile, onSaved, showToast, linkedin, onDisconnect, inst
                   <p className="text-xs text-gray-500">
                     Connectée
                     {linkedin.orgExpiresAt && <> · expire le {new Date(linkedin.orgExpiresAt).toLocaleDateString("fr-FR")}</>}
+                    {" "}· alimente aussi les statistiques de votre profil personnel (onglet Statistiques)
                   </p>
-                ) : canOrgPublish ? (
-                  <p className="text-xs text-gray-400">Connectez votre page entreprise LinkedIn pour publier en son nom.</p>
                 ) : (
-                  <p className="text-xs text-gray-400">Disponible à partir du plan <strong>Agence</strong>.</p>
+                  <p className="text-xs text-gray-400">
+                    {canOrgPublish
+                      ? "Connectez votre page entreprise LinkedIn pour publier en son nom. "
+                      : "Publier sur une page entreprise est réservé au plan Agence. "}
+                    Cette connexion active aussi les statistiques de votre profil personnel, quel que soit votre plan.
+                  </p>
                 )}
               </div>
             </div>
@@ -6526,13 +6536,9 @@ function ProfileView({ profile, onSaved, showToast, linkedin, onDisconnect, inst
               <a href="/api/linkedin/auth-org" className="text-xs border border-gray-200 hover:border-[#ff5a5f] text-gray-700 px-3 py-1.5 rounded-xl shrink-0">
                 Reconnecter
               </a>
-            ) : canOrgPublish ? (
+            ) : (
               <a href="/api/linkedin/auth-org" className="text-xs bg-[#0a66c2] hover:bg-[#004182] text-white px-3 py-1.5 rounded-xl shrink-0 transition-colors">
                 Connecter
-              </a>
-            ) : (
-              <a href="/tarifs" className="text-xs bg-gray-100 hover:bg-gray-200 text-gray-600 px-3 py-1.5 rounded-xl shrink-0 flex items-center gap-1">
-                <Lock size={11} /> Agence
               </a>
             )}
           </div>

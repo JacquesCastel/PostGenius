@@ -4,8 +4,11 @@ import { getEffectiveUserId as getUserId } from "@/lib/session";
 import { decryptToken } from "@/lib/crypto";
 
 // Statistiques du profil personnel — API officielle LinkedIn memberCreatorPostAnalytics
-// (remplace Phyllo). Permission requise sur l'app LinkedIn : r_member_postAnalytics
-// (produit Community Management API, même programme que les stats de page entreprise).
+// (remplace Phyllo). Permission requise : r_member_postAnalytics, disponible
+// uniquement sous le produit Community Management API — qui doit être seul
+// produit sur son app LinkedIn (incompatible avec Share on LinkedIn / Sign In).
+// On utilise donc le token de l'app n°2 (orgToken, /api/linkedin/auth-org) :
+// c'est le même utilisateur LinkedIn, juste un token obtenu via l'autre app.
 // Doc : https://learn.microsoft.com/en-us/linkedin/marketing/community-management/members/post-statistics
 
 const BASE = "https://api.linkedin.com/rest/memberCreatorPostAnalytics";
@@ -47,10 +50,10 @@ export async function GET(req) {
   if (!userId) return NextResponse.json({ error: "Non connecté." }, { status: 401 });
 
   const acc = await prisma.linkedInAccount.findUnique({ where: { userId } });
-  const token = decryptToken(acc?.personToken);
+  const token = decryptToken(acc?.orgToken);
   if (!token) return NextResponse.json({ connected: false });
-  if (acc.personExpiresAt && acc.personExpiresAt < new Date()) {
-    return NextResponse.json({ error: "Session LinkedIn expirée — reconnectez votre compte." }, { status: 401 });
+  if (acc.orgExpiresAt && acc.orgExpiresAt < new Date()) {
+    return NextResponse.json({ error: "Session LinkedIn expirée — reconnectez votre compte (onglet Profil, section Page entreprise)." }, { status: 401 });
   }
 
   try {
@@ -122,12 +125,12 @@ export async function GET(req) {
     console.error("Erreur stats profil personnel:", e);
     if (e.status === 403) {
       return NextResponse.json(
-        { error: "LinkedIn refuse l'accès aux statistiques (permission r_member_postAnalytics manquante ou pas encore approuvée)." },
+        { error: "LinkedIn refuse l'accès aux statistiques (permission r_member_postAnalytics manquante ou pas encore approuvée sur l'app Page entreprise)." },
         { status: 403 }
       );
     }
     if (e.status === 401) {
-      return NextResponse.json({ error: "Session LinkedIn expirée — reconnectez votre compte." }, { status: 401 });
+      return NextResponse.json({ error: "Session LinkedIn expirée — reconnectez votre compte (onglet Profil, section Page entreprise)." }, { status: 401 });
     }
     return NextResponse.json({ error: "Échec de la récupération des statistiques." }, { status: 500 });
   }
