@@ -3732,11 +3732,9 @@ function StatsView({ linkedin, orgs, profile, drafts }) {
   }, []);
 
   // Stats du profil personnel — memberCreatorPostAnalytics (LinkedIn).
-  // Nécessite le token de la Page entreprise (orgConnected) : c'est la seule
-  // app LinkedIn qui porte la permission r_member_postAnalytics (Community
-  // Management API, incompatible avec l'app de connexion "Profil personnel").
+  // Connexion dédiée (statsConnected), indépendante de la page entreprise.
   useEffect(() => {
-    if (!linkedin.orgConnected) return;
+    if (!linkedin.statsConnected) return;
     setPLoading(true);
     fetch("/api/linkedin/stats-personal")
       .then(readJson)
@@ -3746,7 +3744,7 @@ function StatsView({ linkedin, orgs, profile, drafts }) {
       })
       .catch((e) => setPStats({ error: e.message }))
       .finally(() => setPLoading(false));
-  }, [linkedin.orgConnected]);
+  }, [linkedin.statsConnected]);
 
   // Stats LinkedIn par draft (page entreprise + profil personnel)
   const statsByDraftId = {};
@@ -3940,14 +3938,10 @@ function StatsView({ linkedin, orgs, profile, drafts }) {
           <UserRound size={16} className="text-[#ff5a5f]" /> Profil personnel
           {linkedin.name && <span className="text-gray-400 font-normal text-sm">— {linkedin.name}</span>}
         </h3>
-        {!linkedin.orgConnected ? (
+        {!linkedin.statsConnected ? (
           <div className="bg-[#fff1f1] border border-[#ffe0e0] rounded-xl p-4 text-sm text-[#1b2a4a] flex items-start gap-2">
             <AlertCircle size={16} className="mt-0.5 shrink-0" />
-            <span>
-              Connectez la <strong>Page entreprise</strong> (onglet Profil) pour voir les statistiques de votre profil
-              personnel — LinkedIn ne rend cette donnée disponible que via cette app, même si vous ne publiez pas sur
-              de page.
-            </span>
+            <span>Connectez les statistiques de votre profil (onglet Profil) pour les voir ici.</span>
           </div>
         ) : pLoading ? (
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center text-gray-400">
@@ -6520,15 +6514,11 @@ function ProfileView({ profile, onSaved, showToast, linkedin, onDisconnect, inst
                   <p className="text-xs text-gray-500">
                     Connectée
                     {linkedin.orgExpiresAt && <> · expire le {new Date(linkedin.orgExpiresAt).toLocaleDateString("fr-FR")}</>}
-                    {" "}· alimente aussi les statistiques de votre profil personnel (onglet Statistiques)
                   </p>
+                ) : canOrgPublish ? (
+                  <p className="text-xs text-gray-400">Connectez votre page entreprise LinkedIn pour publier en son nom.</p>
                 ) : (
-                  <p className="text-xs text-gray-400">
-                    {canOrgPublish
-                      ? "Connectez votre page entreprise LinkedIn pour publier en son nom. "
-                      : "Publier sur une page entreprise est réservé au plan Agence. "}
-                    Cette connexion active aussi les statistiques de votre profil personnel, quel que soit votre plan.
-                  </p>
+                  <p className="text-xs text-gray-400">Disponible à partir du plan <strong>Agence</strong>.</p>
                 )}
               </div>
             </div>
@@ -6536,8 +6526,44 @@ function ProfileView({ profile, onSaved, showToast, linkedin, onDisconnect, inst
               <a href="/api/linkedin/auth-org" className="text-xs border border-gray-200 hover:border-[#ff5a5f] text-gray-700 px-3 py-1.5 rounded-xl shrink-0">
                 Reconnecter
               </a>
-            ) : (
+            ) : canOrgPublish ? (
               <a href="/api/linkedin/auth-org" className="text-xs bg-[#0a66c2] hover:bg-[#004182] text-white px-3 py-1.5 rounded-xl shrink-0 transition-colors">
+                Connecter
+              </a>
+            ) : (
+              <a href="/tarifs" className="text-xs bg-gray-100 hover:bg-gray-200 text-gray-600 px-3 py-1.5 rounded-xl shrink-0 flex items-center gap-1">
+                <Lock size={11} /> Agence
+              </a>
+            )}
+          </div>
+
+          {/* Statistiques du profil personnel — app LinkedIn dédiée, indépendante
+              de la page entreprise (Community Management API ne peut cohabiter
+              avec Share on LinkedIn / Sign In with LinkedIn sur la même app) */}
+          <div className="p-5 flex items-start justify-between gap-3 flex-wrap">
+            <div className="flex items-start gap-3 flex-1">
+              <div className={`p-2 rounded-xl shrink-0 mt-0.5 ${linkedin.statsConnected ? "bg-green-50 text-green-600" : "bg-gray-100 text-gray-400"}`}>
+                <BarChart3 size={18} />
+              </div>
+              <div>
+                <p className="text-sm font-medium">Statistiques du profil personnel</p>
+                {linkedin.statsConnected ? (
+                  <p className="text-xs text-gray-500">
+                    Connectées
+                    {linkedin.statsExpiresAt && <> · expire le {new Date(linkedin.statsExpiresAt).toLocaleDateString("fr-FR")}</>}
+                    {" "}· visibles dans l'onglet Statistiques
+                  </p>
+                ) : (
+                  <p className="text-xs text-gray-400">Impressions, réactions, commentaires de vos posts personnels — indépendant de la page entreprise.</p>
+                )}
+              </div>
+            </div>
+            {linkedin.statsConnected ? (
+              <a href="/api/linkedin/auth-stats" className="text-xs border border-gray-200 hover:border-[#ff5a5f] text-gray-700 px-3 py-1.5 rounded-xl shrink-0">
+                Reconnecter
+              </a>
+            ) : (
+              <a href="/api/linkedin/auth-stats" className="text-xs bg-[#0a66c2] hover:bg-[#004182] text-white px-3 py-1.5 rounded-xl shrink-0 transition-colors">
                 Connecter
               </a>
             )}
@@ -6914,17 +6940,20 @@ export default function Home() {
     const LI_MESSAGES = {
       connected: "LinkedIn connecté ✓",
       org_connected: "Page entreprise connectée ✓",
+      stats_connected: "Statistiques du profil connectées ✓",
       refused: liMsg || "Vous avez refusé l'autorisation LinkedIn",
       org_refused: liMsg ? `Page entreprise refusée : ${liMsg}` : "Autorisation refusée pour la page entreprise",
+      stats_refused: liMsg ? `Statistiques refusées : ${liMsg}` : "Autorisation refusée pour les statistiques du profil",
       state_mismatch: "Session OAuth expirée — réessayez la connexion",
       not_logged_in: "Connectez-vous d'abord à votre compte LinkeePost",
       error: liMsg ? `Erreur LinkedIn : ${liMsg}` : "Erreur LinkedIn — consultez le terminal du serveur",
       org_error: liMsg ? `Erreur page entreprise : ${liMsg}` : "Erreur LinkedIn (page entreprise) — consultez le terminal du serveur",
+      stats_error: liMsg ? `Erreur statistiques : ${liMsg}` : "Erreur LinkedIn (statistiques) — consultez le terminal du serveur",
     };
     if (li) {
       showToast(LI_MESSAGES[li] ?? "Connexion LinkedIn échouée");
-      // Recharger le statut LinkedIn si connexion réussie (perso ou org)
-      if (li === "connected" || li === "org_connected") {
+      // Recharger le statut LinkedIn si connexion réussie (perso, org ou stats)
+      if (li === "connected" || li === "org_connected" || li === "stats_connected") {
         fetch("/api/linkedin/me").then((r) => r.json()).then((d) => {
           setLinkedin(d);
           if (d.orgConnected) {
