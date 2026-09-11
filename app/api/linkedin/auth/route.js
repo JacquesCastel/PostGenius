@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import crypto from "crypto";
 
 // Étape 1 OAuth : redirection vers la page d'autorisation LinkedIn.
-// Scopes : openid + profile (identité) et w_member_social (publication).
+// Scopes : openid + profile (identité), w_member_social (publication),
+// r_member_postAnalytics (statistiques du profil — Community Management API).
 
 export async function GET() {
   const clientId = process.env.LINKEDIN_CLIENT_ID;

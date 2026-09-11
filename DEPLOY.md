@@ -63,7 +63,7 @@ LINKEDIN_ORG_REDIRECT_URI=https://postgenius.network/api/linkedin/callback-org
 ```
 ⚠️ GARDER les mêmes `AUTH_SECRET`, `TOKEN_ENCRYPTION_KEY` et `DATABASE_URL`
 qu'en local : la base Neon actuelle devient la base de PRODUCTION (vos comptes
-et connexions LinkedIn sont conservés). PHYLLO_ENV reste `staging` pour l'instant.
+et connexions LinkedIn sont conservés).
 
 ## 6. Lancer
 ```bash
