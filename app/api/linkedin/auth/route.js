@@ -3,6 +3,9 @@ import crypto from "crypto";
 
 // Étape 1 OAuth : redirection vers la page d'autorisation LinkedIn.
 // Scopes : openid + profile (identité) et w_member_social (publication).
+// Les statistiques du profil perso (r_member_postAnalytics) sont portées par
+// l'app n°2 (auth-org) — Community Management API ne peut pas cohabiter ici
+// avec Share on LinkedIn / Sign In with LinkedIn.
 
 export async function GET() {
   const clientId = process.env.LINKEDIN_CLIENT_ID;

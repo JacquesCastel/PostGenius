@@ -99,10 +99,6 @@ model User {
   requireValidation Boolean @default(true) // valider les posts de série avant publication
   autoGenerate      Boolean @default(false) // pilote auto : générer chaque semaine les posts des créneaux à venir
 
-  // --- Phyllo : statistiques du profil personnel ---
-  phylloUserId    String? // utilisateur Phyllo lié à ce compte
-  phylloAccountId String? // compte LinkedIn connecté via Phyllo Connect
-
   // --- Multi-compte Agence ---
   // Si managedByUserId est renseigné, ce compte est un client géré par une agence.
   // Le client n'a pas de mot de passe utilisable et n'accède jamais à l'outil.

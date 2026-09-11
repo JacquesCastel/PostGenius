@@ -22,7 +22,7 @@ const INT_FIELDS = { defaultMaxChars: [300, 3000], postsPerWeek: [1, 7] };
 const BOOL_FIELDS = ["requireValidation", "autoGenerate"];
 
 const SELECT = Object.fromEntries(
-  [...STRING_FIELDS, ...Object.keys(INT_FIELDS), ...BOOL_FIELDS, "onboardedAt", "email", "phylloAccountId"].map(
+  [...STRING_FIELDS, ...Object.keys(INT_FIELDS), ...BOOL_FIELDS, "onboardedAt", "email"].map(
     (k) => [k, true]
   )
 );

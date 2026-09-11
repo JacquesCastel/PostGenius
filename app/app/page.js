@@ -3711,7 +3711,7 @@ function DashboardView({ drafts, canVeille = true, canEvents = false, canScore =
 }
 
 // ----------------------------------------------------------------
-// Statistiques : profil personnel (Phyllo) + page entreprise (LinkedIn API)
+// Statistiques : profil personnel + page entreprise (LinkedIn API)
 // ----------------------------------------------------------------
 function StatsView({ linkedin, orgs, profile, drafts }) {
   const [org, setOrg] = useState(orgs[0]?.urn ?? "");
@@ -3731,20 +3731,29 @@ function StatsView({ linkedin, orgs, profile, drafts }) {
       .catch(() => {});
   }, []);
 
-  // Stats du profil personnel via Phyllo
+  // Stats du profil personnel — memberCreatorPostAnalytics (LinkedIn).
+  // Nécessite le token de la Page entreprise (orgConnected) : c'est la seule
+  // app LinkedIn qui porte la permission r_member_postAnalytics (Community
+  // Management API, incompatible avec l'app de connexion "Profil personnel").
   useEffect(() => {
-    if (!profile?.phylloAccountId) return;
+    if (!linkedin.orgConnected) return;
     setPLoading(true);
-    fetch("/api/phyllo/stats")
+    fetch("/api/linkedin/stats-personal")
       .then(readJson)
-      .then((d) => setPStats(d.connected ? d : null))
-      .catch(() => {})
+      .then((d) => {
+        if (d.error) throw new Error(d.error);
+        setPStats(d.connected ? d : null);
+      })
+      .catch((e) => setPStats({ error: e.message }))
       .finally(() => setPLoading(false));
-  }, [profile?.phylloAccountId]);
+  }, [linkedin.orgConnected]);
 
-  // Stats LinkedIn par draft (disponibles pour les posts de page entreprise)
+  // Stats LinkedIn par draft (page entreprise + profil personnel)
   const statsByDraftId = {};
   for (const p of data?.posts ?? []) {
+    if (p.stats) statsByDraftId[p.id] = p.stats;
+  }
+  for (const p of pStats?.posts ?? []) {
     if (p.stats) statsByDraftId[p.id] = p.stats;
   }
 
@@ -3925,95 +3934,55 @@ function StatsView({ linkedin, orgs, profile, drafts }) {
         </section>
       )}
 
-      {/* ── 2. Profil personnel (Phyllo) ── */}
+      {/* ── 2. Profil personnel ── */}
       <section>
         <h3 className="font-semibold text-base mb-3 flex items-center gap-2">
           <UserRound size={16} className="text-[#ff5a5f]" /> Profil personnel
-          {pStats?.profile?.name && <span className="text-gray-400 font-normal text-sm">— {pStats.profile.name}</span>}
-          {profile?.phylloAccountId && <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full font-normal">via Phyllo</span>}
+          {linkedin.name && <span className="text-gray-400 font-normal text-sm">— {linkedin.name}</span>}
         </h3>
-        {!profile?.phylloAccountId ? (
+        {!linkedin.orgConnected ? (
           <div className="bg-[#fff1f1] border border-[#ffe0e0] rounded-xl p-4 text-sm text-[#1b2a4a] flex items-start gap-2">
             <AlertCircle size={16} className="mt-0.5 shrink-0" />
-            <span>Connectez Phyllo dans l'onglet Profil pour voir les statistiques de votre profil personnel.</span>
+            <span>
+              Connectez la <strong>Page entreprise</strong> (onglet Profil) pour voir les statistiques de votre profil
+              personnel — LinkedIn ne rend cette donnée disponible que via cette app, même si vous ne publiez pas sur
+              de page.
+            </span>
           </div>
         ) : pLoading ? (
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center text-gray-400">
             <RefreshCw size={22} className="mx-auto mb-2 animate-spin text-[#ff5a5f]" />
             <p className="text-sm">Récupération des statistiques du profil…</p>
           </div>
+        ) : pStats?.error ? (
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-800 flex items-start gap-2">
+            <AlertCircle size={16} className="mt-0.5 shrink-0" />
+            <span>{pStats.error}</span>
+          </div>
         ) : pStats ? (
-          <>
-            {pStats.needsReconnect && (
-              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-800 flex items-start gap-2 mb-3">
-                <AlertCircle size={16} className="mt-0.5 shrink-0" />
-                <span>
-                  La synchronisation avec LinkedIn est interrompue
-                  {pStats.lastSync ? ` (dernière mise à jour le ${fmtDateTime(pStats.lastSync)})` : ""}.
-                  {" "}Reconnectez votre compte dans l'onglet <strong>Profil</strong> pour relancer la remontée des statistiques.
-                </span>
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+            {[
+              ["Impressions", pStats.aggregate?.impressionCount, Eye],
+              ["Clics", pStats.aggregate?.clickCount, MousePointerClick],
+              ["Réactions", pStats.aggregate?.likeCount, ThumbsUp],
+              ["Commentaires", pStats.aggregate?.commentCount, MessageSquare],
+              ["Partages", pStats.aggregate?.shareCount, Share2],
+            ].map(([label, v, Icon]) => (
+              <div key={label} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+                <Icon size={16} className="text-[#ff5a5f] mb-2" />
+                <p className="text-xl font-bold">{v == null ? "—" : new Intl.NumberFormat("fr-FR").format(v)}</p>
+                <p className="text-xs text-gray-500">{label}</p>
               </div>
-            )}
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-3">
-              {[
-                ["Abonnés", pStats.profile?.followers],
-                ["Vues", pStats.aggregate?.views],
-                ["Réactions", pStats.aggregate?.likes],
-                ["Commentaires", pStats.aggregate?.comments],
-                ["Partages", pStats.aggregate?.shares],
-              ].map(([label, v]) => (
-                <div key={label} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
-                  <p className="text-xl font-bold">{v == null ? "—" : new Intl.NumberFormat("fr-FR").format(v)}</p>
-                  <p className="text-xs text-gray-500">{label}</p>
-                </div>
-              ))}
-            </div>
-            {pStats.contents?.length > 0 ? (
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="text-left text-xs text-gray-500 border-b border-gray-100">
-                      <th className="p-3 font-medium">Post</th>
-                      <th className="p-3 font-medium text-right">Vues</th>
-                      <th className="p-3 font-medium text-right">Réactions</th>
-                      <th className="p-3 font-medium text-right">Comm.</th>
-                      <th className="p-3 font-medium text-right">Partages</th>
-                      <th className="p-3" />
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-50">
-                    {pStats.contents.slice(0, 10).map((c) => (
-                      <tr key={c.id}>
-                        <td className="p-3 max-w-xs">
-                          <p className="truncate">{c.title || "Post"}</p>
-                          <p className="text-xs text-gray-400">{c.publishedAt ? fmtDateTime(c.publishedAt) : ""}</p>
-                        </td>
-                        {["views", "likes", "comments", "shares"].map((k) => (
-                          <td key={k} className="p-3 text-right">
-                            {c[k] == null ? "—" : new Intl.NumberFormat("fr-FR").format(c[k])}
-                          </td>
-                        ))}
-                        <td className="p-3">
-                          {c.url && <a href={c.url} target="_blank" rel="noreferrer" className="text-[#ff5a5f] hover:text-[#d12d33]"><ExternalLink size={14} /></a>}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <p className="text-sm text-gray-400 bg-white rounded-xl border border-dashed border-gray-300 p-6 text-center">
-                {pStats.needsReconnect
-                  ? "Aucun post remonté — reconnectez votre compte LinkedIn (onglet Profil) pour relancer la synchronisation."
-                  : "Première synchronisation Phyllo en cours — les posts apparaîtront d'ici quelques minutes."}
-              </p>
-            )}
-          </>
+            ))}
+          </div>
         ) : (
           <p className="text-sm text-gray-400 bg-white rounded-xl border border-dashed border-gray-300 p-6 text-center">
             Données indisponibles — réessayez dans quelques minutes.
           </p>
         )}
+        <p className="text-xs text-gray-400 mt-2">
+          Détail par post disponible ci-dessous, dans « Posts publiés & programmés via LinkeePost ».
+        </p>
       </section>
 
       {/* ── Posts publiés & programmés via LinkeePost (toutes cibles) ── */}
@@ -4084,7 +4053,7 @@ function StatsView({ linkedin, orgs, profile, drafts }) {
           </div>
         )}
         <p className="text-xs text-gray-400 mt-2">
-          Les statistiques détaillées ne sont disponibles que pour les posts de page entreprise (limitation LinkedIn).
+          Statistiques par post limitées aux 10 dernières publications de chaque cible (quota d'appels LinkedIn).
         </p>
       </section>
 
@@ -6171,56 +6140,6 @@ function ProfileView({ profile, onSaved, showToast, linkedin, onDisconnect, inst
     set(key, (list.includes(v) ? list.filter((x) => x !== v) : [...list, v]).join(","));
   };
 
-  // Connexion des statistiques du profil personnel via Phyllo Connect
-  const connectPhyllo = async () => {
-    try {
-      const res = await fetch("/api/phyllo/connect-token", { method: "POST" });
-      const d = await readJson(res);
-      if (!res.ok) throw new Error(d.error || "Erreur Phyllo");
-      if (!window.PhylloConnect) {
-        await new Promise((resolve, reject) => {
-          const s = document.createElement("script");
-          s.src = "https://cdn.getphyllo.com/connect/v2/phyllo-connect.js";
-          s.onload = resolve;
-          s.onerror = () => reject(new Error("Impossible de charger le SDK Phyllo"));
-          document.body.appendChild(s);
-        });
-      }
-      const pc = window.PhylloConnect.initialize({
-        clientDisplayName: "LinkeePost",
-        environment: d.environment,
-        userId: d.phylloUserId,
-        token: d.token,
-        workPlatformId: d.workPlatformId,
-      });
-      // Le SDK Phyllo exige la signature exacte de chaque callback
-      pc.on("accountConnected", async (accountId, workplatformId, phylloUserId) => {
-        await fetch("/api/phyllo/account", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ accountId }),
-        });
-        onSaved({ ...profile, phylloAccountId: accountId });
-        showToast("Statistiques du profil connectées ✓ (première synchro en cours)");
-      });
-      pc.on("accountDisconnected", (accountId, workplatformId, phylloUserId) => {});
-      pc.on("tokenExpired", (phylloUserId) => showToast("Session Phyllo expirée — recliquez sur Connecter"));
-      pc.on("exit", (reason, phylloUserId) => {});
-      pc.on("connectionFailure", (reason, workplatformId, phylloUserId) =>
-        showToast("Connexion Phyllo échouée : " + reason)
-      );
-      pc.open();
-    } catch (e) {
-      showToast(e.message);
-    }
-  };
-
-  const disconnectPhyllo = async () => {
-    await fetch("/api/phyllo/account", { method: "DELETE" });
-    onSaved({ ...profile, phylloAccountId: null });
-    showToast("Statistiques du profil déconnectées");
-  };
-
   const save = async (e) => {
     e.preventDefault();
     setSaving(true);
@@ -6601,11 +6520,15 @@ function ProfileView({ profile, onSaved, showToast, linkedin, onDisconnect, inst
                   <p className="text-xs text-gray-500">
                     Connectée
                     {linkedin.orgExpiresAt && <> · expire le {new Date(linkedin.orgExpiresAt).toLocaleDateString("fr-FR")}</>}
+                    {" "}· alimente aussi les statistiques de votre profil personnel (onglet Statistiques)
                   </p>
-                ) : canOrgPublish ? (
-                  <p className="text-xs text-gray-400">Connectez votre page entreprise LinkedIn pour publier en son nom.</p>
                 ) : (
-                  <p className="text-xs text-gray-400">Disponible à partir du plan <strong>Agence</strong>.</p>
+                  <p className="text-xs text-gray-400">
+                    {canOrgPublish
+                      ? "Connectez votre page entreprise LinkedIn pour publier en son nom. "
+                      : "Publier sur une page entreprise est réservé au plan Agence. "}
+                    Cette connexion active aussi les statistiques de votre profil personnel, quel que soit votre plan.
+                  </p>
                 )}
               </div>
             </div>
@@ -6613,48 +6536,10 @@ function ProfileView({ profile, onSaved, showToast, linkedin, onDisconnect, inst
               <a href="/api/linkedin/auth-org" className="text-xs border border-gray-200 hover:border-[#ff5a5f] text-gray-700 px-3 py-1.5 rounded-xl shrink-0">
                 Reconnecter
               </a>
-            ) : canOrgPublish ? (
+            ) : (
               <a href="/api/linkedin/auth-org" className="text-xs bg-[#0a66c2] hover:bg-[#004182] text-white px-3 py-1.5 rounded-xl shrink-0 transition-colors">
                 Connecter
               </a>
-            ) : (
-              <a href="/tarifs" className="text-xs bg-gray-100 hover:bg-gray-200 text-gray-600 px-3 py-1.5 rounded-xl shrink-0 flex items-center gap-1">
-                <Lock size={11} /> Agence
-              </a>
-            )}
-          </div>
-
-          {/* Statistiques du profil personnel via Phyllo */}
-          <div className="p-5 flex items-center justify-between gap-3 flex-wrap">
-            <div className="flex items-center gap-3">
-              <div className={`p-2 rounded-xl ${profile?.phylloAccountId ? "bg-green-50 text-green-600" : "bg-gray-100 text-gray-400"}`}>
-                <BarChart3 size={18} />
-              </div>
-              <div>
-                <p className="text-sm font-medium">Statistiques du profil personnel</p>
-                {profile?.phylloAccountId ? (
-                  <p className="text-xs text-gray-500">Connectées via Phyllo — visibles dans l'onglet Statistiques</p>
-                ) : (
-                  <p className="text-xs text-gray-400">Via Phyllo : vues, réactions et engagement de vos posts personnels</p>
-                )}
-              </div>
-            </div>
-            {profile?.phylloAccountId ? (
-              <button
-                onClick={disconnectPhyllo}
-                type="button"
-                className="text-xs border border-gray-200 hover:border-red-400 hover:text-red-600 text-gray-700 px-3 py-1.5 rounded-xl"
-              >
-                Déconnecter
-              </button>
-            ) : (
-              <button
-                onClick={connectPhyllo}
-                type="button"
-                className="border border-[#0a66c2] text-[#0a66c2] hover:bg-[#fff1f1] text-xs font-medium px-4 py-2 rounded-xl flex items-center gap-1.5"
-              >
-                <BarChart3 size={14} /> Connecter
-              </button>
             )}
           </div>
 
