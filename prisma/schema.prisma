@@ -106,6 +106,13 @@ model User {
   // l'activent pas explicitement — y compris les clients gérés par l'agence.
   autoPublishThreshold Int?
 
+  // Note libre pour le copilote éditorial — renseignée depuis la zone de
+  // prompt du tableau de bord ("Que publier aujourd'hui ?") pour affiner
+  // les propositions du jour. Persistée comme le reste du profil : elle
+  // alimente aussi bien la génération de posts (userContextBlock) que le
+  // moteur de recommandations (lib/editorial/recommendations.js).
+  editorialNote String?
+
   // --- Multi-compte Agence ---
   // Si managedByUserId est renseigné, ce compte est un client géré par une agence.
   // Le client n'a pas de mot de passe utilisable et n'accède jamais à l'outil.

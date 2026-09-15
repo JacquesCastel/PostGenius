@@ -3079,12 +3079,14 @@ const PROFILE_SIGNALS = [
   { key: "styleNotes", label: "Consignes de style" },
 ];
 
-function EditorialRecoWidget({ onGenerate, showToast, profile, onGoProfileField, onGoCopilot }) {
+function EditorialRecoWidget({ onGenerate, showToast, profile, onProfileSaved, onGoProfileField, onGoCopilot }) {
   const [recos, setRecos] = useState(null); // null = chargement initial
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
   const [actingId, setActingId] = useState(null);
+  const [note, setNote] = useState(profile?.editorialNote ?? "");
+  const [refiningNote, setRefiningNote] = useState(false);
 
   const load = (force = false) => {
     (force ? setRefreshing : setLoading)(true);
@@ -3105,6 +3107,35 @@ function EditorialRecoWidget({ onGenerate, showToast, profile, onGoProfileField,
   useEffect(() => {
     load();
   }, []);
+
+  // Le profil peut arriver après le premier rendu (chargement async côté parent).
+  useEffect(() => {
+    setNote(profile?.editorialNote ?? "");
+  }, [profile?.editorialNote]);
+
+  // Zone de prompt libre : affine les propositions du jour ET alimente le
+  // profil (donc aussi la génération de posts classique) puisque la note
+  // est persistée comme n'importe quel autre champ de contexte métier —
+  // voir userContextBlock dans lib/campaign.js.
+  const refineWithNote = async () => {
+    setRefiningNote(true);
+    try {
+      const res = await fetch("/api/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ editorialNote: note }),
+      });
+      const data = await readJson(res);
+      if (!res.ok) throw new Error(data.error);
+      onProfileSaved?.(data.profile);
+      load(true);
+      showToast("Propositions affinées ✓");
+    } catch (e) {
+      showToast(e.message || "Erreur");
+    } finally {
+      setRefiningNote(false);
+    }
+  };
 
   const respond = async (reco, status) => {
     setActingId(reco.id);
@@ -3155,6 +3186,33 @@ function EditorialRecoWidget({ onGenerate, showToast, profile, onGoProfileField,
       </div>
     ) : null;
 
+  const RefineNoteBox = () => (
+    <div className="bg-gray-50 border border-gray-100 rounded-xl p-3 mb-3">
+      <label className="text-xs font-medium text-gray-600 flex items-center gap-1.5 mb-1.5">
+        <PenLine size={13} /> Affiner les propositions
+      </label>
+      <textarea
+        rows={2}
+        value={note}
+        onChange={(e) => setNote(e.target.value)}
+        placeholder="ex : cette semaine, je veux plus de retours clients concrets, moins de posts d'opinion…"
+        maxLength={500}
+        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
+      />
+      <div className="flex items-center justify-between mt-1.5">
+        <p className="text-[11px] text-gray-400">Enregistrée dans votre profil — affine aussi vos futurs posts.</p>
+        <button
+          onClick={refineWithNote}
+          disabled={refiningNote || note === (profile?.editorialNote ?? "")}
+          className="text-xs bg-[#0a66c2] hover:bg-[#004182] disabled:opacity-50 text-white font-medium px-3 py-1.5 rounded-lg flex items-center gap-1.5 shrink-0"
+        >
+          {refiningNote ? <RefreshCw size={13} className="animate-spin" /> : <Sparkles size={13} />}
+          Affiner mes propositions
+        </button>
+      </div>
+    </div>
+  );
+
   if (loading) {
     return (
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center text-gray-400">
@@ -3168,6 +3226,7 @@ function EditorialRecoWidget({ onGenerate, showToast, profile, onGoProfileField,
     return (
       <div>
         <ProfileSignalsPanel />
+        <RefineNoteBox />
         <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 text-sm text-amber-800 flex items-start gap-2">
           <AlertCircle size={16} className="mt-0.5 shrink-0" />
           <span>{error}</span>
@@ -3180,6 +3239,7 @@ function EditorialRecoWidget({ onGenerate, showToast, profile, onGoProfileField,
     return (
       <div>
         <ProfileSignalsPanel />
+        <RefineNoteBox />
         <div className="bg-white rounded-xl border border-dashed border-gray-300 p-8 text-center text-gray-400 text-sm">
           Aucune recommandation pour l'instant.
           <button onClick={() => load(true)} className="text-[#ff5a5f] hover:underline ml-1">Réessayer</button>
@@ -3246,6 +3306,7 @@ function EditorialRecoWidget({ onGenerate, showToast, profile, onGoProfileField,
         </button>
       </p>
       <ProfileSignalsPanel />
+      <RefineNoteBox />
       <RecoCard reco={main} primary />
       {others.length > 0 && (
         <div className="mt-3">
@@ -3774,6 +3835,7 @@ function DashboardView({ drafts, canVeille = true, canEvents = false, canScore =
         onGenerate={onGenerateFromReco}
         showToast={showToast}
         profile={profile}
+        onProfileSaved={onProfileSaved}
         onGoProfileField={onGoProfileField}
         onGoCopilot={onGoCopilot}
       />
@@ -6663,6 +6725,7 @@ function ProfileView({ profile, onSaved, showToast, linkedin, onDisconnect, inst
     themes: profile?.themes ?? "",
     tone: profile?.tone ?? "Professionnel",
     styleNotes: profile?.styleNotes ?? "",
+    editorialNote: profile?.editorialNote ?? "",
     defaultMaxChars: profile?.defaultMaxChars ?? 1300,
     publishDays: profile?.publishDays ?? "",
     publishTime: profile?.publishTime ?? "09:00",
@@ -6908,6 +6971,20 @@ function ProfileView({ profile, onSaved, showToast, linkedin, onDisconnect, inst
                   value={fields.styleNotes}
                   onChange={(e) => set("styleNotes", e.target.value)}
                   placeholder={"ex : je tutoie mon audience, pas d'emojis, phrases courtes"}
+                  className={input}
+                />
+              </div>
+              <div id="field-editorialNote">
+                <label className={label}>
+                  Note pour le copilote éditorial{" "}
+                  <span className="text-gray-400 font-normal">(modifiable aussi depuis le tableau de bord)</span>
+                </label>
+                <textarea
+                  rows={2}
+                  value={fields.editorialNote}
+                  onChange={(e) => set("editorialNote", e.target.value)}
+                  placeholder="ex : cette semaine, je veux plus de retours clients concrets, moins de posts d'opinion…"
+                  maxLength={500}
                   className={input}
                 />
               </div>
