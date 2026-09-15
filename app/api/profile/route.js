@@ -18,7 +18,7 @@ const STRING_FIELDS = [
   "publishDays",
   "publishTime",
 ];
-const INT_FIELDS = { defaultMaxChars: [300, 3000], postsPerWeek: [1, 7] };
+const INT_FIELDS = { defaultMaxChars: [300, 3000], postsPerWeek: [1, 7], autoPublishThreshold: [50, 100] };
 const BOOL_FIELDS = ["requireValidation", "autoGenerate"];
 
 const SELECT = Object.fromEntries(
