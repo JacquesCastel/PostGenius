@@ -3079,6 +3079,62 @@ const PROFILE_SIGNALS = [
   { key: "styleNotes", label: "Consignes de style" },
 ];
 
+// Composants hors du corps de EditorialRecoWidget (et non redéfinis à chaque
+// rendu) : un composant recréé à chaque frappe force React à démonter/
+// remonter le sous-arbre, et donc le champ de saisie perd le focus.
+function ProfileSignalsPanel({ missingSignals, completion, onGoProfileField }) {
+  if (!missingSignals.length) return null;
+  return (
+    <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-3">
+      <p className="text-xs text-amber-800 font-medium mb-1.5">
+        Profil complété à {completion}/{PROFILE_SIGNALS.length} — ces propositions s'appuient sur votre profil,
+        vos piliers éditoriaux et votre historique de publication. Complétez pour des recommandations plus
+        pertinentes :
+      </p>
+      <div className="flex flex-wrap gap-1.5">
+        {missingSignals.map((s) => (
+          <button
+            key={s.key}
+            onClick={() => onGoProfileField?.(s.key)}
+            className="text-[11px] bg-white border border-amber-300 text-amber-700 hover:bg-amber-100 px-2.5 py-1 rounded-full flex items-center gap-1"
+          >
+            <Plus size={11} /> {s.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function RefineNoteBox({ note, setNote, refiningNote, onRefine, savedNote }) {
+  return (
+    <div className="bg-gray-50 border border-gray-100 rounded-xl p-3 mb-3">
+      <label className="text-xs font-medium text-gray-600 flex items-center gap-1.5 mb-1.5">
+        <PenLine size={13} /> Affiner les propositions
+      </label>
+      <textarea
+        rows={2}
+        value={note}
+        onChange={(e) => setNote(e.target.value)}
+        placeholder="ex : cette semaine, je veux plus de retours clients concrets, moins de posts d'opinion…"
+        maxLength={500}
+        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
+      />
+      <div className="flex items-center justify-between mt-1.5">
+        <p className="text-[11px] text-gray-400">Enregistrée dans votre profil — affine aussi vos futurs posts.</p>
+        <button
+          onClick={onRefine}
+          disabled={refiningNote || note === savedNote}
+          className="text-xs bg-[#0a66c2] hover:bg-[#004182] disabled:opacity-50 text-white font-medium px-3 py-1.5 rounded-lg flex items-center gap-1.5 shrink-0"
+        >
+          {refiningNote ? <RefreshCw size={13} className="animate-spin" /> : <Sparkles size={13} />}
+          Affiner mes propositions
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function EditorialRecoWidget({ onGenerate, showToast, profile, onProfileSaved, onGoProfileField, onGoCopilot }) {
   const [recos, setRecos] = useState(null); // null = chargement initial
   const [loading, setLoading] = useState(true);
@@ -3164,55 +3220,6 @@ function EditorialRecoWidget({ onGenerate, showToast, profile, onProfileSaved, o
   const missingSignals = PROFILE_SIGNALS.filter((s) => !profile?.[s.key]?.trim?.());
   const completion = PROFILE_SIGNALS.length - missingSignals.length;
 
-  const ProfileSignalsPanel = () =>
-    missingSignals.length > 0 ? (
-      <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-3">
-        <p className="text-xs text-amber-800 font-medium mb-1.5">
-          Profil complété à {completion}/{PROFILE_SIGNALS.length} — ces propositions s'appuient sur votre profil,
-          vos piliers éditoriaux et votre historique de publication. Complétez pour des recommandations plus
-          pertinentes :
-        </p>
-        <div className="flex flex-wrap gap-1.5">
-          {missingSignals.map((s) => (
-            <button
-              key={s.key}
-              onClick={() => onGoProfileField?.(s.key)}
-              className="text-[11px] bg-white border border-amber-300 text-amber-700 hover:bg-amber-100 px-2.5 py-1 rounded-full flex items-center gap-1"
-            >
-              <Plus size={11} /> {s.label}
-            </button>
-          ))}
-        </div>
-      </div>
-    ) : null;
-
-  const RefineNoteBox = () => (
-    <div className="bg-gray-50 border border-gray-100 rounded-xl p-3 mb-3">
-      <label className="text-xs font-medium text-gray-600 flex items-center gap-1.5 mb-1.5">
-        <PenLine size={13} /> Affiner les propositions
-      </label>
-      <textarea
-        rows={2}
-        value={note}
-        onChange={(e) => setNote(e.target.value)}
-        placeholder="ex : cette semaine, je veux plus de retours clients concrets, moins de posts d'opinion…"
-        maxLength={500}
-        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
-      />
-      <div className="flex items-center justify-between mt-1.5">
-        <p className="text-[11px] text-gray-400">Enregistrée dans votre profil — affine aussi vos futurs posts.</p>
-        <button
-          onClick={refineWithNote}
-          disabled={refiningNote || note === (profile?.editorialNote ?? "")}
-          className="text-xs bg-[#0a66c2] hover:bg-[#004182] disabled:opacity-50 text-white font-medium px-3 py-1.5 rounded-lg flex items-center gap-1.5 shrink-0"
-        >
-          {refiningNote ? <RefreshCw size={13} className="animate-spin" /> : <Sparkles size={13} />}
-          Affiner mes propositions
-        </button>
-      </div>
-    </div>
-  );
-
   if (loading) {
     return (
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center text-gray-400">
@@ -3225,8 +3232,8 @@ function EditorialRecoWidget({ onGenerate, showToast, profile, onProfileSaved, o
   if (error) {
     return (
       <div>
-        <ProfileSignalsPanel />
-        <RefineNoteBox />
+        <ProfileSignalsPanel missingSignals={missingSignals} completion={completion} onGoProfileField={onGoProfileField} />
+        <RefineNoteBox note={note} setNote={setNote} refiningNote={refiningNote} onRefine={refineWithNote} savedNote={profile?.editorialNote ?? ""} />
         <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 text-sm text-amber-800 flex items-start gap-2">
           <AlertCircle size={16} className="mt-0.5 shrink-0" />
           <span>{error}</span>
@@ -3238,8 +3245,8 @@ function EditorialRecoWidget({ onGenerate, showToast, profile, onProfileSaved, o
   if (!recos?.length) {
     return (
       <div>
-        <ProfileSignalsPanel />
-        <RefineNoteBox />
+        <ProfileSignalsPanel missingSignals={missingSignals} completion={completion} onGoProfileField={onGoProfileField} />
+        <RefineNoteBox note={note} setNote={setNote} refiningNote={refiningNote} onRefine={refineWithNote} savedNote={profile?.editorialNote ?? ""} />
         <div className="bg-white rounded-xl border border-dashed border-gray-300 p-8 text-center text-gray-400 text-sm">
           Aucune recommandation pour l'instant.
           <button onClick={() => load(true)} className="text-[#ff5a5f] hover:underline ml-1">Réessayer</button>
@@ -3305,8 +3312,8 @@ function EditorialRecoWidget({ onGenerate, showToast, profile, onProfileSaved, o
           Voir le détail dans Copilote IA →
         </button>
       </p>
-      <ProfileSignalsPanel />
-      <RefineNoteBox />
+      <ProfileSignalsPanel missingSignals={missingSignals} completion={completion} onGoProfileField={onGoProfileField} />
+      <RefineNoteBox note={note} setNote={setNote} refiningNote={refiningNote} onRefine={refineWithNote} savedNote={profile?.editorialNote ?? ""} />
       <RecoCard reco={main} primary />
       {others.length > 0 && (
         <div className="mt-3">
