@@ -61,7 +61,7 @@ export async function POST(req) {
   const userId = await getUserId(req);
   if (!userId) return NextResponse.json({ error: "Non connecté." }, { status: 401 });
 
-  const { type, theme, expertise, tone, maxChars, text, extra, inspirationUrl, imageUrl, imagePrompt } =
+  const { type, theme, expertise, tone, maxChars, text, extra, inspirationUrl, imageUrl, imagePrompt, pillarId } =
     await req.json();
   if (!text?.trim()) return NextResponse.json({ error: "Texte requis." }, { status: 400 });
 
@@ -84,6 +84,7 @@ export async function POST(req) {
       inspirationUrl: inspirationUrl || null,
       imageUrl: imageUrl || null,
       imagePrompt: imagePrompt || null,
+      pillarId: pillarId || null,
     },
   });
 
