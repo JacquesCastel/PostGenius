@@ -9,7 +9,7 @@ import {
   Megaphone, ChevronDown, Image as ImageIcon, ShieldCheck, Lock, ArrowUpCircle, MapPin, Bell, Camera,
   CreditCard, Gauge, Users, Smartphone, Monitor,
   Upload, Wand2, SlidersHorizontal, Type, Crop, Download, Pencil, GripHorizontal,
-  Compass, Lightbulb, EyeOff
+  Compass, Lightbulb, EyeOff, TrendingUp, TrendingDown, Plus
 } from "lucide-react";
 import { PLANS, PLAN_IDS, planLabel, planAllows, planOf, trialDaysLeft, accessState } from "@/lib/plans";
 import SiteHeader from "@/components/SiteHeader";
@@ -3204,6 +3204,312 @@ function EditorialRecoWidget({ onGenerate, showToast }) {
         </div>
       )}
     </div>
+  );
+}
+
+// ----------------------------------------------------------------
+// Copilote IA — transparence et pilotage du moteur de recommandations :
+// ce qui a été proposé/accepté/ignoré, les poids appris par pilier et par
+// format, et le réglage de la publication autonome (déplacé depuis Profil
+// pour que le pilotage ne dépende plus uniquement du profil).
+// ----------------------------------------------------------------
+function CopilotView({ profile, onProfileSaved, showToast }) {
+  const [stats, setStats] = useState(null);
+  const [pillars, setPillars] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [newPillar, setNewPillar] = useState("");
+  const [addingPillar, setAddingPillar] = useState(false);
+  const [savingThreshold, setSavingThreshold] = useState(false);
+  const [expandedId, setExpandedId] = useState(null);
+
+  const load = () => {
+    setLoading(true);
+    Promise.all([
+      fetch("/api/editorial/stats").then(readJson),
+      fetch("/api/editorial/pillars").then(readJson),
+    ])
+      .then(([s, p]) => {
+        setStats(s);
+        setPillars(p.pillars ?? []);
+      })
+      .catch(() => showToast("Erreur de chargement du copilote"))
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(load, []);
+
+  const enabled = profile?.autoPublishThreshold != null;
+  const threshold = profile?.autoPublishThreshold ?? 85;
+
+  const saveThreshold = async (nextEnabled, nextValue) => {
+    setSavingThreshold(true);
+    try {
+      const res = await fetch("/api/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ autoPublishThreshold: nextEnabled ? nextValue : null }),
+      });
+      const data = await readJson(res);
+      if (!res.ok) throw new Error(data.error);
+      onProfileSaved(data.profile);
+      showToast(nextEnabled ? `Publication autonome activée (seuil ${nextValue}) ✓` : "Publication autonome désactivée");
+    } catch (e) {
+      showToast(e.message || "Erreur");
+    } finally {
+      setSavingThreshold(false);
+    }
+  };
+
+  const addPillar = async () => {
+    if (!newPillar.trim()) return;
+    setAddingPillar(true);
+    try {
+      const res = await fetch("/api/editorial/pillars", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: newPillar.trim() }),
+      });
+      const data = await readJson(res);
+      if (!res.ok) throw new Error(data.error);
+      setPillars((list) => (list.some((p) => p.id === data.pillar.id) ? list : [...list, data.pillar]));
+      setNewPillar("");
+      showToast(`Pilier « ${data.pillar.name} » ajouté ✓`);
+    } catch (e) {
+      showToast(e.message || "Erreur");
+    } finally {
+      setAddingPillar(false);
+    }
+  };
+
+  const STATUS_LABEL = {
+    proposée: ["Proposée", "bg-gray-100 text-gray-500"],
+    générée: ["Générée", "bg-blue-50 text-blue-600"],
+    planifiée: ["Planifiée", "bg-green-50 text-green-600"],
+    ignorée: ["Ignorée", "bg-gray-100 text-gray-400"],
+    rejetée: ["Rejetée", "bg-red-50 text-red-500"],
+  };
+
+  const WeightBar = ({ label, weight, sub }) => {
+    const pct = Math.min(100, Math.max(0, (weight / 2) * 100));
+    const boosted = weight > 1.05;
+    const suppressed = weight < 0.95;
+    return (
+      <div className="py-2">
+        <div className="flex items-center justify-between text-xs mb-1">
+          <span className="font-medium text-gray-700">{label}</span>
+          <span className={`flex items-center gap-1 font-semibold ${boosted ? "text-green-600" : suppressed ? "text-red-500" : "text-gray-400"}`}>
+            {boosted && <TrendingUp size={12} />}
+            {suppressed && <TrendingDown size={12} />}
+            ×{weight.toFixed(2)}
+          </span>
+        </div>
+        <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+          <div
+            className={`h-full rounded-full ${boosted ? "bg-green-500" : suppressed ? "bg-red-400" : "bg-gray-300"}`}
+            style={{ width: `${pct}%` }}
+          />
+        </div>
+        {sub && <p className="text-[11px] text-gray-400 mt-1">{sub}</p>}
+      </div>
+    );
+  };
+
+  if (loading) {
+    return (
+      <main className="max-w-4xl mx-auto p-6 text-center text-gray-400 py-20">
+        <RefreshCw size={22} className="mx-auto mb-2 animate-spin text-[#ff5a5f]" />
+        Chargement du copilote…
+      </main>
+    );
+  }
+
+  return (
+    <main className="max-w-4xl mx-auto p-6 space-y-6">
+      <div>
+        <h2 className="font-semibold text-lg flex items-center gap-2">
+          <Compass size={18} className="text-[#ff5a5f]" /> Copilote IA
+        </h2>
+        <p className="text-sm text-gray-500">Comment le moteur de recommandations décide, et ce qu'il a appris.</p>
+      </div>
+
+      {/* KPI */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {[
+          ["Recommandations", stats.totals.total],
+          ["Acceptées", stats.totals.accepted],
+          [
+            "Taux d'acceptation",
+            stats.totals.acceptanceRate != null ? `${Math.round(stats.totals.acceptanceRate * 100)}%` : "—",
+          ],
+          ["Confiance moyenne", stats.totals.avgConfidence != null ? `${stats.totals.avgConfidence}/100` : "—"],
+        ].map(([label, value]) => (
+          <div key={label} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+            <p className="text-xl font-bold">{value}</p>
+            <p className="text-xs text-gray-500 mt-0.5">{label}</p>
+          </div>
+        ))}
+      </div>
+      {stats.totals.learnedFrom < 5 && (
+        <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-xl p-3">
+          Encore peu de décisions enregistrées ({stats.totals.learnedFrom}) — les poids ci-dessous restent proches
+          de neutre (×1) tant que l'historique est court. Ils s'affinent avec chaque "Générer"/"Ignorer".
+        </p>
+      )}
+
+      {/* Publication autonome */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+        <div className="flex items-center justify-between flex-wrap gap-2 mb-1">
+          <p className="text-sm font-semibold">Publication autonome</p>
+          <label className="flex items-center gap-2 text-xs cursor-pointer">
+            <input
+              type="checkbox"
+              checked={enabled}
+              disabled={savingThreshold}
+              onChange={(e) => saveThreshold(e.target.checked, threshold)}
+              className="accent-[#ff5a5f]"
+            />
+            {enabled ? "Activée" : "Désactivée"}
+          </label>
+        </div>
+        <p className="text-xs text-gray-500">
+          Sans validation manuelle : la recommandation la mieux notée est programmée dès qu'elle atteint le seuil
+          de confiance choisi, sur votre prochain créneau habituel. Désactivée par défaut sur tous les comptes.
+        </p>
+        {enabled && (
+          <div className="flex items-center gap-3 mt-3">
+            <input
+              type="range"
+              min={50}
+              max={100}
+              step={5}
+              value={threshold}
+              disabled={savingThreshold}
+              onChange={(e) => saveThreshold(true, Number(e.target.value))}
+              className="flex-1 accent-[#ff5a5f]"
+            />
+            <span className="text-sm font-semibold w-24 text-right">Seuil {threshold}</span>
+          </div>
+        )}
+        {stats.autopilot?.nextEligibleAt && (
+          <p className="text-[11px] text-gray-400 mt-2">
+            Dernière vérification : {fmtDateTime(stats.autopilot.lastRunAt)} · prochaine possible à partir de{" "}
+            {fmtDateTime(stats.autopilot.nextEligibleAt)}
+          </p>
+        )}
+      </div>
+
+      {/* Poids appris */}
+      <div className="grid sm:grid-cols-2 gap-4">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+          <p className="text-sm font-semibold mb-1">Poids appris — piliers</p>
+          <p className="text-xs text-gray-400 mb-2">
+            ×1 = neutre. Au-dessus : ce pilier passe plus souvent devant les autres car vous l'acceptez plus.
+            En-dessous : il est freiné car vous l'ignorez/le rejetez plus souvent.
+          </p>
+          {stats.byPillar.filter((p) => p.proposed > 0).length === 0 ? (
+            <p className="text-xs text-gray-400">Pas encore assez de données par pilier.</p>
+          ) : (
+            stats.byPillar
+              .filter((p) => p.proposed > 0)
+              .sort((a, b) => b.weight - a.weight)
+              .map((p) => (
+                <WeightBar
+                  key={p.id}
+                  label={p.name}
+                  weight={p.weight}
+                  sub={`${p.proposed} proposée${p.proposed > 1 ? "s" : ""} · ${p.accepted} acceptée${p.accepted > 1 ? "s" : ""} · ${p.rejected} ignorée${p.rejected > 1 ? "s" : ""}`}
+                />
+              ))
+          )}
+        </div>
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+          <p className="text-sm font-semibold mb-1">Poids appris — formats</p>
+          <p className="text-xs text-gray-400 mb-2">Même principe, par type de post.</p>
+          {stats.byPostType.filter((t) => t.proposed > 0).length === 0 ? (
+            <p className="text-xs text-gray-400">Pas encore assez de données par format.</p>
+          ) : (
+            stats.byPostType
+              .filter((t) => t.proposed > 0)
+              .sort((a, b) => b.weight - a.weight)
+              .map((t) => (
+                <WeightBar
+                  key={t.type}
+                  label={t.type === "simple" ? "Post simple" : t.type === "carrousel" ? "Carrousel" : "Vidéo"}
+                  weight={t.weight}
+                  sub={`${t.proposed} proposé${t.proposed > 1 ? "s" : ""}`}
+                />
+              ))
+          )}
+        </div>
+      </div>
+
+      {/* Piliers éditoriaux */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+        <p className="text-sm font-semibold mb-3">Piliers éditoriaux</p>
+        <div className="flex flex-wrap gap-2 mb-3">
+          {pillars.map((p) => (
+            <span key={p.id} className="text-xs bg-gray-100 text-gray-600 px-2.5 py-1 rounded-full">
+              {p.name}
+            </span>
+          ))}
+        </div>
+        <div className="flex items-center gap-2">
+          <input
+            type="text"
+            value={newPillar}
+            onChange={(e) => setNewPillar(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && addPillar()}
+            placeholder="Ajouter un pilier personnalisé…"
+            className="flex-1 border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
+          />
+          <button
+            onClick={addPillar}
+            disabled={addingPillar || !newPillar.trim()}
+            className="text-xs bg-[#0a66c2] hover:bg-[#004182] disabled:opacity-50 text-white px-3 py-1.5 rounded-lg flex items-center gap-1"
+          >
+            <Plus size={13} /> Ajouter
+          </button>
+        </div>
+      </div>
+
+      {/* Historique récent */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        <p className="text-sm font-semibold p-5 pb-0">Dernières recommandations</p>
+        {stats.recent.length === 0 ? (
+          <p className="text-sm text-gray-400 p-5">Aucune recommandation générée pour l'instant.</p>
+        ) : (
+          <div className="divide-y divide-gray-50">
+            {stats.recent.map((r) => {
+              const [label, cls] = STATUS_LABEL[r.status] ?? [r.status, "bg-gray-100 text-gray-500"];
+              return (
+                <div key={r.id} className="p-4">
+                  <button
+                    onClick={() => setExpandedId(expandedId === r.id ? null : r.id)}
+                    className="w-full text-left flex items-center justify-between gap-3"
+                  >
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium truncate">{r.topic}</p>
+                      <p className="text-xs text-gray-400">
+                        {r.pillar ?? "sans pilier"} · confiance {r.confidence} · {fmtDateTime(r.createdAt)}
+                      </p>
+                    </div>
+                    <span className={`text-[10px] font-semibold uppercase tracking-wide rounded-full px-2 py-0.5 shrink-0 ${cls}`}>
+                      {label}
+                    </span>
+                  </button>
+                  {expandedId === r.id && (
+                    <p className="text-xs text-gray-500 mt-2 flex items-start gap-1.5">
+                      <Lightbulb size={13} className="mt-0.5 shrink-0 text-amber-400" />
+                      {r.rationale}
+                    </p>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </main>
   );
 }
 
@@ -6590,40 +6896,10 @@ function ProfileView({ profile, onSaved, showToast, linkedin, onDisconnect, inst
                 Valider avant publication
               </label>
 
-              {/* Publication autonome depuis le copilote éditorial — opt-in, désactivé
-                  par défaut. Ne concerne que ce compte (les clients gérés par une
-                  agence gardent la validation manuelle sauf activation explicite). */}
-              <div className="sm:col-span-2 border-t border-gray-100 pt-4 mt-1">
-                <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={fields.autoPublishThreshold != null}
-                    onChange={(e) => set("autoPublishThreshold", e.target.checked ? 85 : null)}
-                    className="accent-[#ff5a5f]"
-                  />
-                  Publication autonome depuis le copilote éditorial
-                </label>
-                <p className="text-xs text-gray-400 mt-1">
-                  Sans validation manuelle : la recommandation la mieux notée du copilote est
-                  programmée automatiquement dès qu'elle atteint le seuil de confiance choisi.
-                </p>
-                {fields.autoPublishThreshold != null && (
-                  <div className="flex items-center gap-3 mt-2">
-                    <input
-                      type="range"
-                      min={50}
-                      max={100}
-                      step={5}
-                      value={fields.autoPublishThreshold}
-                      onChange={(e) => set("autoPublishThreshold", Number(e.target.value))}
-                      className="flex-1 accent-[#ff5a5f]"
-                    />
-                    <span className="text-sm font-semibold w-20 text-right">
-                      Seuil {fields.autoPublishThreshold}
-                    </span>
-                  </div>
-                )}
-              </div>
+              <p className="sm:col-span-2 text-xs text-gray-400 border-t border-gray-100 pt-3 mt-1">
+                La publication autonome du copilote éditorial se pilote désormais depuis l'onglet
+                <strong> Copilote IA</strong> (avec les indicateurs et les poids appris).
+              </p>
             </div>
           </div>
 
@@ -7595,6 +7871,7 @@ export default function Home() {
     { id: "campaigns", label: "Campagnes", icon: LayersIcon, requires: "campaigns", featureLabel: "Les campagnes" },
     { id: "events", label: "Événements", icon: MapPin, requires: "events", featureLabel: "Le module Événements" },
     { id: "stats", label: "Statistiques", icon: BarChart3 },
+    { id: "copilot", label: "Copilote IA", icon: Compass },
     { id: "billing", label: "Abonnement", icon: CreditCard },
     { id: "profile", label: "Profil", icon: UserRound },
     { id: "brand-kit", label: "Charte graphique", icon: ImageIcon },
@@ -8985,6 +9262,8 @@ export default function Home() {
         />
       ) : view === "stats" ? (
         <StatsView linkedin={linkedin} orgs={orgs} profile={profile} drafts={drafts} />
+      ) : view === "copilot" ? (
+        <CopilotView profile={profile} onProfileSaved={setProfile} showToast={showToast} />
       ) : view === "billing" ? (
         <BillingView user={user} showToast={showToast} />
       ) : view === "brand-kit" ? (
