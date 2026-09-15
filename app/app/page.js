@@ -9,7 +9,7 @@ import {
   Megaphone, ChevronDown, Image as ImageIcon, ShieldCheck, Lock, ArrowUpCircle, MapPin, Bell, Camera,
   CreditCard, Gauge, Users, Smartphone, Monitor,
   Upload, Wand2, SlidersHorizontal, Type, Crop, Download, Pencil, GripHorizontal,
-  Compass, Lightbulb, EyeOff, TrendingUp, TrendingDown, Plus
+  Compass, Lightbulb, EyeOff, TrendingUp, TrendingDown, Plus, Globe
 } from "lucide-react";
 import { PLANS, PLAN_IDS, planLabel, planAllows, planOf, trialDaysLeft, accessState } from "@/lib/plans";
 import SiteHeader from "@/components/SiteHeader";
@@ -3216,7 +3216,9 @@ function EditorialRecoWidget({ onGenerate, showToast }) {
 function CopilotView({ profile, onProfileSaved, showToast }) {
   const [stats, setStats] = useState(null);
   const [pillars, setPillars] = useState([]);
+  const [watch, setWatch] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [watchLoading, setWatchLoading] = useState(false);
   const [newPillar, setNewPillar] = useState("");
   const [addingPillar, setAddingPillar] = useState(false);
   const [savingThreshold, setSavingThreshold] = useState(false);
@@ -3227,13 +3229,24 @@ function CopilotView({ profile, onProfileSaved, showToast }) {
     Promise.all([
       fetch("/api/editorial/stats").then(readJson),
       fetch("/api/editorial/pillars").then(readJson),
+      fetch("/api/editorial/watch").then(readJson),
     ])
-      .then(([s, p]) => {
+      .then(([s, p, w]) => {
         setStats(s);
         setPillars(p.pillars ?? []);
+        setWatch(w.items ?? []);
       })
       .catch(() => showToast("Erreur de chargement du copilote"))
       .finally(() => setLoading(false));
+  };
+
+  const refreshWatch = () => {
+    setWatchLoading(true);
+    fetch("/api/editorial/watch?refresh=1")
+      .then(readJson)
+      .then((w) => setWatch(w.items ?? []))
+      .catch(() => showToast("Erreur de rafraîchissement de la veille"))
+      .finally(() => setWatchLoading(false));
   };
 
   useEffect(load, []);
@@ -3470,6 +3483,50 @@ function CopilotView({ profile, onProfileSaved, showToast }) {
             <Plus size={13} /> Ajouter
           </button>
         </div>
+      </div>
+
+      {/* Veille LinkedIn */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+        <div className="flex items-center justify-between gap-2 mb-1">
+          <p className="text-sm font-semibold flex items-center gap-1.5">
+            <Globe size={15} className="text-[#ff5a5f]" /> Veille — méthodes de publication LinkedIn
+          </p>
+          <button
+            onClick={refreshWatch}
+            disabled={watchLoading}
+            className="text-xs text-gray-400 hover:text-gray-600 flex items-center gap-1 disabled:opacity-50"
+          >
+            <RefreshCw size={12} className={watchLoading ? "animate-spin" : ""} /> Rafraîchir
+          </button>
+        </div>
+        <p className="text-xs text-gray-400 mb-3">
+          Actualité et bonnes pratiques repérées sur le web (algorithme, formats, fréquence) — pour éclairer les
+          recommandations, pas pour les décider automatiquement.
+        </p>
+        {watch.length === 0 ? (
+          <p className="text-xs text-gray-400">Aucun article LinkedIn repéré pour l'instant.</p>
+        ) : (
+          <div className="divide-y divide-gray-50">
+            {watch.map((item, i) => (
+              <a
+                key={item.link ?? i}
+                href={item.link ?? "#"}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-start gap-2 py-2.5 group"
+              >
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-gray-700 group-hover:text-[#0a66c2] truncate">{item.title}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    {item.source}
+                    {item.date ? ` · ${fmtDateTime(item.date)}` : ""}
+                  </p>
+                </div>
+                <ExternalLink size={13} className="text-gray-300 group-hover:text-[#0a66c2] mt-0.5 shrink-0" />
+              </a>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Historique récent */}
