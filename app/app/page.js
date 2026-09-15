@@ -6244,6 +6244,7 @@ function ProfileView({ profile, onSaved, showToast, linkedin, onDisconnect, inst
     publishDays: profile?.publishDays ?? "",
     publishTime: profile?.publishTime ?? "09:00",
     requireValidation: profile?.requireValidation ?? true,
+    autoPublishThreshold: profile?.autoPublishThreshold ?? null,
   });
   const [saving, setSaving] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
@@ -6588,6 +6589,41 @@ function ProfileView({ profile, onSaved, showToast, linkedin, onDisconnect, inst
                 />
                 Valider avant publication
               </label>
+
+              {/* Publication autonome depuis le copilote éditorial — opt-in, désactivé
+                  par défaut. Ne concerne que ce compte (les clients gérés par une
+                  agence gardent la validation manuelle sauf activation explicite). */}
+              <div className="sm:col-span-2 border-t border-gray-100 pt-4 mt-1">
+                <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={fields.autoPublishThreshold != null}
+                    onChange={(e) => set("autoPublishThreshold", e.target.checked ? 85 : null)}
+                    className="accent-[#ff5a5f]"
+                  />
+                  Publication autonome depuis le copilote éditorial
+                </label>
+                <p className="text-xs text-gray-400 mt-1">
+                  Sans validation manuelle : la recommandation la mieux notée du copilote est
+                  programmée automatiquement dès qu'elle atteint le seuil de confiance choisi.
+                </p>
+                {fields.autoPublishThreshold != null && (
+                  <div className="flex items-center gap-3 mt-2">
+                    <input
+                      type="range"
+                      min={50}
+                      max={100}
+                      step={5}
+                      value={fields.autoPublishThreshold}
+                      onChange={(e) => set("autoPublishThreshold", Number(e.target.value))}
+                      className="flex-1 accent-[#ff5a5f]"
+                    />
+                    <span className="text-sm font-semibold w-20 text-right">
+                      Seuil {fields.autoPublishThreshold}
+                    </span>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
