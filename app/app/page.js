@@ -3066,7 +3066,20 @@ function PaywallScreen({ user, showToast, onLogout }) {
 // (lib/editorial/recommendations.js) et relaie "Générer" vers le moteur
 // de génération existant (onGenerate = préremplit le formulaire de création).
 // ----------------------------------------------------------------
-function EditorialRecoWidget({ onGenerate, showToast }) {
+// Champs de profil qui alimentent directement le prompt du copilote éditorial
+// (voir userContextBlock dans lib/campaign.js) — sert à mesurer et à guider
+// leur complétion depuis le tableau de bord.
+const PROFILE_SIGNALS = [
+  { key: "headline", label: "Titre professionnel" },
+  { key: "companyName", label: "Entreprise / marque" },
+  { key: "businessDescription", label: "Activité & valeur ajoutée" },
+  { key: "targetAudience", label: "Audience cible" },
+  { key: "market", label: "Marché & positionnement" },
+  { key: "commGoals", label: "Objectifs de communication" },
+  { key: "styleNotes", label: "Consignes de style" },
+];
+
+function EditorialRecoWidget({ onGenerate, showToast, profile, onGoProfileField, onGoCopilot }) {
   const [recos, setRecos] = useState(null); // null = chargement initial
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -3114,6 +3127,34 @@ function EditorialRecoWidget({ onGenerate, showToast }) {
     onGenerate(reco);
   };
 
+  // Complétion des champs de profil qui alimentent directement le copilote —
+  // affichée pour que "pourquoi ces propositions ?" ne reste pas opaque, avec
+  // un accès direct à ce qui manque plutôt qu'un renvoi générique vers Profil.
+  const missingSignals = PROFILE_SIGNALS.filter((s) => !profile?.[s.key]?.trim?.());
+  const completion = PROFILE_SIGNALS.length - missingSignals.length;
+
+  const ProfileSignalsPanel = () =>
+    missingSignals.length > 0 ? (
+      <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-3">
+        <p className="text-xs text-amber-800 font-medium mb-1.5">
+          Profil complété à {completion}/{PROFILE_SIGNALS.length} — ces propositions s'appuient sur votre profil,
+          vos piliers éditoriaux et votre historique de publication. Complétez pour des recommandations plus
+          pertinentes :
+        </p>
+        <div className="flex flex-wrap gap-1.5">
+          {missingSignals.map((s) => (
+            <button
+              key={s.key}
+              onClick={() => onGoProfileField?.(s.key)}
+              className="text-[11px] bg-white border border-amber-300 text-amber-700 hover:bg-amber-100 px-2.5 py-1 rounded-full flex items-center gap-1"
+            >
+              <Plus size={11} /> {s.label}
+            </button>
+          ))}
+        </div>
+      </div>
+    ) : null;
+
   if (loading) {
     return (
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center text-gray-400">
@@ -3125,18 +3166,24 @@ function EditorialRecoWidget({ onGenerate, showToast }) {
 
   if (error) {
     return (
-      <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 text-sm text-amber-800 flex items-start gap-2">
-        <AlertCircle size={16} className="mt-0.5 shrink-0" />
-        <span>{error}</span>
+      <div>
+        <ProfileSignalsPanel />
+        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 text-sm text-amber-800 flex items-start gap-2">
+          <AlertCircle size={16} className="mt-0.5 shrink-0" />
+          <span>{error}</span>
+        </div>
       </div>
     );
   }
 
   if (!recos?.length) {
     return (
-      <div className="bg-white rounded-xl border border-dashed border-gray-300 p-8 text-center text-gray-400 text-sm">
-        Aucune recommandation pour l'instant.
-        <button onClick={() => load(true)} className="text-[#ff5a5f] hover:underline ml-1">Réessayer</button>
+      <div>
+        <ProfileSignalsPanel />
+        <div className="bg-white rounded-xl border border-dashed border-gray-300 p-8 text-center text-gray-400 text-sm">
+          Aucune recommandation pour l'instant.
+          <button onClick={() => load(true)} className="text-[#ff5a5f] hover:underline ml-1">Réessayer</button>
+        </div>
       </div>
     );
   }
@@ -3180,7 +3227,7 @@ function EditorialRecoWidget({ onGenerate, showToast }) {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center justify-between mb-1 flex-wrap gap-2">
         <h2 className="font-semibold text-base flex items-center gap-2">
           <Compass size={17} className="text-[#ff5a5f]" /> Que publier aujourd'hui ?
         </h2>
@@ -3192,6 +3239,13 @@ function EditorialRecoWidget({ onGenerate, showToast }) {
           <RefreshCw size={12} className={refreshing ? "animate-spin" : ""} /> Voir d'autres propositions
         </button>
       </div>
+      <p className="text-xs text-gray-400 mb-3">
+        Construites à partir de votre profil, de vos piliers éditoriaux et de votre historique de publication.{" "}
+        <button onClick={onGoCopilot} className="text-[#0a66c2] hover:underline">
+          Voir le détail dans Copilote IA →
+        </button>
+      </p>
+      <ProfileSignalsPanel />
       <RecoCard reco={main} primary />
       {others.length > 0 && (
         <div className="mt-3">
@@ -3570,7 +3624,7 @@ function CopilotView({ profile, onProfileSaved, showToast }) {
   );
 }
 
-function DashboardView({ drafts, canVeille = true, canEvents = false, canScore = true, canCampaigns = true, postsLimit = null, onGoCreate, onGoHistory, onGoEvents, onGoProfile, onApprove, profile, linkedin, orgs, onPlanned, onProfileSaved, showToast, onInspire, onGenerateFromReco }) {
+function DashboardView({ drafts, canVeille = true, canEvents = false, canScore = true, canCampaigns = true, postsLimit = null, onGoCreate, onGoHistory, onGoEvents, onGoProfile, onGoProfileField, onGoCopilot, onApprove, profile, linkedin, orgs, onPlanned, onProfileSaved, showToast, onInspire, onGenerateFromReco }) {
   const [mode, setMode] = useState("list"); // list | calendar
   const [periodDays, setPeriodDays] = useState(7);
   const [planTarget, setPlanTarget] = useState("person");
@@ -3716,7 +3770,13 @@ function DashboardView({ drafts, canVeille = true, canEvents = false, canScore =
   return (
     <main className="max-w-5xl mx-auto p-6 space-y-6">
       {/* Copilote éditorial */}
-      <EditorialRecoWidget onGenerate={onGenerateFromReco} showToast={showToast} />
+      <EditorialRecoWidget
+        onGenerate={onGenerateFromReco}
+        showToast={showToast}
+        profile={profile}
+        onGoProfileField={onGoProfileField}
+        onGoCopilot={onGoCopilot}
+      />
 
       {/* KPI + graphiques */}
       <div className="grid md:grid-cols-3 gap-4">
@@ -6589,7 +6649,7 @@ function BrandKitView({ showToast }) {
 // ----------------------------------------------------------------
 // Page profil : identité, expertise, style de rédaction
 // ----------------------------------------------------------------
-function ProfileView({ profile, onSaved, showToast, linkedin, onDisconnect, instagram, onDisconnectInstagram, canOrgPublish = true }) {
+function ProfileView({ profile, onSaved, showToast, linkedin, onDisconnect, instagram, onDisconnectInstagram, canOrgPublish = true, focusField, onFocusHandled }) {
   const [fields, setFields] = useState({
     name: profile?.name ?? "",
     headline: profile?.headline ?? "",
@@ -6611,6 +6671,21 @@ function ProfileView({ profile, onSaved, showToast, linkedin, onDisconnect, inst
   });
   const [saving, setSaving] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
+
+  // Arrivée depuis un lien "Compléter" du copilote éditorial : on amène le
+  // champ concerné à l'écran et on le met brièvement en évidence.
+  useEffect(() => {
+    if (!focusField) return;
+    const el = document.getElementById(`field-${focusField}`);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      el.classList.add("ring-2", "ring-[#ff5a5f]", "rounded-xl");
+      const t = setTimeout(() => el.classList.remove("ring-2", "ring-[#ff5a5f]", "rounded-xl"), 2500);
+      onFocusHandled?.();
+      return () => clearTimeout(t);
+    }
+    onFocusHandled?.();
+  }, [focusField]);
 
   const set = (k, v) => setFields((f) => ({ ...f, [k]: v }));
 
@@ -6722,7 +6797,7 @@ function ProfileView({ profile, onSaved, showToast, linkedin, onDisconnect, inst
               </p>
             </div>
             <div className="space-y-4">
-              <div>
+              <div id="field-businessDescription">
                 <label className={label}>Activité — que faites-vous, pour qui, avec quelle valeur ajoutée ?</label>
                 <textarea
                   rows={3}
@@ -6733,7 +6808,7 @@ function ProfileView({ profile, onSaved, showToast, linkedin, onDisconnect, inst
                 />
               </div>
               <div className="grid sm:grid-cols-2 gap-4">
-                <div>
+                <div id="field-targetAudience">
                   <label className={label}>Cible sur LinkedIn</label>
                   <input
                     type="text"
@@ -6743,7 +6818,7 @@ function ProfileView({ profile, onSaved, showToast, linkedin, onDisconnect, inst
                     className={input}
                   />
                 </div>
-                <div>
+                <div id="field-market">
                   <label className={label}>Marché & positionnement</label>
                   <input
                     type="text"
@@ -6754,7 +6829,7 @@ function ProfileView({ profile, onSaved, showToast, linkedin, onDisconnect, inst
                   />
                 </div>
               </div>
-              <div>
+              <div id="field-commGoals">
                 <label className={label}>Objectifs de communication</label>
                 <div className="flex flex-wrap gap-1.5">
                   {COMM_GOALS.map((g) => {
@@ -6824,7 +6899,7 @@ function ProfileView({ profile, onSaved, showToast, linkedin, onDisconnect, inst
                   ))}
                 </div>
               </div>
-              <div>
+              <div id="field-styleNotes">
                 <label className={label}>
                   Mon mode d'écriture <span className="text-gray-400 font-normal">(consignes pour l'IA)</span>
                 </label>
@@ -6877,7 +6952,7 @@ function ProfileView({ profile, onSaved, showToast, linkedin, onDisconnect, inst
                   className={input}
                 />
               </div>
-              <div>
+              <div id="field-headline">
                 <label className={label}>Titre professionnel</label>
                 <input
                   type="text"
@@ -6887,7 +6962,7 @@ function ProfileView({ profile, onSaved, showToast, linkedin, onDisconnect, inst
                   className={input}
                 />
               </div>
-              <div>
+              <div id="field-companyName">
                 <label className={label}>Entreprise / marque</label>
                 <input
                   type="text"
@@ -7229,6 +7304,11 @@ export default function Home() {
   const [authChecked, setAuthChecked] = useState(false);
 
   const [view, setView] = useState("dashboard");
+  const [profileFocusField, setProfileFocusField] = useState(null); // champ à mettre en évidence à l'arrivée sur Profil
+  const goToProfileField = (field) => {
+    setProfileFocusField(field);
+    setView("profile");
+  };
   const [upgrade, setUpgrade] = useState(null); // { feature } quand on clique une fonctionnalité verrouillée
   const [optimizeText, setOptimizeText] = useState(null); // { text, type } → page Étape 2 plein écran
   const [rewriting, setRewriting] = useState(false);
@@ -8447,6 +8527,8 @@ export default function Home() {
           onGoHistory={() => setView("history")}
           onGoEvents={() => setView("events")}
           onGoProfile={() => setView("profile")}
+          onGoProfileField={goToProfileField}
+          onGoCopilot={() => setView("copilot")}
           onApprove={async (d) => {
             try {
               await patchDraft(d.id, { status: "programmé" });
@@ -9335,6 +9417,8 @@ export default function Home() {
           onDisconnectInstagram={disconnectInstagram}
           canOrgPublish={plan.orgPublish}
           showToast={showToast}
+          focusField={profileFocusField}
+          onFocusHandled={() => setProfileFocusField(null)}
           onSaved={(p) => {
             setProfile(p);
             setForm((f) => ({
