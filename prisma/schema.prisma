@@ -109,6 +109,10 @@ model User {
   // --- Charte graphique ---
   brandKit    BrandKit?
   mediaAssets MediaAsset[]
+
+  // --- Copilote éditorial ---
+  editorialPillars   EditorialPillar[]
+  editorialRecos     EditorialRecommendation[]
 }
 
 // Charte graphique : couleurs, logo, police, style de fond
@@ -279,6 +283,13 @@ model Draft {
   eventId String?
   event   Event? @relation(fields: [eventId], references: [id], onDelete: SetNull)
 
+  // Pilier éditorial (copilote) — nullable : posts existants non rétroactivement classés
+  pillarId String?
+  pillar   EditorialPillar? @relation(fields: [pillarId], references: [id], onDelete: SetNull)
+
+  // Recommandation éditoriale à l'origine de ce post, si généré depuis "Que publier ?"
+  editorialReco EditorialRecommendation?
+
   inspirationUrl String? // article de veille sur lequel le post s'appuie
 
   imageUrl    String? // image générée pour le post (/api/images/...)
@@ -321,4 +332,56 @@ model PushSubscription {
   createdAt DateTime @default(now())
 
   @@index([userId])
+}
+
+// Pilier éditorial (ligne éditoriale) : catégorie de contenu personnalisable
+// utilisée pour équilibrer les recommandations (ex. Expertise, Cas client...).
+// Semée avec des valeurs par défaut au premier usage (lib/editorial/pillars.js).
+model EditorialPillar {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  isDefault   Boolean  @default(false) // seedé automatiquement vs créé par l'utilisateur/l'IA
+  createdAt   DateTime @default(now())
+
+  drafts          Draft[]
+  recommendations EditorialRecommendation[]
+
+  @@unique([userId, name])
+}
+
+// Recommandation éditoriale ("Que publier ?") générée par le copilote —
+// voir lib/editorial/recommendations.js. Le statut fait office de journal de
+// feedback (proposée → générée/planifiée, ou ignorée/rejetée) : pas de table
+// séparée pour rester simple (cf. respondedAt pour l'horodatage de la réponse).
+model EditorialRecommendation {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  topic      String // sujet proposé
+  angle      String // angle éditorial
+  rationale  String // pourquoi c'est pertinent maintenant (affiché à l'utilisateur)
+  objective  String? // objectif (notoriété, leads, expertise...)
+  audience   String? // audience visée, si différente de l'audience par défaut
+  postType   String   @default("simple") // simple | carrousel | video
+  hook       String? // accroche suggérée
+  cta        String? // appel à l'action suggéré
+  priority   Int      @default(50) // 0-100, ordre d'affichage
+  confidence Int      @default(50) // 0-100, confiance du moteur
+
+  pillarId String?
+  pillar   EditorialPillar? @relation(fields: [pillarId], references: [id], onDelete: SetNull)
+
+  status     String    @default("proposée") // proposée | générée | planifiée | ignorée | rejetée
+  respondedAt DateTime? // horodatage du feedback utilisateur
+
+  draftId String? @unique
+  draft   Draft?  @relation(fields: [draftId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, status, createdAt])
 }

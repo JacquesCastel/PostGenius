@@ -8,7 +8,8 @@ import {
   BarChart3, Eye, MousePointerClick, ThumbsUp, MessageSquare, Share2, Undo2, Layers as LayersIcon,
   Megaphone, ChevronDown, Image as ImageIcon, ShieldCheck, Lock, ArrowUpCircle, MapPin, Bell, Camera,
   CreditCard, Gauge, Users, Smartphone, Monitor,
-  Upload, Wand2, SlidersHorizontal, Type, Crop, Download, Pencil, GripHorizontal
+  Upload, Wand2, SlidersHorizontal, Type, Crop, Download, Pencil, GripHorizontal,
+  Compass, Lightbulb, EyeOff
 } from "lucide-react";
 import { PLANS, PLAN_IDS, planLabel, planAllows, planOf, trialDaysLeft, accessState } from "@/lib/plans";
 import SiteHeader from "@/components/SiteHeader";
@@ -3059,7 +3060,154 @@ function PaywallScreen({ user, showToast, onLogout }) {
   );
 }
 
-function DashboardView({ drafts, canVeille = true, canEvents = false, canScore = true, canCampaigns = true, postsLimit = null, onGoCreate, onGoHistory, onGoEvents, onGoProfile, onApprove, profile, linkedin, orgs, onPlanned, onProfileSaved, showToast, onInspire }) {
+// ----------------------------------------------------------------
+// Copilote éditorial — "Que publier ?"
+// Affiche les recommandations générées par le moteur éditorial
+// (lib/editorial/recommendations.js) et relaie "Générer" vers le moteur
+// de génération existant (onGenerate = préremplit le formulaire de création).
+// ----------------------------------------------------------------
+function EditorialRecoWidget({ onGenerate, showToast }) {
+  const [recos, setRecos] = useState(null); // null = chargement initial
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState(null);
+  const [actingId, setActingId] = useState(null);
+
+  const load = (force = false) => {
+    (force ? setRefreshing : setLoading)(true);
+    setError(null);
+    fetch(`/api/editorial/recommendations${force ? "?force=1" : ""}`)
+      .then(readJson)
+      .then((d) => {
+        if (d.error) throw new Error(d.error);
+        setRecos(d.recommendations ?? []);
+      })
+      .catch((e) => setError(e.message))
+      .finally(() => {
+        setLoading(false);
+        setRefreshing(false);
+      });
+  };
+
+  useEffect(() => {
+    load();
+  }, []);
+
+  const respond = async (reco, status) => {
+    setActingId(reco.id);
+    try {
+      await fetch(`/api/editorial/recommendations/${reco.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+      });
+      setRecos((list) => list.filter((r) => r.id !== reco.id));
+    } catch {
+      showToast("Erreur lors de la mise à jour de la recommandation");
+    } finally {
+      setActingId(null);
+    }
+  };
+
+  const handleGenerate = (reco) => {
+    respond(reco, "générée");
+    onGenerate(reco);
+  };
+
+  if (loading) {
+    return (
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center text-gray-400">
+        <RefreshCw size={22} className="mx-auto mb-2 animate-spin text-[#ff5a5f]" />
+        <p className="text-sm">Analyse de votre stratégie éditoriale…</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 text-sm text-amber-800 flex items-start gap-2">
+        <AlertCircle size={16} className="mt-0.5 shrink-0" />
+        <span>{error}</span>
+      </div>
+    );
+  }
+
+  if (!recos?.length) {
+    return (
+      <div className="bg-white rounded-xl border border-dashed border-gray-300 p-8 text-center text-gray-400 text-sm">
+        Aucune recommandation pour l'instant.
+        <button onClick={() => load(true)} className="text-[#ff5a5f] hover:underline ml-1">Réessayer</button>
+      </div>
+    );
+  }
+
+  const [main, ...others] = recos;
+
+  const RecoCard = ({ reco, primary }) => (
+    <div className={`rounded-2xl border p-5 ${primary ? "bg-white border-gray-100 shadow-sm" : "bg-gray-50 border-gray-100"}`}>
+      <div className="flex items-center gap-2 flex-wrap mb-2">
+        {reco.pillar && (
+          <span className="text-[10px] font-semibold uppercase tracking-wide bg-[#fff1f1] text-[#ff5a5f] rounded-full px-2 py-0.5">
+            {reco.pillar.name}
+          </span>
+        )}
+        {reco.objective && <span className="text-[10px] text-gray-400">{reco.objective}</span>}
+      </div>
+      <p className={primary ? "font-semibold text-base" : "font-semibold text-sm"}>{reco.topic}</p>
+      <p className={`text-gray-500 mt-1 ${primary ? "text-sm" : "text-xs"}`}>{reco.angle}</p>
+      <p className="text-xs text-gray-400 mt-2 flex items-start gap-1.5">
+        <Lightbulb size={13} className="mt-0.5 shrink-0 text-amber-400" />
+        {reco.rationale}
+      </p>
+      <div className="flex items-center gap-2 mt-4">
+        <button
+          onClick={() => handleGenerate(reco)}
+          disabled={actingId === reco.id}
+          className="bg-[#0a66c2] hover:bg-[#004182] disabled:opacity-50 text-white text-xs font-medium px-3 py-1.5 rounded-lg flex items-center gap-1.5"
+        >
+          <Sparkles size={13} /> Générer ce post
+        </button>
+        <button
+          onClick={() => respond(reco, "ignorée")}
+          disabled={actingId === reco.id}
+          className="text-xs border border-gray-200 hover:border-gray-300 text-gray-600 px-3 py-1.5 rounded-lg flex items-center gap-1.5 disabled:opacity-50"
+        >
+          <EyeOff size={13} /> Ignorer
+        </button>
+      </div>
+    </div>
+  );
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="font-semibold text-base flex items-center gap-2">
+          <Compass size={17} className="text-[#ff5a5f]" /> Que publier aujourd'hui ?
+        </h2>
+        <button
+          onClick={() => load(true)}
+          disabled={refreshing}
+          className="text-xs text-gray-400 hover:text-[#ff5a5f] flex items-center gap-1 disabled:opacity-50"
+        >
+          <RefreshCw size={12} className={refreshing ? "animate-spin" : ""} /> Voir d'autres propositions
+        </button>
+      </div>
+      <RecoCard reco={main} primary />
+      {others.length > 0 && (
+        <div className="mt-3">
+          <p className="text-xs text-gray-400 mb-2">Autres opportunités</p>
+          <div className="grid sm:grid-cols-2 gap-3">
+            {others.map((r) => (
+              <RecoCard key={r.id} reco={r} />
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function DashboardView({ drafts, canVeille = true, canEvents = false, canScore = true, canCampaigns = true, postsLimit = null, onGoCreate, onGoHistory, onGoEvents, onGoProfile, onApprove, profile, linkedin, orgs, onPlanned, onProfileSaved, showToast, onInspire, onGenerateFromReco }) {
   const [mode, setMode] = useState("list"); // list | calendar
   const [periodDays, setPeriodDays] = useState(7);
   const [planTarget, setPlanTarget] = useState("person");
@@ -3204,6 +3352,9 @@ function DashboardView({ drafts, canVeille = true, canEvents = false, canScore =
 
   return (
     <main className="max-w-5xl mx-auto p-6 space-y-6">
+      {/* Copilote éditorial */}
+      <EditorialRecoWidget onGenerate={onGenerateFromReco} showToast={showToast} />
+
       {/* KPI + graphiques */}
       <div className="grid md:grid-cols-3 gap-4">
         {/* Carte dégradée : activité du mois */}
@@ -6836,6 +6987,8 @@ export default function Home() {
   const [imageLoading, setImageLoading] = useState(false);
   // Article de veille servant d'inspiration à la génération
   const [inspiration, setInspiration] = useState(null);
+  // Recommandation éditoriale à l'origine de la génération en cours (copilote)
+  const [activeReco, setActiveReco] = useState(null);
   // Ouverture du wizard de campagne demandée depuis la sidebar
   const [campaignWizardOpen, setCampaignWizardOpen] = useState(false);
   // Wizard : étape suivante proposée après chaque action
@@ -7152,6 +7305,7 @@ export default function Home() {
           inspirationUrl: inspiration?.link ?? null,
           imageUrl: postImage?.url ?? null,
           imagePrompt: postImage?.prompt ?? null,
+          pillarId: activeReco?.pillarId ?? null,
         }),
       });
       const data = await readJson(res);
@@ -7894,9 +8048,30 @@ export default function Home() {
           onInspire={(item) => {
             setForm((f) => ({ ...f, theme: item.title.slice(0, 120) }));
             setInspiration(item);
+            setActiveReco(null);
             setGenMode("single");
             setView("create");
             showToast("Article chargé comme inspiration ✓");
+          }}
+          onGenerateFromReco={(reco) => {
+            setForm((f) => ({
+              ...f,
+              theme: `${reco.topic} — ${reco.angle}`.slice(0, 200),
+              type: reco.postType || f.type,
+            }));
+            setInspiration({
+              title: reco.topic,
+              excerpt: [reco.hook && `Accroche suggérée : ${reco.hook}`, reco.cta && `CTA suggéré : ${reco.cta}`]
+                .filter(Boolean)
+                .join(" "),
+              url: null,
+              link: null,
+              source: "Copilote éditorial",
+            });
+            setActiveReco(reco);
+            setGenMode("single");
+            setView("create");
+            showToast("Recommandation chargée — personnalisez puis générez ✓");
           }}
           onGoCreate={() => setView("create")}
           onGoHistory={() => setView("history")}
@@ -8034,7 +8209,10 @@ export default function Home() {
                     {inspiration.source && <span className="text-amber-600"> ({inspiration.source})</span>}
                   </span>
                   <button
-                    onClick={() => setInspiration(null)}
+                    onClick={() => {
+                      setInspiration(null);
+                      setActiveReco(null);
+                    }}
                     className="text-amber-500 hover:text-amber-800 shrink-0"
                     title="Retirer l'inspiration"
                   >
