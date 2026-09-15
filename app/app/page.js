@@ -3106,30 +3106,101 @@ function ProfileSignalsPanel({ missingSignals, completion, onGoProfileField }) {
   );
 }
 
-function RefineNoteBox({ note, setNote, refiningNote, onRefine, savedNote }) {
+// Échange conversationnel (au lieu d'une simple zone de texte figée) pour
+// affiner la note du copilote éditorial — voir lib/editorial/chat.js et
+// app/api/editorial/chat/route.js. La note résultante est persistée dans le
+// profil ; régénérer les propositions reste une action explicite (pas un
+// appel IA supplémentaire à chaque message).
+function EditorialChat({ profile, onProfileSaved, onRegenerate, showToast }) {
+  const [messages, setMessages] = useState([]);
+  const [input, setInput] = useState("");
+  const [sending, setSending] = useState(false);
+  const [noteJustUpdated, setNoteJustUpdated] = useState(false);
+
+  const send = async () => {
+    const text = input.trim();
+    if (!text || sending) return;
+    const next = [...messages, { role: "user", content: text }];
+    setMessages(next);
+    setInput(""); // vidé immédiatement à l'envoi, comme un vrai échange
+    setSending(true);
+    setNoteJustUpdated(false);
+    try {
+      const res = await fetch("/api/editorial/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: next }),
+      });
+      const data = await readJson(res);
+      if (!res.ok) throw new Error(data.error);
+      setMessages((m) => [...m, { role: "assistant", content: data.reply }]);
+      if (data.editorialNote && data.editorialNote !== profile?.editorialNote) {
+        onProfileSaved?.({ ...profile, editorialNote: data.editorialNote });
+        setNoteJustUpdated(true);
+      }
+    } catch (e) {
+      showToast(e.message || "Erreur");
+    } finally {
+      setSending(false);
+    }
+  };
+
   return (
     <div className="bg-gray-50 border border-gray-100 rounded-xl p-3 mb-3">
       <label className="text-xs font-medium text-gray-600 flex items-center gap-1.5 mb-1.5">
-        <PenLine size={13} /> Affiner les propositions
+        <PenLine size={13} /> Affiner les propositions — échangez avec le copilote
       </label>
-      <textarea
-        rows={2}
-        value={note}
-        onChange={(e) => setNote(e.target.value)}
-        placeholder="ex : cette semaine, je veux plus de retours clients concrets, moins de posts d'opinion…"
-        maxLength={500}
-        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
-      />
-      <div className="flex items-center justify-between mt-1.5">
-        <p className="text-[11px] text-gray-400">Enregistrée dans votre profil — affine aussi vos futurs posts.</p>
+
+      {messages.length > 0 && (
+        <div className="space-y-1.5 mb-2 max-h-40 overflow-y-auto pr-1">
+          {messages.map((m, i) => (
+            <div
+              key={i}
+              className={`text-xs rounded-lg px-2.5 py-1.5 max-w-[85%] ${
+                m.role === "user" ? "bg-[#0a66c2] text-white ml-auto" : "bg-white border border-gray-200 text-gray-700"
+              }`}
+            >
+              {m.content}
+            </div>
+          ))}
+          {sending && (
+            <div className="text-xs text-gray-400 flex items-center gap-1">
+              <RefreshCw size={11} className="animate-spin" /> Réflexion…
+            </div>
+          )}
+        </div>
+      )}
+
+      <div className="flex items-center gap-2">
+        <input
+          type="text"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && send()}
+          placeholder="ex : je veux plus de retours clients concrets, moins de posts d'opinion…"
+          maxLength={500}
+          className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
+        />
         <button
-          onClick={onRefine}
-          disabled={refiningNote || note === savedNote}
-          className="text-xs bg-[#0a66c2] hover:bg-[#004182] disabled:opacity-50 text-white font-medium px-3 py-1.5 rounded-lg flex items-center gap-1.5 shrink-0"
+          onClick={send}
+          disabled={sending || !input.trim()}
+          className="bg-[#0a66c2] hover:bg-[#004182] disabled:opacity-50 text-white px-3 py-2 rounded-lg shrink-0"
         >
-          {refiningNote ? <RefreshCw size={13} className="animate-spin" /> : <Sparkles size={13} />}
-          Affiner mes propositions
+          {sending ? <RefreshCw size={13} className="animate-spin" /> : <Send size={13} />}
         </button>
+      </div>
+
+      <div className="flex items-center justify-between mt-1.5 gap-2">
+        <p className="text-[11px] text-gray-400 truncate">
+          {profile?.editorialNote
+            ? `Note actuelle : « ${profile.editorialNote.slice(0, 70)}${profile.editorialNote.length > 70 ? "…" : ""} »`
+            : "Aucune note enregistrée pour l'instant."}
+        </p>
+        {noteJustUpdated && (
+          <button onClick={onRegenerate} className="text-[11px] text-[#0a66c2] hover:underline shrink-0 flex items-center gap-1">
+            <Sparkles size={11} /> Régénérer les propositions
+          </button>
+        )}
       </div>
     </div>
   );
@@ -3141,8 +3212,6 @@ function EditorialRecoWidget({ onGenerate, showToast, profile, onProfileSaved, o
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
   const [actingId, setActingId] = useState(null);
-  const [note, setNote] = useState(profile?.editorialNote ?? "");
-  const [refiningNote, setRefiningNote] = useState(false);
 
   const load = (force = false) => {
     (force ? setRefreshing : setLoading)(true);
@@ -3163,35 +3232,6 @@ function EditorialRecoWidget({ onGenerate, showToast, profile, onProfileSaved, o
   useEffect(() => {
     load();
   }, []);
-
-  // Le profil peut arriver après le premier rendu (chargement async côté parent).
-  useEffect(() => {
-    setNote(profile?.editorialNote ?? "");
-  }, [profile?.editorialNote]);
-
-  // Zone de prompt libre : affine les propositions du jour ET alimente le
-  // profil (donc aussi la génération de posts classique) puisque la note
-  // est persistée comme n'importe quel autre champ de contexte métier —
-  // voir userContextBlock dans lib/campaign.js.
-  const refineWithNote = async () => {
-    setRefiningNote(true);
-    try {
-      const res = await fetch("/api/profile", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ editorialNote: note }),
-      });
-      const data = await readJson(res);
-      if (!res.ok) throw new Error(data.error);
-      onProfileSaved?.(data.profile);
-      load(true);
-      showToast("Propositions affinées ✓");
-    } catch (e) {
-      showToast(e.message || "Erreur");
-    } finally {
-      setRefiningNote(false);
-    }
-  };
 
   const respond = async (reco, status) => {
     setActingId(reco.id);
@@ -3233,7 +3273,7 @@ function EditorialRecoWidget({ onGenerate, showToast, profile, onProfileSaved, o
     return (
       <div>
         <ProfileSignalsPanel missingSignals={missingSignals} completion={completion} onGoProfileField={onGoProfileField} />
-        <RefineNoteBox note={note} setNote={setNote} refiningNote={refiningNote} onRefine={refineWithNote} savedNote={profile?.editorialNote ?? ""} />
+        <EditorialChat profile={profile} onProfileSaved={onProfileSaved} onRegenerate={() => load(true)} showToast={showToast} />
         <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 text-sm text-amber-800 flex items-start gap-2">
           <AlertCircle size={16} className="mt-0.5 shrink-0" />
           <span>{error}</span>
@@ -3246,7 +3286,7 @@ function EditorialRecoWidget({ onGenerate, showToast, profile, onProfileSaved, o
     return (
       <div>
         <ProfileSignalsPanel missingSignals={missingSignals} completion={completion} onGoProfileField={onGoProfileField} />
-        <RefineNoteBox note={note} setNote={setNote} refiningNote={refiningNote} onRefine={refineWithNote} savedNote={profile?.editorialNote ?? ""} />
+        <EditorialChat profile={profile} onProfileSaved={onProfileSaved} onRegenerate={() => load(true)} showToast={showToast} />
         <div className="bg-white rounded-xl border border-dashed border-gray-300 p-8 text-center text-gray-400 text-sm">
           Aucune recommandation pour l'instant.
           <button onClick={() => load(true)} className="text-[#ff5a5f] hover:underline ml-1">Réessayer</button>
@@ -3313,7 +3353,7 @@ function EditorialRecoWidget({ onGenerate, showToast, profile, onProfileSaved, o
         </button>
       </p>
       <ProfileSignalsPanel missingSignals={missingSignals} completion={completion} onGoProfileField={onGoProfileField} />
-      <RefineNoteBox note={note} setNote={setNote} refiningNote={refiningNote} onRefine={refineWithNote} savedNote={profile?.editorialNote ?? ""} />
+      <EditorialChat profile={profile} onProfileSaved={onProfileSaved} onRegenerate={() => load(true)} showToast={showToast} />
       <RecoCard reco={main} primary />
       {others.length > 0 && (
         <div className="mt-3">
