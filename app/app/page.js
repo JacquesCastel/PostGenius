@@ -7474,11 +7474,17 @@ export default function Home() {
 
 
   // Ouvre la page Étape 2 et initialise l'historique
-  // draftId : si fourni, les modifications sont enregistrées dans le brouillon
-  const openOptimize = (text, type, draftId = null) => {
+  // draftId : si fourni, les modifications (texte + image) sont enregistrées dans le brouillon
+  const openOptimize = (text, type, draftId = null, imageUrl = null, imagePrompt = null) => {
     setRewriteScope("all");
     setVersions([{ id: Date.now(), text, label: "Version initiale", score: scorePost({ text, type }).score }]);
     setOptimizeText({ text, type, draftId });
+    // Reprend l'image déjà associée au brouillon (si on vient de "Mes posts") —
+    // sinon on garde celle déjà en cours (si on vient de "Créer un post").
+    if (draftId) {
+      setPostImage(imageUrl ? { url: imageUrl, prompt: imagePrompt ?? "" } : null);
+      setImagePromptInput("");
+    }
   };
 
   // Répercute un nouveau texte : brouillon (si draftId) ou post en cours de création
@@ -7902,13 +7908,14 @@ export default function Home() {
   };
 
   // Génère l'image du post (prompt manuel ou rédigé par l'IA)
+  // Disponible depuis "Créer un post" (y compris en mode modification) ET
+  // depuis "Optimiser mes posts" — illustre le texte réellement affiché
+  // dans chaque contexte, pas un texte figé/obsolète.
   const generateImage = async () => {
-    if (!result || imageLoading) return;
+    if ((!result && !optimizeText) || imageLoading) return;
     setImageLoading(true);
     try {
-      // En mode modification, on illustre le texte en cours d'édition,
-      // pas l'ancien texte déjà validé.
-      const text = editingResult ? resultDraftText : result.text;
+      const text = optimizeText ? optimizeText.text : editingResult ? resultDraftText : result.text;
       const res = await fetch("/api/image/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -7918,6 +7925,11 @@ export default function Home() {
       if (!res.ok) throw new Error(data.error || "Erreur");
       setPostImage(data);
       setImagePromptInput("");
+      if (optimizeText?.draftId) {
+        const draftId = optimizeText.draftId;
+        patchDraft(draftId, { imageUrl: data.url, imagePrompt: data.prompt }).catch(() => {});
+        setDrafts((ds) => ds.map((d) => (d.id === draftId ? { ...d, imageUrl: data.url, imagePrompt: data.prompt } : d)));
+      }
       showToast("Image générée ✓");
     } catch (e) {
       showToast(e.message);
@@ -7925,6 +7937,93 @@ export default function Home() {
       setImageLoading(false);
     }
   };
+
+  // Ferme l'écran d'optimisation. Ne nettoie l'image que si elle vient d'un
+  // brouillon existant (Mes posts) — sinon c'est l'image du post en cours de
+  // création, à conserver quand on revient sur "Créer un post".
+  const closeOptimize = () => {
+    if (optimizeText?.draftId) setPostImage(null);
+    setOptimizeText(null);
+  };
+
+  const removePostImage = () => {
+    setPostImage(null);
+    if (optimizeText?.draftId) {
+      const draftId = optimizeText.draftId;
+      patchDraft(draftId, { imageUrl: null, imagePrompt: null }).catch(() => {});
+      setDrafts((ds) => ds.map((d) => (d.id === draftId ? { ...d, imageUrl: null, imagePrompt: null } : d)));
+    }
+  };
+
+  // Bloc "Image du post", partagé entre "Créer un post" (y compris en mode
+  // modification) et "Optimiser mes posts" — fonction simple (pas un composant
+  // <X/>) appelée via renderImageBlock() pour ne jamais démonter/remonter le
+  // champ de saisie à chaque frappe (voir le bug de focus de app/app/page.js).
+  const renderImageBlock = () => (
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+      <p className="text-sm font-semibold mb-3 flex items-center gap-2">
+        <ImageIcon size={15} className="text-[#ff5a5f]" /> Image du post
+        <span className="text-xs text-gray-400 font-normal">(optionnelle — publiée avec le post)</span>
+      </p>
+      {!canImages ? (
+        <div className="rounded-xl bg-[#fff1f1] p-4 text-center">
+          <Lock size={20} className="text-[#ff5a5f] mx-auto mb-1.5" />
+          <p className="text-sm font-medium">Les images générées par IA sont incluses à partir de l'offre Pro.</p>
+          <a href="/tarifs" className="inline-flex items-center gap-1.5 mt-2 text-xs font-semibold text-[#ff5a5f] hover:underline">
+            <ArrowUpCircle size={13} /> Faire évoluer mon offre
+          </a>
+        </div>
+      ) : postImage ? (
+        <>
+          <img src={postImage.url} alt="Image générée pour le post" className="rounded-xl w-full mb-2" />
+          <p className="text-xs text-gray-400 mb-3 line-clamp-2" title={postImage.prompt}>
+            Prompt : {postImage.prompt}
+          </p>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={imagePromptInput}
+              onChange={(e) => setImagePromptInput(e.target.value)}
+              placeholder="Ajustement ou nouveau prompt — vide = l'IA redécide"
+              className="flex-1 border border-gray-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
+            />
+            <button
+              onClick={generateImage}
+              disabled={imageLoading}
+              className="bg-gray-900 hover:bg-gray-700 disabled:bg-gray-300 text-white text-xs px-3 py-1.5 rounded-lg flex items-center gap-1.5"
+            >
+              {imageLoading ? <RefreshCw size={12} className="animate-spin" /> : <RefreshCw size={12} />}
+              Régénérer
+            </button>
+            <button
+              onClick={removePostImage}
+              className="border border-gray-200 hover:border-red-400 hover:text-red-600 text-gray-600 text-xs px-3 py-1.5 rounded-lg"
+            >
+              Retirer
+            </button>
+          </div>
+        </>
+      ) : (
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={imagePromptInput}
+            onChange={(e) => setImagePromptInput(e.target.value)}
+            placeholder="Décrivez l'image souhaitée — vide = l'IA la déduit du post"
+            className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
+          />
+          <button
+            onClick={generateImage}
+            disabled={imageLoading}
+            className="bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white text-xs font-medium px-4 py-2 rounded-lg flex items-center gap-1.5"
+          >
+            {imageLoading ? <RefreshCw size={13} className="animate-spin" /> : <ImageIcon size={13} />}
+            {imageLoading ? "Génération… (~30 s)" : "Générer une image"}
+          </button>
+        </div>
+      )}
+    </div>
+  );
 
   // Wizard : Brouillon → propose programmer/publier ensuite
   const saveDraftFlow = async () => {
@@ -8229,7 +8328,7 @@ export default function Home() {
         <div className="fixed inset-0 z-50 bg-slate-50 overflow-y-auto">
           <div className="sticky top-0 bg-white border-b border-gray-100 px-6 py-3">
             <button
-              onClick={() => setOptimizeText(null)}
+              onClick={closeOptimize}
               className="flex items-center gap-1.5 text-sm font-medium text-[#1b2a4a] hover:text-[#ff5a5f]"
             >
               <ChevronLeft size={18} /> Fermer
@@ -8255,6 +8354,10 @@ export default function Home() {
                   className="w-full text-sm leading-relaxed border border-gray-200 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-[#ff5a5f] resize-y"
                 />
               </div>
+
+              {/* Image du post — absente auparavant de cet écran (bug rapporté). */}
+              {renderImageBlock()}
+
               {/* Niveau de réécriture (comme le choix du format) — réservé Pro/Agence */}
               {canScore && (
                 <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
@@ -8294,7 +8397,7 @@ export default function Home() {
                   </button>
                 )}
                 <button
-                  onClick={() => setOptimizeText(null)}
+                  onClick={closeOptimize}
                   className="flex-1 border-2 border-[#ffd5d6] hover:border-[#ff5a5f] text-[#1b2a4a] font-semibold px-5 py-3 rounded-full"
                 >
                   Fermer
@@ -9118,74 +9221,9 @@ export default function Home() {
                 )}
 
                 {/* Image du post — reste accessible en mode modification (bug rapporté :
-                    impossible de générer une image tant qu'on éditait le texte). */}
-                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-                    <p className="text-sm font-semibold mb-3 flex items-center gap-2">
-                      <ImageIcon size={15} className="text-[#ff5a5f]" /> Image du post
-                      <span className="text-xs text-gray-400 font-normal">(optionnelle — publiée avec le post)</span>
-                    </p>
-                    {!canImages ? (
-                      <div className="rounded-xl bg-[#fff1f1] p-4 text-center">
-                        <Lock size={20} className="text-[#ff5a5f] mx-auto mb-1.5" />
-                        <p className="text-sm font-medium">Les images générées par IA sont incluses à partir de l'offre Pro.</p>
-                        <a href="/tarifs" className="inline-flex items-center gap-1.5 mt-2 text-xs font-semibold text-[#ff5a5f] hover:underline">
-                          <ArrowUpCircle size={13} /> Faire évoluer mon offre
-                        </a>
-                      </div>
-                    ) : postImage ? (
-                      <>
-                        <img
-                          src={postImage.url}
-                          alt="Image générée pour le post"
-                          className="rounded-xl w-full mb-2"
-                        />
-                        <p className="text-xs text-gray-400 mb-3 line-clamp-2" title={postImage.prompt}>
-                          Prompt : {postImage.prompt}
-                        </p>
-                        <div className="flex gap-2">
-                          <input
-                            type="text"
-                            value={imagePromptInput}
-                            onChange={(e) => setImagePromptInput(e.target.value)}
-                            placeholder="Ajustement ou nouveau prompt — vide = l'IA redécide"
-                            className="flex-1 border border-gray-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
-                          />
-                          <button
-                            onClick={generateImage}
-                            disabled={imageLoading}
-                            className="bg-gray-900 hover:bg-gray-700 disabled:bg-gray-300 text-white text-xs px-3 py-1.5 rounded-lg flex items-center gap-1.5"
-                          >
-                            {imageLoading ? <RefreshCw size={12} className="animate-spin" /> : <RefreshCw size={12} />}
-                            Régénérer
-                          </button>
-                          <button
-                            onClick={() => setPostImage(null)}
-                            className="border border-gray-200 hover:border-red-400 hover:text-red-600 text-gray-600 text-xs px-3 py-1.5 rounded-lg"
-                          >
-                            Retirer
-                          </button>
-                        </div>
-                      </>
-                    ) : (
-                      <div className="flex gap-2">
-                        <input
-                          type="text"
-                          value={imagePromptInput}
-                          onChange={(e) => setImagePromptInput(e.target.value)}
-                          placeholder="Décrivez l'image souhaitée — vide = l'IA la déduit du post"
-                          className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
-                        />
-                        <button
-                          onClick={generateImage}
-                          disabled={imageLoading}
-                          className="bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white text-xs font-medium px-4 py-2 rounded-lg flex items-center gap-1.5"
-                        >
-                          {imageLoading ? <RefreshCw size={13} className="animate-spin" /> : <ImageIcon size={13} />}
-                          {imageLoading ? "Génération… (~30 s)" : "Générer une image"}
-                        </button>
-                      </div>
-                    )}
-                </div>
+                    impossible de générer une image tant qu'on éditait le texte), et
+                    partagée avec l'écran "Optimiser mes posts" via renderImageBlock(). */}
+                {renderImageBlock()}
 
                 {result.extra && (
                   <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
@@ -9685,7 +9723,7 @@ export default function Home() {
                                     <Copy size={13} />
                                   </button>
                                   <button
-                                    onClick={() => openOptimize(p.text, p.type, p.id)}
+                                    onClick={() => openOptimize(p.text, p.type, p.id, p.imageUrl, p.imagePrompt)}
                                     className="text-gray-300 hover:text-[#ff5a5f] p-1"
                                     title="Modifier et optimiser"
                                   >
