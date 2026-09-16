@@ -9,7 +9,7 @@ import {
   Megaphone, ChevronDown, Image as ImageIcon, ShieldCheck, Lock, ArrowUpCircle, MapPin, Bell, Camera,
   CreditCard, Gauge, Users, Smartphone, Monitor,
   Upload, Wand2, SlidersHorizontal, Type, Crop, Download, Pencil, GripHorizontal,
-  Compass, Lightbulb, EyeOff, TrendingUp, TrendingDown, Plus, Globe
+  Compass, Lightbulb, EyeOff, TrendingUp, TrendingDown, Plus, Globe, ChevronUp
 } from "lucide-react";
 import { PLANS, PLAN_IDS, planLabel, planAllows, planOf, trialDaysLeft, accessState } from "@/lib/plans";
 import SiteHeader from "@/components/SiteHeader";
@@ -3456,6 +3456,69 @@ function CopilotView({ profile, onProfileSaved, showToast }) {
     }
   };
 
+  // Classement par importance des piliers — flèches haut/bas, persisté côté
+  // serveur (utilisé ensuite par le copilote pour prioriser ses propositions).
+  const movePillar = async (index, dir) => {
+    const target = index + dir;
+    if (target < 0 || target >= pillars.length) return;
+    const next = [...pillars];
+    [next[index], next[target]] = [next[target], next[index]];
+    setPillars(next);
+    try {
+      const res = await fetch("/api/editorial/pillars", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ order: next.map((p) => p.id) }),
+      });
+      if (!res.ok) throw new Error((await readJson(res)).error);
+    } catch (e) {
+      setPillars(pillars); // annule visuellement si l'enregistrement échoue
+      showToast(e.message || "Erreur lors du classement");
+    }
+  };
+
+  // Mots-clés prioritaires (Profil.themes) — même principe de classement,
+  // mais stockés comme une liste ordonnée séparée par des virgules : l'ordre
+  // dans la chaîne EST le rang d'importance, sans champ dédié supplémentaire.
+  const keywords = (profile?.themes || "").split(",").map((k) => k.trim()).filter(Boolean);
+  const [newKeyword, setNewKeyword] = useState("");
+  const [savingKeywords, setSavingKeywords] = useState(false);
+
+  const saveKeywords = async (next) => {
+    setSavingKeywords(true);
+    try {
+      const res = await fetch("/api/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ themes: next.join(", ") }),
+      });
+      const data = await readJson(res);
+      if (!res.ok) throw new Error(data.error);
+      onProfileSaved(data.profile);
+    } catch (e) {
+      showToast(e.message || "Erreur");
+    } finally {
+      setSavingKeywords(false);
+    }
+  };
+
+  const addKeyword = () => {
+    const v = newKeyword.trim();
+    if (!v || keywords.includes(v)) return;
+    setNewKeyword("");
+    saveKeywords([...keywords, v]);
+  };
+
+  const removeKeyword = (kw) => saveKeywords(keywords.filter((k) => k !== kw));
+
+  const moveKeyword = (index, dir) => {
+    const target = index + dir;
+    if (target < 0 || target >= keywords.length) return;
+    const next = [...keywords];
+    [next[index], next[target]] = [next[target], next[index]];
+    saveKeywords(next);
+  };
+
   const STATUS_LABEL = {
     proposée: ["Proposée", "bg-gray-100 text-gray-500"],
     générée: ["Générée", "bg-blue-50 text-blue-600"],
@@ -3620,12 +3683,32 @@ function CopilotView({ profile, onProfileSaved, showToast }) {
 
       {/* Piliers éditoriaux */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-        <p className="text-sm font-semibold mb-3">Piliers éditoriaux</p>
-        <div className="flex flex-wrap gap-2 mb-3">
-          {pillars.map((p) => (
-            <span key={p.id} className="text-xs bg-gray-100 text-gray-600 px-2.5 py-1 rounded-full">
-              {p.name}
-            </span>
+        <p className="text-sm font-semibold mb-1">Piliers éditoriaux</p>
+        <p className="text-xs text-gray-400 mb-3">
+          Classés par importance — le copilote privilégie les premiers en cas d'hésitation entre plusieurs pistes équivalentes.
+        </p>
+        <div className="space-y-1 mb-3">
+          {pillars.map((p, i) => (
+            <div key={p.id} className="flex items-center gap-2 bg-gray-50 rounded-lg px-2.5 py-1.5">
+              <span className="text-[11px] font-semibold text-gray-400 w-4 text-right shrink-0">{i + 1}</span>
+              <span className="text-xs text-gray-700 flex-1 truncate">{p.name}</span>
+              <button
+                onClick={() => movePillar(i, -1)}
+                disabled={i === 0}
+                className="text-gray-400 hover:text-[#ff5a5f] disabled:opacity-30 disabled:hover:text-gray-400 p-0.5"
+                title="Plus important"
+              >
+                <ChevronUp size={14} />
+              </button>
+              <button
+                onClick={() => movePillar(i, 1)}
+                disabled={i === pillars.length - 1}
+                className="text-gray-400 hover:text-[#ff5a5f] disabled:opacity-30 disabled:hover:text-gray-400 p-0.5"
+                title="Moins important"
+              >
+                <ChevronDown size={14} />
+              </button>
+            </div>
           ))}
         </div>
         <div className="flex items-center gap-2">
@@ -3640,6 +3723,67 @@ function CopilotView({ profile, onProfileSaved, showToast }) {
           <button
             onClick={addPillar}
             disabled={addingPillar || !newPillar.trim()}
+            className="text-xs bg-[#0a66c2] hover:bg-[#004182] disabled:opacity-50 text-white px-3 py-1.5 rounded-lg flex items-center gap-1"
+          >
+            <Plus size={13} /> Ajouter
+          </button>
+        </div>
+      </div>
+
+      {/* Mots-clés prioritaires */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+        <p className="text-sm font-semibold mb-1">Mots-clés prioritaires</p>
+        <p className="text-xs text-gray-400 mb-3">
+          Thématiques favorites classées par importance — le copilote favorise les sujets liés aux premiers de la liste.
+        </p>
+        {keywords.length === 0 ? (
+          <p className="text-xs text-gray-400 mb-3">Aucun mot-clé pour l'instant.</p>
+        ) : (
+          <div className="space-y-1 mb-3">
+            {keywords.map((k, i) => (
+              <div key={k} className="flex items-center gap-2 bg-gray-50 rounded-lg px-2.5 py-1.5">
+                <span className="text-[11px] font-semibold text-gray-400 w-4 text-right shrink-0">{i + 1}</span>
+                <span className="text-xs text-gray-700 flex-1 truncate">{k}</span>
+                <button
+                  onClick={() => moveKeyword(i, -1)}
+                  disabled={i === 0 || savingKeywords}
+                  className="text-gray-400 hover:text-[#ff5a5f] disabled:opacity-30 disabled:hover:text-gray-400 p-0.5"
+                  title="Plus important"
+                >
+                  <ChevronUp size={14} />
+                </button>
+                <button
+                  onClick={() => moveKeyword(i, 1)}
+                  disabled={i === keywords.length - 1 || savingKeywords}
+                  className="text-gray-400 hover:text-[#ff5a5f] disabled:opacity-30 disabled:hover:text-gray-400 p-0.5"
+                  title="Moins important"
+                >
+                  <ChevronDown size={14} />
+                </button>
+                <button
+                  onClick={() => removeKeyword(k)}
+                  disabled={savingKeywords}
+                  className="text-gray-300 hover:text-red-500 disabled:opacity-30 p-0.5"
+                  title="Retirer"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+        <div className="flex items-center gap-2">
+          <input
+            type="text"
+            value={newKeyword}
+            onChange={(e) => setNewKeyword(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && addKeyword()}
+            placeholder="Ajouter un mot-clé…"
+            className="flex-1 border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
+          />
+          <button
+            onClick={addKeyword}
+            disabled={savingKeywords || !newKeyword.trim()}
             className="text-xs bg-[#0a66c2] hover:bg-[#004182] disabled:opacity-50 text-white px-3 py-1.5 rounded-lg flex items-center gap-1"
           >
             <Plus size={13} /> Ajouter
