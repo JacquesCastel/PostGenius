@@ -11,14 +11,28 @@ import { checkImageQuota, checkAccess } from "@/lib/gating";
 
 export const maxDuration = 120;
 
-async function writeImagePrompt(user, postText) {
+function brandKitBlock(brandKit) {
+  if (!brandKit) return "";
+  const colors = [
+    brandKit.primaryColor && `principale ${brandKit.primaryColor}`,
+    brandKit.accentColor && `d'accent ${brandKit.accentColor}`,
+  ]
+    .filter(Boolean)
+    .join(", ");
+  if (!colors) return "";
+  return `\n\nCharte graphique de la marque (à respecter dans l'ambiance chromatique de l'image — traduis
+ces couleurs en description visuelle naturelle dans le prompt final, ne mentionne jamais de code hex) :
+- Couleur ${colors}.`;
+}
+
+async function writeImagePrompt(user, postText, brandKit) {
   const prompt = `Voici un post LinkedIn :
 """
 ${postText.slice(0, 1500)}
 """
 Contexte de l'auteur : ${user.businessDescription ?? user.expertise ?? "professionnel"}${
     user.targetAudience ? ` — cible : ${user.targetAudience}` : ""
-  }
+  }${brandKitBlock(brandKit)}
 
 Écris un prompt EN ANGLAIS pour générer l'illustration de ce post.
 Contraintes impératives :
@@ -26,6 +40,7 @@ Contraintes impératives :
 - Style professionnel, moderne et épuré, adapté à un feed LinkedIn
 - Une métaphore visuelle du message principal du post, pas une scène littérale
 - Composition simple, lisible en petit format
+- Si une charte graphique est indiquée ci-dessus, la palette de l'image doit s'en rapprocher
 
 Réponds UNIQUEMENT en JSON : {"prompt": "..."}`;
 
@@ -73,8 +88,8 @@ export async function POST(req) {
   }
 
   try {
-    const user = await prisma.user.findUnique({ where: { id: userId } });
-    const finalPrompt = customPrompt?.trim() || (await writeImagePrompt(user, text));
+    const user = await prisma.user.findUnique({ where: { id: userId }, include: { brandKit: true } });
+    const finalPrompt = customPrompt?.trim() || (await writeImagePrompt(user, text, user.brandKit));
 
     // Essaie gpt-image-1 (accès org requis), sinon bascule sur dall-e-3
     let b64 = null;
