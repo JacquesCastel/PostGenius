@@ -9809,6 +9809,11 @@ export default function Home() {
             )}
           </div>
 
+          {/* Calendrier mensuel des programmations — au-dessus du kanban */}
+          <div className="mb-6">
+            <CalendarMonth drafts={drafts} />
+          </div>
+
           {drafts.length === 0 ? (
             <div className="bg-white rounded-2xl border border-dashed border-gray-200 p-12 text-center text-gray-400 max-w-xl mx-auto">
               <History size={32} className="mx-auto mb-3" />
