@@ -10,7 +10,7 @@ export async function PATCH(req, { params }) {
   if (!userId) return NextResponse.json({ error: "Non connecté." }, { status: 401 });
 
   const { id } = await params;
-  const { text, status, postId, scheduledAt, target } = await req.json();
+  const { text, status, postId, scheduledAt, target, imageUrl, imagePrompt } = await req.json();
 
   // Programmation : date future obligatoire
   if (scheduledAt !== undefined && scheduledAt !== null) {
@@ -31,6 +31,8 @@ export async function PATCH(req, { params }) {
       ...(postId !== undefined && { postId }),
       ...(scheduledAt !== undefined && { scheduledAt: scheduledAt ? new Date(scheduledAt) : null }),
       ...(target !== undefined && { target }),
+      ...(imageUrl !== undefined && { imageUrl }),
+      ...(imagePrompt !== undefined && { imagePrompt }),
       ...(status === "brouillon" && { publishError: null }),
     },
   });
