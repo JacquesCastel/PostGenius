@@ -358,6 +358,7 @@ model EditorialPillar {
   name        String
   description String?
   isDefault   Boolean  @default(false) // seedé automatiquement vs créé par l'utilisateur/l'IA
+  order       Int      @default(0) // rang d'importance manuel (0 = le plus important) — piloté depuis Copilote IA
   createdAt   DateTime @default(now())
 
   drafts          Draft[]

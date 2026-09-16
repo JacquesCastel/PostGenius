@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getEffectiveUserId as getUserId } from "@/lib/session";
-import { getPillars, findOrCreatePillar } from "@/lib/editorial/pillars";
+import { getPillars, findOrCreatePillar, reorderPillars } from "@/lib/editorial/pillars";
 
 // Piliers éditoriaux du client (semés avec des valeurs par défaut au premier appel).
 
@@ -23,4 +23,18 @@ export async function POST(req) {
 
   const pillar = await findOrCreatePillar(userId, name.trim().slice(0, 60));
   return NextResponse.json({ pillar });
+}
+
+// Réordonne les piliers par importance (Copilote IA — flèches haut/bas).
+export async function PUT(req) {
+  const userId = await getUserId(req);
+  if (!userId) return NextResponse.json({ error: "Non connecté." }, { status: 401 });
+
+  const { order } = await req.json();
+  if (!Array.isArray(order) || !order.length) {
+    return NextResponse.json({ error: "Ordre requis." }, { status: 400 });
+  }
+
+  const pillars = await reorderPillars(userId, order);
+  return NextResponse.json({ pillars });
 }
