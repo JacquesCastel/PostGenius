@@ -490,11 +490,14 @@ function ScheduleModal({ draft, linkedin, orgs, profile, onClose, onScheduled, s
 // ----------------------------------------------------------------
 // Calendrier mensuel des publications
 // ----------------------------------------------------------------
-function CalendarMonth({ drafts }) {
+const DRAGGABLE_STATUSES = ["programmé", "à valider"];
+
+function CalendarMonth({ drafts, onReschedule }) {
   const [month, setMonth] = useState(() => {
     const d = new Date();
     return new Date(d.getFullYear(), d.getMonth(), 1);
   });
+  const [dragOverDay, setDragOverDay] = useState(null); // index de cellule survolée pendant un drag
 
   const events = drafts
     .filter(
@@ -558,25 +561,54 @@ function CalendarMonth({ drafts }) {
         {cells.map((d, i) => {
           const inMonth = d.getMonth() === month.getMonth();
           const dayEvents = events.filter((e) => sameDay(e.date, d));
+          const droppable = !!onReschedule;
           return (
             <div
               key={i}
+              onDragOver={
+                droppable
+                  ? (e) => {
+                      e.preventDefault();
+                      setDragOverDay(i);
+                    }
+                  : undefined
+              }
+              onDragLeave={droppable ? () => setDragOverDay(null) : undefined}
+              onDrop={
+                droppable
+                  ? (e) => {
+                      e.preventDefault();
+                      setDragOverDay(null);
+                      const draftId = e.dataTransfer.getData("text/plain");
+                      if (draftId) onReschedule(draftId, d);
+                    }
+                  : undefined
+              }
               className={`min-h-16 p-1.5 text-xs ${inMonth ? "bg-white" : "bg-gray-50 text-gray-300"} ${
                 sameDay(d, today) ? "ring-2 ring-inset ring-[#ff5a5f]" : ""
-              }`}
+              } ${dragOverDay === i ? "bg-[#fff1f1]" : ""}`}
             >
               <span className={sameDay(d, today) ? "font-bold text-[#ff5a5f]" : ""}>{d.getDate()}</span>
               <div className="mt-0.5 space-y-0.5">
-                {dayEvents.slice(0, 2).map((e, j) => (
-                  <div
-                    key={j}
-                    title={`${e.draft.theme} — ${e.draft.status}`}
-                    className="flex items-center gap-1 truncate"
-                  >
-                    <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${DOT[e.draft.status]}`} />
-                    <span className="truncate text-gray-600">{e.draft.theme || "Post"}</span>
-                  </div>
-                ))}
+                {dayEvents.slice(0, 2).map((e, j) => {
+                  const draggableEvent = droppable && DRAGGABLE_STATUSES.includes(e.draft.status);
+                  return (
+                    <div
+                      key={j}
+                      title={`${e.draft.theme} — ${e.draft.status}${draggableEvent ? " (glisser pour déplacer)" : ""}`}
+                      draggable={draggableEvent}
+                      onDragStart={
+                        draggableEvent
+                          ? (ev) => ev.dataTransfer.setData("text/plain", e.draft.id)
+                          : undefined
+                      }
+                      className={`flex items-center gap-1 truncate ${draggableEvent ? "cursor-grab active:cursor-grabbing" : ""}`}
+                    >
+                      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${DOT[e.draft.status]}`} />
+                      <span className="truncate text-gray-600">{e.draft.theme || "Post"}</span>
+                    </div>
+                  );
+                })}
                 {dayEvents.length > 2 && (
                   <p className="text-gray-400">+{dayEvents.length - 2}</p>
                 )}
@@ -585,10 +617,13 @@ function CalendarMonth({ drafts }) {
           );
         })}
       </div>
-      <div className="flex gap-4 mt-3 text-xs text-gray-500">
-        <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-amber-400" /> Programmé</span>
-        <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-green-500" /> Publié</span>
-        <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-red-500" /> Erreur</span>
+      <div className="flex items-center justify-between mt-3 flex-wrap gap-2">
+        <div className="flex gap-4 text-xs text-gray-500">
+          <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-amber-400" /> Programmé</span>
+          <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-green-500" /> Publié</span>
+          <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-red-500" /> Erreur</span>
+        </div>
+        {onReschedule && <p className="text-[11px] text-gray-400">Glissez un post programmé vers un autre jour pour le déplacer</p>}
       </div>
     </div>
   );
@@ -3906,7 +3941,7 @@ function CopilotView({ profile, onProfileSaved, showToast, onGoDashboard }) {
   );
 }
 
-function DashboardView({ drafts, canVeille = true, canEvents = false, canScore = true, canCampaigns = true, postsLimit = null, onGoCreate, onGoHistory, onGoEvents, onGoProfile, onGoProfileField, onGoCopilot, onApprove, profile, linkedin, orgs, onPlanned, onProfileSaved, showToast, onInspire, onGenerateFromReco }) {
+function DashboardView({ drafts, canVeille = true, canEvents = false, canScore = true, canCampaigns = true, postsLimit = null, onGoCreate, onGoHistory, onGoEvents, onGoProfile, onGoProfileField, onGoCopilot, onApprove, onReschedule, profile, linkedin, orgs, onPlanned, onProfileSaved, showToast, onInspire, onGenerateFromReco }) {
   const [mode, setMode] = useState("list"); // list | calendar
   const [periodDays, setPeriodDays] = useState(7);
   const [planTarget, setPlanTarget] = useState("person");
@@ -4504,7 +4539,7 @@ function DashboardView({ drafts, canVeille = true, canEvents = false, canScore =
         </div>
 
         {mode === "calendar" ? (
-          <CalendarMonth drafts={drafts} />
+          <CalendarMonth drafts={drafts} onReschedule={onReschedule} />
         ) : scheduled.length === 0 ? (
           <div className="bg-white rounded-xl border border-dashed border-gray-300 p-10 text-center text-gray-400">
             <Clock size={28} className="mx-auto mb-2" />
@@ -8293,6 +8328,28 @@ export default function Home() {
     if (!res.ok) throw new Error((await readJson(res)).error || "Erreur");
   };
 
+  // Déplacement d'un post programmé vers un autre jour (drag & drop sur le
+  // calendrier) — conserve l'heure prévue, change juste la date.
+  const rescheduleDraft = async (draftId, newDay) => {
+    const draft = drafts.find((d) => d.id === draftId);
+    if (!draft?.scheduledAt) return;
+    const next = new Date(draft.scheduledAt);
+    const target = new Date(newDay);
+    next.setFullYear(target.getFullYear(), target.getMonth(), target.getDate());
+    if (next.getTime() === new Date(draft.scheduledAt).getTime()) return; // même jour, rien à faire
+    if (next <= new Date()) {
+      showToast("La date de programmation doit être dans le futur.");
+      return;
+    }
+    try {
+      await patchDraft(draftId, { scheduledAt: next.toISOString() });
+      setDrafts((ds) => ds.map((d) => (d.id === draftId ? { ...d, scheduledAt: next } : d)));
+      showToast(`Post déplacé au ${next.toLocaleDateString("fr-FR")} ✓`);
+    } catch (e) {
+      showToast(e.message || "Erreur lors du déplacement");
+    }
+  };
+
   const deleteDraft = async (id) => {
     setDrafts((d) => d.filter((x) => x.id !== id));
     fetch(`/api/drafts/${id}`, { method: "DELETE" }).catch(() => {});
@@ -8893,6 +8950,7 @@ export default function Home() {
           orgs={orgs}
           showToast={showToast}
           onProfileSaved={setProfile}
+          onReschedule={rescheduleDraft}
           onPlanned={() =>
             fetch("/api/drafts")
               .then((r) => r.json())
@@ -9811,7 +9869,7 @@ export default function Home() {
 
           {/* Calendrier mensuel des programmations — au-dessus du kanban */}
           <div className="mb-6">
-            <CalendarMonth drafts={drafts} />
+            <CalendarMonth drafts={drafts} onReschedule={rescheduleDraft} />
           </div>
 
           {drafts.length === 0 ? (
