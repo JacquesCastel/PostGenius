@@ -3375,7 +3375,7 @@ function EditorialRecoWidget({ onGenerate, showToast, profile, onProfileSaved, o
 // format, et le réglage de la publication autonome (déplacé depuis Profil
 // pour que le pilotage ne dépende plus uniquement du profil).
 // ----------------------------------------------------------------
-function CopilotView({ profile, onProfileSaved, showToast }) {
+function CopilotView({ profile, onProfileSaved, showToast, onGoDashboard }) {
   const [stats, setStats] = useState(null);
   const [pillars, setPillars] = useState([]);
   const [watch, setWatch] = useState([]);
@@ -3385,6 +3385,7 @@ function CopilotView({ profile, onProfileSaved, showToast }) {
   const [addingPillar, setAddingPillar] = useState(false);
   const [savingThreshold, setSavingThreshold] = useState(false);
   const [expandedId, setExpandedId] = useState(null);
+  const [refreshingRecos, setRefreshingRecos] = useState(false);
 
   const load = () => {
     setLoading(true);
@@ -3517,6 +3518,24 @@ function CopilotView({ profile, onProfileSaved, showToast }) {
     const next = [...keywords];
     [next[index], next[target]] = [next[target], next[index]];
     saveKeywords(next);
+  };
+
+  // Après un réordonnancement des piliers/mots-clés, les propositions déjà
+  // en cache (fraîcheur 20h) ne reflètent pas encore le nouveau classement —
+  // ce bouton force leur régénération puis ramène sur le tableau de bord.
+  const refreshRecos = async () => {
+    setRefreshingRecos(true);
+    try {
+      const res = await fetch("/api/editorial/recommendations?force=1");
+      const data = await readJson(res);
+      if (!res.ok) throw new Error(data.error);
+      showToast("Propositions du jour mises à jour ✓");
+      onGoDashboard?.();
+    } catch (e) {
+      showToast(e.message || "Erreur lors de la mise à jour des propositions");
+    } finally {
+      setRefreshingRecos(false);
+    }
   };
 
   const STATUS_LABEL = {
@@ -3787,6 +3806,17 @@ function CopilotView({ profile, onProfileSaved, showToast }) {
             className="text-xs bg-[#0a66c2] hover:bg-[#004182] disabled:opacity-50 text-white px-3 py-1.5 rounded-lg flex items-center gap-1"
           >
             <Plus size={13} /> Ajouter
+          </button>
+        </div>
+        <div className="flex items-center justify-between gap-2 mt-3 pt-3 border-t border-gray-100">
+          <p className="text-xs text-gray-400">Piliers ou mots-clés ajustés ? Les propositions du jour ne les reflètent pas encore.</p>
+          <button
+            onClick={refreshRecos}
+            disabled={refreshingRecos}
+            className="text-xs bg-[#ff5a5f] hover:bg-[#f63d44] disabled:opacity-50 text-white font-medium px-3 py-1.5 rounded-lg flex items-center gap-1.5 shrink-0"
+          >
+            {refreshingRecos ? <RefreshCw size={13} className="animate-spin" /> : <Sparkles size={13} />}
+            Mettre à jour les propositions du jour
           </button>
         </div>
       </div>
@@ -9710,7 +9740,7 @@ export default function Home() {
       ) : view === "stats" ? (
         <StatsView linkedin={linkedin} orgs={orgs} profile={profile} drafts={drafts} />
       ) : view === "copilot" ? (
-        <CopilotView profile={profile} onProfileSaved={setProfile} showToast={showToast} />
+        <CopilotView profile={profile} onProfileSaved={setProfile} showToast={showToast} onGoDashboard={() => setView("dashboard")} />
       ) : view === "billing" ? (
         <BillingView user={user} showToast={showToast} />
       ) : view === "brand-kit" ? (
