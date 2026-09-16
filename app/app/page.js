@@ -7906,10 +7906,13 @@ export default function Home() {
     if (!result || imageLoading) return;
     setImageLoading(true);
     try {
+      // En mode modification, on illustre le texte en cours d'édition,
+      // pas l'ancien texte déjà validé.
+      const text = editingResult ? resultDraftText : result.text;
       const res = await fetch("/api/image/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: result.text, prompt: imagePromptInput }),
+        body: JSON.stringify({ text, prompt: imagePromptInput }),
       });
       const data = await readJson(res);
       if (!res.ok) throw new Error(data.error || "Erreur");
@@ -9114,9 +9117,9 @@ export default function Home() {
                   </button>
                 )}
 
-                {/* Image du post */}
-                {!editingResult && (
-                  <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+                {/* Image du post — reste accessible en mode modification (bug rapporté :
+                    impossible de générer une image tant qu'on éditait le texte). */}
+                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
                     <p className="text-sm font-semibold mb-3 flex items-center gap-2">
                       <ImageIcon size={15} className="text-[#ff5a5f]" /> Image du post
                       <span className="text-xs text-gray-400 font-normal">(optionnelle — publiée avec le post)</span>
@@ -9182,8 +9185,7 @@ export default function Home() {
                         </button>
                       </div>
                     )}
-                  </div>
-                )}
+                </div>
 
                 {result.extra && (
                   <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
