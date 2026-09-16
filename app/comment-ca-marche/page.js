@@ -1,7 +1,7 @@
 import Link from "next/link";
 import {
   Sparkles, Megaphone, BarChart3, Check, ChevronRight, ShieldCheck,
-  CalendarDays, UserRound, Send, Linkedin, Eye, MapPin,
+  CalendarDays, UserRound, Send, Linkedin, Eye, MapPin, MessageCircle,
 } from "lucide-react";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
@@ -34,9 +34,20 @@ const STEPS = [
     text: "Autorisez l'application par OAuth officiel — aucun mot de passe ne nous est confié. Profil personnel, et pages entreprise selon votre offre.",
   },
   {
+    icon: MessageCircle,
+    title: "Échangez avec le copilote éditorial",
+    text: "Chaque jour, il propose des sujets argumentés pour votre prochain post, classés selon vos piliers et mots-clés. Pas convaincu ? Dites-lui ce que vous voulez cette semaine — il ajuste ses propositions et s'en souvient.",
+    visual: (
+      <div className="rounded-2xl border border-gray-100 p-3 max-w-xs">
+        <p className="text-xs font-semibold flex items-center gap-1.5 mb-1.5"><MessageCircle size={13} className="text-[#ff5a5f]" /> Que publier aujourd'hui ?</p>
+        <p className="text-[11px] text-gray-500">« Les 3 erreurs qui ruinent la crédibilité d'un post » · confiance 88</p>
+      </div>
+    ),
+  },
+  {
     icon: Megaphone,
     title: "Lancez une campagne",
-    text: "Un thème (ou un article repéré par votre veille), 3 questions de cadrage posées par l'IA, un post d'exemple à valider — et c'est parti.",
+    text: "Un thème — le vôtre, une idée du copilote, ou un article repéré par votre veille —, 3 questions de cadrage posées par l'IA, un post d'exemple à valider — et c'est parti.",
     visual: (
       <div className="rounded-2xl border border-gray-100 p-3 max-w-xs">
         <p className="text-xs font-semibold flex items-center gap-1.5 mb-1.5"><Megaphone size={13} className="text-[#ff5a5f]" /> Campagne « Accessibilité 2026 »</p>
@@ -59,7 +70,7 @@ const STEPS = [
   {
     icon: ShieldCheck,
     title: "Validez — ou laissez le pilote automatique",
-    text: "Activez la validation et chaque post attend votre feu vert avant de partir. Ou laissez LinkeePost gérer de bout en bout : c'est vous qui décidez.",
+    text: "Activez la validation et chaque post attend votre feu vert avant de partir. Ou laissez LinkeePost gérer de bout en bout — y compris les propositions du copilote au-delà d'un seuil de confiance que vous choisissez, désactivé par défaut : c'est vous qui décidez.",
   },
   {
     icon: Send,

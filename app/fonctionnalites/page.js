@@ -2,6 +2,7 @@ import Link from "next/link";
 import {
   Sparkles, Megaphone, Eye, Clock, BarChart3, Image as ImageIcon, Check, ChevronRight,
   ShieldCheck, CalendarDays, Layers, UserRound, Send, ThumbsUp, MessageSquare, Share2, Rss, ArrowRight, MapPin, Bell,
+  MessageCircle,
 } from "lucide-react";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
@@ -14,6 +15,7 @@ export const metadata = {
 
 const PIPELINE = [
   { icon: UserRound, label: "Profil" },
+  { icon: MessageCircle, label: "Copilote" },
   { icon: Megaphone, label: "Campagne" },
   { icon: Sparkles, label: "Génération IA" },
   { icon: CalendarDays, label: "Programmation" },
@@ -127,6 +129,41 @@ export default function FonctionnalitesPage() {
                 <Check size={14} className="text-[#ff5a5f]" />
               </div>
             ))}
+          </Card>
+        </Feature>
+
+        {/* Copilote éditorial */}
+        <Feature
+          reverse
+          tag="Copilote éditorial"
+          title="Un agent avec qui échanger pour savoir quoi publier"
+          text="Chaque jour, le copilote propose des sujets de post argumentés — construits à partir de votre profil, de vos piliers éditoriaux et de votre historique récent, pour ne jamais répéter un angle déjà traité. Pas convaincu par une proposition ? Discutez-en avec lui : il précise, ajuste, et retient vos choix pour la suite."
+          points={[
+            "Propositions quotidiennes classées par pertinence, avec leur justification",
+            "Piliers éditoriaux et mots-clés classables par importance",
+            "Apprend de vos choix (Générer / Ignorer) pour s'affiner avec le temps",
+            "Veille des bonnes pratiques LinkedIn pour éclairer ses suggestions",
+          ]}
+        >
+          <Card>
+            <p className="text-xs font-semibold flex items-center gap-1.5 mb-3">
+              <MessageCircle size={15} className="text-[#ff5a5f]" /> Que publier aujourd'hui ?
+            </p>
+            <div className="rounded-xl border border-gray-100 p-3 mb-3">
+              <span className="text-[10px] font-semibold uppercase tracking-wide bg-[#fff1f1] text-[#ff5a5f] rounded-full px-2 py-0.5">
+                Expertise
+              </span>
+              <p className="text-sm font-semibold mt-1.5">Les 3 erreurs qui ruinent la crédibilité d'un post</p>
+              <p className="text-xs text-gray-400 mt-1">Confiance 88 · argumenté par votre historique</p>
+            </div>
+            <div className="space-y-1.5">
+              <div className="text-xs bg-[#0a66c2] text-white rounded-lg px-2.5 py-1.5 ml-auto w-fit max-w-[85%]">
+                Plus de retours clients ce mois-ci
+              </div>
+              <div className="text-xs bg-gray-50 border border-gray-100 rounded-lg px-2.5 py-1.5 w-fit max-w-[85%]">
+                Compris — je privilégie vos cas clients dès la prochaine proposition.
+              </div>
+            </div>
           </Card>
         </Feature>
 

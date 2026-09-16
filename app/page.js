@@ -2,7 +2,7 @@ import Link from "next/link";
 import {
   Sparkles, Megaphone, Eye, Clock, BarChart3, Image as ImageIcon,
   Check, ChevronRight, ShieldCheck, CalendarDays, Layers, PlayCircle, ArrowUp, MapPin, UserRound,
-  Gauge, PenLine,
+  Gauge, PenLine, MessageCircle,
 } from "lucide-react";
 import { getLanding } from "@/lib/landing";
 import SiteHeader from "@/components/SiteHeader";
@@ -22,7 +22,7 @@ const FEATURES = [
   { icon: UserRound, title: "Profil de rédaction", text: "Activité, cible, marché, ton et rythme — décrits une fois (ou déduits de votre site par l'IA), et chaque contenu est calibré à votre image." },
   { icon: Megaphone, title: "Campagnes guidées par l'IA", text: "Un thème, un brief cadré par l'IA, un post d'exemple à valider — puis une série de posts qui progressent vers votre message clé." },
   { icon: Eye, title: "Veille connectée", text: "LinkeePost surveille les sources de votre secteur et ancre vos posts dans l'actualité. Un article pertinent devient un post." },
-  { icon: Sparkles, title: "Votre style, pas un robot", text: "Contexte métier, cible, positionnement, consignes d'écriture : chaque post est rédigé avec votre ADN." },
+  { icon: MessageCircle, title: "Copilote éditorial", text: "Un agent avec qui échanger pour savoir quoi publier : il propose des idées argumentées, pose des questions et apprend de vos choix (Générer/Ignorer) au fil du temps." },
   { icon: ImageIcon, title: "Illustrations générées", text: "Une image cohérente avec le contenu, générée par IA et publiée avec le post. Prompt automatique ou personnalisé." },
   { icon: Clock, title: "Publication à votre rythme", text: "Choisissez vos jours et votre heure : les posts partent seuls, après votre validation si vous le souhaitez." },
   { icon: MapPin, title: "Module Événements", text: "Salons et forums : posts de présence générés et programmés autour des dates. Le jour J, une notification vous invite à poster une photo en direct. (Offre Agence)" },
@@ -32,7 +32,7 @@ const FEATURES = [
 
 const STEPS = [
   { n: "1", icon: ShieldCheck, title: "Décrivez votre environnement", text: "Activité, cible, marché, objectifs, style et rythme : 5 minutes au départ, l'IA s'en souvient pour toujours." },
-  { n: "2", icon: Layers, title: "Lancez une campagne", text: "Un thème, 3 questions de cadrage, un post d'exemple à valider — la série se génère et se planifie sur vos créneaux." },
+  { n: "2", icon: Layers, title: "Lancez une campagne", text: "Un thème — le vôtre, ou une idée proposée par le copilote éditorial — puis un post d'exemple à valider : la série se génère et se planifie sur vos créneaux." },
   { n: "3", icon: CalendarDays, title: "Validez, c'est publié", text: "Chaque post attend votre feu vert puis part automatiquement sur LinkedIn, image comprise. Suivez les retombées." },
 ];
 
