@@ -9878,7 +9878,7 @@ export default function Home() {
               <p className="text-sm">Aucun post pour l'instant. Générez un post puis enregistrez-le.</p>
             </div>
           ) : (
-            <div className="flex gap-4 overflow-x-auto items-start pb-4">
+            <div className="flex flex-col gap-4 md:flex-row md:overflow-x-auto md:items-start pb-4">
               {[
                 { id: "brouillon", title: "Brouillons", dot: "bg-gray-400" },
                 { id: "à valider", title: "À valider", dot: "bg-purple-500" },
@@ -9911,7 +9911,7 @@ export default function Home() {
                             }
                           : undefined
                       }
-                      className={`w-80 shrink-0 rounded-2xl p-3 transition-colors ${
+                      className={`w-full md:w-80 md:shrink-0 rounded-2xl p-3 transition-colors ${
                         dragOverCol === col.id ? "bg-[#ffe0e0] ring-2 ring-[#ff8a8d]" : "bg-gray-200/50"
                       }`}
                     >
