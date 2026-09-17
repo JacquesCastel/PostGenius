@@ -6,6 +6,11 @@ import crypto from "crypto";
 // (Community Management API doit être seul produit sur son app LinkedIn)
 // et de l'app "PostGenius Stats" (statistiques du profil perso, auth-stats).
 // Scopes : w_organization_social rw_organization_admin
+//   + r_organization_social_feed / w_organization_social_feed (lecture et
+//   réponse aux commentaires des posts de page entreprise — Comments API,
+//   même produit Community Management API). Le profil personnel n'a pas
+//   cet accès : r_member_social_feed est réservé par LinkedIn à une liste
+//   fermée de développeurs (non auto-servisable).
 // Redirect URI : LINKEDIN_ORG_REDIRECT_URI → /api/linkedin/callback-org
 //   (doit être déclarée dans l'app LinkedIn 786qkg73bkqdvj, onglet Auth)
 
@@ -24,7 +29,11 @@ export async function GET() {
   url.searchParams.set("client_id", clientId);
   url.searchParams.set("redirect_uri", redirectUri);
   url.searchParams.set("state", state);
-  url.searchParams.set("scope", process.env.LINKEDIN_ORG_SCOPES || "w_organization_social rw_organization_admin");
+  url.searchParams.set(
+    "scope",
+    process.env.LINKEDIN_ORG_SCOPES ||
+      "w_organization_social rw_organization_admin r_organization_social_feed w_organization_social_feed"
+  );
 
   const res = NextResponse.redirect(url.toString());
   res.cookies.set("li_org_oauth_state", state, { httpOnly: true, maxAge: 600, path: "/" });

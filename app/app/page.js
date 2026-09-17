@@ -489,6 +489,110 @@ function ScheduleModal({ draft, linkedin, orgs, profile, onClose, onScheduled, s
 }
 
 // ----------------------------------------------------------------
+// Commentaires d'un post de page entreprise (Comments API LinkedIn)
+// Réservé aux posts publiés sur une page entreprise — le profil personnel
+// n'a pas accès en lecture aux commentaires côté API LinkedIn.
+// ----------------------------------------------------------------
+function CommentsPanel({ draft, onClose, showToast }) {
+  const [comments, setComments] = useState(null); // null = chargement
+  const [error, setError] = useState(null);
+  const [replyText, setReplyText] = useState("");
+  const [sending, setSending] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    setComments(null);
+    setError(null);
+    fetch(`/api/linkedin/comments?draftId=${draft.id}`)
+      .then((r) => r.json().then((data) => ({ ok: r.ok, data })))
+      .then(({ ok, data }) => {
+        if (cancelled) return;
+        if (!ok) throw new Error(data.error || "Erreur");
+        setComments(data.comments);
+      })
+      .catch((e) => !cancelled && setError(e.message));
+    return () => {
+      cancelled = true;
+    };
+  }, [draft.id]);
+
+  const sendReply = async () => {
+    if (!replyText.trim() || sending) return;
+    setSending(true);
+    try {
+      const res = await fetch("/api/linkedin/comments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ draftId: draft.id, text: replyText }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Erreur");
+      setComments((c) => [...(c ?? []), data.comment]);
+      setReplyText("");
+    } catch (e) {
+      showToast(e.message);
+    } finally {
+      setSending(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" onClick={onClose}>
+      <div
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[85vh] flex flex-col overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 shrink-0">
+          <p className="text-sm font-semibold truncate pr-2">{draft.theme || "Post"}</p>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-700 p-1 shrink-0">
+            <X size={18} />
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-4 space-y-3">
+          {comments === null && !error && (
+            <p className="text-sm text-gray-400 text-center py-6 flex items-center justify-center gap-2">
+              <RefreshCw size={14} className="animate-spin" /> Chargement des commentaires…
+            </p>
+          )}
+          {error && <p className="text-sm text-red-600 bg-red-50 rounded-lg p-3">{error}</p>}
+          {comments?.length === 0 && (
+            <p className="text-sm text-gray-400 text-center py-6">Aucun commentaire pour l'instant.</p>
+          )}
+          {comments?.map((c) => (
+            <div key={c.id} className="bg-gray-50 rounded-xl p-3">
+              <p className="text-xs font-semibold text-gray-700">{c.authorName || "Membre LinkedIn"}</p>
+              <p className="text-sm text-gray-700 mt-0.5 whitespace-pre-wrap">{c.text}</p>
+              {c.createdAt && (
+                <p className="text-[11px] text-gray-400 mt-1">{new Date(c.createdAt).toLocaleDateString("fr-FR")}</p>
+              )}
+            </div>
+          ))}
+        </div>
+
+        <div className="flex gap-2 p-3 border-t border-gray-100 shrink-0">
+          <input
+            type="text"
+            value={replyText}
+            onChange={(e) => setReplyText(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && sendReply()}
+            placeholder="Répondre au nom de la page…"
+            className="flex-1 min-w-0 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
+          />
+          <button
+            onClick={sendReply}
+            disabled={sending || !replyText.trim()}
+            className="bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white text-sm px-4 py-2 rounded-lg flex items-center gap-1.5 shrink-0"
+          >
+            {sending ? <RefreshCw size={14} className="animate-spin" /> : <Send size={14} />}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ----------------------------------------------------------------
 // Calendrier mensuel des publications
 // ----------------------------------------------------------------
 const DRAGGABLE_STATUSES = ["programmé", "à valider"];
@@ -7781,6 +7885,7 @@ export default function Home() {
     }
   };
   const [scheduleDraft, setScheduleDraft] = useState(null);
+  const [commentsDraft, setCommentsDraft] = useState(null); // post (page entreprise) dont on affiche les commentaires
   const [scheduleStatus, setScheduleStatus] = useState("programmé"); // statut après la modal de date
   const [dragOverCol, setDragOverCol] = useState(null); // colonne kanban survolée pendant un drag
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false); // menu burger (navigation mobile)
@@ -9050,6 +9155,10 @@ export default function Home() {
             }
           }}
         />
+      )}
+
+      {commentsDraft && (
+        <CommentsPanel draft={commentsDraft} onClose={() => setCommentsDraft(null)} showToast={showToast} />
       )}
 
       {/* Bandeau d'essai / incident de paiement (seulement si le paiement est actif) */}
@@ -10333,6 +10442,14 @@ export default function Home() {
                                         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
                                         Publié sur Instagram ✓
                                       </div>
+                                    )}
+                                    {p.postId && p.target?.startsWith("urn:li:organization:") && (
+                                      <button
+                                        onClick={() => setCommentsDraft(p)}
+                                        className="self-end flex items-center gap-1 text-gray-500 hover:text-[#ff5a5f] mt-0.5"
+                                      >
+                                        <MessageSquare size={11} /> Commentaires
+                                      </button>
                                     )}
                                   </div>
                                 )}
