@@ -531,6 +531,12 @@ function CalendarMonth({ drafts, onReschedule }) {
     publié: "bg-green-500",
   };
 
+  // Agenda mobile : liste chronologique des jours du mois qui ont au moins un événement
+  const agendaDays = cells
+    .filter((d) => d.getMonth() === month.getMonth())
+    .map((d) => ({ date: d, dayEvents: events.filter((e) => sameDay(e.date, d)) }))
+    .filter((d) => d.dayEvents.length > 0);
+
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
       <div className="flex items-center justify-between mb-3">
@@ -550,14 +556,39 @@ function CalendarMonth({ drafts, onReschedule }) {
           <ChevronRight size={16} />
         </button>
       </div>
-      <div className="grid grid-cols-7 text-center text-xs text-gray-400 mb-1">
+
+      {/* Agenda liste — affichage mobile, plus lisible qu'une grille 7 colonnes sur petit écran */}
+      <div className="md:hidden space-y-1.5">
+        {agendaDays.length === 0 ? (
+          <p className="text-xs text-gray-400 text-center py-6">Aucune publication ce mois-ci</p>
+        ) : (
+          agendaDays.map(({ date, dayEvents }, i) => (
+            <div key={i} className="flex gap-3 border border-gray-100 rounded-xl p-2">
+              <div className={`shrink-0 w-11 text-center rounded-lg py-1 ${sameDay(date, today) ? "bg-[#fff1f1]" : "bg-gray-50"}`}>
+                <p className="text-[10px] uppercase text-gray-400">{date.toLocaleDateString("fr-FR", { weekday: "short" })}</p>
+                <p className={`text-sm font-bold ${sameDay(date, today) ? "text-[#ff5a5f]" : ""}`}>{date.getDate()}</p>
+              </div>
+              <div className="min-w-0 flex-1 space-y-1">
+                {dayEvents.map((e, j) => (
+                  <div key={j} className="flex items-center gap-1.5 text-xs">
+                    <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${DOT[e.draft.status]}`} />
+                    <span className="truncate text-gray-600">{e.draft.theme || "Post"}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      <div className="hidden md:grid grid-cols-7 text-center text-xs text-gray-400 mb-1">
         {["lun", "mar", "mer", "jeu", "ven", "sam", "dim"].map((d) => (
           <div key={d} className="py-1">
             {d}
           </div>
         ))}
       </div>
-      <div className="grid grid-cols-7 gap-px bg-gray-100 rounded-lg overflow-hidden">
+      <div className="hidden md:grid grid-cols-7 gap-px bg-gray-100 rounded-lg overflow-hidden">
         {cells.map((d, i) => {
           const inMonth = d.getMonth() === month.getMonth();
           const dayEvents = events.filter((e) => sameDay(e.date, d));
@@ -623,7 +654,9 @@ function CalendarMonth({ drafts, onReschedule }) {
           <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-green-500" /> Publié</span>
           <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-red-500" /> Erreur</span>
         </div>
-        {onReschedule && <p className="text-[11px] text-gray-400">Glissez un post programmé vers un autre jour pour le déplacer</p>}
+        {onReschedule && (
+          <p className="hidden md:block text-[11px] text-gray-400">Glissez un post programmé vers un autre jour pour le déplacer</p>
+        )}
       </div>
     </div>
   );
@@ -7749,6 +7782,7 @@ export default function Home() {
   const [scheduleDraft, setScheduleDraft] = useState(null);
   const [scheduleStatus, setScheduleStatus] = useState("programmé"); // statut après la modal de date
   const [dragOverCol, setDragOverCol] = useState(null); // colonne kanban survolée pendant un drag
+  const [mobileCol, setMobileCol] = useState("brouillon"); // colonne affichée sur mobile (bascule)
   const [editingResult, setEditingResult] = useState(false);
   const [resultDraftText, setResultDraftText] = useState("");
   const [refineInput, setRefineInput] = useState("");
@@ -9878,7 +9912,37 @@ export default function Home() {
               <p className="text-sm">Aucun post pour l'instant. Générez un post puis enregistrez-le.</p>
             </div>
           ) : (
-            <div className="flex flex-col gap-4 md:flex-row md:overflow-x-auto md:items-start pb-4">
+            <>
+              {/* Bascule mobile : une seule colonne visible à la fois, sur petit écran */}
+              <div className="md:hidden flex gap-1.5 overflow-x-auto pb-3 -mx-1 px-1">
+                {[
+                  { id: "brouillon", title: "Brouillons", dot: "bg-gray-400" },
+                  { id: "à valider", title: "À valider", dot: "bg-purple-500" },
+                  { id: "programmé", title: "Programmés", dot: "bg-amber-400" },
+                  { id: "publié", title: "Publiés", dot: "bg-green-500" },
+                  { id: "erreur", title: "Erreurs", dot: "bg-red-500" },
+                ]
+                  .filter((col) => col.id !== "erreur" || drafts.some((d) => d.status === "erreur"))
+                  .map((col) => {
+                    const count = drafts.filter((d) => d.status === col.id).length;
+                    const active = mobileCol === col.id;
+                    return (
+                      <button
+                        key={col.id}
+                        onClick={() => setMobileCol(col.id)}
+                        className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap ${
+                          active ? "bg-[#ff5a5f] text-white" : "bg-gray-100 text-gray-600"
+                        }`}
+                      >
+                        <span className={`w-1.5 h-1.5 rounded-full ${active ? "bg-white" : col.dot}`} />
+                        {col.title}
+                        <span className={`text-[10px] ${active ? "text-white/80" : "text-gray-400"}`}>{count}</span>
+                      </button>
+                    );
+                  })}
+              </div>
+
+              <div className="flex flex-col gap-4 md:flex-row md:overflow-x-auto md:items-start pb-4">
               {[
                 { id: "brouillon", title: "Brouillons", dot: "bg-gray-400" },
                 { id: "à valider", title: "À valider", dot: "bg-purple-500" },
@@ -9911,7 +9975,7 @@ export default function Home() {
                             }
                           : undefined
                       }
-                      className={`w-full md:w-80 md:shrink-0 rounded-2xl p-3 transition-colors ${
+                      className={`${col.id === mobileCol ? "block" : "hidden md:block"} w-full md:w-80 md:shrink-0 rounded-2xl p-3 transition-colors ${
                         dragOverCol === col.id ? "bg-[#ffe0e0] ring-2 ring-[#ff8a8d]" : "bg-gray-200/50"
                       }`}
                     >
@@ -10174,7 +10238,8 @@ export default function Home() {
                     </div>
                   );
                 })}
-            </div>
+              </div>
+            </>
           )}
         </main>
       )}
