@@ -15,6 +15,7 @@ import { PLANS, PLAN_IDS, planLabel, planAllows, planOf, trialDaysLeft, accessSt
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 import LpMark from "@/components/LpMark";
+import ImageEditor from "@/components/ImageEditor";
 import { scorePost } from "@/lib/score";
 
 // Format compact des tokens : 12 500 → "12,5k", 3 200 000 → "3,2M"
@@ -7808,6 +7809,7 @@ export default function Home() {
   const [postImage, setPostImage] = useState(null); // { url, prompt }
   const [imagePromptInput, setImagePromptInput] = useState("");
   const [imageLoading, setImageLoading] = useState(false);
+  const [editingImageSrc, setEditingImageSrc] = useState(null); // image ouverte dans l'éditeur crop/filtre (import ou retouche)
   // Article de veille servant d'inspiration à la génération
   const [inspiration, setInspiration] = useState(null);
   // Recommandation éditoriale à l'origine de la génération en cours (copilote)
@@ -8182,6 +8184,46 @@ export default function Home() {
     }
   };
 
+  // Import d'une image depuis l'ordinateur — ouvre directement l'éditeur
+  // (crop/redimensionnement/filtre) avant tout enregistrement.
+  const handleImageFilePick = (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = ""; // permet de re-choisir le même fichier ensuite
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      showToast("Fichier non supporté — choisissez une image.");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => setEditingImageSrc(reader.result);
+    reader.readAsDataURL(file);
+  };
+
+  // Enregistre le résultat de l'éditeur (PNG en base64) : upload simple,
+  // ne consomme pas le quota d'images IA (pas de génération, juste un import).
+  const saveEditedImage = async (dataUrl) => {
+    try {
+      const res = await fetch("/api/image/upload", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ image: dataUrl }),
+      });
+      const data = await readJson(res);
+      if (!res.ok) throw new Error(data.error || "Erreur");
+      const next = { url: data.url, prompt: postImage?.prompt ?? null };
+      setPostImage(next);
+      setEditingImageSrc(null);
+      if (optimizeText?.draftId) {
+        const draftId = optimizeText.draftId;
+        patchDraft(draftId, { imageUrl: next.url, imagePrompt: next.prompt }).catch(() => {});
+        setDrafts((ds) => ds.map((d) => (d.id === draftId ? { ...d, imageUrl: next.url, imagePrompt: next.prompt } : d)));
+      }
+      showToast("Image enregistrée ✓");
+    } catch (e) {
+      showToast(e.message);
+    }
+  };
+
   // Ferme l'écran d'optimisation. Ne nettoie l'image que si elle vient d'un
   // brouillon existant (Mes posts) — sinon c'est l'image du post en cours de
   // création, à conserver quand on revient sur "Créer un post".
@@ -8203,41 +8245,48 @@ export default function Home() {
   // modification) et "Optimiser mes posts" — fonction simple (pas un composant
   // <X/>) appelée via renderImageBlock() pour ne jamais démonter/remonter le
   // champ de saisie à chaque frappe (voir le bug de focus de app/app/page.js).
+  // Import : toujours disponible (aucun coût IA), même sur l'offre Essentiel —
+  // seule la génération par IA reste réservée à l'offre Pro (canImages).
   const renderImageBlock = () => (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
       <p className="text-sm font-semibold mb-3 flex items-center gap-2">
         <ImageIcon size={15} className="text-[#ff5a5f]" /> Image du post
         <span className="text-xs text-gray-400 font-normal">(optionnelle — publiée avec le post)</span>
       </p>
-      {!canImages ? (
-        <div className="rounded-xl bg-[#fff1f1] p-4 text-center">
-          <Lock size={20} className="text-[#ff5a5f] mx-auto mb-1.5" />
-          <p className="text-sm font-medium">Les images générées par IA sont incluses à partir de l'offre Pro.</p>
-          <a href="/tarifs" className="inline-flex items-center gap-1.5 mt-2 text-xs font-semibold text-[#ff5a5f] hover:underline">
-            <ArrowUpCircle size={13} /> Faire évoluer mon offre
-          </a>
-        </div>
-      ) : postImage ? (
+
+      {postImage ? (
         <>
-          <img src={postImage.url} alt="Image générée pour le post" className="rounded-xl w-full mb-2" />
-          <p className="text-xs text-gray-400 mb-3 line-clamp-2" title={postImage.prompt}>
-            Prompt : {postImage.prompt}
-          </p>
+          <img src={postImage.url} alt="Image du post" className="rounded-xl w-full mb-2" />
+          {postImage.prompt && (
+            <p className="text-xs text-gray-400 mb-3 line-clamp-2" title={postImage.prompt}>
+              Prompt : {postImage.prompt}
+            </p>
+          )}
           <div className="flex flex-wrap gap-2">
-            <input
-              type="text"
-              value={imagePromptInput}
-              onChange={(e) => setImagePromptInput(e.target.value)}
-              placeholder="Ajustement ou nouveau prompt — vide = l'IA redécide"
-              className="flex-1 min-w-[10rem] border border-gray-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
-            />
+            {canImages && (
+              <input
+                type="text"
+                value={imagePromptInput}
+                onChange={(e) => setImagePromptInput(e.target.value)}
+                placeholder="Ajustement ou nouveau prompt — vide = l'IA redécide"
+                className="flex-1 min-w-[10rem] border border-gray-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
+              />
+            )}
+            {canImages && (
+              <button
+                onClick={generateImage}
+                disabled={imageLoading}
+                className="bg-gray-900 hover:bg-gray-700 disabled:bg-gray-300 text-white text-xs px-3 py-1.5 rounded-lg flex items-center gap-1.5"
+              >
+                {imageLoading ? <RefreshCw size={12} className="animate-spin" /> : <RefreshCw size={12} />}
+                Régénérer
+              </button>
+            )}
             <button
-              onClick={generateImage}
-              disabled={imageLoading}
-              className="bg-gray-900 hover:bg-gray-700 disabled:bg-gray-300 text-white text-xs px-3 py-1.5 rounded-lg flex items-center gap-1.5"
+              onClick={() => setEditingImageSrc(postImage.url)}
+              className="border border-gray-200 hover:border-gray-400 text-gray-600 text-xs px-3 py-1.5 rounded-lg flex items-center gap-1.5"
             >
-              {imageLoading ? <RefreshCw size={12} className="animate-spin" /> : <RefreshCw size={12} />}
-              Régénérer
+              <Crop size={12} /> Retoucher
             </button>
             <button
               onClick={removePostImage}
@@ -8248,23 +8297,52 @@ export default function Home() {
           </div>
         </>
       ) : (
-        <div className="flex flex-wrap gap-2">
-          <input
-            type="text"
-            value={imagePromptInput}
-            onChange={(e) => setImagePromptInput(e.target.value)}
-            placeholder="Décrivez l'image souhaitée — vide = l'IA la déduit du post"
-            className="flex-1 min-w-[10rem] border border-gray-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
-          />
-          <button
-            onClick={generateImage}
-            disabled={imageLoading}
-            className="bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white text-xs font-medium px-4 py-2 rounded-lg flex items-center gap-1.5"
-          >
-            {imageLoading ? <RefreshCw size={13} className="animate-spin" /> : <ImageIcon size={13} />}
-            {imageLoading ? "Génération… (~30 s)" : "Générer une image"}
-          </button>
+        <div className="space-y-3">
+          <div className="flex flex-wrap gap-2">
+            <label className="border border-gray-200 hover:border-gray-400 text-gray-700 text-xs font-medium px-4 py-2 rounded-lg flex items-center gap-1.5 cursor-pointer">
+              <Upload size={13} /> Importer une image
+              <input type="file" accept="image/*" onChange={handleImageFilePick} className="hidden" />
+            </label>
+          </div>
+
+          {canImages ? (
+            <div className="flex flex-wrap gap-2">
+              <input
+                type="text"
+                value={imagePromptInput}
+                onChange={(e) => setImagePromptInput(e.target.value)}
+                placeholder="Ou décrivez l'image à générer par IA — vide = l'IA la déduit du post"
+                className="flex-1 min-w-[10rem] border border-gray-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
+              />
+              <button
+                onClick={generateImage}
+                disabled={imageLoading}
+                className="bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white text-xs font-medium px-4 py-2 rounded-lg flex items-center gap-1.5"
+              >
+                {imageLoading ? <RefreshCw size={13} className="animate-spin" /> : <ImageIcon size={13} />}
+                {imageLoading ? "Génération… (~30 s)" : "Générer une image"}
+              </button>
+            </div>
+          ) : (
+            <div className="rounded-xl bg-[#fff1f1] p-3 text-center">
+              <p className="text-xs text-gray-600">
+                <Lock size={12} className="inline -mt-0.5 mr-1 text-[#ff5a5f]" />
+                La génération d'image par IA est incluse à partir de l'offre Pro.
+              </p>
+              <a href="/tarifs" className="inline-flex items-center gap-1.5 mt-1 text-xs font-semibold text-[#ff5a5f] hover:underline">
+                <ArrowUpCircle size={12} /> Faire évoluer mon offre
+              </a>
+            </div>
+          )}
         </div>
+      )}
+
+      {editingImageSrc && (
+        <ImageEditor
+          src={editingImageSrc}
+          onCancel={() => setEditingImageSrc(null)}
+          onSave={saveEditedImage}
+        />
       )}
     </div>
   );
