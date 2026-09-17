@@ -1000,7 +1000,7 @@ function CampaignWizard({ profile, linkedin, orgs, onClose, onLaunched, showToas
                     <Check size={15} /> Exemple validé — il guidera le style de la campagne
                   </p>
                 ) : (
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2">
                     <input
                       type="text"
                       value={feedback}
@@ -2601,8 +2601,8 @@ function EventsView({ profile, showToast, onGenerated }) {
         </h2>
         <div>
           <label className={label}>Lien de l'événement (salon, forum…)</label>
-          <div className="flex gap-2 mt-1">
-            <input className={input} value={form.url} onChange={(e) => set("url", e.target.value)} placeholder="https://www.salon-exemple.com" />
+          <div className="flex flex-wrap gap-2 mt-1">
+            <input className={`flex-1 min-w-0 ${input}`} value={form.url} onChange={(e) => set("url", e.target.value)} placeholder="https://www.salon-exemple.com" />
             <button
               type="button"
               onClick={analyze}
@@ -3843,7 +3843,7 @@ function CopilotView({ profile, onProfileSaved, showToast, onGoDashboard }) {
             <Plus size={13} /> Ajouter
           </button>
         </div>
-        <div className="flex items-center justify-between gap-2 mt-3 pt-3 border-t border-gray-100">
+        <div className="flex items-center flex-wrap justify-between gap-2 mt-3 pt-3 border-t border-gray-100">
           <p className="text-xs text-gray-400">Piliers ou mots-clés ajustés ? Les propositions du jour ne les reflètent pas encore.</p>
           <button
             onClick={refreshRecos}
@@ -7093,13 +7093,13 @@ function ProfileView({ profile, onSaved, showToast, linkedin, onDisconnect, inst
             {/* Site internet + analyse IA */}
             <div className="bg-[#fff1f1] rounded-xl p-3 mb-4">
               <label className={label}>Votre site internet</label>
-              <div className="flex gap-2 mt-1">
+              <div className="flex flex-wrap gap-2 mt-1">
                 <input
                   type="text"
                   value={fields.website}
                   onChange={(e) => set("website", e.target.value)}
                   placeholder="https://votre-site.fr"
-                  className={input}
+                  className={`flex-1 min-w-0 ${input}`}
                 />
                 <button
                   type="button"
@@ -8188,13 +8188,13 @@ export default function Home() {
           <p className="text-xs text-gray-400 mb-3 line-clamp-2" title={postImage.prompt}>
             Prompt : {postImage.prompt}
           </p>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <input
               type="text"
               value={imagePromptInput}
               onChange={(e) => setImagePromptInput(e.target.value)}
               placeholder="Ajustement ou nouveau prompt — vide = l'IA redécide"
-              className="flex-1 border border-gray-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
+              className="flex-1 min-w-[10rem] border border-gray-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
             />
             <button
               onClick={generateImage}
@@ -8213,13 +8213,13 @@ export default function Home() {
           </div>
         </>
       ) : (
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <input
             type="text"
             value={imagePromptInput}
             onChange={(e) => setImagePromptInput(e.target.value)}
             placeholder="Décrivez l'image souhaitée — vide = l'IA la déduit du post"
-            className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
+            className="flex-1 min-w-[10rem] border border-gray-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
           />
           <button
             onClick={generateImage}
@@ -9497,14 +9497,14 @@ export default function Home() {
                         e.preventDefault();
                         handleRefine(refineInput);
                       }}
-                      className="flex gap-2"
+                      className="flex flex-wrap gap-2"
                     >
                       <input
                         type="text"
                         value={refineInput}
                         onChange={(e) => setRefineInput(e.target.value)}
                         placeholder="Consigne libre : « insiste sur le ROI », « termine par une question »…"
-                        className="flex-1 border border-gray-300 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
+                        className="flex-1 min-w-[10rem] border border-gray-300 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
                       />
                       <button
                         type="submit"
