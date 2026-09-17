@@ -9,7 +9,7 @@ import {
   Megaphone, ChevronDown, Image as ImageIcon, ShieldCheck, Lock, ArrowUpCircle, MapPin, Bell, Camera,
   CreditCard, Gauge, Users, Smartphone, Monitor,
   Upload, Wand2, SlidersHorizontal, Type, Crop, Download, Pencil, GripHorizontal,
-  Compass, Lightbulb, EyeOff, TrendingUp, TrendingDown, Plus, Globe, ChevronUp
+  Compass, Lightbulb, EyeOff, TrendingUp, TrendingDown, Plus, Globe, ChevronUp, Menu
 } from "lucide-react";
 import { PLANS, PLAN_IDS, planLabel, planAllows, planOf, trialDaysLeft, accessState } from "@/lib/plans";
 import SiteHeader from "@/components/SiteHeader";
@@ -1534,7 +1534,7 @@ function VeilleBlock({ showToast, onInspire, onCampaign }) {
         <>
           <div className="divide-y divide-gray-50">
             {(showAll ? items : items.slice(0, 6)).map((it, i) => (
-              <div key={i} className="py-2.5 flex items-center justify-between gap-3">
+              <div key={i} className="py-2.5 flex items-center flex-wrap justify-between gap-3">
                 <div className="min-w-0">
                   <p className="text-sm font-medium truncate">
                     {it.link ? (
@@ -7782,6 +7782,7 @@ export default function Home() {
   const [scheduleDraft, setScheduleDraft] = useState(null);
   const [scheduleStatus, setScheduleStatus] = useState("programmé"); // statut après la modal de date
   const [dragOverCol, setDragOverCol] = useState(null); // colonne kanban survolée pendant un drag
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false); // menu burger (navigation mobile)
   const [mobileCol, setMobileCol] = useState("brouillon"); // colonne affichée sur mobile (bascule)
   const [editingResult, setEditingResult] = useState(false);
   const [resultDraftText, setResultDraftText] = useState("");
@@ -8574,7 +8575,7 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen flex overflow-x-hidden">
       {/* Tutoriel de première connexion */}
       {showTutorial && <TutorialOverlay canEvents={planAllows(user, "events")} onClose={closeTutorial} />}
 
@@ -8824,27 +8825,80 @@ export default function Home() {
 
       {/* Contenu */}
       <div className="flex-1 min-w-0">
-        {/* Navigation mobile */}
-        <div className="md:hidden bg-white border-b border-gray-100 px-3 py-2 flex gap-1 overflow-x-auto">
-          {NAV.map((item) => {
-            const locked = isLocked(item);
-            return (
-              <button
-                key={item.id}
-                onClick={() => onNav(item)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap flex items-center gap-1.5 ${
-                  view === item.id ? "bg-[#ff5a5f] text-white" : locked ? "text-gray-300" : "text-gray-500"
-                }`}
-              >
-                <item.icon size={14} /> {item.label}
-                {locked && <Lock size={11} />}
-              </button>
-            );
-          })}
-          <button onClick={logout} className="text-gray-400 p-1.5 ml-auto">
+        {/* Navigation mobile : menu burger */}
+        <div className="md:hidden bg-white border-b border-gray-100 px-3 py-2 flex items-center gap-2">
+          <button
+            onClick={() => setMobileMenuOpen(true)}
+            aria-label="Ouvrir le menu"
+            className="p-1.5 text-gray-600 hover:bg-gray-100 rounded-lg shrink-0"
+          >
+            <Menu size={20} />
+          </button>
+          <div className="flex items-center gap-1.5 text-sm font-semibold min-w-0 truncate">
+            <LpMark size={16} />
+            {VIEW_TITLES[view] ?? "LinkeePost"}
+          </div>
+          <button onClick={logout} className="text-gray-400 p-1.5 ml-auto shrink-0" title="Se déconnecter">
             <LogOut size={15} />
           </button>
         </div>
+
+        {mobileMenuOpen && (
+          <div className="md:hidden fixed inset-0 z-50 flex">
+            <div className="absolute inset-0 bg-black/40" onClick={() => setMobileMenuOpen(false)} />
+            <div className="relative w-72 max-w-[85vw] h-full bg-white shadow-xl overflow-y-auto">
+              <div className="flex items-center justify-between px-4 py-4 border-b border-gray-100">
+                <div className="flex items-center gap-2 font-bold">
+                  <LpMark size={18} /> LinkeePost
+                </div>
+                <button
+                  onClick={() => setMobileMenuOpen(false)}
+                  aria-label="Fermer le menu"
+                  className="p-1.5 text-gray-400 hover:bg-gray-100 rounded-lg"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+              <nav className="px-3 py-3 space-y-1">
+                {NAV.map((item) => {
+                  const locked = isLocked(item);
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => {
+                        onNav(item);
+                        setMobileMenuOpen(false);
+                      }}
+                      className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium flex items-center gap-2.5 ${
+                        view === item.id ? "bg-[#ff5a5f] text-white" : locked ? "text-gray-300" : "text-gray-600 hover:bg-gray-50"
+                      }`}
+                    >
+                      <item.icon size={16} />
+                      <span className="flex-1 truncate">{item.label}</span>
+                      {item.badge ? (
+                        <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${view === item.id ? "bg-white/25" : "bg-gray-100 text-gray-500"}`}>
+                          {item.badge}
+                        </span>
+                      ) : null}
+                      {locked && <Lock size={12} />}
+                    </button>
+                  );
+                })}
+              </nav>
+              <div className="px-4 py-3 border-t border-gray-100">
+                <button
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    logout();
+                  }}
+                  className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-500 hover:bg-gray-50"
+                >
+                  <LogOut size={16} /> Se déconnecter
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Barre supérieure */}
         <header className="px-6 pt-6 pb-1 flex items-center justify-between flex-wrap gap-3 max-w-5xl mx-auto">
@@ -8854,7 +8908,7 @@ export default function Home() {
           </div>
           <div className="flex items-center gap-2 flex-wrap">
           {linkedin.connected ? (
-            <div className="flex items-center gap-2 text-sm">
+            <div className="flex items-center gap-2 text-sm flex-wrap">
               <span className="flex items-center gap-1.5 bg-green-50 text-green-700 px-3 py-1.5 rounded-full text-xs font-medium">
                 <span className="w-2 h-2 bg-green-500 rounded-full" />
                 {linkedin.name || "Connecté"}
@@ -9731,12 +9785,12 @@ export default function Home() {
                     </p>
                   )}
                   {linkedin.connected && orgs.length > 0 && (
-                    <label className="flex items-center gap-2 text-xs text-gray-600">
+                    <label className="flex items-center gap-2 text-xs text-gray-600 flex-wrap">
                       Publier en tant que :
                       <select
                         value={target}
                         onChange={(e) => setTarget(e.target.value)}
-                        className="border border-gray-300 rounded-lg px-2 py-1 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
+                        className="border border-gray-300 rounded-lg px-2 py-1 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-[#ff5a5f] max-w-full"
                       >
                         <option value="person">
                           Profil personnel{linkedin.name ? ` (${linkedin.name})` : ""}
@@ -9882,12 +9936,12 @@ export default function Home() {
           {/* Barre d'options */}
           <div className="flex items-center justify-end mb-4 flex-wrap gap-3">
             {linkedin.connected && (
-              <label className="flex items-center gap-2 text-sm text-gray-600">
+              <label className="flex items-center gap-2 text-sm text-gray-600 flex-wrap">
                 Publier en tant que :
                 <select
                   value={target}
                   onChange={(e) => setTarget(e.target.value)}
-                  className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
+                  className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#ff5a5f] max-w-full"
                 >
                   <option value="person">Profil personnel{linkedin.name ? ` (${linkedin.name})` : ""}</option>
                   {linkedin.orgConnected &&
