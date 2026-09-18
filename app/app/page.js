@@ -8757,6 +8757,10 @@ export default function Home() {
     );
   };
 
+  // "Mes posts" : ne montre que les posts du profil actuellement sélectionné
+  // dans "Publier en tant que" (même sélecteur, réutilisé comme filtre d'affichage).
+  const postsForTarget = drafts.filter((d) => (d.target || "person") === target);
+
   return (
     <div className="min-h-screen flex overflow-x-hidden">
       {/* Tutoriel de première connexion */}
@@ -10120,7 +10124,8 @@ export default function Home() {
         />
       ) : (
         <main className="p-6">
-          {/* Barre d'options */}
+          {/* Barre d'options — le profil sélectionné filtre aussi la liste ci-dessous
+              (ce select fixe aussi le compte utilisé par les actions rapides "Publier") */}
           <div className="flex items-center justify-end mb-4 flex-wrap gap-3">
             {linkedin.connected && (
               <label className="flex items-center gap-2 text-sm text-gray-600 flex-wrap">
@@ -10144,13 +10149,17 @@ export default function Home() {
 
           {/* Calendrier mensuel des programmations — au-dessus du kanban */}
           <div className="mb-6">
-            <CalendarMonth drafts={drafts} onReschedule={rescheduleDraft} />
+            <CalendarMonth drafts={postsForTarget} onReschedule={rescheduleDraft} />
           </div>
 
-          {drafts.length === 0 ? (
+          {postsForTarget.length === 0 ? (
             <div className="bg-white rounded-2xl border border-dashed border-gray-200 p-12 text-center text-gray-400 max-w-xl mx-auto">
               <History size={32} className="mx-auto mb-3" />
-              <p className="text-sm">Aucun post pour l'instant. Générez un post puis enregistrez-le.</p>
+              <p className="text-sm">
+                {drafts.length === 0
+                  ? "Aucun post pour l'instant. Générez un post puis enregistrez-le."
+                  : "Aucun post pour ce profil — changez de profil ci-dessus pour voir les autres."}
+              </p>
             </div>
           ) : (
             <>
@@ -10163,9 +10172,9 @@ export default function Home() {
                   { id: "publié", title: "Publiés", dot: "bg-green-500" },
                   { id: "erreur", title: "Erreurs", dot: "bg-red-500" },
                 ]
-                  .filter((col) => col.id !== "erreur" || drafts.some((d) => d.status === "erreur"))
+                  .filter((col) => col.id !== "erreur" || postsForTarget.some((d) => d.status === "erreur"))
                   .map((col) => {
-                    const count = drafts.filter((d) => d.status === col.id).length;
+                    const count = postsForTarget.filter((d) => d.status === col.id).length;
                     const active = mobileCol === col.id;
                     return (
                       <button
@@ -10191,9 +10200,9 @@ export default function Home() {
                 { id: "publié", title: "Publiés", dot: "bg-green-500" },
                 { id: "erreur", title: "Erreurs", dot: "bg-red-500" },
               ]
-                .filter((col) => col.id !== "erreur" || drafts.some((d) => d.status === "erreur"))
+                .filter((col) => col.id !== "erreur" || postsForTarget.some((d) => d.status === "erreur"))
                 .map((col) => {
-                  const items = drafts.filter((d) => d.status === col.id);
+                  const items = postsForTarget.filter((d) => d.status === col.id);
                   const droppable = col.id !== "erreur";
                   return (
                     <div
