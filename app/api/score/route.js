@@ -20,12 +20,25 @@ export async function POST(req) {
   let tips = [];
   if (process.env.ANTHROPIC_API_KEY) {
     try {
-      const prompt = `Voici un post LinkedIn :
+      // Le texte a déjà été rédigé (par une IA ou retouché) en suivant des consignes de
+      // bonnes pratiques, et un contrôle automatique (heuristique) vient de vérifier les
+      // critères de base ci-dessous. On les transmet explicitement pour éviter que ce
+      // second appel ne redécouvre les mêmes points de zéro et ne les répète (ou pire,
+      // ne suggère d'ajouter ce qui est déjà présent).
+      const alreadyChecked = heur.factors
+        .map((f) => `- ${f.label} : ${f.ok ? "déjà bon, ne pas y revenir" : `déjà signalé (« ${f.advice} »)`}`)
+        .join("\n");
+
+      const prompt = `Voici un post LinkedIn, déjà rédigé en suivant des consignes de bonnes pratiques (accroche, aération, question finale, hashtags, émojis avec parcimonie) :
 """
 ${text.slice(0, 3000)}
 """
 
-Donne 2 à 3 conseils CONCIS et actionnables (chacun en une phrase courte à l'impératif, en français) pour augmenter son potentiel d'engagement. Concentre-toi sur l'accroche, la lisibilité, l'incitation à commenter. Réponds UNIQUEMENT en JSON : {"tips":["...","..."]}`;
+Un contrôle automatique a déjà évalué ces critères de forme :
+${alreadyChecked}
+
+Donne 2 à 3 conseils COMPLÉMENTAIRES, qui n'ont rien à voir avec la liste ci-dessus (ne répète jamais un point déjà couvert, même reformulé). Concentre-toi sur le FOND : clarté du message, crédibilité, storytelling, spécificité des exemples, adéquation avec la cible. Si tu n'as vraiment rien de nouveau à ajouter, réponds avec un tableau tips vide.
+Chaque conseil : une phrase courte à l'impératif, en français. Réponds UNIQUEMENT en JSON : {"tips":["...","..."]}`;
       const res = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
         headers: {
