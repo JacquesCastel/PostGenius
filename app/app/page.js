@@ -2864,6 +2864,73 @@ function EventsView({ profile, showToast, onGenerated }) {
 // ----------------------------------------------------------------
 const REMARK_EXAMPLES = "« trop long », « moins d'émojis », « plus de chiffres »…";
 
+// Suggestions de remarques déduites des modifications de l'utilisateur (« vous retirez
+// souvent les émojis »). Jamais appliquées seules : Ajouter ou Ignorer.
+function RemarkSuggestions({ onAccepted, showToast }) {
+  const [items, setItems] = useState([]);
+  const [busy, setBusy] = useState(null);
+
+  useEffect(() => {
+    fetch("/api/remarks/suggestions")
+      .then(readJson)
+      .then((d) => setItems(d.suggestions ?? []))
+      .catch(() => {});
+  }, []);
+
+  const respond = async (s, action) => {
+    setBusy(s.id);
+    try {
+      const res = await fetch(`/api/remarks/suggestions/${s.id}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action }),
+      });
+      const data = await readJson(res);
+      if (!res.ok) throw new Error(data.error || "Erreur");
+      setItems((list) => list.filter((x) => x.id !== s.id));
+      if (action === "accept") {
+        showToast("Remarque ajoutée ✓");
+        onAccepted?.(data.remark);
+      }
+    } catch (e) {
+      showToast(e.message);
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  if (!items.length) return null;
+  return (
+    <div className="rounded-xl bg-amber-50 border border-amber-200 p-3 space-y-3 mb-3">
+      <p className="text-xs font-semibold text-amber-800 flex items-center gap-1.5">
+        <Lightbulb size={13} /> D'après vos modifications, voulez-vous ajouter ?
+      </p>
+      {items.map((s) => (
+        <div key={s.id}>
+          <p className="text-sm text-gray-800 font-medium">{s.text}</p>
+          <p className="text-xs text-gray-500 mt-0.5">{s.evidence}</p>
+          <div className="flex gap-2 mt-1.5">
+            <button
+              onClick={() => respond(s, "accept")}
+              disabled={busy === s.id}
+              className="bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white text-xs font-medium px-3 py-1 rounded-lg"
+            >
+              Ajouter
+            </button>
+            <button
+              onClick={() => respond(s, "dismiss")}
+              disabled={busy === s.id}
+              className="text-xs text-gray-500 hover:text-gray-800 px-2 py-1"
+            >
+              Ignorer
+            </button>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function RemarkBox({ onApplyNow, onManage, showToast }) {
   const [text, setText] = useState("");
   const [applyNow, setApplyNow] = useState(false);
@@ -2911,6 +2978,7 @@ function RemarkBox({ onApplyNow, onManage, showToast }) {
       <p className="text-xs text-gray-400 mt-1 mb-3">
         Enregistrée pour tous vos futurs posts (ex : {REMARK_EXAMPLES}). Pour modifier seulement ce post, utilisez « Retoucher avec l'IA ».
       </p>
+      <RemarkSuggestions onAccepted={(r) => r && setCount((c) => (c ?? 0) + 1)} showToast={showToast} />
       <div className="flex flex-wrap gap-2">
         <input
           type="text"
@@ -3003,6 +3071,7 @@ function RemarksManager({ showToast }) {
       <p className="text-xs text-gray-400 mt-0.5 mb-2">
         Ajoutées sous un post généré ou ici. L'IA les applique à chaque nouveau post, y compris en pilote automatique. Supprimez celles qui ne vous servent plus.
       </p>
+      <RemarkSuggestions onAccepted={(r) => r && setRemarks((list) => [...(list ?? []), r])} showToast={showToast} />
       {remarks === null ? (
         <p className="text-xs text-gray-400">Chargement…</p>
       ) : (
@@ -8519,6 +8588,9 @@ export default function Home() {
         body: JSON.stringify({
           ...form,
           text: result.text,
+          // Version d'origine de l'IA (la plus ancienne de l'historique) : sert à repérer
+          // ce que l'utilisateur modifie d'habitude.
+          generatedText: (history[0] ?? result).text,
           extra: result.extra,
           inspirationUrl: inspiration?.link ?? null,
           imageUrl: postImage?.url ?? null,

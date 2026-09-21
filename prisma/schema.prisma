@@ -127,6 +127,8 @@ model User {
   // --- Copilote éditorial ---
   editorialPillars   EditorialPillar[]
   postRemarks        PostRemark[]
+  remarkSuggestions  RemarkSuggestion[]
+  remarkAnalysisAt   DateTime? // dernière analyse des modifications de posts (suggestions de remarques)
   editorialRecos     EditorialRecommendation[]
 }
 
@@ -280,6 +282,9 @@ model Draft {
   tone      String
   maxChars  Int
   text      String
+  // Texte tel que produit par l'IA, avant les modifications de l'utilisateur : sert à repérer
+  // ses habitudes d'édition (suggestions de remarques). Absent des anciens brouillons.
+  generatedText String?
   extra     String? // JSON (plan carrousel / script vidéo)
   status    String   @default("brouillon") // brouillon | programmé | publié | erreur
   postId    String? // x-restli-id LinkedIn après publication
@@ -414,4 +419,22 @@ model PostRemark {
   createdAt DateTime @default(now())
 
   @@index([userId, createdAt])
+}
+
+// Suggestion de remarque déduite des modifications que l'utilisateur apporte aux posts
+// générés ("vous retirez souvent les émojis"). Jamais appliquée seule : l'utilisateur
+// l'accepte (elle devient une PostRemark) ou l'ignore.
+model RemarkSuggestion {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  text        String // la remarque proposée
+  key         String    @default("llm") // motif (emojis | length | hashtags | question | llm) : un motif refusé n'est pas reproposé
+  evidence    String // ce qui a été observé, en une phrase
+  quote       String? // phrase citée par le modèle (motifs de fond) : sert à ne pas reproposer le même motif reformulé
+  status      String    @default("proposée") // proposée | acceptée | ignorée
+  createdAt   DateTime  @default(now())
+  respondedAt DateTime?
+
+  @@index([userId, status])
 }
