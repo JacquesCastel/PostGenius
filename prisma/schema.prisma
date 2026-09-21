@@ -391,7 +391,7 @@ model EditorialRecommendation {
   pillarId String?
   pillar   EditorialPillar? @relation(fields: [pillarId], references: [id], onDelete: SetNull)
 
-  status     String    @default("proposée") // proposée | générée | planifiée | ignorée | rejetée
+  status     String    @default("proposée") // proposée | générée | planifiée | ignorée | rejetée | remplacée (régénération auto, neutre pour l'apprentissage)
   respondedAt DateTime? // horodatage du feedback utilisateur
 
   draftId String? @unique

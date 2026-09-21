@@ -3785,7 +3785,7 @@ function EditorialRecoWidget({ onGenerate, showToast, profile, onProfileSaved, o
         </button>
       </div>
       <p className="text-xs text-gray-400 mb-3">
-        Construites à partir de votre profil, de vos piliers éditoriaux et de votre historique de publication.{" "}
+        Construites à partir de votre profil, de vos piliers éditoriaux, de votre historique de publication et de vos remarques.{" "}
         <button onClick={onGoCopilot} className="text-[#0a66c2] hover:underline">
           Voir le détail dans Copilote IA →
         </button>
