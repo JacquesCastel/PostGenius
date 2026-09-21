@@ -17,12 +17,19 @@ export async function POST(req) {
   const gate = await checkFeature(userId, "scoring", "L'optimisation du post");
   if (!gate.ok) return NextResponse.json({ error: gate.error }, { status: 403 });
 
-  const { text, type, scope = "all" } = await req.json();
+  const { text, type, scope = "all", tips } = await req.json();
   if (!text?.trim()) return NextResponse.json({ error: "Texte requis." }, { status: 400 });
 
-  // Liste des améliorations à appliquer (critères non réussis)
+  // Liste des améliorations à appliquer : critères de forme non réussis (heuristique)
+  // + conseils de fond affichés à l'utilisateur (panneau "Conseils personnalisés (IA)"),
+  // pour que "Réécrire avec ces conseils" applique bien tout ce qui est visible à l'écran.
   const heur = scorePost({ text, type });
   const improvements = heur.factors.filter((f) => !f.ok).map((f) => `- ${f.label} : ${f.advice}`);
+  const tipLines = (Array.isArray(tips) ? tips : [])
+    .filter((t) => typeof t === "string" && t.trim())
+    .slice(0, 3)
+    .map((t) => `- Conseil de fond : ${t.trim().slice(0, 300)}`);
+  improvements.push(...tipLines);
 
   // Périmètre de la réécriture
   const SCOPE = {
@@ -49,7 +56,7 @@ PÉRIMÈTRE : ${scopeInstruction}
 Améliore le post pour MAXIMISER son potentiel d'engagement, en appliquant ces pistes (uniquement sur la partie concernée par le périmètre ci-dessus) :
 ${improvements.length ? improvements.join("\n") : "- Renforce l'accroche, l'aération et l'incitation à commenter."}
 
-Règles :
+Règles :${scope === "hook" || scope === "all" ? "\n- La première ligne (accroche) doit faire MOINS de 90 caractères et contenir une tension (question, chiffre ou promesse) : elle seule s'affiche avant le « voir plus »." : ""}
 - Garde le même sujet, la même langue (français) et le même message.
 - Respecte le ton ${user?.tone ? `"${user.tone}"` : "de l'auteur"}.${user?.styleNotes ? `\n- Consignes de style à respecter : ${user.styleNotes}.` : ""}
 - Réponds UNIQUEMENT avec le texte du post complet réécrit (aucun commentaire autour).`;

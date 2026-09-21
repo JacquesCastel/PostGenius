@@ -2858,7 +2858,7 @@ function EventsView({ profile, showToast, onGenerated }) {
 // ----------------------------------------------------------------
 // Score de potentiel d'engagement (heuristique instantanée + conseils IA)
 // ----------------------------------------------------------------
-function ScorePanel({ text, type, recomputing }) {
+function ScorePanel({ text, type, recomputing, onTips }) {
   const heur = scorePost({ text, type });
   const [tips, setTips] = useState(null);
   const [display, setDisplay] = useState(heur.score);
@@ -2881,6 +2881,7 @@ function ScorePanel({ text, type, recomputing }) {
   useEffect(() => {
     let cancel = false;
     setTips(null);
+    onTips?.(null);
     fetch("/api/score", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -2888,10 +2889,14 @@ function ScorePanel({ text, type, recomputing }) {
     })
       .then(readJson)
       .then((d) => {
-        if (!cancel) setTips(d.tips || []);
+        if (cancel) return;
+        setTips(d.tips || []);
+        onTips?.(d.tips || []);
       })
       .catch(() => {
-        if (!cancel) setTips([]);
+        if (cancel) return;
+        setTips([]);
+        onTips?.([]);
       });
     return () => {
       cancel = true;
@@ -7783,7 +7788,8 @@ export default function Home() {
   const [upgrade, setUpgrade] = useState(null); // { feature } quand on clique une fonctionnalité verrouillée
   const [optimizeText, setOptimizeText] = useState(null); // { text, type } → page Étape 2 plein écran
   const [rewriting, setRewriting] = useState(false);
-  const [rewriteScope, setRewriteScope] = useState("all"); // all | hook | body | signature
+  const [rewriteScope, setRewriteScope] = useState("all"); // all | hook | body | signature (= conclusion + appel à l'action)
+  const [scoreTips, setScoreTips] = useState(null); // conseils IA affichés dans ScorePanel, appliqués aussi par la réécriture
   const [versions, setVersions] = useState([]); // historique de versions { id, text, label, score }
   const [showTutorial, setShowTutorial] = useState(false); // tutoriel de première connexion
 
@@ -7870,11 +7876,11 @@ export default function Home() {
       const res = await fetch("/api/score/rewrite", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: optimizeText.text, type: optimizeText.type, scope: rewriteScope }),
+        body: JSON.stringify({ text: optimizeText.text, type: optimizeText.type, scope: rewriteScope, tips: scoreTips ?? [] }),
       });
       const d = await readJson(res);
       if (!res.ok) throw new Error(d.error);
-      const label = { all: "Réécriture complète", hook: "Accroche", body: "Corps", signature: "Signature" }[rewriteScope] || "Réécriture";
+      const label = { all: "Réécriture complète", hook: "Accroche", body: "Corps", signature: "Conclusion & appel à l'action" }[rewriteScope] || "Réécriture";
       persistOptimized(d.text);
       setVersions((vs) => [...vs, { id: Date.now(), text: d.text, label, score: scorePost({ text: d.text, type: optimizeText.type }).score }]);
       showToast("Post réécrit ✓");
@@ -8814,18 +8820,19 @@ export default function Home() {
               {/* Niveau de réécriture (comme le choix du format) — réservé Pro/Agence */}
               {canScore && (
                 <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
-                  <p className="text-xs font-semibold text-gray-500 mb-2">Niveau de réécriture</p>
+                  <p className="text-xs font-semibold text-gray-500 mb-0.5">Partie à réécrire</p>
+                  <p className="text-[11px] text-gray-400 mb-2">Le reste du post reste identique. La réécriture applique les points en rouge et les conseils IA à droite.</p>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                     {[
                       { id: "all", label: "Tout le post" },
                       { id: "hook", label: "Accroche" },
                       { id: "body", label: "Corps" },
-                      { id: "signature", label: "Signature" },
+                      { id: "signature", label: "Conclusion & appel à l'action" },
                     ].map((s) => (
                       <button
                         key={s.id}
                         onClick={() => setRewriteScope(s.id)}
-                        className={`text-sm font-medium px-3 py-2 rounded-xl border transition-colors ${
+                        className={`text-sm font-medium leading-tight px-3 py-2 rounded-xl border transition-colors ${
                           rewriteScope === s.id
                             ? "bg-[#ff5a5f] text-white border-[#ff5a5f]"
                             : "bg-white text-[#1b2a4a] border-gray-200 hover:border-[#ffd5d6]"
@@ -8894,7 +8901,7 @@ export default function Home() {
             </div>
             {/* Droite : module d'optimisation (réservé Pro/Agence) */}
             {canScore ? (
-              <ScorePanel text={optimizeText.text} type={optimizeText.type} recomputing={rewriting} />
+              <ScorePanel text={optimizeText.text} type={optimizeText.type} recomputing={rewriting} onTips={setScoreTips} />
             ) : (
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 md:p-8 text-center">
                 <div className="w-14 h-14 rounded-2xl bg-[#fff1f1] text-[#ff5a5f] flex items-center justify-center mx-auto mb-4">

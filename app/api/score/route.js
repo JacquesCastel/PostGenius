@@ -38,7 +38,7 @@ Un contrôle automatique a déjà évalué ces critères de forme :
 ${alreadyChecked}
 
 Donne 2 à 3 conseils COMPLÉMENTAIRES, qui n'ont rien à voir avec la liste ci-dessus (ne répète jamais un point déjà couvert, même reformulé). Concentre-toi sur le FOND : clarté du message, crédibilité, storytelling, spécificité des exemples, adéquation avec la cible. Si tu n'as vraiment rien de nouveau à ajouter, réponds avec un tableau tips vide.
-Chaque conseil : une phrase courte à l'impératif, en français. Réponds UNIQUEMENT en JSON : {"tips":["...","..."]}`;
+Chaque conseil : une phrase courte à l'impératif, en français, avec vouvoiement (« Ajoutez… », « Précisez… », jamais « Ajoute… » ni « ta cible »). Réponds UNIQUEMENT en JSON : {"tips":["...","..."]}`;
       const res = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
         headers: {
