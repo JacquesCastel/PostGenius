@@ -8230,6 +8230,7 @@ export default function Home() {
   const [resultDraftText, setResultDraftText] = useState("");
   const [refineInput, setRefineInput] = useState("");
   const [reanalyzing, setReanalyzing] = useState(false);
+  const [resultView, setResultView] = useState(false); // true : page dédiée au post généré (sinon paramètres + carte « Revoir le post »)
   const [genMode, setGenMode] = useState("single"); // single | series
   const [seriesCount, setSeriesCount] = useState(5);
   const [wantVariants, setWantVariants] = useState(false);
@@ -8449,8 +8450,10 @@ export default function Home() {
         setVariants(data.variants);
         setActiveVariant(0);
         setResult(data.variants[0]);
+        setResultView(true);
       } else {
         setResult(data);
+        setResultView(true);
       }
     } catch (e) {
       setError(e.message);
@@ -8610,6 +8613,7 @@ export default function Home() {
   };
 
   const clearResultArea = () => {
+    setResultView(false);
     setResult(null);
     setVariants(null);
     setHistory([]);
@@ -9117,12 +9121,18 @@ export default function Home() {
     );
   };
 
+  // Page dédiée au post généré : pendant une régénération (result vide, loading) on y reste
+  // pour ne pas basculer sur le formulaire.
+  const showResultPage = resultView && !seriesResult && (Boolean(result) || loading);
+
   // "Mes posts" : ne montre que les posts du profil actuellement sélectionné
   // dans "Publier en tant que" (même sélecteur, réutilisé comme filtre d'affichage).
   const postsForTarget = drafts.filter((d) => (d.target || "person") === target);
 
+  // overflow-x-clip et non -hidden : hidden ferait de la racine un conteneur de défilement et
+  // casserait position: sticky (barre latérale, barres d'actions).
   return (
-    <div className="min-h-screen flex overflow-x-hidden">
+    <div className="min-h-screen flex overflow-x-clip">
       {/* Tutoriel de première connexion */}
       {showTutorial && <TutorialOverlay canEvents={planAllows(user, "events")} onClose={closeTutorial} />}
 
@@ -9641,6 +9651,347 @@ export default function Home() {
             }
           }}
         />
+      ) : view === "create" && showResultPage ? (
+        <main className="max-w-6xl mx-auto p-6 space-y-5">
+            {/* Barre d'actions — en haut à droite dès la génération */}
+          {result && (
+              <div className="sticky top-4 z-30 bg-white/95 backdrop-blur rounded-xl border border-[#ffd5d6] ring-1 ring-[#ffe0e0] shadow-md p-3 flex items-center justify-between flex-wrap gap-2">
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => setResultView(false)}
+                    className="text-xs font-medium text-gray-500 hover:text-[#ff5a5f] flex items-center gap-1"
+                    title="Modifier les paramètres du post"
+                  >
+                    <ChevronLeft size={14} /> Paramètres
+                  </button>
+                  <span className="text-sm font-medium text-green-700 flex items-center gap-1.5">
+                    <Check size={15} /> Post prêt
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5 flex-wrap justify-end">
+                  {linkedin.connected && linkedin.orgConnected && orgs.length > 0 && (
+                    <select
+                      value={target}
+                      onChange={(e) => setTarget(e.target.value)}
+                      className="border border-gray-300 rounded-lg px-2 py-1.5 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
+                      title="Compte de publication"
+                    >
+                      <option value="person">Profil perso</option>
+                      {orgs.map((o) => (
+                        <option key={o.urn} value={o.urn}>
+                          {o.name}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                  <button
+                    onClick={() => {
+                      setResultDraftText(result.text);
+                      setEditingResult(true);
+                    }}
+                    disabled={editingResult}
+                    className="border border-gray-300 hover:border-[#ff5a5f] hover:text-[#ff5a5f] disabled:opacity-50 text-gray-700 text-xs font-medium px-3 py-1.5 rounded-lg flex items-center gap-1.5"
+                  >
+                    <PenLine size={13} /> Modifier
+                  </button>
+                  <button
+                    onClick={saveDraftFlow}
+                    className="border border-gray-300 hover:border-[#ff5a5f] hover:text-[#ff5a5f] text-gray-700 text-xs font-medium px-3 py-1.5 rounded-lg flex items-center gap-1.5"
+                  >
+                    <Save size={13} /> Brouillon
+                  </button>
+                  <button
+                    onClick={scheduleNow}
+                    className="bg-amber-500 hover:bg-amber-600 text-white text-xs font-medium px-3 py-1.5 rounded-lg flex items-center gap-1.5"
+                  >
+                    <Clock size={13} /> Programmer
+                  </button>
+                  <button
+                    onClick={publishNow}
+                    disabled={publishingId !== null || !linkedin.connected}
+                    title={!linkedin.connected ? "Connectez d'abord votre compte LinkedIn" : undefined}
+                    className="bg-[#0a66c2] hover:bg-[#004182] disabled:bg-gray-300 text-white text-xs font-medium px-3 py-1.5 rounded-lg flex items-center gap-1.5"
+                  >
+                    {publishingId !== null ? (
+                      <RefreshCw size={13} className="animate-spin" />
+                    ) : (
+                      <Send size={13} />
+                    )}
+                    Publier
+                  </button>
+                  {instagram && postImage && (
+                    <button
+                      onClick={async () => {
+                        const d = await saveDraft({ silent: true });
+                        if (!d) return;
+                        try {
+                          const res = await fetch("/api/instagram/publish", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ draftId: d.id }),
+                          });
+                          const data = await readJson(res);
+                          if (!res.ok) throw new Error(data.error || "Erreur Instagram");
+                          setDrafts((prev) => prev.map((x) => x.id === d.id ? { ...x, igPostId: data.igPostId, igStatus: "published" } : x));
+                          showToast("Publié sur Instagram ✓");
+                        } catch (e) {
+                          showToast("Instagram : " + e.message);
+                        }
+                      }}
+                      className="bg-gradient-to-r from-pink-500 to-orange-400 hover:from-pink-600 hover:to-orange-500 text-white text-xs font-medium px-3 py-1.5 rounded-lg flex items-center gap-1.5"
+                      title="Publier ce post (avec son image) sur Instagram"
+                    >
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+                      Instagram
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+
+
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl p-4 text-sm flex items-start gap-2">
+              <AlertCircle size={16} className="mt-0.5 shrink-0" />
+              {error}
+            </div>
+          )}
+
+          <div className="grid lg:grid-cols-2 gap-6 items-start">
+            {/* Gauche : le post */}
+            <div className="space-y-4 lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto lg:p-1 lg:-m-1">
+            {result && variants && (
+              <div className="flex items-center gap-1.5 flex-wrap">
+                {variants.map((v, i) => (
+                  <button
+                    key={i}
+                    onClick={() => {
+                      if (i === activeVariant) return;
+                      setActiveVariant(i);
+                      setResult(variants[i]);
+                      setHistory([]);
+                      setEditingResult(false);
+                    }}
+                    className={`text-xs px-3 py-1.5 rounded-full border font-medium ${
+                      i === activeVariant
+                        ? "bg-[#ff5a5f] text-white border-[#ff5a5f]"
+                        : "border-gray-300 text-gray-600 hover:border-[#ff8a8d]"
+                    }`}
+                  >
+                    Variante {i + 1}
+                  </button>
+                ))}
+              </div>
+            )}
+
+
+              {loading && (
+                <div className="text-xs text-gray-500 flex items-center gap-1.5">
+                  <RefreshCw size={12} className="animate-spin text-[#ff5a5f]" />
+                  {result ? "Claude retouche votre post…" : "Claude rédige votre post…"}
+                </div>
+              )}
+              {result ? (
+                <>
+                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+                  <div className="flex items-center justify-between mb-3">
+                    <span
+                      className={`text-xs font-medium uppercase tracking-wide ${
+                        (editingResult ? resultDraftText : result.text).length > 3000
+                          ? "text-red-600"
+                          : "text-gray-500"
+                      }`}
+                    >
+                      Aperçu · {(editingResult ? resultDraftText : result.text).length} / 3000 caractères
+                    </span>
+                    <div className="flex gap-2">
+                      {history.length > 0 && (
+                        <button
+                          onClick={undoResult}
+                          className="text-amber-600 hover:text-amber-800 p-1.5 rounded hover:bg-amber-50 flex items-center gap-1 text-xs font-medium"
+                          title="Revenir à la version précédente"
+                        >
+                          <Undo2 size={16} /> v-{history.length}
+                        </button>
+                      )}
+                      <button
+                        onClick={() => handleCopy(result.text)}
+                        className="text-gray-500 hover:text-[#ff5a5f] p-1.5 rounded hover:bg-gray-100"
+                        title="Copier"
+                      >
+                        {copied ? <Check size={16} className="text-green-600" /> : <Copy size={16} />}
+                      </button>
+                      <button
+                        onClick={handleGenerate}
+                        className="text-gray-500 hover:text-[#ff5a5f] p-1.5 rounded hover:bg-gray-100"
+                        title="Tout régénérer"
+                      >
+                        <RefreshCw size={16} />
+                      </button>
+                    </div>
+                  </div>
+
+                  {editingResult ? (
+                    <div className="space-y-2">
+                      <textarea
+                        value={resultDraftText}
+                        onChange={(e) => setResultDraftText(e.target.value)}
+                        rows={12}
+                        autoFocus
+                        className="w-full border border-gray-300 rounded-lg p-3 text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
+                      />
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => {
+                            setHistory((h) => [...h, result]);
+                            setResult((r) => ({ ...r, text: resultDraftText }));
+                            setEditingResult(false);
+                          }}
+                          className="bg-[#ff5a5f] text-white text-sm px-4 py-1.5 rounded-lg flex items-center gap-1.5"
+                        >
+                          <Check size={14} /> Valider
+                        </button>
+                        <button
+                          onClick={() => setEditingResult(false)}
+                          className="text-gray-500 text-sm px-3 py-1.5 rounded-lg hover:bg-gray-100 flex items-center gap-1.5"
+                        >
+                          <X size={14} /> Annuler
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <pre className="whitespace-pre-wrap text-sm font-sans leading-relaxed">{result.text}</pre>
+                  )}
+
+                </div>
+
+                {result.extra && (
+                  <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+                    <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                      {form.type === "carrousel" ? <Layers size={16} /> : <Video size={16} />}
+                      {result.extra.title}
+                    </h3>
+                    <ul className="space-y-2">
+                      {result.extra.items?.map((item, i) => (
+                        <li key={i} className="flex items-start gap-2 text-sm text-gray-700">
+                          <ChevronRight size={14} className="text-[#ff5a5f] mt-0.5 shrink-0" />
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                </>
+              ) : (
+                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-12 text-center text-gray-400">
+                  <RefreshCw size={32} className="mx-auto mb-3 animate-spin text-[#ff5a5f]" />
+                  <p className="text-sm">Claude rédige votre post…</p>
+                </div>
+              )}
+            </div>
+
+            {/* Droite : pourquoi ce post, remarque, optimisation, retouche texte et image */}
+            {result && (
+              <div className="space-y-4">
+                {!editingResult && result?.why && (
+                  <PostWhy text={result.text} why={result.why} onReanalyze={reanalyzeWhy} reanalyzing={reanalyzing} />
+                )}
+
+                {!editingResult && result?.text && (
+                  <RemarkBox onApplyNow={handleRefine} onManage={() => setView("profile")} showToast={showToast} />
+                )}
+
+                {!editingResult && result?.text && canScore && (
+                  <button
+                    onClick={() => openOptimize(result.text, form?.type)}
+                    className="w-full flex items-center justify-between gap-2 bg-[#fff1f1] hover:bg-[#ffe0e0] text-[#1b2a4a] rounded-2xl px-5 py-4 transition-colors"
+                  >
+                    <span className="flex items-center gap-2.5 text-left">
+                      <span className="bg-[#ff5a5f] text-white p-2 rounded-xl shrink-0">
+                        <BarChart3 size={18} />
+                      </span>
+                      <span>
+                        <span className="block font-bold text-sm">Voir et optimiser le potentiel d'engagement</span>
+                        <span className="block text-xs text-[#5a6b85]">Étape 2 — score détaillé + conseils pour améliorer votre post</span>
+                      </span>
+                    </span>
+                    <ChevronRight size={20} className="text-[#ff5a5f] shrink-0" />
+                  </button>
+                )}
+                {!editingResult && result?.text && !canScore && (
+                  <button
+                    onClick={() => setUpgrade({ feature: "Le score d'engagement" })}
+                    className="w-full flex items-center justify-between gap-2 bg-gray-50 hover:bg-gray-100 text-gray-500 rounded-2xl px-5 py-4 transition-colors"
+                  >
+                    <span className="flex items-center gap-2.5 text-left">
+                      <span className="bg-gray-200 text-gray-400 p-2 rounded-xl shrink-0">
+                        <BarChart3 size={18} />
+                      </span>
+                      <span>
+                        <span className="block font-bold text-sm flex items-center gap-1.5">
+                          Score & optimisation d'engagement <Lock size={13} />
+                        </span>
+                        <span className="block text-xs text-gray-400">Inclus à partir de l'offre Pro — cliquez pour découvrir</span>
+                      </span>
+                    </span>
+                    <ArrowUpCircle size={20} className="text-[#ff5a5f] shrink-0" />
+                  </button>
+                )}
+
+                {/* Retoucher avec l'IA : le texte et l'image au même endroit */}
+                <div className="space-y-3">
+                  <p className="text-sm font-semibold flex items-center gap-2 px-1">
+                    <Sparkles size={15} className="text-[#ff5a5f]" /> Retoucher avec l'IA
+                    <span className="text-xs text-gray-400 font-normal">texte et image</span>
+                  </p>
+                  {!editingResult && (
+                    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+                      <p className="text-xs font-medium text-gray-500 mb-2">Le texte</p>
+                    <div className="flex flex-wrap gap-1.5 mb-2">
+                      {["Plus court", "Plus percutant", "Moins formel", "Ajoute une anecdote"].map((s) => (
+                        <button
+                          key={s}
+                          onClick={() => handleRefine(s)}
+                          disabled={loading}
+                          className="text-xs bg-gray-100 hover:bg-[#fff1f1] hover:text-[#f63d44] disabled:opacity-50 text-gray-600 px-2.5 py-1 rounded-full"
+                        >
+                          {s}
+                        </button>
+                      ))}
+                    </div>
+                    <form
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        handleRefine(refineInput);
+                      }}
+                      className="flex flex-wrap gap-2"
+                    >
+                      <input
+                        type="text"
+                        value={refineInput}
+                        onChange={(e) => setRefineInput(e.target.value)}
+                        placeholder="Consigne libre : « insiste sur le ROI », « termine par une question »…"
+                        className="flex-1 min-w-[10rem] border border-gray-300 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
+                      />
+                      <button
+                        type="submit"
+                        disabled={loading || !refineInput.trim()}
+                        className="bg-gray-900 hover:bg-gray-700 disabled:bg-gray-300 text-white text-xs px-3 py-1.5 rounded-lg"
+                      >
+                        Appliquer
+                      </button>
+                    </form>
+                  </div>
+                )}
+                  {/* Image du post — reste accessible en mode modification, et partagée avec
+                      l'écran "Optimiser mes posts" via renderImageBlock(). */}
+                  {renderImageBlock()}
+                </div>
+              </div>
+            )}
+          </div>
+        </main>
       ) : view === "create" ? (
         <main className="max-w-6xl mx-auto p-6 grid md:grid-cols-2 gap-6">
           <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-5 h-fit">
@@ -9870,301 +10221,18 @@ export default function Home() {
                 </p>
               </div>
             )}
-            {/* Barre d'actions — en haut à droite dès la génération */}
             {result && (
-              <div className="sticky top-4 z-20 bg-white/95 backdrop-blur rounded-xl border border-[#ffd5d6] ring-1 ring-[#ffe0e0] shadow-md p-3 flex items-center justify-between flex-wrap gap-2">
+              <div className="bg-white rounded-2xl border border-[#ffd5d6] shadow-sm p-5 flex items-center justify-between gap-3 flex-wrap">
                 <span className="text-sm font-medium text-green-700 flex items-center gap-1.5">
-                  <Check size={15} /> Post prêt
+                  <Check size={15} /> Votre post est prêt
                 </span>
-                <div className="flex items-center gap-1.5 flex-wrap justify-end">
-                  {linkedin.connected && linkedin.orgConnected && orgs.length > 0 && (
-                    <select
-                      value={target}
-                      onChange={(e) => setTarget(e.target.value)}
-                      className="border border-gray-300 rounded-lg px-2 py-1.5 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
-                      title="Compte de publication"
-                    >
-                      <option value="person">Profil perso</option>
-                      {orgs.map((o) => (
-                        <option key={o.urn} value={o.urn}>
-                          {o.name}
-                        </option>
-                      ))}
-                    </select>
-                  )}
-                  <button
-                    onClick={() => {
-                      setResultDraftText(result.text);
-                      setEditingResult(true);
-                    }}
-                    disabled={editingResult}
-                    className="border border-gray-300 hover:border-[#ff5a5f] hover:text-[#ff5a5f] disabled:opacity-50 text-gray-700 text-xs font-medium px-3 py-1.5 rounded-lg flex items-center gap-1.5"
-                  >
-                    <PenLine size={13} /> Modifier
-                  </button>
-                  <button
-                    onClick={saveDraftFlow}
-                    className="border border-gray-300 hover:border-[#ff5a5f] hover:text-[#ff5a5f] text-gray-700 text-xs font-medium px-3 py-1.5 rounded-lg flex items-center gap-1.5"
-                  >
-                    <Save size={13} /> Brouillon
-                  </button>
-                  <button
-                    onClick={scheduleNow}
-                    className="bg-amber-500 hover:bg-amber-600 text-white text-xs font-medium px-3 py-1.5 rounded-lg flex items-center gap-1.5"
-                  >
-                    <Clock size={13} /> Programmer
-                  </button>
-                  <button
-                    onClick={publishNow}
-                    disabled={publishingId !== null || !linkedin.connected}
-                    title={!linkedin.connected ? "Connectez d'abord votre compte LinkedIn" : undefined}
-                    className="bg-[#0a66c2] hover:bg-[#004182] disabled:bg-gray-300 text-white text-xs font-medium px-3 py-1.5 rounded-lg flex items-center gap-1.5"
-                  >
-                    {publishingId !== null ? (
-                      <RefreshCw size={13} className="animate-spin" />
-                    ) : (
-                      <Send size={13} />
-                    )}
-                    Publier
-                  </button>
-                  {instagram && postImage && (
-                    <button
-                      onClick={async () => {
-                        const d = await saveDraft({ silent: true });
-                        if (!d) return;
-                        try {
-                          const res = await fetch("/api/instagram/publish", {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({ draftId: d.id }),
-                          });
-                          const data = await readJson(res);
-                          if (!res.ok) throw new Error(data.error || "Erreur Instagram");
-                          setDrafts((prev) => prev.map((x) => x.id === d.id ? { ...x, igPostId: data.igPostId, igStatus: "published" } : x));
-                          showToast("Publié sur Instagram ✓");
-                        } catch (e) {
-                          showToast("Instagram : " + e.message);
-                        }
-                      }}
-                      className="bg-gradient-to-r from-pink-500 to-orange-400 hover:from-pink-600 hover:to-orange-500 text-white text-xs font-medium px-3 py-1.5 rounded-lg flex items-center gap-1.5"
-                      title="Publier ce post (avec son image) sur Instagram"
-                    >
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
-                      Instagram
-                    </button>
-                  )}
-                </div>
+                <button
+                  onClick={() => setResultView(true)}
+                  className="bg-[#ff5a5f] hover:bg-[#f63d44] text-white text-sm font-medium px-4 py-2 rounded-lg flex items-center gap-1.5"
+                >
+                  Revoir le post <ChevronRight size={15} />
+                </button>
               </div>
-            )}
-
-            {result && variants && (
-              <div className="flex items-center gap-1.5 flex-wrap">
-                {variants.map((v, i) => (
-                  <button
-                    key={i}
-                    onClick={() => {
-                      if (i === activeVariant) return;
-                      setActiveVariant(i);
-                      setResult(variants[i]);
-                      setHistory([]);
-                      setEditingResult(false);
-                    }}
-                    className={`text-xs px-3 py-1.5 rounded-full border font-medium ${
-                      i === activeVariant
-                        ? "bg-[#ff5a5f] text-white border-[#ff5a5f]"
-                        : "border-gray-300 text-gray-600 hover:border-[#ff8a8d]"
-                    }`}
-                  >
-                    Variante {i + 1}
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {result && (
-              <>
-                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-                  <div className="flex items-center justify-between mb-3">
-                    <span
-                      className={`text-xs font-medium uppercase tracking-wide ${
-                        (editingResult ? resultDraftText : result.text).length > 3000
-                          ? "text-red-600"
-                          : "text-gray-500"
-                      }`}
-                    >
-                      Aperçu · {(editingResult ? resultDraftText : result.text).length} / 3000 caractères
-                    </span>
-                    <div className="flex gap-2">
-                      {history.length > 0 && (
-                        <button
-                          onClick={undoResult}
-                          className="text-amber-600 hover:text-amber-800 p-1.5 rounded hover:bg-amber-50 flex items-center gap-1 text-xs font-medium"
-                          title="Revenir à la version précédente"
-                        >
-                          <Undo2 size={16} /> v-{history.length}
-                        </button>
-                      )}
-                      <button
-                        onClick={() => handleCopy(result.text)}
-                        className="text-gray-500 hover:text-[#ff5a5f] p-1.5 rounded hover:bg-gray-100"
-                        title="Copier"
-                      >
-                        {copied ? <Check size={16} className="text-green-600" /> : <Copy size={16} />}
-                      </button>
-                      <button
-                        onClick={handleGenerate}
-                        className="text-gray-500 hover:text-[#ff5a5f] p-1.5 rounded hover:bg-gray-100"
-                        title="Tout régénérer"
-                      >
-                        <RefreshCw size={16} />
-                      </button>
-                    </div>
-                  </div>
-
-                  {editingResult ? (
-                    <div className="space-y-2">
-                      <textarea
-                        value={resultDraftText}
-                        onChange={(e) => setResultDraftText(e.target.value)}
-                        rows={12}
-                        autoFocus
-                        className="w-full border border-gray-300 rounded-lg p-3 text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
-                      />
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => {
-                            setHistory((h) => [...h, result]);
-                            setResult((r) => ({ ...r, text: resultDraftText }));
-                            setEditingResult(false);
-                          }}
-                          className="bg-[#ff5a5f] text-white text-sm px-4 py-1.5 rounded-lg flex items-center gap-1.5"
-                        >
-                          <Check size={14} /> Valider
-                        </button>
-                        <button
-                          onClick={() => setEditingResult(false)}
-                          className="text-gray-500 text-sm px-3 py-1.5 rounded-lg hover:bg-gray-100 flex items-center gap-1.5"
-                        >
-                          <X size={14} /> Annuler
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <pre className="whitespace-pre-wrap text-sm font-sans leading-relaxed">{result.text}</pre>
-                  )}
-
-                </div>
-
-                {!editingResult && result?.why && (
-                  <PostWhy text={result.text} why={result.why} onReanalyze={reanalyzeWhy} reanalyzing={reanalyzing} />
-                )}
-
-                {!editingResult && result?.text && (
-                  <RemarkBox onApplyNow={handleRefine} onManage={() => setView("profile")} showToast={showToast} />
-                )}
-
-                {!editingResult && result?.text && canScore && (
-                  <button
-                    onClick={() => openOptimize(result.text, form?.type)}
-                    className="w-full flex items-center justify-between gap-2 bg-[#fff1f1] hover:bg-[#ffe0e0] text-[#1b2a4a] rounded-2xl px-5 py-4 transition-colors"
-                  >
-                    <span className="flex items-center gap-2.5 text-left">
-                      <span className="bg-[#ff5a5f] text-white p-2 rounded-xl shrink-0">
-                        <BarChart3 size={18} />
-                      </span>
-                      <span>
-                        <span className="block font-bold text-sm">Voir et optimiser le potentiel d'engagement</span>
-                        <span className="block text-xs text-[#5a6b85]">Étape 2 — score détaillé + conseils pour améliorer votre post</span>
-                      </span>
-                    </span>
-                    <ChevronRight size={20} className="text-[#ff5a5f] shrink-0" />
-                  </button>
-                )}
-                {!editingResult && result?.text && !canScore && (
-                  <button
-                    onClick={() => setUpgrade({ feature: "Le score d'engagement" })}
-                    className="w-full flex items-center justify-between gap-2 bg-gray-50 hover:bg-gray-100 text-gray-500 rounded-2xl px-5 py-4 transition-colors"
-                  >
-                    <span className="flex items-center gap-2.5 text-left">
-                      <span className="bg-gray-200 text-gray-400 p-2 rounded-xl shrink-0">
-                        <BarChart3 size={18} />
-                      </span>
-                      <span>
-                        <span className="block font-bold text-sm flex items-center gap-1.5">
-                          Score & optimisation d'engagement <Lock size={13} />
-                        </span>
-                        <span className="block text-xs text-gray-400">Inclus à partir de l'offre Pro — cliquez pour découvrir</span>
-                      </span>
-                    </span>
-                    <ArrowUpCircle size={20} className="text-[#ff5a5f] shrink-0" />
-                  </button>
-                )}
-
-                {/* Image du post — reste accessible en mode modification (bug rapporté :
-                    impossible de générer une image tant qu'on éditait le texte), et
-                    partagée avec l'écran "Optimiser mes posts" via renderImageBlock(). */}
-                {renderImageBlock()}
-
-                {result.extra && (
-                  <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-                    <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
-                      {form.type === "carrousel" ? <Layers size={16} /> : <Video size={16} />}
-                      {result.extra.title}
-                    </h3>
-                    <ul className="space-y-2">
-                      {result.extra.items?.map((item, i) => (
-                        <li key={i} className="flex items-start gap-2 text-sm text-gray-700">
-                          <ChevronRight size={14} className="text-[#ff5a5f] mt-0.5 shrink-0" />
-                          {item}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-
-                {/* Retouches rapides par IA — sticky en bas pendant le scroll */}
-                {!editingResult && (
-                  <div className="sticky bottom-4 z-20 bg-white/95 backdrop-blur rounded-2xl border border-gray-100 shadow-sm shadow-md p-4">
-                    <p className="text-xs font-medium text-gray-500 mb-2 flex items-center gap-1.5">
-                      <Sparkles size={12} /> Retoucher avec l'IA
-                    </p>
-                    <div className="flex flex-wrap gap-1.5 mb-2">
-                      {["Plus court", "Plus percutant", "Moins formel", "Ajoute une anecdote"].map((s) => (
-                        <button
-                          key={s}
-                          onClick={() => handleRefine(s)}
-                          disabled={loading}
-                          className="text-xs bg-gray-100 hover:bg-[#fff1f1] hover:text-[#f63d44] disabled:opacity-50 text-gray-600 px-2.5 py-1 rounded-full"
-                        >
-                          {s}
-                        </button>
-                      ))}
-                    </div>
-                    <form
-                      onSubmit={(e) => {
-                        e.preventDefault();
-                        handleRefine(refineInput);
-                      }}
-                      className="flex flex-wrap gap-2"
-                    >
-                      <input
-                        type="text"
-                        value={refineInput}
-                        onChange={(e) => setRefineInput(e.target.value)}
-                        placeholder="Consigne libre : « insiste sur le ROI », « termine par une question »…"
-                        className="flex-1 min-w-[10rem] border border-gray-300 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
-                      />
-                      <button
-                        type="submit"
-                        disabled={loading || !refineInput.trim()}
-                        className="bg-gray-900 hover:bg-gray-700 disabled:bg-gray-300 text-white text-xs px-3 py-1.5 rounded-lg"
-                      >
-                        Appliquer
-                      </button>
-                    </form>
-                  </div>
-                )}
-              </>
             )}
 
             {/* Wizard : étape suivante après une action */}
