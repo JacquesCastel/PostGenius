@@ -2857,6 +2857,202 @@ function EventsView({ profile, showToast, onGenerated }) {
 }
 
 // ----------------------------------------------------------------
+// Remarques pour les futurs posts. Deux vues sur la même liste (API /api/remarks) :
+// - RemarkBox : saisie rapide sous un post généré (+ option « appliquer aussi à ce post »)
+// - RemarksManager : liste visible et supprimable dans Profil
+// L'IA les applique à chaque nouveau post (manuel, pilote automatique, réécriture).
+// ----------------------------------------------------------------
+const REMARK_EXAMPLES = "« trop long », « moins d'émojis », « plus de chiffres »…";
+
+function RemarkBox({ onApplyNow, onManage, showToast }) {
+  const [text, setText] = useState("");
+  const [applyNow, setApplyNow] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [count, setCount] = useState(null);
+
+  useEffect(() => {
+    fetch("/api/remarks")
+      .then(readJson)
+      .then((d) => setCount(d.remarks?.length ?? 0))
+      .catch(() => {});
+  }, []);
+
+  const save = async () => {
+    const remark = text.trim();
+    if (!remark || saving) return;
+    setSaving(true);
+    try {
+      const res = await fetch("/api/remarks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: remark }),
+      });
+      const data = await readJson(res);
+      if (!res.ok) throw new Error(data.error || "Erreur");
+      setCount((c) => (c ?? 0) + 1);
+      setText("");
+      showToast("Remarque enregistrée — elle guidera vos prochains posts ✓");
+      if (applyNow) {
+        setApplyNow(false);
+        onApplyNow(remark);
+      }
+    } catch (e) {
+      showToast(e.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+      <p className="text-sm font-semibold flex items-center gap-2">
+        <MessageSquare size={15} className="text-[#ff5a5f]" /> Une remarque pour vos prochains posts ?
+      </p>
+      <p className="text-xs text-gray-400 mt-1 mb-3">
+        Enregistrée pour tous vos futurs posts (ex : {REMARK_EXAMPLES}). Pour modifier seulement ce post, utilisez « Retoucher avec l'IA ».
+      </p>
+      <div className="flex flex-wrap gap-2">
+        <input
+          type="text"
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && save()}
+          maxLength={300}
+          placeholder="Votre remarque…"
+          className="flex-1 min-w-[10rem] border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
+        />
+        <button
+          onClick={save}
+          disabled={saving || !text.trim()}
+          className="bg-gray-900 hover:bg-gray-700 disabled:bg-gray-300 text-white text-sm px-4 py-2 rounded-lg flex items-center gap-1.5"
+        >
+          {saving && <RefreshCw size={13} className="animate-spin" />} Enregistrer
+        </button>
+      </div>
+      <label className="flex items-center gap-2 text-xs text-gray-600 mt-2.5 cursor-pointer">
+        <input type="checkbox" checked={applyNow} onChange={(e) => setApplyNow(e.target.checked)} className="accent-[#ff5a5f]" />
+        Appliquer aussi à ce post
+      </label>
+      {count > 0 && (
+        <p className="text-xs text-gray-400 mt-3">
+          {count} remarque{count > 1 ? "s" : ""} enregistrée{count > 1 ? "s" : ""} ·{" "}
+          <button onClick={onManage} className="text-[#ff5a5f] hover:underline">
+            Gérer dans Profil
+          </button>
+        </p>
+      )}
+    </div>
+  );
+}
+
+function RemarksManager({ showToast }) {
+  const [remarks, setRemarks] = useState(null);
+  const [max, setMax] = useState(10);
+  const [text, setText] = useState("");
+  const [adding, setAdding] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/remarks")
+      .then(readJson)
+      .then((d) => {
+        setRemarks(d.remarks ?? []);
+        if (d.max) setMax(d.max);
+      })
+      .catch(() => setRemarks([]));
+  }, []);
+
+  const add = async () => {
+    const remark = text.trim();
+    if (!remark || adding) return;
+    setAdding(true);
+    try {
+      const res = await fetch("/api/remarks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: remark }),
+      });
+      const data = await readJson(res);
+      if (!res.ok) throw new Error(data.error || "Erreur");
+      setRemarks((r) => [...(r ?? []), data.remark]);
+      setText("");
+    } catch (e) {
+      showToast(e.message);
+    } finally {
+      setAdding(false);
+    }
+  };
+
+  const remove = async (id) => {
+    try {
+      const res = await fetch(`/api/remarks/${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Suppression impossible");
+      setRemarks((r) => r.filter((x) => x.id !== id));
+    } catch (e) {
+      showToast(e.message);
+    }
+  };
+
+  return (
+    <div id="field-remarks">
+      <p className="text-sm font-medium text-gray-700">
+        Remarques pour vos futurs posts{" "}
+        <span className="text-gray-400 font-normal">
+          ({remarks?.length ?? 0}/{max})
+        </span>
+      </p>
+      <p className="text-xs text-gray-400 mt-0.5 mb-2">
+        Ajoutées sous un post généré ou ici. L'IA les applique à chaque nouveau post, y compris en pilote automatique. Supprimez celles qui ne vous servent plus.
+      </p>
+      {remarks === null ? (
+        <p className="text-xs text-gray-400">Chargement…</p>
+      ) : (
+        <ul className="space-y-1.5 mb-2">
+          {remarks.map((r) => (
+            <li key={r.id} className="flex items-start justify-between gap-2 bg-gray-50 rounded-lg px-3 py-2 text-sm text-gray-700">
+              <span className="min-w-0 break-words">{r.text}</span>
+              <button
+                type="button"
+                onClick={() => remove(r.id)}
+                className="text-gray-300 hover:text-red-600 p-0.5 shrink-0"
+                title="Supprimer cette remarque"
+              >
+                <Trash2 size={14} />
+              </button>
+            </li>
+          ))}
+          {remarks.length === 0 && <li className="text-xs text-gray-400">Aucune remarque pour l'instant.</li>}
+        </ul>
+      )}
+      <div className="flex flex-wrap gap-2">
+        <input
+          type="text"
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              add();
+            }
+          }}
+          maxLength={300}
+          disabled={(remarks?.length ?? 0) >= max}
+          placeholder={(remarks?.length ?? 0) >= max ? `${max} remarques maximum — supprimez-en une` : `ex : ${REMARK_EXAMPLES}`}
+          className="flex-1 min-w-[10rem] border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f] disabled:bg-gray-50"
+        />
+        <button
+          type="button"
+          onClick={add}
+          disabled={adding || !text.trim() || (remarks?.length ?? 0) >= max}
+          className="bg-gray-900 hover:bg-gray-700 disabled:bg-gray-300 text-white text-sm px-4 py-2 rounded-lg"
+        >
+          Ajouter
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ----------------------------------------------------------------
 // « Pourquoi ce post ? » — éléments réels du texte + explication de chaque choix
 // d'écriture, produite par la même génération que le post. Périmée si le texte
 // est modifié à la main : bandeau + « Réanalyser ».
@@ -7437,6 +7633,7 @@ function ProfileView({ profile, onSaved, showToast, linkedin, onDisconnect, inst
                   className={input}
                 />
               </div>
+              <RemarksManager showToast={showToast} />
               <div id="field-editorialNote">
                 <label className={label}>
                   Note pour le copilote éditorial{" "}
@@ -9788,6 +9985,10 @@ export default function Home() {
 
                 {!editingResult && result?.why && (
                   <PostWhy text={result.text} why={result.why} onReanalyze={reanalyzeWhy} reanalyzing={reanalyzing} />
+                )}
+
+                {!editingResult && result?.text && (
+                  <RemarkBox onApplyNow={handleRefine} onManage={() => setView("profile")} showToast={showToast} />
                 )}
 
                 {!editingResult && result?.text && canScore && (

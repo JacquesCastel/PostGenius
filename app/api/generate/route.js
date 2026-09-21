@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { getEffectiveUserId as getUserId } from "@/lib/session";
 import { logUsage } from "@/lib/usage";
 import { checkAccess } from "@/lib/gating";
+import { getRemarks, remarksPromptBlock } from "@/lib/remarks";
 import { writingRulesPrompt, WHY_INSTRUCTION, WHY_JSON_FORMAT, cleanWhy } from "@/lib/linkedinRules";
 
 // Génération du post via l'API Claude (Messages API).
@@ -14,7 +15,7 @@ Tu rédiges des posts qui maximisent l'engagement en appliquant strictement les 
 d'écriture LinkedIn fournies dans chaque demande.
 Tu réponds UNIQUEMENT avec un objet JSON valide, sans backticks ni texte autour.`;
 
-function buildUserPrompt({ type, theme, expertise, tone, maxChars, refine, mode, count, variants, inspiration }, profile) {
+function buildUserPrompt({ type, theme, expertise, tone, maxChars, refine, mode, count, variants, inspiration }, profile, remarks = []) {
   let extraSpec = "";
   if (type === "carrousel") {
     extraSpec = `\nC'est un post carrousel : fournis aussi un plan de 8 slides dans "extra"
@@ -36,6 +37,7 @@ Le texte du post doit accompagner la vidéo.`;
     profileSpec += `\n- Objectifs de communication : ${profile.commGoals} (oriente le post vers ces objectifs)`;
   if (profile?.styleNotes)
     profileSpec += `\n- Consignes de style de l'auteur (À RESPECTER IMPÉRATIVEMENT) : ${profile.styleNotes}`;
+  profileSpec += remarksPromptBlock(remarks);
 
   // Mode retouche : réécriture d'un post existant selon une consigne
   if (refine?.text && refine?.instruction) {
@@ -163,6 +165,8 @@ export async function POST(req) {
     });
   }
 
+  const remarks = userId ? await getRemarks(userId) : [];
+
   try {
     // Le modèle renvoie parfois un JSON invalide (guillemet non échappé dans le texte) :
     // on retente une fois avant d'abandonner.
@@ -179,7 +183,7 @@ export async function POST(req) {
           model: process.env.ANTHROPIC_MODEL || "claude-sonnet-4-6",
           max_tokens: params.mode === "series" || params.variants ? 8000 : 2048,
           system: SYSTEM_PROMPT,
-          messages: [{ role: "user", content: buildUserPrompt(params, profile) }],
+          messages: [{ role: "user", content: buildUserPrompt(params, profile, remarks) }],
         }),
       });
 

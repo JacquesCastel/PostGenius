@@ -126,6 +126,7 @@ model User {
 
   // --- Copilote éditorial ---
   editorialPillars   EditorialPillar[]
+  postRemarks        PostRemark[]
   editorialRecos     EditorialRecommendation[]
 }
 
@@ -399,4 +400,18 @@ model EditorialRecommendation {
   createdAt DateTime @default(now())
 
   @@index([userId, status, createdAt])
+}
+
+// Remarques de l'utilisateur pour ses futurs posts ("trop long", "moins d'émojis"…),
+// saisies sous un post généré ou depuis Profil. Liste visible et supprimable
+// (10 maximum) : injectée dans les prompts de génération (post manuel, pilote
+// automatique, réécriture) en plus des consignes de style du profil.
+model PostRemark {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  text      String
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
 }
