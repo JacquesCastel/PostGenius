@@ -51,6 +51,7 @@ export async function GET(req) {
   const drafts = await prisma.draft.findMany({
     where: { userId },
     orderBy: { createdAt: "desc" },
+    omit: { generatedText: true }, // usage interne : inutile côté client, doublerait le poids de la liste
   });
   return NextResponse.json({
     drafts: drafts.map((d) => ({ ...d, extra: d.extra ? JSON.parse(d.extra) : null })),
@@ -61,7 +62,7 @@ export async function POST(req) {
   const userId = await getUserId(req);
   if (!userId) return NextResponse.json({ error: "Non connecté." }, { status: 401 });
 
-  const { type, theme, expertise, tone, maxChars, text, extra, inspirationUrl, imageUrl, imagePrompt, pillarId } =
+  const { type, theme, expertise, tone, maxChars, text, generatedText, extra, inspirationUrl, imageUrl, imagePrompt, pillarId } =
     await req.json();
   if (!text?.trim()) return NextResponse.json({ error: "Texte requis." }, { status: 400 });
 
@@ -80,6 +81,8 @@ export async function POST(req) {
       tone: tone ?? "",
       maxChars: maxChars ?? 3000,
       text,
+      // Texte d'origine de l'IA (avant modifications) : sert à repérer les habitudes d'édition.
+      generatedText: typeof generatedText === "string" && generatedText.trim() ? generatedText : text,
       extra: extra ? JSON.stringify(extra) : null,
       inspirationUrl: inspirationUrl || null,
       imageUrl: imageUrl || null,
@@ -93,5 +96,6 @@ export async function POST(req) {
     attachTemplateImage(draft.id, userId, text).catch(() => {});
   }
 
-  return NextResponse.json({ draft: { ...draft, extra: extra ?? null } });
+  const { generatedText: _omit, ...publicDraft } = draft;
+  return NextResponse.json({ draft: { ...publicDraft, extra: extra ?? null } });
 }
