@@ -28,7 +28,7 @@ export async function POST(req) {
   const tipLines = (Array.isArray(tips) ? tips : [])
     .filter((t) => typeof t === "string" && t.trim())
     .slice(0, 3)
-    .map((t) => `- Conseil de fond : ${t.trim().slice(0, 300)}`);
+    .map((t) => `- À ajouter ou renforcer : ${t.trim().slice(0, 300)}`);
   improvements.push(...tipLines);
 
   // Périmètre de la réécriture

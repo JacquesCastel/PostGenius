@@ -17,6 +17,7 @@ import SiteFooter from "@/components/SiteFooter";
 import LpMark from "@/components/LpMark";
 import ImageEditor from "@/components/ImageEditor";
 import { scorePost } from "@/lib/score";
+import { postAnatomy } from "@/lib/linkedinRules";
 
 // Format compact des tokens : 12 500 → "12,5k", 3 200 000 → "3,2M"
 function fmtTokens(n) {
@@ -2856,6 +2857,63 @@ function EventsView({ profile, showToast, onGenerated }) {
 }
 
 // ----------------------------------------------------------------
+// « Pourquoi ce post ? » — éléments réels du texte + explication de chaque choix
+// d'écriture, produite par la même génération que le post. Périmée si le texte
+// est modifié à la main : bandeau + « Réanalyser ».
+// ----------------------------------------------------------------
+function PostWhy({ text, why, onReanalyze, reanalyzing }) {
+  const [open, setOpen] = useState(true);
+  const a = postAnatomy(text);
+  const stale = why.forText !== text;
+  const rows = [
+    { key: "hook", label: "Accroche", value: a.hook ? `« ${a.hook} »` : "—" },
+    {
+      key: "structure",
+      label: "Longueur & structure",
+      value: `${a.chars.toLocaleString("fr-FR")} caractères · ${a.paragraphs} paragraphe${a.paragraphs > 1 ? "s" : ""}`,
+    },
+    { key: "cta", label: "Question & appel à l'action", value: a.closing ? `« ${a.closing} »` : "—" },
+    { key: "hashtags", label: "Hashtags", value: a.hashtags.length ? a.hashtags.join(" ") : "Aucun" },
+  ];
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
+      <button
+        onClick={() => setOpen((o) => !o)}
+        className="w-full flex items-center justify-between gap-2 px-5 py-3.5 text-left"
+      >
+        <span className="flex items-center gap-2 text-sm font-semibold">
+          <Lightbulb size={15} className="text-[#ff5a5f]" /> Pourquoi ce post ?
+        </span>
+        {open ? <ChevronUp size={16} className="text-gray-400" /> : <ChevronDown size={16} className="text-gray-400" />}
+      </button>
+      {open && (
+        <div className="px-5 pb-5 space-y-3.5">
+          {stale && (
+            <div className="bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 text-xs text-amber-800 flex items-center justify-between gap-2 flex-wrap">
+              <span>Vous avez modifié le texte : ces explications décrivent la version générée par l'IA.</span>
+              <button
+                onClick={onReanalyze}
+                disabled={reanalyzing}
+                className="font-semibold underline hover:no-underline disabled:opacity-50 flex items-center gap-1"
+              >
+                {reanalyzing && <RefreshCw size={11} className="animate-spin" />} Réanalyser
+              </button>
+            </div>
+          )}
+          {rows.map((r) => (
+            <div key={r.key}>
+              <p className="text-xs font-semibold text-gray-500">{r.label}</p>
+              <p className="text-sm text-gray-800 mt-0.5 break-words">{r.value}</p>
+              {why[r.key] && <p className="text-sm text-[#5a6b85] mt-1 leading-relaxed">{why[r.key]}</p>}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ----------------------------------------------------------------
 // Score de potentiel d'engagement (heuristique instantanée + conseils IA)
 // ----------------------------------------------------------------
 function ScorePanel({ text, type, recomputing, onTips }) {
@@ -2974,13 +3032,19 @@ function ScorePanel({ text, type, recomputing, onTips }) {
         ) : tips.length === 0 ? (
           <p className="text-sm text-white/60">Aucune suggestion supplémentaire — votre post est déjà solide. 👍</p>
         ) : (
-          <ul className="space-y-2.5">
-            {tips.map((t, i) => (
-              <li key={i} className="text-sm text-white/90 flex items-start gap-2 leading-relaxed">
-                <ChevronRight size={16} className="text-[#ff8a8d] mt-0.5 shrink-0" /> {t}
-              </li>
-            ))}
-          </ul>
+          <>
+            <p className="text-sm text-white/70 mb-2.5">Vous pourriez ajouter :</p>
+            <ol className="space-y-2.5">
+              {tips.map((t, i) => (
+                <li key={i} className="text-sm text-white/90 flex items-start gap-2.5 leading-relaxed">
+                  <span className="shrink-0 w-5 h-5 rounded-full bg-[#ff5a5f]/25 text-[#ff8a8d] text-xs font-semibold flex items-center justify-center mt-0.5">
+                    {i + 1}
+                  </span>
+                  <span>{t}</span>
+                </li>
+              ))}
+            </ol>
+          </>
         )}
       </div>
     </div>
@@ -7899,6 +7963,7 @@ export default function Home() {
   const [editingResult, setEditingResult] = useState(false);
   const [resultDraftText, setResultDraftText] = useState("");
   const [refineInput, setRefineInput] = useState("");
+  const [reanalyzing, setReanalyzing] = useState(false);
   const [genMode, setGenMode] = useState("single"); // single | series
   const [seriesCount, setSeriesCount] = useState(5);
   const [wantVariants, setWantVariants] = useState(false);
@@ -8219,6 +8284,26 @@ export default function Home() {
       setError(e.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // « Réanalyser » : nouvelle explication de la forme après une modification manuelle
+  const reanalyzeWhy = async () => {
+    if (!result?.text || reanalyzing) return;
+    setReanalyzing(true);
+    try {
+      const res = await fetch("/api/generate/explain", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: result.text }),
+      });
+      const data = await readJson(res);
+      if (!res.ok) throw new Error(data.error || "Erreur");
+      setResult((r) => (r ? { ...r, why: data.why } : r));
+    } catch (e) {
+      showToast(e.message);
+    } finally {
+      setReanalyzing(false);
     }
   };
 
@@ -9700,6 +9785,10 @@ export default function Home() {
                   )}
 
                 </div>
+
+                {!editingResult && result?.why && (
+                  <PostWhy text={result.text} why={result.why} onReanalyze={reanalyzeWhy} reanalyzing={reanalyzing} />
+                )}
 
                 {!editingResult && result?.text && canScore && (
                   <button
