@@ -59,7 +59,7 @@ PÉRIMÈTRE : ${scopeInstruction}
 Améliore le post pour MAXIMISER son potentiel d'engagement, en appliquant ces pistes (uniquement sur la partie concernée par le périmètre ci-dessus) :
 ${improvements.length ? improvements.join("\n") : "- Renforce l'accroche, l'aération et l'incitation à commenter."}
 
-Règles :${scope === "hook" || scope === "all" ? "\n- La première ligne (accroche) doit faire MOINS de 90 caractères et contenir une tension (question, chiffre ou promesse) : elle seule s'affiche avant le « voir plus »." : ""}
+Règles :${scope === "hook" || scope === "all" ? "\n- La première ligne (accroche) doit faire MOINS de 90 caractères et porter à elle seule l'idée du post : elle seule s'affiche avant le « voir plus ». Une tension (question, chiffre, promesse) peut l'aider à percuter, mais seulement si ça sert le sens — pas une formule obligatoire." : ""}
 - Garde le même sujet, la même langue (français) et le même message.
 - Respecte le ton ${user?.tone ? `"${user.tone}"` : "de l'auteur"}.${user?.styleNotes ? `\n- Consignes de style à respecter : ${user.styleNotes}.` : ""}${remarksPromptBlock(remarks)}
 - Réponds UNIQUEMENT avec le texte du post complet réécrit (aucun commentaire autour).`;
