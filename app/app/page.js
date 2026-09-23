@@ -3137,7 +3137,7 @@ function PostWhy({ text, why, onReanalyze, reanalyzing }) {
       label: "Longueur & structure",
       value: `${a.chars.toLocaleString("fr-FR")} caractères · ${a.paragraphs} paragraphe${a.paragraphs > 1 ? "s" : ""}`,
     },
-    { key: "cta", label: "Question & appel à l'action", value: a.closing ? `« ${a.closing} »` : "—" },
+    { key: "cta", label: "Conclusion", value: a.closing ? `« ${a.closing} »` : "—" },
     { key: "hashtags", label: "Hashtags", value: a.hashtags.length ? a.hashtags.join(" ") : "Aucun" },
   ];
   return (
