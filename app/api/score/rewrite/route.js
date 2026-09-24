@@ -5,6 +5,7 @@ import { logUsage } from "@/lib/usage";
 import { scorePost } from "@/lib/score";
 import { checkFeature } from "@/lib/gating";
 import { getRemarks, remarksPromptBlock } from "@/lib/remarks";
+import { ANTI_INVENTION_INSTRUCTION } from "@/lib/linkedinRules";
 
 // Réécrit un post en appliquant les améliorations d'engagement détectées.
 export const maxDuration = 60;
@@ -62,6 +63,7 @@ ${improvements.length ? improvements.join("\n") : "- Renforce l'accroche, l'aér
 Règles :${scope === "hook" || scope === "all" ? "\n- La première ligne (accroche) doit faire MOINS de 90 caractères et porter à elle seule l'idée du post : elle seule s'affiche avant le « voir plus ». Une tension (question, chiffre, promesse) peut l'aider à percuter, mais seulement si ça sert le sens — pas une formule obligatoire." : ""}
 - Garde le même sujet, la même langue (français) et le même message.
 - Respecte le ton ${user?.tone ? `"${user.tone}"` : "de l'auteur"}.${user?.styleNotes ? `\n- Consignes de style à respecter : ${user.styleNotes}.` : ""}${remarksPromptBlock(remarks)}
+- ${ANTI_INVENTION_INSTRUCTION}
 - Réponds UNIQUEMENT avec le texte du post complet réécrit (aucun commentaire autour).`;
 
   let data;
