@@ -121,8 +121,9 @@ model User {
   clients         User[]  @relation("AgencyClients")
 
   // --- Charte graphique ---
-  brandKit    BrandKit?
-  mediaAssets MediaAsset[]
+  brandKit       BrandKit?
+  mediaAssets    MediaAsset[]
+  slideTemplates SlideTemplate[]
 
   // --- Copilote éditorial ---
   editorialPillars   EditorialPillar[]
@@ -161,6 +162,23 @@ model BrandKit {
 
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+}
+
+// Modèle personnalisé d'une slide de carrousel (éditeur visuel dans Charte graphique) :
+// éléments texte/image positionnés librement, qui remplacent la mise en page fixe de
+// lib/templates.js pour ce type de slide. "data" est un JSON { elements: [...] } —
+// voir le commentaire de renderCustomSlide dans lib/templates.js pour la forme exacte.
+// Un seul modèle par type et par utilisateur : l'enregistrer remplace le précédent.
+model SlideTemplate {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kind      String // "title" | "content" | "end"
+  data      String // JSON
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, kind])
 }
 
 // Médiathèque : images uploadées, générées par IA, ou transformées (recadrage, filtres, texte)
