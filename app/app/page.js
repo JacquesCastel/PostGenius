@@ -9,7 +9,8 @@ import {
   Megaphone, ChevronDown, Image as ImageIcon, ShieldCheck, Lock, ArrowUpCircle, MapPin, Bell, Camera,
   CreditCard, Gauge, Users, Smartphone, Monitor,
   Upload, Wand2, SlidersHorizontal, Type, Crop, Download, Pencil, GripHorizontal,
-  Compass, Lightbulb, EyeOff, TrendingUp, TrendingDown, Plus, Globe, ChevronUp, Menu
+  Compass, Lightbulb, EyeOff, TrendingUp, TrendingDown, Plus, Globe, ChevronUp, Menu,
+  AlignLeft, AlignCenter, AlignRight, Move
 } from "lucide-react";
 import { PLANS, PLAN_IDS, planLabel, planAllows, planOf, trialDaysLeft, accessState } from "@/lib/plans";
 import SiteHeader from "@/components/SiteHeader";
@@ -7250,6 +7251,378 @@ const BG_STYLES = [
   { id: "gradient", label: "Dégradé" },
 ];
 
+// ----------------------------------------------------------------
+// Éditeur visuel des gabarits de carrousel (titre / contenu / fin) — Charte
+// graphique. Chaque slide est un canevas 1080×1080 où l'on place librement des
+// éléments texte ou image (glisser pour déplacer, poignée en bas à droite pour
+// redimensionner), enregistrés dans SlideTemplate et utilisés à la place de la mise
+// en page fixe de lib/templates.js dès qu'un modèle existe pour ce type de slide.
+// ----------------------------------------------------------------
+const SLIDE_KIND_LABEL = { title: "Slide 1 — titre", content: "Slide contenu", end: "Slide CTA" };
+const ROLE_PLACEHOLDER = {
+  title: "Titre accrocheur de votre carrousel",
+  subtitle: "Un sous-titre qui donne envie de swiper.",
+  body: "Le corps de la slide : votre texte apparaîtra ici, avec le contenu réel du post généré par l'IA.",
+  cta: "Suivez-moi pour plus de conseils",
+  pageNumber: "1 / 8",
+};
+const CANVAS_DISPLAY = 460; // px affichés ; le canevas réel fait 1080×1080
+const CANVAS_SCALE = CANVAS_DISPLAY / 1080;
+
+function defaultSlideElements(kind, kit) {
+  const light = kit.secondaryColor || "#ffffff";
+  const dark = kit.primaryColor || "#0a66c2";
+  const uid = (s) => `seed-${s}`;
+  if (kind === "title") {
+    return [
+      { id: uid("title"), type: "text", role: "title", x: 80, y: 280, width: 920, height: 180, fontSize: 64, fontWeight: 700, color: light, textAlign: "left" },
+      { id: uid("subtitle"), type: "text", role: "subtitle", x: 80, y: 470, width: 920, height: 100, fontSize: 28, fontWeight: 400, color: light, textAlign: "left" },
+    ];
+  }
+  if (kind === "end") {
+    return [{ id: uid("cta"), type: "text", role: "cta", x: 140, y: 460, width: 800, height: 200, fontSize: 40, fontWeight: 700, color: light, textAlign: "center" }];
+  }
+  return [
+    { id: uid("title"), type: "text", role: "title", x: 80, y: 80, width: 920, height: 120, fontSize: 44, fontWeight: 700, color: dark, textAlign: "left" },
+    { id: uid("body"), type: "text", role: "body", x: 80, y: 240, width: 920, height: 600, fontSize: 28, fontWeight: 400, color: "#374151", textAlign: "left" },
+  ];
+}
+
+function SlideTemplateEditor({ kind, kit, onClose, onSaved, showToast }) {
+  const [elements, setElements] = useState([]);
+  const [selectedId, setSelectedId] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/slide-templates")
+      .then(readJson)
+      .then((d) => {
+        const existing = d.templates?.[kind]?.elements;
+        setElements(existing?.length ? existing : defaultSlideElements(kind, kit));
+      })
+      .catch(() => setElements(defaultSlideElements(kind, kit)))
+      .finally(() => setLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [kind]);
+
+  const selected = elements.find((el) => el.id === selectedId) || null;
+
+  const updateElement = (id, patch) => setElements((prev) => prev.map((el) => (el.id === id ? { ...el, ...patch } : el)));
+  const removeElement = (id) => {
+    setElements((prev) => prev.filter((el) => el.id !== id));
+    setSelectedId(null);
+  };
+  const addElement = (partial) => {
+    const id = `el_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+    setElements((prev) => [...prev, { fontSize: 32, fontWeight: 400, color: "#111111", textAlign: "left", objectFit: "contain", ...partial, id }]);
+    setSelectedId(id);
+  };
+
+  // Glisser pour déplacer / poignée pour redimensionner — écoute la souris
+  // directement (pas besoin d'effet React : la poignée démarre et arrête l'écoute).
+  const startDrag = (el, mode) => (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    const startX = e.clientX;
+    const startY = e.clientY;
+    const orig = { x: el.x, y: el.y, width: el.width, height: el.height };
+    setSelectedId(el.id);
+    const onMove = (ev) => {
+      const dx = (ev.clientX - startX) / CANVAS_SCALE;
+      const dy = (ev.clientY - startY) / CANVAS_SCALE;
+      updateElement(el.id, mode === "move"
+        ? { x: Math.round(orig.x + dx), y: Math.round(orig.y + dy) }
+        : { width: Math.max(20, Math.round(orig.width + dx)), height: Math.max(20, Math.round(orig.height + dy)) });
+    };
+    const onUp = () => {
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+    };
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+  };
+
+  const onImageFileChange = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file || !file.type.startsWith("image/")) return;
+    setUploading(true);
+    try {
+      const dataUrl = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+      const img = await new Promise((resolve, reject) => {
+        const image = new Image();
+        image.onload = () => resolve(image);
+        image.onerror = reject;
+        image.src = dataUrl;
+      });
+      const canvas = document.createElement("canvas");
+      canvas.width = img.width;
+      canvas.height = img.height;
+      canvas.getContext("2d").drawImage(img, 0, 0);
+      const res = await fetch("/api/image/upload", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ image: canvas.toDataURL("image/png") }),
+      });
+      const d = await readJson(res);
+      if (!res.ok) throw new Error(d.error || "Erreur");
+      addElement({ type: "image", role: "custom", src: d.url, x: 440, y: 440, width: 200, height: 200 });
+    } catch (err) {
+      showToast(err.message || "Erreur d'import");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const save = async () => {
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/slide-templates/${kind}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ elements }),
+      });
+      const d = await readJson(res);
+      if (!res.ok) throw new Error(d.error || "Erreur");
+      showToast("Modèle enregistré ✓");
+      onSaved?.();
+      onClose();
+    } catch (e) {
+      showToast(e.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const reset = async () => {
+    setSaving(true);
+    try {
+      await fetch(`/api/slide-templates/${kind}`, { method: "DELETE" });
+      setElements(defaultSlideElements(kind, kit));
+      setSelectedId(null);
+      showToast("Modèle réinitialisé ✓");
+      onSaved?.();
+    } catch (e) {
+      showToast(e.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const elementText = (el) => (el.role === "custom" ? el.text || "Nouveau texte" : ROLE_PLACEHOLDER[el.role] ?? "");
+
+  return (
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4 overflow-y-auto" onClick={onClose}>
+      <div className="bg-white rounded-xl shadow-xl w-full max-w-3xl p-6 my-8" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-semibold text-base flex items-center gap-2">
+            <Pencil size={17} className="text-[#ff5a5f]" /> Modèle — {SLIDE_KIND_LABEL[kind]}
+          </h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 p-1">
+            <X size={18} />
+          </button>
+        </div>
+
+        {loading ? (
+          <div className="text-center py-16 text-gray-300 text-sm">Chargement…</div>
+        ) : (
+          <div className="grid md:grid-cols-[460px_1fr] gap-5">
+            {/* Canevas */}
+            <div>
+              <div className="flex flex-wrap gap-2 mb-2">
+                <button type="button" onClick={() => addElement({ type: "text", role: "custom", text: "Nouveau texte", x: 300, y: 480, width: 480, height: 100 })}
+                  className="text-xs border border-gray-200 hover:border-gray-400 text-gray-700 px-2.5 py-1.5 rounded-lg flex items-center gap-1">
+                  <Type size={12} /> Texte
+                </button>
+                <button type="button" onClick={() => addElement({ type: "image", role: "logo", x: 460, y: 960, width: 160, height: 80, objectFit: "contain" })}
+                  className="text-xs border border-gray-200 hover:border-gray-400 text-gray-700 px-2.5 py-1.5 rounded-lg flex items-center gap-1">
+                  <ImageIcon size={12} /> Logo
+                </button>
+                <label className="text-xs border border-gray-200 hover:border-gray-400 text-gray-700 px-2.5 py-1.5 rounded-lg flex items-center gap-1 cursor-pointer">
+                  {uploading ? <RefreshCw size={12} className="animate-spin" /> : <Upload size={12} />} Image
+                  <input type="file" accept="image/*" onChange={onImageFileChange} className="hidden" disabled={uploading} />
+                </label>
+              </div>
+
+              <div
+                className="relative rounded-lg overflow-hidden border border-gray-200"
+                style={{
+                  width: CANVAS_DISPLAY,
+                  height: CANVAS_DISPLAY,
+                  // Même convention que le rendu réel (renderCustomSlide, lib/templates.js) :
+                  // fond blanc pour une slide de contenu, couleurs de marque pour titre/fin.
+                  background:
+                    kind === "content"
+                      ? "#ffffff"
+                      : kit.bgStyle === "gradient"
+                      ? `linear-gradient(135deg, ${kit.primaryColor}, #1b2a4a)`
+                      : kit.primaryColor,
+                }}
+                onMouseDown={() => setSelectedId(null)}
+              >
+                {elements.map((el) => (
+                  <div
+                    key={el.id}
+                    onMouseDown={startDrag(el, "move")}
+                    className={`absolute cursor-move flex overflow-hidden ${selectedId === el.id ? "ring-2 ring-[#ff5a5f]" : "ring-1 ring-white/30 hover:ring-white/70"}`}
+                    style={{
+                      left: el.x * CANVAS_SCALE,
+                      top: el.y * CANVAS_SCALE,
+                      width: el.width * CANVAS_SCALE,
+                      height: el.height * CANVAS_SCALE,
+                      justifyContent: el.textAlign === "center" ? "center" : el.textAlign === "right" ? "flex-end" : "flex-start",
+                      alignItems: el.type === "image" ? "center" : "flex-start",
+                    }}
+                  >
+                    {el.type === "image" ? (
+                      (el.role === "logo" ? kit.logoUrl : el.src) ? (
+                        <img src={el.role === "logo" ? kit.logoUrl : el.src} alt="" className="w-full h-full pointer-events-none" style={{ objectFit: el.objectFit }} />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-black/10 text-white text-[10px] pointer-events-none">Logo</div>
+                      )
+                    ) : (
+                      <span
+                        className="pointer-events-none"
+                        style={{
+                          fontSize: el.fontSize * CANVAS_SCALE,
+                          fontWeight: el.fontWeight,
+                          color: el.color,
+                          textAlign: el.textAlign,
+                          lineHeight: 1.25,
+                        }}
+                      >
+                        {elementText(el)}
+                      </span>
+                    )}
+                    {selectedId === el.id && (
+                      <div
+                        onMouseDown={startDrag(el, "resize")}
+                        className="absolute -right-1.5 -bottom-1.5 w-3.5 h-3.5 bg-[#ff5a5f] rounded-full cursor-nwse-resize"
+                      />
+                    )}
+                  </div>
+                ))}
+              </div>
+              <p className="text-[11px] text-gray-400 mt-2">
+                Le texte réel (titre, contenu, appel à l'action) remplacera ces exemples au moment de la génération.
+              </p>
+            </div>
+
+            {/* Panneau des propriétés */}
+            <div className="space-y-4">
+              {selected ? (
+                <div className="border border-gray-100 rounded-xl p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                      {selected.type === "text" ? "Texte" : "Image"} sélectionné{selected.type === "text" ? "" : "e"}
+                    </p>
+                    <button onClick={() => removeElement(selected.id)} className="text-xs text-red-500 hover:text-red-700 flex items-center gap-1">
+                      <Trash2 size={12} /> Supprimer
+                    </button>
+                  </div>
+
+                  {selected.type === "text" && (
+                    <>
+                      {selected.role === "custom" && (
+                        <input
+                          type="text"
+                          value={selected.text || ""}
+                          onChange={(e) => updateElement(selected.id, { text: e.target.value })}
+                          placeholder="Texte affiché"
+                          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
+                        />
+                      )}
+                      <div className="grid grid-cols-2 gap-2">
+                        <label className="text-xs text-gray-500">
+                          Taille
+                          <input
+                            type="number"
+                            min={8}
+                            max={160}
+                            value={selected.fontSize}
+                            onChange={(e) => updateElement(selected.id, { fontSize: Number(e.target.value) || 32 })}
+                            className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-sm mt-1"
+                          />
+                        </label>
+                        <label className="text-xs text-gray-500">
+                          Couleur
+                          <input
+                            type="color"
+                            value={selected.color}
+                            onChange={(e) => updateElement(selected.id, { color: e.target.value })}
+                            className="w-full h-[34px] border border-gray-200 rounded-lg mt-1"
+                          />
+                        </label>
+                      </div>
+                      <div className="flex gap-1.5">
+                        {[{ v: 400, l: "Normal" }, { v: 700, l: "Gras" }].map((w) => (
+                          <button
+                            key={w.v}
+                            type="button"
+                            onClick={() => updateElement(selected.id, { fontWeight: w.v })}
+                            className={`flex-1 text-xs py-1.5 rounded-lg border font-medium ${selected.fontWeight === w.v ? "bg-gray-900 text-white border-gray-900" : "border-gray-200 text-gray-600 hover:border-gray-300"}`}
+                          >
+                            {w.l}
+                          </button>
+                        ))}
+                      </div>
+                      <div className="flex gap-1.5">
+                        {[{ v: "left", I: AlignLeft }, { v: "center", I: AlignCenter }, { v: "right", I: AlignRight }].map(({ v, I }) => (
+                          <button
+                            key={v}
+                            type="button"
+                            onClick={() => updateElement(selected.id, { textAlign: v })}
+                            className={`flex-1 py-1.5 rounded-lg border flex items-center justify-center ${selected.textAlign === v ? "bg-gray-900 text-white border-gray-900" : "border-gray-200 text-gray-500 hover:border-gray-300"}`}
+                          >
+                            <I size={14} />
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                  {selected.type === "image" && (
+                    <p className="text-xs text-gray-400">Glissez pour déplacer, tirez la poignée pour redimensionner.</p>
+                  )}
+                </div>
+              ) : (
+                <div className="border border-dashed border-gray-200 rounded-xl p-4 text-xs text-gray-400 text-center">
+                  Cliquez un élément du canevas pour le modifier, ou ajoutez-en un ci-dessus.
+                </div>
+              )}
+
+              <div className="flex flex-col gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={save}
+                  disabled={saving}
+                  className="w-full bg-[#ff5a5f] hover:bg-[#f63d44] disabled:opacity-50 text-white py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2"
+                >
+                  {saving ? <RefreshCw size={14} className="animate-spin" /> : <Save size={14} />} Enregistrer le modèle
+                </button>
+                <button
+                  type="button"
+                  onClick={reset}
+                  disabled={saving}
+                  className="w-full text-xs text-gray-400 hover:text-red-500 py-1.5"
+                >
+                  Réinitialiser (revenir à la mise en page par défaut)
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function BrandKitView({ showToast }) {
   const [activeTab, setActiveTab] = useState("charte"); // "charte" | "mediatheque"
   const [kit, setKit] = useState({
@@ -7269,6 +7642,7 @@ function BrandKitView({ showToast }) {
   const [preview, setPreview]       = useState(null); // URL de l'aperçu PNG généré
   const [generating, setGenerating] = useState(false);
   const [previewKind, setPreviewKind] = useState("post"); // "post" | "title" | "content" | "end"
+  const [editingKind, setEditingKind] = useState(null); // type de slide dont le modèle est en cours d'édition
 
   const set = (k, v) => setKit((f) => ({ ...f, [k]: v }));
 
@@ -7394,6 +7768,7 @@ function BrandKitView({ showToast }) {
   if (loading) return <div className="text-center py-20 text-gray-300 text-sm">Chargement…</div>;
 
   return (
+    <>
     <main className="max-w-4xl mx-auto p-6">
       {/* Onglets Charte / Médiathèque */}
       <div className="flex gap-1 mb-6 bg-gray-100 p-1 rounded-xl w-fit">
@@ -7599,19 +7974,30 @@ function BrandKitView({ showToast }) {
                 { id: "content", label: "Slide contenu" },
                 { id: "end", label: "Slide CTA" },
               ].map((t) => (
-                <button
-                  key={t.id}
-                  type="button"
-                  onClick={() => generatePreview(t.id)}
-                  disabled={generating}
-                  className={`text-xs px-2.5 py-1.5 rounded-full border font-medium transition-colors disabled:opacity-50 ${
-                    previewKind === t.id
-                      ? "bg-[#ff5a5f] text-white border-[#ff5a5f]"
-                      : "border-gray-200 text-gray-500 hover:border-gray-300"
-                  }`}
-                >
-                  {t.label}
-                </button>
+                <span key={t.id} className="inline-flex items-center gap-0.5">
+                  <button
+                    type="button"
+                    onClick={() => generatePreview(t.id)}
+                    disabled={generating}
+                    className={`text-xs px-2.5 py-1.5 rounded-full border font-medium transition-colors disabled:opacity-50 ${
+                      previewKind === t.id
+                        ? "bg-[#ff5a5f] text-white border-[#ff5a5f]"
+                        : "border-gray-200 text-gray-500 hover:border-gray-300"
+                    }`}
+                  >
+                    {t.label}
+                  </button>
+                  {t.id !== "post" && (
+                    <button
+                      type="button"
+                      onClick={() => setEditingKind(t.id)}
+                      title={`Modifier le modèle — ${t.label}`}
+                      className="p-1.5 rounded-full border border-gray-200 text-gray-400 hover:border-gray-300 hover:text-gray-600"
+                    >
+                      <Pencil size={11} />
+                    </button>
+                  )}
+                </span>
               ))}
             </div>
             <div className="aspect-square rounded-xl overflow-hidden bg-gray-50 border border-gray-100 flex items-center justify-center mb-4">
@@ -7648,6 +8034,16 @@ function BrandKitView({ showToast }) {
       </div>
       )}
     </main>
+    {editingKind && (
+      <SlideTemplateEditor
+        kind={editingKind}
+        kit={kit}
+        showToast={showToast}
+        onClose={() => setEditingKind(null)}
+        onSaved={() => setPreview(null)}
+      />
+    )}
+    </>
   );
 }
 

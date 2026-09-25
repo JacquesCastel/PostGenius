@@ -40,8 +40,8 @@ export async function POST(req) {
 
     // Si le logo est une URL relative (/api/images/logos/…), on le résout en URL absolue
     // pour que Satori puisse le charger (il a besoin d'une URL absolue ou d'une data URL)
+    const base = process.env.APP_URL ?? "http://localhost:3000";
     if (kit.logoUrl?.startsWith("/")) {
-      const base = process.env.APP_URL ?? "http://localhost:3000";
       kit.logoUrl = `${base}${kit.logoUrl}`;
     }
 
@@ -51,7 +51,21 @@ export async function POST(req) {
       if (!Array.isArray(slides) || slides.length === 0) {
         return NextResponse.json({ error: "slides requis pour le type carrousel" }, { status: 400 });
       }
-      const pngs = await renderCarouselTemplate({ slides, brandKit: kit });
+
+      // Modèles personnalisés (éditeur visuel, Charte graphique), par type de slide —
+      // les URL d'images importées (relatives) doivent être résolues en absolu, comme
+      // le logo ci-dessus, pour que Satori puisse les charger.
+      const templateRows = await prisma.slideTemplate.findMany({ where: { userId } });
+      const customTemplates = Object.fromEntries(
+        templateRows.map((r) => {
+          const elements = (JSON.parse(r.data).elements ?? []).map((el) =>
+            el.type === "image" && el.src?.startsWith("/") ? { ...el, src: `${base}${el.src}` } : el
+          );
+          return [r.kind, { elements }];
+        })
+      );
+
+      const pngs = await renderCarouselTemplate({ slides, brandKit: kit, customTemplates });
       for (const png of pngs) {
         const b64 = png.toString("base64");
         const { url } = await saveImage(b64);
