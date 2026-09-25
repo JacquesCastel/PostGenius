@@ -6062,6 +6062,9 @@ function MonthlyReportModal({ client, onClose }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  // Charte graphique de l'AGENCE (pas du client) : marque blanche du rapport qu'elle
+  // partage. Valeurs par défaut si l'agence n'a pas encore renseigné de charte.
+  const [brandKit, setBrandKit] = useState(null);
 
   useEffect(() => {
     setLoading(true);
@@ -6075,6 +6078,16 @@ function MonthlyReportModal({ client, onClose }) {
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
   }, [client.id, year, month]);
+
+  useEffect(() => {
+    fetch("/api/brand-kit")
+      .then(readJson)
+      .then((d) => setBrandKit(d.brandKit))
+      .catch(() => {});
+  }, []);
+
+  const primary = brandKit?.primaryColor || "#1b2a4a";
+  const accent = brandKit?.accentColor || "#ff5a5f";
 
   const pct = (n) => (n == null ? "—" : `${(n * 100).toFixed(1)} %`);
   const monthLabel = new Date(year, month - 1, 1).toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
@@ -6090,9 +6103,17 @@ function MonthlyReportModal({ client, onClose }) {
         className="bg-white rounded-xl shadow-xl w-full max-w-2xl p-6 my-8 print:shadow-none print:max-w-full print:m-0"
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Barre d'accent aux couleurs de l'agence — seul élément de marque du rapport */}
+        <div className="h-1 -mx-6 -mt-6 mb-4 rounded-t-xl print:hidden" style={{ backgroundColor: primary }} />
+
         <div className="flex items-center justify-between mb-1 print:hidden">
           <h3 className="font-semibold text-base flex items-center gap-2">
-            <BarChart3 size={18} className="text-[#ff5a5f]" /> Rapport mensuel
+            {brandKit?.logoUrl ? (
+              <img src={brandKit.logoUrl} alt="" className="h-6 max-w-[120px] object-contain" />
+            ) : (
+              <BarChart3 size={18} style={{ color: accent }} />
+            )}
+            Rapport mensuel
           </h3>
           <div className="flex items-center gap-2">
             <button onClick={() => window.print()} className="text-xs font-medium text-gray-500 hover:text-gray-700 border border-gray-200 rounded-lg px-2.5 py-1.5">
@@ -6104,14 +6125,20 @@ function MonthlyReportModal({ client, onClose }) {
           </div>
         </div>
 
+        {/* En-tête imprimé : logo de l'agence si renseigné, jamais la marque LinkeePost */}
+        {brandKit?.logoUrl && (
+          <img src={brandKit.logoUrl} alt="" className="hidden print:block h-8 max-w-[160px] object-contain mb-3" />
+        )}
+
         <div className="mb-4">
-          <p className="text-lg font-bold text-[#1b2a4a]">{client.companyName || client.name}</p>
+          <p className="text-lg font-bold" style={{ color: primary }}>{client.companyName || client.name}</p>
           <div className="flex items-center gap-2 text-sm text-gray-500 print:hidden">
             <button onClick={() => changeMonth(-1)} className="p-1 hover:bg-gray-100 rounded"><ChevronDown size={14} className="rotate-90" /></button>
             <span className="capitalize">{monthLabel}</span>
             <button onClick={() => changeMonth(1)} disabled={year === now.getFullYear() && month === now.getMonth() + 1} className="p-1 hover:bg-gray-100 rounded disabled:opacity-30"><ChevronDown size={14} className="-rotate-90" /></button>
           </div>
           <p className="hidden print:block text-sm text-gray-500 capitalize">{monthLabel}</p>
+          {brandKit?.tagline && <p className="text-xs text-gray-400 mt-0.5">{brandKit.tagline}</p>}
         </div>
 
         {loading ? (
@@ -6131,7 +6158,7 @@ function MonthlyReportModal({ client, onClose }) {
                 { label: "Recos suivies", value: `${data.report.recommendations.followed}/${data.report.recommendations.proposed || 0}` },
               ].map((k) => (
                 <div key={k.label} className="bg-gray-50 rounded-xl p-3">
-                  <p className="text-lg font-bold text-[#1b2a4a]">{k.value}</p>
+                  <p className="text-lg font-bold" style={{ color: primary }}>{k.value}</p>
                   <p className="text-[11px] text-gray-400">{k.label}</p>
                 </div>
               ))}
@@ -6145,7 +6172,7 @@ function MonthlyReportModal({ client, onClose }) {
                     <div key={p.id} className="border border-gray-100 rounded-xl p-3">
                       <div className="flex items-center justify-between gap-2">
                         <p className="text-xs font-medium text-gray-700 truncate">{p.theme}</p>
-                        <span className="text-xs font-semibold text-[#ff5a5f] shrink-0">{pct(p.engagementRate)}</span>
+                        <span className="text-xs font-semibold shrink-0" style={{ color: accent }}>{pct(p.engagementRate)}</span>
                       </div>
                       <p className="text-xs text-gray-400 mt-0.5 line-clamp-2">{p.excerpt}</p>
                     </div>
