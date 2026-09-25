@@ -7268,6 +7268,7 @@ function BrandKitView({ showToast }) {
   const [uploadingBg, setUploadingBg]     = useState(false);
   const [preview, setPreview]       = useState(null); // URL de l'aperçu PNG généré
   const [generating, setGenerating] = useState(false);
+  const [previewKind, setPreviewKind] = useState("post"); // "post" | "title" | "content" | "end"
 
   const set = (k, v) => setKit((f) => ({ ...f, [k]: v }));
 
@@ -7340,7 +7341,20 @@ function BrandKitView({ showToast }) {
     await fetch("/api/brand-kit/background", { method: "DELETE" }).catch(() => {});
   };
 
-  const generatePreview = async () => {
+  // Exemples pour l'aperçu des 3 slides de carrousel (mêmes gabarits que
+  // CarouselImagesBlock dans la création de post — lib/templates.js::renderCarouselTemplate)
+  const CAROUSEL_PREVIEW_SLIDES = {
+    title: { type: "title", title: "Titre accrocheur de votre carrousel", subtitle: "Un sous-titre qui donne envie de swiper." },
+    content: {
+      type: "content",
+      title: "Étape 1 — Un titre clair",
+      body: "Le corps de la slide : une explication concise qui apporte de la valeur, avec des phrases courtes et lisibles.",
+    },
+    end: { type: "end", cta: "Suivez-moi pour plus de conseils" },
+  };
+
+  const generatePreview = async (kind = previewKind) => {
+    setPreviewKind(kind);
     setGenerating(true);
     setPreview(null);
     try {
@@ -7350,13 +7364,17 @@ function BrandKitView({ showToast }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(kit),
       });
+      const body =
+        kind === "post"
+          ? {
+              type: "post",
+              text: "Voici un aperçu de votre charte graphique sur un post LinkedIn. Personnalisez les couleurs, la police et le logo pour refléter votre marque.",
+            }
+          : { type: "carousel", slides: [CAROUSEL_PREVIEW_SLIDES[kind]] };
       const res = await fetch("/api/image/template", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          type: "post",
-          text: "Voici un aperçu de votre charte graphique sur un post LinkedIn. Personnalisez les couleurs, la police et le logo pour refléter votre marque.",
-        }),
+        body: JSON.stringify(body),
       });
       const d = await res.json();
       if (!res.ok) throw new Error(d.error || "Erreur génération");
@@ -7574,6 +7592,28 @@ function BrandKitView({ showToast }) {
         <div className="space-y-4 sticky top-6">
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
             {sectionTitle("Aperçu du visuel")}
+            <div className="flex flex-wrap gap-1.5 mb-3">
+              {[
+                { id: "post", label: "Post" },
+                { id: "title", label: "Slide 1 — titre" },
+                { id: "content", label: "Slide contenu" },
+                { id: "end", label: "Slide CTA" },
+              ].map((t) => (
+                <button
+                  key={t.id}
+                  type="button"
+                  onClick={() => generatePreview(t.id)}
+                  disabled={generating}
+                  className={`text-xs px-2.5 py-1.5 rounded-full border font-medium transition-colors disabled:opacity-50 ${
+                    previewKind === t.id
+                      ? "bg-[#ff5a5f] text-white border-[#ff5a5f]"
+                      : "border-gray-200 text-gray-500 hover:border-gray-300"
+                  }`}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
             <div className="aspect-square rounded-xl overflow-hidden bg-gray-50 border border-gray-100 flex items-center justify-center mb-4">
               {preview ? (
                 <img src={preview} alt="Aperçu" className="w-full h-full object-cover" />
@@ -7591,7 +7631,7 @@ function BrandKitView({ showToast }) {
             </div>
             <button
               type="button"
-              onClick={generatePreview}
+              onClick={() => generatePreview()}
               disabled={generating}
               className="w-full border border-[#ff5a5f] text-[#ff5a5f] py-2.5 rounded-xl text-sm font-semibold hover:bg-[#fff1f1] disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
             >
