@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getEffectiveUserId as getUserId } from "@/lib/session";
 import { decryptToken } from "@/lib/crypto";
+import { fetchOrgShareStats } from "@/lib/linkedin/orgShareStats";
 
 // Statistiques des posts d'une page entreprise.
 // API : organizationalEntityShareStatistics (Community Management API)
@@ -68,30 +69,7 @@ export async function GET(req) {
     });
 
     const shareUrns = published.map((d) => d.postId).filter((id) => /^urn:li:(share|ugcPost):/.test(id));
-    const statsByUrn = {};
-
-    // L'API accepte une List() d'URNs — par lots de 10
-    for (let i = 0; i < shareUrns.length; i += 10) {
-      const batch = shareUrns.slice(i, i + 10);
-      const shares = batch.filter((u) => u.startsWith("urn:li:share:"));
-      const ugc = batch.filter((u) => u.startsWith("urn:li:ugcPost:"));
-      const params = [`q=organizationalEntity`, `organizationalEntity=${encodeURIComponent(org)}`];
-      if (shares.length)
-        params.push(`shares=List(${shares.map(encodeURIComponent).join(",")})`);
-      if (ugc.length)
-        params.push(`ugcPosts=List(${ugc.map(encodeURIComponent).join(",")})`);
-
-      const res = await fetch(`${BASE}?${params.join("&")}`, { headers: liHeaders(orgToken) });
-      if (!res.ok) {
-        console.error("Stats par post:", res.status, await res.text());
-        continue;
-      }
-      const data = await res.json();
-      for (const el of data.elements ?? []) {
-        const urn = el.share ?? el.ugcPost;
-        if (urn) statsByUrn[urn] = el.totalShareStatistics;
-      }
-    }
+    const statsByUrn = await fetchOrgShareStats(orgToken, org, shareUrns);
 
     // Programmés d'abord (le prochain en tête), puis publiés (le plus récent en tête)
     const posts = [

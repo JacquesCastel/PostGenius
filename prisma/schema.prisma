@@ -318,6 +318,29 @@ model Draft {
   // --- Instagram ---
   igPostId  String? // media ID Instagram après publication
   igStatus  String? // published | error
+
+  performance PostPerformance[]
+}
+
+// Instantané des vraies statistiques LinkedIn d'un post publié (page entreprise
+// uniquement — les stats du profil personnel dépendent d'une permission LinkedIn
+// encore en attente de revue). Capturé par lib/editorial/performance.js à des
+// paliers fixes après publication : la mémoire d'historique qui manquait pour un
+// jour relier les recommandations à de vrais résultats plutôt qu'au seul
+// accepté/ignoré (voir lib/editorial/learning.js).
+model PostPerformance {
+  id          String   @id @default(cuid())
+  draftId     String
+  draft       Draft    @relation(fields: [draftId], references: [id], onDelete: Cascade)
+  offsetHours Int // palier après publication : 24 (J+1) ou 168 (J+7)
+  capturedAt  DateTime @default(now())
+  impressions Int?
+  likes       Int?
+  comments    Int?
+  shares      Int?
+  clicks      Int?
+
+  @@unique([draftId, offsetHours])
 }
 
 // Événement (salon, forum…) auquel le client participe : sert à générer
