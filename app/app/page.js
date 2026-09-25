@@ -7436,6 +7436,52 @@ function BrandKitView({ showToast }) {
   );
 }
 
+// Suggestion de créneau à partir des vraies performances mesurées (lib/editorial/cadence.js) —
+// n'affiche rien tant qu'il n'y a pas assez de posts publiés avec des stats (voir
+// lib/editorial/performance.js) : pas de créneau deviné faute de données.
+function CadenceSuggestion({ fields, set, toggleCsv }) {
+  const [suggestion, setSuggestion] = useState(undefined); // undefined = chargement, null = rien à proposer
+  const [applied, setApplied] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/editorial/cadence-suggestion")
+      .then(readJson)
+      .then((d) => setSuggestion(d.suggestion ?? null))
+      .catch(() => setSuggestion(null));
+  }, []);
+
+  if (!suggestion) return null;
+  const dayLabel = WEEK_DAYS.find((w) => w.n === suggestion.day)?.label ?? "";
+  const alreadySet = (fields.publishDays ?? "").split(",").includes(String(suggestion.day));
+
+  const apply = () => {
+    if (!alreadySet) toggleCsv("publishDays", suggestion.day);
+    set("publishTime", suggestion.time);
+    setApplied(true);
+  };
+
+  return (
+    <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 mb-3 text-xs text-emerald-800">
+      <p>
+        D'après {suggestion.totalSamples} de vos posts publiés, <strong>{dayLabel} vers {suggestion.time}</strong>{" "}
+        obtient le meilleur engagement réel ({suggestion.engagementRate}%, sur {suggestion.sampleSize} posts ce
+        jour-là).
+      </p>
+      {applied || (alreadySet && fields.publishTime === suggestion.time) ? (
+        <p className="mt-1.5 font-medium">✓ Appliqué</p>
+      ) : (
+        <button
+          type="button"
+          onClick={apply}
+          className="mt-1.5 bg-white border border-emerald-300 hover:bg-emerald-100 px-2.5 py-1 rounded-full font-medium"
+        >
+          Appliquer ce créneau
+        </button>
+      )}
+    </div>
+  );
+}
+
 // ----------------------------------------------------------------
 // Page profil : identité, expertise, style de rédaction
 // ----------------------------------------------------------------
@@ -7784,6 +7830,7 @@ function ProfileView({ profile, onSaved, showToast, linkedin, onDisconnect, inst
           {/* Rythme de publication */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
             {cardTitle(Clock, "Rythme de publication")}
+            <CadenceSuggestion fields={fields} set={set} toggleCsv={toggleCsv} />
             <div className="space-y-4">
               <div>
                 <label className={label}>
