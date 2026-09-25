@@ -7258,21 +7258,29 @@ const BG_STYLES = [
 // redimensionner), enregistrés dans SlideTemplate et utilisés à la place de la mise
 // en page fixe de lib/templates.js dès qu'un modèle existe pour ce type de slide.
 // ----------------------------------------------------------------
-const SLIDE_KIND_LABEL = { title: "Slide 1 — titre", content: "Slide contenu", end: "Slide CTA" };
+const SLIDE_KIND_LABEL = { post: "Post", title: "Slide 1 — titre", content: "Slide contenu", end: "Slide CTA" };
 const ROLE_PLACEHOLDER = {
   title: "Titre accrocheur de votre carrousel",
   subtitle: "Un sous-titre qui donne envie de swiper.",
   body: "Le corps de la slide : votre texte apparaîtra ici, avec le contenu réel du post généré par l'IA.",
+  quote: "Voici un aperçu de votre charte graphique sur un post LinkedIn.",
   cta: "Suivez-moi pour plus de conseils",
   pageNumber: "1 / 8",
 };
 const CANVAS_DISPLAY = 460; // px affichés ; le canevas réel fait 1080×1080
 const CANVAS_SCALE = CANVAS_DISPLAY / 1080;
+// Fond blanc par défaut pour une slide de contenu (texte sombre) ; couleurs de marque
+// pour les autres (post, titre, fin — texte clair) — même convention que le rendu réel
+// (renderCustomSlide, lib/templates.js).
+const LIGHT_BG_KINDS = ["content"];
 
 function defaultSlideElements(kind, kit) {
   const light = kit.secondaryColor || "#ffffff";
   const dark = kit.primaryColor || "#0a66c2";
   const uid = (s) => `seed-${s}`;
+  if (kind === "post") {
+    return [{ id: uid("quote"), type: "text", role: "quote", x: 90, y: 340, width: 850, height: 400, fontSize: 44, fontWeight: 700, color: light, textAlign: "left" }];
+  }
   if (kind === "title") {
     return [
       { id: uid("title"), type: "text", role: "title", x: 80, y: 280, width: 920, height: 180, fontSize: 64, fontWeight: 700, color: light, textAlign: "left" },
@@ -7457,9 +7465,9 @@ function SlideTemplateEditor({ kind, kit, onClose, onSaved, showToast }) {
                   width: CANVAS_DISPLAY,
                   height: CANVAS_DISPLAY,
                   // Même convention que le rendu réel (renderCustomSlide, lib/templates.js) :
-                  // fond blanc pour une slide de contenu, couleurs de marque pour titre/fin.
+                  // fond blanc pour une slide de contenu, couleurs de marque pour post/titre/fin.
                   background:
-                    kind === "content"
+                    LIGHT_BG_KINDS.includes(kind)
                       ? "#ffffff"
                       : kit.bgStyle === "gradient"
                       ? `linear-gradient(135deg, ${kit.primaryColor}, #1b2a4a)`
@@ -7987,16 +7995,14 @@ function BrandKitView({ showToast }) {
                   >
                     {t.label}
                   </button>
-                  {t.id !== "post" && (
-                    <button
-                      type="button"
-                      onClick={() => setEditingKind(t.id)}
-                      title={`Modifier le modèle — ${t.label}`}
-                      className="p-1.5 rounded-full border border-gray-200 text-gray-400 hover:border-gray-300 hover:text-gray-600"
-                    >
-                      <Pencil size={11} />
-                    </button>
-                  )}
+                  <button
+                    type="button"
+                    onClick={() => setEditingKind(t.id)}
+                    title={`Modifier le modèle — ${t.label}`}
+                    className="p-1.5 rounded-full border border-gray-200 text-gray-400 hover:border-gray-300 hover:text-gray-600"
+                  >
+                    <Pencil size={11} />
+                  </button>
                 </span>
               ))}
             </div>
