@@ -195,7 +195,11 @@ export async function POST(req) {
         },
         body: JSON.stringify({
           model: process.env.ANTHROPIC_MODEL || "claude-sonnet-4-6",
-          max_tokens: params.mode === "series" || params.variants ? 8000 : 2048,
+          // Carrousel : le plan structuré ("slides", en plus de "items") alourdit nettement
+          // la réponse JSON — 2048 suffisait avant, mais peut la couper avant la fin
+          // maintenant, ce qui fait disparaître "slides" en silence (JSON invalide, ou le
+          // modèle raccourcit pour tenir dans le budget).
+          max_tokens: params.mode === "series" || params.variants || params.type === "carrousel" ? 8000 : 2048,
           system: SYSTEM_PROMPT,
           messages: [{ role: "user", content: buildUserPrompt(params, profile, remarks) }],
         }),
