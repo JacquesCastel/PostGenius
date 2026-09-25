@@ -1,9 +1,29 @@
+"use client";
+
 import Link from "next/link";
-import { LogIn } from "lucide-react";
+import { useEffect, useState } from "react";
+import { LogIn, LogOut } from "lucide-react";
 import LpMark from "./LpMark";
 
-// En-tête public partagé (landing, blog, contact, pages légales)
+// En-tête public partagé (landing, blog, contact, pages légales). Aussi rendu
+// depuis app/app/page.js (client) sur l'écran de connexion/inscription — d'où
+// le composant client avec vérification de session via /api/auth/me plutôt
+// qu'une lecture de cookies côté serveur (incompatible avec cet usage-là).
 export default function SiteHeader() {
+  const [loggedIn, setLoggedIn] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/auth/me")
+      .then((r) => r.json())
+      .then((d) => setLoggedIn(Boolean(d.user)))
+      .catch(() => {});
+  }, []);
+
+  const logout = async () => {
+    await fetch("/api/auth/logout", { method: "POST" });
+    window.location.href = "/";
+  };
+
   return (
     <header className="max-w-6xl mx-auto px-4 sm:px-6 pt-5">
       <div className="bg-white/80 backdrop-blur rounded-full shadow-lg shadow-rose-100/50 border border-white px-5 py-2.5 flex items-center justify-between gap-4">
@@ -28,14 +48,25 @@ export default function SiteHeader() {
           >
             Essai gratuit
           </Link>
-          <Link
-            href="/app?mode=login"
-            title="Se connecter"
-            aria-label="Se connecter"
-            className="w-9 h-9 rounded-full border border-[#ffd5d6] flex items-center justify-center text-[#1b2a4a] hover:text-[#ff5a5f] hover:border-[#ff5a5f] transition-colors"
-          >
-            <LogIn size={17} />
-          </Link>
+          {loggedIn ? (
+            <button
+              onClick={logout}
+              title="Se déconnecter"
+              aria-label="Se déconnecter"
+              className="w-9 h-9 rounded-full border border-[#ffd5d6] flex items-center justify-center text-[#1b2a4a] hover:text-[#ff5a5f] hover:border-[#ff5a5f] transition-colors"
+            >
+              <LogOut size={17} />
+            </button>
+          ) : (
+            <Link
+              href="/app?mode=login"
+              title="Se connecter"
+              aria-label="Se connecter"
+              className="w-9 h-9 rounded-full border border-[#ffd5d6] flex items-center justify-center text-[#1b2a4a] hover:text-[#ff5a5f] hover:border-[#ff5a5f] transition-colors"
+            >
+              <LogIn size={17} />
+            </Link>
+          )}
         </div>
       </div>
     </header>
