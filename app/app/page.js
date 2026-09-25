@@ -8988,6 +8988,7 @@ export default function Home() {
   // Image générée pour le post courant
   const [postImage, setPostImage] = useState(null); // { url, prompt }
   const [imagePromptInput, setImagePromptInput] = useState("");
+  const [useBrandKitForImage, setUseBrandKitForImage] = useState(true); // respecter la charte graphique dans l'image générée par IA
   const [imageLoading, setImageLoading] = useState(false);
   const [editingImageSrc, setEditingImageSrc] = useState(null); // image ouverte dans l'éditeur crop/filtre (import ou retouche)
   // Article de veille servant d'inspiration à la génération
@@ -9371,7 +9372,7 @@ export default function Home() {
       const res = await fetch("/api/image/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text, prompt: imagePromptInput }),
+        body: JSON.stringify({ text, prompt: imagePromptInput, useBrandKit: useBrandKitForImage }),
       });
       const data = await readJson(res);
       if (!res.ok) throw new Error(data.error || "Erreur");
@@ -9459,6 +9460,18 @@ export default function Home() {
         <ImageIcon size={15} className="text-[#ff5a5f]" /> Image du post
         <span className="text-xs text-gray-400 font-normal">(optionnelle — publiée avec le post)</span>
       </p>
+
+      {canImages && (
+        <label className="flex items-center gap-2 text-xs text-gray-600 mb-3 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={useBrandKitForImage}
+            onChange={(e) => setUseBrandKitForImage(e.target.checked)}
+            className="accent-[#ff5a5f]"
+          />
+          Respecter ma charte graphique (couleurs) dans l'image générée par IA
+        </label>
+      )}
 
       {postImage ? (
         <>
