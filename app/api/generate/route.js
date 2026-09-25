@@ -15,11 +15,25 @@ Tu rédiges des posts qui maximisent l'engagement en appliquant strictement les 
 d'écriture LinkedIn fournies dans chaque demande.
 Tu réponds UNIQUEMENT avec un objet JSON valide, sans backticks ni texte autour.`;
 
+// Rappel du format JSON attendu pour "extra", selon le type de post — le carrousel a
+// besoin de "slides" (structure de mise en page) en plus de "items" (résumé lisible),
+// sans quoi le modèle omet parfois le second faute de le voir dans le rappel de format.
+function extraFormat(type) {
+  if (type === "simple") return "null";
+  if (type === "carrousel") return `{"title": "...", "items": ["..."], "slides": [{"type": "title", "title": "...", "subtitle": "..."}, {"type": "content", "title": "...", "body": "..."}, {"type": "end", "cta": "..."}]}`;
+  return `{"title": "...", "items": ["..."]}`;
+}
+
 function buildUserPrompt({ type, theme, expertise, tone, maxChars, refine, mode, count, variants, inspiration }, profile, remarks = []) {
   let extraSpec = "";
   if (type === "carrousel") {
-    extraSpec = `\nC'est un post carrousel : fournis aussi un plan de 8 slides dans "extra"
-(titre: "Plan du carrousel", items: tableau de 8 chaînes "Slide N — contenu").
+    extraSpec = `\nC'est un post carrousel : fournis aussi dans "extra" un plan de 8 slides, sous DEUX formes qui se correspondent dans le même ordre :
+- "title": "Plan du carrousel" ;
+- "items" : 8 chaînes courtes "Slide N — contenu" (résumé lisible) ;
+- "slides" : 8 objets structurés pour la mise en page (jamais de texte au-delà des limites indiquées) :
+  - le 1er : {"type": "title", "title": "titre accrocheur du carrousel (80 caractères max)", "subtitle": "sous-titre optionnel (120 caractères max) ou null"} ;
+  - les 6 suivants : {"type": "content", "title": "titre court de la slide (60 caractères max)", "body": "développement, 2-3 phrases courtes (320 caractères max)"} ;
+  - le dernier : {"type": "end", "cta": "appel à l'action final, ex : « Suivez-moi pour plus de conseils »"}.
 Le texte du post doit teaser le carrousel.`;
   } else if (type === "video") {
     extraSpec = `\nC'est un post vidéo : fournis aussi un script de 60-90 secondes dans "extra"
@@ -59,7 +73,7 @@ ${writingRulesPrompt(maxChars)}
 ${WHY_INSTRUCTION}
 
 Format de réponse JSON :
-{"text": "le post complet", "extra": ${type === "simple" ? "null" : `{"title": "...", "items": ["..."]}`}, ${WHY_JSON_FORMAT}}`;
+{"text": "le post complet", "extra": ${extraFormat(type)}, ${WHY_JSON_FORMAT}}`;
   }
 
   // Mode série : N posts gradués sur un thème, avec reveal final
@@ -117,7 +131,7 @@ Propose ${n} VARIANTES distinctes du post : angles d'attaque différents
 ${WHY_INSTRUCTION}
 
 Format de réponse JSON (exactement ${n} variantes) :
-{"variants": [{"text": "...", "extra": ${type === "simple" ? "null" : `{"title": "...", "items": ["..."]}`}, ${WHY_JSON_FORMAT}}, ...]}`;
+{"variants": [{"text": "...", "extra": ${extraFormat(type)}, ${WHY_JSON_FORMAT}}, ...]}`;
   }
 
   return `${base}
@@ -125,7 +139,7 @@ Format de réponse JSON (exactement ${n} variantes) :
 ${WHY_INSTRUCTION}
 
 Format de réponse JSON :
-{"text": "le post complet", "extra": ${type === "simple" ? "null" : `{"title": "...", "items": ["..."]}`}, ${WHY_JSON_FORMAT}}`;
+{"text": "le post complet", "extra": ${extraFormat(type)}, ${WHY_JSON_FORMAT}}`;
 }
 
 export async function POST(req) {
