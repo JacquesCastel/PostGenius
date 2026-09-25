@@ -3,9 +3,9 @@ import { randomUUID } from "crypto";
 import { prisma } from "@/lib/db";
 import { getEffectiveUserId as getUserId } from "@/lib/session";
 
-const KINDS = ["title", "content", "end"];
+const KINDS = ["title", "content", "end", "post"];
 const MAX_ELEMENTS = 20;
-const TEXT_ROLES = ["title", "subtitle", "body", "cta", "pageNumber", "custom"];
+const TEXT_ROLES = ["title", "subtitle", "body", "quote", "cta", "pageNumber", "custom"];
 const IMAGE_ROLES = ["logo", "custom"];
 
 // Nettoie un élément reçu de l'éditeur : bornes numériques (le canevas fait

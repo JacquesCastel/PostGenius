@@ -47,23 +47,23 @@ export async function POST(req) {
 
     let urls = [];
 
+    // Modèles personnalisés (éditeur visuel, Charte graphique), par type de slide (post
+    // inclus) — les URL d'images importées (relatives) doivent être résolues en absolu,
+    // comme le logo ci-dessus, pour que Satori puisse les charger.
+    const templateRows = await prisma.slideTemplate.findMany({ where: { userId } });
+    const customTemplates = Object.fromEntries(
+      templateRows.map((r) => {
+        const elements = (JSON.parse(r.data).elements ?? []).map((el) =>
+          el.type === "image" && el.src?.startsWith("/") ? { ...el, src: `${base}${el.src}` } : el
+        );
+        return [r.kind, { elements }];
+      })
+    );
+
     if (type === "carousel") {
       if (!Array.isArray(slides) || slides.length === 0) {
         return NextResponse.json({ error: "slides requis pour le type carrousel" }, { status: 400 });
       }
-
-      // Modèles personnalisés (éditeur visuel, Charte graphique), par type de slide —
-      // les URL d'images importées (relatives) doivent être résolues en absolu, comme
-      // le logo ci-dessus, pour que Satori puisse les charger.
-      const templateRows = await prisma.slideTemplate.findMany({ where: { userId } });
-      const customTemplates = Object.fromEntries(
-        templateRows.map((r) => {
-          const elements = (JSON.parse(r.data).elements ?? []).map((el) =>
-            el.type === "image" && el.src?.startsWith("/") ? { ...el, src: `${base}${el.src}` } : el
-          );
-          return [r.kind, { elements }];
-        })
-      );
 
       const pngs = await renderCarouselTemplate({ slides, brandKit: kit, customTemplates });
       for (const png of pngs) {
@@ -75,7 +75,7 @@ export async function POST(req) {
       if (!text?.trim()) {
         return NextResponse.json({ error: "text requis pour le type post" }, { status: 400 });
       }
-      const png = await renderPostTemplate({ text, brandKit: kit });
+      const png = await renderPostTemplate({ text, brandKit: kit, customTemplate: customTemplates.post });
       const b64 = png.toString("base64");
       const { url } = await saveImage(b64);
       urls = [url];
