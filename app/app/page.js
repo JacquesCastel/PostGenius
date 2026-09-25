@@ -8323,6 +8323,79 @@ function TutorialOverlay({ canEvents, onClose }) {
   );
 }
 
+// Génère les images du carrousel à partir du plan structuré produit par l'IA
+// (result.extra.slides — voir buildUserPrompt dans app/api/generate/route.js), via le
+// même gabarit Satori que la charte graphique (couleurs, logo, police de l'utilisateur).
+// Ne publie rien : images téléchargeables, à poster manuellement en document LinkedIn.
+function CarouselImagesBlock({ slides }) {
+  const [images, setImages] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const generate = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/image/template", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "carousel", slides }),
+      });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error || "Échec de la génération");
+      setImages(d.urls ?? []);
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="border-t border-gray-100 mt-4 pt-4">
+      {!images ? (
+        <button
+          onClick={generate}
+          disabled={loading}
+          className="bg-gray-900 hover:bg-gray-700 disabled:bg-gray-300 text-white text-xs font-medium px-4 py-2 rounded-lg flex items-center gap-1.5"
+        >
+          {loading ? <RefreshCw size={13} className="animate-spin" /> : <ImageIcon size={13} />}
+          {loading ? "Génération des slides…" : "Générer les images du carrousel"}
+        </button>
+      ) : (
+        <>
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-xs font-medium text-gray-500">{images.length} image{images.length > 1 ? "s" : ""} générée{images.length > 1 ? "s" : ""}</p>
+            <button onClick={generate} disabled={loading} className="text-xs text-gray-500 hover:text-[#ff5a5f] flex items-center gap-1">
+              {loading ? <RefreshCw size={12} className="animate-spin" /> : <RefreshCw size={12} />} Régénérer
+            </button>
+          </div>
+          <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+            {images.map((url, i) => (
+              <a
+                key={url}
+                href={url}
+                download={`slide-${i + 1}.png`}
+                className="group relative rounded-lg overflow-hidden border border-gray-100 aspect-square"
+                title={`Télécharger la slide ${i + 1}`}
+              >
+                <img src={url} alt={`Slide ${i + 1}`} className="w-full h-full object-cover" />
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center">
+                  <Download size={16} className="text-white opacity-0 group-hover:opacity-100" />
+                </div>
+              </a>
+            ))}
+          </div>
+          <p className="text-[11px] text-gray-400 mt-2">
+            À poster manuellement en document LinkedIn (carrousel) — la publication automatique n'est pas encore disponible.
+          </p>
+        </>
+      )}
+      {error && <p className="text-xs text-red-500 mt-2">{error}</p>}
+    </div>
+  );
+}
+
 // ----------------------------------------------------------------
 // Application
 // ----------------------------------------------------------------
@@ -10101,6 +10174,9 @@ export default function Home() {
                         </li>
                       ))}
                     </ul>
+                    {form.type === "carrousel" && result.extra.slides?.length > 0 && (
+                      <CarouselImagesBlock key={result.text} slides={result.extra.slides} />
+                    )}
                   </div>
                 )}
 
