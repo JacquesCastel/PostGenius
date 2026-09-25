@@ -8902,7 +8902,10 @@ export default function Home() {
     // Reprend l'image déjà associée au brouillon (si on vient de "Mes posts") —
     // sinon on garde celle déjà en cours (si on vient de "Créer un post").
     if (draftId) {
-      setPostImage(imageUrl ? { url: imageUrl, prompt: imagePrompt ?? "" } : null);
+      // Un brouillon enregistré ne mémorise pas la source d'origine : on la déduit
+      // du prompt (présent seulement pour une illustration IA) pour proposer
+      // "Régénérer" à bon escient, sans le supposer à tort pour un import.
+      setPostImage(imageUrl ? { url: imageUrl, prompt: imagePrompt ?? "", source: imagePrompt ? "illustration" : undefined } : null);
       setImagePromptInput("");
     }
   };
@@ -8989,6 +8992,7 @@ export default function Home() {
   const [postImage, setPostImage] = useState(null); // { url, prompt }
   const [imagePromptInput, setImagePromptInput] = useState("");
   const [useBrandKitForImage, setUseBrandKitForImage] = useState(true); // respecter la charte graphique dans l'image générée par IA
+  const [imageSourceTab, setImageSourceTab] = useState("text"); // "text" | "illustration" | "upload" — source choisie avant génération
   const [imageLoading, setImageLoading] = useState(false);
   const [editingImageSrc, setEditingImageSrc] = useState(null); // image ouverte dans l'éditeur crop/filtre (import ou retouche)
   // Article de veille servant d'inspiration à la génération
@@ -9376,7 +9380,7 @@ export default function Home() {
       });
       const data = await readJson(res);
       if (!res.ok) throw new Error(data.error || "Erreur");
-      setPostImage(data);
+      setPostImage({ ...data, source: "illustration" });
       setImagePromptInput("");
       if (optimizeText?.draftId) {
         const draftId = optimizeText.draftId;
@@ -9384,6 +9388,36 @@ export default function Home() {
         setDrafts((ds) => ds.map((d) => (d.id === draftId ? { ...d, imageUrl: data.url, imagePrompt: data.prompt } : d)));
       }
       showToast("Image générée ✓");
+    } catch (e) {
+      showToast(e.message);
+    } finally {
+      setImageLoading(false);
+    }
+  };
+
+  // Visuel généré à partir du texte du post et du gabarit "post" de la Charte
+  // graphique (couleurs, police, logo — et le modèle personnalisé de l'éditeur
+  // visuel s'il existe). Aucun coût IA : rendu Satori, comme l'aperçu de charte.
+  const generateTemplateImage = async () => {
+    if ((!result && !optimizeText) || imageLoading) return;
+    setImageLoading(true);
+    try {
+      const text = optimizeText ? optimizeText.text : editingResult ? resultDraftText : result.text;
+      const res = await fetch("/api/image/template", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "post", text }),
+      });
+      const data = await readJson(res);
+      if (!res.ok) throw new Error(data.error || "Erreur");
+      const next = { url: data.urls[0], prompt: null, source: "text" };
+      setPostImage(next);
+      if (optimizeText?.draftId) {
+        const draftId = optimizeText.draftId;
+        patchDraft(draftId, { imageUrl: next.url, imagePrompt: null }).catch(() => {});
+        setDrafts((ds) => ds.map((d) => (d.id === draftId ? { ...d, imageUrl: next.url, imagePrompt: null } : d)));
+      }
+      showToast("Image générée à partir de votre charte ✓");
     } catch (e) {
       showToast(e.message);
     } finally {
@@ -9417,7 +9451,7 @@ export default function Home() {
       });
       const data = await readJson(res);
       if (!res.ok) throw new Error(data.error || "Erreur");
-      const next = { url: data.url, prompt: postImage?.prompt ?? null };
+      const next = { url: data.url, prompt: postImage?.prompt ?? null, source: postImage?.source ?? "upload" };
       setPostImage(next);
       setEditingImageSrc(null);
       if (optimizeText?.draftId) {
@@ -9461,18 +9495,6 @@ export default function Home() {
         <span className="text-xs text-gray-400 font-normal">(optionnelle — publiée avec le post)</span>
       </p>
 
-      {canImages && (
-        <label className="flex items-center gap-2 text-xs text-gray-600 mb-3 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={useBrandKitForImage}
-            onChange={(e) => setUseBrandKitForImage(e.target.checked)}
-            className="accent-[#ff5a5f]"
-          />
-          Respecter ma charte graphique (couleurs) dans l'image générée par IA
-        </label>
-      )}
-
       {postImage ? (
         <>
           <img src={postImage.url} alt="Image du post" className="rounded-xl w-full mb-2" />
@@ -9481,8 +9503,19 @@ export default function Home() {
               Prompt : {postImage.prompt}
             </p>
           )}
+          {postImage.source === "illustration" && canImages && (
+            <label className="flex items-center gap-2 text-xs text-gray-600 mb-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={useBrandKitForImage}
+                onChange={(e) => setUseBrandKitForImage(e.target.checked)}
+                className="accent-[#ff5a5f]"
+              />
+              Respecter ma charte graphique (couleurs)
+            </label>
+          )}
           <div className="flex flex-wrap gap-2">
-            {canImages && (
+            {postImage.source === "illustration" && canImages && (
               <input
                 type="text"
                 value={imagePromptInput}
@@ -9491,9 +9524,19 @@ export default function Home() {
                 className="flex-1 min-w-[10rem] border border-gray-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
               />
             )}
-            {canImages && (
+            {postImage.source === "illustration" && canImages && (
               <button
                 onClick={generateImage}
+                disabled={imageLoading}
+                className="bg-gray-900 hover:bg-gray-700 disabled:bg-gray-300 text-white text-xs px-3 py-1.5 rounded-lg flex items-center gap-1.5"
+              >
+                {imageLoading ? <RefreshCw size={12} className="animate-spin" /> : <RefreshCw size={12} />}
+                Régénérer
+              </button>
+            )}
+            {postImage.source === "text" && (
+              <button
+                onClick={generateTemplateImage}
                 disabled={imageLoading}
                 className="bg-gray-900 hover:bg-gray-700 disabled:bg-gray-300 text-white text-xs px-3 py-1.5 rounded-lg flex items-center gap-1.5"
               >
@@ -9517,41 +9560,92 @@ export default function Home() {
         </>
       ) : (
         <div className="space-y-3">
-          <div className="flex flex-wrap gap-2">
-            <label className="border border-gray-200 hover:border-gray-400 text-gray-700 text-xs font-medium px-4 py-2 rounded-lg flex items-center gap-1.5 cursor-pointer">
-              <Upload size={13} /> Importer une image
-              <input type="file" accept="image/*" onChange={handleImageFilePick} className="hidden" />
-            </label>
+          {/* Source du visuel : gabarit de charte (gratuit), illustration IA, ou import */}
+          <div className="flex flex-wrap gap-1.5">
+            {[
+              { id: "text", label: "Texte (votre charte)", icon: Type },
+              { id: "illustration", label: "Illustration IA", icon: Sparkles },
+              { id: "upload", label: "Importer une image", icon: Upload },
+            ].map((t) => (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => setImageSourceTab(t.id)}
+                className={`text-xs px-3 py-1.5 rounded-full border font-medium flex items-center gap-1.5 transition-colors ${
+                  imageSourceTab === t.id
+                    ? "bg-[#ff5a5f] text-white border-[#ff5a5f]"
+                    : "border-gray-200 text-gray-600 hover:border-gray-300"
+                }`}
+              >
+                <t.icon size={12} /> {t.label}
+              </button>
+            ))}
           </div>
 
-          {canImages ? (
-            <div className="flex flex-wrap gap-2">
-              <input
-                type="text"
-                value={imagePromptInput}
-                onChange={(e) => setImagePromptInput(e.target.value)}
-                placeholder="Ou décrivez l'image à générer par IA — vide = l'IA la déduit du post"
-                className="flex-1 min-w-[10rem] border border-gray-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
-              />
+          {imageSourceTab === "text" && (
+            <div className="space-y-2">
+              <p className="text-xs text-gray-400">
+                Un visuel généré à partir du texte du post, aux couleurs, à la police et au logo de votre
+                charte graphique (modèle personnalisable dans Charte graphique). Gratuit, pas d'IA.
+              </p>
               <button
-                onClick={generateImage}
+                onClick={generateTemplateImage}
                 disabled={imageLoading}
                 className="bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white text-xs font-medium px-4 py-2 rounded-lg flex items-center gap-1.5"
               >
-                {imageLoading ? <RefreshCw size={13} className="animate-spin" /> : <ImageIcon size={13} />}
-                {imageLoading ? "Génération… (~30 s)" : "Générer une image"}
+                {imageLoading ? <RefreshCw size={13} className="animate-spin" /> : <Type size={13} />}
+                {imageLoading ? "Génération…" : "Générer avec ma charte"}
               </button>
             </div>
-          ) : (
-            <div className="rounded-xl bg-[#fff1f1] p-3 text-center">
-              <p className="text-xs text-gray-600">
-                <Lock size={12} className="inline -mt-0.5 mr-1 text-[#ff5a5f]" />
-                La génération d'image par IA est incluse à partir de l'offre Pro.
-              </p>
-              <a href="/tarifs" className="inline-flex items-center gap-1.5 mt-1 text-xs font-semibold text-[#ff5a5f] hover:underline">
-                <ArrowUpCircle size={12} /> Faire évoluer mon offre
-              </a>
-            </div>
+          )}
+
+          {imageSourceTab === "illustration" &&
+            (canImages ? (
+              <div className="space-y-2">
+                <label className="flex items-center gap-2 text-xs text-gray-600 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={useBrandKitForImage}
+                    onChange={(e) => setUseBrandKitForImage(e.target.checked)}
+                    className="accent-[#ff5a5f]"
+                  />
+                  Respecter ma charte graphique (couleurs)
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  <input
+                    type="text"
+                    value={imagePromptInput}
+                    onChange={(e) => setImagePromptInput(e.target.value)}
+                    placeholder="Décrivez l'image à générer par IA — vide = l'IA la déduit du post"
+                    className="flex-1 min-w-[10rem] border border-gray-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
+                  />
+                  <button
+                    onClick={generateImage}
+                    disabled={imageLoading}
+                    className="bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white text-xs font-medium px-4 py-2 rounded-lg flex items-center gap-1.5"
+                  >
+                    {imageLoading ? <RefreshCw size={13} className="animate-spin" /> : <ImageIcon size={13} />}
+                    {imageLoading ? "Génération… (~30 s)" : "Générer une image"}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="rounded-xl bg-[#fff1f1] p-3 text-center">
+                <p className="text-xs text-gray-600">
+                  <Lock size={12} className="inline -mt-0.5 mr-1 text-[#ff5a5f]" />
+                  La génération d'image par IA est incluse à partir de l'offre Pro.
+                </p>
+                <a href="/tarifs" className="inline-flex items-center gap-1.5 mt-1 text-xs font-semibold text-[#ff5a5f] hover:underline">
+                  <ArrowUpCircle size={12} /> Faire évoluer mon offre
+                </a>
+              </div>
+            ))}
+
+          {imageSourceTab === "upload" && (
+            <label className="border border-gray-200 hover:border-gray-400 text-gray-700 text-xs font-medium px-4 py-2 rounded-lg flex items-center gap-1.5 cursor-pointer w-fit">
+              <Upload size={13} /> Choisir un fichier
+              <input type="file" accept="image/*" onChange={handleImageFilePick} className="hidden" />
+            </label>
           )}
         </div>
       )}
