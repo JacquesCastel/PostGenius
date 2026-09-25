@@ -6051,8 +6051,147 @@ function DraftsPanel({ client, onClose, showToast, onGenerate }) {
   );
 }
 
+// Rapport mensuel de performance d'un client — agrège des données déjà collectées
+// (posts publiés, vraies stats LinkedIn, recommandations suivies), pensé pour être
+// montré tel quel à un client d'agence (lib/reports/monthly.js). Export via
+// l'impression du navigateur : pas de génération PDF côté serveur pour l'instant.
+function MonthlyReportModal({ client, onClose }) {
+  const now = new Date();
+  const [year, setYear] = useState(now.getFullYear());
+  const [month, setMonth] = useState(now.getMonth() + 1);
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    setLoading(true);
+    setError(null);
+    fetch(`/api/agency/clients/${client.id}/report?year=${year}&month=${month}`)
+      .then(readJson)
+      .then((d) => {
+        if (d.error) throw new Error(d.error);
+        setData(d);
+      })
+      .catch((e) => setError(e.message))
+      .finally(() => setLoading(false));
+  }, [client.id, year, month]);
+
+  const pct = (n) => (n == null ? "—" : `${(n * 100).toFixed(1)} %`);
+  const monthLabel = new Date(year, month - 1, 1).toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
+  const changeMonth = (delta) => {
+    const d = new Date(year, month - 1 + delta, 1);
+    setYear(d.getFullYear());
+    setMonth(d.getMonth() + 1);
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4 overflow-y-auto print:bg-white print:static print:p-0">
+      <div
+        className="bg-white rounded-xl shadow-xl w-full max-w-2xl p-6 my-8 print:shadow-none print:max-w-full print:m-0"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between mb-1 print:hidden">
+          <h3 className="font-semibold text-base flex items-center gap-2">
+            <BarChart3 size={18} className="text-[#ff5a5f]" /> Rapport mensuel
+          </h3>
+          <div className="flex items-center gap-2">
+            <button onClick={() => window.print()} className="text-xs font-medium text-gray-500 hover:text-gray-700 border border-gray-200 rounded-lg px-2.5 py-1.5">
+              Imprimer / Exporter en PDF
+            </button>
+            <button onClick={onClose} className="text-gray-400 hover:text-gray-600 p-1">
+              <X size={18} />
+            </button>
+          </div>
+        </div>
+
+        <div className="mb-4">
+          <p className="text-lg font-bold text-[#1b2a4a]">{client.companyName || client.name}</p>
+          <div className="flex items-center gap-2 text-sm text-gray-500 print:hidden">
+            <button onClick={() => changeMonth(-1)} className="p-1 hover:bg-gray-100 rounded"><ChevronDown size={14} className="rotate-90" /></button>
+            <span className="capitalize">{monthLabel}</span>
+            <button onClick={() => changeMonth(1)} disabled={year === now.getFullYear() && month === now.getMonth() + 1} className="p-1 hover:bg-gray-100 rounded disabled:opacity-30"><ChevronDown size={14} className="-rotate-90" /></button>
+          </div>
+          <p className="hidden print:block text-sm text-gray-500 capitalize">{monthLabel}</p>
+        </div>
+
+        {loading ? (
+          <div className="text-center py-10 text-gray-400">
+            <RefreshCw size={20} className="mx-auto mb-2 animate-spin" />
+            <p className="text-sm">Préparation du rapport…</p>
+          </div>
+        ) : error ? (
+          <p className="text-sm text-red-500 py-6 text-center">{error}</p>
+        ) : (
+          <div className="space-y-5">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {[
+                { label: "Posts publiés", value: data.report.postsPublished },
+                { label: "Impressions", value: data.report.totalImpressions.toLocaleString("fr-FR") },
+                { label: "Engagement moyen", value: pct(data.report.avgEngagementRate) },
+                { label: "Recos suivies", value: `${data.report.recommendations.followed}/${data.report.recommendations.proposed || 0}` },
+              ].map((k) => (
+                <div key={k.label} className="bg-gray-50 rounded-xl p-3">
+                  <p className="text-lg font-bold text-[#1b2a4a]">{k.value}</p>
+                  <p className="text-[11px] text-gray-400">{k.label}</p>
+                </div>
+              ))}
+            </div>
+
+            {data.report.topPosts.length > 0 && (
+              <div>
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Meilleurs posts</p>
+                <div className="space-y-2">
+                  {data.report.topPosts.map((p) => (
+                    <div key={p.id} className="border border-gray-100 rounded-xl p-3">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-xs font-medium text-gray-700 truncate">{p.theme}</p>
+                        <span className="text-xs font-semibold text-[#ff5a5f] shrink-0">{pct(p.engagementRate)}</span>
+                      </div>
+                      <p className="text-xs text-gray-400 mt-0.5 line-clamp-2">{p.excerpt}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div>
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
+                Tous les posts publiés ce mois ({data.report.posts.length})
+              </p>
+              {data.report.posts.length === 0 ? (
+                <p className="text-xs text-gray-300">Aucun post publié sur ce mois.</p>
+              ) : (
+                <div className="space-y-1.5 max-h-64 overflow-y-auto print:max-h-none print:overflow-visible">
+                  {data.report.posts.map((p) => (
+                    <div key={p.id} className="flex items-center justify-between gap-3 text-xs border-b border-gray-50 py-1.5">
+                      <span className="text-gray-400 shrink-0">
+                        {new Date(p.publishedAt).toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" })}
+                      </span>
+                      <span className="text-gray-600 truncate flex-1">{p.theme}</span>
+                      <span className="text-gray-400 shrink-0">
+                        {p.impressions != null ? `${pct(p.engagementRate)} · ${p.impressions.toLocaleString("fr-FR")} imp.` : "stats à venir"}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {data.report.postsPublished > data.report.postsWithStats && (
+              <p className="text-[11px] text-gray-300">
+                {data.report.postsPublished - data.report.postsWithStats} post(s) sans statistiques pour l'instant
+                (mesurées à J+1 et J+7 après publication).
+              </p>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ── Ligne de tableau client (avec accordéon) ────────────────────────
-function ClientTableRow({ client, onManage, onViewDrafts, onDelete, deleting }) {
+function ClientTableRow({ client, onManage, onViewDrafts, onDelete, deleting, onShowReport }) {
   const [open, setOpen] = useState(false);
   const { completion, linkedin } = client;
   const linkedInOk = Boolean(linkedin?.personName);
@@ -6132,6 +6271,10 @@ function ClientTableRow({ client, onManage, onViewDrafts, onDelete, deleting }) 
                 ${client.pendingCount > 0 ? "bg-amber-50 border-amber-200 text-amber-700" : "border-gray-200 text-gray-400 hover:bg-gray-50"}`}>
               <FileText size={11} />{client.pendingCount > 0 ? client.pendingCount : ""}
             </button>
+            <button onClick={() => onShowReport(client)}
+              className="p-1.5 rounded-lg border border-gray-200 text-gray-400 hover:bg-gray-50 transition-colors" title="Rapport mensuel">
+              <BarChart3 size={13} />
+            </button>
             <button onClick={() => onManage(client, "dashboard")}
               className="p-1.5 rounded-lg border border-gray-200 text-gray-400 hover:bg-gray-50 transition-colors" title="Accès complet">
               <ChevronRight size={13} />
@@ -6205,6 +6348,7 @@ function ClientsView({ showToast, onManage }) {
   const [submitting, setSubmitting] = useState(false);
   const [step, setStep] = useState(0); // 0 = dashboard, 1-6 = wizard
   const [panelClient, setPanelClient] = useState(null); // client pour le panel brouillons
+  const [reportClient, setReportClient] = useState(null); // client pour le rapport mensuel
   const [form, setForm] = useState({
     name: "", email: "",
     companyName: "", website: "",
@@ -6536,6 +6680,7 @@ function ClientsView({ showToast, onManage }) {
                     onViewDrafts={setPanelClient}
                     onDelete={deleteClient}
                     deleting={deleting}
+                    onShowReport={setReportClient}
                   />
                 ))}
               </tbody>
@@ -6553,6 +6698,9 @@ function ClientsView({ showToast, onManage }) {
           onGenerate={() => { setPanelClient(null); onManage(panelClient, "generate"); }}
         />
       )}
+
+      {/* Rapport mensuel */}
+      {reportClient && <MonthlyReportModal client={reportClient} onClose={() => setReportClient(null)} />}
     </>
   );
 }
