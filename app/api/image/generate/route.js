@@ -82,14 +82,14 @@ export async function POST(req) {
     );
   }
 
-  const { text, prompt: customPrompt } = await req.json();
+  const { text, prompt: customPrompt, useBrandKit = true } = await req.json();
   if (!text?.trim() && !customPrompt?.trim()) {
     return NextResponse.json({ error: "Texte du post ou prompt requis." }, { status: 400 });
   }
 
   try {
     const user = await prisma.user.findUnique({ where: { id: userId }, include: { brandKit: true } });
-    const finalPrompt = customPrompt?.trim() || (await writeImagePrompt(user, text, user.brandKit));
+    const finalPrompt = customPrompt?.trim() || (await writeImagePrompt(user, text, useBrandKit ? user.brandKit : null));
 
     // Essaie gpt-image-1 (accès org requis), sinon bascule sur dall-e-3
     let b64 = null;
