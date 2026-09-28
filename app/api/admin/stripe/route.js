@@ -13,6 +13,10 @@ export async function GET(req) {
     return NextResponse.json({ error: "Stripe non configuré (STRIPE_SECRET_KEY manquant)." }, { status: 404 });
   }
 
+  // Clé live ou de test : badge LIVE/TEST de la carte admin (renvoyé aussi en
+  // cas d'erreur Stripe, pour savoir quel compte a été interrogé).
+  const livemode = process.env.STRIPE_SECRET_KEY.startsWith("sk_live");
+
   try {
     const [subs, invoices] = await Promise.all([
       stripe().subscriptions.list({ status: "active", limit: 100, expand: ["data.customer"] }),
@@ -45,6 +49,7 @@ export async function GET(req) {
     }));
 
     return NextResponse.json({
+      livemode,
       totals: {
         activeSubscriptions: subs.data.length,
         mrr: mrr / 100,
@@ -53,6 +58,6 @@ export async function GET(req) {
       recentSales,
     });
   } catch (e) {
-    return NextResponse.json({ error: `Erreur Stripe : ${e.message}` }, { status: 502 });
+    return NextResponse.json({ error: `Erreur Stripe : ${e.message}`, livemode }, { status: 502 });
   }
 }

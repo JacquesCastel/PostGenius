@@ -1782,67 +1782,97 @@ function AdminHealthCard() {
 
 // Ventes Stripe (abonnements actifs, MRR, revenu 30 j, dernières factures
 // payées) — lu en direct depuis l'API Stripe via /api/admin/stripe, sans
-// dépendre du webhook (qui peut être absent/mal configuré).
+// dépendre du webhook (qui peut être absent/mal configuré). Carte toujours
+// affichée : chargement, erreur et absence de ventes restent visibles dedans.
 function AdminStripeCard() {
-  const [data, setData] = useState(null);
-  const [error, setError] = useState(null);
+  const [data, setData] = useState(null); // null = chargement, sinon réponse de l'API ou { error }
 
   useEffect(() => {
     fetch("/api/admin/stripe")
       .then(readJson)
-      .then((d) => {
-        if (d.error) throw new Error(d.error);
-        setData(d);
-      })
-      .catch((e) => setError(e.message));
+      .then(setData)
+      .catch((e) => setData({ error: e.message }));
   }, []);
 
   const fmtMoney = (n, currency = "eur") =>
     new Intl.NumberFormat("fr-FR", { style: "currency", currency: currency.toUpperCase() }).format(n);
 
-  if (error) {
-    return (
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 text-xs text-gray-400">
-        Ventes Stripe : {error}
-      </div>
-    );
-  }
-  if (!data) return null;
+  // Clé live ou de test : inconnu pendant le chargement ou si Stripe n'est pas configuré
+  const livemode = data?.livemode;
+  const empty =
+    data?.totals &&
+    data.totals.activeSubscriptions === 0 &&
+    data.totals.mrr === 0 &&
+    data.totals.revenue30d === 0 &&
+    data.recentSales.length === 0;
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-      <p className="font-semibold text-sm flex items-center gap-1.5 mb-3">
-        <CreditCard size={15} /> Ventes Stripe
-      </p>
-      <div className="grid grid-cols-3 gap-3 mb-4">
-        <div>
-          <p className="text-lg font-bold">{data.totals.activeSubscriptions}</p>
-          <p className="text-[11px] text-gray-500">Abonnements actifs</p>
-        </div>
-        <div>
-          <p className="text-lg font-bold text-green-600">{fmtMoney(data.totals.mrr)}</p>
-          <p className="text-[11px] text-gray-500">MRR estimé</p>
-        </div>
-        <div>
-          <p className="text-lg font-bold text-orange-500">{fmtMoney(data.totals.revenue30d)}</p>
-          <p className="text-[11px] text-gray-500">Revenu (30 j)</p>
-        </div>
+      <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 mb-3">
+        <p className="font-semibold text-sm flex items-center gap-1.5 whitespace-nowrap">
+          <CreditCard size={15} /> Ventes Stripe
+          {typeof livemode === "boolean" && (
+            <span
+              className={`text-[10px] font-bold tracking-wide px-1.5 py-0.5 rounded ${
+                livemode ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"
+              }`}
+            >
+              {livemode ? "LIVE" : "TEST"}
+            </span>
+          )}
+        </p>
+        <a
+          href={livemode === false ? "https://dashboard.stripe.com/test/dashboard" : "https://dashboard.stripe.com/dashboard"}
+          target="_blank"
+          rel="noopener"
+          className="text-xs text-[#ff5a5f] hover:underline inline-flex items-center gap-1 whitespace-nowrap"
+        >
+          Dashboard Stripe <ExternalLink size={11} />
+        </a>
       </div>
-      {data.recentSales.length > 0 && (
-        <div className="border-t border-gray-100 pt-3">
-          <p className="text-[11px] text-gray-400 mb-1.5">Dernières factures payées</p>
-          <div className="space-y-1 max-h-40 overflow-y-auto">
-            {data.recentSales.map((s) => (
-              <div key={s.id} className="flex items-center justify-between text-xs">
-                <span className="text-gray-600 truncate">{s.customerEmail || "—"}</span>
-                <span className="text-gray-400 shrink-0 ml-2">
-                  {s.date ? new Date(s.date).toLocaleDateString("fr-FR") : "—"}
-                </span>
-                <span className="font-medium shrink-0 ml-2">{fmtMoney(s.amount / 100, s.currency)}</span>
-              </div>
-            ))}
+      {!data ? (
+        <p className="text-xs text-gray-400 flex items-center gap-2 py-3">
+          <RefreshCw size={14} className="animate-spin text-[#ff5a5f]" /> Chargement des ventes…
+        </p>
+      ) : data.error ? (
+        <p className="bg-red-50 rounded-lg p-3 text-xs text-red-700 flex items-start gap-2">
+          <AlertCircle size={14} className="shrink-0 mt-px" /> {data.error}
+        </p>
+      ) : empty ? (
+        <p className="text-sm text-gray-400 text-center py-3">Aucune vente pour l'instant</p>
+      ) : (
+        <>
+          <div className="grid grid-cols-3 gap-3 mb-4">
+            <div>
+              <p className="text-lg font-bold">{data.totals.activeSubscriptions}</p>
+              <p className="text-[11px] text-gray-500">Abonnements actifs</p>
+            </div>
+            <div>
+              <p className="text-lg font-bold text-green-600">{fmtMoney(data.totals.mrr)}</p>
+              <p className="text-[11px] text-gray-500">MRR estimé</p>
+            </div>
+            <div>
+              <p className="text-lg font-bold text-orange-500">{fmtMoney(data.totals.revenue30d)}</p>
+              <p className="text-[11px] text-gray-500">Revenu (30 j)</p>
+            </div>
           </div>
-        </div>
+          {data.recentSales.length > 0 && (
+            <div className="border-t border-gray-100 pt-3">
+              <p className="text-[11px] text-gray-400 mb-1.5">Dernières factures payées</p>
+              <div className="space-y-1 max-h-40 overflow-y-auto">
+                {data.recentSales.map((s) => (
+                  <div key={s.id} className="flex items-center justify-between text-xs">
+                    <span className="text-gray-600 truncate">{s.customerEmail || "—"}</span>
+                    <span className="text-gray-400 shrink-0 ml-2">
+                      {s.date ? new Date(s.date).toLocaleDateString("fr-FR") : "—"}
+                    </span>
+                    <span className="font-medium shrink-0 ml-2">{fmtMoney(s.amount / 100, s.currency)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </>
       )}
     </div>
   );
