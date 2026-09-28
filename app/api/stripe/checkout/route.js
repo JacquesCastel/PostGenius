@@ -37,14 +37,23 @@ export async function POST(req) {
     await prisma.user.update({ where: { id: user.id }, data: { stripeCustomerId: customerId } });
   }
 
+  // ui_mode, origin_context et integration_identifier : validés en mode test avec
+  // le SDK 17.7.0 et l'API forcée 2024-06-20 (lib/stripe.js). Sur les versions
+  // d'API récentes, "hosted" s'appelle "hosted_page" : à renommer si on monte de version.
   const session = await stripe().checkout.sessions.create({
     mode: "subscription",
+    ui_mode: "hosted",
+    origin_context: "web",
+    // Libellé fixe pour suivre ce parcours dans le Dashboard (suffixe aléatoire recommandé par Stripe)
+    integration_identifier: "postgenius-abonnement-aonvqlfv",
     customer: customerId,
     line_items: [{ price, quantity: 1 }],
     client_reference_id: user.id,
     metadata: { userId: user.id, plan, interval },
     subscription_data: { metadata: { userId: user.id, plan, interval } },
     allow_promotion_codes: true,
+    billing_address_collection: "auto",
+    submit_type: "auto",
     locale: "fr",
     success_url: `${appUrl()}/app?billing=success`,
     cancel_url: `${appUrl()}/app?billing=cancel`,
