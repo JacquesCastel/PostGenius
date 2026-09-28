@@ -9034,6 +9034,12 @@ export default function Home() {
   const [versions, setVersions] = useState([]); // historique de versions { id, text, label, score }
   const [showTutorial, setShowTutorial] = useState(false); // tutoriel de première connexion
 
+  // Super admin (rôle dédié, hors des types de compte produit) : atterrit
+  // directement sur l'administration, "Tableau de bord" n'existe pas pour lui.
+  useEffect(() => {
+    if (user?.isSuperAdmin && view === "dashboard") setView("admin");
+  }, [user?.isSuperAdmin]);
+
   // Lien profond (notifications, retour Stripe) — ex : /app?view=events, /app?billing=success
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -10029,7 +10035,7 @@ export default function Home() {
       </div>
     );
   }
-  if (!profile?.onboardedAt) {
+  if (!profile?.onboardedAt && !user.isSuperAdmin) {
     return (
       <OnboardingWizard
         user={user}
@@ -10057,29 +10063,37 @@ export default function Home() {
   const postsThisMonth = drafts.filter((d) => new Date(d.createdAt) >= monthStart).length;
   const postsLimit = plan.postsPerMonth;
   const postsReached = postsLimit != null && postsThisMonth >= postsLimit;
-  const NAV = [
-    { id: "dashboard", label: "Tableau de bord", icon: LayoutDashboard },
-    { id: "create", label: "Créer un post", icon: Sparkles },
-    { id: "new-campaign", label: "Créer une campagne", icon: Megaphone, requires: "campaigns", featureLabel: "L'outil de campagne" },
-    { id: "history", label: "Mes posts", icon: History, badge: drafts.length || null },
-    { id: "campaigns", label: "Campagnes", icon: LayersIcon, requires: "campaigns", featureLabel: "Les campagnes" },
-    { id: "events", label: "Événements", icon: MapPin, requires: "events", featureLabel: "Le module Événements" },
-    { id: "stats", label: "Statistiques", icon: BarChart3 },
-    { id: "copilot", label: "Copilote IA", icon: Compass },
-    { id: "billing", label: "Abonnement", icon: CreditCard },
-    { id: "profile", label: "Profil", icon: UserRound },
-    { id: "brand-kit", label: "Charte graphique", icon: ImageIcon },
-    ...(user.plan === "agence"
-      ? [{ id: "clients", label: "Mes clients", icon: Users }]
-      : []),
-    ...(user.isAdmin
-      ? [
-          { id: "admin", label: "Administration", icon: ShieldCheck },
-          { id: "content", label: "Contenu du site", icon: PenLine },
-          { id: "messages", label: "Messages", icon: MessageSquare },
-        ]
-      : []),
-  ];
+  // Super admin : rôle dédié hors des types de compte produit — ne voit QUE
+  // les outils d'administration, jamais la création de posts ni la facturation.
+  const NAV = user.isSuperAdmin
+    ? [
+        { id: "admin", label: "Administration", icon: ShieldCheck },
+        { id: "content", label: "Contenu du site", icon: PenLine },
+        { id: "messages", label: "Messages", icon: MessageSquare },
+      ]
+    : [
+        { id: "dashboard", label: "Tableau de bord", icon: LayoutDashboard },
+        { id: "create", label: "Créer un post", icon: Sparkles },
+        { id: "new-campaign", label: "Créer une campagne", icon: Megaphone, requires: "campaigns", featureLabel: "L'outil de campagne" },
+        { id: "history", label: "Mes posts", icon: History, badge: drafts.length || null },
+        { id: "campaigns", label: "Campagnes", icon: LayersIcon, requires: "campaigns", featureLabel: "Les campagnes" },
+        { id: "events", label: "Événements", icon: MapPin, requires: "events", featureLabel: "Le module Événements" },
+        { id: "stats", label: "Statistiques", icon: BarChart3 },
+        { id: "copilot", label: "Copilote IA", icon: Compass },
+        { id: "billing", label: "Abonnement", icon: CreditCard },
+        { id: "profile", label: "Profil", icon: UserRound },
+        { id: "brand-kit", label: "Charte graphique", icon: ImageIcon },
+        ...(user.plan === "agence"
+          ? [{ id: "clients", label: "Mes clients", icon: Users }]
+          : []),
+        ...(user.isAdmin
+          ? [
+              { id: "admin", label: "Administration", icon: ShieldCheck },
+              { id: "content", label: "Contenu du site", icon: PenLine },
+              { id: "messages", label: "Messages", icon: MessageSquare },
+            ]
+          : []),
+      ];
   const VIEW_TITLES = {
     dashboard: "Tableau de bord",
     create: "Créer un post",
@@ -10351,37 +10365,48 @@ export default function Home() {
         </div>
         <nav className="flex-1 px-3 space-y-1 mt-2">{NAV.map(navBtn)}</nav>
         <div className="px-3 mt-2">
-          <div className="rounded-2xl bg-[#fff1f1] p-3">
-            <p className="text-[11px] text-gray-500">Votre offre</p>
-            <p className="font-bold text-[#ff5a5f] flex items-center gap-1.5">
-              <Sparkles size={13} /> {plan.name}
-            </p>
-            {postsLimit != null && (
-              <div className="mt-2">
-                <div className="flex justify-between text-[11px] mb-1">
-                  <span className="text-gray-500">Posts ce mois</span>
-                  <span className={`font-semibold ${postsReached ? "text-red-600" : "text-[#ff5a5f]"}`}>
-                    {postsThisMonth}/{postsLimit}
-                  </span>
+          {user.isSuperAdmin ? (
+            <div className="rounded-2xl bg-gray-50 p-3">
+              <p className="font-bold text-gray-500 flex items-center gap-1.5 text-sm">
+                <ShieldCheck size={14} /> Super admin
+              </p>
+              <p className="text-[11px] text-gray-400 mt-0.5">
+                Compte d'administration — hors offres, sans accès aux outils de création.
+              </p>
+            </div>
+          ) : (
+            <div className="rounded-2xl bg-[#fff1f1] p-3">
+              <p className="text-[11px] text-gray-500">Votre offre</p>
+              <p className="font-bold text-[#ff5a5f] flex items-center gap-1.5">
+                <Sparkles size={13} /> {plan.name}
+              </p>
+              {postsLimit != null && (
+                <div className="mt-2">
+                  <div className="flex justify-between text-[11px] mb-1">
+                    <span className="text-gray-500">Posts ce mois</span>
+                    <span className={`font-semibold ${postsReached ? "text-red-600" : "text-[#ff5a5f]"}`}>
+                      {postsThisMonth}/{postsLimit}
+                    </span>
+                  </div>
+                  <div className="h-1.5 bg-white rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full ${postsReached ? "bg-red-500" : "bg-[#ff5a5f]"}`}
+                      style={{ width: `${Math.min(100, (postsThisMonth / postsLimit) * 100)}%` }}
+                    />
+                  </div>
+                  {postsReached && <p className="text-[10px] text-red-600 mt-1">Limite mensuelle atteinte.</p>}
                 </div>
-                <div className="h-1.5 bg-white rounded-full overflow-hidden">
-                  <div
-                    className={`h-full rounded-full ${postsReached ? "bg-red-500" : "bg-[#ff5a5f]"}`}
-                    style={{ width: `${Math.min(100, (postsThisMonth / postsLimit) * 100)}%` }}
-                  />
-                </div>
-                {postsReached && <p className="text-[10px] text-red-600 mt-1">Limite mensuelle atteinte.</p>}
-              </div>
-            )}
-            {plan.id !== "agence" && (
-              <a
-                href="/tarifs"
-                className="mt-2 flex items-center justify-center gap-1.5 text-xs font-semibold text-white bg-[#ff5a5f] hover:bg-[#f63d44] rounded-full py-1.5 transition-colors"
-              >
-                <ArrowUpCircle size={14} /> Faire évoluer mon offre
-              </a>
-            )}
-          </div>
+              )}
+              {plan.id !== "agence" && (
+                <a
+                  href="/tarifs"
+                  className="mt-2 flex items-center justify-center gap-1.5 text-xs font-semibold text-white bg-[#ff5a5f] hover:bg-[#f63d44] rounded-full py-1.5 transition-colors"
+                >
+                  <ArrowUpCircle size={14} /> Faire évoluer mon offre
+                </a>
+              )}
+            </div>
+          )}
         </div>
         <div className="px-3 pb-5 pt-3 border-t border-gray-100 mx-3 mb-1">
           <div className="flex items-center gap-2.5 px-2">
@@ -10483,7 +10508,7 @@ export default function Home() {
             <p className="text-xs text-gray-400">Bonjour {user.name || ""} 👋</p>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
-          {linkedin.connected ? (
+          {user.isSuperAdmin ? null : linkedin.connected ? (
             <div className="flex items-center gap-2 text-sm flex-wrap">
               <span className="flex items-center gap-1.5 bg-green-50 text-green-700 px-3 py-1.5 rounded-full text-xs font-medium">
                 <span className="w-2 h-2 bg-green-500 rounded-full" />

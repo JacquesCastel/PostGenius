@@ -33,6 +33,7 @@ export async function GET(req) {
       email: user.email,
       name: user.name,
       isAdmin: isAdminUser(user),
+      isSuperAdmin: user.role === "admin",
       plan: user.plan,
       trialEndsAt: user.trialEndsAt,
       subscriptionStatus: user.subscriptionStatus,
