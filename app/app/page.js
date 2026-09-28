@@ -1780,6 +1780,74 @@ function AdminHealthCard() {
   );
 }
 
+// Ventes Stripe (abonnements actifs, MRR, revenu 30 j, dernières factures
+// payées) — lu en direct depuis l'API Stripe via /api/admin/stripe, sans
+// dépendre du webhook (qui peut être absent/mal configuré).
+function AdminStripeCard() {
+  const [data, setData] = useState(null);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    fetch("/api/admin/stripe")
+      .then(readJson)
+      .then((d) => {
+        if (d.error) throw new Error(d.error);
+        setData(d);
+      })
+      .catch((e) => setError(e.message));
+  }, []);
+
+  const fmtMoney = (n, currency = "eur") =>
+    new Intl.NumberFormat("fr-FR", { style: "currency", currency: currency.toUpperCase() }).format(n);
+
+  if (error) {
+    return (
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 text-xs text-gray-400">
+        Ventes Stripe : {error}
+      </div>
+    );
+  }
+  if (!data) return null;
+
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+      <p className="font-semibold text-sm flex items-center gap-1.5 mb-3">
+        <CreditCard size={15} /> Ventes Stripe
+      </p>
+      <div className="grid grid-cols-3 gap-3 mb-4">
+        <div>
+          <p className="text-lg font-bold">{data.totals.activeSubscriptions}</p>
+          <p className="text-[11px] text-gray-500">Abonnements actifs</p>
+        </div>
+        <div>
+          <p className="text-lg font-bold text-green-600">{fmtMoney(data.totals.mrr)}</p>
+          <p className="text-[11px] text-gray-500">MRR estimé</p>
+        </div>
+        <div>
+          <p className="text-lg font-bold text-orange-500">{fmtMoney(data.totals.revenue30d)}</p>
+          <p className="text-[11px] text-gray-500">Revenu (30 j)</p>
+        </div>
+      </div>
+      {data.recentSales.length > 0 && (
+        <div className="border-t border-gray-100 pt-3">
+          <p className="text-[11px] text-gray-400 mb-1.5">Dernières factures payées</p>
+          <div className="space-y-1 max-h-40 overflow-y-auto">
+            {data.recentSales.map((s) => (
+              <div key={s.id} className="flex items-center justify-between text-xs">
+                <span className="text-gray-600 truncate">{s.customerEmail || "—"}</span>
+                <span className="text-gray-400 shrink-0 ml-2">
+                  {s.date ? new Date(s.date).toLocaleDateString("fr-FR") : "—"}
+                </span>
+                <span className="font-medium shrink-0 ml-2">{fmtMoney(s.amount / 100, s.currency)}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function AdminView({ showToast }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -1891,6 +1959,7 @@ function AdminView({ showToast }) {
   return (
     <main className="max-w-6xl mx-auto p-6 space-y-6">
       <AdminHealthCard />
+      <AdminStripeCard />
 
       {/* Totaux plateforme */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
