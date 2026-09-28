@@ -1,8 +1,26 @@
 import { NextResponse } from "next/server";
+import sharp from "sharp";
 import { getEffectiveUserId as getUserId } from "@/lib/session";
+import { saveImage } from "@/lib/image";
 
 // Analyse le lien d'un événement : récupère le titre, l'image (og:image)
 // et une description pour nourrir la génération des posts.
+
+// Beaucoup de sites servent leur og:image avec des en-têtes qui empêchent son
+// affichage direct en <img> (Content-Disposition: attachment, Cross-Origin-
+// Resource-Policy: same-site, ex. snowflake.com) -- on la rapatrie donc sur
+// notre propre stockage plutôt que de la référencer telle quelle.
+async function rehostImage(sourceUrl) {
+  const res = await fetch(sourceUrl, {
+    headers: { "User-Agent": "LinkeePost/1.0 (analyse evenement)" },
+    signal: AbortSignal.timeout(15000),
+  });
+  if (!res.ok) throw new Error(`code ${res.status}`);
+  const buf = Buffer.from(await res.arrayBuffer());
+  const png = await sharp(buf).png().toBuffer();
+  const saved = await saveImage(png.toString("base64"));
+  return saved.url;
+}
 
 function meta(html, patterns) {
   for (const re of patterns) {
@@ -92,6 +110,15 @@ export async function POST(req) {
       }
     } catch {
       // Repli best-effort : on continue sans image plutôt que d'échouer l'analyse.
+    }
+  }
+  if (imageUrl) {
+    try {
+      imageUrl = await rehostImage(imageUrl);
+    } catch {
+      // Rapatriement best-effort : on garde l'URL externe telle quelle si ça échoue
+      // (ne s'affichera pas pour les sites à protection anti-hotlink, mais ne bloque
+      // pas l'analyse pour les autres).
     }
   }
   const description = meta(html, [
