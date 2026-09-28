@@ -13,13 +13,13 @@ export const metadata = {
 };
 
 const CRITERIA = [
-  { label: "Accroche", weight: 20, text: "La première ligne, celle qu'on lit avant le « voir plus ». Courte et porteuse d'une tension (question, chiffre, promesse) : c'est elle qui décide si on clique." },
-  { label: "Longueur & aération", weight: 20, text: "Entre 600 et 1 600 caractères, découpé en courts paragraphes. Un pavé compact décourage la lecture ; un texte aéré se lit d'un trait dans le fil." },
-  { label: "Question / interaction", weight: 15, text: "Une question ouverte qui invite à réagir. C'est le levier n°1 pour déclencher des commentaires, et l'algorithme adore les commentaires." },
-  { label: "Hashtags", weight: 15, text: "2 à 5 hashtags vraiment pertinents pour être trouvé sur vos thématiques — ni zéro, ni une avalanche qui fait spammy." },
-  { label: "Format", weight: 10, text: "Le type de contenu. Carrousels et vidéos engagent en moyenne bien plus que le texte seul : on vous le signale quand le sujet s'y prête." },
-  { label: "Émojis", weight: 10, text: "1 à 6 émojis pour rythmer le texte et guider l'œil, sans en abuser. Le bon dosage rend le post vivant et crédible." },
-  { label: "Appel à l'action", weight: 10, text: "Une incitation claire en fin de post (« Dites-moi en commentaire… », « Partagez si ça vous parle »). On guide votre audience vers la réaction attendue." },
+  { label: "Accroche", weight: 25, text: "La première ligne, seule visible avant le « voir plus » : elle doit porter à elle seule l'idée du post, pas juste l'annoncer. Une tension (chiffre, question, « : ») peut l'aider à percuter, mais ce n'est jamais une obligation — une ligne courte et claire obtient déjà la meilleure note." },
+  { label: "Longueur & aération", weight: 25, text: "Entre 400 et 1 600 caractères, découpé en courts paragraphes. Un pavé compact décourage la lecture, quelle que soit sa longueur." },
+  { label: "Question / interaction", weight: 10, text: "Un bonus, pas une fin imposée : si une question ouverte vient naturellement, elle invite aux commentaires. Un post qui conclut sur sa propre idée fonctionne tout aussi bien." },
+  { label: "Hashtags", weight: 10, text: "Aucun minimum : zéro hashtag est un choix tout aussi valable. Au-delà de 5, ça commence à paraître spammy." },
+  { label: "Format", weight: 10, text: "Le texte seul est déjà un format efficace quand il est bien écrit. Carrousel ou vidéo restent une option si le sujet s'y prête, jamais une obligation." },
+  { label: "Émojis", weight: 10, text: "0 à 6 émojis pour rythmer le texte sans l'alourdir. Zéro émoji obtient la note pleine : ce n'est pas une obligation." },
+  { label: "Appel à l'action", weight: 10, text: "Si ça vient naturellement, un CTA explicite (« Dites-moi en commentaire… ») peut aider — mais un post qui se suffit à lui-même n'en a pas besoin." },
 ];
 
 const STEPS = [
@@ -96,9 +96,9 @@ export default function ScoringPage() {
             </div>
             <div className="mt-5 space-y-2">
               {[
-                { label: "Accroche percutante", ok: true },
+                { label: "Accroche qui tient avant « voir plus »", ok: true },
                 { label: "Question pour engager", ok: true },
-                { label: "Ajouter 2-3 hashtags", ok: false },
+                { label: "Texte à aérer davantage", ok: false },
                 { label: "Appel à l'action clair", ok: true },
               ].map((f) => (
                 <div key={f.label} className={`flex items-center gap-2 rounded-xl px-3 py-2 text-sm ${f.ok ? "bg-green-50 text-green-700" : "bg-[#fff1f1] text-[#ff5a5f]"}`}>
@@ -134,6 +134,9 @@ export default function ScoringPage() {
           <h2 className="text-3xl md:text-4xl font-extrabold text-center">Les 7 critères, et leur poids</h2>
           <p className="text-[#5a6b85] text-center mt-3 max-w-2xl mx-auto">
             Le score sur 100 se répartit entre sept critères. Pour chacun, LinkeePost vous dit où vous en êtes et comment progresser.
+          </p>
+          <p className="text-[#5a6b85] text-center mt-2 max-w-2xl mx-auto text-sm">
+            Pas de formule imposée : seule l'accroche doit tenir avant le « voir plus ». Le reste — question, hashtags, émojis, appel à l'action — n'est qu'une option que le texte peut saisir s'il s'y prête, jamais une case à cocher. Zéro hashtag ou zéro émoji obtient déjà la meilleure note si le post n'en a pas besoin.
           </p>
           <div className="mt-12 space-y-4">
             {CRITERIA.map((c) => (
