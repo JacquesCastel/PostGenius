@@ -66,6 +66,34 @@ export async function POST(req) {
       imageUrl = "";
     }
   }
+  // Repli : la page de l'événement n'a pas sa propre og:image (fréquent pour une
+  // page "détail" sans visuel dédié) -- on reprend l'image par défaut du site
+  // (og:image de la page d'accueil du domaine), si elle existe.
+  if (!imageUrl) {
+    try {
+      const origin = new URL(url).origin;
+      if (origin + "/" !== url) {
+        const homeRes = await fetch(origin, {
+          headers: { "User-Agent": "LinkeePost/1.0 (analyse evenement)" },
+          signal: AbortSignal.timeout(10000),
+          redirect: "follow",
+        });
+        if (homeRes.ok) {
+          const homeHtml = await homeRes.text();
+          let siteImageUrl = meta(homeHtml, [
+            /<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i,
+            /<meta[^>]+name=["']twitter:image["'][^>]+content=["']([^"']+)["']/i,
+          ]);
+          if (siteImageUrl && !/^https?:\/\//i.test(siteImageUrl)) {
+            siteImageUrl = new URL(siteImageUrl, origin).href;
+          }
+          if (siteImageUrl) imageUrl = siteImageUrl;
+        }
+      }
+    } catch {
+      // Repli best-effort : on continue sans image plutôt que d'échouer l'analyse.
+    }
+  }
   const description = meta(html, [
     /<meta[^>]+name=["']description["'][^>]+content=["']([^"']+)["']/i,
     /<meta[^>]+property=["']og:description["'][^>]+content=["']([^"']+)["']/i,
