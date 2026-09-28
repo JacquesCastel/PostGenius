@@ -26,7 +26,7 @@ const STEPS = [
   {
     icon: Zap,
     title: "1 · Analyse instantanée",
-    text: "Dès qu'un post est généré, LinkeePost l'évalue en temps réel sur 7 critères mesurables issus des bonnes pratiques LinkedIn, et en tire une note sur 100. Aucun délai, aucun appel externe : c'est immédiat.",
+    text: "Dès qu'un post est généré, LinkeePost l'évalue en temps réel sur 7 critères mesurables — construits autour du principe de la pyramide inversée plutôt que d'une formule imposée — et en tire une note sur 100. Aucun délai, aucun appel externe : c'est immédiat.",
   },
   {
     icon: Brain,
@@ -136,7 +136,7 @@ export default function ScoringPage() {
             Le score sur 100 se répartit entre sept critères. Pour chacun, LinkeePost vous dit où vous en êtes et comment progresser.
           </p>
           <p className="text-[#5a6b85] text-center mt-2 max-w-2xl mx-auto text-sm">
-            Pas de formule imposée : seule l'accroche doit tenir avant le « voir plus ». Le reste — question, hashtags, émojis, appel à l'action — n'est qu'une option que le texte peut saisir s'il s'y prête, jamais une case à cocher. Zéro hashtag ou zéro émoji obtient déjà la meilleure note si le post n'en a pas besoin.
+            Le principe éditorial : la <strong>pyramide inversée</strong> (l'essentiel d'abord, les détails ensuite, le secondaire en dernier), pas une formule imposée. Seule l'accroche doit vraiment tenir avant le « voir plus » : le reste — question, hashtags, émojis, appel à l'action — n'est qu'une option que le texte peut saisir s'il s'y prête, jamais une case à cocher. Zéro hashtag ou zéro émoji obtient déjà la meilleure note si le post n'en a pas besoin.
           </p>
           <div className="mt-12 space-y-4">
             {CRITERIA.map((c) => (
