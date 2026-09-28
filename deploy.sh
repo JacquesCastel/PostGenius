@@ -19,6 +19,16 @@ cd /opt/postgenius
 echo "==> 1/5  git pull"
 git pull
 
+# ── Dossiers de données persistantes (montés dans /app/data) ────────────────
+# Doivent exister avec des droits d'écriture pour le conteneur AVANT le premier
+# upload : le conteneur ne peut pas créer un nouveau sous-dossier sous ./data
+# (root:root, 755) faute de droit d'écriture sur le parent -- seul un mkdir
+# depuis l'hôte le peut. Idempotent : ne fait rien si déjà en place (c'était le
+# cas pour data/images, jamais fait pour data/logos et data/backgrounds --
+# d'où l'échec silencieux en production : EACCES sur mkdir '/app/data/logos').
+mkdir -p /opt/postgenius/data/images /opt/postgenius/data/logos /opt/postgenius/data/backgrounds
+chmod 777 /opt/postgenius/data/images /opt/postgenius/data/logos /opt/postgenius/data/backgrounds
+
 # ── Lecture du .env sur l'hôte (avant d'entrer dans Docker) ─────────────────
 # Le .env appartient à root:root rw-r-----, donc lisible par root sur l'hôte
 # mais pas nécessairement par le root remap'é dans le conteneur.
