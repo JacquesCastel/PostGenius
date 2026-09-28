@@ -10,7 +10,7 @@ import {
   CreditCard, Gauge, Users, Smartphone, Monitor,
   Upload, Wand2, SlidersHorizontal, Type, Crop, Download, Pencil, GripHorizontal,
   Compass, Lightbulb, EyeOff, TrendingUp, TrendingDown, Plus, Globe, ChevronUp, Menu,
-  AlignLeft, AlignCenter, AlignRight, Move
+  AlignLeft, AlignCenter, AlignRight, Move, Server
 } from "lucide-react";
 import { PLANS, PLAN_IDS, planLabel, planAllows, planOf, trialDaysLeft, accessState } from "@/lib/plans";
 import SiteHeader from "@/components/SiteHeader";
@@ -1704,9 +1704,86 @@ function VeilleBlock({ showToast, onInspire, onCampaign }) {
 // ----------------------------------------------------------------
 // Administration (super admin) : comptes + consommation IA
 // ----------------------------------------------------------------
+// Rapport de santé serveur (disque, conteneurs, erreurs récentes) — cron
+// health-check.sh côté hôte, fichier lu par /api/admin/health.
+function AdminHealthCard() {
+  const [health, setHealth] = useState(null);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    fetch("/api/admin/health")
+      .then(readJson)
+      .then((d) => {
+        if (d.error) throw new Error(d.error);
+        setHealth(d);
+      })
+      .catch((e) => setError(e.message));
+  }, []);
+
+  if (error) {
+    return (
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 text-xs text-gray-400">
+        Système : {error}
+      </div>
+    );
+  }
+  if (!health) return null;
+
+  const diskPct = health.disk.usedPercent;
+  const diskColor = diskPct >= 90 ? "text-red-600" : diskPct >= 75 ? "text-amber-600" : "text-green-600";
+  const ago = Math.round((Date.now() - new Date(health.generatedAt)) / 60000);
+
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+      <div className="flex items-center justify-between mb-3">
+        <p className="font-semibold text-sm flex items-center gap-1.5">
+          <Server size={15} /> Système (serveur de production)
+        </p>
+        <p className="text-[11px] text-gray-400">
+          maj il y a {ago < 1 ? "< 1" : ago} min
+        </p>
+      </div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div>
+          <p className={`text-lg font-bold ${diskColor}`}>{diskPct}%</p>
+          <p className="text-[11px] text-gray-500">
+            Disque utilisé ({(health.disk.usedBytes / 1e9).toFixed(1)} / {(health.disk.totalBytes / 1e9).toFixed(1)} Go)
+          </p>
+        </div>
+        {health.containers.map((c) => (
+          <div key={c.name}>
+            <p className={`text-lg font-bold ${c.state === "running" ? "text-green-600" : "text-red-600"}`}>
+              {c.state === "running" ? "OK" : c.state}
+            </p>
+            <p className="text-[11px] text-gray-500">
+              {c.service} · {c.status}
+            </p>
+          </div>
+        ))}
+        <div>
+          <p className={`text-lg font-bold ${health.errors15m.count > 0 ? "text-red-600" : "text-green-600"}`}>
+            {health.errors15m.count}
+          </p>
+          <p className="text-[11px] text-gray-500">Erreurs (15 dernières min)</p>
+        </div>
+      </div>
+      {health.errors15m.count > 0 && (
+        <div className="mt-3 bg-red-50 rounded-lg p-3 max-h-32 overflow-y-auto">
+          {health.errors15m.lines.map((l, i) => (
+            <p key={i} className="text-[11px] text-red-700 font-mono break-all">
+              {l}
+            </p>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function AdminView({ showToast }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
 
   const load = () => {
     setLoading(true);
@@ -1772,6 +1849,33 @@ function AdminView({ showToast }) {
 
   const fmtCost = (c) => `${c.toFixed(2).replace(".", ",")} $`;
 
+  const filteredUsers = (data?.users ?? []).filter((u) => {
+    const q = search.trim().toLowerCase();
+    if (!q) return true;
+    return u.email?.toLowerCase().includes(q) || u.name?.toLowerCase().includes(q);
+  });
+
+  const newThisWeek = (data?.users ?? []).filter(
+    (u) => Date.now() - new Date(u.createdAt).getTime() < 7 * 86400000
+  ).length;
+
+  const exportCsv = () => {
+    const header = ["email", "nom", "inscrit_le", "offre", "posts_publies", "posts_total", "campagnes", "cout_30j_usd", "cout_total_usd", "statut", "linkedin_connecte"];
+    const rows = filteredUsers.map((u) => [
+      u.email, u.name || "", new Date(u.createdAt).toISOString().slice(0, 10), u.plan,
+      u.published, u.posts, u.campaigns, u.usage30.cost.toFixed(2), u.usageTotal.cost.toFixed(2),
+      u.disabled ? "suspendu" : "actif", u.linkedinConnected ? "oui" : "non",
+    ]);
+    const csv = [header, ...rows].map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `linkeepost-comptes-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   if (loading && !data) {
     return (
       <main className="max-w-6xl mx-auto p-6">
@@ -1786,11 +1890,17 @@ function AdminView({ showToast }) {
 
   return (
     <main className="max-w-6xl mx-auto p-6 space-y-6">
+      <AdminHealthCard />
+
       {/* Totaux plateforme */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <div className="rounded-2xl p-5 text-white bg-gradient-to-br from-[#ff5a5f] to-pink-500 shadow-lg shadow-[#ffd5d6]">
           <p className="text-3xl font-bold">{data.totals.users}</p>
           <p className="text-sm text-white/80 mt-1">Comptes clients</p>
+        </div>
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+          <p className="text-3xl font-bold text-sky-600">{newThisWeek}</p>
+          <p className="text-sm text-gray-500 mt-1">Nouveaux (7 j)</p>
         </div>
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
           <p className="text-3xl font-bold text-green-600">{data.totals.published}</p>
@@ -1812,6 +1922,21 @@ function AdminView({ showToast }) {
       </div>
 
       {/* Comptes */}
+      <div className="flex items-center gap-2">
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Rechercher par email ou nom…"
+          className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
+        />
+        <button
+          onClick={exportCsv}
+          className="flex items-center gap-1.5 text-sm border border-gray-200 hover:border-gray-300 text-gray-600 px-3 py-2 rounded-lg"
+        >
+          <Download size={14} /> Export CSV
+        </button>
+      </div>
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
@@ -1830,7 +1955,7 @@ function AdminView({ showToast }) {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50">
-            {data.users.map((u) => (
+            {filteredUsers.map((u) => (
               <tr key={u.id} className={u.disabled ? "opacity-50" : ""}>
                 <td className="p-3">
                   <p className="font-medium flex items-center gap-1.5">
