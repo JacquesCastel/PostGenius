@@ -5505,7 +5505,7 @@ function StatsView({ linkedin, orgs, profile, drafts }) {
 // ----------------------------------------------------------------
 function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast }) {
   // Si LinkedIn vient d'être connecté (retour OAuth), on reprend à la dernière étape
-  const [step, setStep] = useState(linkedinConnected ? 5 : 0);
+  const [step, setStep] = useState(linkedinConnected ? 6 : 0);
   const [saving, setSaving] = useState(false);
   const [fields, setFields] = useState({
     name: profile?.name ?? user?.name ?? "",
@@ -5544,6 +5544,10 @@ function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast 
     {
       title: "Votre rythme de publication",
       subtitle: "Jours et heure de vos posts — vos programmations suivront ce rythme.",
+    },
+    {
+      title: "Deux outils en plus de la génération",
+      subtitle: "Configurables à tout moment depuis le menu — un simple aperçu pour l'instant.",
     },
     { title: "Connectez LinkedIn", subtitle: "Pour publier en un clic. Vous pourrez le faire plus tard." },
   ];
@@ -5889,6 +5893,38 @@ function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast 
           )}
 
           {step === 5 && (
+            <div className="space-y-3">
+              <div className="bg-gray-50 rounded-xl p-4 flex items-start gap-3">
+                <div className="bg-[#fff1f1] text-[#ff5a5f] p-2.5 rounded-xl shrink-0">
+                  <MapPin size={18} />
+                </div>
+                <div>
+                  <p className="font-medium text-sm">Événements</p>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    Ajoutez vos salons, forums et conférences : LinkeePost génère automatiquement un post
+                    d'annonce avant et un post « jour J », avec l'image de l'événement.
+                  </p>
+                </div>
+              </div>
+              <div className="bg-gray-50 rounded-xl p-4 flex items-start gap-3">
+                <div className="bg-[#fff1f1] text-[#ff5a5f] p-2.5 rounded-xl shrink-0">
+                  <ImageIcon size={18} />
+                </div>
+                <div>
+                  <p className="font-medium text-sm">Charte graphique</p>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    Renseignez vos couleurs, votre logo et votre police une fois : elles sont ensuite
+                    appliquées automatiquement aux images générées pour vos posts et carrousels.
+                  </p>
+                </div>
+              </div>
+              <p className="text-xs text-gray-400 text-center pt-1">
+                Retrouvez-les à tout moment dans le menu de gauche.
+              </p>
+            </div>
+          )}
+
+          {step === 6 && (
             <div className="text-center py-4">
               {linkedinConnected ? (
                 <p className="text-sm text-green-700 bg-green-50 rounded-lg p-3 inline-flex items-center gap-2">
