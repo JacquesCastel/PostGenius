@@ -14,6 +14,18 @@ import {
 } from "lucide-react";
 import { PLANS, PLAN_IDS, planLabel, planAllows, planOf, trialDaysLeft, accessState } from "@/lib/plans";
 import SiteHeader from "@/components/SiteHeader";
+// Polices de la charte graphique, chargées comme polices web pour que l'éditeur de
+// modèle de slide (SlideTemplateEditor) affiche vraiment celle choisie — jusqu'ici
+// seul le rendu final (Satori, côté serveur) l'appliquait, jamais le canevas d'édition.
+// Mêmes paquets @fontsource et mêmes graisses (400/700) que lib/templates.js.
+import "@fontsource/inter/400.css";
+import "@fontsource/inter/700.css";
+import "@fontsource/poppins/400.css";
+import "@fontsource/poppins/700.css";
+import "@fontsource/montserrat/400.css";
+import "@fontsource/montserrat/700.css";
+import "@fontsource/raleway/400.css";
+import "@fontsource/raleway/700.css";
 import SiteFooter from "@/components/SiteFooter";
 import LpMark from "@/components/LpMark";
 import ImageEditor from "@/components/ImageEditor";
@@ -7499,6 +7511,7 @@ function SlideTemplateEditor({ kind, kit, onClose, onSaved, showToast }) {
                       <span
                         className="pointer-events-none"
                         style={{
+                          fontFamily: kit.fontFamily,
                           fontSize: el.fontSize * CANVAS_SCALE,
                           fontWeight: el.fontWeight,
                           color: el.color,
