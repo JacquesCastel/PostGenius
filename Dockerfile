@@ -24,6 +24,9 @@ RUN apt-get update \
 # Build standalone Next.js déjà produit sur l'hôte + assets + client Prisma
 COPY --chown=app:app .next/standalone ./
 COPY --chown=app:app .next/static ./.next/static
+# public/ (sw.js, icon.svg) n'est PAS inclus dans .next/standalone : sans cette
+# copie, /sw.js et /icon.svg répondent 404 en prod (notifications push cassées)
+COPY --chown=app:app public ./public
 COPY --chown=app:app node_modules/.prisma ./node_modules/.prisma
 # Fonts @fontsource lues via fs.readFileSync à l'exécution (non tracées par le
 # build standalone) — copie explicite, sinon ENOENT sur les .woff en prod
