@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { stripe, planFromPriceId } from "@/lib/stripe";
+import { sendPaymentFailedEmail } from "@/lib/lifecycleEmails";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -37,6 +38,17 @@ export async function POST(req) {
       case "customer.subscription.deleted": {
         const sub = event.data.object;
         await syncSubscription(sub, sub.customer, sub.metadata?.userId);
+        break;
+      }
+      case "invoice.payment_failed": {
+        const invoice = event.data.object;
+        const user = invoice.customer
+          ? await prisma.user.findUnique({
+              where: { stripeCustomerId: invoice.customer },
+              select: { id: true, email: true, name: true },
+            })
+          : null;
+        if (user) await sendPaymentFailedEmail(user, invoice.id);
         break;
       }
       default:

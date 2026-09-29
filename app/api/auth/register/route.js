@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { createSessionToken, SESSION_COOKIE, sessionCookieOptions } from "@/lib/session";
 import { rateLimit, clientIp } from "@/lib/ratelimit";
 import { isPlanId, DEFAULT_PLAN, TRIAL_DAYS } from "@/lib/plans";
+import { sendWelcomeEmail } from "@/lib/lifecycleEmails";
 
 export async function POST(req) {
   if (!rateLimit(`register:${clientIp(req)}`, { limit: 5, windowMs: 60_000 })) {
@@ -36,6 +37,9 @@ export async function POST(req) {
       planUpdatedAt: new Date(),
     },
   });
+
+  // Email de bienvenue : sans attendre le SMTP, un échec ne doit jamais bloquer l'inscription
+  sendWelcomeEmail(user).catch((e) => console.error("[lifecycle] bienvenue :", e.message));
 
   const res = NextResponse.json({
     user: {

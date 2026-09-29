@@ -74,6 +74,7 @@ model User {
   usage     UsageEvent[]
   events    Event[]
   pushSubs  PushSubscription[]
+  lifecycleEmails LifecycleEmail[]
 
   // --- Profil de rédaction ---
   headline        String? // titre pro, ex : "Consultant SEO @ Acme"
@@ -247,6 +248,20 @@ model PasswordResetToken {
   expiresAt DateTime
   usedAt    DateTime?
   createdAt DateTime @default(now())
+}
+
+// Emails de cycle de vie déjà envoyés (bienvenue, fin d'essai, paiement échoué).
+// La contrainte unique (userId, key) garantit qu'un même email n'est jamais
+// envoyé deux fois, même si le planificateur repasse ou que Stripe rejoue un webhook.
+// key = "welcome" | "trial_ending" | "payment_failed:<id facture Stripe>"
+model LifecycleEmail {
+  id     String   @id @default(cuid())
+  userId String
+  user   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  key    String
+  sentAt DateTime @default(now())
+
+  @@unique([userId, key])
 }
 
 // Consommation IA de la plateforme (tokens Claude, images OpenAI)
