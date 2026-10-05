@@ -506,13 +506,15 @@ function ScheduleModal({ draft, linkedin, orgs, profile, onClose, onScheduled, s
 }
 
 // ----------------------------------------------------------------
-// Commentaires d'un post de page entreprise (Comments API LinkedIn)
-// Réservé aux posts publiés sur une page entreprise — le profil personnel
-// n'a pas accès en lecture aux commentaires côté API LinkedIn.
+// Commentaires d'un post publié (Comments API LinkedIn)
+// Page entreprise : lecture et réponse. Profil personnel : la lecture dépend d'une
+// permission LinkedIn (voir app/api/linkedin/comments/route.js) ; sans elle, l'écran
+// l'explique et renvoie vers le post sur LinkedIn.
 // ----------------------------------------------------------------
 function CommentsPanel({ draft, onClose, showToast }) {
   const [comments, setComments] = useState(null); // null = chargement
   const [error, setError] = useState(null);
+  const [errorCode, setErrorCode] = useState(null); // "read_forbidden" : lecture refusée par LinkedIn
   const [replyText, setReplyText] = useState("");
   const [sending, setSending] = useState(false);
 
@@ -520,11 +522,15 @@ function CommentsPanel({ draft, onClose, showToast }) {
     let cancelled = false;
     setComments(null);
     setError(null);
+    setErrorCode(null);
     fetch(`/api/linkedin/comments?draftId=${draft.id}`)
       .then((r) => r.json().then((data) => ({ ok: r.ok, data })))
       .then(({ ok, data }) => {
         if (cancelled) return;
-        if (!ok) throw new Error(data.error || "Erreur");
+        if (!ok) {
+          setErrorCode(data.code ?? null);
+          throw new Error(data.error || "Erreur");
+        }
         setComments(data.comments);
       })
       .catch((e) => !cancelled && setError(e.message));
@@ -572,7 +578,27 @@ function CommentsPanel({ draft, onClose, showToast }) {
               <RefreshCw size={14} className="animate-spin" /> Chargement des commentaires…
             </p>
           )}
-          {error && <p className="text-sm text-red-600 bg-red-50 rounded-lg p-3">{error}</p>}
+          {error && errorCode === "read_forbidden" ? (
+            <div className="rounded-xl bg-amber-50 border border-amber-200 p-4 space-y-3">
+              <p className="text-sm text-amber-900">{error}</p>
+              <p className="text-xs text-amber-800">
+                C&apos;est une restriction de LinkedIn : la lecture des commentaires d&apos;un profil personnel n&apos;est pas
+                ouverte à toutes les applications. Les commentaires s&apos;afficheront ici dès que l&apos;accès sera accordé.
+              </p>
+              {draft.postId && (
+                <a
+                  href={`https://www.linkedin.com/feed/update/${draft.postId}/`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1.5 bg-[#0a66c2] hover:bg-[#084d92] text-white text-xs font-medium px-3 py-2 rounded-lg"
+                >
+                  <Linkedin size={13} /> Voir les commentaires sur LinkedIn <ExternalLink size={12} />
+                </a>
+              )}
+            </div>
+          ) : (
+            error && <p className="text-sm text-red-600 bg-red-50 rounded-lg p-3">{error}</p>
+          )}
           {comments?.length === 0 && (
             <p className="text-sm text-gray-400 text-center py-6">Aucun commentaire pour l'instant.</p>
           )}
@@ -587,13 +613,14 @@ function CommentsPanel({ draft, onClose, showToast }) {
           ))}
         </div>
 
+        {errorCode !== "read_forbidden" && (
         <div className="flex gap-2 p-3 border-t border-gray-100 shrink-0">
           <input
             type="text"
             value={replyText}
             onChange={(e) => setReplyText(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && sendReply()}
-            placeholder="Répondre au nom de la page…"
+            placeholder={draft.target?.startsWith("urn:li:organization:") ? "Répondre au nom de la page…" : "Commenter avec votre profil…"}
             className="flex-1 min-w-0 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
           />
           <button
@@ -604,6 +631,7 @@ function CommentsPanel({ draft, onClose, showToast }) {
             {sending ? <RefreshCw size={14} className="animate-spin" /> : <Send size={14} />}
           </button>
         </div>
+        )}
       </div>
     </div>
   );
@@ -9418,7 +9446,7 @@ export default function Home() {
     }
   };
   const [scheduleDraft, setScheduleDraft] = useState(null);
-  const [commentsDraft, setCommentsDraft] = useState(null); // post (page entreprise) dont on affiche les commentaires
+  const [commentsDraft, setCommentsDraft] = useState(null); // post publié dont on affiche les commentaires
   const [scheduleStatus, setScheduleStatus] = useState("programmé"); // statut après la modal de date
   const [dragOverCol, setDragOverCol] = useState(null); // colonne kanban survolée pendant un drag
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false); // menu burger (navigation mobile)
@@ -12468,7 +12496,7 @@ export default function Home() {
                                         Publié sur Instagram ✓
                                       </div>
                                     )}
-                                    {p.postId && p.target?.startsWith("urn:li:organization:") && (
+                                    {p.postId && (
                                       <button
                                         onClick={() => setCommentsDraft(p)}
                                         className="self-end flex items-center gap-1 text-gray-500 hover:text-[#ff5a5f] mt-0.5"
