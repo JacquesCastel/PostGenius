@@ -395,6 +395,13 @@ model Event {
   createdAt DateTime @default(now())
   remindedAt DateTime? // dernière notification jour-J envoyée (évite les doublons)
 
+  // Événement LinkedIn créé depuis LinkeePost (API Events Management, permission rw_events)
+  linkedinEventId   String? // identifiant LinkedIn (chaîne : dépasse la précision d'un nombre JavaScript)
+  linkedinPostUrn   String? // post qui rend l'événement visible ; le supprimer supprime l'événement
+  linkedinEventType String? // online | inPerson (non modifiable après création)
+  linkedinOrganizer String? // urn:li:person:… ou urn:li:organization:…
+  linkedinAt        DateTime? // création sur LinkedIn
+
   drafts Draft[]
 
   @@index([userId, startDate])
