@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getEffectiveUserId as getUserId } from "@/lib/session";
+import { videoPathFromUrl } from "@/lib/video";
 
 // PATCH : modifier texte/statut — DELETE : supprimer
 // La clause where inclut toujours userId : un client ne touche que SES brouillons.
@@ -10,7 +11,15 @@ export async function PATCH(req, { params }) {
   if (!userId) return NextResponse.json({ error: "Non connecté." }, { status: 401 });
 
   const { id } = await params;
-  const { text, status, postId, scheduledAt, target, imageUrl, imagePrompt } = await req.json();
+  const { text, status, postId, scheduledAt, target, imageUrl, imagePrompt, videoUrl } = await req.json();
+
+  if (videoUrl) {
+    try {
+      videoPathFromUrl(videoUrl, userId);
+    } catch {
+      return NextResponse.json({ error: "Vidéo invalide." }, { status: 400 });
+    }
+  }
 
   // Programmation : date future obligatoire
   if (scheduledAt !== undefined && scheduledAt !== null) {
@@ -33,6 +42,7 @@ export async function PATCH(req, { params }) {
       ...(target !== undefined && { target }),
       ...(imageUrl !== undefined && { imageUrl }),
       ...(imagePrompt !== undefined && { imagePrompt }),
+      ...(videoUrl !== undefined && { videoUrl }),
       ...(status === "brouillon" && { publishError: null }),
     },
   });

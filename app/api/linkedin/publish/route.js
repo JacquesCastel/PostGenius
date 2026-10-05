@@ -12,7 +12,7 @@ export async function POST(req) {
     return NextResponse.json({ error: "Non connecté." }, { status: 401 });
   }
 
-  const { text, author, imageUrl } = await req.json();
+  const { text, author, imageUrl, videoUrl } = await req.json();
 
   // Publication sur une page entreprise (URN organization) : réservée à l'offre Agence
   if (typeof author === "string" && author.includes("organization")) {
@@ -21,7 +21,7 @@ export async function POST(req) {
   }
 
   try {
-    const { postId } = await publishForUser(userId, { text, author, imageUrl });
+    const { postId } = await publishForUser(userId, { text, author, imageUrl, videoUrl });
     return NextResponse.json({ ok: true, postId });
   } catch (e) {
     const msg = e.message || "Échec de la publication.";
