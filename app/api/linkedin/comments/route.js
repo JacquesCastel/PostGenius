@@ -3,14 +3,17 @@ import { prisma } from "@/lib/db";
 import { getEffectiveUserId as getUserId } from "@/lib/session";
 import { decryptToken } from "@/lib/crypto";
 
-// Commentaires sur les posts de page entreprise — Comments API LinkedIn
-// (socialActions/comments), sous Community Management API, scopes
-// r_organization_social_feed / w_organization_social_feed. Réservé aux
-// posts publiés sur une page entreprise (target = urn:li:organization:ID) :
-// pour le profil personnel, la lecture des commentaires (r_member_social_feed)
-// est réservée par LinkedIn à une liste fermée de développeurs, donc non
-// disponible ici — voir doc Comments API.
+// Commentaires d'un post publié — Comments API LinkedIn (socialActions/comments).
+// - Page entreprise (target = urn:li:organization:ID) : Community Management API,
+//   scopes r_organization_social_feed / w_organization_social_feed.
+// - Profil personnel (target = "person") : la LECTURE exige r_member_social_feed,
+//   que LinkedIn réserve à une liste fermée de développeurs. Tant que l'accès n'est
+//   pas accordé à l'application, LinkedIn répond 403 et l'écran propose le lien vers
+//   le post. Une fois accordé : ajouter le scope dans LINKEDIN_SCOPES et reconnecter
+//   le compte, rien d'autre à changer. Répondre (écriture) relève de w_member_social.
 // https://learn.microsoft.com/en-us/linkedin/marketing/community-management/shares/comments-api
+
+const LI_API = process.env.LINKEDIN_API_BASE || "https://api.linkedin.com";
 
 function liHeaders(token) {
   return {
@@ -21,20 +24,27 @@ function liHeaders(token) {
   };
 }
 
-async function orgDraftAndToken(userId, draftId) {
+async function draftAndToken(userId, draftId) {
   const draft = await prisma.draft.findFirst({ where: { id: draftId, userId } });
   if (!draft) return { error: "Post introuvable.", status: 404 };
   if (!draft.postId) return { error: "Ce post n'a pas encore été publié.", status: 400 };
-  if (!draft.target?.startsWith("urn:li:organization:")) {
-    return { error: "Les commentaires ne sont disponibles que pour les posts de page entreprise.", status: 400 };
-  }
   const acc = await prisma.linkedInAccount.findUnique({ where: { userId } });
-  const token = decryptToken(acc?.orgToken);
-  if (!token) return { error: "Page entreprise non connectée.", status: 401 };
-  if (acc.orgExpiresAt && acc.orgExpiresAt < new Date()) {
-    return { error: "Session de la page entreprise expirée — reconnectez-la (onglet Profil).", status: 401 };
+
+  if (draft.target?.startsWith("urn:li:organization:")) {
+    const token = decryptToken(acc?.orgToken);
+    if (!token) return { error: "Page entreprise non connectée.", status: 401 };
+    if (acc.orgExpiresAt && acc.orgExpiresAt < new Date()) {
+      return { error: "Session de la page entreprise expirée — reconnectez-la (onglet Profil).", status: 401 };
+    }
+    return { draft, token, actor: draft.target, personal: false };
   }
-  return { draft, token, actor: draft.target };
+
+  const token = decryptToken(acc?.personToken);
+  if (!token || !acc?.personSub) return { error: "Compte LinkedIn non connecté.", status: 401 };
+  if (acc.personExpiresAt && acc.personExpiresAt < new Date()) {
+    return { error: "Session LinkedIn expirée — reconnectez votre compte (onglet Profil).", status: 401 };
+  }
+  return { draft, token, actor: `urn:li:person:${acc.personSub}`, personal: true };
 }
 
 export async function GET(req) {
@@ -44,19 +54,30 @@ export async function GET(req) {
   const draftId = new URL(req.url).searchParams.get("draftId");
   if (!draftId) return NextResponse.json({ error: "draftId requis." }, { status: 400 });
 
-  const { draft, token, error, status } = await orgDraftAndToken(userId, draftId);
+  const { draft, token, personal, error, status } = await draftAndToken(userId, draftId);
   if (error) return NextResponse.json({ error }, { status });
 
   try {
     const res = await fetch(
-      `https://api.linkedin.com/rest/socialActions/${encodeURIComponent(draft.postId)}/comments`,
+      `${LI_API}/rest/socialActions/${encodeURIComponent(draft.postId)}/comments`,
       { headers: liHeaders(token) }
     );
     if (!res.ok) {
       const raw = await res.text();
       console.error("LinkedIn comments GET:", res.status, raw);
       if (res.status === 401) return NextResponse.json({ error: "Session LinkedIn expirée — reconnectez la page entreprise." }, { status: 401 });
-      if (res.status === 403) return NextResponse.json({ error: "LinkedIn refuse l'accès aux commentaires (permission pas encore approuvée sur cette app)." }, { status: 403 });
+      if (res.status === 403) {
+        // Code stable pour l'interface : elle propose alors le lien vers le post LinkedIn
+        return NextResponse.json(
+          {
+            code: "read_forbidden",
+            error: personal
+              ? "LinkedIn n'autorise pas encore cette application à lire les commentaires de votre profil personnel."
+              : "LinkedIn refuse l'accès aux commentaires (permission pas encore approuvée sur cette app).",
+          },
+          { status: 403 }
+        );
+      }
       return NextResponse.json({ error: `LinkedIn a refusé la demande (${res.status}).` }, { status: 502 });
     }
     const data = await res.json();
@@ -85,7 +106,7 @@ export async function POST(req) {
   const { draftId, text, parentCommentUrn } = await req.json();
   if (!draftId || !text?.trim()) return NextResponse.json({ error: "draftId et texte requis." }, { status: 400 });
 
-  const { draft, token, actor, error, status } = await orgDraftAndToken(userId, draftId);
+  const { draft, token, actor, error, status } = await draftAndToken(userId, draftId);
   if (error) return NextResponse.json({ error }, { status });
 
   const body = {
@@ -97,7 +118,7 @@ export async function POST(req) {
 
   try {
     const res = await fetch(
-      `https://api.linkedin.com/rest/socialActions/${encodeURIComponent(draft.postId)}/comments`,
+      `${LI_API}/rest/socialActions/${encodeURIComponent(draft.postId)}/comments`,
       { method: "POST", headers: liHeaders(token), body: JSON.stringify(body) }
     );
     if (!res.ok) {
