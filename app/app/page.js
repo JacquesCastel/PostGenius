@@ -10,7 +10,7 @@ import {
   CreditCard, Gauge, Users, Smartphone, Monitor,
   Upload, Wand2, SlidersHorizontal, Type, Crop, Download, Pencil, GripHorizontal,
   Compass, Lightbulb, EyeOff, TrendingUp, TrendingDown, Plus, Globe, ChevronUp, Menu,
-  AlignLeft, AlignCenter, AlignRight, Move, Server
+  AlignLeft, AlignCenter, AlignRight, Move, Server, Clapperboard
 } from "lucide-react";
 import { PLANS, PLAN_IDS, planLabel, planAllows, planOf, trialDaysLeft, accessState } from "@/lib/plans";
 import SiteHeader from "@/components/SiteHeader";
@@ -28,6 +28,7 @@ import "@fontsource/raleway/400.css";
 import "@fontsource/raleway/700.css";
 import SiteFooter from "@/components/SiteFooter";
 import LpMark from "@/components/LpMark";
+import ShootingKit from "@/components/ShootingKit";
 import ImageEditor from "@/components/ImageEditor";
 import { scorePost } from "@/lib/score";
 import { postAnatomy } from "@/lib/linkedinRules";
@@ -9367,6 +9368,7 @@ export default function Home() {
   const [useBrandKitForImage, setUseBrandKitForImage] = useState(true); // respecter la charte graphique dans l'image générée par IA
   const [imageSourceTab, setImageSourceTab] = useState("text"); // "text" | "illustration" | "upload" — source choisie avant génération
   const [imageLoading, setImageLoading] = useState(false);
+  const [kitDraft, setKitDraft] = useState(null); // brouillon vidéo dont on affiche le kit de tournage
   const [postVideo, setPostVideo] = useState(null); // { url, name, size } — vidéo envoyée par le client
   const [videoUpload, setVideoUpload] = useState(null); // { name, pct } pendant l'envoi
   const [editingImageSrc, setEditingImageSrc] = useState(null); // image ouverte dans l'éditeur crop/filtre (import ou retouche)
@@ -10861,6 +10863,17 @@ export default function Home() {
         </div>
       )}
 
+      {kitDraft && (
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" onClick={() => setKitDraft(null)}>
+          <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <ShootingKit text={kitDraft.text} extra={kitDraft.extra} showToast={showToast} />
+            <button onClick={() => setKitDraft(null)} className="mt-3 w-full bg-white rounded-xl py-2 text-sm text-gray-600">
+              Fermer
+            </button>
+          </div>
+        </div>
+      )}
+
       {scheduleDraft && (
         <ScheduleModal
           draft={scheduleDraft}
@@ -11228,7 +11241,10 @@ export default function Home() {
 
                 </div>
 
-                {result.extra && (
+                {result.extra && form.type === "video" && (
+                  <ShootingKit text={result.text} extra={result.extra} showToast={showToast} />
+                )}
+                {result.extra && form.type !== "video" && (
                   <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
                     <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
                       {form.type === "carrousel" ? <Layers size={16} /> : <Video size={16} />}
@@ -12079,6 +12095,15 @@ export default function Home() {
                                   >
                                     <Copy size={13} />
                                   </button>
+                                  {p.type === "video" && p.extra && (
+                                    <button
+                                      onClick={() => setKitDraft(p)}
+                                      className="text-gray-300 hover:text-[#ff5a5f] p-1"
+                                      title="Kit de tournage"
+                                    >
+                                      <Clapperboard size={13} />
+                                    </button>
+                                  )}
                                   <button
                                     onClick={() => openOptimize(p.text, p.type, p.id, p.imageUrl, p.imagePrompt, p.videoUrl)}
                                     className="text-gray-300 hover:text-[#ff5a5f] p-1"
