@@ -214,6 +214,7 @@ model LinkedInAccount {
   personSub       String?
   personName      String?
   personExpiresAt DateTime?
+  personScope     String? // permissions accordées par LinkedIn à la dernière connexion (champ « scope » du jeton)
   orgToken        String?
   orgExpiresAt    DateTime?
   orgUrn          String?   // urn:li:organization:ID de la première page (compat)

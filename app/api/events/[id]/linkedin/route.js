@@ -15,6 +15,15 @@ import { buildEventBody, buildPatch, createEvent, postEvent, updateEvent, delete
 // Connexion membre (jeton du profil) avec la permission rw_events : ajouter rw_events à
 // LINKEDIN_SCOPES et reconnecter le compte LinkedIn.
 
+// « partnerApiEvents » : LinkedIn n'ouvre l'API des événements qu'à une application dotée du produit
+// « Events Management API ». Deux causes possibles, que seul le portail LinkedIn permet de départager.
+function explain403(e) {
+  if (e.status === 403 && /partnerApiEvents/i.test(e.raw ?? "")) {
+    return `${e.message} Causes possibles : (1) la connexion LinkedIn n'a pas la permission rw_events (reconnectez après avoir ajouté rw_events à LINKEDIN_SCOPES) ; (2) l'accès « Events Management API » n'est pas actif sur l'application LinkedIn utilisée pour se connecter : comparez le numéro d'application du mail de LinkedIn avec celui de cette application (portail LinkedIn, Settings).`;
+  }
+  return null;
+}
+
 const MIN_COVER_WIDTH = 480; // largeur minimale de la photo de couverture imposée par LinkedIn
 
 async function context(req, params) {
@@ -32,6 +41,14 @@ async function context(req, params) {
   if (!token || !acc?.personSub) return { error: "Compte LinkedIn non connecté (onglet Profil).", status: 401 };
   if (acc.personExpiresAt && acc.personExpiresAt < new Date()) {
     return { error: "Session LinkedIn expirée — reconnectez votre compte (onglet Profil).", status: 401 };
+  }
+  // Le jeton du profil doit porter rw_events. LinkedIn indique les permissions accordées à la
+  // connexion (mémorisées depuis la PR « diagnostic ») : inutile d'appeler LinkedIn si elle manque.
+  if (acc.personScope && !acc.personScope.split(/[\s,]+/).includes("rw_events")) {
+    return {
+      error: `Votre connexion LinkedIn n'a pas la permission « rw_events » (permissions accordées : ${acc.personScope.replace(/[\s,]+/g, ", ")}). Ajoutez rw_events à LINKEDIN_SCOPES sur le serveur, puis reconnectez LinkedIn (onglet Profil).`,
+      status: 403,
+    };
   }
   return { userId, event, token, personUrn: `urn:li:person:${acc.personSub}` };
 }
@@ -143,7 +160,7 @@ export async function POST(req, { params }) {
     return NextResponse.json({ ok: true, event: publicFields(updated), imageNote });
   } catch (e) {
     const status = e.status === 401 ? 401 : e.status === 403 ? 403 : e.status === 400 || e.status === 422 ? 400 : 502;
-    return NextResponse.json({ error: e.message || "Échec de la création sur LinkedIn." }, { status });
+    return NextResponse.json({ error: explain403(e) || e.message || "Échec de la création sur LinkedIn." }, { status });
   }
 }
 
