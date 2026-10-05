@@ -104,8 +104,23 @@ Caddy obtient le certificat HTTPS automatiquement dès que le DNS pointe.
   ```bash
   curl -s https://postgenius.network | grep -o '<title>[^<]*'
   ```
-- **Sauvegardes** : Neon gère les snapshots ; le dossier `/opt/postgenius/data`
-  (images) à sauvegarder via les snapshots Hetzner.
+- **Sauvegardes** : la base est sauvegardée par Neon (snapshots). Le dossier
+  `/opt/postgenius/data` (images, logos, fonds, médiathèque) est sauvegardé par
+  `backup-data.sh` : archive `tar.gz` datée dans `/opt/postgenius-backups`
+  (hors dépôt), 14 dernières conservées. Installation (une fois) :
+  ```bash
+  crontab -e   # ajouter :
+  30 3 * * * /opt/postgenius/backup-data.sh >> /var/log/postgenius-backup.log 2>&1
+  ```
+  Copie hors serveur (recommandée, sinon une perte du serveur emporte aussi les
+  archives) : définir `BACKUP_RSYNC_TARGET=user@hote:/chemin/` devant la commande
+  du cron, ou activer les snapshots Hetzner.
+  Restauration :
+  ```bash
+  ls /opt/postgenius-backups                       # choisir l'archive
+  cd /opt/postgenius && tar -xzf /opt/postgenius-backups/data-AAAAMMJJ-HHMMSS.tar.gz
+  chmod 777 data/images data/logos data/backgrounds
+  ```
 
 ## Dépannage rapide
 - Certificat HTTPS absent → DNS pas encore propagé (`dig postgenius.network`)
