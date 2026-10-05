@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import fs from "fs/promises";
 import path from "path";
 import { requireAdmin } from "@/lib/admin";
+import { readBackupStatus, evaluateBackup } from "@/lib/backupHealth";
 
 // Rapport de santé serveur (disque, conteneurs Docker, erreurs récentes),
 // généré côté hôte par health-check.sh (cron, toutes les 5 min) et déposé
@@ -15,7 +16,9 @@ export async function GET(req) {
 
   try {
     const raw = await fs.readFile(HEALTH_FILE, "utf8");
-    return NextResponse.json(JSON.parse(raw));
+    // Sauvegardes (data/backup-status.json, écrit par backup-data.sh) + alertes déduites
+    const status = await readBackupStatus();
+    return NextResponse.json({ ...JSON.parse(raw), backup: { status, ...evaluateBackup(status) } });
   } catch {
     return NextResponse.json(
       { error: "Rapport de santé indisponible (cron pas encore passé, ou serveur non configuré)." },

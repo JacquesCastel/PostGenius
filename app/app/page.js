@@ -1777,6 +1777,56 @@ function AdminHealthCard() {
           ))}
         </div>
       )}
+      {health.backup && <AdminBackupBlock backup={health.backup} />}
+    </div>
+  );
+}
+
+// Sauvegardes de data/ (backup-data.sh) : badge OK / Attention / Alerte, messages
+// d'alerte, et à défaut le détail de la dernière sauvegarde et de la copie hors serveur.
+function AdminBackupBlock({ backup }) {
+  const { status, level, alerts } = backup;
+  const hours = (iso) => {
+    if (!iso) return null;
+    const h = Math.round((Date.now() - new Date(iso)) / 3600000);
+    return h < 1 ? "moins d'1 h" : h < 48 ? `${h} h` : `${Math.round(h / 24)} j`;
+  };
+  const badge =
+    level === "critical"
+      ? { cls: "bg-red-100 text-red-700", label: "ALERTE" }
+      : level === "warn"
+      ? { cls: "bg-amber-100 text-amber-700", label: "ATTENTION" }
+      : { cls: "bg-green-100 text-green-700", label: "OK" };
+
+  return (
+    <div className="mt-4 border-t border-gray-100 pt-3">
+      <p className="text-xs font-semibold flex items-center gap-1.5 mb-2">
+        <Save size={13} /> Sauvegardes
+        <span className={`text-[10px] font-bold tracking-wide px-1.5 py-0.5 rounded ${badge.cls}`}>{badge.label}</span>
+      </p>
+      {alerts.length > 0 && (
+        <div className="space-y-1 mb-2">
+          {alerts.map((a, i) => (
+            <p
+              key={i}
+              className={`text-[11px] rounded-lg p-2 flex items-start gap-1.5 ${
+                a.level === "critical" ? "bg-red-50 text-red-700" : "bg-amber-50 text-amber-800"
+              }`}
+            >
+              <AlertCircle size={12} className="shrink-0 mt-px" /> {a.message}
+            </p>
+          ))}
+        </div>
+      )}
+      {status && (
+        <p className="text-[11px] text-gray-500">
+          Dernière sauvegarde locale : {hours(status.local?.lastSuccessAt) ? `il y a ${hours(status.local.lastSuccessAt)}` : "jamais"}
+          {status.local?.archives ? ` · ${status.local.archives} archives` : ""}
+          {status.local?.bytes ? ` · ${(status.local.bytes / 1048576).toFixed(1)} Mo` : ""}
+          {status.remote?.configured &&
+            ` · copie hors serveur : ${hours(status.remote.lastSuccessAt) ? `il y a ${hours(status.remote.lastSuccessAt)}` : "jamais"}`}
+        </p>
+      )}
     </div>
   );
 }
