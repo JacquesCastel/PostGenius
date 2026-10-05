@@ -82,6 +82,7 @@ model User {
   expertise       String? // "Je suis un(e)..." — pré-rempli dans le générateur
   themes          String? // thématiques favorites, séparées par des virgules
   tone            String? // ton par défaut (Professionnel, Inspirant, ...)
+  postLanguage    String  @default("fr") // langue de génération des posts (fr, en, es, de, it, pt, nl)
   styleNotes      String? // consignes libres : tutoiement, emojis, longueur de phrases...
   defaultMaxChars Int? // longueur par défaut des posts
   onboardedAt     DateTime? // null = doit passer par l'onboarding en étapes
