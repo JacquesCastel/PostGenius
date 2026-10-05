@@ -30,6 +30,7 @@ import SiteFooter from "@/components/SiteFooter";
 import LpMark from "@/components/LpMark";
 import ShootingKit from "@/components/ShootingKit";
 import { LANGUAGES, normalizeLanguage } from "@/lib/languages";
+import { MOODS } from "@/lib/moods";
 import { parseYouTubeId, youtubeWatchUrl, youtubeEmbedUrl, youtubeThumbUrl } from "@/lib/youtube";
 import ImageEditor from "@/components/ImageEditor";
 import { scorePost } from "@/lib/score";
@@ -12316,6 +12317,29 @@ export default function Home() {
                     }`}
                   >
                     {l.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className="text-sm font-medium text-gray-700 block mb-2">
+                Humeur <span className="text-gray-400 font-normal">(optionnel — oriente l'approche éditoriale)</span>
+              </label>
+              <div className="flex flex-wrap gap-1.5">
+                {MOODS.map((m) => (
+                  <button
+                    key={m.code}
+                    type="button"
+                    title={m.hint}
+                    onClick={() => set("mood", form.mood === m.code ? null : m.code)}
+                    className={`text-xs px-3 py-1.5 rounded-full border ${
+                      form.mood === m.code
+                        ? "bg-[#ff5a5f] text-white border-[#ff5a5f]"
+                        : "border-gray-200 text-gray-600 hover:border-gray-300"
+                    }`}
+                  >
+                    {m.emoji} {m.label}
                   </button>
                 ))}
               </div>
