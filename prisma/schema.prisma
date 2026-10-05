@@ -348,6 +348,7 @@ model Draft {
   imageUrl    String? // image générée pour le post (/api/images/...)
   imagePrompt String? // prompt utilisé pour générer l'image
   videoUrl    String? // vidéo du post, fichier envoyé par le client (/api/videos/...) — remplace l'image à la publication
+  youtubeUrl  String? // lien YouTube joint au post (carte cliquable sur LinkedIn) — remplace l'image, cède la place à videoUrl
 
   // --- Instagram ---
   igPostId  String? // media ID Instagram après publication
