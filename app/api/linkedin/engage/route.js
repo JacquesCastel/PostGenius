@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getEffectiveUserId as getUserId } from "@/lib/session";
 import { decryptToken } from "@/lib/crypto";
+import { withDetail } from "@/lib/linkedinError";
 import { rateLimit } from "@/lib/ratelimit";
 import { parsePostUrn, REACTION_TYPES } from "@/lib/linkedinPost";
 
@@ -83,11 +84,11 @@ export async function POST(req) {
       const raw = await res.text();
       console.error(`LinkedIn ${action}:`, res.status, raw);
       if (res.status === 401) return NextResponse.json({ error: "Session LinkedIn expirée — reconnectez votre compte." }, { status: 401 });
-      if (res.status === 403) return NextResponse.json({ error: "LinkedIn refuse cette action : post privé ou inaccessible, ou permission manquante." }, { status: 403 });
-      if (res.status === 404) return NextResponse.json({ error: "Post introuvable. Vérifiez l'adresse, ou que le post est public." }, { status: 404 });
+      if (res.status === 403) return NextResponse.json({ error: withDetail("LinkedIn refuse cette action (403) : post privé ou inaccessible, ou permission manquante.", raw) }, { status: 403 });
+      if (res.status === 404) return NextResponse.json({ error: withDetail("Post introuvable (404). Vérifiez l'adresse, ou que le post est public.", raw) }, { status: 404 });
       if (res.status === 429) return NextResponse.json({ error: "LinkedIn demande de ralentir. Réessayez dans quelques minutes." }, { status: 429 });
-      if (res.status === 409 || res.status === 422) return NextResponse.json({ error: action === "react" ? "Vous avez déjà réagi à ce post, ou LinkedIn refuse cette réaction." : "LinkedIn a refusé ce commentaire (doublon ou contenu non accepté)." }, { status: 409 });
-      return NextResponse.json({ error: `LinkedIn a refusé la demande (${res.status}).` }, { status: 502 });
+      if (res.status === 409 || res.status === 422) return NextResponse.json({ error: withDetail(action === "react" ? `Vous avez déjà réagi à ce post, ou LinkedIn refuse cette réaction (${res.status}).` : `LinkedIn a refusé ce commentaire (${res.status}) : doublon ou contenu non accepté.`, raw) }, { status: 409 });
+      return NextResponse.json({ error: withDetail(`LinkedIn a refusé la demande (${res.status}).`, raw) }, { status: 502 });
     }
     return NextResponse.json({ ok: true, urn });
   } catch (e) {
