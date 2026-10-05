@@ -29,6 +29,7 @@ import "@fontsource/raleway/700.css";
 import SiteFooter from "@/components/SiteFooter";
 import LpMark from "@/components/LpMark";
 import ShootingKit from "@/components/ShootingKit";
+import { parseYouTubeId, youtubeWatchUrl, youtubeEmbedUrl, youtubeThumbUrl } from "@/lib/youtube";
 import ImageEditor from "@/components/ImageEditor";
 import { scorePost } from "@/lib/score";
 import { postAnatomy } from "@/lib/linkedinRules";
@@ -2582,7 +2583,7 @@ function BlogAdmin({ showToast }) {
           className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
         />
         <textarea
-          placeholder="Contenu de l'article (Markdown : # titres, **gras**, - listes, [lien](url))"
+          placeholder="Contenu de l'article (Markdown : # titres, **gras**, - listes, [lien](url) — un lien YouTube seul sur une ligne devient un lecteur intégré)"
           value={editing.content}
           onChange={(e) => set("content", e.target.value)}
           rows={16}
@@ -9318,7 +9319,7 @@ export default function Home() {
 
   // Ouvre la page Étape 2 et initialise l'historique
   // draftId : si fourni, les modifications (texte + image) sont enregistrées dans le brouillon
-  const openOptimize = (text, type, draftId = null, imageUrl = null, imagePrompt = null, videoUrl = null) => {
+  const openOptimize = (text, type, draftId = null, imageUrl = null, imagePrompt = null, videoUrl = null, youtubeUrl = null) => {
     setRewriteScope("all");
     setVersions([{ id: Date.now(), text, label: "Version initiale", score: scorePost({ text, type }).score }]);
     setOptimizeText({ text, type, draftId });
@@ -9330,6 +9331,8 @@ export default function Home() {
       // "Régénérer" à bon escient, sans le supposer à tort pour un import.
       setPostImage(imageUrl ? { url: imageUrl, prompt: imagePrompt ?? "", source: imagePrompt ? "illustration" : undefined } : null);
       setPostVideo(videoUrl ? { url: videoUrl, name: "Vidéo du post" } : null);
+      setPostYoutube(youtubeUrl ? { url: youtubeUrl, id: parseYouTubeId(youtubeUrl) } : null);
+      setYoutubeInput("");
       setImagePromptInput("");
     }
   };
@@ -9419,6 +9422,8 @@ export default function Home() {
   const [imageSourceTab, setImageSourceTab] = useState("text"); // "text" | "illustration" | "upload" — source choisie avant génération
   const [imageLoading, setImageLoading] = useState(false);
   const [kitDraft, setKitDraft] = useState(null); // brouillon vidéo dont on affiche le kit de tournage
+  const [postYoutube, setPostYoutube] = useState(null); // { url, id } — lien YouTube joint au post
+  const [youtubeInput, setYoutubeInput] = useState("");
   const [postVideo, setPostVideo] = useState(null); // { url, name, size } — vidéo envoyée par le client
   const [videoUpload, setVideoUpload] = useState(null); // { name, pct } pendant l'envoi
   const [editingImageSrc, setEditingImageSrc] = useState(null); // image ouverte dans l'éditeur crop/filtre (import ou retouche)
@@ -9600,6 +9605,7 @@ export default function Home() {
     setEditingResult(false);
     setPostImage(null);
     setPostVideo(null);
+    setPostYoutube(null);
     try {
       const res = await fetch("/api/generate", {
         method: "POST",
@@ -9769,6 +9775,7 @@ export default function Home() {
           imageUrl: postImage?.url ?? null,
           imagePrompt: postImage?.prompt ?? null,
           videoUrl: postVideo?.url ?? null,
+          youtubeUrl: postYoutube?.url ?? null,
           pillarId: activeReco?.pillarId ?? null,
         }),
       });
@@ -9791,6 +9798,7 @@ export default function Home() {
     setEditingResult(false);
     setPostImage(null);
     setPostVideo(null);
+    setPostYoutube(null);
     setImagePromptInput("");
   };
 
@@ -9902,6 +9910,7 @@ export default function Home() {
     if (optimizeText?.draftId) {
       setPostImage(null);
       setPostVideo(null);
+      setPostYoutube(null);
     }
     setOptimizeText(null);
   };
@@ -9920,6 +9929,10 @@ export default function Home() {
   // vidéo suit le post en cours de création jusqu'à son enregistrement.
   const uploadVideo = async (file) => {
     if (!file || videoUpload) return;
+    if (postYoutube) {
+      showToast("Retirez d'abord le lien YouTube : un post n'a qu'une seule vidéo.");
+      return;
+    }
     if (file.size > 200 * 1024 * 1024) {
       showToast("Vidéo trop lourde (200 Mo maximum).");
       return;
@@ -9977,6 +9990,94 @@ export default function Home() {
       setDrafts((ds) => ds.map((d) => (d.id === draftId ? { ...d, videoUrl: null } : d)));
     }
   };
+
+  // Lien YouTube : carte cliquable sur LinkedIn (le lecteur n'est pas intégrable
+  // dans LinkedIn), lecteur intégré ici pour vérifier la bonne vidéo.
+  const addYoutube = async () => {
+    const id = parseYouTubeId(youtubeInput);
+    if (!id) {
+      showToast("Lien YouTube non reconnu. Collez l'adresse de la vidéo (youtube.com/watch?v=… ou youtu.be/…).");
+      return;
+    }
+    const url = youtubeWatchUrl(id);
+    setPostYoutube({ url, id });
+    setYoutubeInput("");
+    if (optimizeText?.draftId) {
+      const draftId = optimizeText.draftId;
+      try {
+        await patchDraft(draftId, { youtubeUrl: url });
+        setDrafts((ds) => ds.map((d) => (d.id === draftId ? { ...d, youtubeUrl: url } : d)));
+      } catch (e) {
+        showToast(e.message);
+      }
+    }
+  };
+
+  const removeYoutube = () => {
+    setPostYoutube(null);
+    if (optimizeText?.draftId) {
+      const draftId = optimizeText.draftId;
+      patchDraft(draftId, { youtubeUrl: null }).catch(() => {});
+      setDrafts((ds) => ds.map((d) => (d.id === draftId ? { ...d, youtubeUrl: null } : d)));
+    }
+  };
+
+  const renderYoutubeBlock = () => (
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+      <p className="text-sm font-semibold mb-3 flex items-center gap-2">
+        <Video size={15} className="text-[#ff5a5f]" /> Lien YouTube
+        <span className="text-xs text-gray-400 font-normal">(optionnel — carte cliquable sur LinkedIn)</span>
+      </p>
+      {postYoutube ? (
+        <>
+          <div className="aspect-video w-full overflow-hidden rounded-xl bg-black mb-2">
+            <iframe
+              src={youtubeEmbedUrl(postYoutube.id)}
+              title="Aperçu YouTube"
+              className="h-full w-full"
+              loading="lazy"
+              allow="encrypted-media; picture-in-picture"
+              allowFullScreen
+            />
+          </div>
+          <p className="text-xs text-gray-400 mb-3 break-all">
+            {postYoutube.url} · sur LinkedIn : carte avec miniature et titre, remplace l&apos;image
+          </p>
+          <button
+            onClick={removeYoutube}
+            className="border border-gray-200 hover:border-red-400 hover:text-red-600 text-gray-600 text-xs px-3 py-1.5 rounded-lg"
+          >
+            Retirer le lien
+          </button>
+        </>
+      ) : postVideo ? (
+        <p className="text-xs text-gray-400">Retirez la vidéo importée pour utiliser un lien YouTube : un post n&apos;a qu&apos;une seule vidéo.</p>
+      ) : (
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            addYoutube();
+          }}
+          className="flex flex-wrap gap-2"
+        >
+          <input
+            type="url"
+            value={youtubeInput}
+            onChange={(e) => setYoutubeInput(e.target.value)}
+            placeholder="https://www.youtube.com/watch?v=…"
+            className="flex-1 min-w-[10rem] border border-gray-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
+          />
+          <button
+            type="submit"
+            disabled={!youtubeInput.trim()}
+            className="bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white text-xs font-medium px-4 py-2 rounded-lg"
+          >
+            Ajouter
+          </button>
+        </form>
+      )}
+    </div>
+  );
 
   // Bloc "Vidéo du post" (fonction simple, comme renderImageBlock, pour ne pas
   // démonter le champ fichier). La vidéo remplace l'image à la publication.
@@ -10334,7 +10435,7 @@ export default function Home() {
       const res = await fetch("/api/linkedin/publish", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: p.text, author: target, imageUrl: p.imageUrl ?? null, videoUrl: p.videoUrl ?? null }),
+        body: JSON.stringify({ text: p.text, author: target, imageUrl: p.imageUrl ?? null, videoUrl: p.videoUrl ?? null, youtubeUrl: p.youtubeUrl ?? null }),
       });
       const data = await readJson(res);
       if (!res.ok) throw new Error(data.error || "Erreur de publication");
@@ -10576,6 +10677,7 @@ export default function Home() {
               {/* Image du post — absente auparavant de cet écran (bug rapporté). */}
               {renderImageBlock()}
               {renderVideoBlock()}
+              {renderYoutubeBlock()}
 
               {/* Niveau de réécriture (comme le choix du format) — réservé Pro/Agence */}
               {canScore && (
@@ -11420,6 +11522,7 @@ export default function Home() {
                       l'écran "Optimiser mes posts" via renderImageBlock(). */}
                   {renderImageBlock()}
                   {renderVideoBlock()}
+                  {renderYoutubeBlock()}
                 </div>
               </div>
             )}
@@ -12124,6 +12227,8 @@ export default function Home() {
                           >
                             {p.videoUrl ? (
                               <video src={p.videoUrl} preload="metadata" muted className="w-full h-28 object-cover bg-black" />
+                            ) : parseYouTubeId(p.youtubeUrl) ? (
+                              <img src={youtubeThumbUrl(parseYouTubeId(p.youtubeUrl))} alt="Miniature YouTube" className="w-full h-28 object-cover bg-black" />
                             ) : p.imageUrl && (
                               <img
                                 src={p.imageUrl}
@@ -12155,7 +12260,7 @@ export default function Home() {
                                     </button>
                                   )}
                                   <button
-                                    onClick={() => openOptimize(p.text, p.type, p.id, p.imageUrl, p.imagePrompt, p.videoUrl)}
+                                    onClick={() => openOptimize(p.text, p.type, p.id, p.imageUrl, p.imagePrompt, p.videoUrl, p.youtubeUrl)}
                                     className="text-gray-300 hover:text-[#ff5a5f] p-1"
                                     title="Modifier et optimiser"
                                   >
