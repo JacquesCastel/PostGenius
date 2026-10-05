@@ -5678,6 +5678,14 @@ function StatsView({ linkedin, orgs, profile, drafts, showToast, onConnect }) {
   const [inter, setInter] = useState(null); // résumé des commentaires/réactions envoyés
   const [showEngage, setShowEngage] = useState(false);
   const [commentsFor, setCommentsFor] = useState(null); // post dont on ouvre les commentaires
+  const [social, setSocial] = useState(null); // compteurs réactions/commentaires du profil perso, via l'API v2
+
+  useEffect(() => {
+    fetch("/api/linkedin/social-summary")
+      .then(readJson)
+      .then((d) => setSocial(d.posts ? d : null))
+      .catch(() => {});
+  }, []);
 
   const loadInter = () =>
     fetch("/api/linkedin/interactions")
@@ -6135,8 +6143,8 @@ function StatsView({ linkedin, orgs, profile, drafts, showToast, onConnect }) {
                       </td>
                       <td className="p-3 text-right">{s?.impressionCount ?? "—"}</td>
                       <td className="p-3 text-right">{s?.clickCount ?? "—"}</td>
-                      <td className="p-3 text-right">{s?.likeCount ?? "—"}</td>
-                      <td className="p-3 text-right">{s?.commentCount ?? "—"}</td>
+                      <td className="p-3 text-right">{s?.likeCount ?? social?.posts[p.id]?.reactions ?? "—"}</td>
+                      <td className="p-3 text-right">{s?.commentCount ?? social?.posts[p.id]?.comments ?? "—"}</td>
                       <td className="p-3 text-right">{s?.shareCount ?? "—"}</td>
                       <td className="p-3 text-right text-xs text-gray-500 whitespace-nowrap">
                         {inter?.byDraft[p.id] ? (
@@ -6174,6 +6182,14 @@ function StatsView({ linkedin, orgs, profile, drafts, showToast, onConnect }) {
         <p className="text-xs text-gray-400 mt-2">
           Statistiques par post limitées aux 10 dernières publications de chaque cible (quota d'appels LinkedIn).
         </p>
+        {social?.unavailable === "denied" && (
+          <p className="text-xs text-gray-500 bg-gray-50 border border-gray-100 rounded-lg p-3 mt-2">
+            Les tirets (—) signifient que LinkedIn ne communique pas ce chiffre à LinkeePost pour votre profil personnel : ni les
+            réactions et commentaires reçus, ni les impressions, tant que l&apos;accès aux statistiques du profil n&apos;est pas accordé
+            (onglet Profil, « statistiques »). Ouvrez le post sur LinkedIn (icône ↗) pour les voir. La colonne « Vos actions »
+            compte ce que vous avez envoyé depuis LinkeePost.
+          </p>
+        )}
       </section>
 
       {commentsFor && (
