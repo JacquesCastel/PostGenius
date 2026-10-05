@@ -3090,7 +3090,186 @@ function urlBase64ToUint8Array(base64String) {
   return Uint8Array.from([...raw].map((c) => c.charCodeAt(0)));
 }
 
-function EventsView({ profile, showToast, onGenerated }) {
+// ----------------------------------------------------------------
+// Événement LinkedIn : crée (ou met à jour) l'événement d'une fiche du module Événements
+// via l'Events Management API (permission rw_events). Le serveur contrôle les limites de
+// LinkedIn (nom 75 caractères, description 5 000, début à venir) avant tout envoi.
+// ----------------------------------------------------------------
+function LinkedInEventModal({ ev, mode, orgs, onClose, onDone, showToast }) {
+  const updating = mode === "update";
+  const [organizer, setOrganizer] = useState(updating ? ev.linkedinOrganizer : "person");
+  const [type, setType] = useState(updating ? ev.linkedinEventType : ev.url && !ev.location ? "online" : "inPerson");
+  const [startTime, setStartTime] = useState("09:00");
+  const [endTime, setEndTime] = useState("18:00");
+  const [tz, setTz] = useState(() => {
+    try {
+      return Intl.DateTimeFormat().resolvedOptions().timeZone || "Europe/Paris";
+    } catch {
+      return "Europe/Paris";
+    }
+  });
+  const [description, setDescription] = useState("");
+  const [commentary, setCommentary] = useState("");
+  const [discoveryMode, setDiscoveryMode] = useState("LISTED");
+  const [useImage, setUseImage] = useState(Boolean(ev.imageUrl));
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState(null);
+
+  const day = (d) => new Date(d).toISOString().slice(0, 10);
+  const input = "w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]";
+  const label = "text-xs font-medium text-gray-500";
+
+  const submit = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/events/${ev.id}/linkedin`, {
+        method: updating ? "PATCH" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ organizer, type, tz, startTime, endTime, description, commentary, discoveryMode, useImage }),
+      });
+      const data = await readJson(res);
+      if (!res.ok) throw new Error(data.error || "Erreur");
+      onDone(data);
+      onClose();
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 sticky top-0 bg-white">
+          <p className="font-semibold flex items-center gap-2">
+            <Linkedin size={16} className="text-[#0a66c2]" /> {updating ? "Mettre à jour sur LinkedIn" : "Créer l'événement sur LinkedIn"}
+          </p>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-700 p-1">
+            <X size={18} />
+          </button>
+        </div>
+        <div className="p-5 space-y-4">
+          <div className="bg-gray-50 rounded-xl p-3 text-sm">
+            <p className="font-medium">{ev.name}</p>
+            <p className="text-xs text-gray-500 mt-0.5">
+              Du {day(ev.startDate)} au {day(ev.endDate)}
+              {ev.location ? ` · ${ev.location}` : ""}
+            </p>
+            {ev.name.length > 75 && <p className="text-xs text-red-600 mt-1">Le nom dépasse 75 caractères, limite de LinkedIn : raccourcissez-le dans la fiche.</p>}
+          </div>
+
+          <div>
+            <label className={label}>Organisateur</label>
+            <select className={input} value={organizer} onChange={(e) => setOrganizer(e.target.value)} disabled={updating}>
+              <option value="person">Mon profil</option>
+              {(orgs ?? []).map((o) => (
+                <option key={o.urn} value={o.urn}>
+                  {o.name} (page)
+                </option>
+              ))}
+              {updating && organizer !== "person" && !(orgs ?? []).some((o) => o.urn === organizer) && <option value={organizer}>{organizer}</option>}
+            </select>
+            {updating && <p className="text-[11px] text-gray-400 mt-1">L'organisateur et le type ne peuvent pas changer après la création.</p>}
+          </div>
+
+          <div>
+            <label className={label}>Type d&apos;événement</label>
+            <div className="flex gap-2 mt-1">
+              {[
+                ["inPerson", "En personne"],
+                ["online", "En ligne (page externe)"],
+              ].map(([v, l]) => (
+                <button
+                  key={v}
+                  type="button"
+                  disabled={updating}
+                  onClick={() => setType(v)}
+                  className={`text-xs px-3 py-1.5 rounded-full border font-medium ${type === v ? "bg-[#ff5a5f] text-white border-[#ff5a5f]" : "border-gray-200 text-gray-600"} disabled:opacity-60`}
+                >
+                  {l}
+                </button>
+              ))}
+            </div>
+            {type === "online" && !ev.url && <p className="text-xs text-amber-700 mt-1">Un événement en ligne exige le lien de la page : renseignez-le dans la fiche.</p>}
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className={label}>Heure de début</label>
+              <input type="time" className={input} value={startTime} onChange={(e) => setStartTime(e.target.value)} />
+            </div>
+            <div>
+              <label className={label}>Heure de fin (dernier jour)</label>
+              <input type="time" className={input} value={endTime} onChange={(e) => setEndTime(e.target.value)} />
+            </div>
+          </div>
+          <div>
+            <label className={label}>Fuseau horaire</label>
+            <input className={input} value={tz} onChange={(e) => setTz(e.target.value)} placeholder="Europe/Paris" />
+          </div>
+
+          <div>
+            <div className="flex items-center justify-between">
+              <label className={label}>Description (facultative)</label>
+              {ev.details && (
+                <button type="button" onClick={() => setDescription(ev.details.slice(0, 1500))} className="text-[11px] text-[#ff5a5f] hover:underline">
+                  Reprendre le texte de la fiche
+                </button>
+              )}
+            </div>
+            <textarea className={input} rows={4} maxLength={5000} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Sujets, programme, ce que les participants y trouveront…" />
+            <p className="text-[11px] text-gray-400 text-right">{description.length} / 5000</p>
+          </div>
+
+          {!updating && (
+            <>
+              <div>
+                <label className={label}>Texte du post d&apos;annonce (facultatif)</label>
+                <textarea className={input} rows={3} maxLength={3000} value={commentary} onChange={(e) => setCommentary(e.target.value)} placeholder="Accompagne l'événement dans le fil. Vide : l'événement seul." />
+              </div>
+              <div>
+                <label className={label}>Visibilité</label>
+                <select className={input} value={discoveryMode} onChange={(e) => setDiscoveryMode(e.target.value)}>
+                  <option value="LISTED">Public : trouvable dans LinkedIn (recherche, recommandations)</option>
+                  <option value="URL_ONLY">Accessible seulement avec le lien</option>
+                </select>
+              </div>
+              {ev.imageUrl && (
+                <label className="flex items-center gap-2 text-xs text-gray-600 cursor-pointer">
+                  <input type="checkbox" checked={useImage} onChange={(e) => setUseImage(e.target.checked)} className="accent-[#ff5a5f]" />
+                  Utiliser l&apos;image de la fiche comme photo de couverture (largeur minimale 480 px)
+                </label>
+              )}
+            </>
+          )}
+
+          {error && <p className="text-sm text-red-600 bg-red-50 rounded-lg p-3">{error}</p>}
+          <p className="text-[11px] text-gray-400">
+            {updating
+              ? "Impossible une fois l'événement commencé. Les champs ci-dessus remplacent ceux déjà publiés."
+              : "L'événement est créé puis publié tout de suite sur LinkedIn, au nom de l'organisateur choisi."}
+          </p>
+        </div>
+        <div className="flex justify-end gap-2 px-5 py-4 border-t border-gray-100">
+          <button onClick={onClose} className="text-sm text-gray-500 hover:text-gray-800 px-3 py-2">
+            Annuler
+          </button>
+          <button
+            onClick={submit}
+            disabled={busy}
+            className="bg-[#0a66c2] hover:bg-[#084d92] disabled:bg-gray-300 text-white text-sm font-medium px-5 py-2 rounded-lg flex items-center gap-1.5"
+          >
+            {busy && <RefreshCw size={14} className="animate-spin" />} {updating ? "Mettre à jour" : "Créer sur LinkedIn"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function EventsView({ profile, linkedin, orgs, showToast, onGenerated }) {
   const [events, setEvents] = useState([]);
   const [form, setForm] = useState({ ...EMPTY_EVENT });
   const [analyzing, setAnalyzing] = useState(false);
@@ -3098,6 +3277,27 @@ function EventsView({ profile, showToast, onGenerated }) {
   const [genId, setGenId] = useState(null);
   const [pushState, setPushState] = useState("idle"); // idle | working | enabled | unsupported | denied
   const [photoBusy, setPhotoBusy] = useState(null);
+  const [liModal, setLiModal] = useState(null); // { ev, mode: "create" | "update" }
+  const [liBusy, setLiBusy] = useState(null);
+
+  // Met à jour l'événement dans la liste avec les champs LinkedIn renvoyés par le serveur
+  const mergeLinkedIn = (id, fields) => setEvents((list) => list.map((x) => (x.id === id ? { ...x, ...fields } : x)));
+
+  const removeFromLinkedIn = async (ev) => {
+    if (!window.confirm(`Retirer « ${ev.name} » de LinkedIn ? L'événement et son post seront supprimés sur LinkedIn.`)) return;
+    setLiBusy(ev.id);
+    try {
+      const res = await fetch(`/api/events/${ev.id}/linkedin`, { method: "DELETE" });
+      const data = await readJson(res);
+      if (!res.ok) throw new Error(data.error || "Erreur");
+      mergeLinkedIn(ev.id, data.event);
+      showToast("Événement retiré de LinkedIn ✓");
+    } catch (e) {
+      showToast(e.message);
+    } finally {
+      setLiBusy(null);
+    }
+  };
 
   const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
 
@@ -3430,6 +3630,42 @@ function EventsView({ profile, showToast, onGenerated }) {
                     <Trash2 size={14} />
                   </button>
                 </div>
+                {/* Événement LinkedIn (Events Management API) */}
+                <div className="flex flex-wrap items-center gap-2 mt-2 text-xs">
+                  {ev.linkedinEventId ? (
+                    <>
+                      <span className="inline-flex items-center gap-1 font-semibold text-green-700 bg-green-50 rounded-full px-2.5 py-1">
+                        <Linkedin size={12} /> Sur LinkedIn
+                      </span>
+                      {ev.linkedinPostUrn && (
+                        <a href={`https://www.linkedin.com/feed/update/${ev.linkedinPostUrn}/`} target="_blank" rel="noreferrer" className="text-[#0a66c2] hover:underline inline-flex items-center gap-1">
+                          Voir <ExternalLink size={11} />
+                        </a>
+                      )}
+                      {!past && !live && (
+                        <button onClick={() => setLiModal({ ev, mode: "update" })} className="border border-gray-200 hover:border-gray-400 text-gray-600 px-2.5 py-1 rounded-lg">
+                          Mettre à jour
+                        </button>
+                      )}
+                      <button
+                        onClick={() => removeFromLinkedIn(ev)}
+                        disabled={liBusy === ev.id}
+                        className="border border-gray-200 hover:border-red-400 hover:text-red-600 text-gray-500 px-2.5 py-1 rounded-lg"
+                      >
+                        {liBusy === ev.id ? "…" : "Retirer de LinkedIn"}
+                      </button>
+                    </>
+                  ) : (
+                    !past && (
+                      <button
+                        onClick={() => (linkedin?.connected ? setLiModal({ ev, mode: "create" }) : showToast("Connectez d'abord votre compte LinkedIn (onglet Profil)."))}
+                        className="bg-[#0a66c2] hover:bg-[#084d92] text-white font-medium px-3 py-1.5 rounded-lg flex items-center gap-1.5"
+                      >
+                        <Linkedin size={12} /> Créer sur LinkedIn
+                      </button>
+                    )
+                  )}
+                </div>
               </div>
             </div>
           );
@@ -3440,6 +3676,20 @@ function EventsView({ profile, showToast, onGenerated }) {
         Les posts générés sont programmés (à valider si l'option est activée dans votre profil) sur les jours qui
         encadrent l'événement, avec l'image du salon. Retrouvez-les dans « Mes posts ».
       </p>
+
+      {liModal && (
+        <LinkedInEventModal
+          ev={liModal.ev}
+          mode={liModal.mode}
+          orgs={orgs}
+          onClose={() => setLiModal(null)}
+          onDone={(data) => {
+            if (data.event) mergeLinkedIn(liModal.ev.id, data.event);
+            showToast(liModal.mode === "update" ? "Événement mis à jour sur LinkedIn ✓" : data.imageNote ? `Événement créé sur LinkedIn ✓ — ${data.imageNote}` : "Événement créé sur LinkedIn ✓");
+          }}
+          showToast={showToast}
+        />
+      )}
     </main>
   );
 }
@@ -12385,6 +12635,8 @@ export default function Home() {
       ) : view === "events" ? (
         <EventsView
           profile={profile}
+          linkedin={linkedin}
+          orgs={orgs}
           showToast={showToast}
           onGenerated={() =>
             fetch("/api/drafts")

@@ -27,6 +27,10 @@ export async function GET(req) {
         details: e.details,
         startDate: e.startDate,
         endDate: e.endDate,
+        linkedinEventId: e.linkedinEventId,
+        linkedinPostUrn: e.linkedinPostUrn,
+        linkedinEventType: e.linkedinEventType,
+        linkedinOrganizer: e.linkedinOrganizer,
         postCount: e.drafts.length,
         published,
       };
