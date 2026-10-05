@@ -2005,6 +2005,18 @@ function AdminView({ showToast }) {
     }
   };
 
+  // Support : voir l'outil comme ce client (lecture seule, 2 h)
+  const viewAs = async (u) => {
+    try {
+      const res = await fetch(`/api/admin/users/${u.id}/view-as`, { method: "POST" });
+      const d = await readJson(res);
+      if (d.error) throw new Error(d.error);
+      window.location.reload();
+    } catch (e) {
+      showToast(e.message);
+    }
+  };
+
   const deleteUser = async (u) => {
     if (!window.confirm(`Supprimer définitivement le compte ${u.email} et toutes ses données ?`)) return;
     try {
@@ -2193,6 +2205,13 @@ function AdminView({ showToast }) {
                 <td className="p-3">
                   {!u.isAdmin && (
                     <div className="flex gap-1 justify-end">
+                      <button
+                        onClick={() => viewAs(u)}
+                        className="text-[11px] border border-sky-300 text-sky-700 hover:bg-sky-50 px-2 py-1 rounded-lg inline-flex items-center gap-1"
+                        title="Voir l'outil comme ce client (lecture seule)"
+                      >
+                        <Eye size={11} /> Voir
+                      </button>
                       <button
                         onClick={() => setDisabled(u, !u.disabled)}
                         className={`text-[11px] border px-2 py-1 rounded-lg ${
@@ -10785,19 +10804,27 @@ export default function Home() {
           <div className="bg-amber-50 border border-amber-200 text-amber-800 rounded-xl px-4 py-2.5 text-sm flex items-center justify-between gap-3 flex-wrap">
             <span className="flex items-center gap-2 font-medium">
               <Users size={15} />
-              Mode client — <span className="font-semibold">{impersonating.companyName || impersonating.name}</span>
+              {impersonating.support ? (
+                <>
+                  Vue support, lecture seule — <span className="font-semibold">{impersonating.email}</span>
+                </>
+              ) : (
+                <>
+                  Mode client — <span className="font-semibold">{impersonating.companyName || impersonating.name}</span>
+                </>
+              )}
             </span>
             <button
               onClick={async () => {
                 await fetch("/api/agency/impersonate", { method: "DELETE" });
                 setImpersonating(null);
-                setView("clients");
+                setView(impersonating.support ? "admin" : "clients");
                 // Recharger les données pour revenir sur le compte agence
                 window.location.reload();
               }}
               className="text-xs font-semibold underline hover:no-underline"
             >
-              ← Revenir à mon compte
+              {impersonating.support ? "← Quitter la vue support" : "← Revenir à mon compte"}
             </button>
           </div>
         </div>

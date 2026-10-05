@@ -17,6 +17,38 @@ export async function GET(req) {
   });
   if (!user || user.disabled) return NextResponse.json({ user: null });
 
+  // Vue support (admin en lecture seule sur un compte client) : on renvoie le
+  // compte du client tel qu'il le verrait — offre, abonnement, sans droits admin.
+  if (session.support && session.clientId) {
+    const client = await prisma.user.findUnique({
+      where: { id: session.clientId },
+      select: {
+        id: true, email: true, name: true, companyName: true,
+        plan: true, trialEndsAt: true, subscriptionStatus: true,
+        subscriptionInterval: true, currentPeriodEnd: true, stripeCustomerId: true,
+      },
+    });
+    if (client) {
+      return NextResponse.json({
+        user: {
+          id: client.id,
+          email: client.email,
+          name: client.name,
+          isAdmin: false,
+          isSuperAdmin: false,
+          plan: client.plan,
+          trialEndsAt: client.trialEndsAt,
+          subscriptionStatus: client.subscriptionStatus,
+          subscriptionInterval: client.subscriptionInterval,
+          currentPeriodEnd: client.currentPeriodEnd,
+          hasBilling: false, // pas d'accès au portail de facturation en vue support
+          billingEnabled: Boolean(process.env.STRIPE_SECRET_KEY),
+        },
+        impersonating: { id: client.id, name: client.name, companyName: client.companyName, email: client.email, support: true },
+      });
+    }
+  }
+
   // Infos sur le client impersonné (mode agence)
   let impersonating = null;
   if (session.clientId) {
