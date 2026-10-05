@@ -10,7 +10,7 @@ export async function POST(req) {
   const userId = await getUserId(req);
   if (!userId) return NextResponse.json({ error: "Non connecté." }, { status: 401 });
 
-  const { theme, objective, context, feedback, previous } = await req.json();
+  const { theme, objective, context, feedback, previous, mood } = await req.json();
   if (!theme?.trim()) return NextResponse.json({ error: "Thème requis." }, { status: 400 });
 
   const user = await prisma.user.findUnique({ where: { id: userId } });
@@ -25,7 +25,7 @@ export async function POST(req) {
   }
 
   try {
-    const { text } = await generateText(user, theme, campaignContext);
+    const { text } = await generateText(user, theme, campaignContext, null, mood);
     return NextResponse.json({ text });
   } catch (e) {
     console.error("Erreur sample campagne:", e);
