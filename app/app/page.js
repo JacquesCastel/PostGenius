@@ -10347,7 +10347,8 @@ export default function Home() {
   };
 
   // Retouche IA du post généré (« plus court », consigne libre…)
-  const handleRefine = async (instruction) => {
+  // moodOverride : humeur imposée pour cette retouche (null = neutre), sinon celle du formulaire
+  const handleRefine = async (instruction, moodOverride) => {
     if (!result || loading || !instruction.trim()) return;
     setLoading(true);
     setError(null);
@@ -10356,7 +10357,7 @@ export default function Home() {
       const res = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, refine: { text: result.text, instruction } }),
+        body: JSON.stringify({ ...form, ...(moodOverride !== undefined ? { mood: moodOverride } : {}), refine: { text: result.text, instruction } }),
       });
       const data = await readJson(res);
       if (!res.ok) throw new Error(data.error || "Erreur inconnue");
@@ -12122,6 +12123,32 @@ export default function Home() {
                   {!editingResult && (
                     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
                       <p className="text-xs font-medium text-gray-500 mb-2">Le texte</p>
+                    <p className="text-[11px] text-gray-400 mb-1">Changer l'humeur (réécrit le post)</p>
+                    <div className="flex flex-wrap gap-1.5 mb-3">
+                      {[{ code: null, emoji: "😐", label: "Neutre" }, ...MOODS].map((m) => (
+                        <button
+                          key={m.code ?? "neutre"}
+                          type="button"
+                          disabled={loading}
+                          onClick={() => {
+                            setForm((f) => ({ ...f, mood: m.code }));
+                            handleRefine(
+                              m.code
+                                ? `Réécris ce post dans l'humeur « ${m.label} », en gardant le même sujet et les mêmes idées.`
+                                : "Réécris ce post sur un ton neutre, sans humeur marquée, en gardant le même sujet et les mêmes idées.",
+                              m.code
+                            );
+                          }}
+                          className={`text-xs px-2.5 py-1 rounded-full border disabled:opacity-50 ${
+                            (form.mood ?? null) === m.code
+                              ? "bg-[#fff1f1] text-[#f63d44] border-[#ff5a5f]"
+                              : "border-gray-200 text-gray-600 hover:border-gray-300"
+                          }`}
+                        >
+                          {m.emoji} {m.label}
+                        </button>
+                      ))}
+                    </div>
                     <div className="flex flex-wrap gap-1.5 mb-2">
                       {["Plus court", "Plus percutant", "Moins formel", "Ajoute une anecdote"].map((s) => (
                         <button
