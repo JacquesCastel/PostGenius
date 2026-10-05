@@ -45,7 +45,8 @@ export async function GET(req) {
       console.error("LinkedIn token exchange:", tokenRes.status, txt);
       throw new Error("Échange de token échoué: " + txt);
     }
-    const { access_token, expires_in } = await tokenRes.json();
+    const { access_token, expires_in, scope } = await tokenRes.json();
+    console.log(`[linkedin] connexion du profil : permissions accordées = ${scope ?? "(non communiquées)"}`);
     const expiresAt = new Date(Date.now() + (expires_in ?? 5184000) * 1000);
 
     const meRes = await fetch("https://api.linkedin.com/v2/userinfo", {
@@ -60,6 +61,7 @@ export async function GET(req) {
       personSub: me.sub,
       personName: me.name ?? null,
       personExpiresAt: expiresAt,
+      personScope: scope ?? null,
     };
     await prisma.linkedInAccount.upsert({
       where: { userId },
