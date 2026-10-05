@@ -971,6 +971,7 @@ function CampaignWizard({ profile, linkedin, orgs, onClose, onLaunched, showToas
   const [name, setName] = useState(initial?.name ?? "");
   const [theme, setTheme] = useState(initial?.theme ?? "");
   const [objective, setObjective] = useState("");
+  const [mood, setMood] = useState(null);
   const [questions, setQuestions] = useState(null);
   const [answers, setAnswers] = useState([]);
   const [sample, setSample] = useState(null);
@@ -1051,6 +1052,7 @@ function CampaignWizard({ profile, linkedin, orgs, onClose, onLaunched, showToas
         body: JSON.stringify({
           theme,
           objective,
+          mood,
           context: buildContext(),
           ...(withFeedback ? { feedback, previous: sample } : {}),
         }),
@@ -1074,7 +1076,7 @@ function CampaignWizard({ profile, linkedin, orgs, onClose, onLaunched, showToas
       const cRes = await fetch("/api/campaigns", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, theme, objective, context: buildContext() }),
+        body: JSON.stringify({ name, theme, objective, mood, context: buildContext() }),
       });
       const cData = await readJson(cRes);
       if (!cRes.ok) throw new Error(cData.error);
@@ -1202,6 +1204,28 @@ function CampaignWizard({ profile, linkedin, orgs, onClose, onLaunched, showToas
                     }`}
                   >
                     {g}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-700 block mb-1.5">
+                Humeur des posts <span className="text-gray-400 font-normal">(optionnel — oriente l'approche éditoriale)</span>
+              </label>
+              <div className="flex flex-wrap gap-1.5">
+                {MOODS.map((m) => (
+                  <button
+                    key={m.code}
+                    type="button"
+                    title={m.hint}
+                    onClick={() => setMood(mood === m.code ? null : m.code)}
+                    className={`text-xs px-3 py-1.5 rounded-full border ${
+                      mood === m.code
+                        ? "bg-[#ff5a5f] text-white border-[#ff5a5f]"
+                        : "border-gray-200 text-gray-600 hover:border-gray-300"
+                    }`}
+                  >
+                    {m.emoji} {m.label}
                   </button>
                 ))}
               </div>
@@ -1512,6 +1536,23 @@ function CampaignsView({ profile, linkedin, orgs, showToast, onPlanned, openWiza
     }
   };
 
+  const changeCampaignMood = async (c, mood) => {
+    const previous = c.mood ?? null;
+    setCampaigns((list) => list.map((x) => (x.id === c.id ? { ...x, mood } : x)));
+    try {
+      const res = await fetch(`/api/campaigns/${c.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mood }),
+      });
+      if (!res.ok) throw new Error();
+      showToast(mood ? "Humeur enregistrée : elle s'applique aux prochains posts" : "Humeur retirée");
+    } catch {
+      setCampaigns((list) => list.map((x) => (x.id === c.id ? { ...x, mood: previous } : x)));
+      showToast("Erreur d'enregistrement de l'humeur");
+    }
+  };
+
   const archiveCampaign = async (c) => {
     try {
       await fetch(`/api/campaigns/${c.id}`, {
@@ -1620,6 +1661,19 @@ function CampaignsView({ profile, linkedin, orgs, showToast, onPlanned, openWiza
                       )}
                     </div>
                     <p className="text-sm text-gray-500 mt-0.5">{c.theme}</p>
+                    <label className="text-xs text-gray-500 mt-1.5 flex items-center gap-1.5">
+                      Humeur des prochains posts
+                      <select
+                        value={c.mood ?? ""}
+                        onChange={(e) => changeCampaignMood(c, e.target.value || null)}
+                        className="border border-gray-200 rounded-md px-1.5 py-0.5 text-xs bg-white"
+                      >
+                        <option value="">Aucune</option>
+                        {MOODS.map((m) => (
+                          <option key={m.code} value={m.code}>{m.emoji} {m.label}</option>
+                        ))}
+                      </select>
+                    </label>
                   </div>
                   <div className="flex items-center gap-1.5 shrink-0">
                     <button

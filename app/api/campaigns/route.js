@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getEffectiveUserId as getUserId } from "@/lib/session";
 import { checkFeature } from "@/lib/gating";
+import { normalizeMood } from "@/lib/moods";
 
 // Campagnes LinkedIn du client
 
@@ -34,6 +35,7 @@ export async function GET(req) {
         theme: c.theme,
         objective: c.objective,
         context: c.context,
+        mood: c.mood,
         status: c.status,
         createdAt: c.createdAt,
         postCount: c.drafts.length,
@@ -54,7 +56,7 @@ export async function POST(req) {
   const feat = await checkFeature(userId, "campaigns", "L'outil de campagne");
   if (!feat.ok) return NextResponse.json({ error: feat.error }, { status: 403 });
 
-  const { name, theme, objective, context } = await req.json();
+  const { name, theme, objective, context, mood } = await req.json();
   if (!theme?.trim()) return NextResponse.json({ error: "Thème requis." }, { status: 400 });
 
   const campaign = await prisma.campaign.create({
@@ -64,6 +66,7 @@ export async function POST(req) {
       theme: theme.trim(),
       objective: objective?.trim() || null,
       context: context?.trim() || null,
+      mood: normalizeMood(mood),
     },
   });
   return NextResponse.json({ campaign });
