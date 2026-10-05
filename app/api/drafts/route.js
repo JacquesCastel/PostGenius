@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getEffectiveUserId as getUserId } from "@/lib/session";
+import { videoPathFromUrl } from "@/lib/video";
 import { checkPostQuota, checkAccess } from "@/lib/gating";
 import { renderPostTemplate } from "@/lib/templates";
 import { saveImage } from "@/lib/image";
@@ -62,9 +63,17 @@ export async function POST(req) {
   const userId = await getUserId(req);
   if (!userId) return NextResponse.json({ error: "Non connecté." }, { status: 401 });
 
-  const { type, theme, expertise, tone, maxChars, text, generatedText, extra, inspirationUrl, imageUrl, imagePrompt, pillarId } =
+  const { type, theme, expertise, tone, maxChars, text, generatedText, extra, inspirationUrl, imageUrl, imagePrompt, videoUrl, pillarId } =
     await req.json();
   if (!text?.trim()) return NextResponse.json({ error: "Texte requis." }, { status: 400 });
+
+  if (videoUrl) {
+    try {
+      videoPathFromUrl(videoUrl, userId);
+    } catch {
+      return NextResponse.json({ error: "Vidéo invalide." }, { status: 400 });
+    }
+  }
 
   const access = await checkAccess(userId);
   if (!access.ok) return NextResponse.json({ error: access.error, code: access.code }, { status: 403 });
@@ -87,6 +96,7 @@ export async function POST(req) {
       inspirationUrl: inspirationUrl || null,
       imageUrl: imageUrl || null,
       imagePrompt: imagePrompt || null,
+      videoUrl: videoUrl || null,
       pillarId: pillarId || null,
     },
   });

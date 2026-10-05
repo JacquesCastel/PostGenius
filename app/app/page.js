@@ -9267,7 +9267,7 @@ export default function Home() {
 
   // Ouvre la page Étape 2 et initialise l'historique
   // draftId : si fourni, les modifications (texte + image) sont enregistrées dans le brouillon
-  const openOptimize = (text, type, draftId = null, imageUrl = null, imagePrompt = null) => {
+  const openOptimize = (text, type, draftId = null, imageUrl = null, imagePrompt = null, videoUrl = null) => {
     setRewriteScope("all");
     setVersions([{ id: Date.now(), text, label: "Version initiale", score: scorePost({ text, type }).score }]);
     setOptimizeText({ text, type, draftId });
@@ -9278,6 +9278,7 @@ export default function Home() {
       // du prompt (présent seulement pour une illustration IA) pour proposer
       // "Régénérer" à bon escient, sans le supposer à tort pour un import.
       setPostImage(imageUrl ? { url: imageUrl, prompt: imagePrompt ?? "", source: imagePrompt ? "illustration" : undefined } : null);
+      setPostVideo(videoUrl ? { url: videoUrl, name: "Vidéo du post" } : null);
       setImagePromptInput("");
     }
   };
@@ -9366,6 +9367,8 @@ export default function Home() {
   const [useBrandKitForImage, setUseBrandKitForImage] = useState(true); // respecter la charte graphique dans l'image générée par IA
   const [imageSourceTab, setImageSourceTab] = useState("text"); // "text" | "illustration" | "upload" — source choisie avant génération
   const [imageLoading, setImageLoading] = useState(false);
+  const [postVideo, setPostVideo] = useState(null); // { url, name, size } — vidéo envoyée par le client
+  const [videoUpload, setVideoUpload] = useState(null); // { name, pct } pendant l'envoi
   const [editingImageSrc, setEditingImageSrc] = useState(null); // image ouverte dans l'éditeur crop/filtre (import ou retouche)
   // Article de veille servant d'inspiration à la génération
   const [inspiration, setInspiration] = useState(null);
@@ -9544,6 +9547,7 @@ export default function Home() {
     setNextStep(null);
     setEditingResult(false);
     setPostImage(null);
+    setPostVideo(null);
     try {
       const res = await fetch("/api/generate", {
         method: "POST",
@@ -9712,6 +9716,7 @@ export default function Home() {
           inspirationUrl: inspiration?.link ?? null,
           imageUrl: postImage?.url ?? null,
           imagePrompt: postImage?.prompt ?? null,
+          videoUrl: postVideo?.url ?? null,
           pillarId: activeReco?.pillarId ?? null,
         }),
       });
@@ -9733,6 +9738,7 @@ export default function Home() {
     setHistory([]);
     setEditingResult(false);
     setPostImage(null);
+    setPostVideo(null);
     setImagePromptInput("");
   };
 
@@ -9841,7 +9847,10 @@ export default function Home() {
   // brouillon existant (Mes posts) — sinon c'est l'image du post en cours de
   // création, à conserver quand on revient sur "Créer un post".
   const closeOptimize = () => {
-    if (optimizeText?.draftId) setPostImage(null);
+    if (optimizeText?.draftId) {
+      setPostImage(null);
+      setPostVideo(null);
+    }
     setOptimizeText(null);
   };
 
@@ -9853,6 +9862,116 @@ export default function Home() {
       setDrafts((ds) => ds.map((d) => (d.id === draftId ? { ...d, imageUrl: null, imagePrompt: null } : d)));
     }
   };
+
+  // Envoi d'une vidéo par morceaux de 4 Mo (reprise impossible : on recommence).
+  // 200 Mo max, MP4/MOV. Le brouillon (s'il existe) garde le lien ; sinon la
+  // vidéo suit le post en cours de création jusqu'à son enregistrement.
+  const uploadVideo = async (file) => {
+    if (!file || videoUpload) return;
+    if (file.size > 200 * 1024 * 1024) {
+      showToast("Vidéo trop lourde (200 Mo maximum).");
+      return;
+    }
+    if (!/\.(mp4|mov|m4v)$/i.test(file.name) && !file.type.startsWith("video/")) {
+      showToast("Format non pris en charge. Utilisez un fichier MP4.");
+      return;
+    }
+    setVideoUpload({ name: file.name, pct: 0 });
+    try {
+      const init = await readJson(
+        await fetch("/api/videos", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ size: file.size }),
+        })
+      );
+      if (!init.uploadId) throw new Error(init.error || "Envoi impossible.");
+      const total = Math.ceil(file.size / init.chunkSize);
+      for (let i = 0; i < total; i++) {
+        const res = await fetch(`/api/videos/${init.uploadId}?index=${i}`, {
+          method: "PUT",
+          body: file.slice(i * init.chunkSize, (i + 1) * init.chunkSize),
+        });
+        if (!res.ok) throw new Error((await readJson(res)).error || "Échec de l'envoi.");
+        setVideoUpload({ name: file.name, pct: Math.round(((i + 1) / total) * 100) });
+      }
+      const done = await readJson(
+        await fetch(`/api/videos/${init.uploadId}/complete`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ size: file.size }),
+        })
+      );
+      if (!done.url) throw new Error(done.error || "Vidéo non validée.");
+      setPostVideo({ url: done.url, name: file.name, size: file.size });
+      if (optimizeText?.draftId) {
+        const draftId = optimizeText.draftId;
+        await patchDraft(draftId, { videoUrl: done.url });
+        setDrafts((ds) => ds.map((d) => (d.id === draftId ? { ...d, videoUrl: done.url } : d)));
+      }
+      showToast("Vidéo ajoutée ✓");
+    } catch (e) {
+      showToast(e.message);
+    } finally {
+      setVideoUpload(null);
+    }
+  };
+
+  const removePostVideo = () => {
+    setPostVideo(null);
+    if (optimizeText?.draftId) {
+      const draftId = optimizeText.draftId;
+      patchDraft(draftId, { videoUrl: null }).catch(() => {});
+      setDrafts((ds) => ds.map((d) => (d.id === draftId ? { ...d, videoUrl: null } : d)));
+    }
+  };
+
+  // Bloc "Vidéo du post" (fonction simple, comme renderImageBlock, pour ne pas
+  // démonter le champ fichier). La vidéo remplace l'image à la publication.
+  const renderVideoBlock = () => (
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+      <p className="text-sm font-semibold mb-3 flex items-center gap-2">
+        <Video size={15} className="text-[#ff5a5f]" /> Vidéo du post
+        <span className="text-xs text-gray-400 font-normal">(optionnelle — MP4, 200 Mo max)</span>
+      </p>
+      {postVideo ? (
+        <>
+          <video src={postVideo.url} controls preload="metadata" className="rounded-xl w-full max-h-72 bg-black mb-2" />
+          <p className="text-xs text-gray-400 mb-3">
+            {postVideo.name}
+            {postVideo.size ? ` · ${(postVideo.size / 1048576).toFixed(1)} Mo` : ""}
+            {(postImage || optimizeText?.imageUrl) && " · la vidéo remplace l'image à la publication"}
+          </p>
+          <button
+            onClick={removePostVideo}
+            className="border border-gray-200 hover:border-red-400 hover:text-red-600 text-gray-600 text-xs px-3 py-1.5 rounded-lg"
+          >
+            Retirer la vidéo
+          </button>
+        </>
+      ) : videoUpload ? (
+        <div>
+          <p className="text-xs text-gray-500 mb-1.5 truncate">Envoi de {videoUpload.name}… {videoUpload.pct} %</p>
+          <div className="h-2 rounded-full bg-gray-100 overflow-hidden">
+            <div className="h-full bg-[#ff5a5f] transition-all" style={{ width: `${videoUpload.pct}%` }} />
+          </div>
+        </div>
+      ) : (
+        <label className="flex items-center justify-center gap-2 border-2 border-dashed border-gray-200 hover:border-[#ff5a5f] rounded-xl py-5 text-xs text-gray-500 cursor-pointer">
+          <Upload size={14} /> Importer une vidéo
+          <input
+            type="file"
+            accept="video/mp4,video/quicktime,.mp4,.mov,.m4v"
+            className="hidden"
+            onChange={(e) => {
+              uploadVideo(e.target.files?.[0]);
+              e.target.value = "";
+            }}
+          />
+        </label>
+      )}
+    </div>
+  );
 
   // Bloc "Image du post", partagé entre "Créer un post" (y compris en mode
   // modification) et "Optimiser mes posts" — fonction simple (pas un composant
@@ -10163,7 +10282,7 @@ export default function Home() {
       const res = await fetch("/api/linkedin/publish", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: p.text, author: target, imageUrl: p.imageUrl ?? null }),
+        body: JSON.stringify({ text: p.text, author: target, imageUrl: p.imageUrl ?? null, videoUrl: p.videoUrl ?? null }),
       });
       const data = await readJson(res);
       if (!res.ok) throw new Error(data.error || "Erreur de publication");
@@ -10404,6 +10523,7 @@ export default function Home() {
 
               {/* Image du post — absente auparavant de cet écran (bug rapporté). */}
               {renderImageBlock()}
+              {renderVideoBlock()}
 
               {/* Niveau de réécriture (comme le choix du format) — réservé Pro/Agence */}
               {canScore && (
@@ -11233,6 +11353,7 @@ export default function Home() {
                   {/* Image du post — reste accessible en mode modification, et partagée avec
                       l'écran "Optimiser mes posts" via renderImageBlock(). */}
                   {renderImageBlock()}
+                  {renderVideoBlock()}
                 </div>
               </div>
             )}
@@ -11935,7 +12056,9 @@ export default function Home() {
                               p.status !== "publié" && editingId !== p.id ? "cursor-grab active:cursor-grabbing" : ""
                             }`}
                           >
-                            {p.imageUrl && (
+                            {p.videoUrl ? (
+                              <video src={p.videoUrl} preload="metadata" muted className="w-full h-28 object-cover bg-black" />
+                            ) : p.imageUrl && (
                               <img
                                 src={p.imageUrl}
                                 alt=""
@@ -11957,7 +12080,7 @@ export default function Home() {
                                     <Copy size={13} />
                                   </button>
                                   <button
-                                    onClick={() => openOptimize(p.text, p.type, p.id, p.imageUrl, p.imagePrompt)}
+                                    onClick={() => openOptimize(p.text, p.type, p.id, p.imageUrl, p.imagePrompt, p.videoUrl)}
                                     className="text-gray-300 hover:text-[#ff5a5f] p-1"
                                     title="Modifier et optimiser"
                                   >
