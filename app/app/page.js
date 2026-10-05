@@ -1878,6 +1878,79 @@ function AdminStripeCard() {
   );
 }
 
+// Entonnoir produit : de l'inscription à l'abonnement payant, par période.
+// Chaque barre = part des inscrits de la période ayant atteint l'étape.
+function AdminFunnelCard() {
+  const [days, setDays] = useState(30);
+  const [data, setData] = useState(null); // null = chargement
+
+  useEffect(() => {
+    setData(null);
+    fetch(`/api/admin/funnel?days=${days}`)
+      .then(readJson)
+      .then(setData)
+      .catch((e) => setData({ error: e.message }));
+  }, [days]);
+
+  const periods = [
+    { id: 7, label: "7 j" },
+    { id: 30, label: "30 j" },
+    { id: 90, label: "90 j" },
+    { id: 0, label: "Tout" },
+  ];
+
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+      <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+        <p className="font-semibold text-sm flex items-center gap-1.5 whitespace-nowrap">
+          <TrendingUp size={15} /> Entonnoir produit
+        </p>
+        <div className="flex gap-1 bg-gray-100 rounded-lg p-0.5">
+          {periods.map((p) => (
+            <button
+              key={p.id}
+              onClick={() => setDays(p.id)}
+              className={`px-2.5 py-1 rounded-md text-xs font-medium ${days === p.id ? "bg-white shadow-sm" : "text-gray-500"}`}
+            >
+              {p.label}
+            </button>
+          ))}
+        </div>
+      </div>
+      {!data ? (
+        <p className="text-xs text-gray-400 flex items-center gap-2 py-3">
+          <RefreshCw size={14} className="animate-spin text-[#ff5a5f]" /> Chargement…
+        </p>
+      ) : data.error ? (
+        <p className="bg-red-50 rounded-lg p-3 text-xs text-red-700 flex items-start gap-2">
+          <AlertCircle size={14} className="shrink-0 mt-px" /> {data.error}
+        </p>
+      ) : data.steps[0].count === 0 ? (
+        <p className="text-sm text-gray-400 text-center py-3">Aucune inscription sur la période</p>
+      ) : (
+        <div className="space-y-2">
+          {data.steps.map((s) => (
+            <div key={s.key}>
+              <div className="flex items-center justify-between text-xs mb-0.5">
+                <span className="text-gray-600">{s.label}</span>
+                <span className="font-medium">
+                  {s.count} <span className="text-gray-400 font-normal">· {s.pct} %</span>
+                </span>
+              </div>
+              <div className="h-2 rounded-full bg-gray-100 overflow-hidden">
+                <div className="h-full rounded-full bg-[#ff5a5f]" style={{ width: `${Math.max(s.pct, s.count ? 2 : 0)}%` }} />
+              </div>
+            </div>
+          ))}
+          <p className="text-[11px] text-gray-400 pt-1">
+            Chaque étape est comptée indépendamment, en % des inscrits. Hors admins et clients gérés par une agence.
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function AdminView({ showToast }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -1990,6 +2063,7 @@ function AdminView({ showToast }) {
     <main className="max-w-6xl mx-auto p-6 space-y-6">
       <AdminHealthCard />
       <AdminStripeCard />
+      <AdminFunnelCard />
 
       {/* Totaux plateforme */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
