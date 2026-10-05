@@ -4,6 +4,7 @@ import { getEffectiveUserId as getUserId } from "@/lib/session";
 import { logUsage } from "@/lib/usage";
 import { checkAccess } from "@/lib/gating";
 import { getRemarks, remarksPromptBlock } from "@/lib/remarks";
+import { normalizeVideoExtra } from "@/lib/shootingKit";
 import { writingRulesPrompt, WHY_INSTRUCTION, WHY_JSON_FORMAT, cleanWhy } from "@/lib/linkedinRules";
 
 // Génération du post via l'API Claude (Messages API).
@@ -21,6 +22,7 @@ Tu réponds UNIQUEMENT avec un objet JSON valide, sans backticks ni texte autour
 function extraFormat(type) {
   if (type === "simple") return "null";
   if (type === "carrousel") return `{"title": "...", "items": ["..."], "slides": [{"type": "title", "title": "...", "subtitle": "..."}, {"type": "content", "title": "...", "body": "..."}, {"type": "end", "cta": "..."}]}`;
+  if (type === "video") return `{"title": "Script vidéo", "items": ["0-5s — ..."], "shots": [{"time": "0-5s", "say": "...", "show": "...", "onScreen": "..."}], "tips": ["..."]}`;
   return `{"title": "...", "items": ["..."]}`;
 }
 
@@ -36,9 +38,12 @@ function buildUserPrompt({ type, theme, expertise, tone, maxChars, refine, mode,
   - le dernier : {"type": "end", "cta": "appel à l'action final, ex : « Suivez-moi pour plus de conseils »"}.
 Le texte du post doit teaser le carrousel.`;
   } else if (type === "video") {
-    extraSpec = `\nC'est un post vidéo : fournis aussi un script de 60-90 secondes dans "extra"
-(titre: "Script vidéo", items: tableau de chaînes avec timecodes "0-5s — ...").
-Le texte du post doit accompagner la vidéo.`;
+    extraSpec = `\nC'est un post vidéo que l'auteur va filmer lui-même : fournis aussi un kit de tournage de 60-90 secondes dans "extra", sous DEUX formes qui se correspondent dans le même ordre :
+- "title": "Script vidéo" ;
+- "items" : une chaîne par plan avec timecodes, "0-5s — ce qui est dit" (résumé lisible) ;
+- "shots" : 6 à 10 plans, chacun {"time": "0-5s", "say": "les phrases EXACTES à dire face caméra, naturelles à l'oral, courtes (400 caractères max)", "show": "ce qu'on voit à l'image : cadrage, geste, décor, illustration (150 caractères max)", "onScreen": "texte court à incruster à l'écran (60 caractères max) ou null"} ;
+- "tips" : 3 à 4 conseils de tournage concrets et adaptés à ce sujet (lumière, cadrage, rythme, sous-titres).
+Le 1er plan est une accroche qui retient dans les 3 premières secondes, le dernier un appel à l'action. Le texte du post doit accompagner la vidéo sans la répéter.`;
   }
   let profileSpec = "";
   if (profile?.headline) profileSpec += `\n- Titre professionnel de l'auteur : ${profile.headline}`;
@@ -199,7 +204,7 @@ export async function POST(req) {
           // la réponse JSON — 2048 suffisait avant, mais peut la couper avant la fin
           // maintenant, ce qui fait disparaître "slides" en silence (JSON invalide, ou le
           // modèle raccourcit pour tenir dans le budget).
-          max_tokens: params.mode === "series" || params.variants || params.type === "carrousel" ? 8000 : 2048,
+          max_tokens: params.mode === "series" || params.variants || params.type === "carrousel" || params.type === "video" ? 8000 : 2048,
           system: SYSTEM_PROMPT,
           messages: [{ role: "user", content: buildUserPrompt(params, profile, remarks) }],
         }),
@@ -247,11 +252,11 @@ export async function POST(req) {
     // Variantes
     if (params.variants && Array.isArray(result.variants) && result.variants.length > 0) {
       return NextResponse.json({
-        variants: result.variants.map((v) => ({ text: v.text, extra: v.extra ?? null, why: cleanWhy(v.why, v.text) })),
+        variants: result.variants.map((v) => ({ text: v.text, extra: params.type === "video" ? normalizeVideoExtra(v.extra) : v.extra ?? null, why: cleanWhy(v.why, v.text) })),
       });
     }
 
-    return NextResponse.json({ text: result.text, extra: result.extra ?? null, why: cleanWhy(result.why, result.text) });
+    return NextResponse.json({ text: result.text, extra: params.type === "video" ? normalizeVideoExtra(result.extra) : result.extra ?? null, why: cleanWhy(result.why, result.text) });
   } catch (e) {
     console.error("Erreur génération:", e);
     return NextResponse.json({ error: "Échec de la génération. Réessayez." }, { status: 500 });
