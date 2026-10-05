@@ -74,7 +74,10 @@ async function uploadCover({ event, token, owner }) {
       "X-Restli-Protocol-Version": "2.0.0",
       "Content-Type": "application/json",
     };
-    return { urn: await uploadImage({ buf, owner, token, liHeaders }) };
+    // L'API Images renvoie « urn:li:image:{id} » ; l'événement attend « urn:li:digitalmediaAsset:{id} »
+    // (LinkedIn : « Invalid Urn format. Invalid prefix »). L'identifiant est le même, seul le préfixe change.
+    const imageUrn = await uploadImage({ buf, owner, token, liHeaders });
+    return { urn: imageUrn.replace(/^urn:li:image:/, "urn:li:digitalmediaAsset:") };
   } catch (e) {
     return { note: `Image de couverture non envoyée (${e.message}) : image par défaut de LinkedIn.` };
   }
@@ -124,8 +127,9 @@ export async function POST(req, { params }) {
     try {
       eventId = await createEvent(token, buildEventBody({ ...opts, backgroundImage: cover.urn }).body);
     } catch (e) {
-      // Si LinkedIn refuse précisément l'image de couverture (400), on réessaie sans elle
-      if (cover.urn && e.status === 400) {
+      // Si LinkedIn refuse l'image de couverture (400 ou 422 : format ou contenu), on réessaie sans elle ;
+      // si l'événement échoue encore, c'est l'erreur de cette 2e tentative (la vraie cause) qui remonte.
+      if (cover.urn && (e.status === 400 || e.status === 422)) {
         eventId = await createEvent(token, buildEventBody(opts).body);
         imageNote = "LinkedIn a refusé l'image de couverture : image par défaut utilisée.";
       } else {
