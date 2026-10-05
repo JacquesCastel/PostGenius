@@ -6,6 +6,7 @@ import { checkAccess } from "@/lib/gating";
 import { getRemarks, remarksPromptBlock } from "@/lib/remarks";
 import { normalizeVideoExtra } from "@/lib/shootingKit";
 import { normalizeLanguage, languageInstruction, systemPromptFor } from "@/lib/languages";
+import { normalizeMood, moodInstruction } from "@/lib/moods";
 import { writingRulesPrompt, WHY_INSTRUCTION, WHY_JSON_FORMAT, cleanWhy } from "@/lib/linkedinRules";
 
 // Génération du post via l'API Claude (Messages API).
@@ -27,7 +28,7 @@ function extraFormat(type) {
   return `{"title": "...", "items": ["..."]}`;
 }
 
-function buildUserPrompt({ type, theme, expertise, tone, maxChars, refine, mode, count, variants, inspiration, language }, profile, remarks = []) {
+function buildUserPrompt({ type, theme, expertise, tone, maxChars, refine, mode, count, variants, inspiration, language, mood }, profile, remarks = []) {
   let extraSpec = "";
   if (type === "carrousel") {
     extraSpec = `\nC'est un post carrousel : fournis aussi dans "extra" un plan de 8 slides, sous DEUX formes qui se correspondent dans le même ordre :
@@ -59,6 +60,7 @@ Le 1er plan est une accroche qui retient dans les 3 premières secondes, le dern
     profileSpec += `\n- Consignes de style de l'auteur (À RESPECTER IMPÉRATIVEMENT) : ${profile.styleNotes}`;
   profileSpec += remarksPromptBlock(remarks);
   profileSpec += languageInstruction(language);
+  profileSpec += moodInstruction(normalizeMood(mood));
 
   // Mode retouche : réécriture d'un post existant selon une consigne
   if (refine?.text && refine?.instruction) {
