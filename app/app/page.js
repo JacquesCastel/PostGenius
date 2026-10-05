@@ -29,6 +29,7 @@ import "@fontsource/raleway/700.css";
 import SiteFooter from "@/components/SiteFooter";
 import LpMark from "@/components/LpMark";
 import ShootingKit from "@/components/ShootingKit";
+import { LANGUAGES, normalizeLanguage } from "@/lib/languages";
 import { parseYouTubeId, youtubeWatchUrl, youtubeEmbedUrl, youtubeThumbUrl } from "@/lib/youtube";
 import ImageEditor from "@/components/ImageEditor";
 import { scorePost } from "@/lib/score";
@@ -6481,6 +6482,7 @@ function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast 
     expertise: profile?.expertise ?? "",
     themes: profile?.themes ?? "",
     tone: profile?.tone ?? "Professionnel",
+    postLanguage: normalizeLanguage(profile?.postLanguage),
     styleNotes: profile?.styleNotes ?? "",
     defaultMaxChars: profile?.defaultMaxChars ?? 1300,
     publishDays: profile?.publishDays ?? "2,4",
@@ -6741,6 +6743,26 @@ function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast 
 
           {step === 3 && (
             <div className="space-y-4">
+            <div>
+                <label className="text-sm font-medium text-gray-700 block mb-2">Langue de rédaction des posts</label>
+                <div className="flex flex-wrap gap-1.5">
+                  {LANGUAGES.map((l) => (
+                    <button
+                      type="button"
+                      key={l.code}
+                      onClick={() => set("postLanguage", l.code)}
+                      className={`text-xs px-3 py-1.5 rounded-full border ${
+                        fields.postLanguage === l.code
+                          ? "bg-[#ff5a5f] text-white border-[#ff5a5f]"
+                          : "border-gray-200 text-gray-600 hover:border-gray-300"
+                      }`}
+                    >
+                      {l.label}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-[11px] text-gray-400 mt-1">Langue des posts générés par l&apos;IA (modifiable à chaque post). L&apos;interface reste en français.</p>
+              </div>
               <div>
                 <label className="text-sm font-medium text-gray-700 block mb-2">Ton par défaut</label>
                 <div className="flex flex-wrap gap-1.5">
@@ -9127,6 +9149,7 @@ function ProfileView({ profile, onSaved, showToast, linkedin, onDisconnect, inst
     expertise: profile?.expertise ?? "",
     themes: profile?.themes ?? "",
     tone: profile?.tone ?? "Professionnel",
+    postLanguage: normalizeLanguage(profile?.postLanguage),
     styleNotes: profile?.styleNotes ?? "",
     editorialNote: profile?.editorialNote ?? "",
     defaultMaxChars: profile?.defaultMaxChars ?? 1300,
@@ -9345,6 +9368,26 @@ function ProfileView({ profile, onSaved, showToast, linkedin, onDisconnect, inst
                   placeholder="ex : SEO, prospection LinkedIn, freelancing"
                   className={input}
                 />
+              </div>
+              <div>
+                <label className={label}>Langue de rédaction des posts</label>
+                <div className="flex flex-wrap gap-1.5">
+                  {LANGUAGES.map((l) => (
+                    <button
+                      type="button"
+                      key={l.code}
+                      onClick={() => set("postLanguage", l.code)}
+                      className={`text-xs px-3 py-1.5 rounded-full border ${
+                        fields.postLanguage === l.code
+                          ? "bg-[#ff5a5f] text-white border-[#ff5a5f]"
+                          : "border-gray-200 text-gray-600 hover:border-gray-300"
+                      }`}
+                    >
+                      {l.label}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-[11px] text-gray-400 mt-1">Langue des posts générés par l&apos;IA (modifiable à chaque post). L&apos;interface reste en français.</p>
               </div>
               <div>
                 <label className={label}>Ton par défaut</label>
@@ -12257,6 +12300,25 @@ export default function Home() {
                   </button>
                 </div>
               )}
+            </div>
+
+            <div>
+              <label className="text-sm font-medium text-gray-700 block mb-2">Langue du post</label>
+              <div className="flex flex-wrap gap-1.5">
+                {LANGUAGES.map((l) => (
+                  <button
+                    key={l.code}
+                    onClick={() => set("language", l.code)}
+                    className={`text-xs px-3 py-1.5 rounded-full border ${
+                      normalizeLanguage(form.language ?? profile?.postLanguage) === l.code
+                        ? "bg-[#ff5a5f] text-white border-[#ff5a5f]"
+                        : "border-gray-200 text-gray-600 hover:border-gray-300"
+                    }`}
+                  >
+                    {l.label}
+                  </button>
+                ))}
+              </div>
             </div>
 
             <div>

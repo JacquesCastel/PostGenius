@@ -1,3 +1,4 @@
+import { languageName } from "@/lib/languages";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getEffectiveUserId as getUserId } from "@/lib/session";
@@ -36,7 +37,7 @@ export async function POST(req, { params }) {
     select: {
       headline: true, companyName: true, businessDescription: true, targetAudience: true,
       market: true, styleNotes: true, tone: true, defaultMaxChars: true, publishTime: true,
-      requireValidation: true,
+      requireValidation: true, postLanguage: true,
     },
   });
 
@@ -63,7 +64,7 @@ ${event.details ? `Contexte de l'événement : ${event.details.slice(0, 1000)}` 
 Profil de l'auteur :
 ${profileSpec || "(non renseigné)"}
 
-Génère 2 posts LinkedIn en français, dans le style de l'auteur, courts (accroche forte, 2 à 4 phrases aérées, 2-3 hashtags, et le lien de l'événement s'il existe) :
+Génère 2 posts LinkedIn en ${languageName(user?.postLanguage)}, dans le style de l'auteur, courts (accroche forte, 2 à 4 phrases aérées, 2-3 hashtags, et le lien de l'événement s'il existe) :
 1. "annonce" — à publier quelques jours AVANT : nous serons présents à ${event.name} ${periode}, venez nous rencontrer.
 2. "jourJ" — à publier LE JOUR de l'ouverture : nous y sommes, retrouvez-nous${event.location ? ` (${event.location})` : ""}, n'oubliez pas que nous sommes à ${event.name}${sameDay ? "" : ` jusqu'à la fin ${fmtFr(event.endDate)}`}.
 

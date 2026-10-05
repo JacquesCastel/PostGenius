@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getEffectiveUserId as getUserId } from "@/lib/session";
+import { isLanguage } from "@/lib/languages";
 
 const STRING_FIELDS = [
   "name",
@@ -23,7 +24,7 @@ const INT_FIELDS = { defaultMaxChars: [300, 3000], postsPerWeek: [1, 7], autoPub
 const BOOL_FIELDS = ["requireValidation", "autoGenerate"];
 
 const SELECT = Object.fromEntries(
-  [...STRING_FIELDS, ...Object.keys(INT_FIELDS), ...BOOL_FIELDS, "onboardedAt", "email"].map(
+  [...STRING_FIELDS, ...Object.keys(INT_FIELDS), ...BOOL_FIELDS, "postLanguage", "onboardedAt", "email"].map(
     (k) => [k, true]
   )
 );
@@ -58,6 +59,10 @@ export async function PUT(req) {
   }
   for (const key of BOOL_FIELDS) {
     if (key in body) data[key] = Boolean(body[key]);
+  }
+  if ("postLanguage" in body) {
+    if (!isLanguage(body.postLanguage)) return NextResponse.json({ error: "Langue non prise en charge." }, { status: 400 });
+    data.postLanguage = body.postLanguage;
   }
   // Fin de l'onboarding (wizard de première connexion)
   if (body.onboarded === true) data.onboardedAt = new Date();
