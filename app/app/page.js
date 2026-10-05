@@ -6002,6 +6002,11 @@ function StatsView({ linkedin, orgs, profile, drafts, showToast, onConnect }) {
               ["Réactions", pStats.aggregate?.likeCount, ThumbsUp],
               ["Commentaires", pStats.aggregate?.commentCount, MessageSquare],
               ["Partages", pStats.aggregate?.shareCount, Share2],
+              ["Personnes atteintes", pStats.aggregate?.reachedCount, Users],
+              ["Enregistrements", pStats.aggregate?.saveCount, Save],
+              ["Envois en message", pStats.aggregate?.sendCount, Send],
+              ["Abonnés gagnés", pStats.aggregate?.followerCount, UserPlus],
+              ["Vues de profil", pStats.aggregate?.profileViewCount, UserRound],
             ].map(([label, v, Icon]) => (
               <div key={label} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
                 <Icon size={16} className="text-[#ff5a5f] mb-2" />
@@ -6110,6 +6115,7 @@ function StatsView({ linkedin, orgs, profile, drafts, showToast, onConnect }) {
                   <th className="p-3 font-medium">Post</th>
                   <th className="p-3 font-medium">Cible</th>
                   <th className="p-3 font-medium text-right">Impressions</th>
+                  <th className="p-3 font-medium text-right">Atteints</th>
                   <th className="p-3 font-medium text-right">Clics</th>
                   <th className="p-3 font-medium text-right">Réactions</th>
                   <th className="p-3 font-medium text-right">Comm.</th>
@@ -6142,6 +6148,7 @@ function StatsView({ linkedin, orgs, profile, drafts, showToast, onConnect }) {
                         {p.target === "person" ? "Profil perso" : "Page entreprise"}
                       </td>
                       <td className="p-3 text-right">{s?.impressionCount ?? "—"}</td>
+                      <td className="p-3 text-right">{s?.reachedCount ?? "—"}</td>
                       <td className="p-3 text-right">{s?.clickCount ?? "—"}</td>
                       <td className="p-3 text-right">{s?.likeCount ?? social?.posts[p.id]?.reactions ?? "—"}</td>
                       <td className="p-3 text-right">{s?.commentCount ?? social?.posts[p.id]?.comments ?? "—"}</td>
