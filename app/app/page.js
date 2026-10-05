@@ -512,7 +512,8 @@ function ScheduleModal({ draft, linkedin, orgs, profile, onClose, onScheduled, s
 // pas lire le post (permission d'écriture seule) : on l'ouvre sur LinkedIn pour le lire.
 // Chaque action est envoyée immédiatement, sur demande ; plafonds horaires côté serveur.
 // ----------------------------------------------------------------
-function EngageView({ linkedin, showToast, onConnect }) {
+function EngageView({ linkedin, showToast, onConnect, embedded = false, onSent }) {
+  const Wrap = embedded ? "div" : "main";
   const [postInput, setPostInput] = useState("");
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(null); // "comment" | type de réaction en cours
@@ -535,6 +536,7 @@ function EngageView({ linkedin, showToast, onConnect }) {
       setDone((d) => [{ id: Date.now(), label, urn: data.urn, at: new Date() }, ...d].slice(0, 10));
       if (action === "comment") setText("");
       showToast(action === "comment" ? "Commentaire publié sur LinkedIn ✓" : `${label} envoyé ✓`);
+      onSent?.();
     } catch (e) {
       showToast(e.message);
     } finally {
@@ -544,7 +546,7 @@ function EngageView({ linkedin, showToast, onConnect }) {
 
   if (!linkedin.connected) {
     return (
-      <main className="max-w-2xl mx-auto p-6">
+      <Wrap className={embedded ? "" : "max-w-2xl mx-auto p-6"}>
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center space-y-3">
           <Linkedin size={28} className="mx-auto text-[#0a66c2]" />
           <p className="text-sm text-gray-600">Connectez votre compte LinkedIn pour réagir et commenter depuis LinkeePost.</p>
@@ -552,12 +554,12 @@ function EngageView({ linkedin, showToast, onConnect }) {
             Aller au profil
           </button>
         </div>
-      </main>
+      </Wrap>
     );
   }
 
   return (
-    <main className="max-w-2xl mx-auto p-6 space-y-4">
+    <Wrap className={embedded ? "space-y-4" : "max-w-2xl mx-auto p-6 space-y-4"}>
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
         <div>
           <p className="text-sm font-semibold flex items-center gap-2">
@@ -632,7 +634,7 @@ function EngageView({ linkedin, showToast, onConnect }) {
         </p>
       </div>
 
-      {done.length > 0 && (
+      {done.length > 0 && !embedded && (
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
           <p className="text-xs font-semibold mb-2">Envoyé pendant cette session</p>
           <ul className="space-y-1">
@@ -648,7 +650,7 @@ function EngageView({ linkedin, showToast, onConnect }) {
           </ul>
         </div>
       )}
-    </main>
+    </Wrap>
   );
 }
 
@@ -5663,7 +5665,7 @@ function DashboardView({ drafts, canVeille = true, canEvents = false, canScore =
 // ----------------------------------------------------------------
 // Statistiques : profil personnel + page entreprise (LinkedIn API)
 // ----------------------------------------------------------------
-function StatsView({ linkedin, orgs, profile, drafts }) {
+function StatsView({ linkedin, orgs, profile, drafts, showToast, onConnect }) {
   const [org, setOrg] = useState(orgs[0]?.urn ?? "");
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -5673,6 +5675,19 @@ function StatsView({ linkedin, orgs, profile, drafts }) {
   const [expandedId, setExpandedId] = useState(null);
   const [pStats, setPStats] = useState(null);
   const [pLoading, setPLoading] = useState(false);
+  const [inter, setInter] = useState(null); // résumé des commentaires/réactions envoyés
+  const [showEngage, setShowEngage] = useState(false);
+  const [commentsFor, setCommentsFor] = useState(null); // post dont on ouvre les commentaires
+
+  const loadInter = () =>
+    fetch("/api/linkedin/interactions")
+      .then(readJson)
+      .then((d) => setInter(d.totals ? d : null))
+      .catch(() => {});
+
+  useEffect(() => {
+    loadInter();
+  }, []);
 
   useEffect(() => {
     fetch("/api/campaigns?all=1")
@@ -5997,6 +6012,79 @@ function StatsView({ linkedin, orgs, profile, drafts }) {
         </p>
       </section>
 
+      {/* ── Interactions envoyées depuis LinkeePost : commentaires et réactions ── */}
+      <section>
+        <div className="flex items-center justify-between flex-wrap gap-2 mb-3">
+          <h3 className="font-semibold text-base flex items-center gap-2">
+            <MessageSquare size={16} className="text-[#ff5a5f]" /> Commentaires et réactions
+          </h3>
+          <button
+            onClick={() => setShowEngage((v) => !v)}
+            className="text-xs bg-[#ff5a5f] hover:bg-[#f63d44] text-white font-medium px-3 py-1.5 rounded-lg flex items-center gap-1.5"
+          >
+            <ThumbsUp size={12} /> {showEngage ? "Masquer" : "Réagir ou commenter un post"}
+          </button>
+        </div>
+
+        {showEngage && (
+          <div className="mb-4">
+            <EngageView embedded linkedin={linkedin} showToast={showToast} onConnect={onConnect} onSent={loadInter} />
+          </div>
+        )}
+
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {[
+            ["Commentaires envoyés (30 j)", inter?.totals.comments30, MessageSquare],
+            ["Réactions envoyées (30 j)", inter?.totals.reactions30, ThumbsUp],
+            ["Posts concernés (30 j)", inter?.totals.posts30, Send],
+            ["Depuis le début", inter?.totals.total, BarChart3],
+          ].map(([label, v, Icon]) => (
+            <div key={label} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+              <Icon size={16} className="text-[#ff5a5f] mb-2" />
+              <p className="text-xl font-bold">{v == null ? "—" : new Intl.NumberFormat("fr-FR").format(v)}</p>
+              <p className="text-xs text-gray-500">{label}</p>
+            </div>
+          ))}
+        </div>
+
+        {inter && inter.recent.length > 0 ? (
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm mt-3 divide-y divide-gray-50">
+            {inter.recent.map((r) => {
+              const reaction = REACTIONS.find((x) => x.type === r.reactionType);
+              return (
+                <div key={r.id} className="p-3 flex items-start gap-3 text-sm">
+                  <span className="shrink-0 mt-0.5">{r.action === "comment" ? <MessageSquare size={14} className="text-[#0a66c2]" /> : <span>{reaction?.emoji ?? "👍"}</span>}</span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-medium text-gray-700">
+                      {r.action === "comment" ? "Commentaire" : reaction?.label ?? "J'aime"}
+                      {r.draftId && (drafts ?? []).find((d) => d.id === r.draftId) && (
+                        <span className="text-gray-400 font-normal"> · sur « {(drafts ?? []).find((d) => d.id === r.draftId).theme || "votre post"} »</span>
+                      )}
+                    </p>
+                    {r.text && <p className="text-sm text-gray-600 mt-0.5 whitespace-pre-wrap break-words">{r.text}</p>}
+                  </div>
+                  <div className="shrink-0 flex items-center gap-2 text-xs text-gray-400">
+                    <span>{fmtDateTime(r.createdAt)}</span>
+                    <a href={`https://www.linkedin.com/feed/update/${r.urn}/`} target="_blank" rel="noreferrer" className="text-[#0a66c2] hover:text-[#084d92]" title="Voir le post sur LinkedIn">
+                      <ExternalLink size={13} />
+                    </a>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <p className="text-sm text-gray-400 bg-white rounded-2xl border border-dashed border-gray-200 p-5 text-center mt-3">
+            Aucune interaction envoyée pour l&apos;instant. Utilisez « Réagir ou commenter un post ».
+          </p>
+        )}
+        <p className="text-xs text-gray-400 mt-2">
+          LinkedIn ne permet pas à LinkeePost de relire les commentaires et réactions reçus sur un profil personnel : cette liste
+          reprend ce que vous avez envoyé depuis l&apos;outil. Les chiffres reçus par post sont affichés dans le tableau ci-dessous quand
+          LinkedIn les fournit.
+        </p>
+      </section>
+
       {/* ── Posts publiés & programmés via LinkeePost (toutes cibles) ── */}
       <section>
         <h3 className="font-semibold text-base mb-3 flex items-center gap-2">
@@ -6018,6 +6106,7 @@ function StatsView({ linkedin, orgs, profile, drafts }) {
                   <th className="p-3 font-medium text-right">Réactions</th>
                   <th className="p-3 font-medium text-right">Comm.</th>
                   <th className="p-3 font-medium text-right">Partages</th>
+                  <th className="p-3 font-medium text-right whitespace-nowrap">Vos actions</th>
                   <th className="p-3" />
                 </tr>
               </thead>
@@ -6049,13 +6138,31 @@ function StatsView({ linkedin, orgs, profile, drafts }) {
                       <td className="p-3 text-right">{s?.likeCount ?? "—"}</td>
                       <td className="p-3 text-right">{s?.commentCount ?? "—"}</td>
                       <td className="p-3 text-right">{s?.shareCount ?? "—"}</td>
-                      <td className="p-3">
-                        {p.postId && (
-                          <a href={`https://www.linkedin.com/feed/update/${p.postId}/`} target="_blank" rel="noreferrer"
-                            className="text-[#ff5a5f] hover:text-[#d12d33]" title="Voir sur LinkedIn">
-                            <ExternalLink size={14} />
-                          </a>
+                      <td className="p-3 text-right text-xs text-gray-500 whitespace-nowrap">
+                        {inter?.byDraft[p.id] ? (
+                          <>
+                            {inter.byDraft[p.id].comments > 0 && <span title="Commentaires envoyés">💬 {inter.byDraft[p.id].comments}</span>}
+                            {inter.byDraft[p.id].comments > 0 && inter.byDraft[p.id].reactions > 0 && " · "}
+                            {inter.byDraft[p.id].reactions > 0 && <span title="Réactions envoyées">👍 {inter.byDraft[p.id].reactions}</span>}
+                          </>
+                        ) : (
+                          "—"
                         )}
+                      </td>
+                      <td className="p-3">
+                        <div className="flex items-center justify-end gap-2">
+                          {p.postId && p.status === "publié" && (
+                            <button onClick={() => setCommentsFor(p)} className="text-gray-400 hover:text-[#ff5a5f]" title="Commentaires et réponse">
+                              <MessageSquare size={14} />
+                            </button>
+                          )}
+                          {p.postId && (
+                            <a href={`https://www.linkedin.com/feed/update/${p.postId}/`} target="_blank" rel="noreferrer"
+                              className="text-[#ff5a5f] hover:text-[#d12d33]" title="Voir sur LinkedIn">
+                              <ExternalLink size={14} />
+                            </a>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );
@@ -6069,6 +6176,16 @@ function StatsView({ linkedin, orgs, profile, drafts }) {
         </p>
       </section>
 
+      {commentsFor && (
+        <CommentsPanel
+          draft={commentsFor}
+          onClose={() => {
+            setCommentsFor(null);
+            loadInter();
+          }}
+          showToast={showToast}
+        />
+      )}
     </main>
   );
 }
@@ -12256,7 +12373,7 @@ export default function Home() {
       ) : view === "engage" ? (
         <EngageView linkedin={linkedin} showToast={showToast} onConnect={() => setView("profile")} />
       ) : view === "stats" ? (
-        <StatsView linkedin={linkedin} orgs={orgs} profile={profile} drafts={drafts} />
+        <StatsView linkedin={linkedin} orgs={orgs} profile={profile} drafts={drafts} showToast={showToast} onConnect={() => setView("profile")} />
       ) : view === "copilot" ? (
         <CopilotView profile={profile} onProfileSaved={setProfile} showToast={showToast} onGoDashboard={() => setView("dashboard")} />
       ) : view === "billing" ? (
