@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { getEffectiveUserId as getUserId } from "@/lib/session";
 import { decryptToken } from "@/lib/crypto";
 import { withDetail } from "@/lib/linkedinError";
+import { sendComment, sendReaction } from "@/lib/linkedinSocial";
 import { rateLimit } from "@/lib/ratelimit";
 import { parsePostUrn, REACTION_TYPES } from "@/lib/linkedinPost";
 
@@ -14,18 +15,8 @@ import { parsePostUrn, REACTION_TYPES } from "@/lib/linkedinPost";
 // https://learn.microsoft.com/en-us/linkedin/marketing/community-management/shares/comments-api
 // https://learn.microsoft.com/en-us/linkedin/marketing/community-management/shares/reactions-api
 
-const LI_API = process.env.LINKEDIN_API_BASE || "https://api.linkedin.com";
 const HOUR = 3600_000;
 const LIMITS = { comment: 15, react: 40 };
-
-function liHeaders(token) {
-  return {
-    Authorization: `Bearer ${token}`,
-    "LinkedIn-Version": process.env.LINKEDIN_VERSION || "202604",
-    "X-Restli-Protocol-Version": "2.0.0",
-    "Content-Type": "application/json",
-  };
-}
 
 export async function POST(req) {
   const userId = await getUserId(req);
@@ -67,22 +58,21 @@ export async function POST(req) {
   }
 
   try {
-    const res =
+    const { res, via, unsupported } =
       action === "comment"
-        ? await fetch(`${LI_API}/rest/socialActions/${encodeURIComponent(urn)}/comments`, {
-            method: "POST",
-            headers: liHeaders(token),
-            body: JSON.stringify({ actor, object: urn, message: { text: text.trim() } }),
-          })
-        : await fetch(`${LI_API}/rest/reactions?actor=${encodeURIComponent(actor)}`, {
-            method: "POST",
-            headers: liHeaders(token),
-            body: JSON.stringify({ root: urn, reactionType }),
-          });
+        ? await sendComment({ token, actor, urn, text: text.trim() })
+        : await sendReaction({ token, actor, urn, reactionType });
+    if (via === "v2" && res.ok) console.log(`[linkedin] ${action} envoyé par l'ancienne API v2 (l'API versionnée exige la Community Management API)`);
 
     if (!res.ok) {
       const raw = await res.text();
-      console.error(`LinkedIn ${action}:`, res.status, raw);
+      console.error(`LinkedIn ${action} (${via}):`, res.status, raw);
+      if (unsupported) {
+        return NextResponse.json(
+          { error: withDetail("Avec cette application LinkedIn, seule la réaction « J'aime » est disponible (les autres réactions exigent la Community Management API).", raw) },
+          { status: 403 }
+        );
+      }
       if (res.status === 401) return NextResponse.json({ error: "Session LinkedIn expirée — reconnectez votre compte." }, { status: 401 });
       if (res.status === 403) return NextResponse.json({ error: withDetail("LinkedIn refuse cette action (403) : post privé ou inaccessible, ou permission manquante.", raw) }, { status: 403 });
       if (res.status === 404) return NextResponse.json({ error: withDetail("Post introuvable (404). Vérifiez l'adresse, ou que le post est public.", raw) }, { status: 404 });
