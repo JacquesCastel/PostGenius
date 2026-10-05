@@ -33,6 +33,7 @@ import { parseYouTubeId, youtubeWatchUrl, youtubeEmbedUrl, youtubeThumbUrl } fro
 import ImageEditor from "@/components/ImageEditor";
 import { scorePost } from "@/lib/score";
 import { markdownToHtml } from "@/lib/markdown";
+import { parsePostUrn, REACTIONS } from "@/lib/linkedinPost";
 import { postAnatomy } from "@/lib/linkedinRules";
 
 // Format compact des tokens : 12 500 → "12,5k", 3 200 000 → "3,2M"
@@ -506,6 +507,152 @@ function ScheduleModal({ draft, linkedin, orgs, profile, onClose, onScheduled, s
 }
 
 // ----------------------------------------------------------------
+// Interagir : réagir et commenter sur n'importe quel post LinkedIn à partir de son
+// adresse (le vôtre ou celui d'un autre), au nom du profil connecté. L'outil ne peut
+// pas lire le post (permission d'écriture seule) : on l'ouvre sur LinkedIn pour le lire.
+// Chaque action est envoyée immédiatement, sur demande ; plafonds horaires côté serveur.
+// ----------------------------------------------------------------
+function EngageView({ linkedin, showToast, onConnect }) {
+  const [postInput, setPostInput] = useState("");
+  const [text, setText] = useState("");
+  const [busy, setBusy] = useState(null); // "comment" | type de réaction en cours
+  const [done, setDone] = useState([]); // actions réussies pendant cette session
+
+  const parsed = postInput.trim() ? parsePostUrn(postInput) : null;
+  const ready = parsed?.urn;
+
+  const send = async (action, extra, label) => {
+    if (!ready || busy) return;
+    setBusy(action === "comment" ? "comment" : extra.reactionType);
+    try {
+      const res = await fetch("/api/linkedin/engage", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ post: postInput.trim(), action, ...extra }),
+      });
+      const data = await readJson(res);
+      if (!res.ok) throw new Error(data.error || "Erreur");
+      setDone((d) => [{ id: Date.now(), label, urn: data.urn, at: new Date() }, ...d].slice(0, 10));
+      if (action === "comment") setText("");
+      showToast(action === "comment" ? "Commentaire publié sur LinkedIn ✓" : `${label} envoyé ✓`);
+    } catch (e) {
+      showToast(e.message);
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  if (!linkedin.connected) {
+    return (
+      <main className="max-w-2xl mx-auto p-6">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center space-y-3">
+          <Linkedin size={28} className="mx-auto text-[#0a66c2]" />
+          <p className="text-sm text-gray-600">Connectez votre compte LinkedIn pour réagir et commenter depuis LinkeePost.</p>
+          <button onClick={onConnect} className="bg-[#0a66c2] hover:bg-[#084d92] text-white text-sm font-medium px-4 py-2 rounded-lg">
+            Aller au profil
+          </button>
+        </div>
+      </main>
+    );
+  }
+
+  return (
+    <main className="max-w-2xl mx-auto p-6 space-y-4">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
+        <div>
+          <p className="text-sm font-semibold flex items-center gap-2">
+            <ThumbsUp size={15} className="text-[#ff5a5f]" /> Réagir ou commenter un post
+          </p>
+          <p className="text-xs text-gray-400 mt-1">
+            Le vôtre ou celui d&apos;un autre : dans LinkedIn, ouvrez le post, « … » puis « Copier le lien du post », et collez-le ici.
+          </p>
+        </div>
+
+        <div>
+          <input
+            type="url"
+            value={postInput}
+            onChange={(e) => setPostInput(e.target.value)}
+            placeholder="https://www.linkedin.com/posts/…  ou  …/feed/update/urn:li:activity:…"
+            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
+          />
+          {parsed?.error && <p className="text-xs text-red-600 mt-1.5">{parsed.error}</p>}
+          {ready && (
+            <p className="text-xs text-green-700 mt-1.5 flex items-center gap-1.5">
+              <Check size={12} /> Post reconnu.
+              <a href={postInput.trim()} target="_blank" rel="noreferrer" className="text-[#0a66c2] hover:underline inline-flex items-center gap-1">
+                Le lire sur LinkedIn <ExternalLink size={11} />
+              </a>
+            </p>
+          )}
+        </div>
+
+        <div>
+          <p className="text-xs font-medium text-gray-500 mb-2">Réaction</p>
+          <div className="flex flex-wrap gap-2">
+            {REACTIONS.map((r) => (
+              <button
+                key={r.type}
+                onClick={() => send("react", { reactionType: r.type }, `${r.emoji} ${r.label}`)}
+                disabled={!ready || Boolean(busy)}
+                className="text-xs border border-gray-200 hover:border-[#ff5a5f] hover:bg-[#fff1f1] disabled:opacity-40 disabled:hover:border-gray-200 disabled:hover:bg-transparent px-3 py-1.5 rounded-full flex items-center gap-1.5"
+              >
+                {busy === r.type ? <RefreshCw size={12} className="animate-spin" /> : <span>{r.emoji}</span>} {r.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <p className="text-xs font-medium text-gray-500 mb-2">Commentaire</p>
+          <textarea
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            rows={4}
+            maxLength={1250}
+            placeholder="Votre commentaire, publié sous votre nom…"
+            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f] resize-y"
+          />
+          <div className="flex items-center justify-between mt-2">
+            <span className="text-[11px] text-gray-400">{text.length} / 1250</span>
+            <button
+              onClick={() => send("comment", { text }, "Commentaire")}
+              disabled={!ready || !text.trim() || Boolean(busy)}
+              className="bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white text-sm font-medium px-4 py-2 rounded-lg flex items-center gap-1.5"
+            >
+              {busy === "comment" ? <RefreshCw size={14} className="animate-spin" /> : <Send size={14} />} Commenter
+            </button>
+          </div>
+        </div>
+
+        <p className="text-[11px] text-gray-400 border-t border-gray-100 pt-3">
+          Chaque action part immédiatement sur LinkedIn, en votre nom, et ne peut pas être annulée depuis LinkeePost. Plafonds : 15
+          commentaires et 40 réactions par heure, pour éviter que LinkedIn ne signale votre compte. LinkeePost ne peut pas lire le post
+          ni ses commentaires : ouvrez-le sur LinkedIn pour savoir à quoi vous répondez.
+        </p>
+      </div>
+
+      {done.length > 0 && (
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+          <p className="text-xs font-semibold mb-2">Envoyé pendant cette session</p>
+          <ul className="space-y-1">
+            {done.map((d) => (
+              <li key={d.id} className="text-xs text-gray-600 flex items-center justify-between gap-3">
+                <span className="truncate">
+                  <Check size={11} className="inline text-green-600 mr-1" />
+                  {d.label} · <span className="text-gray-400">{d.urn}</span>
+                </span>
+                <span className="text-gray-400 shrink-0">{d.at.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </main>
+  );
+}
+
+// ----------------------------------------------------------------
 // Commentaires d'un post publié (Comments API LinkedIn)
 // Page entreprise : lecture et réponse. Profil personnel : la lecture dépend d'une
 // permission LinkedIn (voir app/api/linkedin/comments/route.js) ; sans elle, l'écran
@@ -550,8 +697,9 @@ function CommentsPanel({ draft, onClose, showToast }) {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Erreur");
-      setComments((c) => [...(c ?? []), data.comment]);
+      setComments((c) => [...(c ?? []), errorCode === "read_forbidden" ? { ...data.comment, authorName: "Vous" } : data.comment]);
       setReplyText("");
+      if (errorCode === "read_forbidden") showToast("Commentaire publié sur LinkedIn ✓");
     } catch (e) {
       showToast(e.message);
     } finally {
@@ -613,14 +761,13 @@ function CommentsPanel({ draft, onClose, showToast }) {
           ))}
         </div>
 
-        {errorCode !== "read_forbidden" && (
         <div className="flex gap-2 p-3 border-t border-gray-100 shrink-0">
           <input
             type="text"
             value={replyText}
             onChange={(e) => setReplyText(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && sendReply()}
-            placeholder={draft.target?.startsWith("urn:li:organization:") ? "Répondre au nom de la page…" : "Commenter avec votre profil…"}
+            placeholder={draft.target?.startsWith("urn:li:organization:") ? "Répondre au nom de la page…" : errorCode === "read_forbidden" ? "Ajouter un commentaire sous votre post…" : "Commenter avec votre profil…"}
             className="flex-1 min-w-0 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
           />
           <button
@@ -631,7 +778,6 @@ function CommentsPanel({ draft, onClose, showToast }) {
             {sending ? <RefreshCw size={14} className="animate-spin" /> : <Send size={14} />}
           </button>
         </div>
-        )}
       </div>
     </div>
   );
@@ -10598,6 +10744,7 @@ export default function Home() {
         { id: "create", label: "Créer un post", icon: Sparkles },
         { id: "new-campaign", label: "Créer une campagne", icon: Megaphone, requires: "campaigns", featureLabel: "L'outil de campagne" },
         { id: "history", label: "Mes posts", icon: History, badge: drafts.length || null },
+        { id: "engage", label: "Interagir", icon: ThumbsUp },
         { id: "campaigns", label: "Campagnes", icon: LayersIcon, requires: "campaigns", featureLabel: "Les campagnes" },
         { id: "events", label: "Événements", icon: MapPin, requires: "events", featureLabel: "Le module Événements" },
         { id: "stats", label: "Statistiques", icon: BarChart3 },
@@ -10620,6 +10767,7 @@ export default function Home() {
     dashboard: "Tableau de bord",
     create: "Créer un post",
     history: "Mes posts",
+    engage: "Interagir sur LinkedIn",
     campaigns: "Campagnes",
     events: "Événements",
     stats: "Statistiques",
@@ -12105,6 +12253,8 @@ export default function Home() {
               .catch(() => {})
           }
         />
+      ) : view === "engage" ? (
+        <EngageView linkedin={linkedin} showToast={showToast} onConnect={() => setView("profile")} />
       ) : view === "stats" ? (
         <StatsView linkedin={linkedin} orgs={orgs} profile={profile} drafts={drafts} />
       ) : view === "copilot" ? (
