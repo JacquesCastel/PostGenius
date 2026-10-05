@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { getEffectiveUserId as getUserId } from "@/lib/session";
 import { decryptToken } from "@/lib/crypto";
 import { withDetail } from "@/lib/linkedinError";
+import { sendComment } from "@/lib/linkedinSocial";
 
 // Commentaires d'un post publié — Comments API LinkedIn (socialActions/comments).
 // - Page entreprise (target = urn:li:organization:ID) : Community Management API,
@@ -110,25 +111,21 @@ export async function POST(req) {
   const { draft, token, actor, error, status } = await draftAndToken(userId, draftId);
   if (error) return NextResponse.json({ error }, { status });
 
-  const body = {
-    actor,
-    object: draft.postId,
-    message: { text: text.trim().slice(0, 1250) },
-    ...(parentCommentUrn ? { parentComment: parentCommentUrn } : {}),
-  };
-
   try {
-    const res = await fetch(
-      `${LI_API}/rest/socialActions/${encodeURIComponent(draft.postId)}/comments`,
-      { method: "POST", headers: liHeaders(token), body: JSON.stringify(body) }
-    );
+    const { res, via } = await sendComment({
+      token,
+      actor,
+      urn: draft.postId,
+      text: text.trim().slice(0, 1250),
+      parentCommentUrn,
+    });
     if (!res.ok) {
       const raw = await res.text();
-      console.error("LinkedIn comments POST:", res.status, raw);
+      console.error(`LinkedIn comments POST (${via}):`, res.status, raw);
       if (res.status === 429) return NextResponse.json({ error: "Trop de commentaires envoyés — réessayez dans une minute." }, { status: 429 });
       return NextResponse.json({ error: withDetail(`LinkedIn a refusé l'envoi (${res.status}).`, raw) }, { status: res.status === 403 ? 403 : 502 });
     }
-    const created = await res.json();
+    const created = await res.json().catch(() => ({}));
     return NextResponse.json({
       comment: {
         id: created.id,
