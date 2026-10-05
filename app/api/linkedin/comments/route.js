@@ -4,6 +4,7 @@ import { getEffectiveUserId as getUserId } from "@/lib/session";
 import { decryptToken } from "@/lib/crypto";
 import { withDetail } from "@/lib/linkedinError";
 import { sendComment } from "@/lib/linkedinSocial";
+import { logInteraction } from "@/lib/interactions";
 
 // Commentaires d'un post publié — Comments API LinkedIn (socialActions/comments).
 // - Page entreprise (target = urn:li:organization:ID) : Community Management API,
@@ -126,6 +127,7 @@ export async function POST(req) {
       return NextResponse.json({ error: withDetail(`LinkedIn a refusé l'envoi (${res.status}).`, raw) }, { status: res.status === 403 ? 403 : 502 });
     }
     const created = await res.json().catch(() => ({}));
+    await logInteraction(prisma, { userId, action: "comment", urn: draft.postId, text, draftId: draft.id });
     return NextResponse.json({
       comment: {
         id: created.id,

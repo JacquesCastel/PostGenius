@@ -4,6 +4,7 @@ import { getEffectiveUserId as getUserId } from "@/lib/session";
 import { decryptToken } from "@/lib/crypto";
 import { withDetail } from "@/lib/linkedinError";
 import { sendComment, sendReaction } from "@/lib/linkedinSocial";
+import { logInteraction } from "@/lib/interactions";
 import { rateLimit } from "@/lib/ratelimit";
 import { parsePostUrn, REACTION_TYPES } from "@/lib/linkedinPost";
 
@@ -80,6 +81,13 @@ export async function POST(req) {
       if (res.status === 409 || res.status === 422) return NextResponse.json({ error: withDetail(action === "react" ? `Vous avez déjà réagi à ce post, ou LinkedIn refuse cette réaction (${res.status}).` : `LinkedIn a refusé ce commentaire (${res.status}) : doublon ou contenu non accepté.`, raw) }, { status: 409 });
       return NextResponse.json({ error: withDetail(`LinkedIn a refusé la demande (${res.status}).`, raw) }, { status: 502 });
     }
+    await logInteraction(prisma, {
+      userId,
+      action,
+      urn,
+      reactionType: action === "react" ? reactionType : null,
+      text: action === "comment" ? text : null,
+    });
     return NextResponse.json({ ok: true, urn });
   } catch (e) {
     console.error("Erreur interaction LinkedIn:", e);

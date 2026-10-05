@@ -75,6 +75,7 @@ model User {
   events    Event[]
   pushSubs  PushSubscription[]
   lifecycleEmails LifecycleEmail[]
+  interactions    InteractionLog[]
 
   // --- Profil de rédaction ---
   headline        String? // titre pro, ex : "Consultant SEO @ Acme"
@@ -495,4 +496,22 @@ model RemarkSuggestion {
   respondedAt DateTime?
 
   @@index([userId, status])
+}
+
+// Journal des commentaires et réactions ENVOYÉS depuis LinkeePost (écran Interagir,
+// commentaires sous un de ses posts). LinkedIn ne permet pas de les relire pour un profil
+// personnel : ce journal est la seule trace, affichée dans Statistiques.
+model InteractionLog {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  action       String // comment | react
+  urn          String // post concerné (urn:li:activity|share|ugcPost:…)
+  reactionType String? // LIKE, PRAISE… (action = react)
+  text         String? // commentaire envoyé (tronqué à 300 caractères)
+  draftId      String? // brouillon correspondant si c'est un post publié via LinkeePost
+  createdAt    DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([userId, draftId])
 }
