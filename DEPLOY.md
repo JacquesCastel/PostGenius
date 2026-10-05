@@ -112,15 +112,36 @@ Caddy obtient le certificat HTTPS automatiquement dès que le DNS pointe.
   crontab -e   # ajouter :
   30 3 * * * /opt/postgenius/backup-data.sh >> /var/log/postgenius-backup.log 2>&1
   ```
-  Copie hors serveur (recommandée, sinon une perte du serveur emporte aussi les
-  archives) : définir `BACKUP_RSYNC_TARGET=user@hote:/chemin/` devant la commande
-  du cron, ou activer les snapshots Hetzner.
+  **Copie hors serveur (Hetzner Storage Box)** : sans elle, une perte du serveur
+  emporte aussi les archives. Mise en place (une fois) :
+  1. Console Hetzner : commander une Storage Box (BX11 suffit), noter son
+     identifiant `uXXXXXX`, et y activer « SSH support » et « External reachability ».
+  2. Sur le serveur : clé dédiée, puis installation sur la Storage Box
+     (le mot de passe de la box est demandé une seule fois) :
+     ```bash
+     ssh-keygen -t ed25519 -N "" -f /root/.ssh/postgenius_backup
+     cat /root/.ssh/postgenius_backup.pub | ssh -p 23 uXXXXXX@uXXXXXX.your-storagebox.de install-ssh-key
+     ```
+  3. Réglages, hors dépôt :
+     ```bash
+     echo 'BACKUP_RSYNC_TARGET=uXXXXXX@uXXXXXX.your-storagebox.de:postgenius-backups/' > /opt/postgenius/backup.env
+     chmod 600 /opt/postgenius/backup.env
+     ```
+  4. Vérifier : `/opt/postgenius/backup-data.sh --test-remote` puis une sauvegarde
+     complète `/opt/postgenius/backup-data.sh` (doit finir par « copie hors serveur OK »).
+  Le script reflète ensuite `/opt/postgenius-backups` vers la box à chaque passage
+  (`rsync --delete`) : la copie distante a les mêmes 14 archives. Si seule la copie
+  distante échoue, le script sort avec le code 2 et la sauvegarde locale reste valide
+  (voir `/var/log/postgenius-backup.log`).
   Restauration :
   ```bash
   ls /opt/postgenius-backups                       # choisir l'archive
   cd /opt/postgenius && tar -xzf /opt/postgenius-backups/data-AAAAMMJJ-HHMMSS.tar.gz
-  chmod 777 data/images data/logos data/backgrounds
+  chmod 777 data/images data/logos data/backgrounds data/videos
   ```
+  Après la perte complète du serveur : réinstaller, puis récupérer les archives
+  depuis la Storage Box (`rsync -a -e "ssh -p 23" uXXXXXX@uXXXXXX.your-storagebox.de:postgenius-backups/ /opt/postgenius-backups/`)
+  avant de restaurer comme ci-dessus.
 
 ## Dépannage rapide
 - Certificat HTTPS absent → DNS pas encore propagé (`dig postgenius.network`)
