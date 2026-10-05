@@ -32,6 +32,7 @@ import ShootingKit from "@/components/ShootingKit";
 import { parseYouTubeId, youtubeWatchUrl, youtubeEmbedUrl, youtubeThumbUrl } from "@/lib/youtube";
 import ImageEditor from "@/components/ImageEditor";
 import { scorePost } from "@/lib/score";
+import { markdownToHtml } from "@/lib/markdown";
 import { postAnatomy } from "@/lib/linkedinRules";
 
 // Format compact des tokens : 12 500 → "12,5k", 3 200 000 → "3,2M"
@@ -2483,6 +2484,7 @@ function BlogAdmin({ showToast }) {
   const [articles, setArticles] = useState([]);
   const [editing, setEditing] = useState(null); // article en cours d'édition (ou EMPTY_ARTICLE)
   const [saving, setSaving] = useState(false);
+  const [mdPreview, setMdPreview] = useState(false); // onglet « Aperçu » de l'éditeur d'article
 
   const load = () => {
     fetch("/api/admin/articles")
@@ -2552,7 +2554,7 @@ function BlogAdmin({ showToast }) {
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-3">
         <div className="flex items-center justify-between">
           <h3 className="font-semibold">{editing.id ? "Modifier l'article" : "Nouvel article"}</h3>
-          <button onClick={() => setEditing(null)} className="text-gray-400 hover:text-gray-700 text-sm">
+          <button onClick={() => { setEditing(null); setMdPreview(false); }} className="text-gray-400 hover:text-gray-700 text-sm">
             ← Retour
           </button>
         </div>
@@ -2582,13 +2584,41 @@ function BlogAdmin({ showToast }) {
           onChange={(e) => set("coverImage", e.target.value)}
           className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
         />
-        <textarea
-          placeholder="Contenu de l'article (Markdown : # titres, **gras**, - listes, [lien](url) — un lien YouTube seul sur une ligne devient un lecteur intégré)"
-          value={editing.content}
-          onChange={(e) => set("content", e.target.value)}
-          rows={16}
-          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
-        />
+        <div className="flex gap-1 bg-gray-100 rounded-lg p-0.5 w-fit">
+          {[
+            { id: false, label: "Écrire" },
+            { id: true, label: "Aperçu" },
+          ].map((t) => (
+            <button
+              key={String(t.id)}
+              type="button"
+              onClick={() => setMdPreview(t.id)}
+              className={`px-3 py-1 rounded-md text-xs font-medium ${mdPreview === t.id ? "bg-white shadow-sm" : "text-gray-500"}`}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+        {mdPreview ? (
+          // Même rendu que la page publique /blog/[slug] : les lecteurs YouTube y sont
+          // visibles. Les lecteurs ne se chargent qu'ici (onglet Aperçu), pas pendant la saisie.
+          <div className="border border-gray-200 rounded-lg px-5 py-4 min-h-[16rem] bg-white">
+            <h1 className="text-3xl font-bold leading-tight">{editing.title || "Titre de l'article"}</h1>
+            {editing.content?.trim() ? (
+              <div className="mt-4" dangerouslySetInnerHTML={{ __html: markdownToHtml(editing.content) }} />
+            ) : (
+              <p className="mt-4 text-sm text-gray-400">Rien à afficher : écrivez le contenu dans l&apos;onglet « Écrire ».</p>
+            )}
+          </div>
+        ) : (
+          <textarea
+            placeholder="Contenu de l'article (Markdown : # titres, **gras**, - listes, [lien](url) — un lien YouTube seul sur une ligne devient un lecteur intégré, visible dans l'onglet Aperçu)"
+            value={editing.content}
+            onChange={(e) => set("content", e.target.value)}
+            rows={16}
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
+          />
+        )}
         <div className="flex items-center justify-between">
           <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" checked={editing.published} onChange={(e) => set("published", e.target.checked)} />
@@ -2611,7 +2641,7 @@ function BlogAdmin({ showToast }) {
       <div className="flex items-center justify-between">
         <p className="text-sm text-gray-500">{articles.length} article(s)</p>
         <button
-          onClick={() => setEditing({ ...EMPTY_ARTICLE })}
+          onClick={() => { setEditing({ ...EMPTY_ARTICLE }); setMdPreview(false); }}
           className="bg-[#ff5a5f] hover:bg-[#f63d44] text-white text-sm font-medium px-4 py-2 rounded-lg flex items-center gap-1.5"
         >
           <PenLine size={14} /> Nouvel article
@@ -2633,7 +2663,7 @@ function BlogAdmin({ showToast }) {
             <button onClick={() => togglePublish(a)} className="text-[11px] border border-gray-200 px-2 py-1 rounded-lg hover:bg-gray-50">
               {a.published ? "Dépublier" : "Publier"}
             </button>
-            <button onClick={() => setEditing(a)} className="text-[11px] border border-gray-200 px-2 py-1 rounded-lg hover:bg-gray-50">
+            <button onClick={() => { setEditing(a); setMdPreview(false); }} className="text-[11px] border border-gray-200 px-2 py-1 rounded-lg hover:bg-gray-50">
               Modifier
             </button>
             <button onClick={() => remove(a)} className="text-gray-300 hover:text-red-600 p-1" title="Supprimer">
