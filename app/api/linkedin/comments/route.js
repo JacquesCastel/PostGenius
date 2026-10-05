@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getEffectiveUserId as getUserId } from "@/lib/session";
 import { decryptToken } from "@/lib/crypto";
+import { withDetail } from "@/lib/linkedinError";
 
 // Commentaires d'un post publié — Comments API LinkedIn (socialActions/comments).
 // - Page entreprise (target = urn:li:organization:ID) : Community Management API,
@@ -78,7 +79,7 @@ export async function GET(req) {
           { status: 403 }
         );
       }
-      return NextResponse.json({ error: `LinkedIn a refusé la demande (${res.status}).` }, { status: 502 });
+      return NextResponse.json({ error: withDetail(`LinkedIn a refusé la demande (${res.status}).`, raw) }, { status: 502 });
     }
     const data = await res.json();
     const comments = (data.elements ?? []).map((c) => ({
@@ -125,7 +126,7 @@ export async function POST(req) {
       const raw = await res.text();
       console.error("LinkedIn comments POST:", res.status, raw);
       if (res.status === 429) return NextResponse.json({ error: "Trop de commentaires envoyés — réessayez dans une minute." }, { status: 429 });
-      return NextResponse.json({ error: `LinkedIn a refusé l'envoi (${res.status}).` }, { status: 502 });
+      return NextResponse.json({ error: withDetail(`LinkedIn a refusé l'envoi (${res.status}).`, raw) }, { status: res.status === 403 ? 403 : 502 });
     }
     const created = await res.json();
     return NextResponse.json({
