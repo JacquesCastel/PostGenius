@@ -12240,6 +12240,7 @@ export default function Home() {
                   {editingResult ? (
                     <div className="space-y-2">
                       <textarea
+                        dir="auto"
                         value={resultDraftText}
                         onChange={(e) => setResultDraftText(e.target.value)}
                         rows={12}
@@ -12266,7 +12267,7 @@ export default function Home() {
                       </div>
                     </div>
                   ) : (
-                    <pre className="whitespace-pre-wrap text-sm font-sans leading-relaxed">{result.text}</pre>
+                    <pre dir="auto" className="whitespace-pre-wrap text-sm font-sans leading-relaxed">{result.text}</pre>
                   )}
 
                 </div>
@@ -12832,7 +12833,7 @@ export default function Home() {
                         </button>
                       </div>
                     </div>
-                    <pre className="whitespace-pre-wrap text-sm font-sans leading-relaxed">{p.text}</pre>
+                    <pre dir="auto" className="whitespace-pre-wrap text-sm font-sans leading-relaxed">{p.text}</pre>
                   </div>
                 ))}
 
@@ -13229,6 +13230,7 @@ export default function Home() {
                               {editingId === p.id ? (
                                 <div className="space-y-2">
                                   <textarea
+                                    dir="auto"
                                     value={editText}
                                     onChange={(e) => setEditText(e.target.value)}
                                     rows={10}
@@ -13250,7 +13252,7 @@ export default function Home() {
                                   </div>
                                 </div>
                               ) : (
-                                <pre className="whitespace-pre-wrap text-xs text-gray-600 font-sans leading-relaxed line-clamp-5">
+                                <pre dir="auto" className="whitespace-pre-wrap text-xs text-gray-600 font-sans leading-relaxed line-clamp-5">
                                   {p.text}
                                 </pre>
                               )}
