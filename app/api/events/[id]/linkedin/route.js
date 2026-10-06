@@ -6,7 +6,7 @@ import { checkFeature } from "@/lib/gating";
 import { decryptToken } from "@/lib/crypto";
 import { readImageFromUrl } from "@/lib/image";
 import { uploadImage } from "@/lib/publish";
-import { buildEventBody, buildPatch, createEvent, postEvent, updateEvent, deleteEventPost } from "@/lib/linkedinEvents";
+import { buildEventBody, buildPatch, createEventResilient, postEvent, updateEvent, deleteEventPost } from "@/lib/linkedinEvents";
 
 // Événement LinkedIn d'un événement du module (salon, forum…) — Events Management API.
 //   POST   : crée l'événement sur LinkedIn, puis le poste pour le rendre visible
@@ -122,20 +122,10 @@ export async function POST(req, { params }) {
     let cover = { note: "Image par défaut de LinkedIn (option décochée)." };
     if (body.useImage !== false) cover = await uploadCover({ event, token, owner: opts.organizer });
 
-    let eventId;
-    let imageNote = cover.note ?? null;
-    try {
-      eventId = await createEvent(token, buildEventBody({ ...opts, backgroundImage: cover.urn }).body);
-    } catch (e) {
-      // Si LinkedIn refuse l'image de couverture (400 ou 422 : format ou contenu), on réessaie sans elle ;
-      // si l'événement échoue encore, c'est l'erreur de cette 2e tentative (la vraie cause) qui remonte.
-      if (cover.urn && (e.status === 400 || e.status === 422)) {
-        eventId = await createEvent(token, buildEventBody(opts).body);
-        imageNote = "LinkedIn a refusé l'image de couverture : image par défaut utilisée.";
-      } else {
-        throw e;
-      }
-    }
+    // Image refusée (400/422) ou erreur serveur LinkedIn (5xx) : réessai sans image (voir createEventResilient)
+    const created = await createEventResilient(token, (img) => buildEventBody({ ...opts, backgroundImage: img }).body, cover.urn);
+    const eventId = created.eventId;
+    const imageNote = created.imageNote ?? cover.note ?? null;
 
     // Création réussie : l'événement est invisible tant qu'il n'est pas posté
     let postUrn;
