@@ -76,6 +76,7 @@ model User {
   pushSubs  PushSubscription[]
   lifecycleEmails LifecycleEmail[]
   interactions    InteractionLog[]
+  knowledge       KnowledgeSource[]
 
   // --- Profil de rédaction ---
   headline        String? // titre pro, ex : "Consultant SEO @ Acme"
@@ -544,4 +545,24 @@ model Invitation {
   acceptedUserId String?
 
   @@index([email])
+}
+
+// Base de connaissances d'un client : textes, articles (liens) et documents qu'il fournit pour que les posts
+// collent à son contexte et à ses faits. Chaque source est résumée par l'IA ; seuls ces résumés et les faits
+// relevés (chiffres, cas, positions) servent à rédiger, jamais sans que la source soit citée.
+model KnowledgeSource {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kind      String // note | link | file | posts
+  title     String
+  origin    String? // adresse du lien ou nom du fichier
+  text      String // texte extrait (borné)
+  summary   String? // résumé produit par l'IA
+  facts     String? // JSON : faits et preuves relevés dans le texte (chaque chiffre vérifié dans la source)
+  pinned    Boolean  @default(false) // « toujours utiliser » (ex. présentation de l'entreprise)
+  charCount Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
 }

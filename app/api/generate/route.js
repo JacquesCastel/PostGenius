@@ -8,6 +8,8 @@ import { normalizeVideoExtra } from "@/lib/shootingKit";
 import { normalizeLanguage, languageInstruction, systemPromptFor } from "@/lib/languages";
 import { normalizeMood, moodInstruction } from "@/lib/moods";
 import { styleExamplesBlock } from "@/lib/postImport";
+import { knowledgeFor } from "@/lib/knowledge";
+import { usedSources } from "@/lib/knowledgeText";
 import { writingRulesPrompt, WHY_INSTRUCTION, WHY_JSON_FORMAT, cleanWhy } from "@/lib/linkedinRules";
 
 // Génération du post via l'API Claude (Messages API).
@@ -29,7 +31,9 @@ function extraFormat(type) {
   return `{"title": "...", "items": ["..."]}`;
 }
 
-function buildUserPrompt({ type, theme, expertise, tone, maxChars, refine, mode, count, variants, inspiration, language, mood }, profile, remarks = []) {
+function buildUserPrompt({ type, theme, expertise, tone, maxChars, refine, mode, count, variants, inspiration, language, mood }, profile, remarks = [], knowledge = { picked: [], block: "" }) {
+  // Les sources de la base de connaissances sont numérotées [S1]… ; le modèle indique celles qu'il a utilisées
+  const srcFmt = knowledge.picked.length ? ', "sources": [numéros des sources [S…] réellement utilisées dans le post, ou une liste vide]' : "";
   let extraSpec = "";
   if (type === "carrousel") {
     extraSpec = `\nC'est un post carrousel : fournis aussi dans "extra" un plan de 8 slides, sous DEUX formes qui se correspondent dans le même ordre :
@@ -60,6 +64,7 @@ Le 1er plan est une accroche qui retient dans les 3 premières secondes, le dern
   if (profile?.styleNotes)
     profileSpec += `\n- Consignes de style de l'auteur (À RESPECTER IMPÉRATIVEMENT) : ${profile.styleNotes}`;
   profileSpec += styleExamplesBlock(profile?.styleExamples);
+  profileSpec += knowledge.block;
   profileSpec += remarksPromptBlock(remarks);
   profileSpec += languageInstruction(language);
   profileSpec += moodInstruction(normalizeMood(mood));
@@ -84,7 +89,7 @@ ${writingRulesPrompt(maxChars)}
 ${WHY_INSTRUCTION}
 
 Format de réponse JSON :
-{"text": "le post complet", "extra": ${extraFormat(type)}, ${WHY_JSON_FORMAT}}`;
+{"text": "le post complet", "extra": ${extraFormat(type)}, ${WHY_JSON_FORMAT}${srcFmt}}`;
   }
 
   // Mode série : N posts gradués sur un thème, avec reveal final
@@ -142,7 +147,7 @@ Propose ${n} VARIANTES distinctes du post : angles d'attaque différents
 ${WHY_INSTRUCTION}
 
 Format de réponse JSON (exactement ${n} variantes) :
-{"variants": [{"text": "...", "extra": ${extraFormat(type)}, ${WHY_JSON_FORMAT}}, ...]}`;
+{"variants": [{"text": "...", "extra": ${extraFormat(type)}, ${WHY_JSON_FORMAT}${srcFmt}}, ...]}`;
   }
 
   return `${base}
@@ -150,7 +155,7 @@ Format de réponse JSON (exactement ${n} variantes) :
 ${WHY_INSTRUCTION}
 
 Format de réponse JSON :
-{"text": "le post complet", "extra": ${extraFormat(type)}, ${WHY_JSON_FORMAT}}`;
+{"text": "le post complet", "extra": ${extraFormat(type)}, ${WHY_JSON_FORMAT}${srcFmt}}`;
 }
 
 export async function POST(req) {
@@ -193,6 +198,8 @@ export async function POST(req) {
   }
 
   const remarks = userId ? await getRemarks(userId) : [];
+  // Base de connaissances : sources les plus proches du sujet (jamais bloquant)
+  const knowledge = await knowledgeFor(userId, [params.theme, params.inspiration?.title, params.refine?.text?.slice(0, 400)].filter(Boolean).join(" "));
   // Langue du post : celle choisie dans le formulaire, sinon celle du profil, sinon le français
   const language = normalizeLanguage(params.language ?? profile?.postLanguage);
 
@@ -216,7 +223,7 @@ export async function POST(req) {
           // modèle raccourcit pour tenir dans le budget).
           max_tokens: params.mode === "series" || params.variants || params.type === "carrousel" || params.type === "video" ? 8000 : 2048,
           system: systemPromptFor(SYSTEM_PROMPT, language),
-          messages: [{ role: "user", content: buildUserPrompt({ ...params, language }, profile, remarks) }],
+          messages: [{ role: "user", content: buildUserPrompt({ ...params, language }, profile, remarks, knowledge) }],
         }),
       });
 
@@ -262,11 +269,11 @@ export async function POST(req) {
     // Variantes
     if (params.variants && Array.isArray(result.variants) && result.variants.length > 0) {
       return NextResponse.json({
-        variants: result.variants.map((v) => ({ text: v.text, extra: params.type === "video" ? normalizeVideoExtra(v.extra) : v.extra ?? null, why: cleanWhy(v.why, v.text) })),
+        variants: result.variants.map((v) => ({ text: v.text, extra: params.type === "video" ? normalizeVideoExtra(v.extra) : v.extra ?? null, why: cleanWhy(v.why, v.text), sources: usedSources(v.sources, knowledge.picked) })),
       });
     }
 
-    return NextResponse.json({ text: result.text, extra: params.type === "video" ? normalizeVideoExtra(result.extra) : result.extra ?? null, why: cleanWhy(result.why, result.text) });
+    return NextResponse.json({ text: result.text, extra: params.type === "video" ? normalizeVideoExtra(result.extra) : result.extra ?? null, why: cleanWhy(result.why, result.text), sources: usedSources(result.sources, knowledge.picked) });
   } catch (e) {
     console.error("Erreur génération:", e);
     return NextResponse.json({ error: "Échec de la génération. Réessayez." }, { status: 500 });

@@ -4091,6 +4091,181 @@ function RemarkBox({ onApplyNow, onManage, showToast }) {
 }
 
 // ----------------------------------------------------------------
+// Base de connaissances : textes et articles (liens) que le client dépose pour que les posts collent à son
+// contexte. Chaque ajout est résumé par l'IA ; seuls le résumé et les faits relevés servent à rédiger,
+// et le post indique les sources utilisées.
+// ----------------------------------------------------------------
+function KnowledgePanel({ showToast }) {
+  const [data, setData] = useState(null); // { sources, limit, plan } ; null = chargement
+  const [open, setOpen] = useState(false);
+  const [tab, setTab] = useState("note"); // note | link
+  const [title, setTitle] = useState("");
+  const [text, setText] = useState("");
+  const [url, setUrl] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState(null);
+  const [expanded, setExpanded] = useState(null);
+
+  const load = () =>
+    fetch("/api/knowledge")
+      .then(readJson)
+      .then((d) => (d.error ? setData({ sources: [], limit: 0, error: d.error }) : setData(d)))
+      .catch(() => setData({ sources: [], limit: 0, error: "Chargement impossible." }));
+  useEffect(() => {
+    load();
+  }, []);
+
+  const used = data?.sources?.length ?? 0;
+  const full = data && used >= data.limit;
+
+  const add = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/knowledge", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(tab === "link" ? { kind: "link", url, title } : { kind: "note", text, title }),
+      });
+      const d = await readJson(res);
+      if (!res.ok) throw new Error(d.error || "Erreur");
+      showToast("Source ajoutée et analysée ✓");
+      setTitle("");
+      setText("");
+      setUrl("");
+      load();
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const patch = async (id, body) => {
+    const res = await fetch(`/api/knowledge/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    const d = await readJson(res);
+    if (!res.ok) showToast(d.error || "Erreur");
+    else load();
+  };
+  const remove = async (s) => {
+    if (!window.confirm(`Supprimer la source « ${s.title} » ? Elle ne servira plus à rédiger vos posts.`)) return;
+    const res = await fetch(`/api/knowledge/${s.id}`, { method: "DELETE" });
+    if (res.ok) load();
+    else showToast("Erreur de suppression");
+  };
+
+  const chip = (on) => `text-xs px-3 py-1.5 rounded-full border ${on ? "bg-[#ff5a5f] text-white border-[#ff5a5f]" : "border-gray-200 text-gray-600 hover:border-gray-300"}`;
+  const KIND = { note: "Texte", link: "Lien", file: "Fichier", posts: "Posts" };
+
+  return (
+    <div id="field-knowledge" className="border border-dashed border-gray-300 rounded-xl p-3">
+      <button type="button" onClick={() => setOpen((o) => !o)} className="w-full text-left flex items-center justify-between gap-2">
+        <span className="text-sm font-medium text-gray-700">
+          Ma base de connaissances{" "}
+          <span className="text-gray-400 font-normal">
+            (documents, articles : les posts s&apos;appuient sur vos faits{data ? ` · ${used}/${data.limit} sources` : ""})
+          </span>
+        </span>
+        <ChevronDown size={15} className={`text-gray-400 transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+      {open && (
+        <div className="mt-3 space-y-3">
+          <p className="text-xs text-gray-500 leading-relaxed">
+            Déposez ce qui décrit votre activité : une présentation, une offre, une étude de cas, un article de votre site. L&apos;IA en tire un résumé et des faits précis (chiffres, cas, positions), puis s&apos;en sert pour rédiger vos posts, <strong>sans rien inventer au-delà</strong>. Chaque post indique les sources utilisées. Vos sources ne servent qu&apos;à rédiger vos posts, ne sont partagées avec personne et se suppriment à tout moment.
+          </p>
+          {data?.error && <p className="text-xs text-red-600">{data.error}</p>}
+          {full ? (
+            <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-2.5">
+              Limite de votre offre atteinte ({data.limit} sources). Supprimez une source pour en ajouter, ou passez à une offre supérieure.
+            </p>
+          ) : (
+            <div className="space-y-2">
+              <div className="flex gap-1.5">
+                <button type="button" onClick={() => setTab("note")} className={chip(tab === "note")}>Coller un texte</button>
+                <button type="button" onClick={() => setTab("link")} className={chip(tab === "link")}>Un lien</button>
+              </div>
+              <input
+                type="text"
+                value={title}
+                maxLength={120}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Titre (facultatif : l'IA en propose un)"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
+              />
+              {tab === "note" ? (
+                <textarea
+                  rows={6}
+                  value={text}
+                  onChange={(e) => setText(e.target.value)}
+                  placeholder="Collez ici une présentation, une offre, une étude de cas, des notes…"
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
+                />
+              ) : (
+                <input
+                  type="url"
+                  value={url}
+                  onChange={(e) => setUrl(e.target.value)}
+                  placeholder="https://votre-site.fr/article"
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
+                />
+              )}
+              {error && <p className="text-xs text-red-600">{error}</p>}
+              <button
+                type="button"
+                onClick={add}
+                disabled={busy || (tab === "note" ? text.trim().length < 20 : !url.trim())}
+                className="bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white text-sm font-medium px-4 py-2 rounded-lg"
+              >
+                {busy ? "Analyse en cours…" : "Ajouter et analyser"}
+              </button>
+            </div>
+          )}
+          {data?.sources?.length > 0 && (
+            <ul className="divide-y divide-gray-100 border border-gray-100 rounded-lg">
+              {data.sources.map((s) => (
+                <li key={s.id} className="p-2.5">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-gray-800 truncate">
+                        <span className="text-[10px] uppercase tracking-wide bg-gray-100 text-gray-500 rounded px-1.5 py-0.5 mr-1.5">{KIND[s.kind] ?? s.kind}</span>
+                        {s.title}
+                      </p>
+                      <p className="text-[11px] text-gray-400">
+                        {Math.round(s.charCount / 100) / 10} k caractères · {s.facts.length} fait{s.facts.length > 1 ? "s" : ""} retenu{s.facts.length > 1 ? "s" : ""}
+                        {s.origin && s.kind === "link" ? ` · ${s.origin.replace(/^https?:\/\//, "").slice(0, 40)}` : ""}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0 text-xs">
+                      <label className="flex items-center gap-1 text-gray-500" title="Cette source est toujours transmise à l'IA, quel que soit le sujet">
+                        <input type="checkbox" checked={s.pinned} onChange={(e) => patch(s.id, { pinned: e.target.checked })} /> Toujours
+                      </label>
+                      <button type="button" onClick={() => setExpanded(expanded === s.id ? null : s.id)} className="text-[#ff5a5f] hover:underline">
+                        {expanded === s.id ? "Masquer" : "Voir"}
+                      </button>
+                      <button type="button" onClick={() => remove(s)} className="text-gray-400 hover:text-red-600">Supprimer</button>
+                    </div>
+                  </div>
+                  {expanded === s.id && (
+                    <div className="mt-2 text-xs text-gray-600 space-y-1.5">
+                      {s.summary && <p>{s.summary}</p>}
+                      {s.facts.length > 0 && (
+                        <ul className="list-disc pl-4 space-y-0.5">
+                          {s.facts.map((f, i) => (<li key={i}>{f}</li>))}
+                        </ul>
+                      )}
+                    </div>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ----------------------------------------------------------------
 // Import des anciens posts : l'IA analyse jusqu'à 50 posts (export LinkedIn Shares.csv ou texte collé),
 // propose un portrait de style, des thèmes et une langue ; l'utilisateur valide avant tout enregistrement.
 // ----------------------------------------------------------------
@@ -9883,6 +10058,7 @@ function ProfileView({ profile, onSaved, showToast, linkedin, onDisconnect, inst
                   } catch {}
                 }}
               />
+              <KnowledgePanel showToast={showToast} />
               <RemarksManager showToast={showToast} />
               <div id="field-editorialNote">
                 <label className={label}>
@@ -12492,7 +12668,14 @@ export default function Home() {
                       </div>
                     </div>
                   ) : (
-                    <pre dir="auto" className="whitespace-pre-wrap text-sm font-sans leading-relaxed">{result.text}</pre>
+                    <>
+                      <pre dir="auto" className="whitespace-pre-wrap text-sm font-sans leading-relaxed">{result.text}</pre>
+                      {result.sources?.length > 0 && (
+                        <p className="text-[11px] text-gray-400 mt-3 border-t border-gray-100 pt-2">
+                          Sources utilisées : {result.sources.map((x) => x.title).join(" · ")}
+                        </p>
+                      )}
+                    </>
                   )}
 
                 </div>
