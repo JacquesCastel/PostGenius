@@ -158,7 +158,13 @@ export async function POST(req, { params }) {
     return NextResponse.json({ ok: true, event: publicFields(updated), imageNote });
   } catch (e) {
     const status = e.status === 401 ? 401 : e.status === 403 ? 403 : e.status === 400 || e.status === 422 ? 400 : 502;
-    return NextResponse.json({ error: explain403(e) || e.message || "Échec de la création sur LinkedIn." }, { status });
+    // Constaté en production : LinkedIn répond 500 à tout événement dont l'organisateur est un profil
+    // personnel, et l'accepte au nom d'une page (même demande, mêmes champs).
+    const personOrganizer500 =
+      e.status >= 500 && opts.organizer.startsWith("urn:li:person:")
+        ? "LinkedIn répond 500 quand l'événement est créé au nom d'un profil personnel avec cette application, alors qu'il l'accepte au nom d'une page. Choisissez votre page comme organisateur."
+        : null;
+    return NextResponse.json({ error: explain403(e) || personOrganizer500 || e.message || "Échec de la création sur LinkedIn." }, { status });
   }
 }
 
