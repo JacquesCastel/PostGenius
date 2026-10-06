@@ -3153,7 +3153,12 @@ function urlBase64ToUint8Array(base64String) {
 // ----------------------------------------------------------------
 function LinkedInEventModal({ ev, mode, orgs, onClose, onDone, showToast }) {
   const updating = mode === "update";
-  const [organizer, setOrganizer] = useState(updating ? ev.linkedinOrganizer : "person");
+  // LinkedIn refuse (500) les événements créés au nom d'un profil personnel : la page est proposée par défaut
+  const [organizer, setOrganizer] = useState(updating ? ev.linkedinOrganizer : orgs?.[0]?.urn ?? "person");
+  const [organizerPicked, setOrganizerPicked] = useState(false);
+  useEffect(() => {
+    if (!updating && !organizerPicked && organizer === "person" && orgs?.length) setOrganizer(orgs[0].urn);
+  }, [orgs, updating, organizerPicked, organizer]);
   const [type, setType] = useState(updating ? ev.linkedinEventType : ev.url && !ev.location ? "online" : "inPerson");
   const [startTime, setStartTime] = useState("09:00");
   const [endTime, setEndTime] = useState("18:00");
@@ -3218,7 +3223,7 @@ function LinkedInEventModal({ ev, mode, orgs, onClose, onDone, showToast }) {
 
           <div>
             <label className={label}>Organisateur</label>
-            <select className={input} value={organizer} onChange={(e) => setOrganizer(e.target.value)} disabled={updating}>
+            <select className={input} value={organizer} onChange={(e) => { setOrganizer(e.target.value); setOrganizerPicked(true); }} disabled={updating}>
               <option value="person">Mon profil</option>
               {(orgs ?? []).map((o) => (
                 <option key={o.urn} value={o.urn}>
@@ -3228,6 +3233,12 @@ function LinkedInEventModal({ ev, mode, orgs, onClose, onDone, showToast }) {
               {updating && organizer !== "person" && !(orgs ?? []).some((o) => o.urn === organizer) && <option value={organizer}>{organizer}</option>}
             </select>
             {updating && <p className="text-[11px] text-gray-400 mt-1">L'organisateur et le type ne peuvent pas changer après la création.</p>}
+            {!updating && organizer === "person" && (
+              <p className="text-[11px] text-amber-700 mt-1">
+                LinkedIn refuse actuellement (erreur 500) de créer un événement au nom d&apos;un profil personnel avec cette application.
+                {(orgs ?? []).length > 0 ? " Choisissez votre page." : " Connectez votre page LinkedIn (onglet Profil) pour l'utiliser comme organisateur."}
+              </p>
+            )}
           </div>
 
           <div>
