@@ -2,7 +2,7 @@ import Link from "next/link";
 import {
   Sparkles, Megaphone, Eye, Clock, BarChart3, Image as ImageIcon, Check, ChevronRight,
   ShieldCheck, CalendarDays, Layers, UserRound, Send, ThumbsUp, MessageSquare, Share2, Rss, ArrowRight, MapPin, Bell,
-  MessageCircle,
+  MessageCircle, Video, Languages, Smile, Mic, Heart,
 } from "lucide-react";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
@@ -10,7 +10,7 @@ import SiteFooter from "@/components/SiteFooter";
 export const metadata = {
   title: "Fonctionnalités — LinkeePost",
   description:
-    "Profil de rédaction, campagnes guidées par l'IA, veille connectée, images générées, programmation automatique, publication LinkedIn et statistiques. Toutes les fonctionnalités de LinkeePost en détail.",
+    "Profil de rédaction, posts en 9 langues avec humeur éditoriale, campagnes guidées par l'IA, veille connectée, images et vidéos, programmation automatique, interactions LinkedIn, événements et statistiques. Toutes les fonctionnalités de LinkeePost en détail.",
 };
 
 const PIPELINE = [
@@ -20,6 +20,7 @@ const PIPELINE = [
   { icon: Sparkles, label: "Génération IA" },
   { icon: CalendarDays, label: "Programmation" },
   { icon: Send, label: "Publication" },
+  { icon: ThumbsUp, label: "Interactions" },
   { icon: BarChart3, label: "Statistiques" },
 ];
 
@@ -172,11 +173,12 @@ export default function FonctionnalitesPage() {
           reverse
           tag="Génération"
           title="Des posts prêts à publier en un clic"
-          text="Un thème, un ton, et l'IA rédige : accroche forte, corps aéré, question finale, hashtags. Post simple, carrousel ou vidéo — vous retouchez, demandez des variantes ou faites réécrire."
+          text="Un thème, un ton, une humeur, et l'IA rédige : accroche forte, corps aéré, question finale, hashtags. Post simple, carrousel ou vidéo — vous retouchez, demandez des variantes ou faites réécrire, dans la langue de votre audience."
           points={[
             "Posts simples, carrousels (plan de slides) et scripts vidéo",
-            "Retouche, variantes et réécriture guidée",
-            "Toujours dans votre style",
+            "9 langues : français, anglais, espagnol, allemand, italien, portugais, néerlandais, arabe, polonais",
+            "Humeur éditoriale : joie, coup de gueule, stress, fierté, doute…, modifiable après coup",
+            "Retouche, variantes et réécriture guidée, toujours dans votre style",
           ]}
         >
           <Card>
@@ -252,6 +254,7 @@ export default function FonctionnalitesPage() {
           text="Choisissez un thème, l'IA vous pose quelques questions de cadrage, valide un post d'exemple avec vous, puis génère et planifie une série cohérente qui progresse vers votre message clé."
           points={[
             "Brief IA en 3 questions, exemple validé avant de lancer",
+            "Une humeur pour toute la campagne, modifiable pour les posts à venir",
             "Série de posts générée et planifiée automatiquement",
             "Progression suivie de bout en bout",
           ]}
@@ -326,6 +329,56 @@ export default function FonctionnalitesPage() {
           </Card>
         </Feature>
 
+        {/* Vidéo : kit de tournage, téléprompteur, import */}
+        <Feature
+          reverse
+          tag="Vidéo"
+          title="Filmez avec un kit de tournage, publiez en un clic"
+          text="Pour chaque post vidéo, LinkeePost prépare un plan de tournage plan par plan : ce que vous dites, ce qu'on voit à l'image, le texte à incruster, et des conseils adaptés au sujet. Lisez votre script face caméra grâce au téléprompteur, puis importez votre vidéo : elle est publiée directement sur LinkedIn avec votre texte."
+          points={[
+            "Plan de tournage et conseils de lumière, cadrage et rythme",
+            "Téléprompteur pour lire le script face caméra",
+            "Import de votre vidéo (jusqu'à 200 Mo) publiée sur LinkedIn",
+            "Lien YouTube : une carte de lecture s'affiche dans le post",
+          ]}
+        >
+          <Card>
+            <div className="flex items-center gap-3 mb-3">
+              <div className="bg-[#fff1f1] text-[#ff5a5f] p-2.5 rounded-xl"><Video size={20} /></div>
+              <div>
+                <p className="font-bold text-sm">Plan 2 · 5-15 s</p>
+                <p className="text-xs text-gray-400">Face caméra, cadrage poitrine</p>
+              </div>
+            </div>
+            <div className="rounded-xl border border-gray-100 p-3 text-sm leading-relaxed">
+              « Voici la seule habitude qui a changé ma façon de communiquer… »
+            </div>
+            <p className="text-xs text-[#5a6b85] mt-3 flex items-center gap-1.5"><Mic size={13} className="text-[#ff5a5f]" /> Téléprompteur · vitesse réglable</p>
+          </Card>
+        </Feature>
+
+        {/* Interactions */}
+        <Feature
+          tag="Interactions"
+          title="Commentez et réagissez sans quitter LinkeePost"
+          text="Une présence LinkedIn, ce n'est pas que publier. Depuis l'écran Interagir, commentez et réagissez à n'importe quel post LinkedIn, et gardez un journal de vos interactions. Les compteurs de commentaires et de réactions de vos posts publiés rejoignent vos statistiques."
+          points={[
+            "Commenter et réagir à n'importe quel post LinkedIn par son lien",
+            "Journal de vos commentaires et réactions",
+            "Compteurs d'interactions de vos posts dans les statistiques",
+          ]}
+        >
+          <Card>
+            <div className="flex items-center gap-4 mb-3 text-gray-300">
+              <ThumbsUp size={20} className="text-[#ff5a5f]" /><Heart size={20} /><MessageSquare size={20} />
+            </div>
+            <div className="space-y-2">
+              <div className="rounded-xl bg-gray-50 border border-gray-100 p-3 text-xs text-[#5a6b85]">Merci pour ce retour d&apos;expérience, très parlant !</div>
+              <div className="text-xs text-gray-400">Envoyé via LinkeePost · journalisé</div>
+            </div>
+          </Card>
+        </Feature>
+
         {/* 6. Programmation */}
         <Feature
           reverse
@@ -357,11 +410,11 @@ export default function FonctionnalitesPage() {
         <Feature
           tag="Mesure"
           title="Des statistiques qui guident vos décisions"
-          text="Suivez impressions, vues, engagement et progression de vos campagnes. LinkeePost met en évidence ce qui fonctionne pour que vous reproduisiez vos meilleurs posts — sur votre profil comme sur vos pages entreprise."
+          text="Suivez l'engagement et la progression de vos campagnes. LinkeePost met en évidence ce qui fonctionne pour que vous reproduisiez vos meilleurs posts — sur votre profil comme sur vos pages entreprise."
           points={[
-            "Impressions, engagement et taux par post",
+            "Commentaires et réactions de chaque post publié",
             "Progression par campagne",
-            "Statistiques profil et page entreprise",
+            "Impressions et engagement de vos pages entreprise",
           ]}
         >
           <Card>
@@ -382,9 +435,10 @@ export default function FonctionnalitesPage() {
           reverse
           tag="Événements · offre Agence"
           title="Ne ratez plus aucun salon"
-          text="Ajoutez vos salons et forums : LinkeePost génère et programme des posts de présence autour des dates (« Nous serons au salon X du A au B, venez nous rencontrer ! »), à partir du lien et de l'image de l'événement. Le jour J, une notification vous rappelle de poster — et de prendre une photo sur place avec votre téléphone."
+          text="Ajoutez vos salons et forums : LinkeePost génère et programme des posts de présence autour des dates (« Nous serons au salon X du A au B, venez nous rencontrer ! »), à partir du lien et de l'image de l'événement. Vous pouvez aussi créer l'événement lui-même sur LinkedIn, au nom de votre page. Le jour J, une notification vous rappelle de poster — et de prendre une photo sur place avec votre téléphone."
           points={[
             "Posts de présence générés et programmés automatiquement",
+            "Événement créé sur LinkedIn au nom de votre page, modifiable tant qu'il n'a pas commencé",
             "Image et contexte récupérés depuis le lien de l'événement",
             "Notification jour-J + post photo en direct depuis le téléphone",
           ]}

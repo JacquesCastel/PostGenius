@@ -21,6 +21,9 @@ const COMPARE = [
   { label: "Profil de rédaction (style, contexte)", value: () => true },
   { label: "Publication sur profil personnel", value: () => true },
   { label: "Programmation & pilote automatique", value: () => true },
+  { label: "9 langues de rédaction & humeur éditoriale", value: () => true },
+  { label: "Vidéo : kit de tournage, téléprompteur, import LinkedIn", value: () => true },
+  { label: "Interactions LinkedIn (commenter, réagir)", value: () => true },
   { label: "Score d'engagement & optimisation des posts", value: (p) => p.scoring },
   { label: "Campagnes guidées par l'IA", value: (p) => p.campaigns },
   { label: "Veille connectée & inspirations", value: (p) => p.veille },
@@ -28,7 +31,7 @@ const COMPARE = [
   { label: "Statistiques détaillées", value: (p) => p.campaigns },
   { label: "Publication sur page entreprise", value: (p) => p.orgPublish },
   { label: "Statistiques de page (impressions…)", value: (p) => p.orgStats },
-  { label: "Module Événements (salons, forums)", value: (p) => p.events },
+  { label: "Module Événements (salons, forums, création sur LinkedIn)", value: (p) => p.events },
   { label: "Support prioritaire", value: (p) => p.id === "agence" },
 ];
 

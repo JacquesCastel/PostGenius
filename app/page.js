@@ -2,7 +2,7 @@ import Link from "next/link";
 import {
   Sparkles, Megaphone, Eye, Clock, BarChart3, Image as ImageIcon,
   Check, ChevronRight, ShieldCheck, CalendarDays, Layers, PlayCircle, ArrowUp, MapPin, UserRound,
-  Gauge, PenLine, MessageCircle,
+  Gauge, PenLine, MessageCircle, Video, Languages, ThumbsUp,
 } from "lucide-react";
 import { getLanding } from "@/lib/landing";
 import SiteHeader from "@/components/SiteHeader";
@@ -15,7 +15,7 @@ export const dynamic = "force-dynamic";
 export const metadata = {
   title: "LinkeePost — Vos campagnes LinkedIn en pilote automatique",
   description:
-    "L'IA qui transforme votre expertise en campagnes LinkedIn : posts contextualisés, veille connectée, programmation automatique et statistiques. Essai gratuit 14 jours.",
+    "L'IA qui transforme votre expertise en campagnes LinkedIn : posts en 9 langues, humeur éditoriale, vidéo avec kit de tournage, veille connectée, programmation automatique, interactions et statistiques. Essai gratuit 14 jours.",
 };
 
 const FEATURES = [
@@ -25,9 +25,12 @@ const FEATURES = [
   { icon: MessageCircle, title: "Copilote éditorial", text: "Un agent avec qui échanger pour savoir quoi publier : il propose des idées argumentées, pose des questions et apprend de vos choix (Générer/Ignorer) au fil du temps." },
   { icon: ImageIcon, title: "Illustrations générées", text: "Une image cohérente avec le contenu, générée par IA et publiée avec le post. Prompt automatique ou personnalisé." },
   { icon: Clock, title: "Publication à votre rythme", text: "Choisissez vos jours et votre heure : les posts partent seuls, après votre validation si vous le souhaitez." },
-  { icon: MapPin, title: "Module Événements", text: "Salons et forums : posts de présence générés et programmés autour des dates. Le jour J, une notification vous invite à poster une photo en direct. (Offre Agence)" },
-  { icon: Layers, title: "Carrousels & vidéos", text: "Au-delà du post simple : carrousels (plan de slides) et scripts vidéo générés par l'IA, prêts à publier — les formats qui engagent le plus." },
-  { icon: BarChart3, title: "Statistiques et suivi", text: "Progression de chaque campagne, posts publiés et à venir, vues et engagement — pour savoir ce qui fonctionne." },
+  { icon: MapPin, title: "Module Événements", text: "Salons et forums : posts de présence générés et programmés autour des dates, et création de l'événement lui-même sur LinkedIn au nom de votre page. Le jour J, une notification vous invite à poster une photo en direct. (Offre Agence)" },
+  { icon: Layers, title: "Carrousels & scripts vidéo", text: "Au-delà du post simple : carrousels (plan de slides) et scripts vidéo générés par l'IA, prêts à publier — les formats qui engagent le plus." },
+  { icon: Video, title: "Vidéo : kit de tournage et import", text: "Un plan de tournage plan par plan, un téléprompteur pour lire face caméra, puis l'import de votre vidéo (jusqu'à 200 Mo) publiée directement sur LinkedIn. Un lien YouTube s'affiche aussi sous forme de carte dans le post." },
+  { icon: Languages, title: "9 langues, votre humeur", text: "Rédigez en français, anglais, espagnol, allemand, italien, portugais, néerlandais, arabe ou polonais. Choisissez l'humeur du post — joie, coup de gueule, stress, fierté… — pour orienter l'approche éditoriale." },
+  { icon: ThumbsUp, title: "Interagir sur LinkedIn", text: "Commentez et réagissez à n'importe quel post LinkedIn depuis LinkeePost, avec un journal de vos interactions. Les compteurs de commentaires et de réactions de vos posts s'affichent dans vos statistiques." },
+  { icon: BarChart3, title: "Statistiques et suivi", text: "Progression de chaque campagne, posts publiés et à venir, commentaires, réactions et engagement — avec les impressions de vos pages entreprise — pour savoir ce qui fonctionne." },
 ];
 
 const STEPS = [
