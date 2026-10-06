@@ -7,6 +7,7 @@ import { getRemarks, remarksPromptBlock } from "@/lib/remarks";
 import { normalizeVideoExtra } from "@/lib/shootingKit";
 import { normalizeLanguage, languageInstruction, systemPromptFor } from "@/lib/languages";
 import { normalizeMood, moodInstruction } from "@/lib/moods";
+import { styleExamplesBlock } from "@/lib/postImport";
 import { writingRulesPrompt, WHY_INSTRUCTION, WHY_JSON_FORMAT, cleanWhy } from "@/lib/linkedinRules";
 
 // Génération du post via l'API Claude (Messages API).
@@ -58,6 +59,7 @@ Le 1er plan est une accroche qui retient dans les 3 premières secondes, le dern
     profileSpec += `\n- Objectifs de communication : ${profile.commGoals} (oriente le post vers ces objectifs)`;
   if (profile?.styleNotes)
     profileSpec += `\n- Consignes de style de l'auteur (À RESPECTER IMPÉRATIVEMENT) : ${profile.styleNotes}`;
+  profileSpec += styleExamplesBlock(profile?.styleExamples);
   profileSpec += remarksPromptBlock(remarks);
   profileSpec += languageInstruction(language);
   profileSpec += moodInstruction(normalizeMood(mood));
@@ -185,6 +187,7 @@ export async function POST(req) {
         market: true,
         commGoals: true,
         postLanguage: true,
+        styleExamples: true,
       },
     });
   }
