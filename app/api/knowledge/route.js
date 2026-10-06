@@ -1,9 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getEffectiveUserId as getUserId } from "@/lib/session";
-import { checkAccess, checkKnowledgeQuota } from "@/lib/gating";
-import { rateLimit } from "@/lib/ratelimit";
-import { analyzeSource, fetchPageText } from "@/lib/knowledge";
+import { createKnowledgeSource, guardKnowledgeAdd, fetchPageText, KnowledgeError } from "@/lib/knowledge";
 import { cleanText, sourceView } from "@/lib/knowledgeText";
 import { knowledgeLimit, planOf } from "@/lib/plans";
 
@@ -29,19 +27,11 @@ export async function GET(req) {
 export async function POST(req) {
   const userId = await getUserId(req);
   if (!userId) return NextResponse.json({ error: "Non connecté." }, { status: 401 });
-  if (!process.env.ANTHROPIC_API_KEY) return NextResponse.json({ error: "Analyse indisponible : clé IA manquante sur le serveur." }, { status: 500 });
-
-  const access = await checkAccess(userId);
-  if (!access.ok) return NextResponse.json({ error: access.error, code: access.code }, { status: 403 });
-  const quota = await checkKnowledgeQuota(userId);
-  if (!quota.ok) return NextResponse.json({ error: quota.error, code: "knowledge_limit" }, { status: 403 });
-  if (!rateLimit(`knowledge:${userId}`, { limit: 20, windowMs: 3600_000 })) {
-    return NextResponse.json({ error: "Trop d'ajouts pour l'instant. Réessayez dans une heure." }, { status: 429 });
-  }
 
   const body = await req.json().catch(() => ({}));
   let kind, title, origin = null, text;
   try {
+    const quota = await guardKnowledgeAdd(userId);
     if (body.kind === "link") {
       const url = String(body.url ?? "").trim();
       if (!/^https?:\/\//i.test(url)) return NextResponse.json({ error: "Collez l'adresse complète d'une page (https://…)." }, { status: 400 });
@@ -54,26 +44,9 @@ export async function POST(req) {
     } else {
       return NextResponse.json({ error: "Type de source inconnu." }, { status: 400 });
     }
+    return NextResponse.json(await createKnowledgeSource(userId, { kind, origin, title, text }, quota));
   } catch (e) {
-    return NextResponse.json({ error: e.message }, { status: 400 });
+    const status = e instanceof KnowledgeError ? e.status : 400;
+    return NextResponse.json({ error: e.message, ...(e.code ? { code: e.code } : {}) }, { status });
   }
-
-  let analysis;
-  try {
-    analysis = await analyzeSource({ userId, title, origin, text });
-  } catch (e) {
-    console.error("Erreur analyse de source:", e.message);
-    return NextResponse.json({ error: "L'analyse a échoué. Réessayez dans un instant." }, { status: 502 });
-  }
-
-  const source = await prisma.knowledgeSource.create({
-    data: {
-      userId, kind, origin, text,
-      title: (String(body.title ?? "").trim() || analysis.title).slice(0, 120),
-      summary: analysis.summary,
-      facts: JSON.stringify(analysis.facts),
-      charCount: text.length,
-    },
-  });
-  return NextResponse.json({ source: sourceView(source), used: quota.used + 1, limit: quota.limit });
 }
