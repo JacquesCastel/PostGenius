@@ -525,3 +525,21 @@ model InteractionLog {
   @@index([userId, createdAt])
   @@index([userId, draftId])
 }
+
+// Invitation de test envoyée par un admin : le lien donne un accès gratuit (offre et durée fixes,
+// voir lib/invites.js) à la personne qui crée son compte avec l'adresse invitée.
+model Invitation {
+  id             String    @id @default(cuid())
+  email          String // adresse invitée (minuscules) : le compte doit être créé avec elle
+  token          String    @unique // secret du lien d'invitation
+  note           String? // mot libre de l'admin (visible dans la liste uniquement)
+  createdAt      DateTime  @default(now())
+  expiresAt      DateTime // fin de validité du lien
+  lastSentAt     DateTime? // dernier envoi de l'e-mail
+  invitedBy      String? // id de l'admin
+  revokedAt      DateTime?
+  acceptedAt     DateTime?
+  acceptedUserId String?
+
+  @@index([email])
+}

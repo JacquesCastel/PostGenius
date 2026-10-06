@@ -148,6 +148,7 @@ function AuthScreen({ onAuth }) {
   const [info, setInfo] = useState(null);
   const [loading, setLoading] = useState(false);
   const [plan, setPlan] = useState(null); // offre choisie depuis la landing (?plan=)
+  const [invite, setInvite] = useState(null); // invitation de test (?invite=) : { token, email, planName, accessDays } ou { invalid: true }
 
   // Si on arrive depuis un bouton d'offre (?plan=pro), pré-sélectionner l'inscription
   useEffect(() => {
@@ -158,6 +159,22 @@ function AuthScreen({ onAuth }) {
       setMode("register");
     } else if (params.get("mode") === "login") {
       setMode("login");
+    }
+    // Lien d'invitation de test : l'adresse invitée est pré-remplie et l'accès offert annoncé
+    const token = params.get("invite");
+    if (token) {
+      setMode("register");
+      fetch(`/api/invitations/${encodeURIComponent(token)}`)
+        .then(readJson)
+        .then((d) => {
+          if (d.valid) {
+            setInvite({ token, email: d.email, planName: d.planName, accessDays: d.accessDays });
+            setFields((f) => ({ ...f, email: d.email }));
+          } else {
+            setInvite({ invalid: true });
+          }
+        })
+        .catch(() => setInvite({ invalid: true }));
     }
   }, []);
 
@@ -181,7 +198,7 @@ function AuthScreen({ onAuth }) {
       const res = await fetch(`/api/auth/${mode === "login" ? "login" : "register"}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(mode === "register" ? { ...fields, plan } : fields),
+        body: JSON.stringify(mode === "register" ? { ...fields, plan, ...(invite?.token ? { invite: invite.token } : {}) } : fields),
       });
       const data = await readJson(res);
       if (!res.ok) throw new Error(data.error || "Erreur");
@@ -301,8 +318,15 @@ function AuthScreen({ onAuth }) {
                 ? "Content de vous revoir."
                 : mode === "forgot"
                 ? "Indiquez votre email, on vous envoie un lien."
+                : invite?.token
+                ? `Invitation de test : accès ${invite.planName} gratuit pendant ${invite.accessDays} jours, sans carte bancaire.`
                 : "Gratuit pendant 14 jours, sans carte bancaire."}
             </p>
+            {mode === "register" && invite?.invalid && (
+              <p className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg p-2.5 mb-3">
+                Ce lien d&apos;invitation n&apos;est plus valide (déjà utilisé, révoqué ou expiré). Demandez-en un nouveau, ou créez un compte avec l&apos;essai gratuit habituel.
+              </p>
+            )}
 
           <form onSubmit={submit} className="space-y-3">
             {mode === "register" && (
@@ -319,6 +343,7 @@ function AuthScreen({ onAuth }) {
               required
               placeholder="Email"
               value={fields.email}
+              readOnly={Boolean(invite?.token) && mode === "register"}
               onChange={(e) => setFields((f) => ({ ...f, email: e.target.value }))}
               className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
             />
@@ -352,7 +377,7 @@ function AuthScreen({ onAuth }) {
               {mode === "login"
                 ? "Se connecter"
                 : mode === "register"
-                ? plan
+                ? plan || invite?.token
                   ? "Démarrer mon essai gratuit"
                   : "Créer mon compte"
                 : "Envoyer le lien"}
@@ -2236,6 +2261,152 @@ function AdminFunnelCard() {
   );
 }
 
+function AdminInvitationsCard({ showToast }) {
+  const [data, setData] = useState(null); // null = chargement
+  const [email, setEmail] = useState("");
+  const [note, setNote] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const load = () =>
+    fetch("/api/admin/invitations")
+      .then(readJson)
+      .then(setData)
+      .catch((e) => setData({ error: e.message }));
+  useEffect(() => {
+    load();
+  }, []);
+
+  const STATUS = {
+    pending: ["En attente", "bg-amber-50 text-amber-700"],
+    accepted: ["Acceptée", "bg-green-50 text-green-700"],
+    expired: ["Expirée", "bg-gray-100 text-gray-500"],
+    revoked: ["Révoquée", "bg-gray-100 text-gray-500"],
+  };
+
+  const copy = async (link) => {
+    try {
+      await navigator.clipboard.writeText(link);
+      showToast("Lien copié");
+    } catch {
+      window.prompt("Copiez ce lien :", link);
+    }
+  };
+
+  const invite = async (e) => {
+    e.preventDefault();
+    if (!email.trim() || busy) return;
+    setBusy(true);
+    try {
+      const res = await fetch("/api/admin/invitations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, note }),
+      });
+      const d = await readJson(res);
+      if (!res.ok) throw new Error(d.error || "Erreur");
+      showToast(d.emailSent ? "Invitation envoyée par e-mail" : "Invitation créée, e-mail non envoyé : copiez le lien");
+      if (!d.emailSent && d.invitation?.link) copy(d.invitation.link);
+      setEmail("");
+      setNote("");
+      load();
+    } catch (err) {
+      showToast(err.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const resend = async (i) => {
+    try {
+      const res = await fetch(`/api/admin/invitations/${i.id}`, { method: "PATCH" });
+      const d = await readJson(res);
+      if (!res.ok) throw new Error(d.error || "Erreur");
+      showToast(d.emailSent ? "E-mail renvoyé" : "E-mail non envoyé : copiez le lien");
+      load();
+    } catch (err) {
+      showToast(err.message);
+    }
+  };
+
+  const revoke = async (i) => {
+    if (!window.confirm(`Révoquer l'invitation de ${i.email} ?`)) return;
+    try {
+      const res = await fetch(`/api/admin/invitations/${i.id}`, { method: "DELETE" });
+      const d = await readJson(res);
+      if (!res.ok) throw new Error(d.error || "Erreur");
+      load();
+    } catch (err) {
+      showToast(err.message);
+    }
+  };
+
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+      <h3 className="font-semibold">Invitations de test</h3>
+      <p className="text-xs text-gray-500 mt-0.5">
+        {data?.accessDays
+          ? `Le testeur reçoit un lien par e-mail et obtient l'offre ${PLANS[data.plan]?.name ?? data.plan} gratuitement pendant ${data.accessDays} jours, sans carte bancaire. Lien valable ${data.linkDays} jours.`
+          : "Invitez une personne à tester LinkeePost."}
+      </p>
+      <form onSubmit={invite} className="flex flex-wrap gap-2 mt-3">
+        <input
+          type="email"
+          required
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="E-mail du testeur"
+          className="flex-1 min-w-[12rem] border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
+        />
+        <input
+          type="text"
+          value={note}
+          maxLength={200}
+          onChange={(e) => setNote(e.target.value)}
+          placeholder="Note (facultatif)"
+          className="flex-1 min-w-[10rem] border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
+        />
+        <button
+          type="submit"
+          disabled={busy || !email.trim()}
+          className="bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white text-sm font-medium px-4 py-2 rounded-lg"
+        >
+          {busy ? "Envoi…" : "Inviter"}
+        </button>
+      </form>
+      {data?.error && <p className="text-xs text-red-600 mt-3">{data.error}</p>}
+      {data?.invitations?.length > 0 && (
+        <ul className="mt-4 divide-y divide-gray-100">
+          {data.invitations.map((i) => {
+            const [label, cls] = STATUS[i.status] ?? ["?", "bg-gray-100 text-gray-500"];
+            return (
+              <li key={i.id} className="py-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+                <span className="font-medium truncate max-w-[16rem]">{i.email}</span>
+                <span className={`text-[11px] px-2 py-0.5 rounded-full ${cls}`}>{label}</span>
+                {i.note && <span className="text-xs text-gray-400 truncate max-w-[14rem]">{i.note}</span>}
+                <span className="text-xs text-gray-400">
+                  {i.status === "accepted"
+                    ? `acceptée le ${fmtDateTime(i.acceptedAt)}`
+                    : i.status === "pending"
+                    ? `valable jusqu'au ${fmtDateTime(i.expiresAt)}`
+                    : `créée le ${fmtDateTime(i.createdAt)}`}
+                </span>
+                {i.status === "pending" && (
+                  <span className="ml-auto flex items-center gap-2 text-xs">
+                    <button onClick={() => copy(i.link)} className="text-[#ff5a5f] hover:underline">Copier le lien</button>
+                    <button onClick={() => resend(i)} className="text-gray-500 hover:underline">Renvoyer</button>
+                    <button onClick={() => revoke(i)} className="text-gray-400 hover:text-red-600">Révoquer</button>
+                  </span>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      )}
+      {data?.invitations?.length === 0 && <p className="text-xs text-gray-400 mt-3">Aucune invitation pour l&apos;instant.</p>}
+    </div>
+  );
+}
+
 function AdminView({ showToast }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -2361,6 +2532,7 @@ function AdminView({ showToast }) {
       <AdminHealthCard />
       <AdminStripeCard />
       <AdminFunnelCard />
+      <AdminInvitationsCard showToast={showToast} />
 
       {/* Totaux plateforme */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
