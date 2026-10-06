@@ -50,6 +50,8 @@ async function draftAndToken(userId, draftId) {
   return { draft, token, actor: `urn:li:person:${acc.personSub}`, personal: true };
 }
 
+let lastReadForbiddenLog = 0; // dernier avertissement « lecture non autorisée » (anti-bruit)
+
 export async function GET(req) {
   const userId = await getUserId(req);
   if (!userId) return NextResponse.json({ error: "Non connecté." }, { status: 401 });
@@ -67,7 +69,17 @@ export async function GET(req) {
     );
     if (!res.ok) {
       const raw = await res.text();
-      console.error("LinkedIn comments GET:", res.status, raw);
+      if (res.status === 403) {
+        // Limite connue (permission de la Community Management API pas encore approuvée) : l'écran
+        // l'explique déjà. Ce n'est pas une panne : un avertissement par heure suffit, sans le mot
+        // « error » que la vérification de santé compte comme incident.
+        if (Date.now() - lastReadForbiddenLog > 3600_000) {
+          lastReadForbiddenLog = Date.now();
+          console.warn("[linkedin] lecture des commentaires non autorisée (403) : permission pas encore approuvée par LinkedIn pour cette app");
+        }
+      } else {
+        console.error("LinkedIn comments GET:", res.status, raw);
+      }
       if (res.status === 401) return NextResponse.json({ error: "Session LinkedIn expirée — reconnectez la page entreprise." }, { status: 401 });
       if (res.status === 403) {
         // Code stable pour l'interface : elle propose alors le lien vers le post LinkedIn
