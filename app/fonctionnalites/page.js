@@ -170,7 +170,6 @@ export default function FonctionnalitesPage() {
 
         {/* 2. Génération IA */}
         <Feature
-          reverse
           tag="Génération"
           title="Des posts prêts à publier en un clic"
           text="Un thème, un ton, une humeur, et l'IA rédige : accroche forte, corps aéré, question finale, hashtags. Post simple, carrousel ou vidéo — vous retouchez, demandez des variantes ou faites réécrire, dans la langue de votre audience."
@@ -205,6 +204,7 @@ export default function FonctionnalitesPage() {
 
         {/* Score d'engagement (offre Pro) */}
         <Feature
+          reverse
           tag="Score d'engagement · offre Pro"
           title="Un score d'engagement, et l'optimisation en un clic"
           text="Chaque post reçoit une note sur 100, avec des conseils concrets critère par critère. Réécrivez l'accroche, le corps ou la signature : le score se recalcule en direct, et l'historique conserve chaque version. Inclus à partir de l'offre Pro."
