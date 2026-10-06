@@ -4090,6 +4090,206 @@ function RemarkBox({ onApplyNow, onManage, showToast }) {
   );
 }
 
+// ----------------------------------------------------------------
+// Import des anciens posts : l'IA analyse jusqu'à 50 posts (export LinkedIn Shares.csv ou texte collé),
+// propose un portrait de style, des thèmes et une langue ; l'utilisateur valide avant tout enregistrement.
+// ----------------------------------------------------------------
+function ImportPostsPanel({ importedAt, currentLanguage, onApplied, showToast }) {
+  const [open, setOpen] = useState(false);
+  const [tab, setTab] = useState("file"); // file | paste
+  const [content, setContent] = useState("");
+  const [fileName, setFileName] = useState("");
+  const [consent, setConsent] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState(null);
+  const [result, setResult] = useState(null); // { count, stats, analysis }
+  const [notes, setNotes] = useState("");
+  const [themes, setThemes] = useState([]);
+  const [setLang, setSetLang] = useState(false);
+  const [doneAt, setDoneAt] = useState(importedAt ?? null);
+
+  const reset = () => {
+    setResult(null);
+    setContent("");
+    setFileName("");
+    setConsent(false);
+    setError(null);
+  };
+
+  const onFile = async (e) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    if (f.size > 3 * 1024 * 1024) {
+      setError("Fichier trop volumineux (3 Mo maximum). Importez Shares.csv, pas l'archive complète.");
+      return;
+    }
+    if (/\.zip$/i.test(f.name)) {
+      setError("Décompressez l'archive reçue de LinkedIn, puis importez le fichier Shares.csv qu'elle contient.");
+      return;
+    }
+    setError(null);
+    setFileName(f.name);
+    setContent(await f.text());
+  };
+
+  const analyze = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/profile/import-posts/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content, consent }),
+      });
+      const d = await readJson(res);
+      if (!res.ok) throw new Error(d.error || "Erreur");
+      setResult(d);
+      setNotes(d.analysis.styleNotes);
+      setThemes(d.analysis.themes);
+      setSetLang(Boolean(d.analysis.language) && d.analysis.language !== currentLanguage);
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const apply = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/profile/import-posts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          styleNotes: notes,
+          themes,
+          examples: result.analysis.examples,
+          ...(setLang && result.analysis.language ? { postLanguage: result.analysis.language } : {}),
+        }),
+      });
+      const d = await readJson(res);
+      if (!res.ok) throw new Error(d.error || "Erreur");
+      setDoneAt(d.profile.styleImportedAt);
+      onApplied?.(d.profile);
+      showToast("Style importé : consignes, thèmes et exemples ajoutés à votre profil ✓");
+      reset();
+      setOpen(false);
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const clearExamples = async () => {
+    if (!window.confirm("Supprimer les posts types conservés comme exemples ? Vos consignes de style restent.")) return;
+    try {
+      const res = await fetch("/api/profile/import-posts", { method: "DELETE" });
+      if (!res.ok) throw new Error();
+      setDoneAt(null);
+      onApplied?.({ styleImportedAt: null });
+      showToast("Exemples supprimés");
+    } catch {
+      showToast("Erreur de suppression");
+    }
+  };
+
+  const chip = (on) => `text-xs px-3 py-1.5 rounded-full border ${on ? "bg-[#ff5a5f] text-white border-[#ff5a5f]" : "border-gray-200 text-gray-600 hover:border-gray-300"}`;
+
+  return (
+    <div className="border border-dashed border-gray-300 rounded-xl p-3">
+      <button type="button" onClick={() => setOpen((o) => !o)} className="w-full text-left flex items-center justify-between gap-2">
+        <span className="text-sm font-medium text-gray-700">
+          Importer mes anciens posts <span className="text-gray-400 font-normal">(facultatif : l&apos;IA apprend votre style)</span>
+        </span>
+        <ChevronDown size={15} className={`text-gray-400 transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+      {doneAt && !open && (
+        <p className="text-[11px] text-green-700 mt-1.5">
+          ✓ Style importé le {new Date(doneAt).toLocaleDateString("fr-FR")} ·{" "}
+          <button type="button" onClick={clearExamples} className="underline text-gray-500 hover:text-red-600">supprimer les exemples conservés</button>
+        </p>
+      )}
+      {open && !result && (
+        <div className="mt-3 space-y-3">
+          <p className="text-xs text-gray-500 leading-relaxed">
+            Sur LinkedIn : <strong>Paramètres › Confidentialité des données › Obtenir une copie de vos données › Publications</strong>. L&apos;archive arrive en quelques minutes (parfois jusqu&apos;à 24 h) : importez le fichier <strong>Shares.csv</strong> qu&apos;elle contient. Ou collez vos posts, séparés par une ligne <code>---</code>. Les 50 plus récents sont analysés.
+          </p>
+          <div className="flex gap-1.5">
+            <button type="button" onClick={() => { setTab("file"); setContent(""); setFileName(""); }} className={chip(tab === "file")}>Fichier</button>
+            <button type="button" onClick={() => { setTab("paste"); setContent(""); setFileName(""); }} className={chip(tab === "paste")}>Copier-coller</button>
+          </div>
+          {tab === "file" ? (
+            <div>
+              <input type="file" accept=".csv,.txt,text/csv,text/plain" onChange={onFile} className="text-xs" />
+              {fileName && <p className="text-[11px] text-gray-500 mt-1">{fileName} · {Math.round(content.length / 1024)} Ko lus</p>}
+            </div>
+          ) : (
+            <textarea
+              rows={7}
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              placeholder={"Premier post…\n---\nDeuxième post…\n---\nTroisième post…"}
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
+            />
+          )}
+          <label className="flex items-start gap-2 text-xs text-gray-600">
+            <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-0.5" />
+            <span>
+              Ces posts sont les miens et j&apos;accepte qu&apos;ils soient analysés par une IA. Seuls le portrait de style, les thèmes et 3 posts types sont conservés ; le fichier ne l&apos;est pas, et je peux tout supprimer.
+            </span>
+          </label>
+          {error && <p className="text-xs text-red-600">{error}</p>}
+          <button
+            type="button"
+            onClick={analyze}
+            disabled={busy || !consent || content.trim().length < 20}
+            className="bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white text-sm font-medium px-4 py-2 rounded-lg"
+          >
+            {busy ? "Analyse en cours…" : "Analyser mes posts"}
+          </button>
+        </div>
+      )}
+      {open && result && (
+        <div className="mt-3 space-y-3">
+          <p className="text-xs text-gray-500">
+            {result.count} posts analysés · longueur médiane {result.stats.medianChars} caractères · émojis dans {result.stats.withEmojiPct} % · hashtags dans {result.stats.withHashtagsPct} % · question finale dans {result.stats.endsWithQuestionPct} % · appel à l&apos;action dans {result.stats.withCtaPct} %
+          </p>
+          <div>
+            <label className="text-xs font-medium text-gray-700 block mb-1">Votre style, vu par l&apos;IA (modifiable) : ajouté à « Mon mode d&apos;écriture »</label>
+            <textarea rows={7} value={notes} onChange={(e) => setNotes(e.target.value)} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]" />
+          </div>
+          {result.analysis.themes.length > 0 && (
+            <div>
+              <p className="text-xs font-medium text-gray-700 mb-1">Thèmes récurrents à ajouter à votre profil</p>
+              <div className="flex flex-wrap gap-1.5">
+                {result.analysis.themes.map((t) => (
+                  <button type="button" key={t} onClick={() => setThemes((l) => (l.includes(t) ? l.filter((x) => x !== t) : [...l, t]))} className={chip(themes.includes(t))}>{t}</button>
+                ))}
+              </div>
+            </div>
+          )}
+          {result.analysis.language && result.analysis.language !== currentLanguage && (
+            <label className="flex items-center gap-2 text-xs text-gray-600">
+              <input type="checkbox" checked={setLang} onChange={(e) => setSetLang(e.target.checked)} />
+              Vos posts sont en {LANGUAGES.find((l) => l.code === result.analysis.language)?.label} : en faire la langue de rédaction
+            </label>
+          )}
+          <p className="text-[11px] text-gray-400">{result.analysis.examples.length} posts types seront conservés comme exemples de votre voix.</p>
+          {error && <p className="text-xs text-red-600">{error}</p>}
+          <div className="flex gap-2">
+            <button type="button" onClick={apply} disabled={busy || !notes.trim()} className="bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white text-sm font-medium px-4 py-2 rounded-lg">
+              {busy ? "Enregistrement…" : "Ajouter à mon profil"}
+            </button>
+            <button type="button" onClick={reset} className="text-gray-500 text-sm px-3 py-2 rounded-lg hover:bg-gray-100">Annuler</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function RemarksManager({ showToast }) {
   const [remarks, setRemarks] = useState(null);
   const [max, setMax] = useState(10);
@@ -7032,6 +7232,16 @@ function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast 
                   className={inputCls}
                 />
               </div>
+              <ImportPostsPanel
+                importedAt={profile?.styleImportedAt}
+                currentLanguage={fields.postLanguage}
+                showToast={showToast}
+                onApplied={(p) => {
+                  if (p.styleNotes !== undefined) set("styleNotes", p.styleNotes ?? "");
+                  if (p.themes !== undefined) set("themes", p.themes ?? "");
+                  if (p.postLanguage) set("postLanguage", p.postLanguage);
+                }}
+              />
               <div>
                 <label className="text-sm font-medium text-gray-700 block mb-1.5">
                   Longueur par défaut :{" "}
@@ -9658,6 +9868,21 @@ function ProfileView({ profile, onSaved, showToast, linkedin, onDisconnect, inst
                   className={input}
                 />
               </div>
+              <ImportPostsPanel
+                importedAt={profile?.styleImportedAt}
+                currentLanguage={fields.postLanguage}
+                showToast={showToast}
+                onApplied={async (p) => {
+                  if (p.styleNotes !== undefined) set("styleNotes", p.styleNotes ?? "");
+                  if (p.themes !== undefined) set("themes", p.themes ?? "");
+                  if (p.postLanguage) set("postLanguage", p.postLanguage);
+                  // Le parent garde une copie du profil : on la rafraîchit pour que la suite (génération) la voie
+                  try {
+                    const d = await readJson(await fetch("/api/profile"));
+                    if (d.profile) onSaved(d.profile);
+                  } catch {}
+                }}
+              />
               <RemarksManager showToast={showToast} />
               <div id="field-editorialNote">
                 <label className={label}>

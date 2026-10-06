@@ -83,6 +83,8 @@ model User {
   themes          String? // thématiques favorites, séparées par des virgules
   tone            String? // ton par défaut (Professionnel, Inspirant, ...)
   postLanguage    String  @default("fr") // langue de génération des posts (fr, en, es, de, it, pt, nl)
+  styleExamples   String? // JSON : 3 posts types de l'auteur (import de ses anciens posts), servent d'exemples de voix
+  styleImportedAt DateTime? // date du dernier import d'anciens posts
   styleNotes      String? // consignes libres : tutoiement, emojis, longueur de phrases...
   defaultMaxChars Int? // longueur par défaut des posts
   onboardedAt     DateTime? // null = doit passer par l'onboarding en étapes
