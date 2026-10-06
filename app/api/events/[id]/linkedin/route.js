@@ -122,8 +122,12 @@ export async function POST(req, { params }) {
     let cover = { note: "Image par défaut de LinkedIn (option décochée)." };
     if (body.useImage !== false) cover = await uploadCover({ event, token, owner: opts.organizer });
 
-    // Image refusée (400/422) ou erreur serveur LinkedIn (5xx) : réessai sans image (voir createEventResilient)
-    const created = await createEventResilient(token, (img) => buildEventBody({ ...opts, backgroundImage: img }).body, cover.urn);
+    // LinkedIn répond parfois 500 sans préciser le champ : variantes successives (voir createEventResilient)
+    const created = await createEventResilient(
+      token,
+      (variant) => buildEventBody({ ...opts, ...variant }).body,
+      { backgroundImage: cover.urn, discoveryMode: opts.discoveryMode }
+    );
     const eventId = created.eventId;
     const imageNote = created.imageNote ?? cover.note ?? null;
 
