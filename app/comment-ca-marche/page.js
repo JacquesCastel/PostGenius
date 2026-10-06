@@ -9,7 +9,7 @@ import SiteFooter from "@/components/SiteFooter";
 export const metadata = {
   title: "Comment ça marche — LinkeePost",
   description:
-    "De l'inscription à la statistique : découvrez étape par étape comment LinkeePost transforme votre expertise en campagnes LinkedIn publiées en pilote automatique.",
+    "De l'inscription à la statistique : découvrez étape par étape comment LinkeePost transforme votre expertise en posts et campagnes LinkedIn — en 9 langues, avec vidéo et interactions — publiés en pilote automatique.",
 };
 
 const STEPS = [
@@ -58,7 +58,7 @@ const STEPS = [
   {
     icon: Sparkles,
     title: "L'IA génère et planifie la série",
-    text: "Les posts se rédigent dans votre style et se placent automatiquement sur vos créneaux de publication, avec une image cohérente quand vous le souhaitez.",
+    text: "Les posts se rédigent dans votre style, dans la langue de votre audience (9 langues) et avec l'humeur que vous choisissez, puis se placent automatiquement sur vos créneaux de publication, avec une image cohérente quand vous le souhaitez.",
     visual: (
       <div className="flex gap-1.5 max-w-xs">
         {[1, 2, 3, 4, 5, 6].map((n) => (
@@ -75,7 +75,7 @@ const STEPS = [
   {
     icon: Send,
     title: "Publication automatique au bon moment",
-    text: "Les posts partent seuls sur LinkedIn aux créneaux prévus, image comprise. Vous ne faites plus rien — votre présence tourne toute seule.",
+    text: "Les posts partent seuls sur LinkedIn aux créneaux prévus, image comprise. Pour un post vidéo, suivez le kit de tournage et le téléprompteur, importez votre vidéo : elle est publiée avec votre texte. Votre présence tourne toute seule.",
     visual: (
       <p className="text-xs text-[#5a6b85] flex items-center gap-1.5"><CalendarDays size={13} className="text-[#ff5a5f]" /> Mar. · Jeu. à 09:00</p>
     ),
@@ -83,7 +83,7 @@ const STEPS = [
   {
     icon: MapPin,
     title: "Couvrez vos salons et événements",
-    text: "Avec l'offre Agence, ajoutez vos salons et forums : LinkeePost génère des posts de présence autour des dates, et le jour J vous notifie pour poster — et prendre une photo en direct sur place.",
+    text: "Avec l'offre Agence, ajoutez vos salons et forums : LinkeePost génère des posts de présence autour des dates, peut créer l'événement sur LinkedIn au nom de votre page, et le jour J vous notifie pour poster — et prendre une photo en direct sur place.",
     visual: (
       <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#ff5a5f] bg-[#fff1f1] px-3 py-1.5 rounded-full">
         <MapPin size={12} /> Offre Agence
@@ -93,7 +93,7 @@ const STEPS = [
   {
     icon: BarChart3,
     title: "Suivez vos statistiques et améliorez",
-    text: "Impressions, engagement, progression de chaque campagne : LinkeePost met en évidence ce qui fonctionne pour que vous reproduisiez vos meilleurs posts.",
+    text: "Commentaires, réactions, engagement et progression de chaque campagne (et impressions de vos pages entreprise) : LinkeePost met en évidence ce qui fonctionne. Commentez et réagissez aux posts de votre réseau depuis l'écran Interagir.",
     visual: (
       <div className="flex items-end gap-1.5 h-16 max-w-[10rem]">
         {[40, 60, 50, 80, 95].map((h, i) => (
