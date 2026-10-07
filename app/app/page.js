@@ -5903,6 +5903,40 @@ function CopilotView({ profile, onProfileSaved, showToast, onGoDashboard }) {
   );
 }
 
+// Section repliable du tableau de bord : fermée par défaut, l'état est mémorisé dans ce navigateur
+// (jamais indispensable : sans stockage, la section reste simplement fermée).
+function DashSection({ id, title, icon: Icon, hint, forceOpen = false, children }) {
+  const key = `dash-open-${id}`;
+  const [open, setOpen] = useState(false);
+  useEffect(() => {
+    try {
+      if (window.localStorage.getItem(key) === "1") setOpen(true);
+    } catch {}
+  }, [key]);
+  const toggle = () => {
+    const next = !open;
+    setOpen(next);
+    try {
+      window.localStorage.setItem(key, next ? "1" : "0");
+    } catch {}
+  };
+  const shown = open || forceOpen;
+  return (
+    <section className="bg-white rounded-2xl border border-gray-100 shadow-sm">
+      <button type="button" onClick={toggle} aria-expanded={shown} className="w-full flex items-center gap-3 px-5 py-4 text-left">
+        {Icon && <span className="p-2 rounded-xl bg-[#fff1f1] text-[#ff5a5f] shrink-0"><Icon size={16} /></span>}
+        <span className="min-w-0 flex-1">
+          <span className="block text-sm font-semibold">{title}</span>
+          {hint && <span className="block text-xs text-gray-400 truncate">{hint}</span>}
+        </span>
+        <ChevronDown size={16} className={`text-gray-400 shrink-0 transition-transform ${shown ? "rotate-180" : ""}`} />
+      </button>
+      {/* Le contenu garde son propre titre et sa propre carte : on les efface ici pour ne pas les doubler avec l'en-tête de la section */}
+      {shown && <div className="px-5 pb-5 space-y-4 [&>div]:!bg-none [&>div]:!bg-transparent [&>div]:!border-0 [&>div]:!shadow-none [&>div]:!p-0 [&_h2]:hidden">{children}</div>}
+    </section>
+  );
+}
+
 function DashboardView({ drafts, canVeille = true, canEvents = false, canScore = true, canCampaigns = true, postsLimit = null, onGoCreate, onGoHistory, onGoEvents, onGoProfile, onGoProfileField, onGoCopilot, onApprove, onReschedule, profile, linkedin, orgs, onPlanned, onProfileSaved, showToast, onInspire, onGenerateFromReco }) {
   const [mode, setMode] = useState("list"); // list | calendar
   const [periodDays, setPeriodDays] = useState(7);
@@ -6048,6 +6082,59 @@ function DashboardView({ drafts, canVeille = true, canEvents = false, canScore =
 
   return (
     <main className="max-w-5xl mx-auto p-6 space-y-6">
+      <div className="flex justify-end ">
+        <button onClick={onGoCreate} className="inline-flex items-center gap-1.5 bg-[#ff5a5f] hover:bg-[#f63d44] text-white text-sm font-medium px-4 py-2 rounded-xl">
+          <Sparkles size={15} /> Créer un post
+        </button>
+      </div>
+
+      {/* Priorité : ce qui demande une action */}
+      {toValidate.length > 0 && (
+        <div className="bg-purple-50 border border-purple-200 rounded-xl p-4">
+          <p className="text-sm font-medium text-purple-800 flex items-center gap-2 mb-3">
+            <Clock size={16} /> {toValidate.length} post{toValidate.length > 1 ? "s" : ""} en attente de
+            validation
+          </p>
+          <div className="space-y-2">
+            {toValidate.slice(0, 4).map((d) => (
+              <div key={d.id} className="flex items-center justify-between gap-3 bg-white rounded-lg p-2.5">
+                <div className="min-w-0">
+                  <p className="text-xs font-medium truncate">{d.theme || "Post"}</p>
+                  <p className="text-xs text-gray-400">{fmtDateTime(d.scheduledAt)}</p>
+                </div>
+                <button
+                  onClick={() => onApprove(d)}
+                  className="bg-purple-600 hover:bg-purple-700 text-white text-xs font-medium px-3 py-1.5 rounded-lg flex items-center gap-1 shrink-0"
+                >
+                  <Check size={12} /> Valider
+                </button>
+              </div>
+            ))}
+          </div>
+          {toValidate.length > 4 && (
+            <button onClick={onGoHistory} className="text-xs text-purple-700 underline mt-2">
+              Voir les {toValidate.length - 4} autres →
+            </button>
+          )}
+        </div>
+      )}
+
+      {errors.length > 0 && (
+        <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+          <p className="text-sm font-medium text-red-700 flex items-center gap-2 mb-2">
+            <AlertCircle size={16} /> {errors.length} publication{errors.length > 1 ? "s" : ""} en échec
+          </p>
+          {errors.slice(0, 3).map((d) => (
+            <p key={d.id} className="text-xs text-red-600 truncate">
+              « {d.theme} » — {d.publishError || "erreur inconnue"}
+            </p>
+          ))}
+          <button onClick={onGoHistory} className="text-xs text-red-700 underline mt-2">
+            Gérer dans Mes posts →
+          </button>
+        </div>
+      )}
+
       {/* Copilote éditorial */}
       <EditorialRecoWidget
         onGenerate={onGenerateFromReco}
@@ -6131,129 +6218,61 @@ function DashboardView({ drafts, canVeille = true, canEvents = false, canScore =
         </div>
       </div>
 
-      {/* Score d'engagement moyen — verrouillé pour Essentiel */}
-      {!canScore && (
-        <a
-          href="/tarifs"
-          className="block bg-white rounded-2xl border border-gray-100 shadow-sm p-5 hover:shadow-md transition-shadow"
-        >
-          <div className="flex items-center justify-between gap-4 flex-wrap">
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="p-2.5 rounded-xl bg-gray-100 text-gray-400 shrink-0"><BarChart3 size={18} /></div>
-              <div className="min-w-0">
-                <p className="text-sm font-semibold flex items-center gap-1.5">
-                  Score d'engagement de vos posts <Lock size={13} className="text-gray-400" />
-                </p>
-                <p className="text-xs text-gray-500 mt-0.5">Notez et optimisez vos posts — inclus à partir de l'offre Pro.</p>
-              </div>
-            </div>
-            <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-white bg-[#ff5a5f] px-4 py-2 rounded-full shrink-0">
-              <ArrowUpCircle size={13} /> Faire évoluer
-            </span>
+      {/* Planning */}
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="font-semibold text-lg">Prochaines publications</h2>
+          <div className="flex gap-1 bg-gray-100 p-1 rounded-lg">
+            <button
+              onClick={() => setMode("list")}
+              className={`px-3 py-1.5 rounded-md text-xs font-medium flex items-center gap-1.5 ${
+                mode === "list" ? "bg-white shadow-sm" : "text-gray-500"
+              }`}
+            >
+              <List size={13} /> Liste
+            </button>
+            <button
+              onClick={() => setMode("calendar")}
+              className={`px-3 py-1.5 rounded-md text-xs font-medium flex items-center gap-1.5 ${
+                mode === "calendar" ? "bg-white shadow-sm" : "text-gray-500"
+              }`}
+            >
+              <CalendarDays size={13} /> Calendrier
+            </button>
           </div>
-        </a>
-      )}
-      {canScore && avgScore != null && (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-          <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-            <p className="text-sm font-semibold flex items-center gap-1.5">
-              <BarChart3 size={15} className="text-[#ff5a5f]" /> Score d'engagement moyen de vos posts
-            </p>
-            <span className="text-xs text-gray-400">
-              {scores.length} post{scores.length > 1 ? "s" : ""} analysé{scores.length > 1 ? "s" : ""}
-            </span>
-          </div>
-          <div className="flex items-center gap-6">
-            <div className="text-center shrink-0">
-              <p className="text-4xl font-extrabold leading-none" style={{ color: avgColor }}>{avgScore}</p>
-              <p className="text-[11px] text-gray-400 mt-1">/ 100</p>
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="text-sm font-semibold">Potentiel moyen</span>
-                <span className="text-sm font-bold" style={{ color: avgColor }}>{avgLevel}</span>
-              </div>
-              <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
-                <div className="h-full rounded-full" style={{ width: `${avgScore}%`, background: avgColor }} />
-              </div>
-              <div className="flex flex-wrap gap-x-4 gap-y-1 mt-3">
-                {scoreBuckets.filter((b) => b.count > 0).map((b) => (
-                  <span key={b.label} className="flex items-center gap-1.5 text-[11px] text-gray-500">
-                    <span className="w-2 h-2 rounded-full shrink-0" style={{ background: b.color }} />
-                    {b.count} {b.label}
-                  </span>
-                ))}
-              </div>
-            </div>
-          </div>
-          <button onClick={onGoHistory} className="text-xs text-[#ff5a5f] hover:underline mt-4 inline-flex items-center gap-1">
-            Optimiser mes posts <ChevronRight size={13} />
-          </button>
         </div>
-      )}
 
-      {/* Raccourcis vers les fonctionnalités */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <button
-          onClick={onGoCreate}
-          className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 text-left hover:-translate-y-0.5 hover:shadow-md transition-all"
-        >
-          <div className="p-2.5 rounded-xl bg-[#fff1f1] text-[#ff5a5f] w-fit mb-3"><PenLine size={18} /></div>
-          <p className="font-semibold text-sm">Générer un post</p>
-          <p className="text-xs text-gray-400 mt-0.5">Avec son score d'engagement</p>
-        </button>
-
-        {canScore ? (
-          <button
-            onClick={onGoHistory}
-            className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 text-left hover:-translate-y-0.5 hover:shadow-md transition-all"
-          >
-            <div className="p-2.5 rounded-xl bg-[#fff1f1] text-[#ff5a5f] w-fit mb-3"><BarChart3 size={18} /></div>
-            <p className="font-semibold text-sm">Optimiser mes posts</p>
-            <p className="text-xs text-gray-400 mt-0.5">Score, réécriture & historique</p>
-          </button>
+        {mode === "calendar" ? (
+          <CalendarMonth drafts={drafts} onReschedule={onReschedule} />
+        ) : scheduled.length === 0 ? (
+          <div className="bg-white rounded-xl border border-dashed border-gray-300 p-10 text-center text-gray-400">
+            <Clock size={28} className="mx-auto mb-2" />
+            <p className="text-sm">Aucun post programmé.</p>
+            <button onClick={onGoCreate} className="text-sm text-[#ff5a5f] hover:underline mt-1">
+              Générer un post →
+            </button>
+          </div>
         ) : (
-          <a
-            href="/tarifs"
-            className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 text-left hover:-translate-y-0.5 hover:shadow-md transition-all block"
-          >
-            <div className="p-2.5 rounded-xl bg-gray-100 text-gray-400 w-fit mb-3"><BarChart3 size={18} /></div>
-            <p className="font-semibold text-sm flex items-center gap-1.5">Optimiser mes posts <Lock size={12} className="text-gray-400" /></p>
-            <p className="text-xs text-[#ff5a5f] font-medium mt-0.5">Inclus à partir de l'offre Pro</p>
-          </a>
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm divide-y divide-gray-100">
+            {scheduled.map((d) => (
+              <div key={d.id} className="p-4 flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium truncate">{d.theme || "Post"}</p>
+                  <p className="text-xs text-gray-500 truncate">{d.text.slice(0, 90)}…</p>
+                </div>
+                <div className="text-right shrink-0">
+                  <p className="text-sm font-medium text-amber-600">{relativeTime(d.scheduledAt)}</p>
+                  <p className="text-xs text-gray-400">
+                    {fmtDateTime(d.scheduledAt)} ·{" "}
+                    {d.target === "person" ? "profil perso" : "page entreprise"}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
         )}
-
-        {canEvents ? (
-          <button
-            onClick={onGoEvents}
-            className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 text-left hover:-translate-y-0.5 hover:shadow-md transition-all"
-          >
-            <div className="p-2.5 rounded-xl bg-[#fff1f1] text-[#ff5a5f] w-fit mb-3"><MapPin size={18} /></div>
-            <p className="font-semibold text-sm">Événements</p>
-            <p className="text-xs text-gray-400 mt-0.5">Salons & forums, notif. jour-J</p>
-          </button>
-        ) : (
-          <a
-            href="/tarifs"
-            className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 text-left hover:-translate-y-0.5 hover:shadow-md transition-all block relative"
-          >
-            <div className="p-2.5 rounded-xl bg-gray-100 text-gray-400 w-fit mb-3"><MapPin size={18} /></div>
-            <p className="font-semibold text-sm flex items-center gap-1.5">Événements <Lock size={12} className="text-gray-400" /></p>
-            <p className="text-xs text-[#ff5a5f] font-medium mt-0.5">Inclus dans l'offre Agence</p>
-          </a>
-        )}
-
-        <button
-          onClick={onGoProfile}
-          className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 text-left hover:-translate-y-0.5 hover:shadow-md transition-all"
-        >
-          <div className="p-2.5 rounded-xl bg-[#fff1f1] text-[#ff5a5f] w-fit mb-3"><UserRound size={18} /></div>
-          <p className="font-semibold text-sm">Mon profil</p>
-          <p className="text-xs text-gray-400 mt-0.5">Votre site web nourrit la rédaction</p>
-        </button>
       </div>
 
-      {/* Campagnes LinkedIn */}
       {wizardInit && (
         <CampaignWizard
           profile={profile}
@@ -6268,6 +6287,8 @@ function DashboardView({ drafts, canVeille = true, canEvents = false, canScore =
           }}
         />
       )}
+      {/* Le reste, replié par défaut : un clic pour l'ouvrir */}
+      <DashSection id="campaigns" title="Mes campagnes" icon={Megaphone} hint="Séries de posts planifiées" forceOpen={Boolean(wizardInit)}>
       {!canCampaigns ? (
         <div className="bg-gradient-to-r from-[#fff1f1] to-white rounded-xl border border-[#ffd5d6] p-5 flex items-center justify-between flex-wrap gap-4">
           <div className="flex items-center gap-3">
@@ -6397,7 +6418,9 @@ function DashboardView({ drafts, canVeille = true, canEvents = false, canScore =
       </div>
       )}
 
-      {/* Inspirations & veille */}
+      </DashSection>
+
+      <DashSection id="veille" title="Inspirations & veille" icon={Compass} hint="L'actualité de votre secteur">
       {canVeille ? (
       <VeilleBlock
         showToast={showToast}
@@ -6428,110 +6451,75 @@ function DashboardView({ drafts, canVeille = true, canEvents = false, canScore =
         </div>
       )}
 
-      {/* Posts en attente de validation */}
-      {toValidate.length > 0 && (
-        <div className="bg-purple-50 border border-purple-200 rounded-xl p-4">
-          <p className="text-sm font-medium text-purple-800 flex items-center gap-2 mb-3">
-            <Clock size={16} /> {toValidate.length} post{toValidate.length > 1 ? "s" : ""} en attente de
-            validation
-          </p>
-          <div className="space-y-2">
-            {toValidate.slice(0, 4).map((d) => (
-              <div key={d.id} className="flex items-center justify-between gap-3 bg-white rounded-lg p-2.5">
-                <div className="min-w-0">
-                  <p className="text-xs font-medium truncate">{d.theme || "Post"}</p>
-                  <p className="text-xs text-gray-400">{fmtDateTime(d.scheduledAt)}</p>
-                </div>
-                <button
-                  onClick={() => onApprove(d)}
-                  className="bg-purple-600 hover:bg-purple-700 text-white text-xs font-medium px-3 py-1.5 rounded-lg flex items-center gap-1 shrink-0"
-                >
-                  <Check size={12} /> Valider
-                </button>
-              </div>
-            ))}
-          </div>
-          {toValidate.length > 4 && (
-            <button onClick={onGoHistory} className="text-xs text-purple-700 underline mt-2">
-              Voir les {toValidate.length - 4} autres →
-            </button>
-          )}
-        </div>
-      )}
+      </DashSection>
 
-      {/* Erreurs de publication */}
-      {errors.length > 0 && (
-        <div className="bg-red-50 border border-red-200 rounded-xl p-4">
-          <p className="text-sm font-medium text-red-700 flex items-center gap-2 mb-2">
-            <AlertCircle size={16} /> {errors.length} publication{errors.length > 1 ? "s" : ""} en échec
-          </p>
-          {errors.slice(0, 3).map((d) => (
-            <p key={d.id} className="text-xs text-red-600 truncate">
-              « {d.theme} » — {d.publishError || "erreur inconnue"}
+      {(!canScore || avgScore != null) && (
+      <DashSection id="score" title="Score d'engagement" icon={BarChart3} hint="Le potentiel moyen de vos posts">
+      {!canScore && (
+        <a
+          href="/tarifs"
+          className="block bg-white rounded-2xl border border-gray-100 shadow-sm p-5 hover:shadow-md transition-shadow"
+        >
+          <div className="flex items-center justify-between gap-4 flex-wrap">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="p-2.5 rounded-xl bg-gray-100 text-gray-400 shrink-0"><BarChart3 size={18} /></div>
+              <div className="min-w-0">
+                <p className="text-sm font-semibold flex items-center gap-1.5">
+                  Score d'engagement de vos posts <Lock size={13} className="text-gray-400" />
+                </p>
+                <p className="text-xs text-gray-500 mt-0.5">Notez et optimisez vos posts — inclus à partir de l'offre Pro.</p>
+              </div>
+            </div>
+            <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-white bg-[#ff5a5f] px-4 py-2 rounded-full shrink-0">
+              <ArrowUpCircle size={13} /> Faire évoluer
+            </span>
+          </div>
+        </a>
+      )}
+      {canScore && avgScore != null && (
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+          <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+            <p className="text-sm font-semibold flex items-center gap-1.5">
+              <BarChart3 size={15} className="text-[#ff5a5f]" /> Score d'engagement moyen de vos posts
             </p>
-          ))}
-          <button onClick={onGoHistory} className="text-xs text-red-700 underline mt-2">
-            Gérer dans Mes posts →
+            <span className="text-xs text-gray-400">
+              {scores.length} post{scores.length > 1 ? "s" : ""} analysé{scores.length > 1 ? "s" : ""}
+            </span>
+          </div>
+          <div className="flex items-center gap-6">
+            <div className="text-center shrink-0">
+              <p className="text-4xl font-extrabold leading-none" style={{ color: avgColor }}>{avgScore}</p>
+              <p className="text-[11px] text-gray-400 mt-1">/ 100</p>
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-sm font-semibold">Potentiel moyen</span>
+                <span className="text-sm font-bold" style={{ color: avgColor }}>{avgLevel}</span>
+              </div>
+              <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
+                <div className="h-full rounded-full" style={{ width: `${avgScore}%`, background: avgColor }} />
+              </div>
+              <div className="flex flex-wrap gap-x-4 gap-y-1 mt-3">
+                {scoreBuckets.filter((b) => b.count > 0).map((b) => (
+                  <span key={b.label} className="flex items-center gap-1.5 text-[11px] text-gray-500">
+                    <span className="w-2 h-2 rounded-full shrink-0" style={{ background: b.color }} />
+                    {b.count} {b.label}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+          <button onClick={onGoHistory} className="text-xs text-[#ff5a5f] hover:underline mt-4 inline-flex items-center gap-1">
+            Optimiser mes posts <ChevronRight size={13} />
           </button>
         </div>
       )}
 
-      {/* Planning */}
-      <div>
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="font-semibold text-lg">Prochaines publications</h2>
-          <div className="flex gap-1 bg-gray-100 p-1 rounded-lg">
-            <button
-              onClick={() => setMode("list")}
-              className={`px-3 py-1.5 rounded-md text-xs font-medium flex items-center gap-1.5 ${
-                mode === "list" ? "bg-white shadow-sm" : "text-gray-500"
-              }`}
-            >
-              <List size={13} /> Liste
-            </button>
-            <button
-              onClick={() => setMode("calendar")}
-              className={`px-3 py-1.5 rounded-md text-xs font-medium flex items-center gap-1.5 ${
-                mode === "calendar" ? "bg-white shadow-sm" : "text-gray-500"
-              }`}
-            >
-              <CalendarDays size={13} /> Calendrier
-            </button>
-          </div>
-        </div>
+      </DashSection>
+      )}
 
-        {mode === "calendar" ? (
-          <CalendarMonth drafts={drafts} onReschedule={onReschedule} />
-        ) : scheduled.length === 0 ? (
-          <div className="bg-white rounded-xl border border-dashed border-gray-300 p-10 text-center text-gray-400">
-            <Clock size={28} className="mx-auto mb-2" />
-            <p className="text-sm">Aucun post programmé.</p>
-            <button onClick={onGoCreate} className="text-sm text-[#ff5a5f] hover:underline mt-1">
-              Générer un post →
-            </button>
-          </div>
-        ) : (
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm divide-y divide-gray-100">
-            {scheduled.map((d) => (
-              <div key={d.id} className="p-4 flex items-center justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="text-sm font-medium truncate">{d.theme || "Post"}</p>
-                  <p className="text-xs text-gray-500 truncate">{d.text.slice(0, 90)}…</p>
-                </div>
-                <div className="text-right shrink-0">
-                  <p className="text-sm font-medium text-amber-600">{relativeTime(d.scheduledAt)}</p>
-                  <p className="text-xs text-gray-400">
-                    {fmtDateTime(d.scheduledAt)} ·{" "}
-                    {d.target === "person" ? "profil perso" : "page entreprise"}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Dernières publications */}
+      {recent.length > 0 && (
+      <DashSection id="recent" title="Dernières publications" icon={History} hint="Ce que vous avez publié récemment">
       {recent.length > 0 && (
         <div>
           <h2 className="font-semibold text-lg mb-3">Dernières publications</h2>
@@ -6559,6 +6547,8 @@ function DashboardView({ drafts, canVeille = true, canEvents = false, canScore =
             ))}
           </div>
         </div>
+      )}
+      </DashSection>
       )}
     </main>
   );
