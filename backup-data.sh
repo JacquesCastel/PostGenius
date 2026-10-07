@@ -103,7 +103,21 @@ trap write_status EXIT
 STAMP=$(date -u +%Y%m%d-%H%M%S)
 FILE="$BACKUP_DIR/data-$STAMP.tar.gz"
 
-tar -czf "$FILE.tmp" -C "$BASE_DIR" --exclude='data/health.json' --exclude='data/health.json.tmp' --exclude='data/backup-status.json*' data
+# Un reste d'une exécution interrompue (archive .tmp jamais validée) ne sert à rien : on le supprime
+rm -f "$BACKUP_DIR"/data-*.tar.gz.tmp
+
+# tar sort avec le code 1 quand un fichier change pendant la lecture (une image écrite pendant la
+# sauvegarde, health.json réécrit toutes les 5 min) : ce n'est pas une erreur, l'archive est complète
+# pour tout ce qui n'a pas bougé. Seul le code 2 ou plus (disque plein, lecture impossible) est fatal.
+# La relecture ci-dessous valide l'archive dans tous les cas.
+TAR_RC=0
+tar -czf "$FILE.tmp" -C "$BASE_DIR" --exclude='data/health.json' --exclude='data/health.json.tmp' --exclude='data/backup-status.json*' data || TAR_RC=$?
+if [ "$TAR_RC" -gt 1 ]; then
+  echo "$(date -u +%FT%TZ) ERREUR : tar a échoué (code $TAR_RC)" >&2
+  rm -f "$FILE.tmp"
+  exit 1
+fi
+[ "$TAR_RC" -eq 1 ] && echo "$(date -u +%FT%TZ) avertissement : des fichiers ont changé pendant la sauvegarde (sans gravité)"
 # Vérifie que l'archive se relit avant de la valider
 tar -tzf "$FILE.tmp" >/dev/null
 mv "$FILE.tmp" "$FILE"
