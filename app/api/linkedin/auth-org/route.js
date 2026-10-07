@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import crypto from "crypto";
+import { oauthTarget, bindOauthTarget, READ_ONLY_MESSAGE } from "@/lib/oauthTarget";
 
 // OAuth app dédiée pages entreprise (Community Management API).
 // App ID : LINKEDIN_ORG_CLIENT_ID — distincte de l'app personnelle
@@ -14,8 +15,12 @@ import crypto from "crypto";
 // Redirect URI : LINKEDIN_ORG_REDIRECT_URI → /api/linkedin/callback-org
 //   (doit être déclarée dans l'app LinkedIn 786qkg73bkqdvj, onglet Auth)
 
-export async function GET() {
+export async function GET(req) {
   const appUrl = process.env.APP_URL || "http://localhost:3000";
+  // Compte visé : le client géré en mode agence ; mémorisé pour être revérifié au retour de LinkedIn
+  const target = await oauthTarget(req);
+  if (target.error === "read_only") return NextResponse.redirect(`${appUrl}/app?linkedin=org_error&msg=${encodeURIComponent(READ_ONLY_MESSAGE)}`);
+  if (target.error) return NextResponse.redirect(`${appUrl}/app?linkedin=not_logged_in`);
   const clientId = process.env.LINKEDIN_ORG_CLIENT_ID;
   const redirectUri = process.env.LINKEDIN_ORG_REDIRECT_URI || `${appUrl}/api/linkedin/callback-org`;
 
@@ -37,5 +42,6 @@ export async function GET() {
 
   const res = NextResponse.redirect(url.toString());
   res.cookies.set("li_org_oauth_state", state, { httpOnly: true, maxAge: 600, path: "/" });
+  bindOauthTarget(res, target.userId);
   return res;
 }

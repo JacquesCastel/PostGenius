@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { getUserId } from "@/lib/session";
+import { oauthTarget, oauthTargetMatches, clearOauthTarget, READ_ONLY_MESSAGE } from "@/lib/oauthTarget";
 import { encryptToken } from "@/lib/crypto";
 
 // Callback OAuth LinkedIn — flux personnel uniquement.
@@ -14,8 +14,11 @@ export async function GET(req) {
   const errorDesc = searchParams.get("error_description") || "";
   const appUrl = process.env.APP_URL || "http://localhost:3000";
 
-  const userId = await getUserId(req);
-  if (!userId) return NextResponse.redirect(`${appUrl}/app?linkedin=not_logged_in`);
+  // Compte visé : le client géré en mode agence (jamais l'agence), refusé en vue support
+  const target = await oauthTarget(req);
+  if (target.error === "read_only") return NextResponse.redirect(`${appUrl}/app?linkedin=error&msg=${encodeURIComponent(READ_ONLY_MESSAGE)}`);
+  if (target.error) return NextResponse.redirect(`${appUrl}/app?linkedin=not_logged_in`);
+  const userId = target.userId;
 
   if (error || !code) {
     console.error("LinkedIn OAuth refusé:", error, errorDesc);
@@ -27,6 +30,7 @@ export async function GET(req) {
   if (!savedState || savedState !== state) {
     return NextResponse.redirect(`${appUrl}/app?linkedin=state_mismatch`);
   }
+  if (!oauthTargetMatches(req, userId)) return NextResponse.redirect(`${appUrl}/app?linkedin=target_mismatch`);
 
   try {
     const tokenRes = await fetch("https://www.linkedin.com/oauth/v2/accessToken", {
@@ -71,6 +75,7 @@ export async function GET(req) {
 
     const res = NextResponse.redirect(`${appUrl}/app?linkedin=connected`);
     res.cookies.delete("li_oauth_state");
+    clearOauthTarget(res);
     return res;
   } catch (e) {
     console.error("Erreur callback LinkedIn:", e.message);

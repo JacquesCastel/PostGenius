@@ -12618,6 +12618,7 @@ export default function Home() {
       stats_refused: liMsg ? `Statistiques refusées : ${liMsg}` : "Autorisation refusée pour les statistiques du profil",
       stats_pending: "Statistiques du profil personnel en attente d'approbation par LinkedIn — réessayez plus tard.",
       state_mismatch: "Session OAuth expirée — réessayez la connexion",
+      target_mismatch: "Le compte géré a changé pendant la connexion : elle a été annulée. Relancez-la depuis le bon client.",
       not_logged_in: "Connectez-vous d'abord à votre compte LinkeePost",
       error: liMsg ? `Erreur LinkedIn : ${liMsg}` : "Erreur LinkedIn — consultez le terminal du serveur",
       org_error: liMsg ? `Erreur page entreprise : ${liMsg}` : "Erreur LinkedIn (page entreprise) — consultez le terminal du serveur",
@@ -12642,6 +12643,7 @@ export default function Home() {
       connected: "Instagram connecté ✓",
       refused: "Vous avez refusé l'autorisation Instagram",
       state_mismatch: "Session OAuth expirée — réessayez la connexion",
+      target_mismatch: "Le compte géré a changé pendant la connexion : elle a été annulée. Relancez-la depuis le bon client.",
       not_logged_in: "Connectez-vous d'abord à votre compte LinkeePost",
       error: "Erreur Instagram — " + (params.get("msg") || "consultez le terminal du serveur"),
     };

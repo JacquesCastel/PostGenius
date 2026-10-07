@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import crypto from "crypto";
-import { getEffectiveUserId as getUserId } from "@/lib/session";
+import { oauthTarget, bindOauthTarget, READ_ONLY_MESSAGE } from "@/lib/oauthTarget";
 
 // Étape 1 : redirection vers Instagram Login (Business Login for Instagram).
 // L'utilisateur se connecte avec ses identifiants Instagram directement —
@@ -13,9 +13,11 @@ import { getEffectiveUserId as getUserId } from "@/lib/session";
 //   INSTAGRAM_REDIRECT_URI  → https://postgenius.network/api/instagram/callback
 
 export async function GET(req) {
-  const userId = await getUserId(req);
   const appUrl = process.env.APP_URL || "http://localhost:3000";
-  if (!userId) return NextResponse.redirect(`${appUrl}/app?instagram=not_logged_in`);
+  // Compte visé : le client géré en mode agence ; mémorisé pour être revérifié au retour d'Instagram
+  const target = await oauthTarget(req);
+  if (target.error === "read_only") return NextResponse.redirect(`${appUrl}/app?instagram=error&msg=${encodeURIComponent(READ_ONLY_MESSAGE)}`);
+  if (target.error) return NextResponse.redirect(`${appUrl}/app?instagram=not_logged_in`);
 
   const appId = process.env.INSTAGRAM_APP_ID;
   const redirectUri = process.env.INSTAGRAM_REDIRECT_URI;
@@ -53,5 +55,6 @@ export async function GET(req) {
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
   });
+  bindOauthTarget(res, target.userId);
   return res;
 }

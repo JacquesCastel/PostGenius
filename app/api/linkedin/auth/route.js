@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import crypto from "crypto";
+import { oauthTarget, bindOauthTarget, READ_ONLY_MESSAGE } from "@/lib/oauthTarget";
 
 // Étape 1 OAuth : redirection vers la page d'autorisation LinkedIn.
 // Scopes : openid + profile (identité) et w_member_social (publication).
@@ -7,7 +8,12 @@ import crypto from "crypto";
 // l'app n°2 (auth-org) — Community Management API ne peut pas cohabiter ici
 // avec Share on LinkedIn / Sign In with LinkedIn.
 
-export async function GET() {
+export async function GET(req) {
+  const appUrl = process.env.APP_URL || "http://localhost:3000";
+  // Compte visé : le client géré en mode agence ; mémorisé pour être revérifié au retour de LinkedIn
+  const target = await oauthTarget(req);
+  if (target.error === "read_only") return NextResponse.redirect(`${appUrl}/app?linkedin=error&msg=${encodeURIComponent(READ_ONLY_MESSAGE)}`);
+  if (target.error) return NextResponse.redirect(`${appUrl}/app?linkedin=not_logged_in`);
   const clientId = process.env.LINKEDIN_CLIENT_ID;
   const redirectUri = process.env.LINKEDIN_REDIRECT_URI;
   if (!clientId || !redirectUri) {
@@ -31,5 +37,6 @@ export async function GET() {
   const res = NextResponse.redirect(url.toString());
   // Le state est vérifié au callback pour éviter les attaques CSRF
   res.cookies.set("li_oauth_state", state, { httpOnly: true, maxAge: 600, path: "/" });
+  bindOauthTarget(res, target.userId);
   return res;
 }
