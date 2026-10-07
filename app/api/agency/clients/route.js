@@ -49,6 +49,7 @@ export async function POST(req) {
       name, email, companyName, website,
       headline, businessDescription, targetAudience,
       tone, themes, styleNotes,
+      guided,
     } = await req.json();
     if (!name?.trim()) return NextResponse.json({ error: "Nom requis" }, { status: 400 });
 
@@ -74,7 +75,9 @@ export async function POST(req) {
         styleNotes:          styleNotes?.trim()           || null,
         plan: "agence",
         managedByUserId: auth.userId,
-        onboardedAt: new Date(), // profil déjà rempli par l'agence — pas besoin d'onboarding
+        // Création guidée : le profil est complété ensuite avec le parcours d'onboarding, dans l'espace du client
+        // (compagnon, import de posts, premier post). Sans `guided`, le profil est considéré comme rempli.
+        onboardedAt: guided === true ? null : new Date(),
       },
       select: { id: true, name: true, email: true, companyName: true, headline: true, createdAt: true },
     });
