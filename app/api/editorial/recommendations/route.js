@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { getEffectiveUserId as getUserId } from "@/lib/session";
 import { generateRecommendations } from "@/lib/editorial/recommendations";
 
-// "Que publier ?" — recommandations éditoriales du copilote.
+// "Que publier ?" — recommandations éditoriales du copilote (6 par fournée : l'espace Copilote IA
+// les affiche en colonnes, avec flèches et filtres ; le tableau de bord n'en montre qu'une).
 // GET : renvoie les recommandations actives, en générant une nouvelle
 // fournée si aucune n'est disponible ou fraîche (voir FRESH_HOURS).
 // ?force=1 : régénère même si des recommandations fraîches existent
@@ -16,7 +17,7 @@ export async function GET(req) {
   const force = searchParams.get("force") === "1";
 
   try {
-    const recommendations = await generateRecommendations(userId, { count: 3, force });
+    const recommendations = await generateRecommendations(userId, { count: 6, force });
     return NextResponse.json({ recommendations });
   } catch (e) {
     console.error("Erreur recommandations éditoriales:", e);

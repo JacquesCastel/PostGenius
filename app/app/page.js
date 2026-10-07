@@ -5076,7 +5076,7 @@ const PROFILE_SIGNALS = [
   { key: "styleNotes", label: "Consignes de style" },
 ];
 
-// Composants hors du corps de EditorialRecoWidget (et non redéfinis à chaque
+// Composants hors du corps des vues (et non redéfinis à chaque
 // rendu) : un composant recréé à chaque frappe force React à démonter/
 // remonter le sous-arbre, et donc le champ de saisie perd le focus.
 function ProfileSignalsPanel({ missingSignals, completion, onGoProfileField }) {
@@ -5203,7 +5203,9 @@ function EditorialChat({ profile, onProfileSaved, onRegenerate, showToast }) {
   );
 }
 
-function EditorialRecoWidget({ onGenerate, showToast, profile, onProfileSaved, onGoProfileField, onGoCopilot }) {
+// Recommandations « Que publier ? » partagées entre le tableau de bord (proposition du jour)
+// et l'espace Copilote IA : même appel, mis en cache côté serveur (20 h).
+function useRecommendations(showToast) {
   const [recos, setRecos] = useState(null); // null = chargement initial
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -5230,15 +5232,17 @@ function EditorialRecoWidget({ onGenerate, showToast, profile, onProfileSaved, o
     load();
   }, []);
 
+  // status : « générée » ou « ignorée » ; la proposition quitte la liste
   const respond = async (reco, status) => {
     setActingId(reco.id);
     try {
-      await fetch(`/api/editorial/recommendations/${reco.id}`, {
+      const res = await fetch(`/api/editorial/recommendations/${reco.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status }),
       });
-      setRecos((list) => list.filter((r) => r.id !== reco.id));
+      if (!res.ok) throw new Error();
+      setRecos((list) => (list ?? []).filter((r) => r.id !== reco.id));
     } catch {
       showToast("Erreur lors de la mise à jour de la recommandation");
     } finally {
@@ -5246,122 +5250,317 @@ function EditorialRecoWidget({ onGenerate, showToast, profile, onProfileSaved, o
     }
   };
 
-  const handleGenerate = (reco) => {
-    respond(reco, "générée");
-    onGenerate(reco);
-  };
+  return { recos, loading, refreshing, error, actingId, load, respond };
+}
 
-  // Complétion des champs de profil qui alimentent directement le copilote —
-  // affichée pour que "pourquoi ces propositions ?" ne reste pas opaque, avec
-  // un accès direct à ce qui manque plutôt qu'un renvoi générique vers Profil.
-  const missingSignals = PROFILE_SIGNALS.filter((s) => !profile?.[s.key]?.trim?.());
-  const completion = PROFILE_SIGNALS.length - missingSignals.length;
+const FORMAT_LABELS = { simple: "Post", carrousel: "Carrousel", video: "Vidéo" };
+
+// Carte d'une proposition (compacte : elle tient sur trois colonnes)
+function RecoCard({ reco, onGenerate, onIgnore, busy }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-col h-full">
+      <div className="flex items-center gap-1.5 flex-wrap mb-2">
+        {reco.pillar && (
+          <span className="text-[10px] font-semibold uppercase tracking-wide bg-[#fff1f1] text-[#ff5a5f] rounded-full px-2 py-0.5">
+            {reco.pillar.name}
+          </span>
+        )}
+        <span className="text-[10px] bg-gray-100 text-gray-500 rounded-full px-2 py-0.5">{FORMAT_LABELS[reco.postType] ?? "Post"}</span>
+        {reco.objective && <span className="text-[10px] text-gray-400">{reco.objective}</span>}
+      </div>
+      <p className="font-semibold text-sm leading-snug">{reco.topic}</p>
+      <p className="text-xs text-gray-500 mt-1.5">{reco.angle}</p>
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        title={open ? "Réduire" : "Lire la suite"}
+        className="text-[11px] text-gray-400 hover:text-gray-600 mt-2 flex items-start gap-1.5 text-left"
+      >
+        <Lightbulb size={12} className="mt-0.5 shrink-0 text-amber-400" />
+        <span className={open ? "" : "line-clamp-2"}>{reco.rationale}</span>
+      </button>
+      <div className="flex items-center gap-2 mt-auto pt-4">
+        <button
+          onClick={() => onGenerate(reco)}
+          disabled={busy}
+          className="flex-1 bg-[#0a66c2] hover:bg-[#004182] disabled:opacity-50 text-white text-xs font-medium px-3 py-2 rounded-lg flex items-center justify-center gap-1.5"
+        >
+          <Sparkles size={13} /> Générer ce post
+        </button>
+        <button
+          onClick={() => onIgnore(reco)}
+          disabled={busy}
+          title="Ignorer cette proposition"
+          aria-label="Ignorer cette proposition"
+          className="border border-gray-200 hover:border-gray-300 text-gray-500 p-2 rounded-lg disabled:opacity-50"
+        >
+          <EyeOff size={13} />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// Un groupe de filtres (pilier, objectif ou format) : « Tous » + les valeurs présentes, avec leur effectif
+function RecoFilterGroup({ label, options, value, onChange }) {
+  if (options.length < 2) return null; // un filtre à une seule valeur n'aide pas
+  const chip = (on) =>
+    `text-xs px-2.5 py-1 rounded-full border transition-colors ${on ? "bg-[#ff5a5f] text-white border-[#ff5a5f]" : "border-gray-200 text-gray-600 hover:border-gray-300 bg-white"}`;
+  return (
+    <div className="flex items-center gap-1.5 flex-wrap">
+      <span className="text-[11px] font-medium uppercase tracking-wide text-gray-400 w-16 shrink-0">{label}</span>
+      <button type="button" onClick={() => onChange(null)} className={chip(value == null)}>Tous</button>
+      {options.map((o) => (
+        <button
+          key={o.key}
+          type="button"
+          disabled={o.count === 0 && value !== o.key}
+          onClick={() => onChange(value === o.key ? null : o.key)}
+          className={`${chip(value === o.key)} disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:border-gray-200`}
+        >
+          {o.label} <span className={value === o.key ? "text-white/80" : "text-gray-400"}>{o.count}</span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+// Propositions sur trois colonnes (une ou deux sur petit écran), flèches gauche/droite et
+// filtres par taxonomie : pilier, objectif, format.
+function RecoCarousel({ recos, onGenerate, onIgnore, actingId }) {
+  const [filters, setFilters] = useState({ pillar: null, objective: null, format: null });
+  const [page, setPage] = useState(0);
+  const [perPage, setPerPage] = useState(3);
+
+  useEffect(() => {
+    const fit = () => setPerPage(window.innerWidth >= 1024 ? 3 : window.innerWidth >= 640 ? 2 : 1);
+    fit();
+    window.addEventListener("resize", fit);
+    return () => window.removeEventListener("resize", fit);
+  }, []);
+
+  const objectiveOf = (r) => (r.objective ?? "").trim().toLowerCase() || null;
+  const formatOf = (r) => r.postType ?? "simple";
+  const pillarOf = (r) => r.pillar?.name ?? null;
+  const KEYS = { pillar: pillarOf, objective: objectiveOf, format: formatOf };
+  // Une proposition passe si elle respecte tous les filtres, sauf éventuellement celui d'un groupe écarté
+  const passes = (r, skip) => Object.entries(KEYS).every(([g, keyOf]) => g === skip || filters[g] == null || keyOf(r) === filters[g]);
+  // Options d'un groupe : toutes les valeurs existantes (liste stable), effectif tenant compte des autres filtres
+  const facet = (group, labelOf) => {
+    const all = new Map();
+    for (const r of recos) {
+      const k = KEYS[group](r);
+      if (k != null && !all.has(k)) all.set(k, { key: k, label: labelOf(r), count: 0 });
+    }
+    for (const r of recos) {
+      const k = KEYS[group](r);
+      if (k != null && passes(r, group)) all.get(k).count++;
+    }
+    return [...all.values()].sort((a, b) => b.count - a.count || a.label.localeCompare(b.label));
+  };
+  const pillarOpts = facet("pillar", (r) => r.pillar.name);
+  const objectiveOpts = facet("objective", (r) => r.objective.trim().replace(/^./, (c) => c.toUpperCase()));
+  const formatOpts = facet("format", (r) => FORMAT_LABELS[r.postType] ?? "Post");
+
+  const filtered = recos.filter((r) => passes(r, null));
+  const setFilter = (k) => (v) => {
+    setFilters((f) => ({ ...f, [k]: v }));
+    setPage(0);
+  };
+  const pages = Math.max(1, Math.ceil(filtered.length / perPage));
+  const current = Math.min(page, pages - 1);
+  const visible = filtered.slice(current * perPage, current * perPage + perPage);
+  const from = filtered.length ? current * perPage + 1 : 0;
+  const to = Math.min(filtered.length, current * perPage + perPage);
+  const filtering = filters.pillar != null || filters.objective != null || filters.format != null;
+
+  const arrow = (dir, disabled) => (
+    <button
+      type="button"
+      onClick={() => setPage(current + dir)}
+      disabled={disabled}
+      aria-label={dir < 0 ? "Propositions précédentes" : "Propositions suivantes"}
+      className="p-2 rounded-full border border-gray-200 bg-white text-gray-600 hover:border-gray-300 disabled:opacity-30 disabled:cursor-not-allowed"
+    >
+      {dir < 0 ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
+    </button>
+  );
+
+  return (
+    <div className="space-y-3">
+      <div className="space-y-2">
+        <RecoFilterGroup label="Pilier" options={pillarOpts} value={filters.pillar} onChange={setFilter("pillar")} />
+        <RecoFilterGroup label="Objectif" options={objectiveOpts} value={filters.objective} onChange={setFilter("objective")} />
+        <RecoFilterGroup label="Format" options={formatOpts} value={filters.format} onChange={setFilter("format")} />
+      </div>
+
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-xs text-gray-400">
+          {filtered.length ? `${from}–${to} sur ${filtered.length} proposition${filtered.length > 1 ? "s" : ""}` : "Aucune proposition"}
+          {filtering && (
+            <button type="button" onClick={() => { setFilters({ pillar: null, objective: null, format: null }); setPage(0); }} className="text-[#0a66c2] hover:underline ml-2">
+              Réinitialiser les filtres
+            </button>
+          )}
+        </p>
+        <div className="flex items-center gap-1.5">
+          {arrow(-1, current === 0)}
+          {arrow(1, current >= pages - 1)}
+        </div>
+      </div>
+
+      {filtered.length === 0 ? (
+        <div className="bg-white rounded-xl border border-dashed border-gray-300 p-8 text-center text-sm text-gray-400">
+          Aucune proposition ne correspond à ces filtres.
+        </div>
+      ) : (
+        <div className={`grid gap-3 ${perPage === 3 ? "grid-cols-3" : perPage === 2 ? "grid-cols-2" : "grid-cols-1"}`}>
+          {visible.map((r) => (
+            <RecoCard key={r.id} reco={r} onGenerate={onGenerate} onIgnore={onIgnore} busy={actingId === r.id} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Tableau de bord : la proposition du jour seulement. Tout le reste (autres pistes, discussion,
+// filtres) vit dans l'espace Copilote IA.
+function RecoToday({ onGenerate, onGoCopilot, showToast }) {
+  const { recos, loading, error, actingId, respond } = useRecommendations(showToast);
+  const header = (
+    <div className="flex items-center justify-between gap-2 mb-3 flex-wrap">
+      <h2 className="font-semibold text-base flex items-center gap-2">
+        <Compass size={17} className="text-[#ff5a5f]" /> Que publier aujourd'hui ?
+      </h2>
+      <button onClick={onGoCopilot} className="text-xs text-[#0a66c2] hover:underline flex items-center gap-1">
+        {recos?.length > 1 ? `Voir les ${recos.length} propositions` : "Ouvrir le copilote"} <ChevronRight size={13} />
+      </button>
+    </div>
+  );
 
   if (loading) {
     return (
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center text-gray-400">
-        <RefreshCw size={22} className="mx-auto mb-2 animate-spin text-[#ff5a5f]" />
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 text-center text-gray-400">
+        <RefreshCw size={20} className="mx-auto mb-2 animate-spin text-[#ff5a5f]" />
         <p className="text-sm">Analyse de votre stratégie éditoriale…</p>
       </div>
     );
   }
-
   if (error) {
     return (
       <div>
-        <ProfileSignalsPanel missingSignals={missingSignals} completion={completion} onGoProfileField={onGoProfileField} />
-        <EditorialChat profile={profile} onProfileSaved={onProfileSaved} onRegenerate={() => load(true)} showToast={showToast} />
-        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 text-sm text-amber-800 flex items-start gap-2">
+        {header}
+        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-sm text-amber-800 flex items-start gap-2">
           <AlertCircle size={16} className="mt-0.5 shrink-0" />
           <span>{error}</span>
         </div>
       </div>
     );
   }
-
   if (!recos?.length) {
     return (
       <div>
-        <ProfileSignalsPanel missingSignals={missingSignals} completion={completion} onGoProfileField={onGoProfileField} />
-        <EditorialChat profile={profile} onProfileSaved={onProfileSaved} onRegenerate={() => load(true)} showToast={showToast} />
-        <div className="bg-white rounded-xl border border-dashed border-gray-300 p-8 text-center text-gray-400 text-sm">
-          Aucune recommandation pour l'instant.
-          <button onClick={() => load(true)} className="text-[#ff5a5f] hover:underline ml-1">Réessayer</button>
+        {header}
+        <div className="bg-white rounded-xl border border-dashed border-gray-300 p-6 text-center text-gray-400 text-sm">
+          Aucune proposition pour l'instant.
+          <button onClick={onGoCopilot} className="text-[#ff5a5f] hover:underline ml-1">Demander au copilote</button>
         </div>
       </div>
     );
   }
 
-  const [main, ...others] = recos;
-
-  const RecoCard = ({ reco, primary }) => (
-    <div className={`rounded-2xl border p-5 ${primary ? "bg-white border-gray-100 shadow-sm" : "bg-gray-50 border-gray-100"}`}>
-      <div className="flex items-center gap-2 flex-wrap mb-2">
-        {reco.pillar && (
-          <span className="text-[10px] font-semibold uppercase tracking-wide bg-[#fff1f1] text-[#ff5a5f] rounded-full px-2 py-0.5">
-            {reco.pillar.name}
-          </span>
-        )}
-        {reco.objective && <span className="text-[10px] text-gray-400">{reco.objective}</span>}
-      </div>
-      <p className={primary ? "font-semibold text-base" : "font-semibold text-sm"}>{reco.topic}</p>
-      <p className={`text-gray-500 mt-1 ${primary ? "text-sm" : "text-xs"}`}>{reco.angle}</p>
-      <p className="text-xs text-gray-400 mt-2 flex items-start gap-1.5">
-        <Lightbulb size={13} className="mt-0.5 shrink-0 text-amber-400" />
-        {reco.rationale}
-      </p>
-      <div className="flex items-center gap-2 mt-4">
-        <button
-          onClick={() => handleGenerate(reco)}
-          disabled={actingId === reco.id}
-          className="bg-[#0a66c2] hover:bg-[#004182] disabled:opacity-50 text-white text-xs font-medium px-3 py-1.5 rounded-lg flex items-center gap-1.5"
-        >
-          <Sparkles size={13} /> Générer ce post
-        </button>
-        <button
-          onClick={() => respond(reco, "ignorée")}
-          disabled={actingId === reco.id}
-          className="text-xs border border-gray-200 hover:border-gray-300 text-gray-600 px-3 py-1.5 rounded-lg flex items-center gap-1.5 disabled:opacity-50"
-        >
-          <EyeOff size={13} /> Ignorer
-        </button>
+  const reco = recos[0];
+  return (
+    <div>
+      {header}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+        <div className="flex items-center gap-2 flex-wrap mb-2">
+          {reco.pillar && (
+            <span className="text-[10px] font-semibold uppercase tracking-wide bg-[#fff1f1] text-[#ff5a5f] rounded-full px-2 py-0.5">{reco.pillar.name}</span>
+          )}
+          <span className="text-[10px] bg-gray-100 text-gray-500 rounded-full px-2 py-0.5">{FORMAT_LABELS[reco.postType] ?? "Post"}</span>
+          {reco.objective && <span className="text-[10px] text-gray-400">{reco.objective}</span>}
+        </div>
+        <p className="font-semibold text-base">{reco.topic}</p>
+        <p className="text-sm text-gray-500 mt-1">{reco.angle}</p>
+        <div className="flex items-center gap-2 mt-4 flex-wrap">
+          <button
+            onClick={() => {
+              respond(reco, "générée");
+              onGenerate(reco);
+            }}
+            disabled={actingId === reco.id}
+            className="bg-[#0a66c2] hover:bg-[#004182] disabled:opacity-50 text-white text-xs font-medium px-3 py-2 rounded-lg flex items-center gap-1.5"
+          >
+            <Sparkles size={13} /> Générer ce post
+          </button>
+          <button
+            onClick={onGoCopilot}
+            className="text-xs border border-gray-200 hover:border-gray-300 text-gray-700 px-3 py-2 rounded-lg flex items-center gap-1.5"
+          >
+            <MessageSquare size={13} /> Discuter avec le copilote
+          </button>
+        </div>
       </div>
     </div>
   );
+}
+
+// Espace Copilote IA : les propositions (colonnes, flèches, filtres) et la discussion avec le copilote
+function CopilotWorkspace({ profile, onProfileSaved, showToast, onGenerateFromReco, onGoProfileField }) {
+  const { recos, loading, refreshing, error, actingId, load, respond } = useRecommendations(showToast);
+  const missingSignals = PROFILE_SIGNALS.filter((s) => !profile?.[s.key]?.trim?.());
+  const completion = PROFILE_SIGNALS.length - missingSignals.length;
+
+  const generate = (reco) => {
+    respond(reco, "générée");
+    onGenerateFromReco(reco);
+  };
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-1 flex-wrap gap-2">
-        <h2 className="font-semibold text-base flex items-center gap-2">
-          <Compass size={17} className="text-[#ff5a5f]" /> Que publier aujourd'hui ?
-        </h2>
+    <div className="space-y-5">
+      <div className="flex items-start justify-between gap-3 flex-wrap">
+        <p className="text-sm text-gray-500 max-w-2xl">
+          Pistes construites à partir de votre profil, de vos piliers éditoriaux, de votre historique de publication et de vos remarques.
+        </p>
         <button
           onClick={() => load(true)}
-          disabled={refreshing}
-          className="text-xs text-gray-400 hover:text-[#ff5a5f] flex items-center gap-1 disabled:opacity-50"
+          disabled={refreshing || loading}
+          className="text-xs text-gray-500 hover:text-[#ff5a5f] flex items-center gap-1 disabled:opacity-50 shrink-0"
         >
           <RefreshCw size={12} className={refreshing ? "animate-spin" : ""} /> Voir d'autres propositions
         </button>
       </div>
-      <p className="text-xs text-gray-400 mb-3">
-        Construites à partir de votre profil, de vos piliers éditoriaux, de votre historique de publication et de vos remarques.{" "}
-        <button onClick={onGoCopilot} className="text-[#0a66c2] hover:underline">
-          Voir le détail dans Copilote IA →
-        </button>
-      </p>
+
       <ProfileSignalsPanel missingSignals={missingSignals} completion={completion} onGoProfileField={onGoProfileField} />
-      <EditorialChat profile={profile} onProfileSaved={onProfileSaved} onRegenerate={() => load(true)} showToast={showToast} />
-      <RecoCard reco={main} primary />
-      {others.length > 0 && (
-        <div className="mt-3">
-          <p className="text-xs text-gray-400 mb-2">Autres opportunités</p>
-          <div className="grid sm:grid-cols-2 gap-3">
-            {others.map((r) => (
-              <RecoCard key={r.id} reco={r} />
-            ))}
-          </div>
+
+      {loading ? (
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center text-gray-400">
+          <RefreshCw size={22} className="mx-auto mb-2 animate-spin text-[#ff5a5f]" />
+          <p className="text-sm">Analyse de votre stratégie éditoriale…</p>
         </div>
+      ) : error ? (
+        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 text-sm text-amber-800 flex items-start gap-2">
+          <AlertCircle size={16} className="mt-0.5 shrink-0" />
+          <span>{error}</span>
+        </div>
+      ) : !recos?.length ? (
+        <div className="bg-white rounded-xl border border-dashed border-gray-300 p-8 text-center text-gray-400 text-sm">
+          Aucune proposition pour l'instant.
+          <button onClick={() => load(true)} className="text-[#ff5a5f] hover:underline ml-1">Réessayer</button>
+        </div>
+      ) : (
+        <RecoCarousel recos={recos} onGenerate={generate} onIgnore={(r) => respond(r, "ignorée")} actingId={actingId} />
       )}
+
+      <div>
+        <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
+          <MessageSquare size={15} className="text-[#ff5a5f]" /> Discuter avec le copilote
+        </h3>
+        <EditorialChat profile={profile} onProfileSaved={onProfileSaved} onRegenerate={() => load(true)} showToast={showToast} />
+      </div>
     </div>
   );
 }
@@ -5372,7 +5571,7 @@ function EditorialRecoWidget({ onGenerate, showToast, profile, onProfileSaved, o
 // format, et le réglage de la publication autonome (déplacé depuis Profil
 // pour que le pilotage ne dépende plus uniquement du profil).
 // ----------------------------------------------------------------
-function CopilotView({ profile, onProfileSaved, showToast, onGoDashboard }) {
+function CopilotSettings({ profile, onProfileSaved, showToast, onGoDashboard }) {
   const [stats, setStats] = useState(null);
   const [pillars, setPillars] = useState([]);
   const [watch, setWatch] = useState([]);
@@ -5578,13 +5777,7 @@ function CopilotView({ profile, onProfileSaved, showToast, onGoDashboard }) {
   }
 
   return (
-    <main className="max-w-4xl mx-auto p-6 space-y-6">
-      <div>
-        <h2 className="font-semibold text-lg flex items-center gap-2">
-          <Compass size={18} className="text-[#ff5a5f]" /> Copilote IA
-        </h2>
-        <p className="text-sm text-gray-500">Comment le moteur de recommandations décide, et ce qu'il a appris.</p>
-      </div>
+    <div className="space-y-6">
 
       {/* KPI */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -5899,6 +6092,48 @@ function CopilotView({ profile, onProfileSaved, showToast, onGoDashboard }) {
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+// Copilote IA : deux onglets. « Propositions » (par défaut) est l'espace de travail ;
+// « Réglages et suivi » garde le pilotage du moteur (publication autonome, poids appris, piliers…).
+function CopilotView({ profile, onProfileSaved, showToast, onGoDashboard, onGenerateFromReco, onGoProfileField }) {
+  const [tab, setTab] = useState("work"); // work | settings
+  const tabBtn = (id, label) => (
+    <button
+      type="button"
+      onClick={() => setTab(id)}
+      className={`px-4 py-2 text-sm font-medium rounded-lg ${tab === id ? "bg-white shadow-sm text-gray-900" : "text-gray-500 hover:text-gray-700"}`}
+    >
+      {label}
+    </button>
+  );
+  return (
+    <main className="max-w-5xl mx-auto p-6 space-y-5">
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div>
+          <h2 className="font-semibold text-lg flex items-center gap-2">
+            <Compass size={18} className="text-[#ff5a5f]" /> Copilote IA
+          </h2>
+          <p className="text-sm text-gray-500">Que publier, pourquoi, et comment affiner avec lui.</p>
+        </div>
+        <div className="flex gap-1 bg-gray-100 p-1 rounded-xl">
+          {tabBtn("work", "Propositions")}
+          {tabBtn("settings", "Réglages et suivi")}
+        </div>
+      </div>
+      {tab === "work" ? (
+        <CopilotWorkspace
+          profile={profile}
+          onProfileSaved={onProfileSaved}
+          showToast={showToast}
+          onGenerateFromReco={onGenerateFromReco}
+          onGoProfileField={onGoProfileField}
+        />
+      ) : (
+        <CopilotSettings profile={profile} onProfileSaved={onProfileSaved} showToast={showToast} onGoDashboard={onGoDashboard} />
+      )}
     </main>
   );
 }
@@ -6185,14 +6420,7 @@ function DashboardView({ drafts, canVeille = true, canEvents = false, canScore =
       )}
 
       {/* Copilote éditorial */}
-      <EditorialRecoWidget
-        onGenerate={onGenerateFromReco}
-        showToast={showToast}
-        profile={profile}
-        onProfileSaved={onProfileSaved}
-        onGoProfileField={onGoProfileField}
-        onGoCopilot={onGoCopilot}
-      />
+      <RecoToday onGenerate={onGenerateFromReco} onGoCopilot={onGoCopilot} showToast={showToast} />
 
       {wizardInit && (
         <CampaignWizard
@@ -11817,6 +12045,27 @@ export default function Home() {
     content: "Contenu du site",
     messages: "Messages de contact",
   };
+  // Charge une proposition du copilote dans le formulaire de création (tableau de bord et Copilote IA)
+  const generateFromReco = (reco) => {
+        setForm((f) => ({
+          ...f,
+          theme: `${reco.topic} — ${reco.angle}`.slice(0, 200),
+          type: reco.postType || f.type,
+        }));
+        setInspiration({
+          title: reco.topic,
+          excerpt: [reco.hook && `Accroche suggérée : ${reco.hook}`, reco.cta && `CTA suggéré : ${reco.cta}`]
+            .filter(Boolean)
+            .join(" "),
+          url: null,
+          link: null,
+          source: "Copilote éditorial",
+        });
+        setActiveReco(reco);
+        setGenMode("single");
+        setView("create");
+        showToast("Recommandation chargée — personnalisez puis générez ✓");
+  };
   const handleNav = (item) => setView(item.id);
   const isLocked = (item) => item.requires && !planAllows(user, item.requires);
   const onNav = (item) =>
@@ -12381,26 +12630,7 @@ export default function Home() {
             setView("create");
             showToast("Article chargé comme inspiration ✓");
           }}
-          onGenerateFromReco={(reco) => {
-            setForm((f) => ({
-              ...f,
-              theme: `${reco.topic} — ${reco.angle}`.slice(0, 200),
-              type: reco.postType || f.type,
-            }));
-            setInspiration({
-              title: reco.topic,
-              excerpt: [reco.hook && `Accroche suggérée : ${reco.hook}`, reco.cta && `CTA suggéré : ${reco.cta}`]
-                .filter(Boolean)
-                .join(" "),
-              url: null,
-              link: null,
-              source: "Copilote éditorial",
-            });
-            setActiveReco(reco);
-            setGenMode("single");
-            setView("create");
-            showToast("Recommandation chargée — personnalisez puis générez ✓");
-          }}
+          onGenerateFromReco={generateFromReco}
           onGoCreate={() => setView("create")}
           onGoHistory={() => setView("history")}
           onGoEvents={() => setView("events")}
@@ -13366,7 +13596,7 @@ export default function Home() {
       ) : view === "stats" ? (
         <StatsView linkedin={linkedin} orgs={orgs} profile={profile} drafts={drafts} showToast={showToast} onConnect={() => setView("profile")} />
       ) : view === "copilot" ? (
-        <CopilotView profile={profile} onProfileSaved={setProfile} showToast={showToast} onGoDashboard={() => setView("dashboard")} />
+        <CopilotView profile={profile} onProfileSaved={setProfile} showToast={showToast} onGoDashboard={() => setView("dashboard")} onGenerateFromReco={generateFromReco} onGoProfileField={goToProfileField} />
       ) : view === "billing" ? (
         <BillingView user={user} showToast={showToast} />
       ) : view === "brand-kit" ? (
