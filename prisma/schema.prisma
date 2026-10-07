@@ -77,6 +77,7 @@ model User {
   lifecycleEmails LifecycleEmail[]
   interactions    InteractionLog[]
   knowledge       KnowledgeSource[]
+  stylePosts      StylePost[]
 
   // --- Profil de rédaction ---
   headline        String? // titre pro, ex : "Consultant SEO @ Acme"
@@ -550,6 +551,17 @@ model Invitation {
 // Base de connaissances d'un client : textes, articles (liens) et documents qu'il fournit pour que les posts
 // collent à son contexte et à ses faits. Chaque source est résumée par l'IA ; seuls ces résumés et les faits
 // relevés (chiffres, cas, positions) servent à rédiger, jamais sans que la source soit citée.
+// Anciens posts de l'auteur (import de son style) : le plus proche du sujet sert d'exemple de voix
+model StylePost {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  text      String
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
 model KnowledgeSource {
   id        String   @id @default(cuid())
   userId    String

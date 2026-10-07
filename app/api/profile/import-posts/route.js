@@ -2,11 +2,13 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getEffectiveUserId as getUserId } from "@/lib/session";
 import { isLanguage } from "@/lib/languages";
-import { serializeExamples } from "@/lib/postImport";
+import { serializeExamples, cleanPost, MAX_POSTS } from "@/lib/postImport";
+import { MIN_CORPUS_CHARS } from "@/lib/styleCorpus";
 
 // Applique la proposition d'analyse validée par l'utilisateur (POST) ou supprime les exemples
 // conservés (DELETE). On ne garde ni l'historique ni le fichier : seulement le portrait ajouté aux
-// consignes de style, les thèmes, la langue éventuelle et au plus 3 posts types.
+// consignes de style, les thèmes, la langue éventuelle, 3 posts types et, si l'utilisateur le souhaite,
+// ses posts (50 au plus) comme corpus d'exemples.
 
 const STYLE_NOTES_MAX = 3000;
 const THEMES_MAX = 15;
@@ -41,17 +43,34 @@ export async function POST(req) {
   }
   data.styleExamples = serializeExamples(body.examples);
 
-  const profile = await prisma.user.update({
-    where: { id: userId },
-    data,
-    select: { styleNotes: true, themes: true, postLanguage: true, styleImportedAt: true },
-  });
-  return NextResponse.json({ profile });
+  // Corpus : l'utilisateur peut garder tous ses posts (50 au plus) pour que l'IA retrouve ceux qui touchent au sujet.
+  // Le nouvel import REMPLACE l'ancien corpus.
+  const corpus = body.keepPosts === true && Array.isArray(body.posts)
+    ? body.posts.map(cleanPost).filter((t) => t.length >= MIN_CORPUS_CHARS).slice(0, MAX_POSTS)
+    : null;
+
+  const [profile] = await prisma.$transaction([
+    prisma.user.update({
+      where: { id: userId },
+      data,
+      select: { styleNotes: true, themes: true, postLanguage: true, styleImportedAt: true },
+    }),
+    ...(corpus
+      ? [
+          prisma.stylePost.deleteMany({ where: { userId } }),
+          prisma.stylePost.createMany({ data: corpus.map((text) => ({ userId, text })) }),
+        ]
+      : []),
+  ]);
+  return NextResponse.json({ profile, kept: corpus?.length ?? 0 });
 }
 
 export async function DELETE(req) {
   const userId = await getUserId(req);
   if (!userId) return NextResponse.json({ error: "Non connecté." }, { status: 401 });
-  await prisma.user.update({ where: { id: userId }, data: { styleExamples: null, styleImportedAt: null } });
+  await prisma.$transaction([
+    prisma.user.update({ where: { id: userId }, data: { styleExamples: null, styleImportedAt: null } }),
+    prisma.stylePost.deleteMany({ where: { userId } }),
+  ]);
   return NextResponse.json({ ok: true });
 }
