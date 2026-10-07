@@ -7729,6 +7729,197 @@ function StatsView({ linkedin, orgs, profile, drafts, showToast, onConnect }) {
   );
 }
 
+// Dernier écran de l'onboarding : le copilote écrit un premier post avec ce que le client vient de lui dire,
+// qu'il peut retoucher une fois (et le copilote propose ce qu'il peut retenir). Rien n'est publié ; le post
+// peut être gardé en brouillon. Le profil est déjà enregistré (étape précédente), donc /api/generate l'utilise.
+function OnboardingFirstPost({ fields, saving, showToast, onFinish, onBack }) {
+  const themes = (fields.themes ?? "").split(",").map((t) => t.trim()).filter(Boolean).slice(0, 2);
+  const ideas = [...themes.map((t) => `Mon point de vue sur ${t}`), "Une erreur fréquente que je vois dans mon métier", "Ce que j'ai appris ces derniers mois", "Pourquoi on fait appel à moi"].slice(0, 4);
+  const [theme, setTheme] = useState("");
+  const [post, setPost] = useState(null); // { text, reply, remember: [{ text, state }] }
+  const [original, setOriginal] = useState("");
+  const [asked, setAsked] = useState([]); // consignes déjà demandées sur ce post
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState(null);
+  const [draftSaved, setDraftSaved] = useState(false);
+  const [savingDraft, setSavingDraft] = useState(false);
+  const [refineText, setRefineText] = useState("");
+
+  const call = async (instruction) => {
+    if (busy) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "simple",
+          theme: theme.trim(),
+          expertise: fields.expertise,
+          tone: fields.tone,
+          maxChars: fields.defaultMaxChars,
+          language: fields.postLanguage,
+          ...(instruction ? { refine: { text: post.text, instruction, history: asked } } : {}),
+        }),
+      });
+      const data = await readJson(res);
+      if (!res.ok) throw new Error(data.error || "Erreur");
+      if (instruction) setAsked((a) => [...a, instruction]);
+      else {
+        setOriginal(data.text);
+        setAsked([]);
+      }
+      setPost({ text: data.text, reply: instruction ? data.reply : "", remember: (data.remember ?? []).map((text) => ({ text, state: "open" })) });
+      setRefineText("");
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const remember = async (i) => {
+    const text = post.remember[i].text;
+    try {
+      const res = await fetch("/api/remarks", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text }) });
+      const data = await readJson(res);
+      if (!res.ok) throw new Error(data.error || "Erreur");
+      setPost((p) => ({ ...p, remember: p.remember.map((r, j) => (j === i ? { ...r, state: "saved" } : r)) }));
+    } catch (e) {
+      showToast(e.message);
+    }
+  };
+  const dismiss = (i) => setPost((p) => ({ ...p, remember: p.remember.map((r, j) => (j === i ? { ...r, state: "dismissed" } : r)) }));
+
+  // Garde le post en brouillon puis termine l'onboarding
+  const keepAndFinish = async () => {
+    if (savingDraft) return;
+    if (!draftSaved) {
+      setSavingDraft(true);
+      try {
+        const res = await fetch("/api/drafts", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ type: "simple", theme: theme.trim(), expertise: fields.expertise, tone: fields.tone, maxChars: fields.defaultMaxChars, text: post.text, generatedText: original }),
+        });
+        const data = await readJson(res);
+        if (!res.ok) throw new Error(data.error || "Erreur");
+        setDraftSaved(true);
+        showToast("Premier post enregistré dans vos brouillons ✓");
+      } catch (e) {
+        showToast(e.message);
+        setSavingDraft(false);
+        return;
+      }
+      setSavingDraft(false);
+    }
+    onFinish();
+  };
+
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 sm:p-6" data-testid="first-post">
+      <p className="text-xs font-medium text-[#ff5a5f] mb-1">Étape {ONBOARDING_STEPS.length} sur {ONBOARDING_STEPS.length}</p>
+      <h2 className="font-semibold text-lg">Votre premier post</h2>
+      <p className="text-sm text-gray-500 mb-4">Voyons le copilote à l&apos;œuvre : choisissez un sujet, il rédige avec tout ce que vous venez de lui dire. Rien n&apos;est publié.</p>
+
+      {!post ? (
+        <div className="space-y-3">
+          <div className="flex flex-wrap gap-1.5">
+            {ideas.map((idea) => (
+              <button type="button" key={idea} onClick={() => setTheme(idea)} className={`text-xs px-3 py-1.5 rounded-full border ${theme === idea ? "bg-[#fff1f1] text-[#f63d44] border-[#ff5a5f]" : "border-gray-200 text-gray-600 hover:border-gray-300"}`}>
+                {idea}
+              </button>
+            ))}
+          </div>
+          <textarea
+            rows={3}
+            maxLength={1500}
+            value={theme}
+            onChange={(e) => setTheme(e.target.value)}
+            placeholder="Ou décrivez votre idée : « les 3 erreurs que je vois en communication interne »…"
+            className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
+          />
+          <button
+            type="button"
+            onClick={() => call()}
+            disabled={!theme.trim() || busy}
+            className="w-full bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white text-sm font-medium py-2.5 rounded-lg flex items-center justify-center gap-2"
+          >
+            {busy ? <RefreshCw size={15} className="animate-spin" /> : <Sparkles size={15} />}
+            {busy ? "Le copilote écrit votre post…" : "Écrire mon premier post"}
+          </button>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
+            <pre dir="auto" className="whitespace-pre-wrap text-sm font-sans leading-relaxed" data-testid="first-post-text">{post.text}</pre>
+          </div>
+          {post.reply && <p className="bg-gray-100 text-gray-800 text-xs rounded-2xl rounded-bl-sm px-3 py-2 w-fit max-w-[90%]">{post.reply}</p>}
+          {post.remember.map((r, i) =>
+            r.state === "dismissed" ? null : (
+              <div key={i} className="rounded-xl bg-amber-50 border border-amber-200 px-3 py-2">
+                <p className="text-[11px] font-semibold text-amber-800 flex items-center gap-1">
+                  <Lightbulb size={12} /> {r.state === "saved" ? "Retenu pour vos prochains posts" : "À retenir pour vos prochains posts ?"}
+                </p>
+                <p className="text-xs text-gray-800 mt-0.5">{r.text}</p>
+                {r.state === "open" && (
+                  <div className="flex gap-2 mt-1.5">
+                    <button type="button" onClick={() => remember(i)} className="bg-[#ff5a5f] hover:bg-[#f63d44] text-white text-xs font-medium px-3 py-1 rounded-lg">Retenir</button>
+                    <button type="button" onClick={() => dismiss(i)} className="text-xs text-gray-500 hover:text-gray-800 px-2 py-1">Non merci</button>
+                  </div>
+                )}
+              </div>
+            )
+          )}
+          <div>
+            <p className="text-xs text-gray-500 mb-1.5">Un détail à changer ? Dites-le, le post est réécrit.</p>
+            <div className="flex flex-wrap gap-1.5 mb-2">
+              {["Plus court", "Moins formel", "Plus percutant"].map((s) => (
+                <button type="button" key={s} onClick={() => call(s)} disabled={busy} className="text-xs bg-gray-100 hover:bg-[#fff1f1] hover:text-[#f63d44] disabled:opacity-50 text-gray-600 px-2.5 py-1 rounded-full">
+                  {s}
+                </button>
+              ))}
+            </div>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (refineText.trim()) call(refineText.trim());
+              }}
+              className="flex gap-2"
+            >
+              <input type="text" value={refineText} onChange={(e) => setRefineText(e.target.value)} placeholder="« termine par une question »…" className="flex-1 min-w-0 border border-gray-300 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]" />
+              <button type="submit" disabled={busy || !refineText.trim()} className="bg-gray-900 hover:bg-gray-700 disabled:bg-gray-300 text-white text-xs px-3 py-1.5 rounded-lg">Envoyer</button>
+            </form>
+            {busy && (
+              <p className="text-xs text-gray-500 flex items-center gap-1.5 mt-2">
+                <RefreshCw size={12} className="animate-spin text-[#ff5a5f]" /> Le copilote retouche votre post…
+              </p>
+            )}
+          </div>
+          <div className="flex flex-wrap items-center gap-3 pt-3 border-t border-gray-100">
+            <button type="button" onClick={keepAndFinish} disabled={busy || saving || savingDraft} className="bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white text-sm font-medium px-5 py-2 rounded-lg flex items-center gap-1.5">
+              {(saving || savingDraft) && <RefreshCw size={14} className="animate-spin" />}
+              Garder ce post et terminer <Check size={15} />
+            </button>
+            <button type="button" onClick={() => { setPost(null); setError(null); }} disabled={busy} className="text-xs text-gray-500 hover:text-gray-800">Autre sujet</button>
+          </div>
+          <p className="text-[11px] text-gray-400">Le post sera dans vos brouillons : vous pourrez le retoucher, le programmer ou le publier.</p>
+        </div>
+      )}
+
+      {error && <p className="mt-3 text-xs text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{error}</p>}
+
+      <div className="flex items-center justify-between mt-5 pt-4 border-t border-gray-100">
+        <button type="button" onClick={onBack} className="text-sm text-gray-500 hover:text-gray-700">← Retour</button>
+        <button type="button" onClick={onFinish} disabled={saving || busy} className="text-sm text-gray-500 hover:text-gray-800">
+          {post ? "Terminer sans garder ce post" : "Passer cette étape"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ----------------------------------------------------------------
 // Onboarding première connexion : 3 étapes courtes, accompagnées par le compagnon. Ce sont les trois premières
 // étapes du parcours du Profil (mêmes champs, même compagnon) ; le reste (sources, rythme, LinkedIn…)
@@ -7738,7 +7929,9 @@ const ONBOARDING_STEPS = [
   { stageId: "identity", short: "Vous", title: "Bienvenue ! Qui êtes-vous ?" },
   { stageId: "audience", short: "Votre cible", title: "À qui parlez-vous ?" },
   { stageId: "voice", short: "Votre voix", title: "Votre façon d'écrire" },
+  { stageId: null, short: "Premier post", title: "Votre premier post" }, // écran final : le copilote écrit sous les yeux du client
 ];
+const ONBOARDING_FORM_STEPS = 3; // les trois premières étapes sont des questions ; la dernière est le premier post
 
 function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast }) {
   // Si LinkedIn vient d'être connecté (retour OAuth d'un ancien parcours), on reprend à la dernière étape
@@ -7772,11 +7965,12 @@ function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast 
   };
 
   const last = ONBOARDING_STEPS.length - 1;
-  const stage = PROFILE_STAGES.find((s) => s.id === ONBOARDING_STEPS[step].stageId);
-  const nextStage = step < last ? PROFILE_STAGES.find((s) => s.id === ONBOARDING_STEPS[step + 1].stageId) : null;
+  const isFirstPost = step >= ONBOARDING_FORM_STEPS;
+  const stage = isFirstPost ? null : PROFILE_STAGES.find((s) => s.id === ONBOARDING_STEPS[step].stageId);
+  const nextStage = step < ONBOARDING_FORM_STEPS - 1 ? PROFILE_STAGES.find((s) => s.id === ONBOARDING_STEPS[step + 1].stageId) : null;
   const ctx = { knowledgeCount: 0, remarksCount: 0, styleImportedAt: profile?.styleImportedAt, linkedin: { connected: linkedinConnected } };
-  const progress = stageProgress(stage, fields, ctx);
-  const missing = stage.items.filter((i) => !i.bonus && !i.done(fields, ctx)).map((i) => i.label.toLowerCase());
+  const progress = stage ? stageProgress(stage, fields, ctx) : null;
+  const missing = stage ? stage.items.filter((i) => !i.bonus && !i.done(fields, ctx)).map((i) => i.label.toLowerCase()) : [];
 
   const canNext = step === 0 ? hasText(fields.name) && hasText(fields.expertise) : step === 1 ? hasText(fields.businessDescription) : true;
 
@@ -7802,7 +7996,7 @@ function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast 
       setSaving(false);
     }
   };
-  const advance = () => (step < last ? save(false) : save(true));
+  const advance = () => save(false); // une étape de questions : on enregistre puis on passe à la suivante
 
   const inputCls =
     "w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]";
@@ -7821,7 +8015,7 @@ function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast 
 
         {/* Progression : le nom des étapes, et ce que ça représente */}
         <div className="mb-5">
-          <div className="flex items-center gap-2">
+          <div className="flex items-start gap-2">
             {ONBOARDING_STEPS.map((s, i) => (
               <div key={s.stageId} className="flex-1">
                 <div className={`h-1.5 rounded-full ${i <= step ? "bg-[#ff5a5f]" : "bg-gray-200"}`} />
@@ -7829,9 +8023,13 @@ function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast 
               </div>
             ))}
           </div>
-          <p className="text-xs text-gray-400 mt-1">Trois étapes, environ 5 minutes. Le reste se complète plus tard, au fil de l&apos;usage.</p>
+          <p className="text-xs text-gray-400 mt-1">Trois questions, puis votre premier post : environ 5 minutes. Le reste se complète plus tard, au fil de l&apos;usage.</p>
         </div>
 
+        {isFirstPost && <OnboardingFirstPost fields={fields} saving={saving} showToast={showToast} onFinish={() => save(true)} onBack={() => setStep(step - 1)} />}
+
+        {!isFirstPost && (
+        <>
         <ProfileCompanion
           key={stage.id}
           stage={stage}
@@ -8002,23 +8200,19 @@ function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast 
               className="bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white text-sm font-medium px-5 py-2 rounded-lg flex items-center gap-1.5"
             >
               {saving && <RefreshCw size={14} className="animate-spin" />}
-              {step < last ? (
-                <>
-                  Continuer <ChevronRight size={15} />
-                </>
-              ) : (
-                <>
-                  Terminer <Check size={15} />
-                </>
-              )}
+              Continuer <ChevronRight size={15} />
             </button>
           </div>
           {!canNext && <p className="text-xs text-gray-400 text-right mt-2">{step === 0 ? "Votre nom et votre expertise sont nécessaires pour continuer." : "Décrivez votre activité pour continuer."}</p>}
         </div>
+        </>
+        )}
 
-        <button type="button" onClick={() => save(true)} disabled={saving} className="text-xs text-gray-400 hover:text-gray-600 mt-4 block mx-auto">
-          Passer la configuration (modifiable ensuite dans « Profil »)
-        </button>
+        {!isFirstPost && (
+          <button type="button" onClick={() => save(true)} disabled={saving} className="text-xs text-gray-400 hover:text-gray-600 mt-4 block mx-auto">
+            Passer la configuration (modifiable ensuite dans « Profil »)
+          </button>
+        )}
       </div>
     </div>
   );
@@ -12728,6 +12922,10 @@ export default function Home() {
         showToast={showToast}
         onDone={(p) => {
           setProfile(p);
+          fetch("/api/drafts")
+            .then((r) => r.json())
+            .then((d) => setDrafts(d.drafts ?? []))
+            .catch(() => {});
           setForm((f) => ({
             ...f,
             expertise: p.expertise || f.expertise,
