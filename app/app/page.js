@@ -6058,8 +6058,8 @@ function DashboardView({ drafts, canVeille = true, canEvents = false, canScore =
   return (
     <main className="max-w-5xl mx-auto p-6 space-y-6">
       {/* Synthèse : répartition des posts + calendrier des publications (2 colonnes) */}
-      <div className="grid md:grid-cols-3 gap-4 items-start">
-        <div className="space-y-4">
+      <div className="grid md:grid-cols-3 gap-4 items-stretch">
+        <div className="flex flex-col gap-4">
           {/* Donut : répartition des posts */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
             <p className="text-sm font-semibold mb-3">Répartition des posts</p>
@@ -6106,8 +6106,33 @@ function DashboardView({ drafts, canVeille = true, canEvents = false, canScore =
           >
             <Sparkles size={16} /> Créer un post
           </button>
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex-1 min-h-0 flex flex-col">
+            <p className="text-sm font-semibold mb-3">À paraître</p>
+            {scheduled.length === 0 ? (
+              <p className="text-xs text-gray-400">Aucun post programmé pour l'instant.</p>
+            ) : (
+              <ul className="divide-y divide-gray-100 -my-1">
+                {scheduled.slice(0, 5).map((d) => (
+                  <li key={d.id} className="py-2">
+                    <div className="flex items-baseline justify-between gap-3">
+                      <p className="text-xs font-medium truncate">{d.theme || "Post"}</p>
+                      <p className="text-[11px] font-medium text-amber-600 shrink-0">{relativeTime(d.scheduledAt)}</p>
+                    </div>
+                    <p className="text-[11px] text-gray-400 truncate">
+                      {fmtDateTime(d.scheduledAt)} · {d.target === "person" ? "profil perso" : "page entreprise"}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {scheduled.length > 5 && (
+              <button onClick={onGoHistory} className="text-xs text-[#ff5a5f] hover:underline mt-auto pt-3 text-left">
+                Voir les {scheduled.length - 5} autres →
+              </button>
+            )}
+          </div>
         </div>
-        <div className="md:col-span-2">
+        <div className="md:col-span-2 [&>div]:h-full">
           <CalendarMonth drafts={drafts} onReschedule={onReschedule} />
         </div>
       </div>
