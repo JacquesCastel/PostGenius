@@ -1085,7 +1085,79 @@ ${String(src.text ?? "").slice(0, CAMPAIGN_SOURCE_CHARS)}
 Les posts de la campagne s'appuient sur cette source : reprends fidèlement ses faits et chiffres, n'ajoute aucune information absente de la source, ne recopie pas de longs passages, et décline le sujet sous différents angles pour la cible.`;
 }
 
-function CampaignWizard({ profile, linkedin, orgs, onClose, onLaunched, onProfileSaved, showToast, initial, inline = false }) {
+// « À retenir » proposé par le copilote après un ajustement : Retenir l'enregistre comme remarque pour tous les futurs posts
+function RememberCard({ item, onRemember, onDismiss }) {
+  if (item.state === "dismissed") return null;
+  return (
+    <div className="rounded-xl bg-amber-50 border border-amber-200 px-3 py-2 max-w-[95%] w-fit" data-testid="remember-card">
+      <p className="text-[11px] font-semibold text-amber-800 flex items-center gap-1">
+        <Lightbulb size={12} /> {item.state === "saved" ? "Retenu pour vos prochains posts" : "À retenir pour vos prochains posts ?"}
+      </p>
+      <p className="text-xs text-gray-800 mt-0.5">{item.text}</p>
+      {item.state === "open" && (
+        <div className="flex gap-2 mt-1.5">
+          <button type="button" onClick={onRemember} className="bg-[#ff5a5f] hover:bg-[#f63d44] text-white text-xs font-medium px-3 py-1 rounded-lg">Retenir</button>
+          <button type="button" onClick={onDismiss} className="text-xs text-gray-500 hover:text-gray-800 px-2 py-1">Non merci</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Après le lancement : ce qui s'est passé, où relire les posts, et la suite
+function CampaignLaunched({ result, theme, linkedin, onClose, onGoHistory, onGoProfile }) {
+  const none = result.created === 0;
+  const review = result.status === "à valider";
+  return (
+    <div className="space-y-4" data-testid="campaign-launched">
+      <div className="text-center">
+        <span className={`w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3 ${none ? "bg-amber-100 text-amber-600" : "bg-green-100 text-green-600"}`}>
+          {none ? <AlertCircle size={22} /> : <Check size={22} />}
+        </span>
+        <h4 className="font-semibold text-base">{none ? "Aucun post n'a pu être créé" : `Campagne lancée : ${result.created} post${result.created > 1 ? "s" : ""} préparé${result.created > 1 ? "s" : ""}`}</h4>
+        <p className="text-sm text-gray-500 mt-1">« {theme} »</p>
+      </div>
+      {none ? (
+        <p className="text-sm text-gray-600 bg-amber-50 border border-amber-200 rounded-lg p-3">
+          Tous vos créneaux de cette période sont déjà occupés par d&apos;autres posts. Relancez la campagne sur une période plus longue, ou libérez un créneau dans « Mes posts ».
+        </p>
+      ) : (
+        <ol className="space-y-2.5">
+          {[
+            review
+              ? ["Relisez vos posts", "Ouvrez « Mes posts » : chaque post est « à valider ». Modifiez-le si besoin, puis validez-le : il partira à la date prévue."]
+              : ["Vos posts sont programmés", "Ils partiront automatiquement aux dates prévues. Vous pouvez les relire et les modifier dans « Mes posts » avant leur date."],
+            ["Ajustez au fil de l'eau", "Chaque modification que vous faites aide le copilote : s'il repère une habitude, il vous proposera de la retenir pour vos prochains posts."],
+            linkedin?.connected ? ["LinkedIn est connecté", "Rien d'autre à faire : les posts valides partiront seuls."] : ["Connectez LinkedIn", "Sans connexion, les posts ne pourront pas partir : connectez votre compte depuis « Profil » avant la première date."],
+          ].map(([t, d], i) => (
+            <li key={t} className="flex items-start gap-3 bg-gray-50 rounded-xl p-3">
+              <span className="w-6 h-6 rounded-full bg-[#ff5a5f] text-white text-xs font-bold flex items-center justify-center shrink-0">{i + 1}</span>
+              <span>
+                <span className="block text-sm font-medium">{t}</span>
+                <span className="block text-xs text-gray-500 mt-0.5">{d}</span>
+              </span>
+            </li>
+          ))}
+        </ol>
+      )}
+      <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+        <button type="button" onClick={onClose} className="text-sm text-gray-500 hover:text-gray-800">Voir mes campagnes</button>
+        <div className="flex gap-2 flex-wrap">
+          {!none && !linkedin?.connected && onGoProfile && (
+            <button type="button" onClick={onGoProfile} className="border border-[#0a66c2] text-[#0a66c2] hover:bg-[#e8f1fb] text-sm font-medium px-4 py-2 rounded-lg">Connecter LinkedIn</button>
+          )}
+          {onGoHistory && (
+            <button type="button" onClick={onGoHistory} className="bg-[#ff5a5f] hover:bg-[#f63d44] text-white text-sm font-medium px-5 py-2 rounded-lg flex items-center gap-1.5">
+              {none ? "Ouvrir mes posts" : review ? "Relire mes posts" : "Voir mes posts"} <ChevronRight size={15} />
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CampaignWizard({ profile, linkedin, orgs, onClose, onLaunched, onProfileSaved, onGoHistory, onGoProfile, showToast, initial, inline = false }) {
   const [step, setStep] = useState(0);
   const [name, setName] = useState(initial?.name ?? "");
   const [theme, setTheme] = useState(initial?.theme ?? "");
@@ -1096,6 +1168,8 @@ function CampaignWizard({ profile, linkedin, orgs, onClose, onLaunched, onProfil
   const [sample, setSample] = useState(null);
   const [sampleApproved, setSampleApproved] = useState(false);
   const [feedback, setFeedback] = useState("");
+  const [sampleThread, setSampleThread] = useState([]); // ajustements de l'exemple : { role, text, remember? }
+  const [launched, setLaunched] = useState(null); // résultat du lancement : { created, skipped, status }
   const [periodDays, setPeriodDays] = useState(7);
   const [target, setTarget] = useState("person");
   // Rythme de publication : choisi ici si le client ne l'a pas encore fait, enregistré dans son profil au lancement
@@ -1194,7 +1268,8 @@ function CampaignWizard({ profile, linkedin, orgs, onClose, onLaunched, onProfil
     }
   };
 
-  const loadSample = async (withFeedback) => {
+  const loadSample = async (withFeedback, fbText) => {
+    const fb = (fbText ?? feedback).trim();
     setBusy(true);
     try {
       const res = await fetch("/api/campaign/sample", {
@@ -1205,7 +1280,7 @@ function CampaignWizard({ profile, linkedin, orgs, onClose, onLaunched, onProfil
           objective,
           mood,
           context: buildContext(),
-          ...(withFeedback ? { feedback, previous: sample } : {}),
+          ...(withFeedback ? { feedback: fb, previous: sample, history: sampleThread.filter((m) => m.role === "user").map((m) => m.text) } : {}),
         }),
       });
       const data = await readJson(res);
@@ -1213,10 +1288,33 @@ function CampaignWizard({ profile, linkedin, orgs, onClose, onLaunched, onProfil
       setSample(data.text);
       setSampleApproved(false);
       setFeedback("");
+      if (withFeedback) {
+        setSampleThread((t) => [
+          ...t,
+          { role: "user", text: fb },
+          { role: "assistant", text: data.reply || "J'ai ajusté l'exemple.", remember: (data.remember ?? []).map((text) => ({ text, state: "open" })) },
+        ]);
+      } else {
+        setSampleThread([]);
+      }
     } catch (e) {
       showToast(e.message);
     } finally {
       setBusy(false);
+    }
+  };
+
+  const setRememberState = (i, j, state) =>
+    setSampleThread((t) => t.map((m, k) => (k === i ? { ...m, remember: m.remember.map((r, l) => (l === j ? { ...r, state } : r)) } : m)));
+  const rememberSample = async (i, j) => {
+    try {
+      const res = await fetch("/api/remarks", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text: sampleThread[i].remember[j].text }) });
+      const data = await readJson(res);
+      if (!res.ok) throw new Error(data.error || "Erreur");
+      setRememberState(i, j, "saved");
+      showToast("Retenu — cela guidera vos prochains posts ✓");
+    } catch (e) {
+      showToast(e.message);
     }
   };
 
@@ -1257,13 +1355,8 @@ function CampaignWizard({ profile, linkedin, orgs, onClose, onLaunched, onProfil
       });
       const pData = await readJson(pRes);
       if (!pRes.ok) throw new Error(pData.error);
-      showToast(
-        pData.status === "à valider"
-          ? `Campagne lancée : ${pData.created} posts à valider ✓`
-          : `Campagne lancée : ${pData.created} posts programmés ✓`
-      );
+      setLaunched({ created: pData.created, skipped: pData.skipped ?? 0, status: pData.status });
       onLaunched();
-      onClose();
     } catch (e) {
       showToast(e.message);
     } finally {
@@ -1304,6 +1397,10 @@ function CampaignWizard({ profile, linkedin, orgs, onClose, onLaunched, onProfil
           )}
         </div>
 
+        {launched ? (
+          <CampaignLaunched result={launched} theme={theme} linkedin={linkedin} onClose={onClose} onGoHistory={onGoHistory ? () => { onClose(); onGoHistory(); } : null} onGoProfile={onGoProfile ? () => { onClose(); onGoProfile(); } : null} />
+        ) : (
+          <>
         {/* Progression */}
         <div className="flex items-center gap-2 mb-5">
           {STEPS.map((s, i) => (
@@ -1572,27 +1669,57 @@ function CampaignWizard({ profile, linkedin, orgs, onClose, onLaunched, onProfil
                 >
                   <pre className="whitespace-pre-wrap text-sm font-sans leading-relaxed">{sample}</pre>
                 </div>
+                {sampleThread.length > 0 && (
+                  <div className="space-y-2" data-testid="sample-thread">
+                    {sampleThread.map((m, i) =>
+                      m.role === "user" ? (
+                        <div key={i} className="flex justify-end">
+                          <p className="bg-gray-900 text-white text-xs rounded-2xl rounded-br-sm px-3 py-2 max-w-[85%]">{m.text}</p>
+                        </div>
+                      ) : (
+                        <div key={i} className="space-y-1.5">
+                          <p className="bg-gray-100 text-gray-800 text-xs rounded-2xl rounded-bl-sm px-3 py-2 max-w-[90%] w-fit">{m.text}</p>
+                          {m.remember?.map((r, j) => (
+                            <RememberCard key={j} item={r} onRemember={() => rememberSample(i, j)} onDismiss={() => setRememberState(i, j, "dismissed")} />
+                          ))}
+                        </div>
+                      )
+                    )}
+                  </div>
+                )}
                 {sampleApproved ? (
                   <p className="text-sm text-green-700 flex items-center gap-1.5">
-                    <Check size={15} /> Exemple validé — il guidera le style de la campagne
+                    <Check size={15} /> Exemple validé : il guidera le style de la campagne
                   </p>
                 ) : (
-                  <div className="flex flex-wrap gap-2">
-                    <input
-                      type="text"
-                      value={feedback}
-                      onChange={(e) => setFeedback(e.target.value)}
-                      placeholder="Ajustement : « plus direct », « cite un chiffre », …"
-                      className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
-                    />
-                    <button
-                      onClick={() => loadSample(true)}
-                      disabled={busy || !feedback.trim()}
-                      className="bg-gray-900 hover:bg-gray-700 disabled:bg-gray-300 text-white text-xs px-3 py-2 rounded-lg flex items-center gap-1"
+                  <div className="space-y-2">
+                    <p className="text-xs text-gray-500">Un détail à changer ? Dites-le, l&apos;exemple est réécrit. Ce que vous demandez de façon répétée peut être retenu pour tous vos posts.</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {["Plus direct", "Plus court", "Cite un chiffre", "Moins formel"].map((c) => (
+                        <button key={c} type="button" disabled={busy} onClick={() => loadSample(true, c)} className="text-xs bg-gray-100 hover:bg-[#fff1f1] hover:text-[#f63d44] disabled:opacity-50 text-gray-600 px-2.5 py-1 rounded-full">
+                          {c}
+                        </button>
+                      ))}
+                    </div>
+                    <form
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        if (feedback.trim()) loadSample(true);
+                      }}
+                      className="flex flex-wrap gap-2"
                     >
-                      {busy ? <RefreshCw size={12} className="animate-spin" /> : <Sparkles size={12} />}
-                      Ajuster
-                    </button>
+                      <input
+                        type="text"
+                        value={feedback}
+                        onChange={(e) => setFeedback(e.target.value)}
+                        placeholder="Ajustement : « plus direct », « cite un chiffre », …"
+                        className="flex-1 min-w-[10rem] border border-gray-300 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
+                      />
+                      <button type="submit" disabled={busy || !feedback.trim()} className="bg-gray-900 hover:bg-gray-700 disabled:bg-gray-300 text-white text-xs px-3 py-2 rounded-lg flex items-center gap-1">
+                        {busy ? <RefreshCw size={12} className="animate-spin" /> : <Sparkles size={12} />}
+                        Ajuster
+                      </button>
+                    </form>
                   </div>
                 )}
                 <div className="flex justify-between pt-2">
@@ -1738,6 +1865,8 @@ function CampaignWizard({ profile, linkedin, orgs, onClose, onLaunched, onProfil
             </div>
           </div>
         )}
+          </>
+        )}
       </div>
     </div>
   );
@@ -1746,7 +1875,7 @@ function CampaignWizard({ profile, linkedin, orgs, onClose, onLaunched, onProfil
 // ----------------------------------------------------------------
 // Vue « Mes campagnes » : gestion complète des campagnes
 // ----------------------------------------------------------------
-function CampaignsView({ profile, linkedin, orgs, showToast, onPlanned, onProfileSaved, openWizard, onWizardConsumed }) {
+function CampaignsView({ profile, linkedin, orgs, showToast, onPlanned, onProfileSaved, onGoHistory, onGoProfile, openWizard, onWizardConsumed }) {
   const [campaigns, setCampaigns] = useState([]);
   const [loaded, setLoaded] = useState(false);
   const [showWizard, setShowWizard] = useState(false);
@@ -1850,11 +1979,15 @@ function CampaignsView({ profile, linkedin, orgs, showToast, onPlanned, onProfil
           orgs={orgs}
           showToast={showToast}
           onProfileSaved={onProfileSaved}
-          onClose={() => setShowWizard(false)}
+          onGoHistory={onGoHistory}
+          onGoProfile={onGoProfile}
+          onClose={() => {
+            setShowWizard(false);
+            loadCampaigns();
+          }}
           onLaunched={() => {
             onPlanned();
             loadCampaigns();
-            setShowWizard(false);
           }}
         />
       </main>
@@ -7173,6 +7306,8 @@ function DashboardView({ drafts, canVeille = true, canEvents = false, canScore =
           orgs={orgs}
           showToast={showToast}
           onProfileSaved={onProfileSaved}
+          onGoHistory={onGoHistory}
+          onGoProfile={onGoProfile}
           initial={wizardInit}
           onClose={() => setWizardInit(null)}
           onLaunched={() => {
@@ -14832,6 +14967,8 @@ export default function Home() {
             orgs={orgs}
             showToast={showToast}
             onProfileSaved={setProfile}
+            onGoHistory={() => setView("history")}
+            onGoProfile={() => setView("profile")}
             onPlanned={() =>
               fetch("/api/drafts")
                 .then((r) => r.json())
