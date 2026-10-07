@@ -11591,6 +11591,15 @@ export default function Home() {
   const [genMode, setGenMode] = useState("single"); // single | series
   const [seriesCount, setSeriesCount] = useState(5);
   const [wantVariants, setWantVariants] = useState(false);
+  // Post libre : matière d'un article (lien) ou d'un document, lue à la demande
+  const [sourceMode, setSourceMode] = useState("idea"); // idea | link | file
+  const [sourceUrl, setSourceUrl] = useState("");
+  const [sourceFile, setSourceFile] = useState(null);
+  const [sourceFileKey, setSourceFileKey] = useState(0); // change pour vider le champ de fichier
+  const [source, setSource] = useState(null); // { kind, title, origin, text, chars, truncated }
+  const [sourceBusy, setSourceBusy] = useState(false);
+  const [sourceError, setSourceError] = useState(null);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [variants, setVariants] = useState(null);
   const [activeVariant, setActiveVariant] = useState(0);
   const [history, setHistory] = useState([]); // versions précédentes du post
@@ -11651,7 +11660,48 @@ export default function Home() {
   const [linkedinLoaded, setLinkedinLoaded] = useState(false);
 
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
-  const canGenerate = form.theme.trim() && form.expertise.trim();
+  const activeSource = genMode === "single" && sourceMode !== "idea" ? source : null;
+  const canGenerate = (form.theme.trim() || activeSource) && form.expertise.trim();
+  // Réglages : repliés sauf si l'expertise manque (indispensable) ; le résumé dit ce qui sera appliqué
+  const settingsShown = settingsOpen || !form.expertise.trim();
+  const settingsSummary = [
+    LANGUAGES.find((l) => l.code === normalizeLanguage(form.language ?? profile?.postLanguage))?.label,
+    form.tone,
+    `${form.maxChars} car.`,
+    MOODS.find((m) => m.code === form.mood)?.label,
+    genMode === "single" && wantVariants ? "3 variantes" : null,
+    !form.expertise.trim() ? "expertise à renseigner" : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
+  // Lit l'article (adresse) ou le document (fichier) choisi : le texte sert ensuite à écrire le post
+  const readSource = async () => {
+    if (sourceBusy) return;
+    setSourceBusy(true);
+    setSourceError(null);
+    try {
+      let res;
+      if (sourceMode === "file") {
+        const body = new FormData();
+        body.append("file", sourceFile);
+        res = await fetch("/api/generate/source", { method: "POST", body });
+      } else {
+        res = await fetch("/api/generate/source", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url: sourceUrl.trim() }) });
+      }
+      const data = await readJson(res);
+      if (!res.ok) throw new Error(data.error || "Lecture impossible");
+      setSource(data);
+      // Le sujet du post est modifiable : on part du titre de la source
+      setForm((f) => (f.theme.trim() ? f : { ...f, theme: data.title || data.origin || "" }));
+      setSourceFile(null);
+      setSourceFileKey((k) => k + 1);
+    } catch (e) {
+      setSourceError(e.message);
+    } finally {
+      setSourceBusy(false);
+    }
+  };
 
   const showToast = (msg) => {
     setToast(msg);
@@ -11805,6 +11855,7 @@ export default function Home() {
           count: seriesCount,
           variants: genMode === "single" && wantVariants ? 3 : undefined,
           inspiration: genMode === "single" ? inspiration : undefined,
+          source: activeSource ? { title: activeSource.title, origin: activeSource.origin, text: activeSource.text } : undefined,
         }),
       });
       const data = await readJson(res);
@@ -13811,72 +13862,120 @@ export default function Home() {
               </div>
             )}
 
-            <div className={genMode === "series" ? "hidden" : ""}>
-              <label className="text-sm font-medium text-gray-700 block mb-2">Type de post</label>
-              <div className="grid grid-cols-3 gap-2">
-                {POST_TYPES.map(({ id, label, icon: Icon, desc }) => (
-                  <button
-                    key={id}
-                    onClick={() => set("type", id)}
-                    className={`p-3 rounded-lg border text-left ${
-                      form.type === id
-                        ? "border-[#ff5a5f] bg-[#fff1f1] ring-1 ring-[#ff5a5f]"
-                        : "border-gray-200 hover:border-gray-300"
-                    }`}
-                  >
-                    <Icon size={18} className={form.type === id ? "text-[#ff5a5f]" : "text-gray-400"} />
-                    <div className="text-sm font-medium mt-1">{label}</div>
-                    <div className="text-xs text-gray-500">{desc}</div>
-                  </button>
-                ))}
-              </div>
-            </div>
-
+            {/* 1 · Sur quoi s'appuie le post : une idée, un article (lien) ou un document */}
             <div>
               <label className="text-sm font-medium text-gray-700 block mb-2">
-                Votre expertise — « Je suis un(e)… »
+                {genMode === "series" ? "Thématique de la série" : "Sur quoi s'appuie votre post ?"}
               </label>
-              <input
-                type="text"
-                value={form.expertise}
-                onChange={(e) => set("expertise", e.target.value)}
-                placeholder="ex : consultant en marketing digital"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
-              />
-              <div className="flex flex-wrap gap-1.5 mt-2">
-                {EXPERTISE_SUGGESTIONS.map((s) => (
-                  <button
-                    key={s}
-                    onClick={() => set("expertise", s)}
-                    className="text-xs bg-gray-100 hover:bg-[#fff1f1] hover:text-[#f63d44] text-gray-600 px-2 py-1 rounded-full"
-                  >
-                    {s}
-                  </button>
-                ))}
-              </div>
-            </div>
+              {genMode === "single" && (
+                <div className="grid grid-cols-3 gap-1 bg-gray-100 p-1 rounded-lg mb-3" role="tablist">
+                  {[
+                    ["idea", "Mon idée", PenLine],
+                    ["link", "Un article", ExternalLink],
+                    ["file", "Un document", FileText],
+                  ].map(([id, text, Icon]) => (
+                    <button
+                      key={id}
+                      type="button"
+                      role="tab"
+                      aria-selected={sourceMode === id}
+                      onClick={() => {
+                        setSourceMode(id);
+                        setSource(null);
+                        setSourceError(null);
+                      }}
+                      className={`py-2 rounded-md text-xs font-medium flex items-center justify-center gap-1.5 ${sourceMode === id ? "bg-white shadow-sm" : "text-gray-500"}`}
+                    >
+                      <Icon size={13} /> {text}
+                    </button>
+                  ))}
+                </div>
+              )}
 
-            <div>
-              <label className="text-sm font-medium text-gray-700 block mb-2">Thématique</label>
-              <input
-                type="text"
-                value={form.theme}
-                onChange={(e) => set("theme", e.target.value)}
-                placeholder="ex : La prospection sur LinkedIn"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
-              />
-              {profile?.themes && (
+              {genMode === "single" && sourceMode === "link" && !source && (
+                <div className="space-y-2 mb-3">
+                  <div className="flex gap-2">
+                    <input
+                      type="url"
+                      value={sourceUrl}
+                      onChange={(e) => setSourceUrl(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && readSource()}
+                      placeholder="https://… (adresse d'un article)"
+                      className="flex-1 min-w-0 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
+                    />
+                    <button type="button" onClick={readSource} disabled={sourceBusy || !sourceUrl.trim()} className="shrink-0 bg-[#0a66c2] hover:bg-[#004182] disabled:bg-gray-300 text-white text-sm font-medium px-4 py-2 rounded-lg flex items-center gap-1.5">
+                      {sourceBusy ? <RefreshCw size={14} className="animate-spin" /> : null} {sourceBusy ? "Lecture…" : "Lire l'article"}
+                    </button>
+                  </div>
+                  <p className="text-[11px] text-gray-400">Le copilote lit la page et écrit à partir de son contenu, avec votre point de vue. Rien n'est enregistré.</p>
+                </div>
+              )}
+
+              {genMode === "single" && sourceMode === "file" && !source && (
+                <div className="space-y-2 mb-3">
+                  <div className="flex gap-2 items-center flex-wrap">
+                    <input
+                      key={sourceFileKey}
+                      type="file"
+                      accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                      onChange={(e) => setSourceFile(e.target.files?.[0] ?? null)}
+                      className="text-xs flex-1 min-w-0"
+                    />
+                    <button type="button" onClick={readSource} disabled={sourceBusy || !sourceFile} className="shrink-0 bg-[#0a66c2] hover:bg-[#004182] disabled:bg-gray-300 text-white text-sm font-medium px-4 py-2 rounded-lg flex items-center gap-1.5">
+                      {sourceBusy ? <RefreshCw size={14} className="animate-spin" /> : null} {sourceBusy ? "Lecture…" : "Lire le document"}
+                    </button>
+                  </div>
+                  <p className="text-[11px] text-gray-400">PDF ou Word (.docx), 8 Mo au plus. Le fichier n'est pas conservé.</p>
+                </div>
+              )}
+
+              {sourceError && <p className="text-xs text-red-600 mb-3">{sourceError}</p>}
+
+              {source && (
+                <div className="mb-3 rounded-xl bg-[#f4f8fd] border border-[#d6e6f7] p-3 flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold text-[#0a66c2] flex items-center gap-1.5"><Check size={13} /> {source.kind === "file" ? "Document lu" : "Article lu"}</p>
+                    <p className="text-sm font-medium truncate mt-0.5">{source.title || source.origin}</p>
+                    <p className="text-[11px] text-gray-500">
+                      {source.origin}
+                      {source.truncated
+                        ? ` · les ${source.text.length.toLocaleString("fr-FR")} premiers caractères sur ${source.chars.toLocaleString("fr-FR")} sont utilisés`
+                        : ` · ${source.chars.toLocaleString("fr-FR")} caractères`}
+                    </p>
+                  </div>
+                  <button type="button" onClick={() => setSource(null)} title="Changer de source" aria-label="Changer de source" className="text-gray-400 hover:text-gray-700 shrink-0">
+                    <X size={15} />
+                  </button>
+                </div>
+              )}
+
+              {(genMode === "series" || sourceMode === "idea" || source) && (
+                <>
+                  {genMode === "single" && source && (
+                    <p className="text-xs text-gray-500 mb-1.5">Votre angle <span className="text-gray-400">(modifiable : ce que vous voulez en retenir ou en dire)</span></p>
+                  )}
+                  <textarea
+                    rows={genMode === "single" && source ? 2 : 3}
+                    value={form.theme}
+                    onChange={(e) => set("theme", e.target.value)}
+                    maxLength={1500}
+                    placeholder={
+                      source
+                        ? "ex : ce que cela change pour les PME"
+                        : "ex : La prospection sur LinkedIn — ou une consigne libre : « explique pourquoi les managers ne relaient pas le message »"
+                    }
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
+                  />
+                </>
+              )}
+              {profile?.themes && !source && (sourceMode === "idea" || genMode === "series") && (
                 <div className="flex flex-wrap gap-1.5 mt-2">
                   {profile.themes
                     .split(",")
                     .map((t) => t.trim())
                     .filter(Boolean)
                     .map((t) => (
-                      <button
-                        key={t}
-                        onClick={() => set("theme", t)}
-                        className="text-xs bg-gray-100 hover:bg-[#fff1f1] hover:text-[#f63d44] text-gray-600 px-2 py-1 rounded-full"
-                      >
+                      <button key={t} type="button" onClick={() => set("theme", t)} className="text-xs px-2.5 py-1 rounded-full border border-gray-200 text-gray-600 hover:border-[#ff5a5f] hover:text-[#ff5a5f]">
                         {t}
                       </button>
                     ))}
@@ -13889,11 +13988,11 @@ export default function Home() {
                     {inspiration.source && <span className="text-amber-600"> ({inspiration.source})</span>}
                   </span>
                   <button
+                    type="button"
                     onClick={() => {
                       setInspiration(null);
                       setActiveReco(null);
                     }}
-                    className="text-amber-500 hover:text-amber-800 shrink-0"
                     title="Retirer l'inspiration"
                   >
                     <X size={13} />
@@ -13902,115 +14001,162 @@ export default function Home() {
               )}
             </div>
 
-            <div>
-              <label className="text-sm font-medium text-gray-700 block mb-2">Langue du post</label>
-              <div className="flex flex-wrap gap-1.5">
-                {LANGUAGES.map((l) => (
+            {/* 2 · Format */}
+            <div className={genMode === "series" ? "hidden" : ""}>
+              <label className="text-sm font-medium text-gray-700 block mb-2">Format</label>
+              <div className="grid grid-cols-3 gap-2">
+                {POST_TYPES.map(({ id, label, icon: Icon, desc }) => (
                   <button
-                    key={l.code}
-                    onClick={() => set("language", l.code)}
-                    className={`text-xs px-3 py-1.5 rounded-full border ${
-                      normalizeLanguage(form.language ?? profile?.postLanguage) === l.code
-                        ? "bg-[#ff5a5f] text-white border-[#ff5a5f]"
-                        : "border-gray-200 text-gray-600 hover:border-gray-300"
-                    }`}
-                  >
-                    {l.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <label className="text-sm font-medium text-gray-700 block mb-2">
-                Humeur <span className="text-gray-400 font-normal">(optionnel — oriente l'approche éditoriale)</span>
-              </label>
-              <div className="flex flex-wrap gap-1.5">
-                {MOODS.map((m) => (
-                  <button
-                    key={m.code}
+                    key={id}
                     type="button"
-                    title={m.hint}
-                    onClick={() => set("mood", form.mood === m.code ? null : m.code)}
-                    className={`text-xs px-3 py-1.5 rounded-full border ${
-                      form.mood === m.code
-                        ? "bg-[#ff5a5f] text-white border-[#ff5a5f]"
-                        : "border-gray-200 text-gray-600 hover:border-gray-300"
+                    onClick={() => set("type", id)}
+                    className={`text-left p-3 rounded-xl border transition-colors ${
+                      form.type === id ? "border-[#ff5a5f] bg-[#fff1f1] ring-1 ring-[#ff5a5f]" : "border-gray-200 hover:border-gray-300"
                     }`}
                   >
-                    {m.emoji} {m.label}
+                    <Icon size={18} className={form.type === id ? "text-[#ff5a5f]" : "text-gray-400"} />
+                    <div className="text-sm font-medium mt-1">{label}</div>
+                    <div className="text-xs text-gray-500">{desc}</div>
                   </button>
                 ))}
               </div>
             </div>
 
-            <div>
-              <label className="text-sm font-medium text-gray-700 block mb-2">Ton</label>
-              <div className="flex flex-wrap gap-1.5">
-                {TONES.map((t) => (
-                  <button
-                    key={t}
-                    onClick={() => set("tone", t)}
-                    className={`text-xs px-3 py-1.5 rounded-full border ${
-                      form.tone === t
-                        ? "bg-[#ff5a5f] text-white border-[#ff5a5f]"
-                        : "border-gray-200 text-gray-600 hover:border-gray-300"
-                    }`}
-                  >
-                    {t}
-                  </button>
-                ))}
-              </div>
+            {/* 3 · Réglages : repliés, un résumé suffit tant qu'on ne les change pas */}
+            <div className="border border-gray-200 rounded-xl">
+              <button type="button" onClick={() => setSettingsOpen((o) => !o)} aria-expanded={settingsShown} className="w-full flex items-center justify-between gap-3 px-3.5 py-3 text-left">
+                <span className="min-w-0">
+                  <span className="block text-sm font-medium text-gray-700">Réglages</span>
+                  <span className="block text-xs text-gray-400 truncate">{settingsSummary}</span>
+                </span>
+                <span className="text-xs text-[#0a66c2] flex items-center gap-1 shrink-0">
+                  {settingsShown ? "Réduire" : "Modifier"} <ChevronDown size={14} className={`transition-transform ${settingsShown ? "rotate-180" : ""}`} />
+                </span>
+              </button>
+              {settingsShown && (
+                <div className="px-3.5 pb-4 space-y-5 border-t border-gray-100 pt-4">
+                  <div>
+                    <label className="text-sm font-medium text-gray-700 block mb-2">Votre expertise — « Je suis un(e)… »</label>
+                    <input
+                      type="text"
+                      value={form.expertise}
+                      onChange={(e) => set("expertise", e.target.value)}
+                      placeholder="ex : consultant en marketing digital"
+                      className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
+                    />
+                    {!form.expertise.trim() && (
+                      <div className="flex flex-wrap gap-1.5 mt-2">
+                        {EXPERTISE_SUGGESTIONS.map((s) => (
+                          <button key={s} type="button" onClick={() => set("expertise", s)} className="text-xs px-2.5 py-1 rounded-full border border-gray-200 text-gray-600 hover:border-[#ff5a5f] hover:text-[#ff5a5f]">
+                            {s}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    <p className="text-[11px] text-gray-400 mt-1.5">Reprise de votre profil : modifiez-la à demeure dans l&apos;étape « Qui vous êtes ».</p>
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium text-gray-700 block mb-2">Langue du post</label>
+                    <div className="flex flex-wrap gap-1.5">
+                      {LANGUAGES.map((l) => (
+                        <button
+                          key={l.code}
+                          type="button"
+                          onClick={() => set("language", l.code)}
+                          className={`text-xs px-3 py-1.5 rounded-full border ${
+                            normalizeLanguage(form.language ?? profile?.postLanguage) === l.code
+                              ? "bg-[#ff5a5f] text-white border-[#ff5a5f]"
+                              : "border-gray-200 text-gray-600 hover:border-gray-300"
+                          }`}
+                        >
+                          {l.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium text-gray-700 block mb-2">
+                      Humeur <span className="text-gray-400 font-normal">(optionnel — oriente l&apos;approche éditoriale)</span>
+                    </label>
+                    <div className="flex flex-wrap gap-1.5">
+                      {MOODS.map((m) => (
+                        <button
+                          key={m.code}
+                          type="button"
+                          title={m.hint}
+                          onClick={() => set("mood", form.mood === m.code ? null : m.code)}
+                          className={`text-xs px-3 py-1.5 rounded-full border ${
+                            form.mood === m.code ? "bg-[#ff5a5f] text-white border-[#ff5a5f]" : "border-gray-200 text-gray-600 hover:border-gray-300"
+                          }`}
+                        >
+                          {m.emoji} {m.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium text-gray-700 block mb-2">Ton</label>
+                    <div className="flex flex-wrap gap-1.5">
+                      {TONES.map((t) => (
+                        <button
+                          key={t}
+                          type="button"
+                          onClick={() => set("tone", t)}
+                          className={`text-xs px-3 py-1.5 rounded-full border ${
+                            form.tone === t ? "bg-[#ff5a5f] text-white border-[#ff5a5f]" : "border-gray-200 text-gray-600 hover:border-gray-300"
+                          }`}
+                        >
+                          {t}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium text-gray-700 block mb-2">
+                      Longueur max : <span className="text-[#ff5a5f] font-semibold">{form.maxChars} caractères</span>
+                    </label>
+                    <input type="range" min="300" max="3000" step="100" value={form.maxChars} onChange={(e) => set("maxChars", Number(e.target.value))} className="w-full accent-[#ff5a5f]" />
+                    <div className="flex justify-between text-xs text-gray-400">
+                      <span>300</span>
+                      <span>3000 (max LinkedIn)</span>
+                    </div>
+                  </div>
+
+                  {genMode === "single" && (
+                    <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                      <input type="checkbox" checked={wantVariants} onChange={(e) => setWantVariants(e.target.checked)} className="accent-[#ff5a5f]" />
+                      Générer 3 variantes (angles différents) au choix
+                    </label>
+                  )}
+                </div>
+              )}
             </div>
 
-            <div>
-              <label className="text-sm font-medium text-gray-700 block mb-2">
-                Longueur max : <span className="text-[#ff5a5f] font-semibold">{form.maxChars} caractères</span>
-              </label>
-              <input
-                type="range"
-                min="300"
-                max="3000"
-                step="100"
-                value={form.maxChars}
-                onChange={(e) => set("maxChars", Number(e.target.value))}
-                className="w-full accent-[#ff5a5f]"
-              />
-              <div className="flex justify-between text-xs text-gray-400">
-                <span>300</span>
-                <span>3000 (max LinkedIn)</span>
-              </div>
+            <div className="sticky bottom-2 z-10 -mx-1 px-1 pt-2 bg-gradient-to-t from-white via-white to-transparent md:static md:bg-none md:p-0 md:m-0">
+              <button
+                onClick={handleGenerate}
+                disabled={!canGenerate || loading}
+                className="w-full bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white font-medium py-3 rounded-lg flex items-center justify-center gap-2"
+              >
+                {loading ? <RefreshCw size={18} className="animate-spin" /> : <Sparkles size={18} />}
+                {loading
+                  ? "Génération en cours…"
+                  : genMode === "series"
+                  ? `Générer la série (${seriesCount} posts)`
+                  : source
+                  ? "Écrire le post à partir de cette source"
+                  : "Générer avec l'IA"}
+              </button>
+              {!canGenerate && (
+                <p className="text-xs text-gray-400 text-center mt-1.5">
+                  {!form.expertise.trim() ? "Renseignez votre expertise (dans « Réglages ») pour générer." : sourceMode === "link" && genMode === "single" ? "Lisez un article ou décrivez votre idée pour générer." : sourceMode === "file" && genMode === "single" ? "Lisez un document ou décrivez votre idée pour générer." : "Décrivez votre sujet pour générer."}
+                </p>
+              )}
             </div>
-
-            {genMode === "single" && (
-              <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={wantVariants}
-                  onChange={(e) => setWantVariants(e.target.checked)}
-                  className="accent-[#ff5a5f]"
-                />
-                Générer 3 variantes (angles différents) au choix
-              </label>
-            )}
-
-            <button
-              onClick={handleGenerate}
-              disabled={!canGenerate || loading}
-              className="w-full bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white font-medium py-3 rounded-lg flex items-center justify-center gap-2"
-            >
-              {loading ? <RefreshCw size={18} className="animate-spin" /> : <Sparkles size={18} />}
-              {loading
-                ? "Génération en cours…"
-                : genMode === "series"
-                ? `Générer la série (${seriesCount} posts)`
-                : "Générer avec l'IA"}
-            </button>
-            {!canGenerate && (
-              <p className="text-xs text-gray-400 text-center">
-                Renseignez votre expertise et la thématique pour générer.
-              </p>
-            )}
           </section>
 
           <section className="space-y-4">

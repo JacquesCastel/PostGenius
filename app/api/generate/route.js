@@ -10,6 +10,7 @@ import { normalizeMood, moodInstruction } from "@/lib/moods";
 import { styleExamplesFor } from "@/lib/styleCorpus";
 import { knowledgeFor } from "@/lib/knowledge";
 import { usedSources } from "@/lib/knowledgeText";
+import { cleanSource, sourceBlock } from "@/lib/generationSource";
 import { writingRulesPrompt, WHY_INSTRUCTION, WHY_JSON_FORMAT, cleanWhy } from "@/lib/linkedinRules";
 
 // Génération du post via l'API Claude (Messages API).
@@ -31,7 +32,7 @@ function extraFormat(type) {
   return `{"title": "...", "items": ["..."]}`;
 }
 
-function buildUserPrompt({ type, theme, expertise, tone, maxChars, refine, mode, count, variants, inspiration, language, mood }, profile, remarks = [], knowledge = { picked: [], block: "" }, styleBlock = "") {
+function buildUserPrompt({ type, theme, expertise, tone, maxChars, refine, mode, count, variants, inspiration, language, mood, source }, profile, remarks = [], knowledge = { picked: [], block: "" }, styleBlock = "") {
   // Les sources de la base de connaissances sont numérotées [S1]… ; le modèle indique celles qu'il a utilisées
   const srcFmt = knowledge.picked.length ? ', "sources": [numéros des sources [S…] réellement utilisées dans le post, ou une liste vide]' : "";
   let extraSpec = "";
@@ -132,7 +133,7 @@ Citer la source si pertinent.`;
 - Auteur : ${expertise}
 - Thématique : ${theme}
 - Ton : ${tone}
-- Longueur maximale STRICTE : ${maxChars} caractères${profileSpec}${inspirationSpec}${extraSpec}
+- Longueur maximale STRICTE : ${maxChars} caractères${profileSpec}${inspirationSpec}${sourceBlock(source)}${extraSpec}
 
 ${writingRulesPrompt(maxChars)}`;
 
@@ -168,8 +169,11 @@ export async function POST(req) {
   }
 
   const params = await req.json();
-  const { theme, expertise } = params;
-  if (!theme?.trim() || !expertise?.trim()) {
+  const { expertise } = params;
+  // Post libre : la matière d'un article ou d'un document peut remplacer la thématique (son titre sert de sujet)
+  const source = params.mode === "series" || params.refine?.text ? null : cleanSource(params.source);
+  const theme = (typeof params.theme === "string" ? params.theme.trim() : "").slice(0, 1500) || source?.title || "";
+  if (!theme || !expertise?.trim()) {
     return NextResponse.json({ error: "Thématique et expertise requises." }, { status: 400 });
   }
 
@@ -199,7 +203,7 @@ export async function POST(req) {
 
   const remarks = userId ? await getRemarks(userId) : [];
   // Base de connaissances : sources les plus proches du sujet (jamais bloquant)
-  const topic = [params.theme, params.inspiration?.title, params.refine?.text?.slice(0, 400)].filter(Boolean).join(" ");
+  const topic = [theme, source?.title, params.inspiration?.title, params.refine?.text?.slice(0, 400)].filter(Boolean).join(" ");
   const knowledge = await knowledgeFor(userId, topic);
   // Exemples de voix : les posts de l'auteur les plus proches du sujet (corpus), sinon ses posts types
   const styleBlock = await styleExamplesFor(userId, topic, profile?.styleExamples);
@@ -226,7 +230,7 @@ export async function POST(req) {
           // modèle raccourcit pour tenir dans le budget).
           max_tokens: params.mode === "series" || params.variants || params.type === "carrousel" || params.type === "video" ? 8000 : 2048,
           system: systemPromptFor(SYSTEM_PROMPT, language),
-          messages: [{ role: "user", content: buildUserPrompt({ ...params, language }, profile, remarks, knowledge, styleBlock) }],
+          messages: [{ role: "user", content: buildUserPrompt({ ...params, theme, source, language }, profile, remarks, knowledge, styleBlock) }],
         }),
       });
 
