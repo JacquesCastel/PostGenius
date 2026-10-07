@@ -38,7 +38,7 @@ export async function POST(req) {
   for (const k of Object.keys(fields)) if (typeof body.values?.[k] === "string") values[k] = body.values[k].slice(0, 600);
 
   try {
-    const out = await companionTurn({ stage: body.stage, history, values });
+    const out = await companionTurn({ stage: body.stage, history, values, subject: body.subject === "client" ? "client" : "self" });
     logUsage(userId, { context: "compagnon du profil", inputTokens: out.usage?.input_tokens ?? 0, outputTokens: out.usage?.output_tokens ?? 0 });
     return NextResponse.json({ reply: out.reply, proposals: out.proposals, done: out.done });
   } catch (e) {

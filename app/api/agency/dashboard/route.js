@@ -37,7 +37,7 @@ export async function GET(req) {
     const clients = await prisma.user.findMany({
       where: { managedByUserId: auth.userId },
       select: {
-        id: true, name: true, email: true, companyName: true,
+        id: true, name: true, email: true, companyName: true, onboardedAt: true,
         headline: true, businessDescription: true, targetAudience: true,
         themes: true, styleNotes: true, tone: true,
         linkedin: { select: { personName: true, orgName: true } },
@@ -53,7 +53,7 @@ export async function GET(req) {
     });
 
     const result = clients.map((client) => {
-      const { drafts, ...data } = client;
+      const { drafts, onboardedAt, ...data } = client;
 
       const pending   = drafts.filter((d) => d.status === "brouillon");
       const scheduled = drafts.filter((d) => d.status === "programmé");
@@ -62,6 +62,7 @@ export async function GET(req) {
 
       return {
         ...data,
+        onboarded: Boolean(onboardedAt), // false : configuration guidée à terminer
         completion: computeCompletion(client),
         pendingCount:   pending.length,
         scheduledCount: scheduled.length,

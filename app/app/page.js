@@ -8387,7 +8387,7 @@ function StatsView({ linkedin, orgs, profile, drafts, showToast, onConnect }) {
 // Dernier écran de l'onboarding : le copilote écrit un premier post avec ce que le client vient de lui dire,
 // qu'il peut retoucher une fois (et le copilote propose ce qu'il peut retenir). Rien n'est publié ; le post
 // peut être gardé en brouillon. Le profil est déjà enregistré (étape précédente), donc /api/generate l'utilise.
-function OnboardingFirstPost({ fields, saving, showToast, onFinish, onBack }) {
+function OnboardingFirstPost({ fields, saving, showToast, onFinish, onBack, forClient = false }) {
   const themes = (fields.themes ?? "").split(",").map((t) => t.trim()).filter(Boolean).slice(0, 2);
   const ideas = [...themes.map((t) => `Mon point de vue sur ${t}`), "Une erreur fréquente que je vois dans mon métier", "Ce que j'ai appris ces derniers mois", "Pourquoi on fait appel à moi"].slice(0, 4);
   const [theme, setTheme] = useState("");
@@ -8475,8 +8475,8 @@ function OnboardingFirstPost({ fields, saving, showToast, onFinish, onBack }) {
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 sm:p-6" data-testid="first-post">
       <p className="text-xs font-medium text-[#ff5a5f] mb-1">Étape {ONBOARDING_STEPS.length} sur {ONBOARDING_STEPS.length}</p>
-      <h2 className="font-semibold text-lg">Votre premier post</h2>
-      <p className="text-sm text-gray-500 mb-4">Voyons le copilote à l&apos;œuvre : choisissez un sujet, il rédige avec tout ce que vous venez de lui dire. Rien n&apos;est publié.</p>
+      <h2 className="font-semibold text-lg">{forClient ? "Son premier post" : "Votre premier post"}</h2>
+      <p className="text-sm text-gray-500 mb-4">Voyons le copilote à l&apos;œuvre : choisissez un sujet, il rédige avec tout ce que vous venez de lui dire{forClient ? " sur ce client" : ""}. Rien n&apos;est publié.</p>
 
       {!post ? (
         <div className="space-y-3">
@@ -8588,7 +8588,12 @@ const ONBOARDING_STEPS = [
 ];
 const ONBOARDING_FORM_STEPS = 3; // les trois premières étapes sont des questions ; la dernière est le premier post
 
-function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast }) {
+const ONBOARDING_CLIENT_SHORT = ["Le client", "Sa cible", "Sa voix", "Premier post"];
+const ONBOARDING_CLIENT_TITLES = ["Qui est ce client ?", "À qui s'adresse-t-il ?", "Sa façon d'écrire", "Son premier post"];
+
+function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast, forClient = null, onExit }) {
+  // Agence : on configure le compte d'un client. Mêmes étapes, formulées à la troisième personne.
+  const me = (self, client) => (forClient ? client : self);
   // Si LinkedIn vient d'être connecté (retour OAuth d'un ancien parcours), on reprend à la dernière étape
   const [step, setStep] = useState(linkedinConnected ? ONBOARDING_STEPS.length - 1 : 0);
   const [saving, setSaving] = useState(false);
@@ -8661,6 +8666,12 @@ function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast 
   return (
     <div className="min-h-screen flex items-start sm:items-center justify-center p-4 sm:p-6">
       <div className="w-full max-w-xl">
+        {forClient && (
+          <div className="mb-4 bg-amber-50 border border-amber-200 text-amber-800 rounded-xl px-4 py-2.5 text-sm flex items-center justify-between gap-3 flex-wrap" data-testid="wizard-client-banner">
+            <span className="flex items-center gap-2"><Users size={15} /> Vous configurez le compte de <span className="font-semibold">{forClient.companyName || forClient.name}</span></span>
+            <button type="button" onClick={onExit} className="text-xs font-semibold underline hover:no-underline">← Mes clients</button>
+          </div>
+        )}
         <div className="flex items-center justify-center gap-2 mb-5">
           <div className="bg-[#ff5a5f] text-white p-2.5 rounded-xl">
             <LpMark size={24} />
@@ -8674,19 +8685,20 @@ function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast 
             {ONBOARDING_STEPS.map((s, i) => (
               <div key={s.stageId} className="flex-1">
                 <div className={`h-1.5 rounded-full ${i <= step ? "bg-[#ff5a5f]" : "bg-gray-200"}`} />
-                <p className={`text-[11px] mt-1.5 ${i === step ? "text-[#ff5a5f] font-semibold" : "text-gray-400"}`}>{s.short}</p>
+                <p className={`text-[11px] mt-1.5 ${i === step ? "text-[#ff5a5f] font-semibold" : "text-gray-400"}`}>{forClient ? ONBOARDING_CLIENT_SHORT[i] : s.short}</p>
               </div>
             ))}
           </div>
           <p className="text-xs text-gray-400 mt-1">Trois questions, puis votre premier post : environ 5 minutes. Le reste se complète plus tard, au fil de l&apos;usage.</p>
         </div>
 
-        {isFirstPost && <OnboardingFirstPost fields={fields} saving={saving} showToast={showToast} onFinish={() => save(true)} onBack={() => setStep(step - 1)} />}
+        {isFirstPost && <OnboardingFirstPost forClient={Boolean(forClient)} fields={fields} saving={saving} showToast={showToast} onFinish={() => save(true)} onBack={() => setStep(step - 1)} />}
 
         {!isFirstPost && (
         <>
         <ProfileCompanion
           key={stage.id}
+          forClient={forClient ? forClient.companyName || forClient.name : null}
           stage={stage}
           progress={progress}
           missing={missing}
@@ -8703,13 +8715,13 @@ function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast 
           <p className="text-xs font-medium text-[#ff5a5f] mb-1">
             Étape {step + 1} sur {ONBOARDING_STEPS.length}
           </p>
-          <h2 className="font-semibold text-lg">{ONBOARDING_STEPS[step].title}</h2>
+          <h2 className="font-semibold text-lg">{forClient ? ONBOARDING_CLIENT_TITLES[step] : ONBOARDING_STEPS[step].title}</h2>
           <p className="text-sm text-gray-500 mb-5">{stage.why}</p>
 
           {step === 0 && (
             <div className="space-y-3">
               <div>
-                <label className="text-sm font-medium text-gray-700 block mb-1.5">Votre nom *</label>
+                <label className="text-sm font-medium text-gray-700 block mb-1.5">{me("Votre nom *", "Son nom *")}</label>
                 <input type="text" value={fields.name} onChange={(e) => set("name", e.target.value)} placeholder="ex : Jacques Castel" className={inputCls} />
               </div>
               <div>
@@ -8721,7 +8733,7 @@ function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast 
                 <input type="text" value={fields.companyName} onChange={(e) => set("companyName", e.target.value)} placeholder="ex : Acme Conseil" className={inputCls} />
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700 block mb-1.5">Je suis un(e)… *</label>
+                <label className="text-sm font-medium text-gray-700 block mb-1.5">{me("Je suis un(e)… *", "Son expertise en une phrase *")}</label>
                 <input
                   type="text"
                   value={fields.expertise}
@@ -8743,7 +8755,7 @@ function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast 
           {step === 1 && (
             <div className="space-y-3">
               <div>
-                <label className="text-sm font-medium text-gray-700 block mb-1.5">Votre activité : que faites-vous, pour qui, avec quelle valeur ajoutée ? *</label>
+                <label className="text-sm font-medium text-gray-700 block mb-1.5">{me("Votre activité : que faites-vous, pour qui, avec quelle valeur ajoutée ? *", "Son activité : que fait-il, pour qui, avec quelle valeur ajoutée ? *")}</label>
                 <textarea
                   rows={3}
                   value={fields.businessDescription}
@@ -8753,11 +8765,11 @@ function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast 
                 />
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700 block mb-1.5">Votre cible sur LinkedIn</label>
+                <label className="text-sm font-medium text-gray-700 block mb-1.5">{me("Votre cible sur LinkedIn", "Sa cible sur LinkedIn")}</label>
                 <input type="text" value={fields.targetAudience} onChange={(e) => set("targetAudience", e.target.value)} placeholder="ex : dirigeants de PME industrielles 50-500 salariés, DAF, DSI" className={inputCls} />
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700 block mb-2">Objectifs de votre communication</label>
+                <label className="text-sm font-medium text-gray-700 block mb-2">{me("Objectifs de votre communication", "Objectifs de sa communication")}</label>
                 <div className="flex flex-wrap gap-1.5">
                   {COMM_GOALS.map((g) => (
                     <button type="button" key={g} onClick={() => toggleCsv("commGoals", g)} className={chip((fields.commGoals ?? "").split(",").includes(g))}>
@@ -8768,7 +8780,7 @@ function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast 
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-700 block mb-1.5">
-                  Votre positionnement <span className="text-gray-400 font-normal">(facultatif)</span>
+                  {me("Votre positionnement", "Son positionnement")} <span className="text-gray-400 font-normal">(facultatif)</span>
                 </label>
                 <textarea
                   rows={2}
@@ -8784,8 +8796,8 @@ function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast 
           {step === 2 && (
             <div className="space-y-4">
               <div>
-                <p className="text-sm font-medium text-gray-700 mb-1.5">Le plus efficace : faire lire vos anciens posts à l&apos;IA</p>
-                <p className="text-xs text-gray-400 mb-2">Elle en tire votre ton, vos tournures et vos thèmes, puis s&apos;en sert d&apos;exemples à chaque post. Sans anciens posts, décrivez simplement votre style ci-dessous.</p>
+                <p className="text-sm font-medium text-gray-700 mb-1.5">{me("Le plus efficace : faire lire vos anciens posts à l'IA", "Le plus efficace : faire lire ses anciens posts à l'IA")}</p>
+                <p className="text-xs text-gray-400 mb-2">{me("Elle en tire votre ton, vos tournures et vos thèmes, puis s'en sert d'exemples à chaque post. Sans anciens posts, décrivez simplement votre style ci-dessous.", "Elle en tire son ton, ses tournures et ses thèmes, puis s'en sert d'exemples à chaque post. Sans anciens posts, décrivez simplement son style ci-dessous.")}</p>
                 <ImportPostsPanel
                   importedAt={profile?.styleImportedAt}
                   currentLanguage={fields.postLanguage}
@@ -8799,7 +8811,7 @@ function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast 
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-700 block mb-1.5">
-                  Mon mode d&apos;écriture <span className="text-gray-400 font-normal">(consignes pour l&apos;IA)</span>
+                  {me("Mon mode d'écriture", "Son mode d'écriture")} <span className="text-gray-400 font-normal">(consignes pour l&apos;IA)</span>
                 </label>
                 <textarea
                   rows={3}
@@ -8811,7 +8823,7 @@ function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast 
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-700 block mb-1.5">
-                  Vos thématiques favorites <span className="text-gray-400 font-normal">(séparées par des virgules)</span>
+                  {me("Vos thématiques favorites", "Ses thématiques favorites")} <span className="text-gray-400 font-normal">(séparées par des virgules)</span>
                 </label>
                 <input type="text" value={fields.themes} onChange={(e) => set("themes", e.target.value)} placeholder="ex : SEO, prospection LinkedIn, freelancing" className={inputCls} />
               </div>
@@ -8876,41 +8888,6 @@ function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast 
 // ----------------------------------------------------------------
 // Vue Clients — tableau de bord agence multi-compte
 // ----------------------------------------------------------------
-// ── Étapes du wizard de création client ────────────────────────────
-const WIZARD_STEPS = [
-  { id: 1, label: "Identité",    icon: "👤" },
-  { id: 2, label: "Entreprise",  icon: "🏢" },
-  { id: 3, label: "Activité",    icon: "💼" },
-  { id: 4, label: "Audience",    icon: "🎯" },
-  { id: 5, label: "Style",       icon: "✍️" },
-  { id: 6, label: "Récapitulatif", icon: "✅" },
-];
-
-function WizardStepBar({ step }) {
-  return (
-    <div className="flex items-center gap-0 mb-8">
-      {WIZARD_STEPS.map((s, i) => (
-        <div key={s.id} className="flex items-center flex-1">
-          <div className={`flex flex-col items-center flex-1 ${i < WIZARD_STEPS.length - 1 ? "" : ""}`}>
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-colors
-              ${s.id < step ? "bg-[#ff5a5f] text-white" :
-                s.id === step ? "bg-[#ff5a5f] text-white ring-4 ring-[#ffd5d6]" :
-                "bg-gray-100 text-gray-400"}`}>
-              {s.id < step ? "✓" : s.id}
-            </div>
-            <span className={`text-[10px] mt-1 hidden sm:block ${s.id === step ? "text-[#ff5a5f] font-semibold" : "text-gray-400"}`}>
-              {s.label}
-            </span>
-          </div>
-          {i < WIZARD_STEPS.length - 1 && (
-            <div className={`h-0.5 flex-1 mx-1 mb-4 transition-colors ${s.id < step ? "bg-[#ff5a5f]" : "bg-gray-100"}`} />
-          )}
-        </div>
-      ))}
-    </div>
-  );
-}
-
 // ── Indicateur de complétion du profil ─────────────────────────────
 function CompletionRing({ percent }) {
   const color = percent === 100 ? "#22c55e" : percent >= 60 ? "#f59e0b" : "#ef4444";
@@ -9182,6 +9159,7 @@ function ClientTableRow({ client, onManage, onViewDrafts, onDelete, deleting, on
             <div className="min-w-0">
               <p className="font-semibold text-sm text-[#1b2a4a] truncate">{client.name}</p>
               {client.companyName && <p className="text-xs text-gray-400 truncate">{client.companyName}</p>}
+              {client.onboarded === false && <p className="text-[10px] font-semibold text-amber-600" data-testid="client-unconfigured">Configuration à terminer</p>}
             </div>
           </div>
         </td>
@@ -9223,10 +9201,17 @@ function ClientTableRow({ client, onManage, onViewDrafts, onDelete, deleting, on
         {/* Actions */}
         <td className="px-4 py-3">
           <div className="flex items-center gap-1.5">
-            <button onClick={() => onManage(client, "generate")}
-              className="flex items-center gap-1 bg-[#ff5a5f] text-white px-2.5 py-1.5 rounded-lg text-xs font-semibold hover:bg-[#e5454a] transition-colors">
-              <Sparkles size={11} /> Générer
-            </button>
+            {client.onboarded === false ? (
+              <button onClick={() => onManage(client, "dashboard")}
+                className="flex items-center gap-1 bg-amber-500 text-white px-2.5 py-1.5 rounded-lg text-xs font-semibold hover:bg-amber-600 transition-colors">
+                <Sparkles size={11} /> Reprendre
+              </button>
+            ) : (
+              <button onClick={() => onManage(client, "generate")}
+                className="flex items-center gap-1 bg-[#ff5a5f] text-white px-2.5 py-1.5 rounded-lg text-xs font-semibold hover:bg-[#e5454a] transition-colors">
+                <Sparkles size={11} /> Générer
+              </button>
+            )}
             <button onClick={() => onViewDrafts(client)}
               className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition-colors
                 ${client.pendingCount > 0 ? "bg-amber-50 border-amber-200 text-amber-700" : "border-gray-200 text-gray-400 hover:bg-gray-50"}`}>
@@ -9303,24 +9288,55 @@ function ClientTableRow({ client, onManage, onViewDrafts, onDelete, deleting, on
 }
 
 // ── Vue principale Clients ──────────────────────────────────────────
+// Nouveau client : trois champs seulement. Le reste du profil se complète ensuite dans l'espace du client, avec le
+// même parcours guidé que pour un utilisateur (compagnon, import d'anciens posts, premier post).
+function NewClientDialog({ value, onChange, error, busy, onSubmit, onClose }) {
+  const inputCls = "w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]";
+  const labelCls = "block text-xs font-medium text-gray-500 mb-1.5";
+  return (
+    <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={busy ? undefined : onClose}>
+      <form onSubmit={onSubmit} onClick={(e) => e.stopPropagation()} className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 space-y-4" role="dialog" aria-label="Nouveau client" data-testid="new-client">
+        <div>
+          <h3 className="text-lg font-bold text-[#1b2a4a]">Nouveau client</h3>
+          <p className="text-sm text-gray-500 mt-1">Deux informations suffisent pour créer son espace. Vous complétez ensuite son profil avec le copilote : activité, cible, façon d&apos;écrire, puis un premier post.</p>
+        </div>
+        <div>
+          <label className={labelCls}>Nom du contact *</label>
+          <input autoFocus value={value.name} onChange={(e) => onChange({ ...value, name: e.target.value })} placeholder="Marie Dupont" className={inputCls} />
+        </div>
+        <div>
+          <label className={labelCls}>Entreprise ou marque <span className="text-gray-300 font-normal">(facultatif)</span></label>
+          <input value={value.companyName} onChange={(e) => onChange({ ...value, companyName: e.target.value })} placeholder="Acme SAS" className={inputCls} />
+        </div>
+        <div>
+          <label className={labelCls}>E-mail <span className="text-gray-300 font-normal">(facultatif, le client ne se connecte pas lui-même)</span></label>
+          <input type="email" value={value.email} onChange={(e) => onChange({ ...value, email: e.target.value })} placeholder="marie@acme.fr" className={inputCls} />
+        </div>
+        {error && (
+          <div className="bg-red-50 border border-red-100 text-red-600 rounded-xl px-4 py-3 text-sm flex items-center gap-2"><AlertCircle size={15} /> {error}</div>
+        )}
+        <div className="flex items-center justify-end gap-2 pt-1">
+          <button type="button" onClick={onClose} disabled={busy} className="px-4 py-2.5 rounded-xl text-sm text-gray-500 hover:bg-gray-50">Annuler</button>
+          <button type="submit" disabled={busy || !value.name.trim()} className="bg-[#ff5a5f] text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-[#e5454a] disabled:opacity-50 flex items-center gap-2">
+            {busy && <RefreshCw size={14} className="animate-spin" />} Créer et compléter son profil <ChevronRight size={15} />
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
 function ClientsView({ showToast, onManage }) {
   const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
-  const [step, setStep] = useState(0); // 0 = dashboard, 1-6 = wizard
   const [panelClient, setPanelClient] = useState(null); // client pour le panel brouillons
   const [reportClient, setReportClient] = useState(null); // client pour le rapport mensuel
-  const [form, setForm] = useState({
-    name: "", email: "",
-    companyName: "", website: "",
-    headline: "", businessDescription: "",
-    targetAudience: "",
-    tone: "Professionnel", themes: "", styleNotes: "",
-  });
+  // Création d'un client : nom (et entreprise), puis le profil se complète dans l'espace du client avec le parcours guidé
+  const [creating, setCreating] = useState(false);
+  const [newClient, setNewClient] = useState({ name: "", companyName: "", email: "" });
   const [formError, setFormError] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
   const [deleting, setDeleting] = useState(null);
-
-  const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
   useEffect(() => {
     fetch("/api/agency/dashboard")
@@ -9330,37 +9346,29 @@ function ClientsView({ showToast, onManage }) {
       .finally(() => setLoading(false));
   }, []);
 
-  const openWizard = () => {
-    setForm({ name: "", email: "", companyName: "", website: "", headline: "",
-      businessDescription: "", targetAudience: "", tone: "Professionnel", themes: "", styleNotes: "" });
+  const openCreate = () => {
+    setNewClient({ name: "", companyName: "", email: "" });
     setFormError(null);
-    setStep(1);
+    setCreating(true);
   };
-  const closeWizard = () => setStep(0);
 
-  const nextStep = () => {
-    setFormError(null);
-    if (step === 1 && !form.name.trim()) { setFormError("Le nom du contact est requis."); return; }
-    setStep((s) => Math.min(s + 1, 6));
-  };
-  const prevStep = () => { setFormError(null); setStep((s) => Math.max(s - 1, 1)); };
-
-  const createClient = async () => {
+  // Crée le compte (profil à compléter) puis ouvre son espace : le parcours d'onboarding s'y déroule
+  const createClient = async (e) => {
+    e?.preventDefault();
+    if (submitting) return;
+    if (!newClient.name.trim()) { setFormError("Le nom du contact est requis."); return; }
     setFormError(null);
     setSubmitting(true);
     try {
       const res = await fetch("/api/agency/clients", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...newClient, guided: true }),
       });
       const d = await res.json();
       if (!res.ok) { setFormError(d.error || "Erreur"); return; }
-      // Recharger le dashboard pour avoir les données agrégées
-      const dash = await fetch("/api/agency/dashboard").then((r) => r.json());
-      setClients(dash.clients ?? []);
-      closeWizard();
-      showToast("Client créé ✓");
+      showToast("Client créé : complétons son profil ✓");
+      await onManage(d.client, "dashboard");
     } catch (err) {
       setFormError(err.message);
     } finally {
@@ -9383,207 +9391,10 @@ function ClientsView({ showToast, onManage }) {
     }
   };
 
-  // ── WIZARD (étapes 1-6) ──────────────────────────────────────────
-  if (step > 0) {
-    const inputCls = "w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]";
-    const labelCls = "block text-xs font-medium text-gray-500 mb-1.5";
-    const textareaCls = `${inputCls} resize-none`;
-
-    const stepContent = () => {
-      if (step === 1) return (
-        <div className="space-y-4">
-          <div>
-            <label className={labelCls}>Nom du contact *</label>
-            <input autoFocus value={form.name} onChange={(e) => set("name", e.target.value)}
-              placeholder="Marie Dupont" className={inputCls} />
-          </div>
-          <div>
-            <label className={labelCls}>E-mail <span className="text-gray-300 font-normal">(optionnel)</span></label>
-            <input type="email" value={form.email} onChange={(e) => set("email", e.target.value)}
-              placeholder="marie@acme.fr" className={inputCls} />
-          </div>
-        </div>
-      );
-
-      if (step === 2) return (
-        <div className="space-y-4">
-          <div>
-            <label className={labelCls}>Nom de l'entreprise</label>
-            <input autoFocus value={form.companyName} onChange={(e) => set("companyName", e.target.value)}
-              placeholder="Acme SAS" className={inputCls} />
-          </div>
-          <div>
-            <label className={labelCls}>Site internet <span className="text-gray-300 font-normal">(optionnel)</span></label>
-            <input type="url" value={form.website} onChange={(e) => set("website", e.target.value)}
-              placeholder="https://acme.fr" className={inputCls} />
-          </div>
-        </div>
-      );
-
-      if (step === 3) return (
-        <div className="space-y-4">
-          <div>
-            <label className={labelCls}>Titre professionnel LinkedIn</label>
-            <input autoFocus value={form.headline} onChange={(e) => set("headline", e.target.value)}
-              placeholder="Consultante RH & Coach de carrière @ Acme" className={inputCls} />
-          </div>
-          <div>
-            <label className={labelCls}>Description de l'activité</label>
-            <textarea rows={4} value={form.businessDescription} onChange={(e) => set("businessDescription", e.target.value)}
-              placeholder="Ce que fait ce client, ses produits/services, sa proposition de valeur…"
-              className={textareaCls} />
-          </div>
-        </div>
-      );
-
-      if (step === 4) return (
-        <div className="space-y-4">
-          <div>
-            <label className={labelCls}>Audience cible sur LinkedIn</label>
-            <textarea rows={4} value={form.targetAudience} onChange={(e) => set("targetAudience", e.target.value)}
-              placeholder="Ex : DRH de PME industrielles, cadres en transition pro, recruteurs IT…"
-              className={textareaCls} />
-            <p className="text-xs text-gray-300 mt-1.5">
-              Plus c'est précis, plus les posts générés seront pertinents.
-            </p>
-          </div>
-        </div>
-      );
-
-      if (step === 5) return (
-        <div className="space-y-4">
-          <div>
-            <label className={labelCls}>Ton de communication</label>
-            <div className="flex flex-wrap gap-2">
-              {TONES.map((t) => (
-                <button key={t} type="button" onClick={() => set("tone", t)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors
-                    ${form.tone === t ? "bg-[#ff5a5f] text-white border-[#ff5a5f]" : "bg-white text-gray-500 border-gray-200 hover:border-[#ff5a5f]"}`}>
-                  {t}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div>
-            <label className={labelCls}>Thèmes favoris <span className="text-gray-300 font-normal">(séparés par des virgules)</span></label>
-            <input value={form.themes} onChange={(e) => set("themes", e.target.value)}
-              placeholder="Leadership, innovation RH, bien-être au travail" className={inputCls} />
-          </div>
-          <div>
-            <label className={labelCls}>Consignes de style <span className="text-gray-300 font-normal">(optionnel)</span></label>
-            <textarea rows={3} value={form.styleNotes} onChange={(e) => set("styleNotes", e.target.value)}
-              placeholder="Ex : tutoiement, pas d'emojis, phrases courtes, toujours finir par une question…"
-              className={textareaCls} />
-          </div>
-        </div>
-      );
-
-      if (step === 6) {
-        const rows = [
-          { label: "Nom", value: form.name },
-          { label: "E-mail", value: form.email || "—" },
-          { label: "Entreprise", value: form.companyName || "—" },
-          { label: "Site", value: form.website || "—" },
-          { label: "Titre LinkedIn", value: form.headline || "—" },
-          { label: "Activité", value: form.businessDescription || "—" },
-          { label: "Audience", value: form.targetAudience || "—" },
-          { label: "Ton", value: form.tone },
-          { label: "Thèmes", value: form.themes || "—" },
-          { label: "Style", value: form.styleNotes || "—" },
-        ];
-        return (
-          <div>
-            <div className="bg-gray-50 rounded-xl divide-y divide-gray-100 text-sm mb-2">
-              {rows.map((r) => (
-                <div key={r.label} className="flex gap-3 px-4 py-2.5">
-                  <span className="text-gray-400 w-32 shrink-0">{r.label}</span>
-                  <span className="text-[#1b2a4a] flex-1 break-words">{r.value}</span>
-                </div>
-              ))}
-            </div>
-            {formError && (
-              <div className="bg-red-50 border border-red-100 text-red-600 rounded-xl px-4 py-3 text-sm flex items-center gap-2 mt-3">
-                <AlertCircle size={15} /> {formError}
-              </div>
-            )}
-          </div>
-        );
-      }
-    };
-
-    const stepMeta = WIZARD_STEPS[step - 1];
-
-    return (
-      <main className="max-w-xl mx-auto p-6">
-        <button onClick={closeWizard} className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-600 mb-6">
-          <ChevronLeft size={16} /> Mes clients
-        </button>
-
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:p-8">
-          <WizardStepBar step={step} />
-
-          <div className="mb-6">
-            <span className="text-2xl mb-2 block">{stepMeta.icon}</span>
-            <h2 className="text-lg font-bold text-[#1b2a4a]">
-              {step === 1 && "Qui est ce client ?"}
-              {step === 2 && "Son entreprise"}
-              {step === 3 && "Son activité & positionnement"}
-              {step === 4 && "Son audience cible"}
-              {step === 5 && "Son style de communication"}
-              {step === 6 && "Récapitulatif — tout est bon ?"}
-            </h2>
-            <p className="text-sm text-gray-400 mt-0.5">
-              {step === 1 && "Ces informations servent à personnaliser la génération de contenu."}
-              {step === 2 && "L'IA utilisera ces données pour contextualiser les posts."}
-              {step === 3 && "Décrivez ce que fait ce client et ce qui le différencie."}
-              {step === 4 && "À qui s'adressent ses publications LinkedIn ?"}
-              {step === 5 && "Définissez comment il communique sur LinkedIn."}
-              {step === 6 && "Vérifiez les informations avant de créer le compte."}
-            </p>
-          </div>
-
-          {stepContent()}
-
-          {step < 6 && formError && (
-            <div className="bg-red-50 border border-red-100 text-red-600 rounded-xl px-4 py-3 text-sm flex items-center gap-2 mt-4">
-              <AlertCircle size={15} /> {formError}
-            </div>
-          )}
-
-          <div className="flex gap-3 mt-6">
-            {step > 1 && (
-              <button type="button" onClick={prevStep}
-                className="px-4 py-2.5 rounded-xl text-sm text-gray-400 hover:bg-gray-50 border border-gray-100">
-                Retour
-              </button>
-            )}
-            {step < 6 ? (
-              <button type="button" onClick={nextStep}
-                disabled={step === 1 && !form.name.trim()}
-                className="flex-1 bg-[#ff5a5f] text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-[#e5454a] disabled:opacity-40 transition-colors flex items-center justify-center gap-2">
-                Suivant <ChevronRight size={16} />
-              </button>
-            ) : (
-              <button type="button" onClick={createClient} disabled={submitting}
-                className="flex-1 bg-[#ff5a5f] text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-[#e5454a] disabled:opacity-50 transition-colors">
-                {submitting ? "Création…" : "Créer le compte client"}
-              </button>
-            )}
-            {step === 1 && (
-              <button type="button" onClick={closeWizard}
-                className="px-4 py-2.5 rounded-xl text-sm text-gray-400 hover:bg-gray-50 border border-gray-100">
-                Annuler
-              </button>
-            )}
-          </div>
-        </div>
-      </main>
-    );
-  }
-
   // ── TABLEAU DE BORD ──────────────────────────────────────────────
   return (
     <>
+      {creating && <NewClientDialog value={newClient} onChange={setNewClient} error={formError} busy={submitting} onSubmit={createClient} onClose={() => setCreating(false)} />}
       <main className="max-w-5xl mx-auto p-6">
         {/* En-tête */}
         <div className="flex items-center justify-between mb-6">
@@ -9595,7 +9406,7 @@ function ClientsView({ showToast, onManage }) {
                 : "Ajoutez vos premiers clients"}
             </p>
           </div>
-          <button onClick={openWizard}
+          <button onClick={openCreate}
             className="flex items-center gap-2 bg-[#ff5a5f] text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-[#e5454a] transition-colors">
             <UserPlus size={15} /> Ajouter un client
           </button>
@@ -9613,7 +9424,7 @@ function ClientsView({ showToast, onManage }) {
             <p className="text-sm text-gray-400 text-center max-w-xs mb-6">
               Chaque client dispose de son propre espace : profil, posts, campagnes et connexion LinkedIn.
             </p>
-            <button onClick={openWizard}
+            <button onClick={openCreate}
               className="flex items-center gap-2 bg-[#ff5a5f] text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-[#e5454a] transition-colors">
               <UserPlus size={16} /> Créer le premier compte client
             </button>
@@ -11265,8 +11076,17 @@ const COMPANION_COACH = {
   },
 };
 
-function ProfileCompanion({ stage, progress, missing, nextStage, values, onApply, onGoNext, onSaveNext, saving, showToast }) {
-  const coach = COMPANION_COACH[stage.id] ?? {};
+const COMPANION_COACH_CLIENT = {
+  identity: { opener: "Bonjour ! Quelques questions rapides sur votre client. D'abord : comment s'appelle-t-il, et que fait-il dans sa vie professionnelle ?" },
+  audience: { opener: "Parlons de ses propres clients. À qui doit-il parler sur LinkedIn ? Décrivez-moi la personne idéale : sa fonction, son secteur." },
+  voice: {
+    tip: "Le plus efficace reste d'importer ses anciens posts (plus bas). À défaut, je peux vous interroger sur sa façon d'écrire.",
+    opener: "Parlons de sa façon d'écrire. Comment la décririez-vous : tutoiement ou vouvoiement, phrases courtes ou longues, avec ou sans émojis ?",
+  },
+};
+
+function ProfileCompanion({ stage, progress, missing, nextStage, values, onApply, onGoNext, onSaveNext, saving, showToast, forClient = null }) {
+  const coach = (forClient ? COMPANION_COACH_CLIENT[stage.id] : COMPANION_COACH[stage.id]) ?? {};
   const [mode, setMode] = useState("idle"); // idle | interview | hidden
   const [messages, setMessages] = useState([]); // { role, content, proposals?: [{ field, label, value, display, applied }] }
   const [input, setInput] = useState("");
@@ -11296,7 +11116,7 @@ function ProfileCompanion({ stage, progress, missing, nextStage, values, onApply
       const res = await fetch("/api/profile/companion", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ stage: stage.id, messages: next.map((m) => ({ role: m.role, content: m.content })), values }),
+        body: JSON.stringify({ stage: stage.id, messages: next.map((m) => ({ role: m.role, content: m.content })), values, ...(forClient ? { subject: "client" } : {}) }),
       });
       const data = await readJson(res);
       if (!res.ok) throw new Error(data.error || "Erreur");
@@ -12284,6 +12104,14 @@ export default function Home() {
   const goToProfileField = (field) => {
     setProfileFocusField(field);
     setView("profile");
+  };
+  // Quitte le mode client (ou la vue support) et recharge pour retrouver le compte réel
+  const stopImpersonation = async () => {
+    const support = impersonating?.support;
+    await fetch("/api/agency/impersonate", { method: "DELETE" });
+    setImpersonating(null);
+    setView(support ? "admin" : "clients");
+    window.location.reload();
   };
   const [upgrade, setUpgrade] = useState(null); // { feature } quand on clique une fonctionnalité verrouillée
   const [optimizeText, setOptimizeText] = useState(null); // { text, type } → page Étape 2 plein écran
@@ -13637,6 +13465,8 @@ export default function Home() {
   if (!profile?.onboardedAt && !user.isSuperAdmin) {
     return (
       <OnboardingWizard
+        forClient={impersonating && !impersonating.support ? impersonating : null}
+        onExit={stopImpersonation}
         user={user}
         profile={profile}
         linkedinConnected={linkedin.connected}
@@ -14320,13 +14150,7 @@ export default function Home() {
               )}
             </span>
             <button
-              onClick={async () => {
-                await fetch("/api/agency/impersonate", { method: "DELETE" });
-                setImpersonating(null);
-                setView(impersonating.support ? "admin" : "clients");
-                // Recharger les données pour revenir sur le compte agence
-                window.location.reload();
-              }}
+              onClick={stopImpersonation}
               className="text-xs font-semibold underline hover:no-underline"
             >
               {impersonating.support ? "← Quitter la vue support" : "← Revenir à mon compte"}
