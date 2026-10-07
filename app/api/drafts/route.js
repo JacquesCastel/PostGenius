@@ -54,6 +54,7 @@ export async function GET(req) {
     where: { userId },
     orderBy: { createdAt: "desc" },
     omit: { generatedText: true }, // usage interne : inutile côté client, doublerait le poids de la liste
+    include: { campaign: { select: { name: true } } }, // affiché sur les cartes de « Mes posts » et sert de filtre
   });
   return NextResponse.json({
     drafts: drafts.map((d) => ({ ...d, extra: d.extra ? JSON.parse(d.extra) : null })),

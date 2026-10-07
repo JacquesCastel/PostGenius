@@ -1872,6 +1872,150 @@ function CampaignWizard({ profile, linkedin, orgs, onClose, onLaunched, onProfil
   );
 }
 
+// Relecture en série des posts « à valider » : un post à la fois, en entier, avec Valider / Modifier / Passer.
+// La file est figée à l'ouverture (les posts validés restent visibles dans le décompte final).
+function ReviewPostsModal({ posts, linkedinConnected, onValidate, onSaveText, onClose }) {
+  const [queue] = useState(() => posts.map((p) => p.id));
+  const [snapshot] = useState(posts); // un post validé quitte « à valider » : on garde sa version d'origine pour « Précédent »
+  const [idx, setIdx] = useState(0);
+  const [outcome, setOutcome] = useState({}); // id -> "validé" | "passé"
+  const [editing, setEditing] = useState(false);
+  const [text, setText] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [edits, setEdits] = useState({}); // texte enregistré pendant la relecture, y compris pour un post déjà validé
+  const byId = (id) => {
+    const p = posts.find((x) => x.id === id) ?? snapshot.find((x) => x.id === id);
+    return p && edits[id] != null ? { ...p, text: edits[id] } : p;
+  };
+  const total = queue.length;
+  const finished = idx >= total;
+  const post = finished ? null : byId(queue[idx]);
+  const next = () => {
+    setEditing(false);
+    setIdx((i) => i + 1);
+  };
+
+  const validate = async () => {
+    if (!post || busy) return;
+    setBusy(true);
+    try {
+      await onValidate(post);
+      setOutcome((o) => ({ ...o, [post.id]: "validé" }));
+      next();
+    } finally {
+      setBusy(false);
+    }
+  };
+  const save = async () => {
+    if (busy || !text.trim()) return;
+    setBusy(true);
+    try {
+      await onSaveText(post, text);
+      setEdits((e) => ({ ...e, [post.id]: text }));
+      setEditing(false);
+    } finally {
+      setBusy(false);
+    }
+  };
+  const validated = Object.values(outcome).filter((v) => v === "validé").length;
+
+  return (
+    <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={busy ? undefined : onClose}>
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[92vh] flex flex-col" onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Relire les posts" data-testid="review-modal">
+        <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-gray-100">
+          <div>
+            <p className="font-semibold text-sm">{finished ? "Relecture terminée" : `Relire vos posts · ${idx + 1} sur ${total}`}</p>
+            {!finished && (
+              <div className="flex gap-1 mt-1.5">
+                {queue.map((id, i) => (
+                  <span key={id} className={`h-1.5 w-6 rounded-full ${outcome[id] === "validé" ? "bg-green-500" : outcome[id] === "passé" ? "bg-gray-400" : i === idx ? "bg-[#ff9a9d]" : "bg-gray-200"}`} />
+                ))}
+              </div>
+            )}
+          </div>
+          <button type="button" onClick={onClose} disabled={busy} className="text-gray-400 hover:text-gray-600 p-1" aria-label="Fermer">
+            <X size={18} />
+          </button>
+        </div>
+
+        {finished ? (
+          <div className="p-6 text-center space-y-3">
+            <span className="w-12 h-12 rounded-full bg-green-100 text-green-600 flex items-center justify-center mx-auto">
+              <Check size={22} />
+            </span>
+            <p className="font-semibold">{validated} post{validated > 1 ? "s" : ""} validé{validated > 1 ? "s" : ""}{total - validated > 0 ? `, ${total - validated} laissé${total - validated > 1 ? "s" : ""} à valider` : ""}</p>
+            <p className="text-sm text-gray-500">{validated > 0 ? "Les posts validés partiront aux dates prévues." : "Les posts passés restent dans « À valider »."}</p>
+            {validated > 0 && !linkedinConnected && <p className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg p-2.5">LinkedIn n&apos;est pas connecté : connectez-le (menu « Profil ») avant la première date, sinon ces posts ne pourront pas partir.</p>}
+            <button type="button" onClick={onClose} className="bg-[#ff5a5f] hover:bg-[#f63d44] text-white text-sm font-medium px-6 py-2 rounded-lg">Fermer</button>
+          </div>
+        ) : (
+          <>
+            <div className="p-5 overflow-y-auto space-y-3">
+              <div className="flex items-center gap-2 flex-wrap text-xs text-gray-500">
+                {post.campaign?.name && <span className="bg-[#fff1f1] text-[#f63d44] px-2 py-0.5 rounded-full font-medium" data-testid="review-campaign">{post.campaign.name}</span>}
+                <span className="flex items-center gap-1 text-purple-700"><Clock size={12} /> Prévu {fmtDateTime(post.scheduledAt)}</span>
+                <span>{(editing ? text : post.text).length} caractères</span>
+              </div>
+              {post.imageUrl && <img src={post.imageUrl} alt="" className="rounded-xl w-full max-h-56 object-cover" />}
+              {editing ? (
+                <textarea dir="auto" value={text} onChange={(e) => setText(e.target.value)} rows={12} autoFocus className="w-full border border-gray-300 rounded-lg p-3 text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]" />
+              ) : (
+                <pre dir="auto" className="whitespace-pre-wrap text-sm font-sans leading-relaxed bg-gray-50 rounded-xl border border-gray-100 p-4" data-testid="review-text">{post.text}</pre>
+              )}
+            </div>
+            <div className="px-5 py-3 border-t border-gray-100 flex items-center justify-between gap-2 flex-wrap">
+              <div className="flex items-center gap-3">
+                <button type="button" onClick={() => { setEditing(false); setIdx((i) => Math.max(0, i - 1)); }} disabled={idx === 0 || busy} className="text-sm text-gray-500 hover:text-gray-800 disabled:opacity-40">← Précédent</button>
+                {!editing && (
+                  <button type="button" onClick={() => { setOutcome((o) => (o[post.id] ? o : { ...o, [post.id]: "passé" })); next(); }} disabled={busy} className="text-sm text-gray-500 hover:text-gray-800">Passer →</button>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                {editing ? (
+                  <>
+                    <button type="button" onClick={() => setEditing(false)} disabled={busy} className="text-sm text-gray-500 hover:text-gray-800 px-3 py-2">Annuler</button>
+                    <button type="button" onClick={save} disabled={busy || !text.trim()} className="bg-gray-900 hover:bg-gray-700 disabled:bg-gray-300 text-white text-sm font-medium px-4 py-2 rounded-lg">Enregistrer</button>
+                  </>
+                ) : (
+                  <>
+                    <button type="button" onClick={() => { setText(post.text); setEditing(true); }} disabled={busy} className="border border-gray-300 hover:border-[#ff5a5f] hover:text-[#ff5a5f] text-gray-700 text-sm font-medium px-4 py-2 rounded-lg flex items-center gap-1.5"><PenLine size={14} /> Modifier</button>
+                    {outcome[post.id] === "validé" ? (
+                      <span className="text-sm font-medium text-green-700 flex items-center gap-1.5 px-3 py-2"><Check size={14} /> Validé</span>
+                    ) : (
+                      <button type="button" onClick={validate} disabled={busy} className="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-300 text-white text-sm font-medium px-5 py-2 rounded-lg flex items-center gap-1.5">
+                        {busy ? <RefreshCw size={14} className="animate-spin" /> : <Check size={14} />} Valider
+                      </button>
+                    )}
+                  </>
+                )}
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// Confirmation de « Tout valider »
+function BulkValidateDialog({ count, linkedinConnected, busy, onConfirm, onClose }) {
+  return (
+    <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={busy ? undefined : onClose}>
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-5" onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Tout valider" data-testid="bulk-validate">
+        <h3 className="font-semibold text-base">Valider {count} post{count > 1 ? "s" : ""} ?</h3>
+        <p className="text-sm text-gray-600 mt-2">Ils seront programmés et partiront automatiquement à leur date prévue. Vous pourrez encore les modifier ou annuler leur programmation dans « Programmés ».</p>
+        {!linkedinConnected && <p className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg p-2.5 mt-3">LinkedIn n&apos;est pas connecté : connectez-le (menu « Profil ») avant la première date, sinon ces posts ne pourront pas partir.</p>}
+        <div className="flex justify-end gap-2 mt-4">
+          <button type="button" onClick={onClose} disabled={busy} className="text-sm text-gray-500 hover:text-gray-800 px-3 py-2">Annuler</button>
+          <button type="button" onClick={onConfirm} disabled={busy} className="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-300 text-white text-sm font-medium px-5 py-2 rounded-lg flex items-center gap-1.5">
+            {busy ? <RefreshCw size={14} className="animate-spin" /> : <Check size={14} />} Tout valider
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // Suppression d'une campagne : on demande ce que deviennent ses posts (supprimés, gardés, ou campagne seulement archivée)
 function CampaignDeleteDialog({ campaign: c, onClose, onDone, showToast }) {
   const [busy, setBusy] = useState(null);
@@ -12233,6 +12377,12 @@ export default function Home() {
   const [dragOverCol, setDragOverCol] = useState(null); // colonne kanban survolée pendant un drag
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false); // menu burger (navigation mobile)
   const [mobileCol, setMobileCol] = useState("brouillon"); // colonne affichée sur mobile (bascule)
+  // Mes posts : recherche, filtre par campagne, relecture en série et validation groupée
+  const [postSearch, setPostSearch] = useState("");
+  const [postCampaign, setPostCampaign] = useState("all"); // all | none | id de campagne
+  const [reviewOpen, setReviewOpen] = useState(false);
+  const [bulkOpen, setBulkOpen] = useState(false);
+  const [bulkBusy, setBulkBusy] = useState(false);
   const [editingResult, setEditingResult] = useState(false);
   const [resultDraftText, setResultDraftText] = useState("");
   const [reanalyzing, setReanalyzing] = useState(false);
@@ -13568,6 +13718,45 @@ export default function Home() {
   // "Mes posts" : ne montre que les posts du profil actuellement sélectionné
   // dans "Publier en tant que" (même sélecteur, réutilisé comme filtre d'affichage).
   const postsForTarget = drafts.filter((d) => (d.target || "person") === target);
+  // Filtres de « Mes posts » : recherche dans le texte et le thème, et campagne d'origine
+  const normSearch = postSearch.trim().toLowerCase();
+  const visiblePosts = postsForTarget.filter(
+    (d) =>
+      (postCampaign === "all" || (postCampaign === "none" ? !d.campaignId : d.campaignId === postCampaign)) &&
+      (!normSearch || `${d.theme ?? ""} ${d.text ?? ""} ${d.campaign?.name ?? ""}`.toLowerCase().includes(normSearch))
+  );
+  const campaignOptions = [...new Map(postsForTarget.filter((d) => d.campaignId && d.campaign?.name).map((d) => [d.campaignId, d.campaign.name])).entries()];
+  const filtersActive = postCampaign !== "all" || Boolean(normSearch);
+  const toReview = visiblePosts
+    .filter((d) => d.status === "à valider")
+    .sort((a, b) => new Date(a.scheduledAt ?? 0) - new Date(b.scheduledAt ?? 0));
+
+  const validateOne = async (p) => {
+    await patchDraft(p.id, { status: "programmé" });
+    setDrafts((d) => d.map((x) => (x.id === p.id ? { ...x, status: "programmé" } : x)));
+  };
+  const saveDraftText = async (p, text) => {
+    try {
+      await patchDraft(p.id, { text });
+      setDrafts((d) => d.map((x) => (x.id === p.id ? { ...x, text } : x)));
+    } catch (e) {
+      showToast(e.message);
+      throw e;
+    }
+  };
+  const validateAll = async () => {
+    setBulkBusy(true);
+    let ok = 0;
+    for (const p of toReview) {
+      try {
+        await validateOne(p);
+        ok++;
+      } catch {}
+    }
+    setBulkBusy(false);
+    setBulkOpen(false);
+    showToast(ok === toReview.length ? `${ok} post${ok > 1 ? "s" : ""} validé${ok > 1 ? "s" : ""} : ils partiront aux dates prévues ✓` : `${ok} validé${ok > 1 ? "s" : ""} sur ${toReview.length} : réessayez pour les autres`);
+  };
 
   // overflow-x-clip et non -hidden : hidden ferait de la racine un conteneur de défilement et
   // casserait position: sticky (barre latérale, barres d'actions).
@@ -15184,12 +15373,71 @@ export default function Home() {
             )}
           </div>
 
+          {/* Recherche et filtre par campagne */}
+          {postsForTarget.length > 0 && (
+            <div className="flex items-center gap-2 mb-4 flex-wrap" data-testid="posts-filters">
+              <input
+                type="search"
+                value={postSearch}
+                onChange={(e) => setPostSearch(e.target.value)}
+                placeholder="Rechercher dans vos posts…"
+                aria-label="Rechercher dans vos posts"
+                className="flex-1 min-w-[12rem] border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
+              />
+              {campaignOptions.length > 0 && (
+                <select
+                  value={postCampaign}
+                  onChange={(e) => setPostCampaign(e.target.value)}
+                  aria-label="Filtrer par campagne"
+                  className="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#ff5a5f] max-w-full"
+                >
+                  <option value="all">Toutes les campagnes</option>
+                  {campaignOptions.map(([id, name]) => (
+                    <option key={id} value={id}>{name}</option>
+                  ))}
+                  <option value="none">Sans campagne</option>
+                </select>
+              )}
+              {filtersActive && (
+                <>
+                  <span className="text-xs text-gray-400">{visiblePosts.length} post{visiblePosts.length > 1 ? "s" : ""} sur {postsForTarget.length}</span>
+                  <button type="button" onClick={() => { setPostSearch(""); setPostCampaign("all"); }} className="text-xs text-[#ff5a5f] hover:underline">Réinitialiser</button>
+                </>
+              )}
+            </div>
+          )}
+
+          {/* Posts à valider : relecture en série ou validation groupée */}
+          {toReview.length > 0 && (
+            <div className="mb-4 bg-purple-50 border border-purple-200 rounded-xl p-4 flex items-center justify-between gap-3 flex-wrap" data-testid="review-banner">
+              <p className="text-sm text-purple-900">
+                <span className="font-semibold">{toReview.length} post{toReview.length > 1 ? "s" : ""} attendent votre validation</span>
+                {postCampaign !== "all" || filtersActive ? " (selon vos filtres)" : ""}. Ils ne partiront qu&apos;après votre accord.
+              </p>
+              <div className="flex items-center gap-2">
+                <button type="button" onClick={() => setReviewOpen(true)} className="bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium px-4 py-2 rounded-lg flex items-center gap-1.5">
+                  <Eye size={14} /> Relire un par un
+                </button>
+                {toReview.length > 1 && (
+                  <button type="button" onClick={() => setBulkOpen(true)} className="border border-purple-300 text-purple-700 hover:bg-purple-100 text-sm font-medium px-4 py-2 rounded-lg">
+                    Tout valider
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Calendrier mensuel des programmations — au-dessus du kanban */}
           <div className="mb-6">
-            <CalendarMonth drafts={postsForTarget} onReschedule={rescheduleDraft} />
+            <CalendarMonth drafts={visiblePosts} onReschedule={rescheduleDraft} />
           </div>
 
-          {postsForTarget.length === 0 ? (
+          {postsForTarget.length > 0 && visiblePosts.length === 0 ? (
+            <div className="bg-white rounded-2xl border border-dashed border-gray-200 p-10 text-center text-gray-400 max-w-xl mx-auto">
+              <p className="text-sm">Aucun post ne correspond à vos filtres.</p>
+              <button type="button" onClick={() => { setPostSearch(""); setPostCampaign("all"); }} className="text-sm text-[#ff5a5f] hover:underline mt-2">Réinitialiser les filtres</button>
+            </div>
+          ) : postsForTarget.length === 0 ? (
             <div className="bg-white rounded-2xl border border-dashed border-gray-200 p-12 text-center text-gray-400 max-w-xl mx-auto">
               <History size={32} className="mx-auto mb-3" />
               <p className="text-sm">
@@ -15209,9 +15457,9 @@ export default function Home() {
                   { id: "publié", title: "Publiés", dot: "bg-green-500" },
                   { id: "erreur", title: "Erreurs", dot: "bg-red-500" },
                 ]
-                  .filter((col) => col.id !== "erreur" || postsForTarget.some((d) => d.status === "erreur"))
+                  .filter((col) => col.id !== "erreur" || visiblePosts.some((d) => d.status === "erreur"))
                   .map((col) => {
-                    const count = postsForTarget.filter((d) => d.status === col.id).length;
+                    const count = visiblePosts.filter((d) => d.status === col.id).length;
                     const active = mobileCol === col.id;
                     return (
                       <button
@@ -15237,9 +15485,9 @@ export default function Home() {
                 { id: "publié", title: "Publiés", dot: "bg-green-500" },
                 { id: "erreur", title: "Erreurs", dot: "bg-red-500" },
               ]
-                .filter((col) => col.id !== "erreur" || postsForTarget.some((d) => d.status === "erreur"))
+                .filter((col) => col.id !== "erreur" || visiblePosts.some((d) => d.status === "erreur"))
                 .map((col) => {
-                  const items = postsForTarget.filter((d) => d.status === col.id);
+                  const items = visiblePosts.filter((d) => d.status === col.id);
                   const droppable = col.id !== "erreur";
                   return (
                     <div
@@ -15372,6 +15620,11 @@ export default function Home() {
 
                               <div className="flex items-center gap-2 mt-2 text-[11px] text-gray-400 flex-wrap">
                                 <span>{new Date(p.createdAt).toLocaleDateString("fr-FR")}</span>
+                                {p.campaign?.name && (
+                                  <button type="button" onClick={() => setPostCampaign(p.campaignId)} title="Voir seulement cette campagne" className="bg-[#fff1f1] text-[#f63d44] px-1.5 py-0.5 rounded-full max-w-[10rem] truncate hover:bg-[#ffe0e0]" data-testid="post-campaign-badge">
+                                    {p.campaign.name}
+                                  </button>
+                                )}
                                 {p.auto && <span className="bg-gray-100 px-1.5 py-0.5 rounded-full">auto</span>}
                                 {p.inspirationUrl && (
                                   <a
@@ -15549,6 +15802,12 @@ export default function Home() {
                 })}
               </div>
             </>
+          )}
+          {reviewOpen && (
+            <ReviewPostsModal posts={toReview} linkedinConnected={linkedin.connected} onValidate={validateOne} onSaveText={saveDraftText} onClose={() => setReviewOpen(false)} />
+          )}
+          {bulkOpen && (
+            <BulkValidateDialog count={toReview.length} linkedinConnected={linkedin.connected} busy={bulkBusy} onConfirm={validateAll} onClose={() => setBulkOpen(false)} />
           )}
         </main>
       )}
