@@ -1873,6 +1873,17 @@ function CampaignWizard({ profile, linkedin, orgs, onClose, onLaunched, onProfil
   );
 }
 
+// Colonnes de « Mes posts » : le chemin d'un post, et ce que chaque statut veut dire
+const POST_COLUMNS = [
+  { id: "brouillon", title: "Brouillons", dot: "bg-gray-400", hint: "Écrits, pas encore planifiés : à publier ou programmer." },
+  { id: "à valider", title: "À valider", dot: "bg-purple-500", hint: "Planifiés, en attente de votre accord : ils ne partent pas sans lui." },
+  { id: "programmé", title: "Programmés", dot: "bg-amber-400", hint: "Validés : ils partent seuls à la date prévue." },
+  { id: "publié", title: "Publiés", dot: "bg-green-500", hint: "En ligne sur LinkedIn." },
+  { id: "erreur", title: "Erreurs", dot: "bg-red-500", hint: "La publication a échoué : la carte explique pourquoi." },
+];
+// Score d'engagement : même palette que l'écran d'optimisation
+const scoreTone = (n) => (n >= 80 ? "bg-green-50 text-green-700" : n >= 60 ? "bg-[#fff1f1] text-[#f63d44]" : n >= 40 ? "bg-amber-50 text-amber-700" : "bg-red-50 text-red-700");
+
 // Relecture en série des posts « à valider » : un post à la fois, en entier, avec Valider / Modifier / Passer.
 // La file est figée à l'ouverture (les posts validés restent visibles dans le décompte final).
 function ReviewPostsModal({ posts, linkedinConnected, onValidate, onSaveText, onClose }) {
@@ -15474,6 +15485,21 @@ export default function Home() {
             </div>
           )}
 
+          {/* Légende : le chemin d'un post, pour qui découvre les statuts */}
+          {postsForTarget.length > 0 && (
+            <details className="mb-4 group" data-testid="status-legend">
+              <summary className="text-xs text-gray-500 cursor-pointer select-none hover:text-gray-800">Comprendre les statuts : le chemin d&apos;un post</summary>
+              <ol className="grid sm:grid-cols-2 lg:grid-cols-5 gap-2 mt-3">
+                {POST_COLUMNS.map((c, i) => (
+                  <li key={c.id} className="bg-white rounded-xl border border-gray-100 p-3">
+                    <p className="text-xs font-semibold flex items-center gap-1.5"><span className={`w-2 h-2 rounded-full ${c.dot}`} /> {i < 4 ? `${i + 1}. ` : ""}{c.title}</p>
+                    <p className="text-[11px] text-gray-500 mt-1">{c.hint}</p>
+                  </li>
+                ))}
+              </ol>
+            </details>
+          )}
+
           {/* Posts à valider : relecture en série ou validation groupée */}
           {toReview.length > 0 && (
             <div className="mb-4 bg-purple-50 border border-purple-200 rounded-xl p-4 flex items-center justify-between gap-3 flex-wrap" data-testid="review-banner">
@@ -15505,25 +15531,43 @@ export default function Home() {
               <button type="button" onClick={() => { setPostSearch(""); setPostCampaign("all"); }} className="text-sm text-[#ff5a5f] hover:underline mt-2">Réinitialiser les filtres</button>
             </div>
           ) : postsForTarget.length === 0 ? (
-            <div className="bg-white rounded-2xl border border-dashed border-gray-200 p-12 text-center text-gray-400 max-w-xl mx-auto">
-              <History size={32} className="mx-auto mb-3" />
-              <p className="text-sm">
-                {drafts.length === 0
-                  ? "Aucun post pour l'instant. Générez un post puis enregistrez-le."
-                  : "Aucun post pour ce profil — changez de profil ci-dessus pour voir les autres."}
-              </p>
-            </div>
+            drafts.length === 0 ? (
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:p-8 max-w-2xl mx-auto" data-testid="posts-empty">
+                <div className="text-center">
+                  <History size={30} className="mx-auto mb-3 text-[#ff5a5f]" />
+                  <h3 className="font-semibold text-base">Vos posts vivront ici</h3>
+                  <p className="text-sm text-gray-500 mt-1.5">Chaque post suit le même chemin, de l&apos;idée à LinkedIn. Vous gardez la main à chaque étape.</p>
+                </div>
+                <ol className="grid sm:grid-cols-4 gap-2 mt-5">
+                  {POST_COLUMNS.slice(0, 4).map((c, i) => (
+                    <li key={c.id} className="bg-gray-50 rounded-xl p-3">
+                      <p className="text-xs font-semibold flex items-center gap-1.5"><span className={`w-2 h-2 rounded-full ${c.dot}`} /> {i + 1}. {c.title.replace(/s$/, "")}</p>
+                      <p className="text-[11px] text-gray-500 mt-1">{c.hint}</p>
+                    </li>
+                  ))}
+                </ol>
+                <div className="flex flex-wrap items-center justify-center gap-2 mt-6">
+                  <button type="button" onClick={() => setView("create")} className="bg-[#ff5a5f] hover:bg-[#f63d44] text-white text-sm font-medium px-5 py-2.5 rounded-lg flex items-center gap-2">
+                    <Sparkles size={15} /> Créer mon premier post
+                  </button>
+                  {plan.campaigns && (
+                    <button type="button" onClick={() => setView("campaigns")} className="border border-gray-300 hover:border-[#ff5a5f] hover:text-[#ff5a5f] text-gray-700 text-sm font-medium px-5 py-2.5 rounded-lg">
+                      Lancer une campagne
+                    </button>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="bg-white rounded-2xl border border-dashed border-gray-200 p-12 text-center text-gray-400 max-w-xl mx-auto">
+                <History size={32} className="mx-auto mb-3" />
+                <p className="text-sm">Aucun post pour ce profil — changez de profil ci-dessus pour voir les autres.</p>
+              </div>
+            )
           ) : (
             <>
               {/* Bascule mobile : une seule colonne visible à la fois, sur petit écran */}
               <div className="md:hidden flex gap-1.5 overflow-x-auto pb-3 -mx-1 px-1">
-                {[
-                  { id: "brouillon", title: "Brouillons", dot: "bg-gray-400" },
-                  { id: "à valider", title: "À valider", dot: "bg-purple-500" },
-                  { id: "programmé", title: "Programmés", dot: "bg-amber-400" },
-                  { id: "publié", title: "Publiés", dot: "bg-green-500" },
-                  { id: "erreur", title: "Erreurs", dot: "bg-red-500" },
-                ]
+                {POST_COLUMNS
                   .filter((col) => col.id !== "erreur" || visiblePosts.some((d) => d.status === "erreur"))
                   .map((col) => {
                     const count = visiblePosts.filter((d) => d.status === col.id).length;
@@ -15545,13 +15589,7 @@ export default function Home() {
               </div>
 
               <div className="flex flex-col gap-4 md:flex-row md:overflow-x-auto md:items-start pb-4">
-              {[
-                { id: "brouillon", title: "Brouillons", dot: "bg-gray-400" },
-                { id: "à valider", title: "À valider", dot: "bg-purple-500" },
-                { id: "programmé", title: "Programmés", dot: "bg-amber-400" },
-                { id: "publié", title: "Publiés", dot: "bg-green-500" },
-                { id: "erreur", title: "Erreurs", dot: "bg-red-500" },
-              ]
+              {POST_COLUMNS
                 .filter((col) => col.id !== "erreur" || visiblePosts.some((d) => d.status === "erreur"))
                 .map((col) => {
                   const items = visiblePosts.filter((d) => d.status === col.id);
@@ -15588,6 +15626,7 @@ export default function Home() {
                           {items.length}
                         </span>
                       </div>
+                      <p className="text-[11px] text-gray-400 px-1 -mt-2 mb-3">{col.hint}</p>
                       <div className="space-y-3 max-h-[68vh] overflow-y-auto pr-1">
                         {items.length === 0 && (
                           <p className="text-xs text-gray-400 text-center py-8">Aucun post</p>
@@ -15687,6 +15726,14 @@ export default function Home() {
 
                               <div className="flex items-center gap-2 mt-2 text-[11px] text-gray-400 flex-wrap">
                                 <span>{new Date(p.createdAt).toLocaleDateString("fr-FR")}</span>
+                                {canScore && p.status !== "publié" && (() => {
+                                  const sc = scorePost({ text: p.text, type: p.type }).score;
+                                  return (
+                                    <button type="button" onClick={() => openOptimize(p.text, p.type, p.id, p.imageUrl, p.imagePrompt, p.videoUrl, p.youtubeUrl)} title="Score d'engagement : cliquez pour l'améliorer" className={`px-1.5 py-0.5 rounded-full font-medium ${scoreTone(sc)}`} data-testid="post-score">
+                                      Score {sc}
+                                    </button>
+                                  );
+                                })()}
                                 {p.campaign?.name && (
                                   <button type="button" onClick={() => setPostCampaign(p.campaignId)} title="Voir seulement cette campagne" className="bg-[#fff1f1] text-[#f63d44] px-1.5 py-0.5 rounded-full max-w-[10rem] truncate hover:bg-[#ffe0e0]" data-testid="post-campaign-badge">
                                     {p.campaign.name}
