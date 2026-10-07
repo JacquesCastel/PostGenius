@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Sparkles, FileText, Layers, Video, Copy, Check, Trash2, Send,
   Clock, PenLine, History, RefreshCw, Linkedin, ChevronRight, ChevronLeft, X, LogOut,
@@ -5306,9 +5306,9 @@ function RecoCard({ reco, onGenerate, onIgnore, busy }) {
 function RecoFilterGroup({ label, options, value, onChange }) {
   if (options.length < 2) return null; // un filtre à une seule valeur n'aide pas
   const chip = (on) =>
-    `text-xs px-2.5 py-1 rounded-full border transition-colors ${on ? "bg-[#ff5a5f] text-white border-[#ff5a5f]" : "border-gray-200 text-gray-600 hover:border-gray-300 bg-white"}`;
+    `text-xs px-2.5 py-1 rounded-full border transition-colors shrink-0 ${on ? "bg-[#ff5a5f] text-white border-[#ff5a5f]" : "border-gray-200 text-gray-600 hover:border-gray-300 bg-white"}`;
   return (
-    <div className="flex items-center gap-1.5 flex-wrap">
+    <div className="flex items-center gap-1.5 overflow-x-auto sm:overflow-visible sm:flex-wrap [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
       <span className="text-[11px] font-medium uppercase tracking-wide text-gray-400 w-16 shrink-0">{label}</span>
       <button type="button" onClick={() => onChange(null)} className={chip(value == null)}>Tous</button>
       {options.map((o) => (
@@ -5326,19 +5326,13 @@ function RecoFilterGroup({ label, options, value, onChange }) {
   );
 }
 
-// Propositions sur trois colonnes (une ou deux sur petit écran), flèches gauche/droite et
-// filtres par taxonomie : pilier, objectif, format.
+// Slider de propositions : une piste qui défile horizontalement (trois cartes visibles sur grand
+// écran, deux puis une sur petit écran), avec accroche à chaque carte, flèches gauche/droite, balayage
+// tactile ou molette, et filtres par taxonomie (pilier, objectif, format).
 function RecoCarousel({ recos, onGenerate, onIgnore, actingId }) {
   const [filters, setFilters] = useState({ pillar: null, objective: null, format: null });
-  const [page, setPage] = useState(0);
-  const [perPage, setPerPage] = useState(3);
-
-  useEffect(() => {
-    const fit = () => setPerPage(window.innerWidth >= 1024 ? 3 : window.innerWidth >= 640 ? 2 : 1);
-    fit();
-    window.addEventListener("resize", fit);
-    return () => window.removeEventListener("resize", fit);
-  }, []);
+  const trackRef = useRef(null);
+  const [scroll, setScroll] = useState({ prev: false, next: false, from: 1, to: 1 });
 
   const objectiveOf = (r) => (r.objective ?? "").trim().toLowerCase() || null;
   const formatOf = (r) => r.postType ?? "simple";
@@ -5366,19 +5360,51 @@ function RecoCarousel({ recos, onGenerate, onIgnore, actingId }) {
   const filtered = recos.filter((r) => passes(r, null));
   const setFilter = (k) => (v) => {
     setFilters((f) => ({ ...f, [k]: v }));
-    setPage(0);
+    resetScroll();
   };
-  const pages = Math.max(1, Math.ceil(filtered.length / perPage));
-  const current = Math.min(page, pages - 1);
-  const visible = filtered.slice(current * perPage, current * perPage + perPage);
-  const from = filtered.length ? current * perPage + 1 : 0;
-  const to = Math.min(filtered.length, current * perPage + perPage);
+  const resetScroll = () => trackRef.current?.scrollTo({ left: 0 });
+  // Position du slider : cartes visibles et possibilité d'aller à gauche/à droite
+  const measure = () => {
+    const el = trackRef.current;
+    if (!el) return;
+    const n = el.children.length;
+    const cardW = n ? el.scrollWidth / n : 0;
+    const perView = cardW ? Math.max(1, Math.round(el.clientWidth / cardW)) : 1;
+    const from = cardW ? Math.min(n, Math.round(el.scrollLeft / cardW) + 1) : 0;
+    setScroll({ prev: el.scrollLeft > 2, next: el.scrollLeft + el.clientWidth < el.scrollWidth - 2, from, to: Math.min(n, from + perView - 1) });
+  };
+  useEffect(() => {
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, [filtered.length]);
+  // Flèches : on vise une carte précise (et non un décalage en pixels), ce qui reste juste même si l'on
+  // clique plusieurs fois pendant le défilement animé.
+  const targetRef = useRef(null);
+  const slide = (dir) => {
+    const el = trackRef.current;
+    if (!el || !el.children.length) return;
+    const n = el.children.length;
+    const cardW = el.scrollWidth / n;
+    const perView = Math.max(1, Math.round(el.clientWidth / cardW));
+    const base = targetRef.current ?? Math.round(el.scrollLeft / cardW);
+    const idx = Math.max(0, Math.min(n - 1, base + dir * perView));
+    targetRef.current = idx;
+    el.scrollTo({ left: el.children[idx].offsetLeft - el.offsetLeft, behavior: "smooth" });
+  };
+  // Fin du défilement : la prochaine flèche repart de la position réelle
+  const scrollTimer = useRef(null);
+  const onTrackScroll = () => {
+    measure();
+    clearTimeout(scrollTimer.current);
+    scrollTimer.current = setTimeout(() => { targetRef.current = null; }, 200);
+  };
   const filtering = filters.pillar != null || filters.objective != null || filters.format != null;
 
   const arrow = (dir, disabled) => (
     <button
       type="button"
-      onClick={() => setPage(current + dir)}
+      onClick={() => slide(dir)}
       disabled={disabled}
       aria-label={dir < 0 ? "Propositions précédentes" : "Propositions suivantes"}
       className="p-2 rounded-full border border-gray-200 bg-white text-gray-600 hover:border-gray-300 disabled:opacity-30 disabled:cursor-not-allowed"
@@ -5397,16 +5423,20 @@ function RecoCarousel({ recos, onGenerate, onIgnore, actingId }) {
 
       <div className="flex items-center justify-between gap-2">
         <p className="text-xs text-gray-400">
-          {filtered.length ? `${from}–${to} sur ${filtered.length} proposition${filtered.length > 1 ? "s" : ""}` : "Aucune proposition"}
+          {filtered.length === 0
+            ? "Aucune proposition"
+            : scroll.to - scroll.from + 1 < filtered.length
+            ? `${scroll.from === scroll.to ? scroll.from : `${scroll.from}–${scroll.to}`} sur ${filtered.length} propositions`
+            : `${filtered.length} proposition${filtered.length > 1 ? "s" : ""}`}
           {filtering && (
-            <button type="button" onClick={() => { setFilters({ pillar: null, objective: null, format: null }); setPage(0); }} className="text-[#0a66c2] hover:underline ml-2">
+            <button type="button" onClick={() => { setFilters({ pillar: null, objective: null, format: null }); resetScroll(); }} className="text-[#0a66c2] hover:underline ml-2">
               Réinitialiser les filtres
             </button>
           )}
         </p>
         <div className="flex items-center gap-1.5">
-          {arrow(-1, current === 0)}
-          {arrow(1, current >= pages - 1)}
+          {arrow(-1, !scroll.prev)}
+          {arrow(1, !scroll.next)}
         </div>
       </div>
 
@@ -5415,9 +5445,15 @@ function RecoCarousel({ recos, onGenerate, onIgnore, actingId }) {
           Aucune proposition ne correspond à ces filtres.
         </div>
       ) : (
-        <div className={`grid gap-3 ${perPage === 3 ? "grid-cols-3" : perPage === 2 ? "grid-cols-2" : "grid-cols-1"}`}>
-          {visible.map((r) => (
-            <RecoCard key={r.id} reco={r} onGenerate={onGenerate} onIgnore={onIgnore} busy={actingId === r.id} />
+        <div
+          ref={trackRef}
+          onScroll={onTrackScroll}
+          className="flex gap-3 overflow-x-auto snap-x snap-mandatory scroll-smooth pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        >
+          {filtered.map((r) => (
+            <div key={r.id} className="snap-start shrink-0 min-w-0 basis-[88%] sm:basis-[calc((100%-0.75rem)/2)] lg:basis-[calc((100%-1.5rem)/3)]">
+              <RecoCard reco={r} onGenerate={onGenerate} onIgnore={onIgnore} busy={actingId === r.id} />
+            </div>
           ))}
         </div>
       )}
@@ -5534,6 +5570,9 @@ function CopilotWorkspace({ profile, onProfileSaved, showToast, onGenerateFromRe
         </button>
       </div>
 
+      {/* Le prompt d'échange reste au-dessus des propositions */}
+      <EditorialChat profile={profile} onProfileSaved={onProfileSaved} onRegenerate={() => load(true)} showToast={showToast} />
+
       <ProfileSignalsPanel missingSignals={missingSignals} completion={completion} onGoProfileField={onGoProfileField} />
 
       {loading ? (
@@ -5554,13 +5593,6 @@ function CopilotWorkspace({ profile, onProfileSaved, showToast, onGenerateFromRe
       ) : (
         <RecoCarousel recos={recos} onGenerate={generate} onIgnore={(r) => respond(r, "ignorée")} actingId={actingId} />
       )}
-
-      <div>
-        <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
-          <MessageSquare size={15} className="text-[#ff5a5f]" /> Discuter avec le copilote
-        </h3>
-        <EditorialChat profile={profile} onProfileSaved={onProfileSaved} onRegenerate={() => load(true)} showToast={showToast} />
-      </div>
     </div>
   );
 }
