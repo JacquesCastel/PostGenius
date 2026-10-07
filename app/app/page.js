@@ -4009,6 +4009,137 @@ function RemarkSuggestions({ onAccepted, showToast }) {
   );
 }
 
+// Pli : en-tête cliquable, contenu replié par défaut (allège la page résultat)
+function Fold({ icon, title, hint, defaultOpen = false, children }) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div>
+      <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open} className="w-full flex items-center justify-between gap-2 bg-white rounded-2xl border border-gray-100 shadow-sm px-5 py-3.5 text-left">
+        <span className="flex items-center gap-2 text-sm font-semibold">
+          {icon} {title}
+          {hint && <span className="text-xs text-gray-400 font-normal hidden sm:inline">{hint}</span>}
+        </span>
+        {open ? <ChevronUp size={16} className="text-gray-400" /> : <ChevronDown size={16} className="text-gray-400" />}
+      </button>
+      {open && <div className="mt-3 space-y-3">{children}</div>}
+    </div>
+  );
+}
+
+// Retouche conversationnelle du post : chaque consigne réécrit le post, l'IA dit ce qu'elle a changé et peut
+// proposer des « À retenir » (préférences durables) que l'auteur accepte ou ignore.
+const QUICK_REFINES = ["Plus court", "Plus percutant", "Moins formel", "Ajoute une anecdote"];
+function RefineChat({ thread, loading, mood, onSend, onMood, onEdit, onRemember, onDismiss }) {
+  const [input, setInput] = useState("");
+  const endRef = useRef(null);
+  useEffect(() => {
+    endRef.current?.scrollIntoView?.({ block: "nearest" });
+  }, [thread.length, loading]);
+  const send = (text) => {
+    const t = text.trim();
+    if (!t || loading) return;
+    setInput("");
+    onSend(t);
+  };
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5" data-testid="refine-chat">
+      <div className="flex items-start justify-between gap-2 mb-1">
+        <p className="text-sm font-semibold flex items-center gap-2">
+          <Sparkles size={15} className="text-[#ff5a5f]" /> Améliorer ce post
+        </p>
+        <button type="button" onClick={onEdit} className="text-xs text-gray-500 hover:text-[#ff5a5f] flex items-center gap-1 shrink-0">
+          <PenLine size={12} /> Modifier à la main
+        </button>
+      </div>
+      <p className="text-xs text-gray-400 mb-3">Dites ce que vous voulez changer : le post est réécrit et l'IA retient vos préférences si vous le souhaitez.</p>
+
+      {thread.length > 0 && (
+        <div className="max-h-72 overflow-y-auto space-y-2.5 mb-3 pr-1">
+          {thread.map((m, i) =>
+            m.role === "user" ? (
+              <div key={i} className="flex justify-end">
+                <p className="bg-gray-900 text-white text-xs rounded-2xl rounded-br-sm px-3 py-2 max-w-[85%]">{m.text}</p>
+              </div>
+            ) : (
+              <div key={i} className="space-y-1.5">
+                <p className="bg-gray-100 text-gray-800 text-xs rounded-2xl rounded-bl-sm px-3 py-2 max-w-[90%] w-fit">{m.text}</p>
+                {m.remember?.map((r, j) =>
+                  r.state === "dismissed" ? null : (
+                    <div key={j} className="rounded-xl bg-amber-50 border border-amber-200 px-3 py-2 max-w-[95%] w-fit">
+                      <p className="text-[11px] font-semibold text-amber-800 flex items-center gap-1">
+                        <Lightbulb size={12} /> {r.state === "saved" ? "Retenu pour vos prochains posts" : "À retenir pour vos prochains posts ?"}
+                      </p>
+                      <p className="text-xs text-gray-800 mt-0.5">{r.text}</p>
+                      {r.state === "open" && (
+                        <div className="flex gap-2 mt-1.5">
+                          <button type="button" onClick={() => onRemember(i, j, r.text)} className="bg-[#ff5a5f] hover:bg-[#f63d44] text-white text-xs font-medium px-3 py-1 rounded-lg">
+                            Retenir
+                          </button>
+                          <button type="button" onClick={() => onDismiss(i, j)} className="text-xs text-gray-500 hover:text-gray-800 px-2 py-1">
+                            Non merci
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )
+                )}
+              </div>
+            )
+          )}
+          {loading && (
+            <p className="text-xs text-gray-500 flex items-center gap-1.5">
+              <RefreshCw size={12} className="animate-spin text-[#ff5a5f]" /> Claude retouche votre post…
+            </p>
+          )}
+          <div ref={endRef} />
+        </div>
+      )}
+
+      <div className="flex flex-wrap gap-1.5 mb-2">
+        {QUICK_REFINES.map((s) => (
+          <button key={s} type="button" onClick={() => send(s)} disabled={loading} className="text-xs bg-gray-100 hover:bg-[#fff1f1] hover:text-[#f63d44] disabled:opacity-50 text-gray-600 px-2.5 py-1 rounded-full">
+            {s}
+          </button>
+        ))}
+      </div>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          send(input);
+        }}
+        className="flex flex-wrap gap-2"
+      >
+        <input
+          type="text"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder="« insiste sur le ROI », « termine par une question »…"
+          className="flex-1 min-w-[10rem] border border-gray-300 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
+        />
+        <button type="submit" disabled={loading || !input.trim()} className="bg-gray-900 hover:bg-gray-700 disabled:bg-gray-300 text-white text-xs px-3 py-1.5 rounded-lg">
+          Envoyer
+        </button>
+      </form>
+      <details className="mt-3">
+        <summary className="text-xs text-gray-500 cursor-pointer select-none">Changer l'humeur (réécrit le post)</summary>
+        <div className="flex flex-wrap gap-1.5 mt-2">
+          {[{ code: null, emoji: "😐", label: "Neutre" }, ...MOODS].map((m) => (
+            <button
+              key={m.code ?? "neutre"}
+              type="button"
+              disabled={loading}
+              onClick={() => onMood(m)}
+              className={`text-xs px-2.5 py-1 rounded-full border disabled:opacity-50 ${mood === m.code ? "bg-[#fff1f1] text-[#f63d44] border-[#ff5a5f]" : "border-gray-200 text-gray-600 hover:border-gray-300"}`}
+            >
+              {m.emoji} {m.label}
+            </button>
+          ))}
+        </div>
+      </details>
+    </div>
+  );
+}
+
 function RemarkBox({ onApplyNow, onManage, showToast }) {
   const [text, setText] = useState("");
   const [applyNow, setApplyNow] = useState(false);
@@ -4054,7 +4185,7 @@ function RemarkBox({ onApplyNow, onManage, showToast }) {
         <MessageSquare size={15} className="text-[#ff5a5f]" /> Une remarque pour vos prochains posts ?
       </p>
       <p className="text-xs text-gray-400 mt-1 mb-3">
-        Enregistrée pour tous vos futurs posts (ex : {REMARK_EXAMPLES}). Pour modifier seulement ce post, utilisez « Retoucher avec l'IA ».
+        Enregistrée pour tous vos futurs posts (ex : {REMARK_EXAMPLES}). Pour modifier seulement ce post, utilisez « Améliorer ce post ».
       </p>
       <RemarkSuggestions onAccepted={(r) => r && setCount((c) => (c ?? 0) + 1)} showToast={showToast} />
       <div className="flex flex-wrap gap-2">
@@ -4625,7 +4756,7 @@ function RemarksManager({ showToast, onCount }) {
 // est modifié à la main : bandeau + « Réanalyser ».
 // ----------------------------------------------------------------
 function PostWhy({ text, why, onReanalyze, reanalyzing }) {
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(false);
   const a = postAnatomy(text);
   const stale = why.forText !== text;
   const rows = [
@@ -11635,7 +11766,6 @@ export default function Home() {
   const [mobileCol, setMobileCol] = useState("brouillon"); // colonne affichée sur mobile (bascule)
   const [editingResult, setEditingResult] = useState(false);
   const [resultDraftText, setResultDraftText] = useState("");
-  const [refineInput, setRefineInput] = useState("");
   const [reanalyzing, setReanalyzing] = useState(false);
   const [resultView, setResultView] = useState(false); // true : page dédiée au post généré (sinon paramètres + carte « Revoir le post »)
   const [genMode, setGenMode] = useState("single"); // single | series
@@ -11653,6 +11783,7 @@ export default function Home() {
   const [variants, setVariants] = useState(null);
   const [activeVariant, setActiveVariant] = useState(0);
   const [history, setHistory] = useState([]); // versions précédentes du post
+  const [thread, setThread] = useState([]); // conversation de retouche : { role, text, remember? }
   const [seriesResult, setSeriesResult] = useState(null);
   const [savingSeries, setSavingSeries] = useState(false);
   const [seriesStart, setSeriesStart] = useState(() => {
@@ -11890,6 +12021,7 @@ export default function Home() {
     setSeriesResult(null);
     setVariants(null);
     setHistory([]);
+    setThread([]);
     setNextStep(null);
     setEditingResult(false);
     setPostImage(null);
@@ -12000,7 +12132,7 @@ export default function Home() {
 
   // Retouche IA du post généré (« plus court », consigne libre…)
   // moodOverride : humeur imposée pour cette retouche (null = neutre), sinon celle du formulaire
-  const handleRefine = async (instruction, moodOverride) => {
+  const handleRefine = async (instruction, moodOverride, label) => {
     if (!result || loading || !instruction.trim()) return;
     setLoading(true);
     setError(null);
@@ -12009,17 +12141,37 @@ export default function Home() {
       const res = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, ...(moodOverride !== undefined ? { mood: moodOverride } : {}), refine: { text: result.text, instruction } }),
+        body: JSON.stringify({ ...form, ...(moodOverride !== undefined ? { mood: moodOverride } : {}), refine: { text: result.text, instruction, history: thread.filter((m) => m.role === "user").map((m) => m.text) } }),
       });
       const data = await readJson(res);
       if (!res.ok) throw new Error(data.error || "Erreur inconnue");
       setHistory((h) => [...h, result]); // version précédente récupérable
       setResult(data);
-      setRefineInput("");
+      setThread((t) => [
+        ...t,
+        { role: "user", text: label || instruction },
+        { role: "assistant", text: data.reply || "C'est fait : voici la nouvelle version.", remember: (data.remember ?? []).map((text) => ({ text, state: "open" })) },
+      ]);
     } catch (e) {
       setError(e.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const setRememberState = (i, j, state) =>
+    setThread((t) => t.map((m, k) => (k === i ? { ...m, remember: m.remember.map((r, l) => (l === j ? { ...r, state } : r)) } : m)));
+
+  // « À retenir » accepté : la consigne devient une remarque pour tous les prochains posts
+  const rememberFromChat = async (i, j, text) => {
+    try {
+      const res = await fetch("/api/remarks", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text }) });
+      const data = await readJson(res);
+      if (!res.ok) throw new Error(data.error || "Erreur");
+      setRememberState(i, j, "saved");
+      showToast("Retenu — cela guidera vos prochains posts ✓");
+    } catch (e) {
+      showToast(e.message);
     }
   };
 
@@ -12086,6 +12238,7 @@ export default function Home() {
     setResult(null);
     setVariants(null);
     setHistory([]);
+    setThread([]);
     setEditingResult(false);
     setPostImage(null);
     setPostVideo(null);
@@ -13518,16 +13671,7 @@ export default function Home() {
                       ))}
                     </select>
                   )}
-                  <button
-                    onClick={() => {
-                      setResultDraftText(result.text);
-                      setEditingResult(true);
-                    }}
-                    disabled={editingResult}
-                    className="border border-gray-300 hover:border-[#ff5a5f] hover:text-[#ff5a5f] disabled:opacity-50 text-gray-700 text-xs font-medium px-3 py-1.5 rounded-lg flex items-center gap-1.5"
-                  >
-                    <PenLine size={13} /> Modifier
-                  </button>
+                  <span className="hidden md:inline text-[11px] font-semibold uppercase tracking-wide text-gray-400 mr-1">Terminer</span>
                   <button
                     onClick={saveDraftFlow}
                     className="border border-gray-300 hover:border-[#ff5a5f] hover:text-[#ff5a5f] text-gray-700 text-xs font-medium px-3 py-1.5 rounded-lg flex items-center gap-1.5"
@@ -13604,6 +13748,7 @@ export default function Home() {
                       setActiveVariant(i);
                       setResult(variants[i]);
                       setHistory([]);
+                      setThread([]);
                       setEditingResult(false);
                     }}
                     className={`text-xs px-3 py-1.5 rounded-full border font-medium ${
@@ -13648,6 +13793,17 @@ export default function Home() {
                           <Undo2 size={16} /> v-{history.length}
                         </button>
                       )}
+                      <button
+                        onClick={() => {
+                          setResultDraftText(result.text);
+                          setEditingResult(true);
+                        }}
+                        disabled={editingResult}
+                        className="text-gray-500 hover:text-[#ff5a5f] disabled:opacity-40 p-1.5 rounded hover:bg-gray-100"
+                        title="Modifier à la main"
+                      >
+                        <PenLine size={16} />
+                      </button>
                       <button
                         onClick={() => handleCopy(result.text)}
                         className="text-gray-500 hover:text-[#ff5a5f] p-1.5 rounded hover:bg-gray-100"
@@ -13739,15 +13895,32 @@ export default function Home() {
               )}
             </div>
 
-            {/* Droite : pourquoi ce post, remarque, optimisation, retouche texte et image */}
+            {/* Droite : améliorer (conversation), puis le reste replié */}
             {result && (
               <div className="space-y-4">
-                {!editingResult && result?.why && (
-                  <PostWhy text={result.text} why={result.why} onReanalyze={reanalyzeWhy} reanalyzing={reanalyzing} />
-                )}
-
                 {!editingResult && result?.text && (
-                  <RemarkBox onApplyNow={handleRefine} onManage={() => setView("profile")} showToast={showToast} />
+                  <RefineChat
+                    thread={thread}
+                    loading={loading}
+                    mood={form.mood ?? null}
+                    onSend={(text) => handleRefine(text)}
+                    onMood={(m) => {
+                      setForm((f) => ({ ...f, mood: m.code }));
+                      handleRefine(
+                        m.code
+                          ? `Réécris ce post dans l'humeur « ${m.label} », en gardant le même sujet et les mêmes idées.`
+                          : "Réécris ce post sur un ton neutre, sans humeur marquée, en gardant le même sujet et les mêmes idées.",
+                        m.code,
+                        `Humeur : ${m.label}`
+                      );
+                    }}
+                    onEdit={() => {
+                      setResultDraftText(result.text);
+                      setEditingResult(true);
+                    }}
+                    onRemember={rememberFromChat}
+                    onDismiss={(i, j) => setRememberState(i, j, "dismissed")}
+                  />
                 )}
 
                 {!editingResult && result?.text && canScore && (
@@ -13761,7 +13934,7 @@ export default function Home() {
                       </span>
                       <span>
                         <span className="block font-bold text-sm">Voir et optimiser le potentiel d'engagement</span>
-                        <span className="block text-xs text-[#5a6b85]">Étape 2 — score détaillé + conseils pour améliorer votre post</span>
+                        <span className="block text-xs text-[#5a6b85]">Score détaillé + conseils pour améliorer votre post</span>
                       </span>
                     </span>
                     <ChevronRight size={20} className="text-[#ff5a5f] shrink-0" />
@@ -13787,83 +13960,22 @@ export default function Home() {
                   </button>
                 )}
 
-                {/* Retoucher avec l'IA : le texte et l'image au même endroit */}
-                <div className="space-y-3">
-                  <p className="text-sm font-semibold flex items-center gap-2 px-1">
-                    <Sparkles size={15} className="text-[#ff5a5f]" /> Retoucher avec l'IA
-                    <span className="text-xs text-gray-400 font-normal">texte et image</span>
-                  </p>
-                  {!editingResult && (
-                    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-                      <p className="text-xs font-medium text-gray-500 mb-2">Le texte</p>
-                    <p className="text-[11px] text-gray-400 mb-1">Changer l'humeur (réécrit le post)</p>
-                    <div className="flex flex-wrap gap-1.5 mb-3">
-                      {[{ code: null, emoji: "😐", label: "Neutre" }, ...MOODS].map((m) => (
-                        <button
-                          key={m.code ?? "neutre"}
-                          type="button"
-                          disabled={loading}
-                          onClick={() => {
-                            setForm((f) => ({ ...f, mood: m.code }));
-                            handleRefine(
-                              m.code
-                                ? `Réécris ce post dans l'humeur « ${m.label} », en gardant le même sujet et les mêmes idées.`
-                                : "Réécris ce post sur un ton neutre, sans humeur marquée, en gardant le même sujet et les mêmes idées.",
-                              m.code
-                            );
-                          }}
-                          className={`text-xs px-2.5 py-1 rounded-full border disabled:opacity-50 ${
-                            (form.mood ?? null) === m.code
-                              ? "bg-[#fff1f1] text-[#f63d44] border-[#ff5a5f]"
-                              : "border-gray-200 text-gray-600 hover:border-gray-300"
-                          }`}
-                        >
-                          {m.emoji} {m.label}
-                        </button>
-                      ))}
-                    </div>
-                    <div className="flex flex-wrap gap-1.5 mb-2">
-                      {["Plus court", "Plus percutant", "Moins formel", "Ajoute une anecdote"].map((s) => (
-                        <button
-                          key={s}
-                          onClick={() => handleRefine(s)}
-                          disabled={loading}
-                          className="text-xs bg-gray-100 hover:bg-[#fff1f1] hover:text-[#f63d44] disabled:opacity-50 text-gray-600 px-2.5 py-1 rounded-full"
-                        >
-                          {s}
-                        </button>
-                      ))}
-                    </div>
-                    <form
-                      onSubmit={(e) => {
-                        e.preventDefault();
-                        handleRefine(refineInput);
-                      }}
-                      className="flex flex-wrap gap-2"
-                    >
-                      <input
-                        type="text"
-                        value={refineInput}
-                        onChange={(e) => setRefineInput(e.target.value)}
-                        placeholder="Consigne libre : « insiste sur le ROI », « termine par une question »…"
-                        className="flex-1 min-w-[10rem] border border-gray-300 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
-                      />
-                      <button
-                        type="submit"
-                        disabled={loading || !refineInput.trim()}
-                        className="bg-gray-900 hover:bg-gray-700 disabled:bg-gray-300 text-white text-xs px-3 py-1.5 rounded-lg"
-                      >
-                        Appliquer
-                      </button>
-                    </form>
-                  </div>
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-400 px-1 pt-1">Aller plus loin</p>
+                {!editingResult && result?.why && (
+                  <PostWhy text={result.text} why={result.why} onReanalyze={reanalyzeWhy} reanalyzing={reanalyzing} />
                 )}
-                  {/* Image du post — reste accessible en mode modification, et partagée avec
-                      l'écran "Optimiser mes posts" via renderImageBlock(). */}
+                {/* Image du post — reste accessible en mode modification, et partagée avec
+                    l'écran "Optimiser mes posts" via renderImageBlock(). */}
+                <Fold icon={<ImageIcon size={15} className="text-[#ff5a5f]" />} title="Image et vidéo" hint="optionnelles" defaultOpen={Boolean(postImage || postVideo || postYoutube)}>
                   {renderImageBlock()}
                   {renderVideoBlock()}
                   {renderYoutubeBlock()}
-                </div>
+                </Fold>
+                {!editingResult && result?.text && (
+                  <Fold icon={<MessageSquare size={15} className="text-[#ff5a5f]" />} title="Une remarque pour vos prochains posts" hint="enregistrée pour tous vos posts">
+                    <RemarkBox onApplyNow={handleRefine} onManage={() => setView("profile")} showToast={showToast} />
+                  </Fold>
+                )}
               </div>
             )}
           </div>

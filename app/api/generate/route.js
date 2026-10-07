@@ -11,6 +11,7 @@ import { styleExamplesFor } from "@/lib/styleCorpus";
 import { knowledgeFor } from "@/lib/knowledge";
 import { usedSources } from "@/lib/knowledgeText";
 import { cleanSource, sourceBlock } from "@/lib/generationSource";
+import { REFINE_CHAT_JSON, REFINE_CHAT_INSTRUCTION, historyBlock, cleanRefineChat } from "@/lib/refineChat";
 import { writingRulesPrompt, WHY_INSTRUCTION, WHY_JSON_FORMAT, cleanWhy } from "@/lib/linkedinRules";
 
 // Génération du post via l'API Claude (Messages API).
@@ -77,7 +78,7 @@ Le 1er plan est une accroche qui retient dans les 3 premières secondes, le dern
 ${refine.text}
 """
 
-Réécris-le en appliquant cette consigne : ${refine.instruction}
+Réécris-le en appliquant cette consigne : ${refine.instruction}${historyBlock(refine.history)}
 Contraintes inchangées :
 - Auteur : ${expertise}
 - Thématique : ${theme}
@@ -89,8 +90,10 @@ ${writingRulesPrompt(maxChars)}
 
 ${WHY_INSTRUCTION}
 
+${REFINE_CHAT_INSTRUCTION}
+
 Format de réponse JSON :
-{"text": "le post complet", "extra": ${extraFormat(type)}, ${WHY_JSON_FORMAT}${srcFmt}}`;
+{"text": "le post complet", "extra": ${extraFormat(type)}, ${WHY_JSON_FORMAT}, ${REFINE_CHAT_JSON}${srcFmt}}`;
   }
 
   // Mode série : N posts gradués sur un thème, avec reveal final
@@ -280,7 +283,8 @@ export async function POST(req) {
       });
     }
 
-    return NextResponse.json({ text: result.text, extra: params.type === "video" ? normalizeVideoExtra(result.extra) : result.extra ?? null, why: cleanWhy(result.why, result.text), sources: usedSources(result.sources, knowledge.picked) });
+    const chat = params.refine?.text ? cleanRefineChat(result, remarks) : null;
+    return NextResponse.json({ text: result.text, extra: params.type === "video" ? normalizeVideoExtra(result.extra) : result.extra ?? null, why: cleanWhy(result.why, result.text), sources: usedSources(result.sources, knowledge.picked), ...(chat ? { reply: chat.reply, remember: chat.remember } : {}) });
   } catch (e) {
     console.error("Erreur génération:", e);
     return NextResponse.json({ error: "Échec de la génération. Réessayez." }, { status: 500 });
