@@ -5229,7 +5229,7 @@ function useNextSteps(profile) {
       })
       .catch(() => {});
   }, []);
-  const steps = activity ? nextSteps(profile, activity, { linkedinConnected: activity.linkedinConnected, snoozed }) : [];
+  const steps = activity ? nextSteps(profile, activity, { linkedinConnected: activity.linkedinConnected, canEvents: activity.canEvents, snoozed }) : [];
   const strength = activity
     ? profileStrength(profile ?? {}, {
         knowledgeCount: activity.knowledgeCount,
@@ -5246,6 +5246,13 @@ function useNextSteps(profile) {
     setSnoozed(next);
   };
   return { steps, strength, snooze };
+}
+
+// Geste d'une étape recommandée : créer un post, ouvrir un champ du profil ou un écran de l'application
+function goNextStep(st, { onGoCreate, onGoProfileField, onGoView }) {
+  if (st.target.type === "create") onGoCreate();
+  else if (st.target.type === "view") onGoView(st.target.view);
+  else onGoProfileField(st.target.field);
 }
 
 function NextStepCard({ steps, strength, onAct, onSnooze }) {
@@ -5959,7 +5966,7 @@ function RecoToday({ onGenerate, onGoCopilot, showToast, profile, onProfileSaved
 }
 
 // Espace Copilote IA : les propositions (colonnes, flèches, filtres) et la discussion avec le copilote
-function CopilotWorkspace({ profile, onProfileSaved, showToast, onGenerateFromReco, onGoProfileField, onGoCreate }) {
+function CopilotWorkspace({ profile, onProfileSaved, showToast, onGenerateFromReco, onGoProfileField, onGoCreate, onGoView }) {
   const { recos, loading, refreshing, error, actingId, load, respond, updateReco, highlightId } = useRecommendations(showToast);
   const sel = useRecoSelection(recos);
   const ns = useNextSteps(profile);
@@ -5999,7 +6006,7 @@ function CopilotWorkspace({ profile, onProfileSaved, showToast, onGenerateFromRe
         steps={ns.steps}
         strength={ns.strength}
         onSnooze={ns.snooze}
-        onAct={(st) => (st.target.type === "create" ? onGoCreate() : onGoProfileField(st.target.field))}
+        onAct={(st) => goNextStep(st, { onGoCreate, onGoProfileField, onGoView })}
       />
 
       {loading ? (
@@ -6565,7 +6572,7 @@ function CopilotSettings({ profile, onProfileSaved, showToast, onGoDashboard }) 
 
 // Copilote IA : deux onglets. « Propositions » (par défaut) est l'espace de travail ;
 // « Réglages et suivi » garde le pilotage du moteur (publication autonome, poids appris, piliers…).
-function CopilotView({ profile, onProfileSaved, showToast, onGoDashboard, onGenerateFromReco, onGoProfileField, onGoCreate }) {
+function CopilotView({ profile, onProfileSaved, showToast, onGoDashboard, onGenerateFromReco, onGoProfileField, onGoCreate, onGoView }) {
   const [tab, setTab] = useState("work"); // work | settings
   const tabBtn = (id, label) => (
     <button
@@ -6598,6 +6605,7 @@ function CopilotView({ profile, onProfileSaved, showToast, onGoDashboard, onGene
           onGenerateFromReco={onGenerateFromReco}
           onGoProfileField={onGoProfileField}
           onGoCreate={onGoCreate}
+          onGoView={onGoView}
         />
       ) : (
         <CopilotSettings profile={profile} onProfileSaved={onProfileSaved} showToast={showToast} onGoDashboard={onGoDashboard} />
@@ -6640,7 +6648,7 @@ function DashSection({ id, title, icon: Icon, hint, forceOpen = false, children 
   );
 }
 
-function DashboardView({ drafts, canVeille = true, canEvents = false, canScore = true, canCampaigns = true, postsLimit = null, onGoCreate, onGoHistory, onGoEvents, onGoProfile, onGoProfileField, onGoCopilot, onApprove, onReschedule, profile, linkedin, orgs, onPlanned, onProfileSaved, showToast, onInspire, onGenerateFromReco }) {
+function DashboardView({ drafts, canVeille = true, canEvents = false, canScore = true, canCampaigns = true, postsLimit = null, onGoCreate, onGoHistory, onGoEvents, onGoProfile, onGoProfileField, onGoView, onGoCopilot, onApprove, onReschedule, profile, linkedin, orgs, onPlanned, onProfileSaved, showToast, onInspire, onGenerateFromReco }) {
   const ns = useNextSteps(profile);
   const [periodDays, setPeriodDays] = useState(7);
   const [planTarget, setPlanTarget] = useState("person");
@@ -6893,7 +6901,7 @@ function DashboardView({ drafts, canVeille = true, canEvents = false, canScore =
         steps={ns.steps}
         strength={ns.strength}
         onSnooze={ns.snooze}
-        onAct={(st) => (st.target.type === "create" ? onGoCreate() : onGoProfileField(st.target.field))}
+        onAct={(st) => goNextStep(st, { onGoCreate, onGoProfileField, onGoView })}
       />
       <RecoToday onGenerate={onGenerateFromReco} onGoCopilot={onGoCopilot} showToast={showToast} profile={profile} onProfileSaved={onProfileSaved} />
 
@@ -11408,16 +11416,16 @@ function ProfileView({ profile, onSaved, showToast, linkedin, onDisconnect, inst
 // ----------------------------------------------------------------
 function TutorialOverlay({ canEvents, onClose }) {
   const steps = [
-    { icon: Sparkles, title: "Bienvenue sur LinkeePost 👋", text: "Quelques minutes par semaine suffisent pour garder une présence LinkedIn régulière. Voici l'essentiel pour bien démarrer." },
-    { icon: PenLine, title: "1 · Générez un post", text: "Dans « Créer », donnez un thème : l'IA rédige un post à votre image. Vous pouvez aussi partir d'une idée repérée par la veille." },
-    { icon: BarChart3, title: "2 · Lisez son score d'engagement", text: "Chaque post reçoit une note sur 100, avec des conseils concrets critère par critère pour l'améliorer avant de publier." },
-    { icon: History, title: "3 · Optimisez en un clic", text: "Sur la page d'optimisation, réécrivez l'accroche, le corps ou la signature. Le score se recalcule en direct et l'historique conserve chaque version." },
-    { icon: Megaphone, title: "4 · Lancez des campagnes", text: "Un thème, un brief, et une série de posts se planifie sur vos créneaux. La veille transforme l'actualité de votre secteur en posts." },
-    { icon: Clock, title: "5 · Publiez automatiquement", text: "Choisissez vos jours et votre heure : les posts partent seuls sur LinkedIn, après votre validation si vous le souhaitez." },
+    { icon: Sparkles, title: "Votre guide LinkeePost", text: "L'essentiel, dans l'ordre où on s'en sert. Vous pouvez le rouvrir à tout moment avec le bouton « ? » en bas de l'écran." },
+    { icon: PenLine, title: "1 · Créez un post", text: "Dans « Créer un post », partez d'une idée, d'un article (son adresse) ou d'un document (PDF, Word). Le copilote rédige avec votre profil, vos sources et vos remarques." },
+    { icon: MessageSquare, title: "2 · Améliorez-le en discutant", text: "Dites ce que vous voulez changer : le post est réécrit. Quand une demande revient, le copilote propose de la retenir pour tous vos prochains posts." },
+    { icon: Compass, title: "3 · Laissez le copilote proposer", text: "Dans « Copilote IA », il propose quoi publier et pourquoi, selon vos objectifs. Vous discutez avec lui pour affiner une piste, puis vous la transformez en post." },
+    { icon: BarChart3, title: "4 · Mesurez et optimisez", text: "Chaque post reçoit une note sur 100 avec des conseils concrets. Sur la page d'optimisation, réécrivez l'accroche ou la conclusion : le score se recalcule en direct." },
+    { icon: Clock, title: "5 · Programmez et publiez", text: "Choisissez vos jours et votre heure : les posts partent seuls sur LinkedIn, après votre validation si vous le souhaitez. Les campagnes planifient une série d'un coup." },
     ...(canEvents
-      ? [{ icon: MapPin, title: "6 · Couvrez vos événements", text: "Ajoutez vos salons et forums : LinkeePost génère des posts de présence et vous notifie le jour J pour poster une photo en direct." }]
+      ? [{ icon: MapPin, title: "6 · Couvrez vos événements", text: "Ajoutez vos salons et forums : LinkeePost prépare des posts de présence et vous notifie le jour J pour poster une photo en direct." }]
       : []),
-    { icon: Check, title: "Tout est prêt 🚀", text: "Commencez par générer votre premier post. Vous pourrez revoir ce guide à tout moment via le bouton « ? » en bas de l'écran." },
+    { icon: Check, title: "Vous êtes prêt 🚀", text: "La carte « Prochaine étape » de votre tableau de bord vous guide au fil de l'usage, sans tout vous demander d'un coup." },
   ];
   const [i, setI] = useState(0);
   const step = steps[i];
@@ -11460,7 +11468,7 @@ function TutorialOverlay({ canEvents, onClose }) {
             )}
             {last ? (
               <button onClick={onClose} className="bg-[#ff5a5f] hover:bg-[#f63d44] text-white font-semibold px-6 py-2.5 rounded-full flex items-center gap-2">
-                C'est parti <Check size={16} />
+                Fermer <Check size={16} />
               </button>
             ) : (
               <button onClick={() => setI(i + 1)} className="bg-[#ff5a5f] hover:bg-[#f63d44] text-white font-semibold px-6 py-2.5 rounded-full flex items-center gap-2">
@@ -11859,14 +11867,8 @@ export default function Home() {
     setTimeout(() => setToast(null), 3000);
   };
 
-  // Tutoriel à la première connexion (une fois le profil configuré)
-  useEffect(() => {
-    if (!user?.id || !profile?.onboardedAt) return;
-    try {
-      if (!localStorage.getItem(`lp_tuto_${user.id}`)) setShowTutorial(true);
-    } catch {}
-  }, [user?.id, profile?.onboardedAt]);
-
+  // Le guide ne s'ouvre plus seul après l'onboarding (il doublait le « Bienvenue » du parcours) : il reste
+  // disponible via le bouton « ? », et la carte « Prochaine étape » du tableau de bord guide la suite.
   const closeTutorial = () => {
     setShowTutorial(false);
     try {
@@ -13601,6 +13603,7 @@ export default function Home() {
           onGoEvents={() => setView("events")}
           onGoProfile={() => setView("profile")}
           onGoProfileField={goToProfileField}
+          onGoView={setView}
           onGoCopilot={() => setView("copilot")}
           onApprove={async (d) => {
             try {
@@ -14617,7 +14620,7 @@ export default function Home() {
       ) : view === "stats" ? (
         <StatsView linkedin={linkedin} orgs={orgs} profile={profile} drafts={drafts} showToast={showToast} onConnect={() => setView("profile")} />
       ) : view === "copilot" ? (
-        <CopilotView profile={profile} onProfileSaved={setProfile} showToast={showToast} onGoDashboard={() => setView("dashboard")} onGenerateFromReco={generateFromReco} onGoProfileField={goToProfileField} onGoCreate={() => setView("create")} />
+        <CopilotView profile={profile} onProfileSaved={setProfile} showToast={showToast} onGoDashboard={() => setView("dashboard")} onGenerateFromReco={generateFromReco} onGoProfileField={goToProfileField} onGoCreate={() => setView("create")} onGoView={setView} />
       ) : view === "billing" ? (
         <BillingView user={user} showToast={showToast} />
       ) : view === "brand-kit" ? (
