@@ -1872,6 +1872,104 @@ function CampaignWizard({ profile, linkedin, orgs, onClose, onLaunched, onProfil
   );
 }
 
+// Suppression d'une campagne : on demande ce que deviennent ses posts (supprimés, gardés, ou campagne seulement archivée)
+function CampaignDeleteDialog({ campaign: c, onClose, onDone, showToast }) {
+  const [busy, setBusy] = useState(null);
+  const toPublish = (c.toValidate ?? 0) + (c.scheduled ?? 0);
+  const other = Math.max(0, c.postCount - c.published - toPublish);
+  const removable = c.postCount - c.published;
+
+  const run = async (kind) => {
+    if (busy) return;
+    setBusy(kind);
+    try {
+      let res;
+      if (kind === "archive") {
+        res = await fetch(`/api/campaigns/${c.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: "archivée" }) });
+      } else {
+        res = await fetch(`/api/campaigns/${c.id}?posts=${kind === "delete" ? "delete" : "keep"}`, { method: "DELETE" });
+      }
+      const data = await readJson(res);
+      if (!res.ok) throw new Error(data.error || "Erreur");
+      showToast(
+        kind === "archive"
+          ? `Campagne « ${c.name} » archivée`
+          : kind === "delete"
+          ? `Campagne supprimée${data.deletedPosts ? ` avec ${data.deletedPosts} post${data.deletedPosts > 1 ? "s" : ""}` : ""}`
+          : "Campagne supprimée, ses posts sont conservés"
+      );
+      onDone(kind);
+    } catch (e) {
+      showToast(e.message);
+      setBusy(null);
+    }
+  };
+
+  const choice = (kind, title, desc, danger = false) => (
+    <button
+      type="button"
+      onClick={() => run(kind)}
+      disabled={Boolean(busy)}
+      className={`w-full text-left rounded-xl border p-3 disabled:opacity-60 ${danger ? "border-red-200 hover:bg-red-50" : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"}`}
+    >
+      <span className={`text-sm font-medium flex items-center gap-2 ${danger ? "text-red-700" : "text-gray-800"}`}>
+        {busy === kind && <RefreshCw size={13} className="animate-spin" />} {title}
+      </span>
+      <span className="block text-xs text-gray-500 mt-0.5">{desc}</span>
+    </button>
+  );
+
+  return (
+    <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={busy ? undefined : onClose}>
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-5" onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Supprimer la campagne" data-testid="campaign-delete">
+        <h3 className="font-semibold text-base">Supprimer la campagne « {c.name} » ?</h3>
+        {c.postCount === 0 ? (
+          <>
+            <p className="text-sm text-gray-500 mt-2">Cette campagne n&apos;a pas de post. Elle sera supprimée.</p>
+            <div className="flex justify-end gap-2 mt-4">
+              <button type="button" onClick={onClose} className="text-sm text-gray-500 hover:text-gray-800 px-3 py-2">Annuler</button>
+              <button type="button" onClick={() => run("keep")} disabled={Boolean(busy)} className="bg-red-600 hover:bg-red-700 disabled:bg-gray-300 text-white text-sm font-medium px-4 py-2 rounded-lg">Supprimer</button>
+            </div>
+          </>
+        ) : (
+          <>
+            <p className="text-sm text-gray-600 mt-2">
+              Elle compte <strong>{c.postCount} post{c.postCount > 1 ? "s" : ""}</strong> :{" "}
+              {[
+                c.toValidate > 0 && `${c.toValidate} à valider`,
+                c.scheduled > 0 && `${c.scheduled} programmé${c.scheduled > 1 ? "s" : ""}`,
+                other > 0 && `${other} brouillon${other > 1 ? "s" : ""} ou en erreur`,
+                c.published > 0 && `${c.published} déjà publié${c.published > 1 ? "s" : ""}`,
+              ]
+                .filter(Boolean)
+                .join(", ")}
+              . Que faire de ses posts ?
+            </p>
+            <div className="space-y-2 mt-4">
+              {removable > 0 &&
+                choice(
+                  "delete",
+                  `Supprimer la campagne et ses ${removable} post${removable > 1 ? "s" : ""} non publié${removable > 1 ? "s" : ""}`,
+                  c.published > 0 ? `Les ${c.published} post${c.published > 1 ? "s" : ""} déjà publié${c.published > 1 ? "s" : ""} sur LinkedIn restent dans « Mes posts ».` : "Rien ne sera publié.",
+                  true
+                )}
+              {choice(
+                "keep",
+                "Supprimer la campagne, garder les posts",
+                toPublish > 0 ? "Les posts restent dans « Mes posts », sans campagne. Ceux qui sont à valider ou programmés partiront aux dates prévues." : "Les posts restent dans « Mes posts », sans campagne."
+              )}
+              {choice("archive", "Archiver seulement", "La campagne passe dans « Archivées » et ses posts restent tels quels.")}
+            </div>
+            <div className="flex justify-end mt-3">
+              <button type="button" onClick={onClose} disabled={Boolean(busy)} className="text-sm text-gray-500 hover:text-gray-800 px-3 py-2">Annuler</button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ----------------------------------------------------------------
 // Vue « Mes campagnes » : gestion complète des campagnes
 // ----------------------------------------------------------------
@@ -1948,18 +2046,14 @@ function CampaignsView({ profile, linkedin, orgs, showToast, onPlanned, onProfil
     }
   };
 
-  const archiveCampaign = async (c) => {
-    try {
-      await fetch(`/api/campaigns/${c.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "archivée" }),
-      });
-      setCampaigns((list) => list.filter((x) => x.id !== c.id));
-      showToast(`Campagne « ${c.name} » archivée`);
-    } catch {
-      showToast("Erreur d'archivage");
-    }
+  // Suppression ou archivage : une fenêtre demande ce que deviennent les posts de la campagne
+  const [deleting, setDeleting] = useState(null);
+  const campaignGone = () => {
+    const gone = deleting;
+    setDeleting(null);
+    setCampaigns((list) => list.filter((x) => x.id !== gone?.id));
+    onPlanned?.(); // recharge les posts (ceux de la campagne ont pu être supprimés)
+    loadCampaigns();
   };
 
   // Création : wizard intégré à la page (pas de popin)
@@ -1996,6 +2090,7 @@ function CampaignsView({ profile, linkedin, orgs, showToast, onPlanned, onProfil
 
   return (
     <main className="max-w-4xl mx-auto p-6 space-y-5">
+      {deleting && <CampaignDeleteDialog campaign={deleting} onClose={() => setDeleting(null)} onDone={campaignGone} showToast={showToast} />}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <p className="text-sm text-gray-500">
           Une campagne = un thème + un brief. Les posts générés se suivent et progressent.
@@ -2107,9 +2202,10 @@ function CampaignsView({ profile, linkedin, orgs, showToast, onPlanned, onProfil
                       {planningId === c.id ? "Génération…" : "Générer la suite"}
                     </button>
                     <button
-                      onClick={() => archiveCampaign(c)}
+                      onClick={() => setDeleting(c)}
                       className="text-gray-400 hover:text-red-600 p-1.5"
-                      title="Archiver"
+                      title="Supprimer la campagne"
+                      aria-label="Supprimer la campagne"
                     >
                       <Trash2 size={14} />
                     </button>
@@ -7089,18 +7185,14 @@ function DashboardView({ drafts, canVeille = true, canEvents = false, canScore =
     }
   };
 
-  const archiveCampaign = async (c) => {
-    try {
-      await fetch(`/api/campaigns/${c.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "archivée" }),
-      });
-      setCampaigns((list) => list.filter((x) => x.id !== c.id));
-      showToast(`Campagne « ${c.name} » archivée`);
-    } catch {
-      showToast("Erreur d'archivage");
-    }
+  // Suppression ou archivage : une fenêtre demande ce que deviennent les posts de la campagne
+  const [deleting, setDeleting] = useState(null);
+  const campaignGone = () => {
+    const gone = deleting;
+    setDeleting(null);
+    setCampaigns((list) => list.filter((x) => x.id !== gone?.id));
+    onPlanned?.(); // recharge les posts (ceux de la campagne ont pu être supprimés)
+    loadCampaigns();
   };
 
   const toggleAutopilot = async (checked) => {
@@ -7161,6 +7253,7 @@ function DashboardView({ drafts, canVeille = true, canEvents = false, canScore =
 
   return (
     <main className="max-w-5xl mx-auto p-6 space-y-6">
+      {deleting && <CampaignDeleteDialog campaign={deleting} onClose={() => setDeleting(null)} onDone={campaignGone} showToast={showToast} />}
       {/* Prochaine étape recommandée : en tête, pour qu'un nouveau client la voie sans faire défiler */}
       <NextStepCard
         steps={ns.steps}
@@ -7396,9 +7489,10 @@ function DashboardView({ drafts, canVeille = true, canEvents = false, canScore =
                           : `Générer ${slotsPreview?.length ?? 0} post${(slotsPreview?.length ?? 0) > 1 ? "s" : ""}`}
                       </button>
                       <button
-                        onClick={() => archiveCampaign(c)}
+                        onClick={() => setDeleting(c)}
                         className="text-gray-400 hover:text-red-600 p-1.5"
-                        title="Archiver la campagne"
+                        title="Supprimer la campagne"
+                        aria-label="Supprimer la campagne"
                       >
                         <Trash2 size={14} />
                       </button>
