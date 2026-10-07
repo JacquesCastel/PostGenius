@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import crypto from "crypto";
+import { oauthTarget, bindOauthTarget, READ_ONLY_MESSAGE } from "@/lib/oauthTarget";
 
 // OAuth app dédiée "PostGenius Stats" (Community Management API).
 // Cette app ne sert qu'à obtenir r_member_postAnalytics pour les
@@ -11,8 +12,12 @@ import crypto from "crypto";
 // Redirect URI : LINKEDIN_STATS_REDIRECT_URI → /api/linkedin/callback-stats
 //   (doit être déclarée dans l'app LinkedIn 77ts3h3ef7m9kq, onglet Auth)
 
-export async function GET() {
+export async function GET(req) {
   const appUrl = process.env.APP_URL || "http://localhost:3000";
+  // Compte visé : le client géré en mode agence ; mémorisé pour être revérifié au retour de LinkedIn
+  const target = await oauthTarget(req);
+  if (target.error === "read_only") return NextResponse.redirect(`${appUrl}/app?linkedin=stats_error&msg=${encodeURIComponent(READ_ONLY_MESSAGE)}`);
+  if (target.error) return NextResponse.redirect(`${appUrl}/app?linkedin=not_logged_in`);
   const clientId = process.env.LINKEDIN_STATS_CLIENT_ID;
   const redirectUri = process.env.LINKEDIN_STATS_REDIRECT_URI || `${appUrl}/api/linkedin/callback-stats`;
 
@@ -30,5 +35,6 @@ export async function GET() {
 
   const res = NextResponse.redirect(url.toString());
   res.cookies.set("li_stats_oauth_state", state, { httpOnly: true, maxAge: 600, path: "/" });
+  bindOauthTarget(res, target.userId);
   return res;
 }
