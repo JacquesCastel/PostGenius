@@ -992,7 +992,7 @@ function CalendarMonth({ drafts, onReschedule }) {
 // Wizard de création de campagne LinkedIn
 // Thème → questions IA de cadrage → post d'exemple à valider → planification
 // ----------------------------------------------------------------
-function CampaignWizard({ profile, linkedin, orgs, onClose, onLaunched, showToast, initial, inline = false }) {
+function CampaignWizard({ profile, linkedin, orgs, onClose, onLaunched, onProfileSaved, showToast, initial, inline = false }) {
   const [step, setStep] = useState(0);
   const [name, setName] = useState(initial?.name ?? "");
   const [theme, setTheme] = useState(initial?.theme ?? "");
@@ -1005,6 +1005,10 @@ function CampaignWizard({ profile, linkedin, orgs, onClose, onLaunched, showToas
   const [feedback, setFeedback] = useState("");
   const [periodDays, setPeriodDays] = useState(7);
   const [target, setTarget] = useState("person");
+  // Rythme de publication : choisi ici si le client ne l'a pas encore fait, enregistré dans son profil au lancement
+  const [days, setDays] = useState(profile?.publishDays ?? "");
+  const [time, setTime] = useState(profile?.publishTime ?? "09:00");
+  const [validate, setValidate] = useState(profile?.requireValidation ?? true);
   const [busy, setBusy] = useState(false);
   // Article de veille servant de point de départ (pré-rempli via `initial` ou choisi à l'étape 1)
   const [seedContext, setSeedContext] = useState(initial?.context ?? "");
@@ -1095,9 +1099,27 @@ function CampaignWizard({ profile, linkedin, orgs, onClose, onLaunched, showToas
     }
   };
 
+  const toggleDay = (n) => {
+    const list = days.split(",").filter(Boolean);
+    const v = String(n);
+    setDays((list.includes(v) ? list.filter((x) => x !== v) : [...list, v]).sort().join(","));
+  };
+
   const launch = async () => {
     setBusy(true);
     try {
+      // 0. Enregistrer le rythme choisi ici (le serveur planifie d'après le profil)
+      const rhythmChanged = days !== (profile?.publishDays ?? "") || time !== (profile?.publishTime ?? "09:00") || validate !== (profile?.requireValidation ?? true);
+      if (rhythmChanged) {
+        const rRes = await fetch("/api/profile", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ publishDays: days, publishTime: time, requireValidation: validate, postsPerWeek: days.split(",").filter(Boolean).length || null }),
+        });
+        const rData = await readJson(rRes);
+        if (!rRes.ok) throw new Error(rData.error || "Rythme non enregistré");
+        onProfileSaved?.(rData.profile);
+      }
       // 1. Créer la campagne avec son brief
       const cRes = await fetch("/api/campaigns", {
         method: "POST",
@@ -1128,9 +1150,11 @@ function CampaignWizard({ profile, linkedin, orgs, onClose, onLaunched, showToas
     }
   };
 
-  const slotsCount = nextPreferredSlots(profile, 100)?.filter(
-    (s) => s <= new Date(Date.now() + periodDays * 86400000)
-  )?.length;
+  const rhythm = { publishDays: days, publishTime: time };
+  const slots = (nextPreferredSlots(rhythm, 100) ?? []).filter((s) => s <= new Date(Date.now() + periodDays * 86400000));
+  const slotsCount = slots.length;
+  const fmtSlot = (d) => `${d.toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" })} à ${time}`;
+  const dayNames = days.split(",").filter(Boolean).map((n) => WEEK_DAYS.find((w) => String(w.n) === n)?.label).filter(Boolean).join(" / ");
 
   const inputCls =
     "w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]";
@@ -1442,9 +1466,36 @@ function CampaignWizard({ profile, linkedin, orgs, onClose, onLaunched, showToas
         {/* Étape 3 — Lancement */}
         {step === 3 && (
           <div className="space-y-4">
-            <div className="grid sm:grid-cols-2 gap-3">
+            <p className="text-sm text-gray-600">
+              Dernière étape : dites quand les posts doivent paraître. Le copilote rédige un post par créneau, dans la continuité de l&apos;exemple.
+            </p>
+            <div>
+              <label className="text-xs font-medium text-gray-600 block mb-1.5">
+                Quels jours publier ?{days && <span className="text-[#ff5a5f] font-semibold"> — {days.split(",").filter(Boolean).length} post{days.split(",").filter(Boolean).length > 1 ? "s" : ""} par semaine</span>}
+              </label>
+              <div className="flex gap-1.5">
+                {WEEK_DAYS.map(({ n, label }) => {
+                  const active = days.split(",").includes(String(n));
+                  return (
+                    <button
+                      type="button"
+                      key={n}
+                      onClick={() => toggleDay(n)}
+                      className={`flex-1 py-2 rounded-lg border text-xs font-medium ${active ? "bg-[#ff5a5f] text-white border-[#ff5a5f]" : "border-gray-200 text-gray-600 hover:border-gray-300"}`}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+            <div className="grid sm:grid-cols-3 gap-3">
               <div>
-                <label className="text-xs font-medium text-gray-600 block mb-1">Période</label>
+                <label className="text-xs font-medium text-gray-600 block mb-1">À quelle heure ?</label>
+                <input type="time" value={time} onChange={(e) => setTime(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]" />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-gray-600 block mb-1">Sur quelle période ?</label>
                 <select
                   value={periodDays}
                   onChange={(e) => setPeriodDays(Number(e.target.value))}
@@ -1472,17 +1523,36 @@ function CampaignWizard({ profile, linkedin, orgs, onClose, onLaunched, showToas
                 </select>
               </div>
             </div>
-            <div className="bg-[#fff1f1] rounded-lg p-3 text-sm text-[#1b2a4a]">
+            <p className="text-[11px] text-gray-400 -mt-2">8h-10h en semaine donne généralement le meilleur reach. Ce rythme est enregistré dans votre profil, modifiable à tout moment.</p>
+            <label className="flex items-start gap-2.5 bg-gray-50 rounded-lg p-3 cursor-pointer">
+              <input type="checkbox" checked={validate} onChange={(e) => setValidate(e.target.checked)} className="accent-[#ff5a5f] mt-0.5" />
+              <span className="text-sm text-gray-700">
+                <span className="font-medium">Valider chaque post avant publication</span>
+                <br />
+                <span className="text-xs text-gray-500">Recommandé pour une première campagne : vous relisez chaque post, il ne part qu&apos;après votre accord. Décochez pour une publication 100 % automatique.</span>
+              </span>
+            </label>
+
+            <div className="bg-[#fff1f1] rounded-lg p-3 text-sm text-[#1b2a4a]" data-testid="campaign-recap">
               <p className="font-medium mb-1">Récapitulatif</p>
-              <p className="text-xs leading-relaxed">
-                {slotsCount ?? 0} post{(slotsCount ?? 0) > 1 ? "s" : ""} seront générés sur le thème «{" "}
-                {theme} », posés sur vos créneaux ({profile?.publishTime ?? "09:00"}),
-                {profile?.requireValidation
-                  ? " puis soumis à votre validation avant publication."
-                  : " puis publiés automatiquement."}
-                {sampleApproved && " L'exemple validé servira de référence de style."}
-              </p>
+              {slotsCount > 0 ? (
+                <>
+                  <p className="text-xs leading-relaxed">
+                    {slotsCount} post{slotsCount > 1 ? "s" : ""} sur le thème « {theme} », publiés le {dayNames} à {time} : du {fmtSlot(slots[0])} au {fmtSlot(slots[slots.length - 1])}.
+                    {validate ? " Ils seront à valider avant publication." : " Ils seront publiés automatiquement."}
+                    {sampleApproved && " L'exemple validé servira de référence de style."}
+                  </p>
+                  <p className="text-[11px] text-[#5a6b85] mt-1.5">Vous les retrouverez dans « Mes posts » et sur le calendrier du tableau de bord.</p>
+                </>
+              ) : (
+                <p className="text-xs leading-relaxed">Choisissez au moins un jour de publication pour voir combien de posts seront créés.</p>
+              )}
             </div>
+            {!linkedin?.connected && (
+              <p className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg p-2.5">
+                LinkedIn n&apos;est pas encore connecté : les posts seront bien créés, mais ils ne pourront partir qu&apos;une fois votre compte connecté (menu « Profil »). Pensez à le faire avant la première date.
+              </p>
+            )}
             <div className="flex justify-between pt-1">
               <button onClick={() => setStep(2)} className="text-sm text-gray-500 hover:text-gray-700 px-3 py-2">
                 ← Retour
@@ -1493,7 +1563,7 @@ function CampaignWizard({ profile, linkedin, orgs, onClose, onLaunched, showToas
                 className="bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white text-sm font-medium px-5 py-2 rounded-lg flex items-center gap-1.5"
               >
                 {busy ? <RefreshCw size={15} className="animate-spin" /> : <Sparkles size={15} />}
-                {busy ? "Génération en cours…" : "Lancer la campagne"}
+                {busy ? "Génération en cours…" : slotsCount ? `Lancer la campagne (${slotsCount} post${slotsCount > 1 ? "s" : ""})` : "Lancer la campagne"}
               </button>
             </div>
           </div>
@@ -1506,7 +1576,7 @@ function CampaignWizard({ profile, linkedin, orgs, onClose, onLaunched, showToas
 // ----------------------------------------------------------------
 // Vue « Mes campagnes » : gestion complète des campagnes
 // ----------------------------------------------------------------
-function CampaignsView({ profile, linkedin, orgs, showToast, onPlanned, openWizard, onWizardConsumed }) {
+function CampaignsView({ profile, linkedin, orgs, showToast, onPlanned, onProfileSaved, openWizard, onWizardConsumed }) {
   const [campaigns, setCampaigns] = useState([]);
   const [loaded, setLoaded] = useState(false);
   const [showWizard, setShowWizard] = useState(false);
@@ -1609,6 +1679,7 @@ function CampaignsView({ profile, linkedin, orgs, showToast, onPlanned, openWiza
           linkedin={linkedin}
           orgs={orgs}
           showToast={showToast}
+          onProfileSaved={onProfileSaved}
           onClose={() => setShowWizard(false)}
           onLaunched={() => {
             onPlanned();
@@ -1663,12 +1734,30 @@ function CampaignsView({ profile, linkedin, orgs, showToast, onPlanned, openWiza
       )}
 
       {loaded && campaigns.length === 0 ? (
-        <div className="bg-white rounded-xl border border-dashed border-gray-300 p-12 text-center text-gray-400">
-          <Megaphone size={32} className="mx-auto mb-3" />
-          <p className="text-sm mb-2">Aucune campagne pour l'instant.</p>
-          <button onClick={() => setShowWizard(true)} className="text-sm text-[#ff5a5f] hover:underline">
-            Créer ma première campagne →
-          </button>
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:p-8" data-testid="campaign-empty">
+          <div className="text-center max-w-lg mx-auto">
+            <Megaphone size={30} className="mx-auto mb-3 text-[#ff5a5f]" />
+            <h3 className="font-semibold text-base">Une campagne, c&apos;est une série de posts autour d&apos;un thème</h3>
+            <p className="text-sm text-gray-500 mt-1.5">Vous donnez un thème et un objectif ; le copilote prépare les posts et les place sur vos créneaux de publication, sans que vous ayez à y penser chaque semaine.</p>
+          </div>
+          <ol className="grid sm:grid-cols-3 gap-3 mt-6">
+            {[
+              ["1", "Vous cadrez", "Un thème, un objectif, quelques questions courtes. Environ 2 minutes."],
+              ["2", "Vous validez un exemple", "Le copilote rédige un post type : vous ajustez jusqu'à ce que ce soit le bon ton."],
+              ["3", "Les posts se planifient", "Un post par créneau. Vous les relisez avant publication si vous le souhaitez."],
+            ].map(([n, t, d]) => (
+              <li key={n} className="bg-gray-50 rounded-xl p-4">
+                <span className="w-6 h-6 rounded-full bg-[#ff5a5f] text-white text-xs font-bold flex items-center justify-center mb-2">{n}</span>
+                <p className="text-sm font-medium">{t}</p>
+                <p className="text-xs text-gray-500 mt-0.5">{d}</p>
+              </li>
+            ))}
+          </ol>
+          <div className="text-center mt-6">
+            <button onClick={() => setShowWizard(true)} className="bg-[#ff5a5f] hover:bg-[#f63d44] text-white text-sm font-medium px-5 py-2.5 rounded-lg inline-flex items-center gap-2">
+              <Sparkles size={15} /> Créer ma première campagne
+            </button>
+          </div>
         </div>
       ) : (
         <div className="space-y-4">
@@ -5229,7 +5318,7 @@ function useNextSteps(profile) {
       })
       .catch(() => {});
   }, []);
-  const steps = activity ? nextSteps(profile, activity, { linkedinConnected: activity.linkedinConnected, canEvents: activity.canEvents, snoozed }) : [];
+  const steps = activity ? nextSteps(profile, activity, { linkedinConnected: activity.linkedinConnected, canEvents: activity.canEvents, canCampaigns: activity.canCampaigns, snoozed }) : [];
   const strength = activity
     ? profileStrength(profile ?? {}, {
         knowledgeCount: activity.knowledgeCount,
@@ -6913,6 +7002,7 @@ function DashboardView({ drafts, canVeille = true, canEvents = false, canScore =
           linkedin={linkedin}
           orgs={orgs}
           showToast={showToast}
+          onProfileSaved={onProfileSaved}
           initial={wizardInit}
           onClose={() => setWizardInit(null)}
           onLaunched={() => {
@@ -14571,6 +14661,7 @@ export default function Home() {
             linkedin={linkedin}
             orgs={orgs}
             showToast={showToast}
+            onProfileSaved={setProfile}
             onPlanned={() =>
               fetch("/api/drafts")
                 .then((r) => r.json())
