@@ -11449,6 +11449,56 @@ function CarouselImagesBlock({ slides }) {
 // ----------------------------------------------------------------
 // Application
 // ----------------------------------------------------------------
+// Contexte du copilote : ce sur quoi le prochain post va s'appuyer (profil, sources, remarques, posts proches).
+// Même sélection que la génération ; un résumé d'une ligne, le détail se déplie.
+function GenerationContextCard({ theme, sourceTitle, onGoProfile }) {
+  const [ctx, setCtx] = useState(null);
+  const [open, setOpen] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(async () => {
+      try {
+        const res = await fetch("/api/generate/context", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ theme, sourceTitle }) });
+        if (res.ok) setCtx(await res.json());
+      } catch {}
+    }, 500);
+    return () => clearTimeout(t);
+  }, [theme, sourceTitle]);
+  if (!ctx) return null;
+  const plural = (n, one, many) => `${n} ${n > 1 ? many : one}`;
+  const parts = [
+    ctx.profile.filled.length ? "votre profil" : null,
+    ctx.sources.length ? plural(ctx.sources.length, "source", "sources") : null,
+    ctx.remarks.length ? plural(ctx.remarks.length, "remarque", "remarques") : null,
+    ctx.posts.length ? plural(ctx.posts.length, "de vos posts proches", "de vos posts proches") : null,
+  ].filter(Boolean);
+  const Row = ({ label, children }) => (
+    <div className="text-xs text-gray-600">
+      <span className="font-medium text-gray-700">{label}&nbsp;: </span>
+      {children}
+    </div>
+  );
+  return (
+    <div className="border border-gray-200 rounded-xl bg-gray-50/60" data-testid="gen-context">
+      <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open} className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left">
+        <span className="text-sm text-gray-700">
+          <Sparkles size={14} className="inline -mt-0.5 mr-1.5 text-[#ff5a5f]" />
+          {parts.length ? <>Le copilote s’appuiera sur <span className="font-medium">{parts.join(", ")}</span></> : "Le copilote n’a pas encore de contexte sur vous"}
+        </span>
+        <ChevronDown size={16} className={`shrink-0 text-gray-400 transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+      {open && (
+        <div className="px-4 pb-3 space-y-1.5 border-t border-gray-200 pt-3">
+          <Row label="Profil">{ctx.profile.filled.length ? ctx.profile.filled.join(", ") : "vide"}{ctx.profile.missing.length > 0 && <span className="text-gray-400"> — manque : {ctx.profile.missing.join(", ")}</span>}</Row>
+          <Row label="Sources">{ctx.sources.length ? ctx.sources.map((s) => s.title).join(" · ") : ctx.totals.sources ? `aucune ne touche à ce sujet (${ctx.totals.sources} en base)` : "aucune dans votre base de connaissances"}</Row>
+          <Row label="Remarques">{ctx.remarks.length ? ctx.remarks.join(" · ") : "aucune pour l’instant"}</Row>
+          <Row label="Posts proches">{ctx.posts.length ? <span className="block">{ctx.posts.map((p, i) => <span key={i} className="block truncate">« {p} »</span>)}</span> : "aucun exemple de votre voix"}</Row>
+          <button type="button" onClick={onGoProfile} className="text-xs text-[#ff5a5f] hover:underline pt-1">Compléter mon profil et mes sources</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function Home() {
   const [user, setUser] = useState(null);
   const [impersonating, setImpersonating] = useState(null); // { id, name, companyName } du client géré
@@ -14135,6 +14185,8 @@ export default function Home() {
                 </div>
               )}
             </div>
+
+            {genMode === "single" && <GenerationContextCard theme={form.theme} sourceTitle={activeSource?.title ?? ""} onGoProfile={() => setView("profile")} />}
 
             <div className="sticky bottom-2 z-10 -mx-1 px-1 pt-2 bg-gradient-to-t from-white via-white to-transparent md:static md:bg-none md:p-0 md:m-0">
               <button
