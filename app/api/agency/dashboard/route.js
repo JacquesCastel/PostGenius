@@ -58,6 +58,10 @@ export async function GET(req) {
       const pending   = drafts.filter((d) => d.status === "brouillon");
       const scheduled = drafts.filter((d) => d.status === "programmé");
       const published = drafts.filter((d) => d.status === "publié");
+      const toValidate = drafts.filter((d) => d.status === "à valider");
+      const errors     = drafts.filter((d) => d.status === "erreur");
+      const monthStart = new Date(); monthStart.setDate(1); monthStart.setHours(0, 0, 0, 0);
+      const publishedThisMonth = published.filter((d) => d.publishedAt && d.publishedAt >= monthStart).length;
       const lastPub   = published[0] ?? null;
 
       return {
@@ -66,6 +70,9 @@ export async function GET(req) {
         completion: computeCompletion(client),
         pendingCount:   pending.length,
         scheduledCount: scheduled.length,
+        toValidateCount: toValidate.length,
+        errorCount:      errors.length,
+        publishedThisMonth,
         totalPosts:     published.length,
         // 5 brouillons les plus récents pour le panel
         pendingDrafts: pending.slice(0, 5).map((d) => ({

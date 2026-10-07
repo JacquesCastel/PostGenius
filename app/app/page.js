@@ -9129,6 +9129,9 @@ function MonthlyReportModal({ client, onClose }) {
 }
 
 // ── Ligne de tableau client (avec accordéon) ────────────────────────
+// Écrans accessibles par /app?view=… (notifications, bascule de client, retour au tableau de bord agence)
+const DEEP_LINK_VIEWS = ["dashboard", "create", "content", "campaigns", "connections", "profile", "stats", "copilot", "events", "engage", "brand-kit", "billing", "clients", "messages"];
+
 function ClientTableRow({ client, onManage, onViewDrafts, onDelete, deleting, onShowReport }) {
   const [open, setOpen] = useState(false);
   const { completion, linkedin } = client;
@@ -9151,7 +9154,7 @@ function ClientTableRow({ client, onManage, onViewDrafts, onDelete, deleting, on
       {/* Ligne principale */}
       <tr className={`border-b border-gray-100 hover:bg-gray-50 transition-colors ${open ? "bg-gray-50" : ""}`}>
         {/* Client */}
-        <td className="px-4 py-3">
+        <td className="px-2.5 py-3">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#ff5a5f] to-orange-400 flex items-center justify-center text-white font-bold text-xs shrink-0">
               {(client.name?.[0] ?? "?").toUpperCase()}
@@ -9165,41 +9168,62 @@ function ClientTableRow({ client, onManage, onViewDrafts, onDelete, deleting, on
         </td>
 
         {/* LinkedIn */}
-        <td className="px-4 py-3">
+        <td className="px-2.5 py-3">
           <div className="flex items-center gap-1.5">
             <Linkedin size={13} className={linkedInOk ? "text-[#0a66c2]" : "text-gray-200"} />
-            <span className={`text-xs truncate max-w-[120px] ${linkedInOk ? "text-gray-600" : "text-gray-300"}`}>
+            <span className={`text-xs truncate max-w-[90px] ${linkedInOk ? "text-gray-600" : "text-gray-300"}`}>
               {linkedInOk ? linkedin.personName : "Non connecté"}
             </span>
           </div>
         </td>
 
         {/* Profil */}
-        <td className="px-4 py-3">
+        <td className="px-2.5 py-3">
           <span className={`text-sm font-bold ${completionColor}`}>{completion.percent}%</span>
         </td>
 
         {/* En attente */}
-        <td className="px-4 py-3 text-center">
+        <td className="px-2.5 py-3 text-center">
           {client.pendingCount > 0
             ? <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-amber-100 text-amber-700 text-xs font-bold">{client.pendingCount}</span>
             : <span className="text-gray-200 text-sm">—</span>}
         </td>
 
+        {/* À valider */}
+        <td className="px-2.5 py-3 text-center" data-testid="count-tovalidate">
+          {client.toValidateCount > 0
+            ? <span className="inline-flex items-center justify-center min-w-6 h-6 px-1 rounded-full bg-violet-100 text-violet-700 text-xs font-bold">{client.toValidateCount}</span>
+            : <span className="text-gray-200 text-sm">—</span>}
+        </td>
+
+        {/* Erreurs */}
+        <td className="px-2.5 py-3 text-center" data-testid="count-errors">
+          {client.errorCount > 0
+            ? <span className="inline-flex items-center justify-center min-w-6 h-6 px-1 rounded-full bg-red-100 text-red-600 text-xs font-bold">{client.errorCount}</span>
+            : <span className="text-gray-200 text-sm">—</span>}
+        </td>
+
         {/* Programmés */}
-        <td className="px-4 py-3 text-center">
+        <td className="px-2.5 py-3 text-center">
           {client.scheduledCount > 0
             ? <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 text-blue-600 text-xs font-bold">{client.scheduledCount}</span>
             : <span className="text-gray-200 text-sm">—</span>}
         </td>
 
+        {/* Publiés ce mois-ci */}
+        <td className="px-2.5 py-3 text-center">
+          {client.publishedThisMonth > 0
+            ? <span className="text-xs font-semibold text-green-600">{client.publishedThisMonth}</span>
+            : <span className="text-gray-200 text-sm">—</span>}
+        </td>
+
         {/* Dernier post */}
-        <td className="px-4 py-3">
+        <td className="px-2.5 py-3 hidden 2xl:table-cell">
           <span className="text-xs text-gray-400">{timeAgo(client.lastPublished?.publishedAt)}</span>
         </td>
 
         {/* Actions */}
-        <td className="px-4 py-3">
+        <td className="px-2.5 py-3">
           <div className="flex items-center gap-1.5">
             {client.onboarded === false ? (
               <button onClick={() => onManage(client, "dashboard")}
@@ -9240,7 +9264,7 @@ function ClientTableRow({ client, onManage, onViewDrafts, onDelete, deleting, on
       {/* Ligne dépliée */}
       {open && (
         <tr className="border-b border-gray-100 bg-gray-50">
-          <td colSpan={7} className="px-6 py-4">
+          <td colSpan={10} className="px-6 py-4">
             <div className="grid sm:grid-cols-2 gap-4">
               {/* Profil à compléter */}
               <div>
@@ -9337,14 +9361,76 @@ function ClientsView({ showToast, onManage }) {
   const [formError, setFormError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [deleting, setDeleting] = useState(null);
+  const [search, setSearch] = useState("");
+  // File « À traiter » commune à tous les clients
+  const [queue, setQueue] = useState([]);
+  const [queueTab, setQueueTab] = useState("à valider");
+  const [reviewing, setReviewing] = useState(null); // { clientId, posts }
+  const [bulkFor, setBulkFor] = useState(null); // { clientId, posts }
+  const [bulkBusy, setBulkBusy] = useState(false);
 
-  useEffect(() => {
+  const loadAll = () => {
     fetch("/api/agency/dashboard")
       .then((r) => r.json())
       .then((d) => setClients(d.clients ?? []))
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, []);
+    fetch("/api/agency/queue")
+      .then((r) => r.json())
+      .then((d) => setQueue(d.items ?? []))
+      .catch(() => {});
+  };
+  useEffect(() => { loadAll(); }, []);
+
+  const patchPost = async (id, body) => {
+    const res = await fetch(`/api/agency/posts/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    const d = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(d.error || "Erreur");
+    return d;
+  };
+  const validateQueuePost = async (p) => {
+    await patchPost(p.id, { status: "programmé" });
+    setQueue((q) => q.filter((x) => x.id !== p.id));
+    setClients((cs) => cs.map((c) => c.id === p.client.id
+      ? { ...c, toValidateCount: Math.max(0, (c.toValidateCount ?? 0) - 1), scheduledCount: (c.scheduledCount ?? 0) + 1 } : c));
+  };
+  const saveQueueText = async (p, text) => {
+    try {
+      await patchPost(p.id, { text });
+      setQueue((q) => q.map((x) => (x.id === p.id ? { ...x, text } : x)));
+    } catch (e) {
+      showToast(e.message);
+      throw e;
+    }
+  };
+  const validateAllFor = async () => {
+    setBulkBusy(true);
+    let ok = 0;
+    for (const p of bulkFor.posts) {
+      try { await validateQueuePost(p); ok++; } catch {}
+    }
+    setBulkBusy(false);
+    setBulkFor(null);
+    showToast(ok ? `${ok} post${ok > 1 ? "s" : ""} programmé${ok > 1 ? "s" : ""} ✓` : "Aucun post n'a pu être validé");
+  };
+
+  // File regroupée par client, selon l'onglet
+  const queueGroups = (() => {
+    const items = queue.filter((i) => i.status === queueTab);
+    const map = new Map();
+    for (const i of items) {
+      if (!map.has(i.client.id)) map.set(i.client.id, { client: i.client, posts: [] });
+      map.get(i.client.id).posts.push(i);
+    }
+    return [...map.values()];
+  })();
+  const queueCounts = { "à valider": queue.filter((i) => i.status === "à valider").length, erreur: queue.filter((i) => i.status === "erreur").length };
+  const q = search.trim().toLowerCase();
+  const shownClients = q ? clients.filter((c) => `${c.name} ${c.companyName ?? ""}`.toLowerCase().includes(q)) : clients;
 
   const openCreate = () => {
     setNewClient({ name: "", companyName: "", email: "" });
@@ -9395,7 +9481,7 @@ function ClientsView({ showToast, onManage }) {
   return (
     <>
       {creating && <NewClientDialog value={newClient} onChange={setNewClient} error={formError} busy={submitting} onSubmit={createClient} onClose={() => setCreating(false)} />}
-      <main className="max-w-5xl mx-auto p-6">
+      <main className="max-w-6xl mx-auto p-6">
         {/* En-tête */}
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -9430,21 +9516,77 @@ function ClientsView({ showToast, onManage }) {
             </button>
           </div>
         ) : (
-          <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
+          <>
+          {/* File « À traiter » : relire et valider sans changer de compte */}
+          {queueCounts["à valider"] + queueCounts.erreur > 0 && (
+            <section className="bg-white border border-gray-100 rounded-2xl shadow-sm mb-6 overflow-hidden" data-testid="agency-queue">
+              <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between gap-3 flex-wrap">
+                <div>
+                  <h3 className="font-semibold text-sm text-[#1b2a4a]">À traiter</h3>
+                  <p className="text-xs text-gray-400 mt-0.5">Posts de tous vos clients qui attendent une action de votre part.</p>
+                </div>
+                <div className="flex gap-1 bg-gray-100 rounded-lg p-0.5 text-xs font-semibold">
+                  {[["à valider", "À valider"], ["erreur", "Erreurs"]].map(([k, label]) => (
+                    <button key={k} onClick={() => setQueueTab(k)} data-testid={`queue-tab-${k === "erreur" ? "errors" : "tovalidate"}`}
+                      className={`px-3 py-1.5 rounded-md ${queueTab === k ? "bg-white shadow-sm text-[#1b2a4a]" : "text-gray-500"}`}>
+                      {label} ({queueCounts[k]})
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {queueGroups.length === 0 ? (
+                <p className="text-sm text-gray-400 px-4 py-6 text-center">{queueTab === "erreur" ? "Aucune erreur de publication 🎉" : "Rien à valider pour le moment 🎉"}</p>
+              ) : (
+                <ul className="divide-y divide-gray-100">
+                  {queueGroups.map(({ client, posts }) => (
+                    <li key={client.id} className="px-4 py-3 flex items-center gap-3 flex-wrap" data-testid="queue-row">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-semibold text-[#1b2a4a] truncate">{client.companyName || client.name} <span className="text-gray-400 font-normal">· {posts.length} post{posts.length > 1 ? "s" : ""}</span></p>
+                        {queueTab === "erreur" ? (
+                          <p className="text-xs text-red-600 mt-0.5 line-clamp-2">{explainPublishError(posts[0].publishError).message}</p>
+                        ) : (
+                          <p className="text-xs text-gray-400 mt-0.5 line-clamp-1">{posts[0].text}</p>
+                        )}
+                        {!client.linkedinConnected && <p className="text-[11px] text-amber-700 mt-0.5">LinkedIn non connecté pour ce client</p>}
+                      </div>
+                      {queueTab === "à valider" ? (
+                        <div className="flex items-center gap-1.5">
+                          <button onClick={() => setReviewing({ posts })} className="bg-[#ff5a5f] text-white px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-[#e5454a]">Relire</button>
+                          {posts.length > 1 && <button onClick={() => setBulkFor({ posts })} className="border border-gray-200 text-gray-600 px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-gray-50">Tout valider</button>}
+                          <button onClick={() => onManage(client, "content")} className="border border-gray-200 text-gray-500 px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-gray-50">Ouvrir l&apos;espace</button>
+                        </div>
+                      ) : (
+                        <button onClick={() => onManage(client, "content")} className="bg-[#ff5a5f] text-white px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-[#e5454a]">Corriger dans son espace</button>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+          )}
+
+          {clients.length > 6 && (
+            <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Rechercher un client…" aria-label="Rechercher un client"
+              className="w-full sm:w-72 border border-gray-200 rounded-xl px-4 py-2 text-sm mb-3 focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]" />
+          )}
+          <div className="bg-white border border-gray-100 rounded-2xl overflow-x-auto shadow-sm">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-100 bg-gray-50">
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">Client</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">LinkedIn</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">Profil</th>
-                  <th className="px-4 py-3 text-center text-xs font-semibold text-gray-400 uppercase tracking-wide">En attente</th>
-                  <th className="px-4 py-3 text-center text-xs font-semibold text-gray-400 uppercase tracking-wide">Programmés</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">Dernier post</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">Actions</th>
+                  <th className="px-2.5 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">Client</th>
+                  <th className="px-2.5 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">LinkedIn</th>
+                  <th className="px-2.5 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">Profil</th>
+                  <th className="px-2.5 py-3 text-center text-xs font-semibold text-gray-400 uppercase tracking-wide">Brouillons</th>
+                  <th className="px-2.5 py-3 text-center text-xs font-semibold text-gray-400 uppercase tracking-wide">À valider</th>
+                  <th className="px-2.5 py-3 text-center text-xs font-semibold text-gray-400 uppercase tracking-wide">Erreurs</th>
+                  <th className="px-2.5 py-3 text-center text-xs font-semibold text-gray-400 uppercase tracking-wide">Programmés</th>
+                  <th className="px-2.5 py-3 text-center text-xs font-semibold text-gray-400 uppercase tracking-wide">Publiés / mois</th>
+                  <th className="px-2.5 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide hidden 2xl:table-cell">Dernier</th>
+                  <th className="px-2.5 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {clients.map((client) => (
+                {shownClients.map((client) => (
                   <ClientTableRow
                     key={client.id}
                     client={client}
@@ -9458,8 +9600,16 @@ function ClientsView({ showToast, onManage }) {
               </tbody>
             </table>
           </div>
+          </>
         )}
       </main>
+
+      {reviewing && (
+        <ReviewPostsModal posts={reviewing.posts} linkedinConnected={reviewing.posts[0]?.client.linkedinConnected} onValidate={validateQueuePost} onSaveText={saveQueueText} onClose={() => setReviewing(null)} />
+      )}
+      {bulkFor && (
+        <BulkValidateDialog count={bulkFor.posts.length} linkedinConnected={bulkFor.posts[0]?.client.linkedinConnected} busy={bulkBusy} onConfirm={validateAllFor} onClose={() => setBulkFor(null)} />
+      )}
 
       {/* Panel brouillons */}
       {panelClient && (
@@ -12110,8 +12260,24 @@ export default function Home() {
     const support = impersonating?.support;
     await fetch("/api/agency/impersonate", { method: "DELETE" });
     setImpersonating(null);
-    setView(support ? "admin" : "clients");
-    window.location.reload();
+    if (support) { setView("admin"); window.location.reload(); return; }
+    window.location.href = "/app?view=clients";
+  };
+  // Agence : bascule d'un client à l'autre sans repasser par le tableau de bord, en restant sur le même écran
+  const [agencyClients, setAgencyClients] = useState([]);
+  useEffect(() => {
+    if (!impersonating || impersonating.support) return;
+    fetch("/api/agency/clients").then((r) => r.json()).then((d) => setAgencyClients(d.clients ?? [])).catch(() => {});
+  }, [impersonating?.id]);
+  const switchClient = async (clientId) => {
+    if (!clientId || clientId === impersonating?.id) return;
+    const res = await fetch("/api/agency/impersonate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ clientId }),
+    });
+    if (!res.ok) { showToast("Erreur lors du changement de client"); return; }
+    window.location.href = `/app?view=${DEEP_LINK_VIEWS.includes(view) && view !== "clients" ? view : "dashboard"}`;
   };
   const [upgrade, setUpgrade] = useState(null); // { feature } quand on clique une fonctionnalité verrouillée
   const [optimizeText, setOptimizeText] = useState(null); // { text, type } → page Étape 2 plein écran
@@ -12132,8 +12298,7 @@ export default function Home() {
     const params = new URLSearchParams(window.location.search);
     const v = params.get("view");
     const billing = params.get("billing");
-    if (v === "events") setView("events");
-    if (v === "billing") setView("billing");
+    if (v && DEEP_LINK_VIEWS.includes(v)) setView(v);
     if (billing === "success") {
       setView("billing");
       showToast("Merci ! Votre abonnement est en cours d'activation ✓");
@@ -14149,12 +14314,23 @@ export default function Home() {
                 </>
               )}
             </span>
+            <span className="flex items-center gap-3 flex-wrap">
+              {!impersonating.support && agencyClients.length > 1 && (
+                <label className="flex items-center gap-1.5 text-xs">
+                  <span className="text-amber-700">Changer de client</span>
+                  <select value={impersonating.id} onChange={(e) => switchClient(e.target.value)} data-testid="client-switcher"
+                    className="border border-amber-300 bg-white rounded-lg px-2 py-1 text-xs text-gray-700 max-w-[180px]">
+                    {agencyClients.map((c) => <option key={c.id} value={c.id}>{c.companyName || c.name}</option>)}
+                  </select>
+                </label>
+              )}
             <button
               onClick={stopImpersonation}
               className="text-xs font-semibold underline hover:no-underline"
             >
-              {impersonating.support ? "← Quitter la vue support" : "← Revenir à mon compte"}
+              {impersonating.support ? "← Quitter la vue support" : "← Revenir à mes clients"}
             </button>
+            </span>
           </div>
         </div>
       )}
@@ -15253,9 +15429,8 @@ export default function Home() {
               body: JSON.stringify({ clientId: client.id }),
             });
             if (res.ok) {
-              setImpersonating(client);
-              setView(targetView === "generate" ? "generate" : "dashboard");
-              window.location.reload();
+              // rechargement complet : tout l'espace (profil, posts, LinkedIn) bascule sur le client
+              window.location.href = `/app?view=${targetView === "generate" ? "create" : targetView}`;
             } else {
               showToast("Erreur lors du changement de compte");
             }
