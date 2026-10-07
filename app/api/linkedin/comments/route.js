@@ -37,7 +37,7 @@ async function draftAndToken(userId, draftId) {
     const token = decryptToken(acc?.orgToken);
     if (!token) return { error: "Page entreprise non connectée.", status: 401 };
     if (acc.orgExpiresAt && acc.orgExpiresAt < new Date()) {
-      return { error: "Session de la page entreprise expirée — reconnectez-la (onglet Profil).", status: 401 };
+      return { error: "Session de la page entreprise expirée — reconnectez-la (menu « Connexions »).", status: 401 };
     }
     return { draft, token, actor: draft.target, personal: false };
   }
@@ -45,7 +45,7 @@ async function draftAndToken(userId, draftId) {
   const token = decryptToken(acc?.personToken);
   if (!token || !acc?.personSub) return { error: "Compte LinkedIn non connecté.", status: 401 };
   if (acc.personExpiresAt && acc.personExpiresAt < new Date()) {
-    return { error: "Session LinkedIn expirée — reconnectez votre compte (onglet Profil).", status: 401 };
+    return { error: "Session LinkedIn expirée — reconnectez votre compte (menu « Connexions »).", status: 401 };
   }
   return { draft, token, actor: `urn:li:person:${acc.personSub}`, personal: true };
 }

@@ -67,7 +67,7 @@ export async function GET(req) {
   const token = decryptToken(acc?.statsToken);
   if (!token) return NextResponse.json({ connected: false });
   if (acc.statsExpiresAt && acc.statsExpiresAt < new Date()) {
-    return NextResponse.json({ error: "Session LinkedIn expirée — reconnectez les statistiques du profil (onglet Profil)." }, { status: 401 });
+    return NextResponse.json({ error: "Session LinkedIn expirée — reconnectez les statistiques du profil (menu « Connexions »)." }, { status: 401 });
   }
 
   try {
@@ -155,7 +155,7 @@ export async function GET(req) {
       );
     }
     if (e.status === 401) {
-      return NextResponse.json({ error: "Session LinkedIn expirée — reconnectez les statistiques du profil (onglet Profil)." }, { status: 401 });
+      return NextResponse.json({ error: "Session LinkedIn expirée — reconnectez les statistiques du profil (menu « Connexions »)." }, { status: 401 });
     }
     return NextResponse.json({ error: "Échec de la récupération des statistiques." }, { status: 500 });
   }

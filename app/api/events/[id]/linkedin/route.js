@@ -38,15 +38,15 @@ async function context(req, params) {
 
   const acc = await prisma.linkedInAccount.findUnique({ where: { userId } });
   const token = decryptToken(acc?.personToken);
-  if (!token || !acc?.personSub) return { error: "Compte LinkedIn non connecté (onglet Profil).", status: 401 };
+  if (!token || !acc?.personSub) return { error: "Compte LinkedIn non connecté (menu « Connexions »).", status: 401 };
   if (acc.personExpiresAt && acc.personExpiresAt < new Date()) {
-    return { error: "Session LinkedIn expirée — reconnectez votre compte (onglet Profil).", status: 401 };
+    return { error: "Session LinkedIn expirée — reconnectez votre compte (menu « Connexions »).", status: 401 };
   }
   // Le jeton du profil doit porter rw_events. LinkedIn indique les permissions accordées à la
   // connexion (mémorisées depuis la PR « diagnostic ») : inutile d'appeler LinkedIn si elle manque.
   if (acc.personScope && !acc.personScope.split(/[\s,]+/).includes("rw_events")) {
     return {
-      error: `Votre connexion LinkedIn n'a pas la permission « rw_events » (permissions accordées : ${acc.personScope.replace(/[\s,]+/g, ", ")}). Ajoutez rw_events à LINKEDIN_SCOPES sur le serveur, puis reconnectez LinkedIn (onglet Profil).`,
+      error: `Votre connexion LinkedIn n'a pas la permission « rw_events » (permissions accordées : ${acc.personScope.replace(/[\s,]+/g, ", ")}). Ajoutez rw_events à LINKEDIN_SCOPES sur le serveur, puis reconnectez LinkedIn (menu « Connexions »).`,
       status: 403,
     };
   }
