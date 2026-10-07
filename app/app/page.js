@@ -4095,7 +4095,7 @@ function RemarkBox({ onApplyNow, onManage, showToast }) {
 // contexte. Chaque ajout est résumé par l'IA ; seuls le résumé et les faits relevés servent à rédiger,
 // et le post indique les sources utilisées.
 // ----------------------------------------------------------------
-function KnowledgePanel({ showToast }) {
+function KnowledgePanel({ showToast, onCount }) {
   const [data, setData] = useState(null); // { sources, limit, plan } ; null = chargement
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState("note"); // note | link
@@ -4116,6 +4116,9 @@ function KnowledgePanel({ showToast }) {
   useEffect(() => {
     load();
   }, []);
+  useEffect(() => {
+    if (data) onCount?.(data.sources?.length ?? 0);
+  }, [data]);
 
   const used = data?.sources?.length ?? 0;
   const full = data && used >= data.limit;
@@ -4503,11 +4506,15 @@ function ImportPostsPanel({ importedAt, currentLanguage, onApplied, showToast })
   );
 }
 
-function RemarksManager({ showToast }) {
+function RemarksManager({ showToast, onCount }) {
   const [remarks, setRemarks] = useState(null);
   const [max, setMax] = useState(10);
   const [text, setText] = useState("");
   const [adding, setAdding] = useState(false);
+
+  useEffect(() => {
+    if (remarks) onCount?.(remarks.length);
+  }, [remarks]);
 
   useEffect(() => {
     fetch("/api/remarks")
@@ -10198,6 +10205,215 @@ function CadenceSuggestion({ fields, set, toggleCsv }) {
 }
 
 // ----------------------------------------------------------------
+// Parcours du profil : cinq étapes, chacune expliquée (pourquoi, exemple, durée), avec son état
+// et un indicateur « Le copilote vous connaît » qui monte au fil des réponses, des posts importés,
+// des documents et des remarques. Les compteurs viennent de ctx : { knowledgeCount, remarksCount, linkedin }.
+// ----------------------------------------------------------------
+const hasText = (v) => (typeof v === "string" ? v.trim().length > 0 : Boolean(v));
+
+const PROFILE_STAGES = [
+  {
+    id: "identity",
+    title: "Qui vous êtes",
+    time: "2 min",
+    icon: UserRound,
+    why: "Votre nom, votre titre et votre entreprise personnalisent chaque post : la signature, votre légitimité et le vocabulaire de votre métier.",
+    items: [
+      { label: "Votre nom", done: (f) => hasText(f.name) },
+      { label: "Votre titre professionnel", done: (f) => hasText(f.headline) },
+      { label: "Votre entreprise ou marque", done: (f) => hasText(f.companyName) },
+      { label: "Votre expertise en une phrase", done: (f) => hasText(f.expertise) },
+    ],
+  },
+  {
+    id: "audience",
+    title: "Votre cible et vos objectifs",
+    time: "3 min",
+    icon: Megaphone,
+    why: "Un bon post parle à quelqu'un de précis. Plus le copilote connaît votre cible et ce que vous visez, plus les sujets, les accroches et les appels à l'action sont pertinents.",
+    items: [
+      { label: "Votre activité", done: (f) => hasText(f.businessDescription) },
+      { label: "Votre cible sur LinkedIn", done: (f) => hasText(f.targetAudience) },
+      { label: "Votre positionnement", done: (f) => hasText(f.market) },
+      { label: "Vos objectifs de communication", done: (f) => hasText(f.commGoals) },
+    ],
+  },
+  {
+    id: "voice",
+    title: "Votre voix",
+    time: "5 min",
+    icon: PenLine,
+    why: "C'est ce qui fait que vos posts vous ressemblent. Décrivez votre façon d'écrire, ou faites-la découvrir au copilote à partir de vos anciens posts : c'est l'étape qui change le plus le résultat.",
+    items: [
+      { label: "Vos thèmes favoris", done: (f) => hasText(f.themes) },
+      { label: "Vos consignes d'écriture", done: (f) => hasText(f.styleNotes) },
+      { label: "Vos anciens posts importés", done: (f, c) => Boolean(c.styleImportedAt) },
+      { label: "Une première remarque retenue", bonus: true, done: (f, c) => c.remarksCount > 0 },
+    ],
+  },
+  {
+    id: "sources",
+    title: "Vos sources",
+    time: "5 min",
+    icon: FileText,
+    why: "Vos documents, articles et liens permettent au copilote de s'appuyer sur vos vrais faits et vos vrais chiffres, au lieu de rester générique.",
+    items: [
+      { label: "Au moins une source ajoutée", done: (f, c) => c.knowledgeCount > 0 },
+      { label: "Une note pour le copilote", bonus: true, done: (f) => hasText(f.editorialNote) },
+    ],
+  },
+  {
+    id: "rhythm",
+    title: "Votre rythme et vos connexions",
+    time: "2 min",
+    icon: Clock,
+    why: "Choisissez quand publier, puis connectez LinkedIn : vos posts partent seuls aux jours et à l'heure voulus, après votre validation si vous le souhaitez.",
+    items: [
+      { label: "Vos jours de publication", done: (f) => hasText(f.publishDays) },
+      { label: "LinkedIn connecté", done: (f, c) => Boolean(c.linkedin?.connected) },
+    ],
+  },
+];
+
+// Champ du profil → étape qui le contient (liens « Compléter » venus d'autres écrans)
+const PROFILE_FIELD_STAGE = {
+  name: "identity", headline: "identity", companyName: "identity", expertise: "identity", website: "identity",
+  businessDescription: "audience", targetAudience: "audience", market: "audience", commGoals: "audience",
+  themes: "voice", styleNotes: "voice", remarks: "voice",
+  knowledge: "sources", editorialNote: "sources",
+  publishDays: "rhythm",
+};
+
+// État d'une étape : « done » quand tous ses éléments obligatoires sont remplis ; les éléments « bonus » comptent seulement pour l'indicateur
+function stageProgress(stage, fields, ctx) {
+  const required = stage.items.filter((i) => !i.bonus);
+  const doneRequired = required.filter((i) => i.done(fields, ctx)).length;
+  const status = doneRequired === required.length ? "done" : doneRequired > 0 ? "doing" : "todo";
+  return { status, done: doneRequired, total: required.length };
+}
+
+const STRENGTH_LEVELS = [
+  [85, "Il écrit comme vous"],
+  [60, "Il vous connaît bien"],
+  [30, "Il commence à vous connaître"],
+  [0, "Premiers pas"],
+];
+function profileStrength(fields, ctx) {
+  const all = PROFILE_STAGES.flatMap((s) => s.items);
+  const done = all.filter((i) => i.done(fields, ctx)).length;
+  const percent = Math.round((done / all.length) * 100);
+  return { percent, label: STRENGTH_LEVELS.find(([min]) => percent >= min)[1] };
+}
+
+// Aide contextuelle d'un champ : repliée par défaut (pourquoi cette question, exemple)
+function FieldHelp({ why, example }) {
+  const [open, setOpen] = useState(false);
+  if (!why && !example) return null;
+  return (
+    <div className="mt-1">
+      <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open} className="text-[11px] text-[#0a66c2] hover:underline inline-flex items-center gap-1">
+        <Lightbulb size={11} /> {open ? "Masquer l'aide" : "Pourquoi cette question ?"}
+      </button>
+      {open && (
+        <div className="mt-1.5 rounded-lg bg-[#f4f8fd] border border-[#d6e6f7] p-2.5 text-xs text-gray-600 space-y-1">
+          {why && <p>{why}</p>}
+          {example && (
+            <p className="text-gray-500">
+              <span className="font-medium text-gray-700">Exemple :</span> {example}
+            </p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Champ du profil : libellé, contrôle, aide (défini hors de ProfileView pour ne pas être recréé à chaque frappe)
+function ProfileField({ id, label, hint, why, example, children }) {
+  return (
+    <div id={id}>
+      <label className="text-sm font-medium text-gray-700 block mb-1.5">
+        {label} {hint && <span className="text-gray-400 font-normal">{hint}</span>}
+      </label>
+      {children}
+      <FieldHelp why={why} example={example} />
+    </div>
+  );
+}
+
+// Colonne de gauche : l'indicateur « Le copilote vous connaît » et la liste des étapes avec leur état
+function ProfileStepper({ stages, progress, current, onSelect, strength }) {
+  return (
+    <div className="lg:sticky lg:top-4 space-y-3 min-w-0">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+        <p className="text-xs text-gray-400">Le copilote vous connaît</p>
+        <div className="flex items-baseline justify-between mt-0.5">
+          <p className="text-sm font-semibold">{strength.label}</p>
+          <p className="text-sm font-bold text-[#ff5a5f]">{strength.percent} %</p>
+        </div>
+        <div className="h-2 bg-gray-100 rounded-full overflow-hidden mt-2" role="progressbar" aria-valuenow={strength.percent} aria-valuemin={0} aria-valuemax={100}>
+          <div className="h-full bg-gradient-to-r from-orange-400 to-[#ff5a5f] rounded-full transition-all" style={{ width: `${strength.percent}%` }} />
+        </div>
+        <p className="text-[11px] text-gray-400 mt-2">Plus il vous connaît, plus vos posts vous ressemblent.</p>
+      </div>
+      <nav aria-label="Étapes du profil" className="flex lg:flex-col gap-2 overflow-x-auto lg:overflow-visible pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {stages.map((s, i) => {
+          const p = progress[i];
+          const active = i === current;
+          return (
+            <button
+              key={s.id}
+              type="button"
+              onClick={() => onSelect(i)}
+              aria-current={active ? "step" : undefined}
+              className={`shrink-0 lg:shrink lg:w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-xl border transition-colors ${
+                active ? "bg-white border-[#ff5a5f] shadow-sm" : "bg-white/60 border-gray-100 hover:border-gray-300"
+              }`}
+            >
+              <span
+                className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 text-xs font-semibold ${
+                  p.status === "done" ? "bg-green-100 text-green-700" : active ? "bg-[#ff5a5f] text-white" : "bg-gray-100 text-gray-500"
+                }`}
+              >
+                {p.status === "done" ? <Check size={14} /> : i + 1}
+              </span>
+              <span className="min-w-0">
+                <span className="block text-sm font-medium leading-tight">{s.title}</span>
+                <span className="block text-[11px] text-gray-400">
+                  {p.status === "done" ? "Terminé" : p.status === "doing" ? `${p.done}/${p.total} · ${s.time}` : s.time}
+                </span>
+              </span>
+            </button>
+          );
+        })}
+      </nav>
+    </div>
+  );
+}
+
+// En-tête d'une étape : où l'on en est, pourquoi elle compte, ce qui reste
+function StageHeader({ index, total, stage, progress }) {
+  const Icon = stage.icon;
+  return (
+    <div className="mb-4">
+      <p className="text-xs text-gray-400">
+        Étape {index + 1} sur {total} · environ {stage.time}
+      </p>
+      <h2 className="font-semibold text-lg flex items-center gap-2 mt-0.5">
+        <span className="p-2 rounded-xl bg-[#fff1f1] text-[#ff5a5f]"><Icon size={16} /></span>
+        {stage.title}
+      </h2>
+      <p className="text-sm text-gray-500 mt-2">{stage.why}</p>
+      {progress.status === "done" ? (
+        <p className="text-xs text-green-700 mt-2 flex items-center gap-1"><Check size={13} /> Étape complète. Vous pouvez la modifier à tout moment.</p>
+      ) : (
+        <p className="text-xs text-gray-400 mt-2">{progress.done} élément{progress.done > 1 ? "s" : ""} sur {progress.total} renseigné{progress.done > 1 ? "s" : ""}.</p>
+      )}
+    </div>
+  );
+}
+
+// ----------------------------------------------------------------
 // Page profil : identité, expertise, style de rédaction
 // ----------------------------------------------------------------
 function ProfileView({ profile, onSaved, showToast, linkedin, onDisconnect, instagram, onDisconnectInstagram, canOrgPublish = true, focusField, onFocusHandled }) {
@@ -10224,20 +10440,49 @@ function ProfileView({ profile, onSaved, showToast, linkedin, onDisconnect, inst
   });
   const [saving, setSaving] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
+  const [counts, setCounts] = useState({ knowledge: 0, remarks: 0 }); // alimentent l'indicateur du parcours
+  const ctx = { knowledgeCount: counts.knowledge, remarksCount: counts.remarks, styleImportedAt: profile?.styleImportedAt, linkedin };
+  const progress = PROFILE_STAGES.map((st) => stageProgress(st, fields, ctx));
+  const strength = profileStrength(fields, ctx);
+  // On ouvre la première étape à compléter (parcours progressif) ; un lien « Compléter » ouvre l'étape du champ visé
+  const [stageIdx, setStageIdx] = useState(() => {
+    const target = PROFILE_FIELD_STAGE[focusField];
+    if (target) return PROFILE_STAGES.findIndex((st) => st.id === target);
+    const first = PROFILE_STAGES.findIndex((st, i) => stageProgress(st, {
+      name: profile?.name ?? "", headline: profile?.headline ?? "", companyName: profile?.companyName ?? "", expertise: profile?.expertise ?? "",
+      businessDescription: profile?.businessDescription ?? "", targetAudience: profile?.targetAudience ?? "", market: profile?.market ?? "", commGoals: profile?.commGoals ?? "",
+      themes: profile?.themes ?? "", styleNotes: profile?.styleNotes ?? "", editorialNote: profile?.editorialNote ?? "", publishDays: profile?.publishDays ?? "",
+    }, { knowledgeCount: 0, remarksCount: 0, styleImportedAt: profile?.styleImportedAt, linkedin }).status !== "done");
+    return first === -1 ? 0 : first;
+  });
+  const stage = PROFILE_STAGES[stageIdx];
+  const goTo = (i) => {
+    setStageIdx(i);
+    window.scrollTo?.({ top: 0, behavior: "smooth" });
+  };
 
-  // Arrivée depuis un lien "Compléter" du copilote éditorial : on amène le
-  // champ concerné à l'écran et on le met brièvement en évidence.
+  // Compteurs réels (documents, remarques) pour l'indicateur, même quand leur étape n'est pas affichée
+  useEffect(() => {
+    fetch("/api/knowledge").then(readJson).then((d) => setCounts((c) => ({ ...c, knowledge: d.sources?.length ?? 0 }))).catch(() => {});
+    fetch("/api/remarks").then(readJson).then((d) => setCounts((c) => ({ ...c, remarks: d.remarks?.length ?? 0 }))).catch(() => {});
+  }, []);
+
+  // Arrivée depuis un lien "Compléter" du copilote éditorial : on ouvre l'étape du champ concerné, on
+  // l'amène à l'écran et on le met brièvement en évidence.
   useEffect(() => {
     if (!focusField) return;
-    const el = document.getElementById(`field-${focusField}`);
-    if (el) {
+    const target = PROFILE_FIELD_STAGE[focusField];
+    const i = PROFILE_STAGES.findIndex((st) => st.id === target);
+    if (i >= 0) setStageIdx(i);
+    const t0 = setTimeout(() => {
+      const el = document.getElementById(`field-${focusField}`);
+      if (!el) return;
       el.scrollIntoView({ behavior: "smooth", block: "center" });
       el.classList.add("ring-2", "ring-[#ff5a5f]", "rounded-xl");
-      const t = setTimeout(() => el.classList.remove("ring-2", "ring-[#ff5a5f]", "rounded-xl"), 2500);
-      onFocusHandled?.();
-      return () => clearTimeout(t);
-    }
+      setTimeout(() => el.classList.remove("ring-2", "ring-[#ff5a5f]", "rounded-xl"), 2500);
+    }, 60);
     onFocusHandled?.();
+    return () => clearTimeout(t0);
   }, [focusField]);
 
   const set = (k, v) => setFields((f) => ({ ...f, [k]: v }));
@@ -10281,8 +10526,8 @@ function ProfileView({ profile, onSaved, showToast, linkedin, onDisconnect, inst
     set(key, (list.includes(v) ? list.filter((x) => x !== v) : [...list, v]).join(","));
   };
 
-  const save = async (e) => {
-    e.preventDefault();
+  // Enregistre le profil ; renvoie true si l'enregistrement a réussi
+  const persist = async () => {
     setSaving(true);
     try {
       const res = await fetch("/api/profile", {
@@ -10297,532 +10542,444 @@ function ProfileView({ profile, onSaved, showToast, linkedin, onDisconnect, inst
       if (!res.ok) throw new Error(data.error || "Erreur");
       onSaved(data.profile);
       showToast("Profil enregistré ✓");
+      return true;
     } catch (err) {
       showToast(err.message);
+      return false;
     } finally {
       setSaving(false);
     }
+  };
+  const save = (e) => {
+    e.preventDefault();
+    return persist();
+  };
+  const saveAndNext = async () => {
+    if (await persist()) goTo(Math.min(stageIdx + 1, PROFILE_STAGES.length - 1));
   };
 
   const input =
     "w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]";
   const label = "text-sm font-medium text-gray-700 block mb-1.5";
-  const cardTitle = (Icon, title) => (
-    <div className="flex items-center gap-2.5 mb-4">
-      <div className="p-2 rounded-xl bg-[#fff1f1] text-[#ff5a5f]">
-        <Icon size={16} />
+
+  const chipCls = (on) =>
+    `text-xs px-3 py-1.5 rounded-full border ${on ? "bg-[#ff5a5f] text-white border-[#ff5a5f]" : "border-gray-200 text-gray-600 hover:border-gray-300"}`;
+  const last = stageIdx === PROFILE_STAGES.length - 1;
+
+  const footer = (
+    <div className="flex items-center justify-between gap-3 flex-wrap pt-1">
+      {stageIdx > 0 ? (
+        <button type="button" onClick={() => goTo(stageIdx - 1)} className="text-sm text-gray-500 hover:text-gray-800 flex items-center gap-1">
+          <ChevronLeft size={15} /> Précédent
+        </button>
+      ) : (
+        <span />
+      )}
+      <div className="flex items-center gap-3">
+        {!last && (
+          <button type="button" onClick={() => goTo(stageIdx + 1)} className="text-sm text-gray-400 hover:text-gray-600">
+            Passer pour l&apos;instant
+          </button>
+        )}
+        {last ? (
+          <button type="submit" disabled={saving} className="bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white font-medium px-5 py-2.5 rounded-xl shadow-sm flex items-center gap-2">
+            {saving ? <RefreshCw size={15} className="animate-spin" /> : <Save size={15} />} Enregistrer mon profil
+          </button>
+        ) : (
+          <button type="button" onClick={saveAndNext} disabled={saving} className="bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white font-medium px-5 py-2.5 rounded-xl shadow-sm flex items-center gap-2">
+            {saving ? <RefreshCw size={15} className="animate-spin" /> : <ChevronRight size={15} />} Enregistrer et continuer
+          </button>
+        )}
       </div>
-      <h3 className="text-sm font-semibold">{title}</h3>
     </div>
   );
 
   return (
     <main className="max-w-5xl mx-auto p-6">
-      <form onSubmit={save} className="grid lg:grid-cols-3 gap-5 items-start">
-        {/* Colonne principale */}
-        <div className="lg:col-span-2 space-y-5">
-          {/* Contexte métier */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-            {cardTitle(Megaphone, "Contexte métier & communication")}
-            {/* Site internet + analyse IA */}
-            <div className="bg-[#fff1f1] rounded-xl p-3 mb-4">
-              <label className={label}>Votre site internet</label>
-              <div className="flex flex-wrap gap-2 mt-1">
-                <input
-                  type="text"
-                  value={fields.website}
-                  onChange={(e) => set("website", e.target.value)}
-                  placeholder="https://votre-site.fr"
-                  className={`flex-1 min-w-0 ${input}`}
-                />
-                <button
-                  type="button"
-                  onClick={analyzeSite}
-                  disabled={analyzing}
-                  className="shrink-0 bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white text-sm font-medium px-4 py-2 rounded-lg flex items-center gap-1.5"
-                >
-                  {analyzing ? <RefreshCw size={14} className="animate-spin" /> : <Sparkles size={14} />}
-                  {analyzing ? "Analyse…" : "Analyser"}
-                </button>
-              </div>
-              <p className="text-[11px] text-gray-500 mt-1.5">
-                L'IA lit votre site et pré-remplit les champs ci-dessous — vérifiez puis enregistrez.
-              </p>
-            </div>
-            <div className="space-y-4">
-              <div id="field-businessDescription">
-                <label className={label}>Activité — que faites-vous, pour qui, avec quelle valeur ajoutée ?</label>
-                <textarea
-                  rows={3}
-                  value={fields.businessDescription}
-                  onChange={(e) => set("businessDescription", e.target.value)}
-                  placeholder="ex : cabinet de conseil en transformation digitale pour PME industrielles"
-                  className={input}
-                />
-              </div>
-              <div className="grid sm:grid-cols-2 gap-4">
-                <div id="field-targetAudience">
-                  <label className={label}>Cible sur LinkedIn</label>
-                  <input
-                    type="text"
-                    value={fields.targetAudience}
-                    onChange={(e) => set("targetAudience", e.target.value)}
-                    placeholder="ex : dirigeants de PME, DAF, DSI"
-                    className={input}
-                  />
-                </div>
-                <div id="field-market">
-                  <label className={label}>Marché & positionnement</label>
-                  <input
-                    type="text"
-                    value={fields.market}
-                    onChange={(e) => set("market", e.target.value)}
-                    placeholder="ex : différenciation par la proximité"
-                    className={input}
-                  />
-                </div>
-              </div>
-              <div id="field-commGoals">
-                <label className={label}>Objectifs de communication</label>
-                <div className="flex flex-wrap gap-1.5">
-                  {COMM_GOALS.map((g) => {
-                    const active = (fields.commGoals ?? "").split(",").includes(g);
-                    return (
+      <div className="grid grid-cols-1 lg:grid-cols-[17rem_minmax(0,1fr)] gap-6 items-start">
+        <ProfileStepper stages={PROFILE_STAGES} progress={progress} current={stageIdx} onSelect={goTo} strength={strength} />
+
+        <div className="min-w-0">
+          <form onSubmit={save} className="space-y-5">
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+              <StageHeader index={stageIdx} total={PROFILE_STAGES.length} stage={stage} progress={progress[stageIdx]} />
+
+              {/* 1 · Qui vous êtes */}
+              {stage.id === "identity" && (
+                <div className="space-y-4">
+                  <div className="bg-[#fff1f1] rounded-xl p-3">
+                    <label className={label}>Gagnez du temps : votre site internet</label>
+                    <div className="flex flex-wrap gap-2 mt-1">
+                      <input
+                        type="text"
+                        value={fields.website}
+                        onChange={(e) => set("website", e.target.value)}
+                        placeholder="https://votre-site.fr"
+                        className={`flex-1 min-w-0 ${input}`}
+                      />
                       <button
                         type="button"
-                        key={g}
-                        onClick={() => toggleCsv("commGoals", g)}
-                        className={`text-xs px-3 py-1.5 rounded-full border ${
-                          active
-                            ? "bg-[#ff5a5f] text-white border-[#ff5a5f]"
-                            : "border-gray-200 text-gray-600 hover:border-gray-300"
-                        }`}
+                        onClick={analyzeSite}
+                        disabled={analyzing}
+                        className="shrink-0 bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white text-sm font-medium px-4 py-2 rounded-lg flex items-center gap-1.5"
                       >
-                        {g}
+                        {analyzing ? <RefreshCw size={14} className="animate-spin" /> : <Sparkles size={14} />}
+                        {analyzing ? "Analyse…" : "Analyser"}
                       </button>
-                    );
-                  })}
+                    </div>
+                    <p className="text-[11px] text-gray-500 mt-1.5">
+                      Le copilote lit votre site et pré-remplit les étapes suivantes (activité, cible, thèmes…). Vous vérifiez, vous corrigez.
+                    </p>
+                  </div>
+                  <ProfileField label="Votre nom" why="Sert à signer vos posts et à personnaliser le copilote." example="Jacques Castel">
+                    <input type="text" value={fields.name} onChange={(e) => set("name", e.target.value)} placeholder="ex : Jacques Castel" className={input} />
+                  </ProfileField>
+                  <ProfileField id="field-headline" label="Titre professionnel" why="Il fixe votre niveau de langage et votre légitimité : le copilote n'écrit pas de la même façon pour un dirigeant que pour un consultant junior." example="Consultante RH · j'aide les PME à fidéliser leurs équipes">
+                    <input type="text" value={fields.headline} onChange={(e) => set("headline", e.target.value)} placeholder="ex : Consultant SEO @ Acme" className={input} />
+                  </ProfileField>
+                  <ProfileField id="field-companyName" label="Entreprise / marque" why="Le copilote cite votre marque au bon moment, sans la répéter partout." example="Acme Conseil">
+                    <input type="text" value={fields.companyName} onChange={(e) => set("companyName", e.target.value)} placeholder="ex : Acme Conseil" className={input} />
+                  </ProfileField>
+                  <ProfileField label="Mon expertise — « Je suis un(e)… »" why="C'est la phrase qui dit au copilote qui parle. Une expertise précise donne des posts précis." example="Consultant en marketing digital spécialisé B2B">
+                    <input type="text" value={fields.expertise} onChange={(e) => set("expertise", e.target.value)} placeholder="ex : consultant en marketing digital spécialisé B2B" className={input} />
+                  </ProfileField>
                 </div>
-              </div>
-            </div>
-          </div>
+              )}
 
-          {/* Expertise & style */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-            {cardTitle(PenLine, "Expertise & style d'écriture")}
-            <div className="space-y-4">
-              <div>
-                <label className={label}>Mon expertise — « Je suis un(e)… »</label>
-                <input
-                  type="text"
-                  value={fields.expertise}
-                  onChange={(e) => set("expertise", e.target.value)}
-                  placeholder="ex : consultant en marketing digital spécialisé B2B"
-                  className={input}
-                />
-              </div>
-              <div>
-                <label className={label}>
-                  Thématiques favorites <span className="text-gray-400 font-normal">(séparées par des virgules)</span>
-                </label>
-                <input
-                  type="text"
-                  value={fields.themes}
-                  onChange={(e) => set("themes", e.target.value)}
-                  placeholder="ex : SEO, prospection LinkedIn, freelancing"
-                  className={input}
-                />
-              </div>
-              <div>
-                <label className={label}>Langue de rédaction des posts</label>
-                <div className="flex flex-wrap gap-1.5">
-                  {LANGUAGES.map((l) => (
-                    <button
-                      type="button"
-                      key={l.code}
-                      onClick={() => set("postLanguage", l.code)}
-                      className={`text-xs px-3 py-1.5 rounded-full border ${
-                        fields.postLanguage === l.code
-                          ? "bg-[#ff5a5f] text-white border-[#ff5a5f]"
-                          : "border-gray-200 text-gray-600 hover:border-gray-300"
-                      }`}
-                    >
-                      {l.label}
-                    </button>
-                  ))}
+              {/* 2 · Votre cible et vos objectifs */}
+              {stage.id === "audience" && (
+                <div className="space-y-4">
+                  <ProfileField id="field-businessDescription" label="Activité — que faites-vous, pour qui, avec quelle valeur ajoutée ?" why="C'est la matière première des exemples et des cas types : ce que vous vendez, et ce que cela change pour vos clients." example="Cabinet de conseil en transformation digitale pour PME industrielles">
+                    <textarea rows={3} value={fields.businessDescription} onChange={(e) => set("businessDescription", e.target.value)} placeholder="ex : cabinet de conseil en transformation digitale pour PME industrielles" className={input} />
+                  </ProfileField>
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    <ProfileField id="field-targetAudience" label="Cible sur LinkedIn" why="Un post écrit pour « tout le monde » ne touche personne. Précisez la fonction et le secteur de ceux que vous voulez atteindre." example="DRH et directeurs de la communication d'ETI industrielles">
+                      <input type="text" value={fields.targetAudience} onChange={(e) => set("targetAudience", e.target.value)} placeholder="ex : dirigeants de PME, DAF, DSI" className={input} />
+                    </ProfileField>
+                    <ProfileField id="field-market" label="Marché & positionnement" why="Ce qui vous distingue de vos concurrents : le copilote s'en sert pour vos prises de position." example="Différenciation par la proximité et le sur-mesure">
+                      <input type="text" value={fields.market} onChange={(e) => set("market", e.target.value)} placeholder="ex : différenciation par la proximité" className={input} />
+                    </ProfileField>
+                  </div>
+                  <ProfileField id="field-commGoals" label="Objectifs de communication" hint="(un ou plusieurs)" why="Vos objectifs orientent le type de sujets et l'appel à l'action de chaque post : se faire connaître n'appelle pas la même conclusion que trouver des clients." example="Génération de leads + Personal branding">
+                    <div className="flex flex-wrap gap-1.5">
+                      {COMM_GOALS.map((g) => (
+                        <button type="button" key={g} onClick={() => toggleCsv("commGoals", g)} className={chipCls((fields.commGoals ?? "").split(",").includes(g))}>
+                          {g}
+                        </button>
+                      ))}
+                    </div>
+                  </ProfileField>
                 </div>
-                <p className="text-[11px] text-gray-400 mt-1">Langue des posts générés par l&apos;IA (modifiable à chaque post). L&apos;interface reste en français.</p>
-              </div>
-              <div>
-                <label className={label}>Ton par défaut</label>
-                <div className="flex flex-wrap gap-1.5">
-                  {TONES.map((t) => (
-                    <button
-                      type="button"
-                      key={t}
-                      onClick={() => set("tone", t)}
-                      className={`text-xs px-3 py-1.5 rounded-full border ${
-                        fields.tone === t
-                          ? "bg-[#ff5a5f] text-white border-[#ff5a5f]"
-                          : "border-gray-200 text-gray-600 hover:border-gray-300"
-                      }`}
-                    >
-                      {t}
-                    </button>
-                  ))}
+              )}
+
+              {/* 3 · Votre voix */}
+              {stage.id === "voice" && (
+                <div className="space-y-4">
+                  <ProfileField label="Thématiques favorites" hint="(séparées par des virgules, la première compte le plus)" why="Ce sont vos sujets de prédilection : le copilote y puise ses idées en priorité." example="SEO, prospection LinkedIn, freelancing">
+                    <input type="text" value={fields.themes} onChange={(e) => set("themes", e.target.value)} placeholder="ex : SEO, prospection LinkedIn, freelancing" className={input} />
+                  </ProfileField>
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    <ProfileField label="Langue de rédaction des posts" why="Langue des posts générés par l'IA, modifiable à chaque post. L'interface reste en français.">
+                      <div className="flex flex-wrap gap-1.5">
+                        {LANGUAGES.map((l) => (
+                          <button type="button" key={l.code} onClick={() => set("postLanguage", l.code)} className={chipCls(fields.postLanguage === l.code)}>
+                            {l.label}
+                          </button>
+                        ))}
+                      </div>
+                    </ProfileField>
+                    <ProfileField label="Ton par défaut" why="Le registre de départ de vos posts. Chaque post peut en changer.">
+                      <div className="flex flex-wrap gap-1.5">
+                        {TONES.map((t) => (
+                          <button type="button" key={t} onClick={() => set("tone", t)} className={chipCls(fields.tone === t)}>
+                            {t}
+                          </button>
+                        ))}
+                      </div>
+                    </ProfileField>
+                  </div>
+                  <ProfileField id="field-styleNotes" label="Mon mode d'écriture" hint="(consignes pour l'IA)" why="Vos règles d'écriture, appliquées à chaque post. Soyez concret : une consigne vérifiable vaut mieux qu'un adjectif." example="Je tutoie mon audience, phrases courtes, pas d'émojis, une question pour finir">
+                    <textarea rows={3} value={fields.styleNotes} onChange={(e) => set("styleNotes", e.target.value)} placeholder="ex : je tutoie mon audience, pas d'emojis, phrases courtes" className={input} />
+                  </ProfileField>
+                  <ProfileField label="Longueur par défaut" hint={`: ${fields.defaultMaxChars} caractères`} why="Réglage de départ, modifiable à chaque post.">
+                    <input type="range" min="300" max="3000" step="100" value={fields.defaultMaxChars} onChange={(e) => set("defaultMaxChars", Number(e.target.value))} className="w-full accent-[#ff5a5f]" />
+                  </ProfileField>
+                  <div className="pt-1 space-y-4">
+                    <p className="text-xs text-gray-500">
+                      <strong className="text-gray-700">Le plus efficace :</strong> faire découvrir votre style à partir de vos anciens posts, plutôt que de le décrire.
+                    </p>
+                    <ImportPostsPanel
+                      importedAt={profile?.styleImportedAt}
+                      currentLanguage={fields.postLanguage}
+                      showToast={showToast}
+                      onApplied={async (p) => {
+                        if (p.styleNotes !== undefined) set("styleNotes", p.styleNotes ?? "");
+                        if (p.themes !== undefined) set("themes", p.themes ?? "");
+                        if (p.postLanguage) set("postLanguage", p.postLanguage);
+                        // Le parent garde une copie du profil : on la rafraîchit pour que la suite (génération) la voie
+                        try {
+                          const d = await readJson(await fetch("/api/profile"));
+                          if (d.profile) onSaved(d.profile);
+                        } catch {}
+                      }}
+                    />
+                    <RemarksManager showToast={showToast} onCount={(n) => setCounts((c) => ({ ...c, remarks: n }))} />
+                  </div>
                 </div>
-              </div>
-              <div id="field-styleNotes">
-                <label className={label}>
-                  Mon mode d'écriture <span className="text-gray-400 font-normal">(consignes pour l'IA)</span>
-                </label>
-                <textarea
-                  rows={3}
-                  value={fields.styleNotes}
-                  onChange={(e) => set("styleNotes", e.target.value)}
-                  placeholder={"ex : je tutoie mon audience, pas d'emojis, phrases courtes"}
-                  className={input}
-                />
-              </div>
-              <ImportPostsPanel
-                importedAt={profile?.styleImportedAt}
-                currentLanguage={fields.postLanguage}
-                showToast={showToast}
-                onApplied={async (p) => {
-                  if (p.styleNotes !== undefined) set("styleNotes", p.styleNotes ?? "");
-                  if (p.themes !== undefined) set("themes", p.themes ?? "");
-                  if (p.postLanguage) set("postLanguage", p.postLanguage);
-                  // Le parent garde une copie du profil : on la rafraîchit pour que la suite (génération) la voie
-                  try {
-                    const d = await readJson(await fetch("/api/profile"));
-                    if (d.profile) onSaved(d.profile);
-                  } catch {}
-                }}
-              />
-              <KnowledgePanel showToast={showToast} />
-              <RemarksManager showToast={showToast} />
-              <div id="field-editorialNote">
-                <label className={label}>
-                  Note pour le copilote éditorial{" "}
-                  <span className="text-gray-400 font-normal">(modifiable aussi depuis le tableau de bord)</span>
-                </label>
-                <textarea
-                  rows={2}
-                  value={fields.editorialNote}
-                  onChange={(e) => set("editorialNote", e.target.value)}
-                  placeholder="ex : cette semaine, je veux plus de retours clients concrets, moins de posts d'opinion…"
-                  maxLength={500}
-                  className={input}
-                />
-              </div>
-              <div>
-                <label className={label}>
-                  Longueur par défaut :{" "}
-                  <span className="text-[#ff5a5f] font-semibold">{fields.defaultMaxChars} caractères</span>
-                </label>
-                <input
-                  type="range"
-                  min="300"
-                  max="3000"
-                  step="100"
-                  value={fields.defaultMaxChars}
-                  onChange={(e) => set("defaultMaxChars", Number(e.target.value))}
-                  className="w-full accent-[#ff5a5f]"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
+              )}
 
-        {/* Colonne latérale */}
-        <div className="space-y-5">
-          {/* Identité */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-            <div className="flex flex-col items-center text-center mb-4">
-              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#ff5a5f] to-pink-500 text-white flex items-center justify-center text-2xl font-bold shadow-lg shadow-[#ffd5d6] mb-2">
-                {(fields.name || profile?.email || "?").slice(0, 1).toUpperCase()}
-              </div>
-              <p className="text-sm font-semibold">{fields.name || "Votre nom"}</p>
-              <p className="text-xs text-gray-400">{profile?.email}</p>
-            </div>
-            <div className="space-y-3">
-              <div>
-                <label className={label}>Nom</label>
-                <input
-                  type="text"
-                  value={fields.name}
-                  onChange={(e) => set("name", e.target.value)}
-                  placeholder="ex : Jacques Castel"
-                  className={input}
-                />
-              </div>
-              <div id="field-headline">
-                <label className={label}>Titre professionnel</label>
-                <input
-                  type="text"
-                  value={fields.headline}
-                  onChange={(e) => set("headline", e.target.value)}
-                  placeholder="ex : Consultant SEO @ Acme"
-                  className={input}
-                />
-              </div>
-              <div id="field-companyName">
-                <label className={label}>Entreprise / marque</label>
-                <input
-                  type="text"
-                  value={fields.companyName}
-                  onChange={(e) => set("companyName", e.target.value)}
-                  placeholder="ex : Acme Conseil"
-                  className={input}
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Rythme de publication */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-            {cardTitle(Clock, "Rythme de publication")}
-            <CadenceSuggestion fields={fields} set={set} toggleCsv={toggleCsv} />
-            <div className="space-y-4">
-              <div>
-                <label className={label}>
-                  Jours
-                  {(fields.publishDays ?? "").split(",").filter(Boolean).length > 0 && (
-                    <span className="text-[#ff5a5f] font-semibold">
-                      {" "}
-                      — {(fields.publishDays ?? "").split(",").filter(Boolean).length}/semaine
-                    </span>
-                  )}
-                </label>
-                <div className="grid grid-cols-7 gap-1">
-                  {WEEK_DAYS.map(({ n, label: l }) => {
-                    const active = (fields.publishDays ?? "").split(",").includes(String(n));
-                    return (
-                      <button
-                        type="button"
-                        key={n}
-                        onClick={() => toggleCsv("publishDays", n)}
-                        className={`py-2 rounded-lg border text-[11px] font-medium ${
-                          active
-                            ? "bg-[#ff5a5f] text-white border-[#ff5a5f]"
-                            : "border-gray-200 text-gray-600 hover:border-gray-300"
-                        }`}
-                      >
-                        {l}
-                      </button>
-                    );
-                  })}
+              {/* 4 · Vos sources */}
+              {stage.id === "sources" && (
+                <div className="space-y-4">
+                  <KnowledgePanel showToast={showToast} onCount={(n) => setCounts((c) => ({ ...c, knowledge: n }))} />
+                  <ProfileField id="field-editorialNote" label="Note pour le copilote éditorial" hint="(modifiable aussi depuis le tableau de bord)" why="Une consigne du moment, pour orienter ses propositions cette semaine. Vous pouvez aussi la modifier en discutant avec lui." example="Cette semaine, je veux plus de retours clients concrets, moins de posts d'opinion">
+                    <textarea rows={2} value={fields.editorialNote} onChange={(e) => set("editorialNote", e.target.value)} placeholder="ex : cette semaine, je veux plus de retours clients concrets, moins de posts d'opinion…" maxLength={500} className={input} />
+                  </ProfileField>
                 </div>
-              </div>
-              <div>
-                <label className={label}>Heure de publication</label>
-                <input
-                  type="time"
-                  value={fields.publishTime}
-                  onChange={(e) => set("publishTime", e.target.value)}
-                  className={input}
-                />
-              </div>
-              <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={fields.requireValidation}
-                  onChange={(e) => set("requireValidation", e.target.checked)}
-                  className="accent-[#ff5a5f]"
-                />
-                Valider avant publication
-              </label>
+              )}
 
-              <p className="sm:col-span-2 text-xs text-gray-400 border-t border-gray-100 pt-3 mt-1">
-                La publication autonome du copilote éditorial se pilote désormais depuis l'onglet
-                <strong> Copilote IA</strong> (avec les indicateurs et les poids appris).
-              </p>
-            </div>
-          </div>
-
-          {/* Enregistrer — sticky */}
-          <div className="sticky bottom-4">
-            <button
-              type="submit"
-              disabled={saving}
-              className="w-full bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white font-medium py-3 rounded-2xl shadow-lg shadow-[#ffd5d6] flex items-center justify-center gap-2"
-            >
-              {saving ? <RefreshCw size={16} className="animate-spin" /> : <Save size={16} />}
-              Enregistrer mon profil
-            </button>
-          </div>
-        </div>
-      </form>
-
-      {/* Connexions */}
-      <div className="mt-6">
-        <div className="flex items-center gap-2.5 mb-3">
-          <div className="p-2 rounded-xl bg-[#fff1f1] text-[#ff5a5f]">
-            <Linkedin size={16} />
-          </div>
-          <div>
-            <h3 className="text-sm font-semibold">Connexions LinkedIn</h3>
-            <p className="text-xs text-gray-400">Les comptes sur lesquels vos posts seront publiés.</p>
-          </div>
-        </div>
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm divide-y divide-gray-100">
-          {/* Profil personnel */}
-          <div className="p-5 flex items-center justify-between gap-3 flex-wrap">
-            <div className="flex items-center gap-3">
-              <div className={`p-2 rounded-xl ${linkedin.connected ? "bg-green-50 text-green-600" : "bg-gray-100 text-gray-400"}`}>
-                <Linkedin size={18} />
-              </div>
-              <div>
-                <p className="text-sm font-medium">Profil personnel</p>
-                {linkedin.connected ? (
-                  <p className="text-xs text-gray-500">
-                    Connecté en tant que <span className="font-medium">{linkedin.name || "—"}</span>
-                    {linkedin.personExpiresAt && (
-                      <> · expire le {new Date(linkedin.personExpiresAt).toLocaleDateString("fr-FR")}</>
+              {/* 5 · Votre rythme (les connexions suivent, hors formulaire) */}
+              {stage.id === "rhythm" && (
+                <div>
+              <CadenceSuggestion fields={fields} set={set} toggleCsv={toggleCsv} />
+              <div className="space-y-4">
+                <div>
+                  <label className={label}>
+                    Jours
+                    {(fields.publishDays ?? "").split(",").filter(Boolean).length > 0 && (
+                      <span className="text-[#ff5a5f] font-semibold">
+                        {" "}
+                        — {(fields.publishDays ?? "").split(",").filter(Boolean).length}/semaine
+                      </span>
                     )}
-                  </p>
-                ) : (
-                  <p className="text-xs text-gray-400">Non connecté — requis pour publier sur votre profil</p>
-                )}
+                  </label>
+                  <div className="grid grid-cols-7 gap-1">
+                    {WEEK_DAYS.map(({ n, label: l }) => {
+                      const active = (fields.publishDays ?? "").split(",").includes(String(n));
+                      return (
+                        <button
+                          type="button"
+                          key={n}
+                          onClick={() => toggleCsv("publishDays", n)}
+                          className={`py-2 rounded-lg border text-[11px] font-medium ${
+                            active
+                              ? "bg-[#ff5a5f] text-white border-[#ff5a5f]"
+                              : "border-gray-200 text-gray-600 hover:border-gray-300"
+                          }`}
+                        >
+                          {l}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+                <div>
+                  <label className={label}>Heure de publication</label>
+                  <input
+                    type="time"
+                    value={fields.publishTime}
+                    onChange={(e) => set("publishTime", e.target.value)}
+                    className={input}
+                  />
+                </div>
+                <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={fields.requireValidation}
+                    onChange={(e) => set("requireValidation", e.target.checked)}
+                    className="accent-[#ff5a5f]"
+                  />
+                  Valider avant publication
+                </label>
+
+                <p className="sm:col-span-2 text-xs text-gray-400 border-t border-gray-100 pt-3 mt-1">
+                  La publication autonome du copilote éditorial se pilote désormais depuis l'onglet
+                  <strong> Copilote IA</strong> (avec les indicateurs et les poids appris).
+                </p>
               </div>
+                </div>
+              )}
             </div>
-            {linkedin.connected ? (
-              <div className="flex gap-2">
-                <a href="/api/linkedin/auth" className="text-xs border border-gray-200 hover:border-[#ff5a5f] text-gray-700 px-3 py-1.5 rounded-xl">
+
+            {footer}
+          </form>
+
+          {stage.id === "rhythm" && (
+            <>
+              <p className="text-xs text-gray-400 mt-4">Enregistrez vos modifications avant de connecter un compte : la connexion quitte brièvement la page.</p>
+        {/* Connexions */}
+        <div className="mt-6">
+          <div className="flex items-center gap-2.5 mb-3">
+            <div className="p-2 rounded-xl bg-[#fff1f1] text-[#ff5a5f]">
+              <Linkedin size={16} />
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold">Connexions LinkedIn</h3>
+              <p className="text-xs text-gray-400">Les comptes sur lesquels vos posts seront publiés.</p>
+            </div>
+          </div>
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm divide-y divide-gray-100">
+            {/* Profil personnel */}
+            <div className="p-5 flex items-center justify-between gap-3 flex-wrap">
+              <div className="flex items-center gap-3">
+                <div className={`p-2 rounded-xl ${linkedin.connected ? "bg-green-50 text-green-600" : "bg-gray-100 text-gray-400"}`}>
+                  <Linkedin size={18} />
+                </div>
+                <div>
+                  <p className="text-sm font-medium">Profil personnel</p>
+                  {linkedin.connected ? (
+                    <p className="text-xs text-gray-500">
+                      Connecté en tant que <span className="font-medium">{linkedin.name || "—"}</span>
+                      {linkedin.personExpiresAt && (
+                        <> · expire le {new Date(linkedin.personExpiresAt).toLocaleDateString("fr-FR")}</>
+                      )}
+                    </p>
+                  ) : (
+                    <p className="text-xs text-gray-400">Non connecté — requis pour publier sur votre profil</p>
+                  )}
+                </div>
+              </div>
+              {linkedin.connected ? (
+                <div className="flex gap-2">
+                  <a href="/api/linkedin/auth" className="text-xs border border-gray-200 hover:border-[#ff5a5f] text-gray-700 px-3 py-1.5 rounded-xl">
+                    Reconnecter
+                  </a>
+                  <button
+                    onClick={onDisconnect}
+                    type="button"
+                    className="text-xs border border-gray-200 hover:border-red-400 hover:text-red-600 text-gray-700 px-3 py-1.5 rounded-xl"
+                  >
+                    Déconnecter
+                  </button>
+                </div>
+              ) : (
+                <a href="/api/linkedin/auth" className="bg-[#0a66c2] hover:bg-[#004182] text-white text-xs font-medium px-4 py-2 rounded-xl flex items-center gap-1.5">
+                  <Linkedin size={14} /> Connecter
+                </a>
+              )}
+            </div>
+
+            {/* Page entreprise */}
+            <div className="p-5 flex items-start justify-between gap-3 flex-wrap">
+              <div className="flex items-start gap-3 flex-1">
+                <div className={`p-2 rounded-xl shrink-0 mt-0.5 ${linkedin.orgConnected ? "bg-green-50 text-green-600" : "bg-gray-100 text-gray-400"}`}>
+                  <Linkedin size={18} />
+                </div>
+                <div>
+                  <p className="text-sm font-medium">Page entreprise</p>
+                  {linkedin.orgConnected ? (
+                    <p className="text-xs text-gray-500">
+                      Connectée
+                      {linkedin.orgExpiresAt && <> · expire le {new Date(linkedin.orgExpiresAt).toLocaleDateString("fr-FR")}</>}
+                    </p>
+                  ) : canOrgPublish ? (
+                    <p className="text-xs text-gray-400">Connectez votre page entreprise LinkedIn pour publier en son nom.</p>
+                  ) : (
+                    <p className="text-xs text-gray-400">Disponible à partir du plan <strong>Agence</strong>.</p>
+                  )}
+                </div>
+              </div>
+              {linkedin.orgConnected ? (
+                <a href="/api/linkedin/auth-org" className="text-xs border border-gray-200 hover:border-[#ff5a5f] text-gray-700 px-3 py-1.5 rounded-xl shrink-0">
                   Reconnecter
                 </a>
-                <button
-                  onClick={onDisconnect}
-                  type="button"
-                  className="text-xs border border-gray-200 hover:border-red-400 hover:text-red-600 text-gray-700 px-3 py-1.5 rounded-xl"
-                >
-                  Déconnecter
-                </button>
-              </div>
-            ) : (
-              <a href="/api/linkedin/auth" className="bg-[#0a66c2] hover:bg-[#004182] text-white text-xs font-medium px-4 py-2 rounded-xl flex items-center gap-1.5">
-                <Linkedin size={14} /> Connecter
-              </a>
-            )}
-          </div>
-
-          {/* Page entreprise */}
-          <div className="p-5 flex items-start justify-between gap-3 flex-wrap">
-            <div className="flex items-start gap-3 flex-1">
-              <div className={`p-2 rounded-xl shrink-0 mt-0.5 ${linkedin.orgConnected ? "bg-green-50 text-green-600" : "bg-gray-100 text-gray-400"}`}>
-                <Linkedin size={18} />
-              </div>
-              <div>
-                <p className="text-sm font-medium">Page entreprise</p>
-                {linkedin.orgConnected ? (
-                  <p className="text-xs text-gray-500">
-                    Connectée
-                    {linkedin.orgExpiresAt && <> · expire le {new Date(linkedin.orgExpiresAt).toLocaleDateString("fr-FR")}</>}
-                  </p>
-                ) : canOrgPublish ? (
-                  <p className="text-xs text-gray-400">Connectez votre page entreprise LinkedIn pour publier en son nom.</p>
-                ) : (
-                  <p className="text-xs text-gray-400">Disponible à partir du plan <strong>Agence</strong>.</p>
-                )}
-              </div>
+              ) : canOrgPublish ? (
+                <a href="/api/linkedin/auth-org" className="text-xs bg-[#0a66c2] hover:bg-[#004182] text-white px-3 py-1.5 rounded-xl shrink-0 transition-colors">
+                  Connecter
+                </a>
+              ) : (
+                <a href="/tarifs" className="text-xs bg-gray-100 hover:bg-gray-200 text-gray-600 px-3 py-1.5 rounded-xl shrink-0 flex items-center gap-1">
+                  <Lock size={11} /> Agence
+                </a>
+              )}
             </div>
-            {linkedin.orgConnected ? (
-              <a href="/api/linkedin/auth-org" className="text-xs border border-gray-200 hover:border-[#ff5a5f] text-gray-700 px-3 py-1.5 rounded-xl shrink-0">
-                Reconnecter
-              </a>
-            ) : canOrgPublish ? (
-              <a href="/api/linkedin/auth-org" className="text-xs bg-[#0a66c2] hover:bg-[#004182] text-white px-3 py-1.5 rounded-xl shrink-0 transition-colors">
-                Connecter
-              </a>
-            ) : (
-              <a href="/tarifs" className="text-xs bg-gray-100 hover:bg-gray-200 text-gray-600 px-3 py-1.5 rounded-xl shrink-0 flex items-center gap-1">
-                <Lock size={11} /> Agence
-              </a>
-            )}
-          </div>
 
-          {/* Statistiques du profil personnel — app LinkedIn dédiée, indépendante
-              de la page entreprise (Community Management API ne peut cohabiter
-              avec Share on LinkedIn / Sign In with LinkedIn sur la même app) */}
-          <div className="p-5 flex items-start justify-between gap-3 flex-wrap">
-            <div className="flex items-start gap-3 flex-1">
-              <div className={`p-2 rounded-xl shrink-0 mt-0.5 ${linkedin.statsConnected ? "bg-green-50 text-green-600" : "bg-gray-100 text-gray-400"}`}>
-                <BarChart3 size={18} />
+            {/* Statistiques du profil personnel — app LinkedIn dédiée, indépendante
+                de la page entreprise (Community Management API ne peut cohabiter
+                avec Share on LinkedIn / Sign In with LinkedIn sur la même app) */}
+            <div className="p-5 flex items-start justify-between gap-3 flex-wrap">
+              <div className="flex items-start gap-3 flex-1">
+                <div className={`p-2 rounded-xl shrink-0 mt-0.5 ${linkedin.statsConnected ? "bg-green-50 text-green-600" : "bg-gray-100 text-gray-400"}`}>
+                  <BarChart3 size={18} />
+                </div>
+                <div>
+                  <p className="text-sm font-medium">Statistiques du profil personnel</p>
+                  {linkedin.statsConnected ? (
+                    <p className="text-xs text-gray-500">
+                      Connectées
+                      {linkedin.statsExpiresAt && <> · expire le {new Date(linkedin.statsExpiresAt).toLocaleDateString("fr-FR")}</>}
+                      {" "}· visibles dans l'onglet Statistiques
+                    </p>
+                  ) : (
+                    <p className="text-xs text-gray-400">Impressions, réactions, commentaires de vos posts personnels — indépendant de la page entreprise.</p>
+                  )}
+                </div>
               </div>
-              <div>
-                <p className="text-sm font-medium">Statistiques du profil personnel</p>
-                {linkedin.statsConnected ? (
-                  <p className="text-xs text-gray-500">
-                    Connectées
-                    {linkedin.statsExpiresAt && <> · expire le {new Date(linkedin.statsExpiresAt).toLocaleDateString("fr-FR")}</>}
-                    {" "}· visibles dans l'onglet Statistiques
-                  </p>
-                ) : (
-                  <p className="text-xs text-gray-400">Impressions, réactions, commentaires de vos posts personnels — indépendant de la page entreprise.</p>
-                )}
-              </div>
-            </div>
-            {linkedin.statsConnected ? (
-              <a href="/api/linkedin/auth-stats" className="text-xs border border-gray-200 hover:border-[#ff5a5f] text-gray-700 px-3 py-1.5 rounded-xl shrink-0">
-                Reconnecter
-              </a>
-            ) : (
-              <a href="/api/linkedin/auth-stats" className="text-xs bg-[#0a66c2] hover:bg-[#004182] text-white px-3 py-1.5 rounded-xl shrink-0 transition-colors">
-                Connecter
-              </a>
-            )}
-          </div>
-
-          {/* Instagram */}
-          <div className="p-5 flex items-center justify-between gap-3 flex-wrap">
-            <div className="flex items-center gap-3">
-              <div className={`p-2 rounded-xl ${instagram ? "bg-pink-50 text-pink-500" : "bg-gray-100 text-gray-400"}`}>
-                {/* Icône Instagram inline (lucide ne l'a pas) */}
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
-                  <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
-                  <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
-                </svg>
-              </div>
-              <div>
-                <p className="text-sm font-medium">Instagram</p>
-                {instagram ? (
-                  <p className="text-xs text-gray-500">
-                    Connecté{instagram.igUsername ? ` en tant que @${instagram.igUsername}` : ""}
-                    {instagram.igName ? ` (${instagram.igName})` : ""}
-                  </p>
-                ) : (
-                  <p className="text-xs text-gray-400">Compte Business requis · publiez vos posts avec image sur Instagram</p>
-                )}
-              </div>
-            </div>
-            {instagram ? (
-              <div className="flex gap-2">
-                <a href="/api/instagram/auth" className="text-xs border border-gray-200 hover:border-pink-400 text-gray-700 px-3 py-1.5 rounded-xl">
+              {linkedin.statsConnected ? (
+                <a href="/api/linkedin/auth-stats" className="text-xs border border-gray-200 hover:border-[#ff5a5f] text-gray-700 px-3 py-1.5 rounded-xl shrink-0">
                   Reconnecter
                 </a>
-                <button
-                  onClick={onDisconnectInstagram}
-                  type="button"
-                  className="text-xs border border-gray-200 hover:border-red-400 hover:text-red-600 text-gray-700 px-3 py-1.5 rounded-xl"
-                >
-                  Déconnecter
-                </button>
+              ) : (
+                <a href="/api/linkedin/auth-stats" className="text-xs bg-[#0a66c2] hover:bg-[#004182] text-white px-3 py-1.5 rounded-xl shrink-0 transition-colors">
+                  Connecter
+                </a>
+              )}
+            </div>
+
+            {/* Instagram */}
+            <div className="p-5 flex items-center justify-between gap-3 flex-wrap">
+              <div className="flex items-center gap-3">
+                <div className={`p-2 rounded-xl ${instagram ? "bg-pink-50 text-pink-500" : "bg-gray-100 text-gray-400"}`}>
+                  {/* Icône Instagram inline (lucide ne l'a pas) */}
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+                    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
+                    <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-sm font-medium">Instagram</p>
+                  {instagram ? (
+                    <p className="text-xs text-gray-500">
+                      Connecté{instagram.igUsername ? ` en tant que @${instagram.igUsername}` : ""}
+                      {instagram.igName ? ` (${instagram.igName})` : ""}
+                    </p>
+                  ) : (
+                    <p className="text-xs text-gray-400">Compte Business requis · publiez vos posts avec image sur Instagram</p>
+                  )}
+                </div>
               </div>
-            ) : (
-              <a
-                href="/api/instagram/auth"
-                className="bg-gradient-to-r from-pink-500 to-orange-400 hover:from-pink-600 hover:to-orange-500 text-white text-xs font-medium px-4 py-2 rounded-xl flex items-center gap-1.5"
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
-                  <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
-                  <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
-                </svg>
-                Connecter
-              </a>
-            )}
+              {instagram ? (
+                <div className="flex gap-2">
+                  <a href="/api/instagram/auth" className="text-xs border border-gray-200 hover:border-pink-400 text-gray-700 px-3 py-1.5 rounded-xl">
+                    Reconnecter
+                  </a>
+                  <button
+                    onClick={onDisconnectInstagram}
+                    type="button"
+                    className="text-xs border border-gray-200 hover:border-red-400 hover:text-red-600 text-gray-700 px-3 py-1.5 rounded-xl"
+                  >
+                    Déconnecter
+                  </button>
+                </div>
+              ) : (
+                <a
+                  href="/api/instagram/auth"
+                  className="bg-gradient-to-r from-pink-500 to-orange-400 hover:from-pink-600 hover:to-orange-500 text-white text-xs font-medium px-4 py-2 rounded-xl flex items-center gap-1.5"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+                    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
+                    <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
+                  </svg>
+                  Connecter
+                </a>
+              )}
+            </div>
           </div>
+        </div>
+            </>
+          )}
         </div>
       </div>
     </main>
