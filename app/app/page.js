@@ -4325,7 +4325,7 @@ function ImportPostsPanel({ importedAt, currentLanguage, onApplied, showToast })
     const f = e.target.files?.[0];
     if (!f) return;
     if (f.size > 3 * 1024 * 1024) {
-      setError("Fichier trop volumineux (3 Mo maximum). Importez Shares.csv, pas l'archive complète.");
+      setError("Fichier trop volumineux (3 Mo maximum). Décompressez l'archive LinkedIn et importez uniquement le fichier Shares.csv qu'elle contient.");
       return;
     }
     if (/\.zip$/i.test(f.name)) {
@@ -4421,7 +4421,7 @@ function ImportPostsPanel({ importedAt, currentLanguage, onApplied, showToast })
       {open && !result && (
         <div className="mt-3 space-y-3">
           <p className="text-xs text-gray-500 leading-relaxed">
-            Sur LinkedIn : <strong>Paramètres › Confidentialité des données › Obtenir une copie de vos données › Publications</strong>. L&apos;archive arrive en quelques minutes (parfois jusqu&apos;à 24 h) : importez le fichier <strong>Shares.csv</strong> qu&apos;elle contient. Ou collez vos posts, séparés par une ligne <code>---</code>. Les 50 plus récents sont analysés.
+            Sur LinkedIn : <strong>Paramètres › Confidentialité des données › Obtenir une copie de vos données</strong>, puis choisissez <strong>« Téléchargez des archives de données plus importantes »</strong> (la sélection par fichiers ne propose pas les publications) et cliquez sur « Demander les archives ». LinkedIn envoie un email avec un lien, en quelques minutes ou jusqu&apos;à 24 h. Décompressez l&apos;archive et importez le fichier <strong>Shares.csv</strong> qu&apos;elle contient. Sans attendre, vous pouvez aussi coller vos posts, séparés par une ligne <code>---</code>. Les 50 plus récents sont analysés.
           </p>
           <div className="flex gap-1.5">
             <button type="button" onClick={() => { setTab("file"); setContent(""); setFileName(""); }} className={chip(tab === "file")}>Fichier</button>
