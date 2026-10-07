@@ -5938,7 +5938,6 @@ function DashSection({ id, title, icon: Icon, hint, forceOpen = false, children 
 }
 
 function DashboardView({ drafts, canVeille = true, canEvents = false, canScore = true, canCampaigns = true, postsLimit = null, onGoCreate, onGoHistory, onGoEvents, onGoProfile, onGoProfileField, onGoCopilot, onApprove, onReschedule, profile, linkedin, orgs, onPlanned, onProfileSaved, showToast, onInspire, onGenerateFromReco }) {
-  const [mode, setMode] = useState("list"); // list | calendar
   const [periodDays, setPeriodDays] = useState(7);
   const [planTarget, setPlanTarget] = useState("person");
   const [planningId, setPlanningId] = useState(null);
@@ -6018,9 +6017,6 @@ function DashboardView({ drafts, canVeille = true, canEvents = false, canScore =
 
   const now = new Date();
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-  const publishedThisMonth = drafts.filter(
-    (d) => d.status === "publié" && new Date(d.publishedAt ?? d.createdAt) >= monthStart
-  ).length;
   const postsThisMonth = drafts.filter((d) => new Date(d.createdAt) >= monthStart).length;
   const scheduled = drafts
     .filter((d) => d.status === "programmé" && d.scheduledAt)
@@ -6044,27 +6040,6 @@ function DashboardView({ drafts, canVeille = true, canEvents = false, canScore =
     { label: "Erreurs", value: errors.length, color: "#ef4444" },
   ];
 
-  // Posts prévus sur les 7 prochains jours (barres)
-  const weekDays = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date();
-    d.setDate(d.getDate() + i);
-    return d;
-  });
-  const sameDay = (a, b) =>
-    a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
-  const weekValues = weekDays.map(
-    (day) =>
-      drafts.filter(
-        (d) =>
-          (d.status === "programmé" || d.status === "à valider") &&
-          d.scheduledAt &&
-          sameDay(new Date(d.scheduledAt), day)
-      ).length
-  );
-  const weekLabels = weekDays.map((d) =>
-    d.toLocaleDateString("fr-FR", { weekday: "short" }).replace(".", "")
-  );
-
   // Score d'engagement moyen des posts rédigés
   const scoredPosts = drafts.filter((d) => d.text && d.text.trim());
   const scores = scoredPosts.map((d) => scorePost({ text: d.text, type: d.type }).score);
@@ -6082,83 +6057,59 @@ function DashboardView({ drafts, canVeille = true, canEvents = false, canScore =
 
   return (
     <main className="max-w-5xl mx-auto p-6 space-y-6">
-      {/* KPI + graphiques */}
-      <div className="grid md:grid-cols-3 gap-4">
-        {/* Carte dégradée : activité du mois */}
-        <div className="rounded-2xl p-5 text-white bg-gradient-to-br from-orange-400 via-orange-500 to-pink-500 shadow-lg shadow-orange-200 flex flex-col justify-between min-h-44">
-          <div>
-            <p className="text-sm font-medium text-white/90">Publiés ce mois-ci</p>
-            <p className="text-4xl font-bold mt-1">{publishedThisMonth}</p>
+      {/* Synthèse : répartition des posts + calendrier des publications (2 colonnes) */}
+      <div className="grid md:grid-cols-3 gap-4 items-start">
+        <div className="space-y-4">
+          {/* Donut : répartition des posts */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+            <p className="text-sm font-semibold mb-3">Répartition des posts</p>
+            <div className="flex items-center gap-4">
+              <div className="relative shrink-0">
+                <DonutChart data={DONUT} />
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <p className="text-xl font-bold">{drafts.length}</p>
+                  <p className="text-[10px] text-gray-400">posts</p>
+                </div>
+              </div>
+              <div className="space-y-1.5 min-w-0">
+                {DONUT.filter((d) => d.value > 0).map((d) => (
+                  <div key={d.label} className="flex items-center gap-2 text-xs">
+                    <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: d.color }} />
+                    <span className="text-gray-500 truncate">{d.label}</span>
+                    <span className="font-semibold ml-auto">{d.value}</span>
+                  </div>
+                ))}
+                {drafts.length === 0 && <p className="text-xs text-gray-400">Aucun post pour l'instant</p>}
+              </div>
+            </div>
             {postsLimit != null && (
-              <div className="mt-3">
-                <div className="flex justify-between text-[11px] text-white/85 mb-1">
-                  <span>Posts générés ce mois</span>
-                  <span className="font-semibold">
+              <div className="mt-4 pt-3 border-t border-gray-100">
+                <div className="flex justify-between text-[11px] text-gray-500 mb-1">
+                  <span>Posts générés ce mois-ci</span>
+                  <span className="font-semibold text-gray-700">
                     {postsThisMonth}/{postsLimit}
                   </span>
                 </div>
-                <div className="h-1.5 bg-white/30 rounded-full overflow-hidden">
+                <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-white rounded-full"
+                    className="h-full bg-[#ff5a5f] rounded-full"
                     style={{ width: `${Math.min(100, (postsThisMonth / postsLimit) * 100)}%` }}
                   />
                 </div>
               </div>
             )}
           </div>
-          <div className="flex gap-6 pt-3 border-t border-white/25">
-            <div>
-              <p className="text-xs text-white/80">À venir</p>
-              <p className="text-lg font-semibold">{scheduled.length + toValidate.length}</p>
-            </div>
-            <div>
-              <p className="text-xs text-white/80">Brouillons</p>
-              <p className="text-lg font-semibold">{pending}</p>
-            </div>
-            {errors.length > 0 && (
-              <div>
-                <p className="text-xs text-white/80">Erreurs</p>
-                <p className="text-lg font-semibold">{errors.length}</p>
-              </div>
-            )}
-          </div>
-        </div>
 
-        {/* Donut : répartition des posts */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-          <p className="text-sm font-semibold mb-3">Répartition des posts</p>
-          <div className="flex items-center gap-4">
-            <div className="relative shrink-0">
-              <DonutChart data={DONUT} />
-              <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <p className="text-xl font-bold">{drafts.length}</p>
-                <p className="text-[10px] text-gray-400">posts</p>
-              </div>
-            </div>
-            <div className="space-y-1.5 min-w-0">
-              {DONUT.filter((d) => d.value > 0).map((d) => (
-                <div key={d.label} className="flex items-center gap-2 text-xs">
-                  <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: d.color }} />
-                  <span className="text-gray-500 truncate">{d.label}</span>
-                  <span className="font-semibold ml-auto">{d.value}</span>
-                </div>
-              ))}
-              {drafts.length === 0 && <p className="text-xs text-gray-400">Aucun post pour l'instant</p>}
-            </div>
-          </div>
+          <button
+            onClick={onGoCreate}
+            className="w-full inline-flex items-center justify-center gap-2 bg-[#ff5a5f] hover:bg-[#f63d44] text-white text-sm font-semibold px-4 py-3 rounded-2xl shadow-sm"
+          >
+            <Sparkles size={16} /> Créer un post
+          </button>
         </div>
-
-        {/* Barres : 7 prochains jours */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-          <p className="text-sm font-semibold mb-3">Publications à venir (7 jours)</p>
-          <MiniBars values={weekValues} labels={weekLabels} />
+        <div className="md:col-span-2">
+          <CalendarMonth drafts={drafts} onReschedule={onReschedule} />
         </div>
-      </div>
-
-      <div className="flex justify-end ">
-        <button onClick={onGoCreate} className="inline-flex items-center gap-1.5 bg-[#ff5a5f] hover:bg-[#f63d44] text-white text-sm font-medium px-4 py-2 rounded-xl">
-          <Sparkles size={15} /> Créer un post
-        </button>
       </div>
 
       {/* Priorité : ce qui demande une action */}
@@ -6217,61 +6168,6 @@ function DashboardView({ drafts, canVeille = true, canEvents = false, canScore =
         onGoProfileField={onGoProfileField}
         onGoCopilot={onGoCopilot}
       />
-
-      {/* Planning */}
-      <div>
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="font-semibold text-lg">Prochaines publications</h2>
-          <div className="flex gap-1 bg-gray-100 p-1 rounded-lg">
-            <button
-              onClick={() => setMode("list")}
-              className={`px-3 py-1.5 rounded-md text-xs font-medium flex items-center gap-1.5 ${
-                mode === "list" ? "bg-white shadow-sm" : "text-gray-500"
-              }`}
-            >
-              <List size={13} /> Liste
-            </button>
-            <button
-              onClick={() => setMode("calendar")}
-              className={`px-3 py-1.5 rounded-md text-xs font-medium flex items-center gap-1.5 ${
-                mode === "calendar" ? "bg-white shadow-sm" : "text-gray-500"
-              }`}
-            >
-              <CalendarDays size={13} /> Calendrier
-            </button>
-          </div>
-        </div>
-
-        {mode === "calendar" ? (
-          <CalendarMonth drafts={drafts} onReschedule={onReschedule} />
-        ) : scheduled.length === 0 ? (
-          <div className="bg-white rounded-xl border border-dashed border-gray-300 p-10 text-center text-gray-400">
-            <Clock size={28} className="mx-auto mb-2" />
-            <p className="text-sm">Aucun post programmé.</p>
-            <button onClick={onGoCreate} className="text-sm text-[#ff5a5f] hover:underline mt-1">
-              Générer un post →
-            </button>
-          </div>
-        ) : (
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm divide-y divide-gray-100">
-            {scheduled.map((d) => (
-              <div key={d.id} className="p-4 flex items-center justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="text-sm font-medium truncate">{d.theme || "Post"}</p>
-                  <p className="text-xs text-gray-500 truncate">{d.text.slice(0, 90)}…</p>
-                </div>
-                <div className="text-right shrink-0">
-                  <p className="text-sm font-medium text-amber-600">{relativeTime(d.scheduledAt)}</p>
-                  <p className="text-xs text-gray-400">
-                    {fmtDateTime(d.scheduledAt)} ·{" "}
-                    {d.target === "person" ? "profil perso" : "page entreprise"}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
 
       {wizardInit && (
         <CampaignWizard
