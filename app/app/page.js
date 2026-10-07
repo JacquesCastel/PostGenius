@@ -10736,7 +10736,6 @@ export default function Home() {
   // Recommandation éditoriale à l'origine de la génération en cours (copilote)
   const [activeReco, setActiveReco] = useState(null);
   // Ouverture du wizard de campagne demandée depuis la sidebar
-  const [campaignWizardOpen, setCampaignWizardOpen] = useState(false);
   // Wizard : étape suivante proposée après chaque action
   // { type: "saved"|"published"|"scheduled", draft?, postId?, when? }
   const [nextStep, setNextStep] = useState(null);
@@ -11834,6 +11833,8 @@ export default function Home() {
   const postsReached = postsLimit != null && postsThisMonth >= postsLimit;
   // Super admin : rôle dédié hors des types de compte produit — ne voit QUE
   // les outils d'administration, jamais la création de posts ni la facturation.
+  // Menu regroupé : `group` donne l'intitulé de la section (la première entrée d'un groupe l'affiche).
+  // « Créer une campagne » n'a plus d'entrée : le bouton « Nouvelle campagne » est dans Campagnes.
   const NAV = user.isSuperAdmin
     ? [
         { id: "admin", label: "Administration", icon: ShieldCheck },
@@ -11842,28 +11843,43 @@ export default function Home() {
       ]
     : [
         { id: "dashboard", label: "Tableau de bord", icon: LayoutDashboard },
-        { id: "create", label: "Créer un post", icon: Sparkles },
-        { id: "new-campaign", label: "Créer une campagne", icon: Megaphone, requires: "campaigns", featureLabel: "L'outil de campagne" },
-        { id: "history", label: "Mes posts", icon: History, badge: drafts.length || null },
-        { id: "engage", label: "Interagir", icon: ThumbsUp },
-        { id: "campaigns", label: "Campagnes", icon: LayersIcon, requires: "campaigns", featureLabel: "Les campagnes" },
-        { id: "events", label: "Événements", icon: MapPin, requires: "events", featureLabel: "Le module Événements" },
-        { id: "stats", label: "Statistiques", icon: BarChart3 },
-        { id: "copilot", label: "Copilote IA", icon: Compass },
-        { id: "billing", label: "Abonnement", icon: CreditCard },
-        { id: "profile", label: "Profil", icon: UserRound },
-        { id: "brand-kit", label: "Charte graphique", icon: ImageIcon },
+        { id: "create", label: "Créer un post", icon: Sparkles, group: "Créer" },
+        { id: "campaigns", label: "Campagnes", icon: LayersIcon, requires: "campaigns", featureLabel: "Les campagnes", group: "Créer" },
+        { id: "events", label: "Événements", icon: MapPin, requires: "events", featureLabel: "Le module Événements", group: "Créer" },
+        { id: "history", label: "Mes posts", icon: History, badge: drafts.length || null, group: "Piloter" },
+        { id: "engage", label: "Interagir", icon: ThumbsUp, group: "Piloter" },
+        { id: "stats", label: "Statistiques", icon: BarChart3, group: "Piloter" },
+        { id: "copilot", label: "Copilote IA", icon: Compass, group: "Piloter" },
         ...(user.plan === "agence"
-          ? [{ id: "clients", label: "Mes clients", icon: Users }]
+          ? [{ id: "clients", label: "Mes clients", icon: Users, group: "Agence" }]
           : []),
+        { id: "profile", label: "Profil", icon: UserRound, group: "Mon compte" },
+        { id: "brand-kit", label: "Charte graphique", icon: ImageIcon, group: "Mon compte" },
+        { id: "billing", label: "Abonnement", icon: CreditCard, group: "Mon compte" },
         ...(user.isAdmin
           ? [
-              { id: "admin", label: "Administration", icon: ShieldCheck },
-              { id: "content", label: "Contenu du site", icon: PenLine },
-              { id: "messages", label: "Messages", icon: MessageSquare },
+              { id: "admin", label: "Administration", icon: ShieldCheck, group: "Administration" },
+              { id: "content", label: "Contenu du site", icon: PenLine, group: "Administration" },
+              { id: "messages", label: "Messages", icon: MessageSquare, group: "Administration" },
             ]
           : []),
       ];
+  // Entrées + intitulés de section, dans l'ordre d'affichage
+  const navEntries = () => {
+    const out = [];
+    let last = null;
+    for (const item of NAV) {
+      if (item.group && item.group !== last) out.push({ header: item.group });
+      last = item.group ?? null;
+      out.push(item);
+    }
+    return out;
+  };
+  const navHeader = (title) => (
+    <p key={`h-${title}`} className="px-4 pt-3 pb-0.5 text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+      {title}
+    </p>
+  );
   const VIEW_TITLES = {
     dashboard: "Tableau de bord",
     create: "Créer un post",
@@ -11880,14 +11896,7 @@ export default function Home() {
     content: "Contenu du site",
     messages: "Messages de contact",
   };
-  const handleNav = (item) => {
-    if (item.id === "new-campaign") {
-      setCampaignWizardOpen(true);
-      setView("campaigns");
-    } else {
-      setView(item.id);
-    }
-  };
+  const handleNav = (item) => setView(item.id);
   const isLocked = (item) => item.requires && !planAllows(user, item.requires);
   const onNav = (item) =>
     isLocked(item) ? setUpgrade({ feature: item.featureLabel, requires: item.requires }) : handleNav(item);
@@ -11899,7 +11908,7 @@ export default function Home() {
         key={item.id}
         onClick={() => onNav(item)}
         title={locked ? `${item.featureLabel} — réservé à une offre supérieure` : undefined}
-        className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors ${
+        className={`w-full flex items-center gap-3 px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
           view === item.id
             ? "bg-[#ff5a5f] text-white shadow-md shadow-[#ffd5d6]"
             : locked
@@ -12136,7 +12145,7 @@ export default function Home() {
             <p className="text-xs text-gray-400">Campagnes LinkedIn</p>
           </div>
         </div>
-        <nav className="flex-1 px-3 space-y-1 mt-2">{NAV.map(navBtn)}</nav>
+        <nav className="flex-1 px-3 space-y-0.5 mt-1 overflow-y-auto">{navEntries().map((e) => (e.header ? navHeader(e.header) : navBtn(e)))}</nav>
         <div className="px-3 mt-2">
           {user.isSuperAdmin ? (
             <div className="rounded-2xl bg-gray-50 p-3">
@@ -12234,7 +12243,8 @@ export default function Home() {
                 </button>
               </div>
               <nav className="px-3 py-3 space-y-1">
-                {NAV.map((item) => {
+                {navEntries().map((item) => {
+                  if (item.header) return navHeader(item.header);
                   const locked = isLocked(item);
                   return (
                     <button
@@ -13384,8 +13394,6 @@ export default function Home() {
             linkedin={linkedin}
             orgs={orgs}
             showToast={showToast}
-            openWizard={campaignWizardOpen}
-            onWizardConsumed={() => setCampaignWizardOpen(false)}
             onPlanned={() =>
               fetch("/api/drafts")
                 .then((r) => r.json())
