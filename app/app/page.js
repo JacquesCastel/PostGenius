@@ -4310,6 +4310,7 @@ function ImportPostsPanel({ importedAt, currentLanguage, onApplied, showToast })
   const [notes, setNotes] = useState("");
   const [themes, setThemes] = useState([]);
   const [setLang, setSetLang] = useState(false);
+  const [keepPosts, setKeepPosts] = useState(true);
   const [doneAt, setDoneAt] = useState(importedAt ?? null);
 
   const reset = () => {
@@ -4369,6 +4370,8 @@ function ImportPostsPanel({ importedAt, currentLanguage, onApplied, showToast })
           styleNotes: notes,
           themes,
           examples: result.analysis.examples,
+          keepPosts,
+          posts: keepPosts ? result.posts : undefined,
           ...(setLang && result.analysis.language ? { postLanguage: result.analysis.language } : {}),
         }),
       });
@@ -4387,7 +4390,7 @@ function ImportPostsPanel({ importedAt, currentLanguage, onApplied, showToast })
   };
 
   const clearExamples = async () => {
-    if (!window.confirm("Supprimer les posts types conservés comme exemples ? Vos consignes de style restent.")) return;
+    if (!window.confirm("Supprimer les posts conservés comme exemples (posts types et corpus) ? Vos consignes de style restent.")) return;
     try {
       const res = await fetch("/api/profile/import-posts", { method: "DELETE" });
       if (!res.ok) throw new Error();
@@ -4412,7 +4415,7 @@ function ImportPostsPanel({ importedAt, currentLanguage, onApplied, showToast })
       {doneAt && !open && (
         <p className="text-[11px] text-green-700 mt-1.5">
           ✓ Style importé le {new Date(doneAt).toLocaleDateString("fr-FR")} ·{" "}
-          <button type="button" onClick={clearExamples} className="underline text-gray-500 hover:text-red-600">supprimer les exemples conservés</button>
+          <button type="button" onClick={clearExamples} className="underline text-gray-500 hover:text-red-600">supprimer les posts conservés</button>
         </p>
       )}
       {open && !result && (
@@ -4441,7 +4444,7 @@ function ImportPostsPanel({ importedAt, currentLanguage, onApplied, showToast })
           <label className="flex items-start gap-2 text-xs text-gray-600">
             <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-0.5" />
             <span>
-              Ces posts sont les miens et j&apos;accepte qu&apos;ils soient analysés par une IA. Seuls le portrait de style, les thèmes et 3 posts types sont conservés ; le fichier ne l&apos;est pas, et je peux tout supprimer.
+              Ces posts sont les miens et j&apos;accepte qu&apos;ils soient analysés par une IA. Le fichier n&apos;est pas conservé, et je peux tout supprimer à tout moment.
             </span>
           </label>
           {error && <p className="text-xs text-red-600">{error}</p>}
@@ -4481,6 +4484,12 @@ function ImportPostsPanel({ importedAt, currentLanguage, onApplied, showToast })
             </label>
           )}
           <p className="text-[11px] text-gray-400">{result.analysis.examples.length} posts types seront conservés comme exemples de votre voix.</p>
+          <label className="flex items-start gap-2 text-xs text-gray-600">
+            <input type="checkbox" checked={keepPosts} onChange={(e) => setKeepPosts(e.target.checked)} className="mt-0.5" />
+            <span>
+              Conserver mes {result.posts?.length ?? result.count} posts : pour chaque nouveau post, l&apos;IA prend en exemple ceux de mes posts (et de mes posts publiés ici) qui touchent au même sujet. Remplace un import précédent.
+            </span>
+          </label>
           {error && <p className="text-xs text-red-600">{error}</p>}
           <div className="flex gap-2">
             <button type="button" onClick={apply} disabled={busy || !notes.trim()} className="bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white text-sm font-medium px-4 py-2 rounded-lg">

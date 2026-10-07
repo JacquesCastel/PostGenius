@@ -45,7 +45,7 @@ export async function POST(req) {
   try {
     const stats = styleStats(posts);
     const analysis = await analyzeStyle({ userId, posts, stats });
-    return NextResponse.json({ count: posts.length, stats, analysis });
+    return NextResponse.json({ count: posts.length, stats, analysis, posts: posts.map((p) => p.text) });
   } catch (e) {
     console.error("Erreur analyse de style:", e.message);
     return NextResponse.json({ error: "L'analyse a échoué. Réessayez dans un instant." }, { status: 502 });

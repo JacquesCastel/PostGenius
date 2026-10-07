@@ -7,7 +7,7 @@ import { getRemarks, remarksPromptBlock } from "@/lib/remarks";
 import { normalizeVideoExtra } from "@/lib/shootingKit";
 import { normalizeLanguage, languageInstruction, systemPromptFor } from "@/lib/languages";
 import { normalizeMood, moodInstruction } from "@/lib/moods";
-import { styleExamplesBlock } from "@/lib/postImport";
+import { styleExamplesFor } from "@/lib/styleCorpus";
 import { knowledgeFor } from "@/lib/knowledge";
 import { usedSources } from "@/lib/knowledgeText";
 import { writingRulesPrompt, WHY_INSTRUCTION, WHY_JSON_FORMAT, cleanWhy } from "@/lib/linkedinRules";
@@ -31,7 +31,7 @@ function extraFormat(type) {
   return `{"title": "...", "items": ["..."]}`;
 }
 
-function buildUserPrompt({ type, theme, expertise, tone, maxChars, refine, mode, count, variants, inspiration, language, mood }, profile, remarks = [], knowledge = { picked: [], block: "" }) {
+function buildUserPrompt({ type, theme, expertise, tone, maxChars, refine, mode, count, variants, inspiration, language, mood }, profile, remarks = [], knowledge = { picked: [], block: "" }, styleBlock = "") {
   // Les sources de la base de connaissances sont numérotées [S1]… ; le modèle indique celles qu'il a utilisées
   const srcFmt = knowledge.picked.length ? ', "sources": [numéros des sources [S…] réellement utilisées dans le post, ou une liste vide]' : "";
   let extraSpec = "";
@@ -63,7 +63,7 @@ Le 1er plan est une accroche qui retient dans les 3 premières secondes, le dern
     profileSpec += `\n- Objectifs de communication : ${profile.commGoals} (oriente le post vers ces objectifs)`;
   if (profile?.styleNotes)
     profileSpec += `\n- Consignes de style de l'auteur (À RESPECTER IMPÉRATIVEMENT) : ${profile.styleNotes}`;
-  profileSpec += styleExamplesBlock(profile?.styleExamples);
+  profileSpec += styleBlock;
   profileSpec += knowledge.block;
   profileSpec += remarksPromptBlock(remarks);
   profileSpec += languageInstruction(language);
@@ -199,7 +199,10 @@ export async function POST(req) {
 
   const remarks = userId ? await getRemarks(userId) : [];
   // Base de connaissances : sources les plus proches du sujet (jamais bloquant)
-  const knowledge = await knowledgeFor(userId, [params.theme, params.inspiration?.title, params.refine?.text?.slice(0, 400)].filter(Boolean).join(" "));
+  const topic = [params.theme, params.inspiration?.title, params.refine?.text?.slice(0, 400)].filter(Boolean).join(" ");
+  const knowledge = await knowledgeFor(userId, topic);
+  // Exemples de voix : les posts de l'auteur les plus proches du sujet (corpus), sinon ses posts types
+  const styleBlock = await styleExamplesFor(userId, topic, profile?.styleExamples);
   // Langue du post : celle choisie dans le formulaire, sinon celle du profil, sinon le français
   const language = normalizeLanguage(params.language ?? profile?.postLanguage);
 
@@ -223,7 +226,7 @@ export async function POST(req) {
           // modèle raccourcit pour tenir dans le budget).
           max_tokens: params.mode === "series" || params.variants || params.type === "carrousel" || params.type === "video" ? 8000 : 2048,
           system: systemPromptFor(SYSTEM_PROMPT, language),
-          messages: [{ role: "user", content: buildUserPrompt({ ...params, language }, profile, remarks, knowledge) }],
+          messages: [{ role: "user", content: buildUserPrompt({ ...params, language }, profile, remarks, knowledge, styleBlock) }],
         }),
       });
 
