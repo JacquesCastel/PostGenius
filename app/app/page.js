@@ -6769,6 +6769,14 @@ function DashboardView({ drafts, canVeille = true, canEvents = false, canScore =
 
   return (
     <main className="max-w-5xl mx-auto p-6 space-y-6">
+      {/* Prochaine étape recommandée : en tête, pour qu'un nouveau client la voie sans faire défiler */}
+      <NextStepCard
+        steps={ns.steps}
+        strength={ns.strength}
+        onSnooze={ns.snooze}
+        onAct={(st) => goNextStep(st, { onGoCreate, onGoProfileField, onGoView })}
+      />
+
       {/* Synthèse : répartition des posts + calendrier des publications (2 colonnes) */}
       <div className="grid md:grid-cols-3 gap-4 items-stretch">
         <div className="flex flex-col gap-4">
@@ -6897,12 +6905,6 @@ function DashboardView({ drafts, canVeille = true, canEvents = false, canScore =
       )}
 
       {/* Copilote éditorial */}
-      <NextStepCard
-        steps={ns.steps}
-        strength={ns.strength}
-        onSnooze={ns.snooze}
-        onAct={(st) => goNextStep(st, { onGoCreate, onGoProfileField, onGoView })}
-      />
       <RecoToday onGenerate={onGenerateFromReco} onGoCopilot={onGoCopilot} showToast={showToast} profile={profile} onProfileSaved={onProfileSaved} />
 
       {wizardInit && (
