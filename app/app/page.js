@@ -13,6 +13,7 @@ import {
   AlignLeft, AlignCenter, AlignRight, Move, Server, Clapperboard
 } from "lucide-react";
 import { PLANS, PLAN_IDS, planLabel, planAllows, planOf, trialDaysLeft, accessState } from "@/lib/plans";
+import { nextSteps, snoozeUntil } from "@/lib/nextSteps";
 import SiteHeader from "@/components/SiteHeader";
 // Polices de la charte graphique, chargées comme polices web pour que l'éditeur de
 // modèle de slide (SlideTemplateEditor) affiche vraiment celle choisie — jusqu'ici
@@ -5073,38 +5074,98 @@ function PaywallScreen({ user, showToast, onLogout }) {
 // Champs de profil qui alimentent directement le prompt du copilote éditorial
 // (voir userContextBlock dans lib/campaign.js) — sert à mesurer et à guider
 // leur complétion depuis le tableau de bord.
-const PROFILE_SIGNALS = [
-  { key: "headline", label: "Titre professionnel" },
-  { key: "companyName", label: "Entreprise / marque" },
-  { key: "businessDescription", label: "Activité & valeur ajoutée" },
-  { key: "targetAudience", label: "Audience cible" },
-  { key: "market", label: "Marché & positionnement" },
-  { key: "commGoals", label: "Objectifs de communication" },
-  { key: "styleNotes", label: "Consignes de style" },
-];
+// Prochaine étape recommandée (tableau de bord et Copilote IA) : le geste qui améliore le plus les posts,
+// avec sa raison, calculé à partir du profil et de l'activité (lib/nextSteps.js). « Plus tard » masque une
+// étape pour une semaine, dans ce navigateur (jamais indispensable : sans stockage, elle reste affichée).
+const SNOOZE_KEY = "nextstep-snooze";
+const readSnoozed = () => {
+  try {
+    return JSON.parse(window.localStorage.getItem(SNOOZE_KEY) || "{}") || {};
+  } catch {
+    return {};
+  }
+};
 
-// Composants hors du corps des vues (et non redéfinis à chaque
-// rendu) : un composant recréé à chaque frappe force React à démonter/
-// remonter le sous-arbre, et donc le champ de saisie perd le focus.
-function ProfileSignalsPanel({ missingSignals, completion, onGoProfileField }) {
-  if (!missingSignals.length) return null;
+function useNextSteps(profile) {
+  const [activity, setActivity] = useState(null); // null = chargement : aucune étape affichée en attendant
+  const [snoozed, setSnoozed] = useState({});
+  useEffect(() => {
+    setSnoozed(readSnoozed());
+    fetch("/api/profile/progress")
+      .then(readJson)
+      .then((d) => {
+        if (!d.error) setActivity(d);
+      })
+      .catch(() => {});
+  }, []);
+  const steps = activity ? nextSteps(profile, activity, { linkedinConnected: activity.linkedinConnected, snoozed }) : [];
+  const strength = activity
+    ? profileStrength(profile ?? {}, {
+        knowledgeCount: activity.knowledgeCount,
+        remarksCount: activity.remarksCount,
+        styleImportedAt: profile?.styleImportedAt,
+        linkedin: { connected: activity.linkedinConnected },
+      })
+    : null;
+  const snooze = (id) => {
+    const next = { ...readSnoozed(), [id]: snoozeUntil() };
+    try {
+      window.localStorage.setItem(SNOOZE_KEY, JSON.stringify(next));
+    } catch {}
+    setSnoozed(next);
+  };
+  return { steps, strength, snooze };
+}
+
+function NextStepCard({ steps, strength, onAct, onSnooze }) {
+  const [more, setMore] = useState(false);
+  if (!steps.length) return null;
+  const [top, ...others] = steps;
   return (
-    <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-3">
-      <p className="text-xs text-amber-800 font-medium mb-1.5">
-        Profil complété à {completion}/{PROFILE_SIGNALS.length} — ces propositions s'appuient sur votre profil,
-        vos piliers éditoriaux et votre historique de publication. Complétez pour des recommandations plus
-        pertinentes :
-      </p>
-      <div className="flex flex-wrap gap-1.5">
-        {missingSignals.map((s) => (
-          <button
-            key={s.key}
-            onClick={() => onGoProfileField?.(s.key)}
-            className="text-[11px] bg-white border border-amber-300 text-amber-700 hover:bg-amber-100 px-2.5 py-1 rounded-full flex items-center gap-1"
-          >
-            <Plus size={11} /> {s.label}
-          </button>
-        ))}
+    <div className="bg-gradient-to-br from-[#fff7f1] to-white border border-[#ffd9c7] rounded-2xl p-4">
+      <div className="flex items-start gap-3">
+        <span className="w-8 h-8 rounded-full bg-gradient-to-br from-orange-400 to-[#ff5a5f] text-white flex items-center justify-center shrink-0">
+          <Sparkles size={15} />
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <p className="text-xs font-semibold text-[#c2410c]">Prochaine étape recommandée</p>
+            {strength && (
+              <span className="text-[11px] text-gray-500">
+                Le copilote vous connaît à <strong className="text-gray-700">{strength.percent} %</strong>
+              </span>
+            )}
+          </div>
+          <p className="font-semibold text-sm mt-1">{top.title}</p>
+          <p className="text-xs text-gray-600 mt-0.5">{top.why}</p>
+          <div className="flex items-center gap-3 mt-3 flex-wrap">
+            <button type="button" onClick={() => onAct(top)} className="bg-[#ff5a5f] hover:bg-[#f63d44] text-white text-xs font-medium px-3.5 py-2 rounded-lg flex items-center gap-1.5">
+              {top.cta} <ChevronRight size={13} />
+            </button>
+            <button type="button" onClick={() => onSnooze(top.id)} className="text-xs text-gray-400 hover:text-gray-600">
+              Plus tard
+            </button>
+            {others.length > 0 && (
+              <button type="button" onClick={() => setMore((m) => !m)} className="text-xs text-[#0a66c2] hover:underline ml-auto">
+                {more ? "Masquer" : `${others.length} autre${others.length > 1 ? "s" : ""} étape${others.length > 1 ? "s" : ""}`}
+              </button>
+            )}
+          </div>
+          {more && (
+            <ul className="mt-3 pt-3 border-t border-[#ffd9c7] space-y-2">
+              {others.slice(0, 4).map((s) => (
+                <li key={s.id} className="flex items-center justify-between gap-3">
+                  <span className="text-xs text-gray-700 min-w-0">
+                    <strong className="font-medium text-gray-900">{s.title}</strong>
+                  </span>
+                  <button type="button" onClick={() => onAct(s)} className="text-[11px] font-medium text-[#0a66c2] hover:underline shrink-0">
+                    {s.cta}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -5767,11 +5828,10 @@ function RecoToday({ onGenerate, onGoCopilot, showToast, profile, onProfileSaved
 }
 
 // Espace Copilote IA : les propositions (colonnes, flèches, filtres) et la discussion avec le copilote
-function CopilotWorkspace({ profile, onProfileSaved, showToast, onGenerateFromReco, onGoProfileField }) {
+function CopilotWorkspace({ profile, onProfileSaved, showToast, onGenerateFromReco, onGoProfileField, onGoCreate }) {
   const { recos, loading, refreshing, error, actingId, load, respond, updateReco, highlightId } = useRecommendations(showToast);
   const sel = useRecoSelection(recos);
-  const missingSignals = PROFILE_SIGNALS.filter((s) => !profile?.[s.key]?.trim?.());
-  const completion = PROFILE_SIGNALS.length - missingSignals.length;
+  const ns = useNextSteps(profile);
 
   const generate = (reco) => {
     respond(reco, "générée");
@@ -5804,7 +5864,12 @@ function CopilotWorkspace({ profile, onProfileSaved, showToast, onGenerateFromRe
         onRecoUpdated={updateReco}
       />
 
-      <ProfileSignalsPanel missingSignals={missingSignals} completion={completion} onGoProfileField={onGoProfileField} />
+      <NextStepCard
+        steps={ns.steps}
+        strength={ns.strength}
+        onSnooze={ns.snooze}
+        onAct={(st) => (st.target.type === "create" ? onGoCreate() : onGoProfileField(st.target.field))}
+      />
 
       {loading ? (
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center text-gray-400">
@@ -6369,7 +6434,7 @@ function CopilotSettings({ profile, onProfileSaved, showToast, onGoDashboard }) 
 
 // Copilote IA : deux onglets. « Propositions » (par défaut) est l'espace de travail ;
 // « Réglages et suivi » garde le pilotage du moteur (publication autonome, poids appris, piliers…).
-function CopilotView({ profile, onProfileSaved, showToast, onGoDashboard, onGenerateFromReco, onGoProfileField }) {
+function CopilotView({ profile, onProfileSaved, showToast, onGoDashboard, onGenerateFromReco, onGoProfileField, onGoCreate }) {
   const [tab, setTab] = useState("work"); // work | settings
   const tabBtn = (id, label) => (
     <button
@@ -6401,6 +6466,7 @@ function CopilotView({ profile, onProfileSaved, showToast, onGoDashboard, onGene
           showToast={showToast}
           onGenerateFromReco={onGenerateFromReco}
           onGoProfileField={onGoProfileField}
+          onGoCreate={onGoCreate}
         />
       ) : (
         <CopilotSettings profile={profile} onProfileSaved={onProfileSaved} showToast={showToast} onGoDashboard={onGoDashboard} />
@@ -6444,6 +6510,7 @@ function DashSection({ id, title, icon: Icon, hint, forceOpen = false, children 
 }
 
 function DashboardView({ drafts, canVeille = true, canEvents = false, canScore = true, canCampaigns = true, postsLimit = null, onGoCreate, onGoHistory, onGoEvents, onGoProfile, onGoProfileField, onGoCopilot, onApprove, onReschedule, profile, linkedin, orgs, onPlanned, onProfileSaved, showToast, onInspire, onGenerateFromReco }) {
+  const ns = useNextSteps(profile);
   const [periodDays, setPeriodDays] = useState(7);
   const [planTarget, setPlanTarget] = useState("person");
   const [planningId, setPlanningId] = useState(null);
@@ -6691,6 +6758,12 @@ function DashboardView({ drafts, canVeille = true, canEvents = false, canScore =
       )}
 
       {/* Copilote éditorial */}
+      <NextStepCard
+        steps={ns.steps}
+        strength={ns.strength}
+        onSnooze={ns.snooze}
+        onAct={(st) => (st.target.type === "create" ? onGoCreate() : onGoProfileField(st.target.field))}
+      />
       <RecoToday onGenerate={onGenerateFromReco} onGoCopilot={onGoCopilot} showToast={showToast} profile={profile} onProfileSaved={onProfileSaved} />
 
       {wizardInit && (
@@ -14260,7 +14333,7 @@ export default function Home() {
       ) : view === "stats" ? (
         <StatsView linkedin={linkedin} orgs={orgs} profile={profile} drafts={drafts} showToast={showToast} onConnect={() => setView("profile")} />
       ) : view === "copilot" ? (
-        <CopilotView profile={profile} onProfileSaved={setProfile} showToast={showToast} onGoDashboard={() => setView("dashboard")} onGenerateFromReco={generateFromReco} onGoProfileField={goToProfileField} />
+        <CopilotView profile={profile} onProfileSaved={setProfile} showToast={showToast} onGoDashboard={() => setView("dashboard")} onGenerateFromReco={generateFromReco} onGoProfileField={goToProfileField} onGoCreate={() => setView("create")} />
       ) : view === "billing" ? (
         <BillingView user={user} showToast={showToast} />
       ) : view === "brand-kit" ? (
