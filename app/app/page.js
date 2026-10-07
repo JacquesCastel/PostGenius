@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { PLANS, PLAN_IDS, planLabel, planAllows, planOf, trialDaysLeft, accessState } from "@/lib/plans";
 import { nextSteps, snoozeUntil } from "@/lib/nextSteps";
+import { explainPublishError } from "@/lib/publishError";
 import SiteHeader from "@/components/SiteHeader";
 // Polices de la charte graphique, chargées comme polices web pour que l'éditeur de
 // modèle de slide (SlideTemplateEditor) affiche vraiment celle choisie — jusqu'ici
@@ -12383,6 +12384,15 @@ export default function Home() {
   const [reviewOpen, setReviewOpen] = useState(false);
   const [bulkOpen, setBulkOpen] = useState(false);
   const [bulkBusy, setBulkBusy] = useState(false);
+  // Suppression d'un post : retardée de quelques secondes pour pouvoir annuler
+  const pendingDeletes = useRef(new Map()); // id -> { timer, post }
+  const [undoToast, setUndoToast] = useState(null); // { id, label }
+  useEffect(() => {
+    // Si la page se ferme pendant le délai, la suppression demandée est tout de même envoyée
+    const flush = () => pendingDeletes.current.forEach((e, id) => fetch(`/api/drafts/${id}`, { method: "DELETE", keepalive: true }).catch(() => {}));
+    window.addEventListener("pagehide", flush);
+    return () => window.removeEventListener("pagehide", flush);
+  }, []);
   const [editingResult, setEditingResult] = useState(false);
   const [resultDraftText, setResultDraftText] = useState("");
   const [reanalyzing, setReanalyzing] = useState(false);
@@ -13413,7 +13423,7 @@ export default function Home() {
           // Glisser vers Programmés = valider (l'échéance existe déjà)
           await patchDraft(p.id, { status: "programmé" });
           setDrafts((d) => d.map((x) => (x.id === p.id ? { ...x, status: "programmé" } : x)));
-          showToast("Post validé — il partira à l'heure prévue ✓");
+          showToast(validatedMessage(p));
         } else {
           setScheduleStatus("programmé");
           setScheduleDraft(p);
@@ -13444,6 +13454,13 @@ export default function Home() {
     if (!nextStep?.draft) return;
     const r = await publish(nextStep.draft);
     if (r) setNextStep({ type: "published", postId: typeof r === "string" ? r : null });
+  };
+
+  // Validation : le message dit si le post pourra réellement partir (LinkedIn connecté pour son compte de publication)
+  const validatedMessage = (p) => {
+    const person = !p?.target || p.target === "person";
+    if (person ? linkedin.connected : linkedin.orgConnected) return "Post validé — il partira à l'heure prévue ✓";
+    return `Post validé, mais ${person ? "LinkedIn n'est pas connecté" : "la page entreprise n'est pas connectée"} : il ne pourra pas partir. Connectez-${person ? "le" : "la"} dans « Profil » avant sa date.`;
   };
 
   const patchDraft = async (id, patch) => {
@@ -13477,9 +13494,36 @@ export default function Home() {
     }
   };
 
-  const deleteDraft = async (id) => {
+  const UNDO_DELAY = 6000;
+  const sortByCreated = (list) => [...list].sort((x, y) => new Date(y.createdAt) - new Date(x.createdAt));
+  const deleteDraft = (id) => {
+    const post = drafts.find((d) => d.id === id);
+    if (!post) return;
+    if (post.status === "publié" && !window.confirm("Ce post est publié sur LinkedIn. Le supprimer d'ici ne le retire pas de LinkedIn. Continuer ?")) return;
     setDrafts((d) => d.filter((x) => x.id !== id));
-    fetch(`/api/drafts/${id}`, { method: "DELETE" }).catch(() => {});
+    const fire = async () => {
+      pendingDeletes.current.delete(id);
+      setUndoToast((t) => (t?.id === id ? null : t));
+      try {
+        const res = await fetch(`/api/drafts/${id}`, { method: "DELETE" });
+        if (!res.ok) throw new Error();
+      } catch {
+        setDrafts((d) => sortByCreated([post, ...d.filter((x) => x.id !== id)]));
+        showToast("Suppression impossible : le post a été remis dans « Mes posts ».");
+      }
+    };
+    pendingDeletes.current.set(id, { timer: setTimeout(fire, UNDO_DELAY), post });
+    setUndoToast({ id, label: post.theme || "Post" });
+  };
+  const undoDelete = () => {
+    const id = undoToast?.id;
+    const e = id && pendingDeletes.current.get(id);
+    if (!e) return;
+    clearTimeout(e.timer);
+    pendingDeletes.current.delete(id);
+    setDrafts((d) => sortByCreated([e.post, ...d.filter((x) => x.id !== id)]));
+    setUndoToast(null);
+    showToast("Suppression annulée");
   };
 
   const publish = async (p) => {
@@ -14148,6 +14192,12 @@ export default function Home() {
           {toast}
         </div>
       )}
+      {undoToast && (
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 bg-gray-900 text-white pl-4 pr-2 py-2 rounded-lg text-sm shadow-lg z-50 flex items-center gap-3 max-w-[92vw]" role="status" data-testid="undo-toast">
+          <span className="truncate">Post « {undoToast.label} » supprimé</span>
+          <button type="button" onClick={undoDelete} className="font-semibold text-[#ff9a9d] hover:text-white px-2 py-1 shrink-0">Annuler</button>
+        </div>
+      )}
 
       {kitDraft && (
         <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" onClick={() => setKitDraft(null)}>
@@ -14289,7 +14339,7 @@ export default function Home() {
             try {
               await patchDraft(d.id, { status: "programmé" });
               setDrafts((x) => x.map((p) => (p.id === d.id ? { ...p, status: "programmé" } : p)));
-              showToast("Post validé — il partira à l'heure prévue ✓");
+              showToast(validatedMessage(d));
             } catch (e) {
               showToast(e.message);
             }
@@ -15373,6 +15423,23 @@ export default function Home() {
             )}
           </div>
 
+          {/* Des posts à valider ou programmés ne pourront pas partir : le compte de publication n'est pas connecté */}
+          {(() => {
+            const waiting = drafts.filter((d) => (d.status === "programmé" || d.status === "à valider") && ((!d.target || d.target === "person") ? !linkedin.connected : !linkedin.orgConnected));
+            if (!waiting.length) return null;
+            const personBlocked = waiting.some((d) => !d.target || d.target === "person");
+            return (
+              <div className="mb-4 bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-center justify-between gap-3 flex-wrap" data-testid="linkedin-banner">
+                <p className="text-sm text-amber-900">
+                  <span className="font-semibold">{personBlocked ? "LinkedIn n'est pas connecté" : "La page entreprise n'est pas connectée"}</span> : {waiting.length} post{waiting.length > 1 ? "s" : ""} {waiting.length > 1 ? "ne pourront" : "ne pourra"} pas partir à la date prévue.
+                </p>
+                <a href={personBlocked ? "/api/linkedin/auth" : "/api/linkedin/auth-org"} className="bg-[#0a66c2] hover:bg-[#004182] text-white text-sm font-medium px-4 py-2 rounded-lg flex items-center gap-1.5">
+                  <Linkedin size={14} /> Connecter {personBlocked ? "LinkedIn" : "la page"}
+                </a>
+              </div>
+            );
+          })()}
+
           {/* Recherche et filtre par campagne */}
           {postsForTarget.length > 0 && (
             <div className="flex items-center gap-2 mb-4 flex-wrap" data-testid="posts-filters">
@@ -15411,7 +15478,7 @@ export default function Home() {
           {toReview.length > 0 && (
             <div className="mb-4 bg-purple-50 border border-purple-200 rounded-xl p-4 flex items-center justify-between gap-3 flex-wrap" data-testid="review-banner">
               <p className="text-sm text-purple-900">
-                <span className="font-semibold">{toReview.length} post{toReview.length > 1 ? "s" : ""} attendent votre validation</span>
+                <span className="font-semibold">{toReview.length} post{toReview.length > 1 ? "s attendent" : " attend"} votre validation</span>
                 {postCampaign !== "all" || filtersActive ? " (selon vos filtres)" : ""}. Ils ne partiront qu&apos;après votre accord.
               </p>
               <div className="flex items-center gap-2">
@@ -15681,7 +15748,7 @@ export default function Home() {
                                             setDrafts((d) =>
                                               d.map((x) => (x.id === p.id ? { ...x, status: "programmé" } : x))
                                             );
-                                            showToast("Post validé — il partira à l'heure prévue ✓");
+                                            showToast(validatedMessage(p));
                                           } catch (e) {
                                             showToast(e.message);
                                           }
@@ -15766,32 +15833,52 @@ export default function Home() {
                                     )}
                                   </div>
                                 )}
-                                {p.status === "erreur" && (
-                                  <>
-                                    <p className="text-[11px] text-red-600 mb-1.5 line-clamp-2">
-                                      {p.publishError || "Erreur de publication"}
-                                    </p>
-                                    <button
-                                      onClick={async () => {
-                                        try {
-                                          await patchDraft(p.id, { status: "brouillon", scheduledAt: null });
-                                          setDrafts((d) =>
-                                            d.map((x) =>
-                                              x.id === p.id
-                                                ? { ...x, status: "brouillon", publishError: null }
-                                                : x
-                                            )
-                                          );
-                                        } catch (e) {
-                                          showToast(e.message);
-                                        }
-                                      }}
-                                      className="w-full text-xs border border-gray-200 hover:border-[#ff5a5f] text-gray-500 py-1.5 rounded-lg"
-                                    >
-                                      Repasser en brouillon
-                                    </button>
-                                  </>
-                                )}
+                                {p.status === "erreur" && (() => {
+                                  const ex = explainPublishError(p.publishError);
+                                  const reconnect = ex.action === "reconnect" || ex.action === "reconnect-org";
+                                  return (
+                                    <div className="space-y-2" data-testid="error-card">
+                                      <div className="rounded-lg bg-red-50 border border-red-200 p-2.5">
+                                        <p className="text-[11px] font-semibold text-red-700">La publication a échoué</p>
+                                        <p className="text-[11px] text-red-700 mt-0.5 break-words">{ex.message}</p>
+                                        <p className="text-[11px] text-gray-600 mt-1">{ex.hint}</p>
+                                      </div>
+                                      <div className="flex flex-col gap-1.5">
+                                        {reconnect && (
+                                          <a href={ex.action === "reconnect-org" ? "/api/linkedin/auth-org" : "/api/linkedin/auth"} className="w-full text-center bg-[#0a66c2] hover:bg-[#004182] text-white text-xs font-medium py-1.5 rounded-lg">
+                                            Reconnecter {ex.action === "reconnect-org" ? "la page" : "LinkedIn"}
+                                          </a>
+                                        )}
+                                        {ex.action === "edit" && (
+                                          <button onClick={() => openOptimize(p.text, p.type, p.id, p.imageUrl, p.imagePrompt, p.videoUrl, p.youtubeUrl)} className="w-full bg-gray-900 hover:bg-gray-700 text-white text-xs font-medium py-1.5 rounded-lg">Modifier le post</button>
+                                        )}
+                                        <div className="flex gap-1.5">
+                                          {!reconnect && ex.action === "retry" && (
+                                            <button onClick={() => publish(p)} disabled={publishingId === p.id} className="flex-1 bg-[#0a66c2] hover:bg-[#004182] disabled:bg-gray-300 text-white text-xs font-medium py-1.5 rounded-lg flex items-center justify-center gap-1">
+                                              {publishingId === p.id ? <RefreshCw size={12} className="animate-spin" /> : <Send size={12} />} Réessayer
+                                            </button>
+                                          )}
+                                          <button onClick={() => { setScheduleStatus("programmé"); setScheduleDraft(p); }} className="flex-1 bg-amber-500 hover:bg-amber-600 text-white text-xs font-medium py-1.5 rounded-lg flex items-center justify-center gap-1">
+                                            <Clock size={12} /> Reprogrammer
+                                          </button>
+                                        </div>
+                                        <button
+                                          onClick={async () => {
+                                            try {
+                                              await patchDraft(p.id, { status: "brouillon", scheduledAt: null });
+                                              setDrafts((d) => d.map((x) => (x.id === p.id ? { ...x, status: "brouillon", scheduledAt: null, publishError: null } : x)));
+                                            } catch (e) {
+                                              showToast(e.message);
+                                            }
+                                          }}
+                                          className="w-full text-[11px] text-gray-500 hover:text-gray-800"
+                                        >
+                                          Repasser en brouillon
+                                        </button>
+                                      </div>
+                                    </div>
+                                  );
+                                })()}
                               </div>
                             )}
                           </div>

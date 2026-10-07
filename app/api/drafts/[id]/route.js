@@ -49,7 +49,8 @@ export async function PATCH(req, { params }) {
       ...(imagePrompt !== undefined && { imagePrompt }),
       ...(videoUrl !== undefined && { videoUrl }),
       ...(youtubeUrl !== undefined && { youtubeUrl: youtubeUrl ? youtubeWatchUrl(parseYouTubeId(youtubeUrl)) : null }),
-      ...(status === "brouillon" && { publishError: null }),
+      // Le message d'échec ne vaut plus dès que le post repart sur une autre voie (brouillon, validé, reprogrammé)
+      ...(status !== undefined && status !== "erreur" && { publishError: null }),
     },
   });
   if (count === 0) return NextResponse.json({ error: "Brouillon introuvable." }, { status: 404 });
