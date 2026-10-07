@@ -1129,7 +1129,7 @@ function CampaignLaunched({ result, theme, linkedin, onClose, onGoHistory, onGoP
               ? ["Relisez vos posts", "Ouvrez « Mes posts » : chaque post est « à valider ». Modifiez-le si besoin, puis validez-le : il partira à la date prévue."]
               : ["Vos posts sont programmés", "Ils partiront automatiquement aux dates prévues. Vous pouvez les relire et les modifier dans « Mes posts » avant leur date."],
             ["Ajustez au fil de l'eau", "Chaque modification que vous faites aide le copilote : s'il repère une habitude, il vous proposera de la retenir pour vos prochains posts."],
-            linkedin?.connected ? ["LinkedIn est connecté", "Rien d'autre à faire : les posts valides partiront seuls."] : ["Connectez LinkedIn", "Sans connexion, les posts ne pourront pas partir : connectez votre compte depuis « Profil » avant la première date."],
+            linkedin?.connected ? ["LinkedIn est connecté", "Rien d'autre à faire : les posts valides partiront seuls."] : ["Connectez LinkedIn", "Sans connexion, les posts ne pourront pas partir : connectez votre compte depuis « Connexions » avant la première date."],
           ].map(([t, d], i) => (
             <li key={t} className="flex items-start gap-3 bg-gray-50 rounded-xl p-3">
               <span className="w-6 h-6 rounded-full bg-[#ff5a5f] text-white text-xs font-bold flex items-center justify-center shrink-0">{i + 1}</span>
@@ -1848,7 +1848,7 @@ function CampaignWizard({ profile, linkedin, orgs, onClose, onLaunched, onProfil
             </div>
             {!linkedin?.connected && (
               <p className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg p-2.5">
-                LinkedIn n&apos;est pas encore connecté : les posts seront bien créés, mais ils ne pourront partir qu&apos;une fois votre compte connecté (menu « Profil »). Pensez à le faire avant la première date.
+                LinkedIn n&apos;est pas encore connecté : les posts seront bien créés, mais ils ne pourront partir qu&apos;une fois votre compte connecté (menu « Connexions »). Pensez à le faire avant la première date.
               </p>
             )}
             <div className="flex justify-between pt-1">
@@ -1957,7 +1957,7 @@ function ReviewPostsModal({ posts, linkedinConnected, onValidate, onSaveText, on
             </span>
             <p className="font-semibold">{validated} post{validated > 1 ? "s" : ""} validé{validated > 1 ? "s" : ""}{total - validated > 0 ? `, ${total - validated} laissé${total - validated > 1 ? "s" : ""} à valider` : ""}</p>
             <p className="text-sm text-gray-500">{validated > 0 ? "Les posts validés partiront aux dates prévues." : "Les posts passés restent dans « À valider »."}</p>
-            {validated > 0 && !linkedinConnected && <p className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg p-2.5">LinkedIn n&apos;est pas connecté : connectez-le (menu « Profil ») avant la première date, sinon ces posts ne pourront pas partir.</p>}
+            {validated > 0 && !linkedinConnected && <p className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg p-2.5">LinkedIn n&apos;est pas connecté : connectez-le (menu « Connexions ») avant la première date, sinon ces posts ne pourront pas partir.</p>}
             <button type="button" onClick={onClose} className="bg-[#ff5a5f] hover:bg-[#f63d44] text-white text-sm font-medium px-6 py-2 rounded-lg">Fermer</button>
           </div>
         ) : (
@@ -2016,7 +2016,7 @@ function BulkValidateDialog({ count, linkedinConnected, busy, onConfirm, onClose
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-5" onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Tout valider" data-testid="bulk-validate">
         <h3 className="font-semibold text-base">Valider {count} post{count > 1 ? "s" : ""} ?</h3>
         <p className="text-sm text-gray-600 mt-2">Ils seront programmés et partiront automatiquement à leur date prévue. Vous pourrez encore les modifier ou annuler leur programmation dans « Programmés ».</p>
-        {!linkedinConnected && <p className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg p-2.5 mt-3">LinkedIn n&apos;est pas connecté : connectez-le (menu « Profil ») avant la première date, sinon ces posts ne pourront pas partir.</p>}
+        {!linkedinConnected && <p className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg p-2.5 mt-3">LinkedIn n&apos;est pas connecté : connectez-le (menu « Connexions ») avant la première date, sinon ces posts ne pourront pas partir.</p>}
         <div className="flex justify-end gap-2 mt-4">
           <button type="button" onClick={onClose} disabled={busy} className="text-sm text-gray-500 hover:text-gray-800 px-3 py-2">Annuler</button>
           <button type="button" onClick={onConfirm} disabled={busy} className="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-300 text-white text-sm font-medium px-5 py-2 rounded-lg flex items-center gap-1.5">
@@ -4053,7 +4053,7 @@ function LinkedInEventModal({ ev, mode, orgs, onClose, onDone, showToast }) {
             {!updating && organizer === "person" && (
               <p className="text-[11px] text-amber-700 mt-1">
                 LinkedIn refuse actuellement (erreur 500) de créer un événement au nom d&apos;un profil personnel avec cette application.
-                {(orgs ?? []).length > 0 ? " Choisissez votre page." : " Connectez votre page LinkedIn (onglet Profil) pour l'utiliser comme organisateur."}
+                {(orgs ?? []).length > 0 ? " Choisissez votre page." : " Connectez votre page LinkedIn (menu « Connexions ») pour l'utiliser comme organisateur."}
               </p>
             )}
           </div>
@@ -4542,7 +4542,7 @@ function EventsView({ profile, linkedin, orgs, showToast, onGenerated }) {
                   ) : (
                     !past && (
                       <button
-                        onClick={() => (linkedin?.connected ? setLiModal({ ev, mode: "create" }) : showToast("Connectez d'abord votre compte LinkedIn (onglet Profil)."))}
+                        onClick={() => (linkedin?.connected ? setLiModal({ ev, mode: "create" }) : showToast("Connectez d'abord votre compte LinkedIn (menu « Connexions »)."))}
                         className="bg-[#0a66c2] hover:bg-[#084d92] text-white font-medium px-3 py-1.5 rounded-lg flex items-center gap-1.5"
                       >
                         <Linkedin size={12} /> Créer sur LinkedIn
@@ -8087,7 +8087,7 @@ function StatsView({ linkedin, orgs, profile, drafts, showToast, onConnect }) {
         {!linkedin.orgConnected ? (
           <div className="bg-white rounded-xl border border-dashed border-gray-300 p-10 text-center text-gray-400">
             <BarChart3 size={28} className="mx-auto mb-2" />
-            <p className="text-sm">Connectez votre page entreprise (onglet Profil) pour voir ses statistiques.</p>
+            <p className="text-sm">Connectez votre page entreprise (menu « Connexions ») pour voir ses statistiques.</p>
           </div>
         ) : loading ? (
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-10 text-center text-gray-400">
@@ -8150,7 +8150,7 @@ function StatsView({ linkedin, orgs, profile, drafts, showToast, onConnect }) {
           <div className="bg-[#fff1f1] border border-[#ffe0e0] rounded-xl p-4 text-sm text-[#1b2a4a] flex items-start gap-2">
             <AlertCircle size={16} className="mt-0.5 shrink-0" />
             <span>
-              Connectez les statistiques de votre profil (onglet Profil) pour les voir ici. Cette
+              Connectez les statistiques de votre profil (menu « Connexions ») pour les voir ici. Cette
               fonctionnalité dépend d'une approbation de LinkedIn (revue en cours) : l'autorisation
               peut échouer tant qu'elle n'est pas accordée.
             </span>
@@ -8364,7 +8364,7 @@ function StatsView({ linkedin, orgs, profile, drafts, showToast, onConnect }) {
           <p className="text-xs text-gray-500 bg-gray-50 border border-gray-100 rounded-lg p-3 mt-2">
             Les tirets (—) signifient que LinkedIn ne communique pas ce chiffre à LinkeePost pour votre profil personnel : ni les
             réactions et commentaires reçus, ni les impressions, tant que l&apos;accès aux statistiques du profil n&apos;est pas accordé
-            (onglet Profil, « statistiques »). Ouvrez le post sur LinkedIn (icône ↗) pour les voir. La colonne « Vos actions »
+            (menu « Connexions », statistiques du profil). Ouvrez le post sur LinkedIn (icône ↗) pour les voir. La colonne « Vos actions »
             compte ce que vous avez envoyé depuis LinkeePost.
           </p>
         )}
@@ -11463,7 +11463,190 @@ function ProfileCompanion({ stage, progress, missing, nextStage, values, onApply
 // ----------------------------------------------------------------
 // Page profil : identité, expertise, style de rédaction
 // ----------------------------------------------------------------
-function ProfileView({ profile, onSaved, showToast, linkedin, onDisconnect, instagram, onDisconnectInstagram, canOrgPublish = true, focusField, onFocusHandled }) {
+// ----------------------------------------------------------------
+// Connexions : les comptes LinkedIn (profil, page entreprise, statistiques) et Instagram. Une entrée de menu à part,
+// toujours accessible : elle ne dépend plus de l'étape du parcours du Profil qui est ouverte.
+// ----------------------------------------------------------------
+function ConnectionsView({ linkedin, onDisconnect, instagram, onDisconnectInstagram, canOrgPublish = true }) {
+  return (
+    <main className="max-w-3xl mx-auto p-6">
+      <p className="text-sm text-gray-500 mb-2">Les comptes que LinkeePost utilise pour publier vos posts et lire leurs statistiques. La connexion quitte brièvement la page, puis vous y revenez.</p>
+        {/* Connexions */}
+        <div className="mt-6">
+          <div className="flex items-center gap-2.5 mb-3">
+            <div className="p-2 rounded-xl bg-[#fff1f1] text-[#ff5a5f]">
+              <Linkedin size={16} />
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold">Connexions LinkedIn</h3>
+              <p className="text-xs text-gray-400">Les comptes sur lesquels vos posts seront publiés.</p>
+            </div>
+          </div>
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm divide-y divide-gray-100">
+            {/* Profil personnel */}
+            <div className="p-5 flex items-center justify-between gap-3 flex-wrap">
+              <div className="flex items-center gap-3">
+                <div className={`p-2 rounded-xl ${linkedin.connected ? "bg-green-50 text-green-600" : "bg-gray-100 text-gray-400"}`}>
+                  <Linkedin size={18} />
+                </div>
+                <div>
+                  <p className="text-sm font-medium">Profil personnel</p>
+                  {linkedin.connected ? (
+                    <p className="text-xs text-gray-500">
+                      Connecté en tant que <span className="font-medium">{linkedin.name || "—"}</span>
+                      {linkedin.personExpiresAt && (
+                        <> · expire le {new Date(linkedin.personExpiresAt).toLocaleDateString("fr-FR")}</>
+                      )}
+                    </p>
+                  ) : (
+                    <p className="text-xs text-gray-400">Non connecté — requis pour publier sur votre profil</p>
+                  )}
+                </div>
+              </div>
+              {linkedin.connected ? (
+                <div className="flex gap-2">
+                  <a href="/api/linkedin/auth" className="text-xs border border-gray-200 hover:border-[#ff5a5f] text-gray-700 px-3 py-1.5 rounded-xl">
+                    Reconnecter
+                  </a>
+                  <button
+                    onClick={onDisconnect}
+                    type="button"
+                    className="text-xs border border-gray-200 hover:border-red-400 hover:text-red-600 text-gray-700 px-3 py-1.5 rounded-xl"
+                  >
+                    Déconnecter
+                  </button>
+                </div>
+              ) : (
+                <a href="/api/linkedin/auth" className="bg-[#0a66c2] hover:bg-[#004182] text-white text-xs font-medium px-4 py-2 rounded-xl flex items-center gap-1.5">
+                  <Linkedin size={14} /> Connecter
+                </a>
+              )}
+            </div>
+
+            {/* Page entreprise */}
+            <div className="p-5 flex items-start justify-between gap-3 flex-wrap">
+              <div className="flex items-start gap-3 flex-1">
+                <div className={`p-2 rounded-xl shrink-0 mt-0.5 ${linkedin.orgConnected ? "bg-green-50 text-green-600" : "bg-gray-100 text-gray-400"}`}>
+                  <Linkedin size={18} />
+                </div>
+                <div>
+                  <p className="text-sm font-medium">Page entreprise</p>
+                  {linkedin.orgConnected ? (
+                    <p className="text-xs text-gray-500">
+                      Connectée
+                      {linkedin.orgExpiresAt && <> · expire le {new Date(linkedin.orgExpiresAt).toLocaleDateString("fr-FR")}</>}
+                    </p>
+                  ) : canOrgPublish ? (
+                    <p className="text-xs text-gray-400">Connectez votre page entreprise LinkedIn pour publier en son nom.</p>
+                  ) : (
+                    <p className="text-xs text-gray-400">Disponible à partir du plan <strong>Agence</strong>.</p>
+                  )}
+                </div>
+              </div>
+              {linkedin.orgConnected ? (
+                <a href="/api/linkedin/auth-org" className="text-xs border border-gray-200 hover:border-[#ff5a5f] text-gray-700 px-3 py-1.5 rounded-xl shrink-0">
+                  Reconnecter
+                </a>
+              ) : canOrgPublish ? (
+                <a href="/api/linkedin/auth-org" className="text-xs bg-[#0a66c2] hover:bg-[#004182] text-white px-3 py-1.5 rounded-xl shrink-0 transition-colors">
+                  Connecter
+                </a>
+              ) : (
+                <a href="/tarifs" className="text-xs bg-gray-100 hover:bg-gray-200 text-gray-600 px-3 py-1.5 rounded-xl shrink-0 flex items-center gap-1">
+                  <Lock size={11} /> Agence
+                </a>
+              )}
+            </div>
+
+            {/* Statistiques du profil personnel — app LinkedIn dédiée, indépendante
+                de la page entreprise (Community Management API ne peut cohabiter
+                avec Share on LinkedIn / Sign In with LinkedIn sur la même app) */}
+            <div className="p-5 flex items-start justify-between gap-3 flex-wrap">
+              <div className="flex items-start gap-3 flex-1">
+                <div className={`p-2 rounded-xl shrink-0 mt-0.5 ${linkedin.statsConnected ? "bg-green-50 text-green-600" : "bg-gray-100 text-gray-400"}`}>
+                  <BarChart3 size={18} />
+                </div>
+                <div>
+                  <p className="text-sm font-medium">Statistiques du profil personnel</p>
+                  {linkedin.statsConnected ? (
+                    <p className="text-xs text-gray-500">
+                      Connectées
+                      {linkedin.statsExpiresAt && <> · expire le {new Date(linkedin.statsExpiresAt).toLocaleDateString("fr-FR")}</>}
+                      {" "}· visibles dans l'onglet Statistiques
+                    </p>
+                  ) : (
+                    <p className="text-xs text-gray-400">Impressions, réactions, commentaires de vos posts personnels — indépendant de la page entreprise.</p>
+                  )}
+                </div>
+              </div>
+              {linkedin.statsConnected ? (
+                <a href="/api/linkedin/auth-stats" className="text-xs border border-gray-200 hover:border-[#ff5a5f] text-gray-700 px-3 py-1.5 rounded-xl shrink-0">
+                  Reconnecter
+                </a>
+              ) : (
+                <a href="/api/linkedin/auth-stats" className="text-xs bg-[#0a66c2] hover:bg-[#004182] text-white px-3 py-1.5 rounded-xl shrink-0 transition-colors">
+                  Connecter
+                </a>
+              )}
+            </div>
+
+            {/* Instagram */}
+            <div className="p-5 flex items-center justify-between gap-3 flex-wrap">
+              <div className="flex items-center gap-3">
+                <div className={`p-2 rounded-xl ${instagram ? "bg-pink-50 text-pink-500" : "bg-gray-100 text-gray-400"}`}>
+                  {/* Icône Instagram inline (lucide ne l'a pas) */}
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+                    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
+                    <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-sm font-medium">Instagram</p>
+                  {instagram ? (
+                    <p className="text-xs text-gray-500">
+                      Connecté{instagram.igUsername ? ` en tant que @${instagram.igUsername}` : ""}
+                      {instagram.igName ? ` (${instagram.igName})` : ""}
+                    </p>
+                  ) : (
+                    <p className="text-xs text-gray-400">Compte Business requis · publiez vos posts avec image sur Instagram</p>
+                  )}
+                </div>
+              </div>
+              {instagram ? (
+                <div className="flex gap-2">
+                  <a href="/api/instagram/auth" className="text-xs border border-gray-200 hover:border-pink-400 text-gray-700 px-3 py-1.5 rounded-xl">
+                    Reconnecter
+                  </a>
+                  <button
+                    onClick={onDisconnectInstagram}
+                    type="button"
+                    className="text-xs border border-gray-200 hover:border-red-400 hover:text-red-600 text-gray-700 px-3 py-1.5 rounded-xl"
+                  >
+                    Déconnecter
+                  </button>
+                </div>
+              ) : (
+                <a
+                  href="/api/instagram/auth"
+                  className="bg-gradient-to-r from-pink-500 to-orange-400 hover:from-pink-600 hover:to-orange-500 text-white text-xs font-medium px-4 py-2 rounded-xl flex items-center gap-1.5"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+                    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
+                    <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
+                  </svg>
+                  Connecter
+                </a>
+              )}
+            </div>
+          </div>
+        </div>
+    </main>
+  );
+}
+
+function ProfileView({ profile, onSaved, showToast, linkedin, onDisconnect, instagram, onDisconnectInstagram, canOrgPublish = true, focusField, onFocusHandled, onGoConnections }) {
   const [fields, setFields] = useState({
     name: profile?.name ?? "",
     headline: profile?.headline ?? "",
@@ -11877,180 +12060,16 @@ function ProfileView({ profile, onSaved, showToast, linkedin, onDisconnect, inst
           </form>
 
           {stage.id === "rhythm" && (
-            <>
-              <p className="text-xs text-gray-400 mt-4">Enregistrez vos modifications avant de connecter un compte : la connexion quitte brièvement la page.</p>
-        {/* Connexions */}
-        <div className="mt-6">
-          <div className="flex items-center gap-2.5 mb-3">
-            <div className="p-2 rounded-xl bg-[#fff1f1] text-[#ff5a5f]">
-              <Linkedin size={16} />
-            </div>
-            <div>
-              <h3 className="text-sm font-semibold">Connexions LinkedIn</h3>
-              <p className="text-xs text-gray-400">Les comptes sur lesquels vos posts seront publiés.</p>
-            </div>
-          </div>
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm divide-y divide-gray-100">
-            {/* Profil personnel */}
-            <div className="p-5 flex items-center justify-between gap-3 flex-wrap">
+            <div className="mt-4 bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex items-center justify-between gap-3 flex-wrap" data-testid="profile-connections-pointer">
               <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-xl ${linkedin.connected ? "bg-green-50 text-green-600" : "bg-gray-100 text-gray-400"}`}>
-                  <Linkedin size={18} />
-                </div>
+                <div className={`p-2 rounded-xl ${linkedin.connected ? "bg-green-50 text-green-600" : "bg-[#fff1f1] text-[#ff5a5f]"}`}><Linkedin size={18} /></div>
                 <div>
-                  <p className="text-sm font-medium">Profil personnel</p>
-                  {linkedin.connected ? (
-                    <p className="text-xs text-gray-500">
-                      Connecté en tant que <span className="font-medium">{linkedin.name || "—"}</span>
-                      {linkedin.personExpiresAt && (
-                        <> · expire le {new Date(linkedin.personExpiresAt).toLocaleDateString("fr-FR")}</>
-                      )}
-                    </p>
-                  ) : (
-                    <p className="text-xs text-gray-400">Non connecté — requis pour publier sur votre profil</p>
-                  )}
+                  <p className="text-sm font-medium">Connexions LinkedIn et Instagram</p>
+                  <p className="text-xs text-gray-500">{linkedin.connected ? "LinkedIn est connecté." : "LinkedIn n'est pas encore connecté."} Profil, page entreprise, statistiques, Instagram.</p>
                 </div>
               </div>
-              {linkedin.connected ? (
-                <div className="flex gap-2">
-                  <a href="/api/linkedin/auth" className="text-xs border border-gray-200 hover:border-[#ff5a5f] text-gray-700 px-3 py-1.5 rounded-xl">
-                    Reconnecter
-                  </a>
-                  <button
-                    onClick={onDisconnect}
-                    type="button"
-                    className="text-xs border border-gray-200 hover:border-red-400 hover:text-red-600 text-gray-700 px-3 py-1.5 rounded-xl"
-                  >
-                    Déconnecter
-                  </button>
-                </div>
-              ) : (
-                <a href="/api/linkedin/auth" className="bg-[#0a66c2] hover:bg-[#004182] text-white text-xs font-medium px-4 py-2 rounded-xl flex items-center gap-1.5">
-                  <Linkedin size={14} /> Connecter
-                </a>
-              )}
+              <button type="button" onClick={onGoConnections} className="bg-[#0a66c2] hover:bg-[#004182] text-white text-sm font-medium px-4 py-2 rounded-lg">Gérer mes connexions</button>
             </div>
-
-            {/* Page entreprise */}
-            <div className="p-5 flex items-start justify-between gap-3 flex-wrap">
-              <div className="flex items-start gap-3 flex-1">
-                <div className={`p-2 rounded-xl shrink-0 mt-0.5 ${linkedin.orgConnected ? "bg-green-50 text-green-600" : "bg-gray-100 text-gray-400"}`}>
-                  <Linkedin size={18} />
-                </div>
-                <div>
-                  <p className="text-sm font-medium">Page entreprise</p>
-                  {linkedin.orgConnected ? (
-                    <p className="text-xs text-gray-500">
-                      Connectée
-                      {linkedin.orgExpiresAt && <> · expire le {new Date(linkedin.orgExpiresAt).toLocaleDateString("fr-FR")}</>}
-                    </p>
-                  ) : canOrgPublish ? (
-                    <p className="text-xs text-gray-400">Connectez votre page entreprise LinkedIn pour publier en son nom.</p>
-                  ) : (
-                    <p className="text-xs text-gray-400">Disponible à partir du plan <strong>Agence</strong>.</p>
-                  )}
-                </div>
-              </div>
-              {linkedin.orgConnected ? (
-                <a href="/api/linkedin/auth-org" className="text-xs border border-gray-200 hover:border-[#ff5a5f] text-gray-700 px-3 py-1.5 rounded-xl shrink-0">
-                  Reconnecter
-                </a>
-              ) : canOrgPublish ? (
-                <a href="/api/linkedin/auth-org" className="text-xs bg-[#0a66c2] hover:bg-[#004182] text-white px-3 py-1.5 rounded-xl shrink-0 transition-colors">
-                  Connecter
-                </a>
-              ) : (
-                <a href="/tarifs" className="text-xs bg-gray-100 hover:bg-gray-200 text-gray-600 px-3 py-1.5 rounded-xl shrink-0 flex items-center gap-1">
-                  <Lock size={11} /> Agence
-                </a>
-              )}
-            </div>
-
-            {/* Statistiques du profil personnel — app LinkedIn dédiée, indépendante
-                de la page entreprise (Community Management API ne peut cohabiter
-                avec Share on LinkedIn / Sign In with LinkedIn sur la même app) */}
-            <div className="p-5 flex items-start justify-between gap-3 flex-wrap">
-              <div className="flex items-start gap-3 flex-1">
-                <div className={`p-2 rounded-xl shrink-0 mt-0.5 ${linkedin.statsConnected ? "bg-green-50 text-green-600" : "bg-gray-100 text-gray-400"}`}>
-                  <BarChart3 size={18} />
-                </div>
-                <div>
-                  <p className="text-sm font-medium">Statistiques du profil personnel</p>
-                  {linkedin.statsConnected ? (
-                    <p className="text-xs text-gray-500">
-                      Connectées
-                      {linkedin.statsExpiresAt && <> · expire le {new Date(linkedin.statsExpiresAt).toLocaleDateString("fr-FR")}</>}
-                      {" "}· visibles dans l'onglet Statistiques
-                    </p>
-                  ) : (
-                    <p className="text-xs text-gray-400">Impressions, réactions, commentaires de vos posts personnels — indépendant de la page entreprise.</p>
-                  )}
-                </div>
-              </div>
-              {linkedin.statsConnected ? (
-                <a href="/api/linkedin/auth-stats" className="text-xs border border-gray-200 hover:border-[#ff5a5f] text-gray-700 px-3 py-1.5 rounded-xl shrink-0">
-                  Reconnecter
-                </a>
-              ) : (
-                <a href="/api/linkedin/auth-stats" className="text-xs bg-[#0a66c2] hover:bg-[#004182] text-white px-3 py-1.5 rounded-xl shrink-0 transition-colors">
-                  Connecter
-                </a>
-              )}
-            </div>
-
-            {/* Instagram */}
-            <div className="p-5 flex items-center justify-between gap-3 flex-wrap">
-              <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-xl ${instagram ? "bg-pink-50 text-pink-500" : "bg-gray-100 text-gray-400"}`}>
-                  {/* Icône Instagram inline (lucide ne l'a pas) */}
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
-                    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
-                    <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
-                  </svg>
-                </div>
-                <div>
-                  <p className="text-sm font-medium">Instagram</p>
-                  {instagram ? (
-                    <p className="text-xs text-gray-500">
-                      Connecté{instagram.igUsername ? ` en tant que @${instagram.igUsername}` : ""}
-                      {instagram.igName ? ` (${instagram.igName})` : ""}
-                    </p>
-                  ) : (
-                    <p className="text-xs text-gray-400">Compte Business requis · publiez vos posts avec image sur Instagram</p>
-                  )}
-                </div>
-              </div>
-              {instagram ? (
-                <div className="flex gap-2">
-                  <a href="/api/instagram/auth" className="text-xs border border-gray-200 hover:border-pink-400 text-gray-700 px-3 py-1.5 rounded-xl">
-                    Reconnecter
-                  </a>
-                  <button
-                    onClick={onDisconnectInstagram}
-                    type="button"
-                    className="text-xs border border-gray-200 hover:border-red-400 hover:text-red-600 text-gray-700 px-3 py-1.5 rounded-xl"
-                  >
-                    Déconnecter
-                  </button>
-                </div>
-              ) : (
-                <a
-                  href="/api/instagram/auth"
-                  className="bg-gradient-to-r from-pink-500 to-orange-400 hover:from-pink-600 hover:to-orange-500 text-white text-xs font-medium px-4 py-2 rounded-xl flex items-center gap-1.5"
-                >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
-                    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
-                    <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
-                  </svg>
-                  Connecter
-                </a>
-              )}
-            </div>
-          </div>
-        </div>
-            </>
           )}
         </div>
       </div>
@@ -12605,6 +12624,7 @@ export default function Home() {
       stats_error: liMsg ? `Erreur statistiques : ${liMsg}` : "Erreur LinkedIn (statistiques) — consultez le terminal du serveur",
     };
     if (li) {
+      setView("connections"); // au retour de LinkedIn, on voit tout de suite l'état des connexions
       showToast(LI_MESSAGES[li] ?? "Connexion LinkedIn échouée");
       // Recharger le statut LinkedIn si connexion réussie (perso, org ou stats)
       if (li === "connected" || li === "org_connected" || li === "stats_connected") {
@@ -12626,6 +12646,7 @@ export default function Home() {
       error: "Erreur Instagram — " + (params.get("msg") || "consultez le terminal du serveur"),
     };
     if (ig) {
+      setView("connections");
       showToast(IG_MESSAGES[ig] ?? "Connexion Instagram échouée");
       if (ig === "connected") {
         fetch("/api/instagram/me").then((r) => r.json()).then((d) => setInstagram(d.account || false)).catch(() => {});
@@ -13471,7 +13492,7 @@ export default function Home() {
   const validatedMessage = (p) => {
     const person = !p?.target || p.target === "person";
     if (person ? linkedin.connected : linkedin.orgConnected) return "Post validé — il partira à l'heure prévue ✓";
-    return `Post validé, mais ${person ? "LinkedIn n'est pas connecté" : "la page entreprise n'est pas connectée"} : il ne pourra pas partir. Connectez-${person ? "le" : "la"} dans « Profil » avant sa date.`;
+    return `Post validé, mais ${person ? "LinkedIn n'est pas connecté" : "la page entreprise n'est pas connectée"} : il ne pourra pas partir. Connectez-${person ? "le" : "la"} dans « Connexions » avant sa date.`;
   };
 
   const patchDraft = async (id, patch) => {
@@ -13666,6 +13687,7 @@ export default function Home() {
           ? [{ id: "clients", label: "Mes clients", icon: Users, group: "Agence" }]
           : []),
         { id: "profile", label: "Profil", icon: UserRound, group: "Mon compte" },
+        { id: "connections", label: "Connexions", icon: Linkedin, group: "Mon compte" },
         { id: "brand-kit", label: "Charte graphique", icon: ImageIcon, group: "Mon compte" },
         { id: "billing", label: "Abonnement", icon: CreditCard, group: "Mon compte" },
         ...(user.isAdmin
@@ -13702,6 +13724,7 @@ export default function Home() {
     stats: "Statistiques",
     billing: "Abonnement",
     profile: "Mon profil",
+    "connections": "Connexions",
     "brand-kit": "Charte graphique",
     clients: "Mes clients",
     admin: "Administration",
@@ -15312,7 +15335,7 @@ export default function Home() {
             showToast={showToast}
             onProfileSaved={setProfile}
             onGoHistory={() => setView("history")}
-            onGoProfile={() => setView("profile")}
+            onGoProfile={() => setView("connections")}
             onPlanned={() =>
               fetch("/api/drafts")
                 .then((r) => r.json())
@@ -15360,9 +15383,9 @@ export default function Home() {
           }
         />
       ) : view === "engage" ? (
-        <EngageView linkedin={linkedin} showToast={showToast} onConnect={() => setView("profile")} />
+        <EngageView linkedin={linkedin} showToast={showToast} onConnect={() => setView("connections")} />
       ) : view === "stats" ? (
-        <StatsView linkedin={linkedin} orgs={orgs} profile={profile} drafts={drafts} showToast={showToast} onConnect={() => setView("profile")} />
+        <StatsView linkedin={linkedin} orgs={orgs} profile={profile} drafts={drafts} showToast={showToast} onConnect={() => setView("connections")} />
       ) : view === "copilot" ? (
         <CopilotView profile={profile} onProfileSaved={setProfile} showToast={showToast} onGoDashboard={() => setView("dashboard")} onGenerateFromReco={generateFromReco} onGoProfileField={goToProfileField} onGoCreate={() => setView("create")} onGoView={setView} />
       ) : view === "billing" ? (
@@ -15372,6 +15395,7 @@ export default function Home() {
       ) : view === "profile" ? (
         <ProfileView
           key={profile?.email ?? "profile"}
+          onGoConnections={() => setView("connections")}
           profile={profile}
           linkedin={linkedin}
           instagram={instagram}
@@ -15391,6 +15415,8 @@ export default function Home() {
             }));
           }}
         />
+      ) : view === "connections" ? (
+        <ConnectionsView linkedin={linkedin} onDisconnect={disconnect} instagram={instagram} onDisconnectInstagram={disconnectInstagram} canOrgPublish={plan.orgPublish} />
       ) : view === "clients" ? (
         <ClientsView
           showToast={showToast}

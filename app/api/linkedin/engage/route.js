@@ -42,7 +42,7 @@ export async function POST(req) {
   const token = decryptToken(acc?.personToken);
   if (!token || !acc?.personSub) return NextResponse.json({ error: "Compte LinkedIn non connecté." }, { status: 401 });
   if (acc.personExpiresAt && acc.personExpiresAt < new Date()) {
-    return NextResponse.json({ error: "Session LinkedIn expirée — reconnectez votre compte (onglet Profil)." }, { status: 401 });
+    return NextResponse.json({ error: "Session LinkedIn expirée — reconnectez votre compte (menu « Connexions »)." }, { status: 401 });
   }
   const actor = `urn:li:person:${acc.personSub}`;
 
