@@ -4102,6 +4102,8 @@ function KnowledgePanel({ showToast }) {
   const [title, setTitle] = useState("");
   const [text, setText] = useState("");
   const [url, setUrl] = useState("");
+  const [file, setFile] = useState(null);
+  const [fileKey, setFileKey] = useState(0); // change après chaque ajout : vide le champ de fichier
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
   const [expanded, setExpanded] = useState(null);
@@ -4122,17 +4124,27 @@ function KnowledgePanel({ showToast }) {
     setBusy(true);
     setError(null);
     try {
-      const res = await fetch("/api/knowledge", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(tab === "link" ? { kind: "link", url, title } : { kind: "note", text, title }),
-      });
+      let res;
+      if (tab === "file") {
+        const fd = new FormData();
+        fd.append("file", file);
+        if (title.trim()) fd.append("title", title.trim());
+        res = await fetch("/api/knowledge/upload", { method: "POST", body: fd });
+      } else {
+        res = await fetch("/api/knowledge", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(tab === "link" ? { kind: "link", url, title } : { kind: "note", text, title }),
+        });
+      }
       const d = await readJson(res);
       if (!res.ok) throw new Error(d.error || "Erreur");
       showToast("Source ajoutée et analysée ✓");
       setTitle("");
       setText("");
       setUrl("");
+      setFile(null);
+      setFileKey((k) => k + 1);
       load();
     } catch (e) {
       setError(e.message);
@@ -4183,6 +4195,7 @@ function KnowledgePanel({ showToast }) {
               <div className="flex gap-1.5">
                 <button type="button" onClick={() => setTab("note")} className={chip(tab === "note")}>Coller un texte</button>
                 <button type="button" onClick={() => setTab("link")} className={chip(tab === "link")}>Un lien</button>
+                <button type="button" onClick={() => setTab("file")} className={chip(tab === "file")}>PDF ou Word</button>
               </div>
               <input
                 type="text"
@@ -4200,7 +4213,7 @@ function KnowledgePanel({ showToast }) {
                   placeholder="Collez ici une présentation, une offre, une étude de cas, des notes…"
                   className="w-full border border-gray-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
                 />
-              ) : (
+              ) : tab === "link" ? (
                 <input
                   type="url"
                   value={url}
@@ -4208,15 +4221,31 @@ function KnowledgePanel({ showToast }) {
                   placeholder="https://votre-site.fr/article"
                   className="w-full border border-gray-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
                 />
+              ) : (
+                <div>
+                  <input
+                    key={fileKey}
+                    type="file"
+                    accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0] ?? null;
+                      if (f && f.size > 8 * 1024 * 1024) { setError("Fichier trop volumineux (8 Mo au maximum)."); setFile(null); return; }
+                      setError(null);
+                      setFile(f);
+                    }}
+                    className="text-xs"
+                  />
+                  <p className="text-[11px] text-gray-400 mt-1">PDF avec texte ou document Word (.docx), 8 Mo au maximum. Le fichier n&apos;est pas conservé : seuls son texte et son analyse le sont. Un PDF scanné (images) ne peut pas être lu : collez son texte.</p>
+                </div>
               )}
               {error && <p className="text-xs text-red-600">{error}</p>}
               <button
                 type="button"
                 onClick={add}
-                disabled={busy || (tab === "note" ? text.trim().length < 20 : !url.trim())}
+                disabled={busy || (tab === "note" ? text.trim().length < 20 : tab === "link" ? !url.trim() : !file)}
                 className="bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white text-sm font-medium px-4 py-2 rounded-lg"
               >
-                {busy ? "Analyse en cours…" : "Ajouter et analyser"}
+                {busy ? (tab === "file" ? "Lecture et analyse…" : "Analyse en cours…") : "Ajouter et analyser"}
               </button>
             </div>
           )}
@@ -4232,7 +4261,7 @@ function KnowledgePanel({ showToast }) {
                       </p>
                       <p className="text-[11px] text-gray-400">
                         {Math.round(s.charCount / 100) / 10} k caractères · {s.facts.length} fait{s.facts.length > 1 ? "s" : ""} retenu{s.facts.length > 1 ? "s" : ""}
-                        {s.origin && s.kind === "link" ? ` · ${s.origin.replace(/^https?:\/\//, "").slice(0, 40)}` : ""}
+                        {s.origin && s.kind === "link" ? ` · ${s.origin.replace(/^https?:\/\//, "").slice(0, 40)}` : s.origin && s.kind === "file" ? ` · ${s.origin.slice(0, 50)}` : ""}
                       </p>
                     </div>
                     <div className="flex items-center gap-2 shrink-0 text-xs">
