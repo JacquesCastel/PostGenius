@@ -5103,22 +5103,67 @@ function ProfileSignalsPanel({ missingSignals, completion, onGoProfileField }) {
   );
 }
 
-// Échange conversationnel (au lieu d'une simple zone de texte figée) pour
-// affiner la note du copilote éditorial — voir lib/editorial/chat.js et
-// app/api/editorial/chat/route.js. La note résultante est persistée dans le
-// profil ; régénérer les propositions reste une action explicite (pas un
-// appel IA supplémentaire à chaque message).
-function EditorialChat({ profile, onProfileSaved, onRegenerate, showToast }) {
+// Discussion avec le copilote éditorial, conservée d'une visite à l'autre (voir
+// app/api/editorial/chat/route.js). Deux usages dans le même champ :
+//  - une piste est sélectionnée (bouton « Retravailler » d'une carte) : le message la modifie, la carte
+//    se met à jour sur place et un lien « Annuler » rétablit la version précédente ;
+//  - aucune piste : discussion stratégique, la note du copilote est mise à jour.
+// Le copilote peut aussi proposer des consignes durables (« Privilégier des exemples chiffrés ») : elles
+// s'ajoutent aux remarques qui guident la rédaction des posts seulement si le client les accepte.
+const RECO_QUICK = [
+  ["Plus concret", "Rends cette piste plus concrète : un exemple, un chiffre ou un cas type."],
+  ["Autre angle", "Propose un autre angle pour ce sujet."],
+  ["Plus personnel", "Rends cette piste plus personnelle, à partir de mon vécu."],
+  ["En carrousel", "Transforme cette piste en carrousel."],
+  ["En vidéo", "Transforme cette piste en vidéo."],
+  ["Plus direct", "Rends l'accroche plus directe et plus percutante."],
+];
+const STRATEGY_QUICK = [
+  ["Plus de cas clients", "Je veux plus de cas clients concrets dans les propositions."],
+  ["Moins d'opinion", "Je veux moins de posts d'opinion."],
+  ["Plus orienté recrutement", "Je veux des sujets plus orientés recrutement."],
+];
+const VISIBLE_MESSAGES = 4;
+
+function EditorialChat({ profile, onProfileSaved, onRegenerate, showToast, selected = null, onClearSelected, onRecoUpdated }) {
   const [messages, setMessages] = useState([]);
+  const [suggestions, setSuggestions] = useState([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
+  const [showAll, setShowAll] = useState(false);
   const [noteJustUpdated, setNoteJustUpdated] = useState(false);
+  const [lastChange, setLastChange] = useState(null); // { recoId, previous, messageId } : dernière modification annulable
+  const [busyId, setBusyId] = useState(null);
+  const inputRef = useRef(null);
+  const threadRef = useRef(null);
 
-  const send = async () => {
-    const text = input.trim();
+  const reload = () =>
+    fetch("/api/editorial/chat")
+      .then(readJson)
+      .then((d) => {
+        setMessages(d.messages ?? []);
+        setSuggestions(d.suggestions ?? []);
+      })
+      .catch(() => {});
+  useEffect(() => {
+    reload();
+  }, []);
+
+  // Sélection d'une piste : le curseur arrive dans le champ
+  useEffect(() => {
+    if (selected?.id) inputRef.current?.focus();
+  }, [selected?.id]);
+  // Le fil reste calé sur le dernier message
+  useEffect(() => {
+    const el = threadRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, [messages.length, sending, showAll]);
+
+  const send = async (override) => {
+    const text = (typeof override === "string" ? override : input).trim();
     if (!text || sending) return;
-    const next = [...messages, { role: "user", content: text }];
-    setMessages(next);
+    const tmpId = `tmp-${Date.now()}`;
+    setMessages((m) => [...m, { id: tmpId, role: "user", content: text, recoTopic: selected?.topic ?? null }]);
     setInput(""); // vidé immédiatement à l'envoi, comme un vrai échange
     setSending(true);
     setNoteJustUpdated(false);
@@ -5126,38 +5171,129 @@ function EditorialChat({ profile, onProfileSaved, onRegenerate, showToast }) {
       const res = await fetch("/api/editorial/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: next }),
+        body: JSON.stringify({ message: text, recoId: selected?.id }),
       });
       const data = await readJson(res);
-      if (!res.ok) throw new Error(data.error);
-      setMessages((m) => [...m, { role: "assistant", content: data.reply }]);
+      if (!res.ok) throw new Error(data.error || "Erreur");
+      setMessages((m) => [...m.filter((x) => x.id !== tmpId), ...data.messages]);
+      setSuggestions(data.suggestions ?? []);
+      if (data.reco) {
+        onRecoUpdated?.(data.reco);
+        setLastChange({ recoId: data.reco.id, previous: data.previous, messageId: data.messages[1].id });
+      }
       if (data.editorialNote && data.editorialNote !== profile?.editorialNote) {
         onProfileSaved?.({ ...profile, editorialNote: data.editorialNote });
         setNoteJustUpdated(true);
       }
     } catch (e) {
+      setMessages((m) => m.filter((x) => x.id !== tmpId));
+      setInput(text);
       showToast(e.message || "Erreur");
     } finally {
       setSending(false);
     }
   };
 
+  const undo = async () => {
+    const c = lastChange;
+    if (!c || busyId) return;
+    setBusyId("undo");
+    try {
+      const res = await fetch(`/api/editorial/recommendations/${c.recoId}/restore`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fields: c.previous }),
+      });
+      const data = await readJson(res);
+      if (!res.ok) throw new Error(data.error || "Erreur");
+      onRecoUpdated?.(data.reco);
+      setLastChange(null);
+      await reload();
+    } catch (e) {
+      showToast(e.message || "Erreur");
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const answerSuggestion = async (sug, action) => {
+    setBusyId(sug.id);
+    try {
+      const res = await fetch(`/api/remarks/suggestions/${sug.id}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action }),
+      });
+      const data = await readJson(res);
+      if (!res.ok) throw new Error(data.error || "Erreur");
+      setSuggestions((l) => l.filter((x) => x.id !== sug.id));
+      if (action === "accept") showToast("Retenu ✓ Cette consigne guidera vos prochains posts.");
+    } catch (e) {
+      showToast(e.message || "Erreur");
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const clearAll = async () => {
+    if (!window.confirm("Effacer toute la conversation avec le copilote ? Vos remarques et votre note sont conservées.")) return;
+    try {
+      const res = await fetch("/api/editorial/chat", { method: "DELETE" });
+      if (!res.ok) throw new Error();
+      setMessages([]);
+      setLastChange(null);
+    } catch {
+      showToast("Erreur lors de l'effacement");
+    }
+  };
+
+  const hidden = showAll ? 0 : Math.max(0, messages.length - VISIBLE_MESSAGES);
+  const shown = hidden ? messages.slice(-VISIBLE_MESSAGES) : messages;
+  const quick = selected ? RECO_QUICK : STRATEGY_QUICK;
+
   return (
-    <div className="bg-gray-50 border border-gray-100 rounded-xl p-3 mb-3">
-      <label className="text-xs font-medium text-gray-600 flex items-center gap-1.5 mb-1.5">
-        <PenLine size={13} /> Affiner les propositions — échangez avec le copilote
-      </label>
+    <div className="bg-gray-50 border border-gray-100 rounded-xl p-3">
+      <div className="flex items-center justify-between gap-2 mb-1.5">
+        <label className="text-xs font-medium text-gray-600 flex items-center gap-1.5">
+          <PenLine size={13} /> Affiner les propositions — échangez avec le copilote
+        </label>
+        {messages.length > 0 && (
+          <button type="button" onClick={clearAll} className="text-[11px] text-gray-400 hover:text-red-600 shrink-0">
+            Effacer la conversation
+          </button>
+        )}
+      </div>
 
       {messages.length > 0 && (
-        <div className="space-y-1.5 mb-2 max-h-40 overflow-y-auto pr-1">
-          {messages.map((m, i) => (
-            <div
-              key={i}
-              className={`text-xs rounded-lg px-2.5 py-1.5 max-w-[85%] ${
-                m.role === "user" ? "bg-[#0a66c2] text-white ml-auto" : "bg-white border border-gray-200 text-gray-700"
-              }`}
-            >
-              {m.content}
+        <div ref={threadRef} className={`space-y-1.5 mb-2 pr-1 ${showAll ? "max-h-72 overflow-y-auto" : ""}`}>
+          {hidden > 0 && (
+            <button type="button" onClick={() => setShowAll(true)} className="text-[11px] text-[#0a66c2] hover:underline">
+              Afficher les {hidden} messages précédents
+            </button>
+          )}
+          {showAll && messages.length > VISIBLE_MESSAGES && (
+            <button type="button" onClick={() => setShowAll(false)} className="text-[11px] text-gray-400 hover:underline block">
+              Réduire l'historique
+            </button>
+          )}
+          {shown.map((m) => (
+            <div key={m.id} className={m.role === "user" ? "flex flex-col items-end" : "flex flex-col items-start"}>
+              {m.role === "user" && m.recoTopic && (
+                <span className="text-[10px] text-gray-400 mb-0.5 max-w-[85%] truncate">↳ {m.recoTopic}</span>
+              )}
+              <div
+                title={m.createdAt ? new Date(m.createdAt).toLocaleString("fr-FR") : undefined}
+                className={`text-xs rounded-lg px-2.5 py-1.5 max-w-[85%] whitespace-pre-wrap ${
+                  m.role === "user" ? "bg-[#0a66c2] text-white" : "bg-white border border-gray-200 text-gray-700"
+                }`}
+              >
+                {m.content}
+              </div>
+              {lastChange && m.id === lastChange.messageId && (
+                <button type="button" onClick={undo} disabled={busyId === "undo"} className="text-[11px] text-gray-500 hover:text-[#0a66c2] mt-0.5 disabled:opacity-50">
+                  ↩ Annuler cette modification
+                </button>
+              )}
             </div>
           ))}
           {sending && (
@@ -5168,26 +5304,78 @@ function EditorialChat({ profile, onProfileSaved, onRegenerate, showToast }) {
         </div>
       )}
 
+      {suggestions.length > 0 && (
+        <div className="rounded-lg bg-amber-50 border border-amber-200 p-2.5 mb-2 space-y-2">
+          <p className="text-[11px] font-semibold text-amber-800 flex items-center gap-1.5">
+            <Lightbulb size={12} /> À retenir pour vos prochains posts ?
+          </p>
+          {suggestions.map((sug) => (
+            <div key={sug.id} className="flex items-center justify-between gap-2 flex-wrap">
+              <p className="text-xs text-gray-800 font-medium">{sug.text}</p>
+              <div className="flex gap-1.5 shrink-0">
+                <button
+                  onClick={() => answerSuggestion(sug, "accept")}
+                  disabled={busyId === sug.id}
+                  className="bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white text-[11px] font-medium px-2.5 py-1 rounded-lg"
+                >
+                  Retenir
+                </button>
+                <button onClick={() => answerSuggestion(sug, "dismiss")} disabled={busyId === sug.id} className="text-[11px] text-gray-500 hover:text-gray-800 px-1.5">
+                  Non merci
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {selected && (
+        <div className="flex items-center gap-2 mb-1.5">
+          <span className="inline-flex items-center gap-1.5 text-[11px] bg-[#e8f1fb] text-[#0a66c2] rounded-full pl-2.5 pr-1.5 py-1 max-w-full">
+            <span className="truncate">Piste : {selected.topic}</span>
+            <button type="button" onClick={onClearSelected} aria-label="Désélectionner la piste" className="hover:bg-[#cfe2f6] rounded-full p-0.5 shrink-0">
+              <X size={11} />
+            </button>
+          </span>
+        </div>
+      )}
+
       <div className="flex items-center gap-2">
         <input
+          ref={inputRef}
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && send()}
-          placeholder="ex : je veux plus de retours clients concrets, moins de posts d'opinion…"
+          placeholder={selected ? "ex : plus concret, pour mes clients DRH, sans jargon…" : "ex : je veux plus de retours clients concrets, moins de posts d'opinion…"}
           maxLength={500}
           className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
         />
         <button
-          onClick={send}
+          onClick={() => send()}
           disabled={sending || !input.trim()}
+          aria-label="Envoyer"
           className="bg-[#0a66c2] hover:bg-[#004182] disabled:opacity-50 text-white px-3 py-2 rounded-lg shrink-0"
         >
           {sending ? <RefreshCw size={13} className="animate-spin" /> : <Send size={13} />}
         </button>
       </div>
 
-      <div className="flex items-center justify-between mt-1.5 gap-2">
+      <div className="flex flex-wrap gap-1.5 mt-2">
+        {quick.map(([label, text]) => (
+          <button
+            key={label}
+            type="button"
+            onClick={() => send(text)}
+            disabled={sending}
+            className="text-[11px] px-2.5 py-1 rounded-full border border-gray-200 bg-white text-gray-600 hover:border-[#0a66c2] hover:text-[#0a66c2] disabled:opacity-50"
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      <div className="flex items-center justify-between mt-2 gap-2">
         <p className="text-[11px] text-gray-400 truncate">
           {profile?.editorialNote
             ? `Note actuelle : « ${profile.editorialNote.slice(0, 70)}${profile.editorialNote.length > 70 ? "…" : ""} »`
@@ -5211,6 +5399,7 @@ function useRecommendations(showToast) {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
   const [actingId, setActingId] = useState(null);
+  const [highlightId, setHighlightId] = useState(null); // piste qui vient d'être modifiée dans la discussion
 
   const load = (force = false) => {
     (force ? setRefreshing : setLoading)(true);
@@ -5250,16 +5439,39 @@ function useRecommendations(showToast) {
     }
   };
 
-  return { recos, loading, refreshing, error, actingId, load, respond };
+  // Piste modifiée dans la discussion : la carte est remplacée sur place et mise en évidence un instant
+  const updateReco = (reco) => {
+    setRecos((list) => (list ?? []).map((r) => (r.id === reco.id ? reco : r)));
+    setHighlightId(reco.id);
+    setTimeout(() => setHighlightId((id) => (id === reco.id ? null : id)), 2500);
+  };
+
+  return { recos, loading, refreshing, error, actingId, load, respond, updateReco, highlightId };
+}
+
+// Sélection d'une piste à retravailler (partagée entre le slider et la discussion) ; elle se vide
+// quand la piste quitte la liste (générée, ignorée, remplacée).
+function useRecoSelection(recos) {
+  const [selectedId, setSelectedId] = useState(null);
+  useEffect(() => {
+    if (selectedId && recos && !recos.some((r) => r.id === selectedId)) setSelectedId(null);
+  }, [recos, selectedId]);
+  const selected = recos?.find((r) => r.id === selectedId) ?? null;
+  const toggle = (reco) => setSelectedId((id) => (id === reco.id ? null : reco.id));
+  return { selected, selectedId, toggle, clear: () => setSelectedId(null) };
 }
 
 const FORMAT_LABELS = { simple: "Post", carrousel: "Carrousel", video: "Vidéo" };
 
 // Carte d'une proposition (compacte : elle tient sur trois colonnes)
-function RecoCard({ reco, onGenerate, onIgnore, busy }) {
+function RecoCard({ reco, onGenerate, onIgnore, onRework, selected = false, highlight = false, busy }) {
   const [open, setOpen] = useState(false);
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-col h-full">
+    <div
+      className={`bg-white rounded-2xl border shadow-sm p-4 flex flex-col h-full transition-shadow ${
+        highlight ? "border-green-400 ring-2 ring-green-300" : selected ? "border-[#0a66c2] ring-2 ring-[#0a66c2]/30" : "border-gray-100"
+      }`}
+    >
       <div className="flex items-center gap-1.5 flex-wrap mb-2">
         {reco.pillar && (
           <span className="text-[10px] font-semibold uppercase tracking-wide bg-[#fff1f1] text-[#ff5a5f] rounded-full px-2 py-0.5">
@@ -5280,23 +5492,37 @@ function RecoCard({ reco, onGenerate, onIgnore, busy }) {
         <Lightbulb size={12} className="mt-0.5 shrink-0 text-amber-400" />
         <span className={open ? "" : "line-clamp-2"}>{reco.rationale}</span>
       </button>
-      <div className="flex items-center gap-2 mt-auto pt-4">
+      <div className="mt-auto pt-4 space-y-2">
         <button
           onClick={() => onGenerate(reco)}
           disabled={busy}
-          className="flex-1 bg-[#0a66c2] hover:bg-[#004182] disabled:opacity-50 text-white text-xs font-medium px-3 py-2 rounded-lg flex items-center justify-center gap-1.5"
+          className="w-full bg-[#0a66c2] hover:bg-[#004182] disabled:opacity-50 text-white text-xs font-medium px-3 py-2 rounded-lg flex items-center justify-center gap-1.5"
         >
           <Sparkles size={13} /> Générer ce post
         </button>
-        <button
-          onClick={() => onIgnore(reco)}
-          disabled={busy}
-          title="Ignorer cette proposition"
-          aria-label="Ignorer cette proposition"
-          className="border border-gray-200 hover:border-gray-300 text-gray-500 p-2 rounded-lg disabled:opacity-50"
-        >
-          <EyeOff size={13} />
-        </button>
+        <div className="flex items-center gap-2">
+          {onRework && (
+            <button
+              onClick={() => onRework(reco)}
+              disabled={busy}
+              title="Retravailler cette piste avec le copilote"
+              className={`flex-1 text-xs px-2.5 py-2 rounded-lg border flex items-center justify-center gap-1.5 disabled:opacity-50 ${
+                selected ? "bg-[#e8f1fb] border-[#0a66c2] text-[#0a66c2]" : "border-gray-200 text-gray-600 hover:border-gray-300"
+              }`}
+            >
+              <PenLine size={13} /> {selected ? "Sélectionnée" : "Retravailler"}
+            </button>
+          )}
+          <button
+            onClick={() => onIgnore(reco)}
+            disabled={busy}
+            title="Ignorer cette proposition"
+            aria-label="Ignorer cette proposition"
+            className="border border-gray-200 hover:border-gray-300 text-gray-500 p-2 rounded-lg disabled:opacity-50"
+          >
+            <EyeOff size={13} />
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -5329,7 +5555,7 @@ function RecoFilterGroup({ label, options, value, onChange }) {
 // Slider de propositions : une piste qui défile horizontalement (trois cartes visibles sur grand
 // écran, deux puis une sur petit écran), avec accroche à chaque carte, flèches gauche/droite, balayage
 // tactile ou molette, et filtres par taxonomie (pilier, objectif, format).
-function RecoCarousel({ recos, onGenerate, onIgnore, actingId, showFilters = true }) {
+function RecoCarousel({ recos, onGenerate, onIgnore, actingId, showFilters = true, selectedId = null, onSelect, highlightId = null }) {
   const [filters, setFilters] = useState({ pillar: null, objective: null, format: null });
   const trackRef = useRef(null);
   const [scroll, setScroll] = useState({ prev: false, next: false, from: 1, to: 1 });
@@ -5454,7 +5680,7 @@ function RecoCarousel({ recos, onGenerate, onIgnore, actingId, showFilters = tru
         >
           {filtered.map((r) => (
             <div key={r.id} className="snap-start shrink-0 min-w-0 basis-[88%] sm:basis-[calc((100%-0.75rem)/2)] lg:basis-[calc((100%-1.5rem)/3)]">
-              <RecoCard reco={r} onGenerate={onGenerate} onIgnore={onIgnore} busy={actingId === r.id} />
+              <RecoCard reco={r} onGenerate={onGenerate} onIgnore={onIgnore} onRework={onSelect} selected={selectedId === r.id} highlight={highlightId === r.id} busy={actingId === r.id} />
             </div>
           ))}
         </div>
@@ -5466,7 +5692,8 @@ function RecoCarousel({ recos, onGenerate, onIgnore, actingId, showFilters = tru
 // Tableau de bord : « Que publier aujourd'hui ? » = le prompt d'échange avec le copilote, puis le
 // slider de propositions. Filtres, réglages et suivi restent dans l'espace Copilote IA.
 function RecoToday({ onGenerate, onGoCopilot, showToast, profile, onProfileSaved }) {
-  const { recos, loading, refreshing, error, actingId, load, respond } = useRecommendations(showToast);
+  const { recos, loading, refreshing, error, actingId, load, respond, updateReco, highlightId } = useRecommendations(showToast);
+  const sel = useRecoSelection(recos);
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-2 flex-wrap">
@@ -5488,7 +5715,15 @@ function RecoToday({ onGenerate, onGoCopilot, showToast, profile, onProfileSaved
       </div>
 
       {/* Le prompt d'échange reste au-dessus des propositions */}
-      <EditorialChat profile={profile} onProfileSaved={onProfileSaved} onRegenerate={() => load(true)} showToast={showToast} />
+      <EditorialChat
+        profile={profile}
+        onProfileSaved={onProfileSaved}
+        onRegenerate={() => load(true)}
+        showToast={showToast}
+        selected={sel.selected}
+        onClearSelected={sel.clear}
+        onRecoUpdated={updateReco}
+      />
 
       {loading ? (
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 text-center text-gray-400">
@@ -5510,6 +5745,9 @@ function RecoToday({ onGenerate, onGoCopilot, showToast, profile, onProfileSaved
           recos={recos}
           showFilters={false}
           actingId={actingId}
+          selectedId={sel.selectedId}
+          onSelect={sel.toggle}
+          highlightId={highlightId}
           onGenerate={(reco) => {
             respond(reco, "générée");
             onGenerate(reco);
@@ -5523,7 +5761,8 @@ function RecoToday({ onGenerate, onGoCopilot, showToast, profile, onProfileSaved
 
 // Espace Copilote IA : les propositions (colonnes, flèches, filtres) et la discussion avec le copilote
 function CopilotWorkspace({ profile, onProfileSaved, showToast, onGenerateFromReco, onGoProfileField }) {
-  const { recos, loading, refreshing, error, actingId, load, respond } = useRecommendations(showToast);
+  const { recos, loading, refreshing, error, actingId, load, respond, updateReco, highlightId } = useRecommendations(showToast);
+  const sel = useRecoSelection(recos);
   const missingSignals = PROFILE_SIGNALS.filter((s) => !profile?.[s.key]?.trim?.());
   const completion = PROFILE_SIGNALS.length - missingSignals.length;
 
@@ -5548,7 +5787,15 @@ function CopilotWorkspace({ profile, onProfileSaved, showToast, onGenerateFromRe
       </div>
 
       {/* Le prompt d'échange reste au-dessus des propositions */}
-      <EditorialChat profile={profile} onProfileSaved={onProfileSaved} onRegenerate={() => load(true)} showToast={showToast} />
+      <EditorialChat
+        profile={profile}
+        onProfileSaved={onProfileSaved}
+        onRegenerate={() => load(true)}
+        showToast={showToast}
+        selected={sel.selected}
+        onClearSelected={sel.clear}
+        onRecoUpdated={updateReco}
+      />
 
       <ProfileSignalsPanel missingSignals={missingSignals} completion={completion} onGoProfileField={onGoProfileField} />
 
@@ -5568,7 +5815,15 @@ function CopilotWorkspace({ profile, onProfileSaved, showToast, onGenerateFromRe
           <button onClick={() => load(true)} className="text-[#ff5a5f] hover:underline ml-1">Réessayer</button>
         </div>
       ) : (
-        <RecoCarousel recos={recos} onGenerate={generate} onIgnore={(r) => respond(r, "ignorée")} actingId={actingId} />
+        <RecoCarousel
+          recos={recos}
+          onGenerate={generate}
+          onIgnore={(r) => respond(r, "ignorée")}
+          actingId={actingId}
+          selectedId={sel.selectedId}
+          onSelect={sel.toggle}
+          highlightId={highlightId}
+        />
       )}
     </div>
   );

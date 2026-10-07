@@ -78,6 +78,7 @@ model User {
   interactions    InteractionLog[]
   knowledge       KnowledgeSource[]
   stylePosts      StylePost[]
+  copilotMessages CopilotMessage[]
 
   // --- Profil de rédaction ---
   headline        String? // titre pro, ex : "Consultant SEO @ Acme"
@@ -552,6 +553,22 @@ model Invitation {
 // collent à son contexte et à ses faits. Chaque source est résumée par l'IA ; seuls ces résumés et les faits
 // relevés (chiffres, cas, positions) servent à rédiger, jamais sans que la source soit citée.
 // Anciens posts de l'auteur (import de son style) : le plus proche du sujet sert d'exemple de voix
+// Historique de la discussion avec le copilote éditorial (conservé d'une visite à l'autre). Le modèle
+// la relit à chaque échange pour apprendre les goûts du client ; les consignes durables qui s'en
+// dégagent passent par RemarkSuggestion (jamais appliquées sans son accord).
+model CopilotMessage {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      String // user | assistant
+  content   String
+  recoId    String? // piste concernée, sans relation : elle peut être ignorée ou remplacée ensuite
+  recoTopic String? // intitulé de la piste au moment de l'échange (affichage)
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+}
+
 model StylePost {
   id        String   @id @default(cuid())
   userId    String
