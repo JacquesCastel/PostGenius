@@ -10413,6 +10413,224 @@ function StageHeader({ index, total, stage, progress }) {
   );
 }
 
+// Le compagnon : il dit où l'on en est, ce qui manque, et propose de remplir l'étape par une interview
+// (une question à la fois). Il PROPOSE des valeurs ; l'utilisateur les applique au formulaire, puis enregistre.
+// Il est recréé à chaque changement d'étape (key) : l'interview ne dure que le temps de l'étape.
+const COMPANION_COACH = {
+  identity: {
+    opener: "Bonjour ! Quelques questions rapides pour remplir cette étape. D'abord : comment vous appelez-vous, et que faites-vous dans votre vie professionnelle ?",
+  },
+  audience: {
+    opener: "Parlons de vos clients. À qui voulez-vous parler sur LinkedIn ? Décrivez-moi la personne idéale : sa fonction, son secteur.",
+  },
+  voice: {
+    tip: "Le plus efficace reste d'importer vos anciens posts (plus bas). Si vous n'en avez pas, je peux vous interroger sur votre façon d'écrire.",
+    opener: "Parlons de votre façon d'écrire. Comment la décririez-vous : plutôt tutoiement ou vouvoiement, phrases courtes ou longues, avec ou sans émojis ?",
+  },
+  sources: {
+    tip: "Ajoutez aussi un document, un article ou un lien ci-dessous : c'est ce qui ancre vos posts dans vos vrais faits.",
+    opener: "Y a-t-il un sujet sur lequel vous voulez que le copilote mette l'accent cette semaine ? Je le noterai pour lui.",
+  },
+  rhythm: {
+    opener: "Parlons rythme. Quels jours de la semaine voulez-vous publier, et à quelle heure ?",
+  },
+};
+
+function ProfileCompanion({ stage, progress, missing, nextStage, values, onApply, onGoNext, onSaveNext, saving, showToast }) {
+  const coach = COMPANION_COACH[stage.id] ?? {};
+  const [mode, setMode] = useState("idle"); // idle | interview | hidden
+  const [messages, setMessages] = useState([]); // { role, content, proposals?: [{ field, label, value, display, applied }] }
+  const [input, setInput] = useState("");
+  const [sending, setSending] = useState(false);
+  const threadRef = useRef(null);
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    const el = threadRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, [messages.length, sending]);
+
+  const start = () => {
+    setMode("interview");
+    setMessages([{ role: "assistant", content: coach.opener }]);
+    setTimeout(() => inputRef.current?.focus(), 50);
+  };
+
+  const send = async () => {
+    const text = input.trim();
+    if (!text || sending) return;
+    const next = [...messages, { role: "user", content: text }];
+    setMessages(next);
+    setInput("");
+    setSending(true);
+    try {
+      const res = await fetch("/api/profile/companion", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ stage: stage.id, messages: next.map((m) => ({ role: m.role, content: m.content })), values }),
+      });
+      const data = await readJson(res);
+      if (!res.ok) throw new Error(data.error || "Erreur");
+      setMessages((m) => [...m, { role: "assistant", content: data.reply, proposals: data.proposals.map((p) => ({ ...p, applied: false })) }]);
+    } catch (e) {
+      setMessages(messages); // la réponse n'est pas perdue pour autant : on la remet dans le champ
+      setInput(text);
+      showToast(e.message || "Erreur");
+    } finally {
+      setSending(false);
+      setTimeout(() => inputRef.current?.focus(), 50);
+    }
+  };
+
+  const apply = (mi, pi) =>
+    setMessages((list) =>
+      list.map((m, i) => {
+        if (i !== mi) return m;
+        const p = m.proposals[pi];
+        if (p.applied) return m;
+        onApply(p.field, p.value);
+        return { ...m, proposals: m.proposals.map((x, j) => (j === pi ? { ...x, applied: true } : x)) };
+      })
+    );
+  const applyAll = (mi) => messages[mi].proposals.forEach((p, pi) => !p.applied && apply(mi, pi));
+
+  const avatar = (
+    <span className="w-8 h-8 rounded-full bg-gradient-to-br from-orange-400 to-[#ff5a5f] text-white flex items-center justify-center shrink-0">
+      <Sparkles size={15} />
+    </span>
+  );
+
+  if (mode === "hidden") {
+    return (
+      <button type="button" onClick={() => setMode("idle")} className="text-xs text-[#0a66c2] hover:underline inline-flex items-center gap-1.5 mb-3">
+        <Sparkles size={12} /> Demander de l'aide au compagnon
+      </button>
+    );
+  }
+
+  return (
+    <div className="bg-gradient-to-br from-[#fff7f1] to-white border border-[#ffd9c7] rounded-2xl p-4 mb-5">
+      <div className="flex items-start gap-3">
+        {avatar}
+        <div className="min-w-0 flex-1">
+          <p className="text-xs font-semibold text-[#c2410c]">Votre compagnon LinkeePost</p>
+
+          {mode === "idle" && (
+            <div>
+              {progress.status === "done" ? (
+                <p className="text-sm text-gray-700 mt-1">
+                  Cette étape est complète, bravo.{" "}
+                  {nextStage ? `Prochaine étape : « ${nextStage.title} » (environ ${nextStage.time}).` : "Votre profil est complet : le copilote peut travailler sur des bases solides."}
+                </p>
+              ) : (
+                <p className="text-sm text-gray-700 mt-1">
+                  {missing.length > 0 ? `Il reste à renseigner : ${missing.join(", ")}. ` : ""}
+                  {coach.tip ? `${coach.tip} ` : ""}Voulez-vous que je vous pose quelques questions ? Je propose les réponses, c'est vous qui validez.
+                </p>
+              )}
+              <div className="flex flex-wrap gap-2 mt-3">
+                {progress.status === "done" ? (
+                  nextStage && (
+                    <button type="button" onClick={onGoNext} className="bg-[#ff5a5f] hover:bg-[#f63d44] text-white text-xs font-medium px-3.5 py-2 rounded-lg flex items-center gap-1.5">
+                      Passer à l&apos;étape suivante <ChevronRight size={13} />
+                    </button>
+                  )
+                ) : (
+                  <>
+                    <button type="button" onClick={start} className="bg-[#ff5a5f] hover:bg-[#f63d44] text-white text-xs font-medium px-3.5 py-2 rounded-lg flex items-center gap-1.5">
+                      <MessageSquare size={13} /> Oui, posez-moi vos questions
+                    </button>
+                    <button type="button" onClick={() => setMode("hidden")} className="text-xs border border-gray-200 bg-white hover:border-gray-300 text-gray-600 px-3.5 py-2 rounded-lg">
+                      Je remplis moi-même
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+
+          {mode === "interview" && (
+            <div className="mt-2">
+              <div ref={threadRef} className="space-y-2 max-h-96 overflow-y-auto pr-1">
+                {messages.map((m, mi) => (
+                  <div key={mi} className={m.role === "user" ? "flex justify-end" : ""}>
+                    <div className={m.role === "user" ? "max-w-[85%]" : "max-w-full"}>
+                      <div className={`text-sm rounded-xl px-3 py-2 whitespace-pre-wrap ${m.role === "user" ? "bg-[#0a66c2] text-white" : "bg-white border border-gray-200 text-gray-700"}`}>
+                        {m.content}
+                      </div>
+                      {m.proposals?.length > 0 && (
+                        <div className="mt-1.5 rounded-xl border border-[#d6e6f7] bg-[#f4f8fd] p-2.5 space-y-2">
+                          <p className="text-[11px] font-semibold text-[#0a66c2]">Je propose d&apos;ajouter à votre profil :</p>
+                          {m.proposals.map((p, pi) => (
+                            <div key={p.field} className="flex items-start justify-between gap-2">
+                              <p className="text-xs text-gray-700 min-w-0">
+                                <span className="font-medium text-gray-900">{p.label} :</span> {p.display}
+                                {!p.applied && !p.multi && values[p.field]?.toString().trim() && <span className="text-gray-400"> (remplace « {String(values[p.field]).slice(0, 40)}{String(values[p.field]).length > 40 ? "…" : ""} »)</span>}
+                              </p>
+                              {p.applied ? (
+                                <span className="text-[11px] text-green-700 flex items-center gap-1 shrink-0"><Check size={12} /> Appliqué</span>
+                              ) : (
+                                <button type="button" onClick={() => apply(mi, pi)} className="text-[11px] font-medium bg-white border border-[#0a66c2] text-[#0a66c2] hover:bg-[#e8f1fb] px-2.5 py-1 rounded-lg shrink-0">
+                                  Appliquer
+                                </button>
+                              )}
+                            </div>
+                          ))}
+                          {m.proposals.filter((p) => !p.applied).length > 1 && (
+                            <button type="button" onClick={() => applyAll(mi)} className="text-[11px] font-medium text-[#0a66c2] hover:underline">
+                              Tout appliquer
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+                {sending && (
+                  <div className="text-xs text-gray-400 flex items-center gap-1">
+                    <RefreshCw size={11} className="animate-spin" /> Je réfléchis…
+                  </div>
+                )}
+              </div>
+
+              {progress.status === "done" && (
+                <div className="mt-3 rounded-xl bg-green-50 border border-green-200 p-2.5 flex items-center justify-between gap-2 flex-wrap">
+                  <p className="text-xs text-green-800 flex items-center gap-1.5"><Check size={13} /> Étape complète. Enregistrez pour la conserver.</p>
+                  <button type="button" onClick={onSaveNext} disabled={saving} className="bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white text-xs font-medium px-3 py-1.5 rounded-lg">
+                    {nextStage ? "Enregistrer et continuer" : "Enregistrer"}
+                  </button>
+                </div>
+              )}
+
+              <div className="flex items-center gap-2 mt-3">
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && send()}
+                  placeholder="Votre réponse…"
+                  maxLength={600}
+                  className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
+                />
+                <button type="button" onClick={send} disabled={sending || !input.trim()} aria-label="Envoyer" className="bg-[#0a66c2] hover:bg-[#004182] disabled:opacity-50 text-white px-3 py-2 rounded-lg shrink-0">
+                  {sending ? <RefreshCw size={13} className="animate-spin" /> : <Send size={13} />}
+                </button>
+              </div>
+              <div className="flex items-center justify-between mt-2 gap-2">
+                <p className="text-[11px] text-gray-400">Rien n&apos;est enregistré sans votre accord : vous appliquez, puis vous enregistrez.</p>
+                <button type="button" onClick={() => setMode("idle")} className="text-[11px] text-gray-500 hover:text-gray-800 shrink-0">
+                  Terminer l&apos;interview
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ----------------------------------------------------------------
 // Page profil : identité, expertise, style de rédaction
 // ----------------------------------------------------------------
@@ -10554,6 +10772,18 @@ function ProfileView({ profile, onSaved, showToast, linkedin, onDisconnect, inst
     e.preventDefault();
     return persist();
   };
+  // Une proposition du compagnon est appliquée au formulaire (pas encore enregistrée). Objectifs et thèmes
+  // s'ajoutent à ceux qui existent ; les autres champs sont remplacés.
+  const applyFromCompanion = (field, value) => {
+    if (field === "commGoals" || field === "themes") {
+      const cur = (fields[field] ?? "").split(",").map((x) => x.trim()).filter(Boolean);
+      const known = new Set(cur.map((x) => x.toLowerCase()));
+      const add = String(value).split(",").map((x) => x.trim()).filter((x) => x && !known.has(x.toLowerCase()));
+      set(field, [...cur, ...add].join(field === "themes" ? ", " : ","));
+    } else {
+      set(field, value);
+    }
+  };
   const saveAndNext = async () => {
     if (await persist()) goTo(Math.min(stageIdx + 1, PROFILE_STAGES.length - 1));
   };
@@ -10600,6 +10830,19 @@ function ProfileView({ profile, onSaved, showToast, linkedin, onDisconnect, inst
         <ProfileStepper stages={PROFILE_STAGES} progress={progress} current={stageIdx} onSelect={goTo} strength={strength} />
 
         <div className="min-w-0">
+          <ProfileCompanion
+            key={stage.id}
+            stage={stage}
+            progress={progress[stageIdx]}
+            missing={stage.items.filter((i) => !i.bonus && !i.done(fields, ctx)).map((i) => i.label.toLowerCase())}
+            nextStage={PROFILE_STAGES[stageIdx + 1]}
+            values={fields}
+            onApply={applyFromCompanion}
+            onGoNext={() => goTo(stageIdx + 1)}
+            onSaveNext={saveAndNext}
+            saving={saving}
+            showToast={showToast}
+          />
           <form onSubmit={save} className="space-y-5">
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
               <StageHeader index={stageIdx} total={PROFILE_STAGES.length} stage={stage} progress={progress[stageIdx]} />
