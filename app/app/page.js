@@ -6082,69 +6082,6 @@ function DashboardView({ drafts, canVeille = true, canEvents = false, canScore =
 
   return (
     <main className="max-w-5xl mx-auto p-6 space-y-6">
-      <div className="flex justify-end ">
-        <button onClick={onGoCreate} className="inline-flex items-center gap-1.5 bg-[#ff5a5f] hover:bg-[#f63d44] text-white text-sm font-medium px-4 py-2 rounded-xl">
-          <Sparkles size={15} /> Créer un post
-        </button>
-      </div>
-
-      {/* Priorité : ce qui demande une action */}
-      {toValidate.length > 0 && (
-        <div className="bg-purple-50 border border-purple-200 rounded-xl p-4">
-          <p className="text-sm font-medium text-purple-800 flex items-center gap-2 mb-3">
-            <Clock size={16} /> {toValidate.length} post{toValidate.length > 1 ? "s" : ""} en attente de
-            validation
-          </p>
-          <div className="space-y-2">
-            {toValidate.slice(0, 4).map((d) => (
-              <div key={d.id} className="flex items-center justify-between gap-3 bg-white rounded-lg p-2.5">
-                <div className="min-w-0">
-                  <p className="text-xs font-medium truncate">{d.theme || "Post"}</p>
-                  <p className="text-xs text-gray-400">{fmtDateTime(d.scheduledAt)}</p>
-                </div>
-                <button
-                  onClick={() => onApprove(d)}
-                  className="bg-purple-600 hover:bg-purple-700 text-white text-xs font-medium px-3 py-1.5 rounded-lg flex items-center gap-1 shrink-0"
-                >
-                  <Check size={12} /> Valider
-                </button>
-              </div>
-            ))}
-          </div>
-          {toValidate.length > 4 && (
-            <button onClick={onGoHistory} className="text-xs text-purple-700 underline mt-2">
-              Voir les {toValidate.length - 4} autres →
-            </button>
-          )}
-        </div>
-      )}
-
-      {errors.length > 0 && (
-        <div className="bg-red-50 border border-red-200 rounded-xl p-4">
-          <p className="text-sm font-medium text-red-700 flex items-center gap-2 mb-2">
-            <AlertCircle size={16} /> {errors.length} publication{errors.length > 1 ? "s" : ""} en échec
-          </p>
-          {errors.slice(0, 3).map((d) => (
-            <p key={d.id} className="text-xs text-red-600 truncate">
-              « {d.theme} » — {d.publishError || "erreur inconnue"}
-            </p>
-          ))}
-          <button onClick={onGoHistory} className="text-xs text-red-700 underline mt-2">
-            Gérer dans Mes posts →
-          </button>
-        </div>
-      )}
-
-      {/* Copilote éditorial */}
-      <EditorialRecoWidget
-        onGenerate={onGenerateFromReco}
-        showToast={showToast}
-        profile={profile}
-        onProfileSaved={onProfileSaved}
-        onGoProfileField={onGoProfileField}
-        onGoCopilot={onGoCopilot}
-      />
-
       {/* KPI + graphiques */}
       <div className="grid md:grid-cols-3 gap-4">
         {/* Carte dégradée : activité du mois */}
@@ -6217,6 +6154,69 @@ function DashboardView({ drafts, canVeille = true, canEvents = false, canScore =
           <MiniBars values={weekValues} labels={weekLabels} />
         </div>
       </div>
+
+      <div className="flex justify-end ">
+        <button onClick={onGoCreate} className="inline-flex items-center gap-1.5 bg-[#ff5a5f] hover:bg-[#f63d44] text-white text-sm font-medium px-4 py-2 rounded-xl">
+          <Sparkles size={15} /> Créer un post
+        </button>
+      </div>
+
+      {/* Priorité : ce qui demande une action */}
+      {toValidate.length > 0 && (
+        <div className="bg-purple-50 border border-purple-200 rounded-xl p-4">
+          <p className="text-sm font-medium text-purple-800 flex items-center gap-2 mb-3">
+            <Clock size={16} /> {toValidate.length} post{toValidate.length > 1 ? "s" : ""} en attente de
+            validation
+          </p>
+          <div className="space-y-2">
+            {toValidate.slice(0, 4).map((d) => (
+              <div key={d.id} className="flex items-center justify-between gap-3 bg-white rounded-lg p-2.5">
+                <div className="min-w-0">
+                  <p className="text-xs font-medium truncate">{d.theme || "Post"}</p>
+                  <p className="text-xs text-gray-400">{fmtDateTime(d.scheduledAt)}</p>
+                </div>
+                <button
+                  onClick={() => onApprove(d)}
+                  className="bg-purple-600 hover:bg-purple-700 text-white text-xs font-medium px-3 py-1.5 rounded-lg flex items-center gap-1 shrink-0"
+                >
+                  <Check size={12} /> Valider
+                </button>
+              </div>
+            ))}
+          </div>
+          {toValidate.length > 4 && (
+            <button onClick={onGoHistory} className="text-xs text-purple-700 underline mt-2">
+              Voir les {toValidate.length - 4} autres →
+            </button>
+          )}
+        </div>
+      )}
+
+      {errors.length > 0 && (
+        <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+          <p className="text-sm font-medium text-red-700 flex items-center gap-2 mb-2">
+            <AlertCircle size={16} /> {errors.length} publication{errors.length > 1 ? "s" : ""} en échec
+          </p>
+          {errors.slice(0, 3).map((d) => (
+            <p key={d.id} className="text-xs text-red-600 truncate">
+              « {d.theme} » — {d.publishError || "erreur inconnue"}
+            </p>
+          ))}
+          <button onClick={onGoHistory} className="text-xs text-red-700 underline mt-2">
+            Gérer dans Mes posts →
+          </button>
+        </div>
+      )}
+
+      {/* Copilote éditorial */}
+      <EditorialRecoWidget
+        onGenerate={onGenerateFromReco}
+        showToast={showToast}
+        profile={profile}
+        onProfileSaved={onProfileSaved}
+        onGoProfileField={onGoProfileField}
+        onGoCopilot={onGoCopilot}
+      />
 
       {/* Planning */}
       <div>
