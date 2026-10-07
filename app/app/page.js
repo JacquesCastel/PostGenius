@@ -7730,11 +7730,19 @@ function StatsView({ linkedin, orgs, profile, drafts, showToast, onConnect }) {
 }
 
 // ----------------------------------------------------------------
-// Onboarding première connexion : profil en 4 étapes
+// Onboarding première connexion : 3 étapes courtes, accompagnées par le compagnon. Ce sont les trois premières
+// étapes du parcours du Profil (mêmes champs, même compagnon) ; le reste (sources, rythme, LinkedIn…)
+// arrive ensuite, au fil de l'usage, via la carte « prochaine étape ».
 // ----------------------------------------------------------------
+const ONBOARDING_STEPS = [
+  { stageId: "identity", short: "Vous", title: "Bienvenue ! Qui êtes-vous ?" },
+  { stageId: "audience", short: "Votre cible", title: "À qui parlez-vous ?" },
+  { stageId: "voice", short: "Votre voix", title: "Votre façon d'écrire" },
+];
+
 function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast }) {
-  // Si LinkedIn vient d'être connecté (retour OAuth), on reprend à la dernière étape
-  const [step, setStep] = useState(linkedinConnected ? 6 : 0);
+  // Si LinkedIn vient d'être connecté (retour OAuth d'un ancien parcours), on reprend à la dernière étape
+  const [step, setStep] = useState(linkedinConnected ? ONBOARDING_STEPS.length - 1 : 0);
   const [saving, setSaving] = useState(false);
   const [fields, setFields] = useState({
     name: profile?.name ?? user?.name ?? "",
@@ -7750,151 +7758,131 @@ function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast 
     postLanguage: normalizeLanguage(profile?.postLanguage),
     styleNotes: profile?.styleNotes ?? "",
     defaultMaxChars: profile?.defaultMaxChars ?? 1300,
-    publishDays: profile?.publishDays ?? "2,4",
+    // Rythme laissé vide : la carte « prochaine étape » le proposera au bon moment
+    publishDays: profile?.publishDays ?? "",
     publishTime: profile?.publishTime ?? "09:00",
     requireValidation: profile?.requireValidation ?? true,
   });
 
   const set = (k, v) => setFields((f) => ({ ...f, [k]: v }));
-
   const toggleCsv = (key, value) => {
     const list = (fields[key] ?? "").split(",").filter(Boolean);
     const v = String(value);
     set(key, (list.includes(v) ? list.filter((x) => x !== v) : [...list, v]).join(","));
   };
 
-  const STEPS = [
-    { title: "Bienvenue ! Qui êtes-vous ?", subtitle: "Ces informations personnalisent toutes vos campagnes." },
-    {
-      title: "Votre environnement",
-      subtitle: "LinkeePost gère vos campagnes LinkedIn : décrivez votre activité, votre marché et votre cible.",
-    },
-    { title: "Expertise et objectifs", subtitle: "Ce que vous incarnez, et ce que votre communication doit accomplir." },
-    { title: "Votre façon d'écrire", subtitle: "L'IA imitera votre style à chaque génération." },
-    {
-      title: "Votre rythme de publication",
-      subtitle: "Jours et heure de vos posts — vos programmations suivront ce rythme.",
-    },
-    {
-      title: "Deux outils en plus de la génération",
-      subtitle: "Configurables à tout moment depuis le menu — un simple aperçu pour l'instant.",
-    },
-    { title: "Connectez LinkedIn", subtitle: "Pour publier en un clic. Vous pourrez le faire plus tard." },
-  ];
+  const last = ONBOARDING_STEPS.length - 1;
+  const stage = PROFILE_STAGES.find((s) => s.id === ONBOARDING_STEPS[step].stageId);
+  const nextStage = step < last ? PROFILE_STAGES.find((s) => s.id === ONBOARDING_STEPS[step + 1].stageId) : null;
+  const ctx = { knowledgeCount: 0, remarksCount: 0, styleImportedAt: profile?.styleImportedAt, linkedin: { connected: linkedinConnected } };
+  const progress = stageProgress(stage, fields, ctx);
+  const missing = stage.items.filter((i) => !i.bonus && !i.done(fields, ctx)).map((i) => i.label.toLowerCase());
 
-  const canNext =
-    step === 0
-      ? fields.name.trim()
-      : step === 1
-      ? fields.businessDescription.trim()
-      : step === 2
-      ? fields.expertise.trim()
-      : true;
+  const canNext = step === 0 ? hasText(fields.name) && hasText(fields.expertise) : step === 1 ? hasText(fields.businessDescription) : true;
 
-  // Sauvegarde le profil puis lance l'OAuth LinkedIn (la page va se recharger)
-  const connectLinkedIn = async () => {
-    setSaving(true);
-    try {
-      await fetch("/api/profile", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(fields),
-      });
-      window.location.href = "/api/linkedin/auth";
-    } catch {
-      setSaving(false);
-      showToast("Erreur de sauvegarde, réessayez");
-    }
-  };
-
-  const finish = async () => {
+  // Enregistre le profil ; à la fin, marque l'onboarding comme terminé. Une étape enregistrée n'est jamais perdue.
+  const save = async (finish) => {
+    if (saving) return;
     setSaving(true);
     try {
       const res = await fetch("/api/profile", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...fields,
-          postsPerWeek: (fields.publishDays ?? "").split(",").filter(Boolean).length || null,
-          onboarded: true,
-        }),
+        body: JSON.stringify(
+          finish ? { ...fields, postsPerWeek: (fields.publishDays ?? "").split(",").filter(Boolean).length || null, onboarded: true } : fields
+        ),
       });
       const data = await readJson(res);
       if (!res.ok) throw new Error(data.error || "Erreur");
-      onDone(data.profile);
+      if (finish) onDone(data.profile);
+      else setStep((s) => Math.min(last, s + 1));
     } catch (e) {
       showToast(e.message);
     } finally {
       setSaving(false);
     }
   };
+  const advance = () => (step < last ? save(false) : save(true));
 
   const inputCls =
     "w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]";
+  const chip = (active) =>
+    `text-xs px-3 py-1.5 rounded-full border ${active ? "bg-[#ff5a5f] text-white border-[#ff5a5f]" : "border-gray-200 text-gray-600 hover:border-gray-300"}`;
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6">
-      <div className="w-full max-w-lg">
-        <div className="flex items-center justify-center gap-2 mb-6">
+    <div className="min-h-screen flex items-start sm:items-center justify-center p-4 sm:p-6">
+      <div className="w-full max-w-xl">
+        <div className="flex items-center justify-center gap-2 mb-5">
           <div className="bg-[#ff5a5f] text-white p-2.5 rounded-xl">
             <LpMark size={24} />
           </div>
           <h1 className="font-bold text-xl">LinkeePost</h1>
         </div>
 
-        {/* Progression */}
-        <div className="flex items-center gap-2 mb-6">
-          {STEPS.map((_, i) => (
-            <div
-              key={i}
-              className={`h-1.5 flex-1 rounded-full ${i <= step ? "bg-[#ff5a5f]" : "bg-gray-200"}`}
-            />
-          ))}
+        {/* Progression : le nom des étapes, et ce que ça représente */}
+        <div className="mb-5">
+          <div className="flex items-center gap-2">
+            {ONBOARDING_STEPS.map((s, i) => (
+              <div key={s.stageId} className="flex-1">
+                <div className={`h-1.5 rounded-full ${i <= step ? "bg-[#ff5a5f]" : "bg-gray-200"}`} />
+                <p className={`text-[11px] mt-1.5 ${i === step ? "text-[#ff5a5f] font-semibold" : "text-gray-400"}`}>{s.short}</p>
+              </div>
+            ))}
+          </div>
+          <p className="text-xs text-gray-400 mt-1">Trois étapes, environ 5 minutes. Le reste se complète plus tard, au fil de l&apos;usage.</p>
         </div>
 
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+        <ProfileCompanion
+          key={stage.id}
+          stage={stage}
+          progress={progress}
+          missing={missing}
+          nextStage={nextStage}
+          values={fields}
+          onApply={set}
+          onGoNext={() => setStep((s) => Math.min(last, s + 1))}
+          onSaveNext={advance}
+          saving={saving}
+          showToast={showToast}
+        />
+
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 sm:p-6">
           <p className="text-xs font-medium text-[#ff5a5f] mb-1">
-            Étape {step + 1} sur {STEPS.length}
+            Étape {step + 1} sur {ONBOARDING_STEPS.length}
           </p>
-          <h2 className="font-semibold text-lg">{STEPS[step].title}</h2>
-          <p className="text-sm text-gray-500 mb-5">{STEPS[step].subtitle}</p>
+          <h2 className="font-semibold text-lg">{ONBOARDING_STEPS[step].title}</h2>
+          <p className="text-sm text-gray-500 mb-5">{stage.why}</p>
 
           {step === 0 && (
             <div className="space-y-3">
               <div>
                 <label className="text-sm font-medium text-gray-700 block mb-1.5">Votre nom *</label>
-                <input
-                  type="text"
-                  value={fields.name}
-                  onChange={(e) => set("name", e.target.value)}
-                  placeholder="ex : Jacques Castel"
-                  className={inputCls}
-                  autoFocus
-                />
+                <input type="text" value={fields.name} onChange={(e) => set("name", e.target.value)} placeholder="ex : Jacques Castel" className={inputCls} />
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700 block mb-1.5">
-                  Titre professionnel
-                </label>
-                <input
-                  type="text"
-                  value={fields.headline}
-                  onChange={(e) => set("headline", e.target.value)}
-                  placeholder="ex : Consultant SEO @ Acme"
-                  className={inputCls}
-                />
+                <label className="text-sm font-medium text-gray-700 block mb-1.5">Titre professionnel</label>
+                <input type="text" value={fields.headline} onChange={(e) => set("headline", e.target.value)} placeholder="ex : Consultant SEO @ Acme" className={inputCls} />
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700 block mb-1.5">
-                  Entreprise ou marque personnelle
-                </label>
+                <label className="text-sm font-medium text-gray-700 block mb-1.5">Entreprise ou marque personnelle</label>
+                <input type="text" value={fields.companyName} onChange={(e) => set("companyName", e.target.value)} placeholder="ex : Acme Conseil" className={inputCls} />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700 block mb-1.5">Je suis un(e)… *</label>
                 <input
                   type="text"
-                  value={fields.companyName}
-                  onChange={(e) => set("companyName", e.target.value)}
-                  placeholder="ex : Acme Conseil"
+                  value={fields.expertise}
+                  onChange={(e) => set("expertise", e.target.value)}
+                  placeholder="ex : consultant en marketing digital spécialisé B2B"
                   className={inputCls}
                 />
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                  {EXPERTISE_SUGGESTIONS.map((s) => (
+                    <button type="button" key={s} onClick={() => set("expertise", s)} className="text-xs bg-gray-100 hover:bg-[#fff1f1] hover:text-[#f63d44] text-gray-600 px-2 py-1 rounded-full">
+                      {s}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           )}
@@ -7902,39 +7890,38 @@ function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast 
           {step === 1 && (
             <div className="space-y-3">
               <div>
-                <label className="text-sm font-medium text-gray-700 block mb-1.5">
-                  Votre activité — que faites-vous, pour qui, avec quelle valeur ajoutée ? *
-                </label>
+                <label className="text-sm font-medium text-gray-700 block mb-1.5">Votre activité : que faites-vous, pour qui, avec quelle valeur ajoutée ? *</label>
                 <textarea
                   rows={3}
                   value={fields.businessDescription}
                   onChange={(e) => set("businessDescription", e.target.value)}
                   placeholder={"ex : cabinet de conseil en transformation digitale pour PME\nindustrielles, spécialisé dans l'automatisation des processus"}
                   className={inputCls}
-                  autoFocus
                 />
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700 block mb-1.5">
-                  Votre cible sur LinkedIn
-                </label>
-                <input
-                  type="text"
-                  value={fields.targetAudience}
-                  onChange={(e) => set("targetAudience", e.target.value)}
-                  placeholder="ex : dirigeants de PME industrielles 50-500 salariés, DAF, DSI"
-                  className={inputCls}
-                />
+                <label className="text-sm font-medium text-gray-700 block mb-1.5">Votre cible sur LinkedIn</label>
+                <input type="text" value={fields.targetAudience} onChange={(e) => set("targetAudience", e.target.value)} placeholder="ex : dirigeants de PME industrielles 50-500 salariés, DAF, DSI" className={inputCls} />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700 block mb-2">Objectifs de votre communication</label>
+                <div className="flex flex-wrap gap-1.5">
+                  {COMM_GOALS.map((g) => (
+                    <button type="button" key={g} onClick={() => toggleCsv("commGoals", g)} className={chip((fields.commGoals ?? "").split(",").includes(g))}>
+                      {g}
+                    </button>
+                  ))}
+                </div>
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-700 block mb-1.5">
-                  Votre marché et positionnement
+                  Votre positionnement <span className="text-gray-400 font-normal">(facultatif)</span>
                 </label>
                 <textarea
                   rows={2}
                   value={fields.market}
                   onChange={(e) => set("market", e.target.value)}
-                  placeholder="ex : marché concurrentiel dominé par les grands cabinets ; nous nous différencions par la proximité et le forfait"
+                  placeholder="ex : marché dominé par les grands cabinets ; nous nous différencions par la proximité et le forfait"
                   className={inputCls}
                 />
               </div>
@@ -7942,114 +7929,24 @@ function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast 
           )}
 
           {step === 2 && (
-            <div className="space-y-3">
-              <div>
-                <label className="text-sm font-medium text-gray-700 block mb-1.5">
-                  Je suis un(e)… *
-                </label>
-                <input
-                  type="text"
-                  value={fields.expertise}
-                  onChange={(e) => set("expertise", e.target.value)}
-                  placeholder="ex : consultant en marketing digital spécialisé B2B"
-                  className={inputCls}
-                  autoFocus
-                />
-                <div className="flex flex-wrap gap-1.5 mt-2">
-                  {EXPERTISE_SUGGESTIONS.map((s) => (
-                    <button
-                      key={s}
-                      onClick={() => set("expertise", s)}
-                      className="text-xs bg-gray-100 hover:bg-[#fff1f1] hover:text-[#f63d44] text-gray-600 px-2 py-1 rounded-full"
-                    >
-                      {s}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-700 block mb-1.5">
-                  Vos thématiques favorites{" "}
-                  <span className="text-gray-400 font-normal">(séparées par des virgules)</span>
-                </label>
-                <input
-                  type="text"
-                  value={fields.themes}
-                  onChange={(e) => set("themes", e.target.value)}
-                  placeholder="ex : SEO, prospection LinkedIn, freelancing"
-                  className={inputCls}
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-700 block mb-1.5">
-                  Objectifs de votre communication
-                </label>
-                <div className="flex flex-wrap gap-1.5">
-                  {COMM_GOALS.map((g) => {
-                    const active = (fields.commGoals ?? "").split(",").includes(g);
-                    return (
-                      <button
-                        key={g}
-                        onClick={() => toggleCsv("commGoals", g)}
-                        className={`text-xs px-3 py-1.5 rounded-full border ${
-                          active
-                            ? "bg-[#ff5a5f] text-white border-[#ff5a5f]"
-                            : "border-gray-200 text-gray-600 hover:border-gray-300"
-                        }`}
-                      >
-                        {g}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {step === 3 && (
             <div className="space-y-4">
-            <div>
-                <label className="text-sm font-medium text-gray-700 block mb-2">Langue de rédaction des posts</label>
-                <div className="flex flex-wrap gap-1.5">
-                  {LANGUAGES.map((l) => (
-                    <button
-                      type="button"
-                      key={l.code}
-                      onClick={() => set("postLanguage", l.code)}
-                      className={`text-xs px-3 py-1.5 rounded-full border ${
-                        fields.postLanguage === l.code
-                          ? "bg-[#ff5a5f] text-white border-[#ff5a5f]"
-                          : "border-gray-200 text-gray-600 hover:border-gray-300"
-                      }`}
-                    >
-                      {l.label}
-                    </button>
-                  ))}
-                </div>
-                <p className="text-[11px] text-gray-400 mt-1">Langue des posts générés par l&apos;IA (modifiable à chaque post). L&apos;interface reste en français.</p>
-              </div>
               <div>
-                <label className="text-sm font-medium text-gray-700 block mb-2">Ton par défaut</label>
-                <div className="flex flex-wrap gap-1.5">
-                  {TONES.map((t) => (
-                    <button
-                      key={t}
-                      onClick={() => set("tone", t)}
-                      className={`text-xs px-3 py-1.5 rounded-full border ${
-                        fields.tone === t
-                          ? "bg-[#ff5a5f] text-white border-[#ff5a5f]"
-                          : "border-gray-200 text-gray-600 hover:border-gray-300"
-                      }`}
-                    >
-                      {t}
-                    </button>
-                  ))}
-                </div>
+                <p className="text-sm font-medium text-gray-700 mb-1.5">Le plus efficace : faire lire vos anciens posts à l&apos;IA</p>
+                <p className="text-xs text-gray-400 mb-2">Elle en tire votre ton, vos tournures et vos thèmes, puis s&apos;en sert d&apos;exemples à chaque post. Sans anciens posts, décrivez simplement votre style ci-dessous.</p>
+                <ImportPostsPanel
+                  importedAt={profile?.styleImportedAt}
+                  currentLanguage={fields.postLanguage}
+                  showToast={showToast}
+                  onApplied={(p) => {
+                    if (p.styleNotes !== undefined) set("styleNotes", p.styleNotes ?? "");
+                    if (p.themes !== undefined) set("themes", p.themes ?? "");
+                    if (p.postLanguage) set("postLanguage", p.postLanguage);
+                  }}
+                />
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-700 block mb-1.5">
-                  Mon mode d'écriture{" "}
-                  <span className="text-gray-400 font-normal">(consignes pour l'IA)</span>
+                  Mon mode d&apos;écriture <span className="text-gray-400 font-normal">(consignes pour l&apos;IA)</span>
                 </label>
                 <textarea
                   rows={3}
@@ -8059,188 +7956,67 @@ function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast 
                   className={inputCls}
                 />
               </div>
-              <ImportPostsPanel
-                importedAt={profile?.styleImportedAt}
-                currentLanguage={fields.postLanguage}
-                showToast={showToast}
-                onApplied={(p) => {
-                  if (p.styleNotes !== undefined) set("styleNotes", p.styleNotes ?? "");
-                  if (p.themes !== undefined) set("themes", p.themes ?? "");
-                  if (p.postLanguage) set("postLanguage", p.postLanguage);
-                }}
-              />
               <div>
                 <label className="text-sm font-medium text-gray-700 block mb-1.5">
-                  Longueur par défaut :{" "}
-                  <span className="text-[#ff5a5f] font-semibold">{fields.defaultMaxChars} caractères</span>
+                  Vos thématiques favorites <span className="text-gray-400 font-normal">(séparées par des virgules)</span>
                 </label>
-                <input
-                  type="range"
-                  min="300"
-                  max="3000"
-                  step="100"
-                  value={fields.defaultMaxChars}
-                  onChange={(e) => set("defaultMaxChars", Number(e.target.value))}
-                  className="w-full accent-[#ff5a5f]"
-                />
+                <input type="text" value={fields.themes} onChange={(e) => set("themes", e.target.value)} placeholder="ex : SEO, prospection LinkedIn, freelancing" className={inputCls} />
               </div>
-            </div>
-          )}
-
-          {step === 4 && (
-            <div className="space-y-4">
               <div>
-                <label className="text-sm font-medium text-gray-700 block mb-2">
-                  Vos jours de publication
-                  {(fields.publishDays ?? "").split(",").filter(Boolean).length > 0 && (
-                    <span className="text-[#ff5a5f] font-semibold">
-                      {" "}
-                      — {(fields.publishDays ?? "").split(",").filter(Boolean).length} post
-                      {(fields.publishDays ?? "").split(",").filter(Boolean).length > 1 ? "s" : ""}/semaine
-                    </span>
-                  )}
-                </label>
-                <div className="flex gap-1.5">
-                  {WEEK_DAYS.map(({ n, label }) => {
-                    const active = (fields.publishDays ?? "").split(",").includes(String(n));
-                    return (
-                      <button
-                        key={n}
-                        onClick={() => toggleCsv("publishDays", n)}
-                        className={`flex-1 py-2 rounded-lg border text-xs font-medium ${
-                          active
-                            ? "bg-[#ff5a5f] text-white border-[#ff5a5f]"
-                            : "border-gray-200 text-gray-600 hover:border-gray-300"
-                        }`}
-                      >
-                        {label}
-                      </button>
-                    );
-                  })}
+                <label className="text-sm font-medium text-gray-700 block mb-2">Ton par défaut</label>
+                <div className="flex flex-wrap gap-1.5">
+                  {TONES.map((t) => (
+                    <button type="button" key={t} onClick={() => set("tone", t)} className={chip(fields.tone === t)}>
+                      {t}
+                    </button>
+                  ))}
                 </div>
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700 block mb-1.5">Heure de publication</label>
-                <input
-                  type="time"
-                  value={fields.publishTime}
-                  onChange={(e) => set("publishTime", e.target.value)}
-                  className={inputCls}
-                />
-                <p className="text-xs text-gray-400 mt-1">
-                  Sur LinkedIn, 8h-10h en semaine donne généralement le meilleur reach.
-                </p>
-              </div>
-              <div className="bg-gray-50 rounded-lg p-3">
-                <label className="flex items-start gap-2.5 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={fields.requireValidation}
-                    onChange={(e) => set("requireValidation", e.target.checked)}
-                    className="accent-[#ff5a5f] mt-0.5"
-                  />
-                  <span className="text-sm text-gray-700">
-                    <span className="font-medium">Valider mes posts avant publication</span>
-                    <br />
-                    <span className="text-xs text-gray-500">
-                      Les posts de série programmés attendront votre validation. Décochez pour une
-                      publication 100 % automatique.
-                    </span>
-                  </span>
-                </label>
-              </div>
-            </div>
-          )}
-
-          {step === 5 && (
-            <div className="space-y-3">
-              <div className="bg-gray-50 rounded-xl p-4 flex items-start gap-3">
-                <div className="bg-[#fff1f1] text-[#ff5a5f] p-2.5 rounded-xl shrink-0">
-                  <MapPin size={18} />
+                <label className="text-sm font-medium text-gray-700 block mb-2">Langue de rédaction des posts</label>
+                <div className="flex flex-wrap gap-1.5">
+                  {LANGUAGES.map((l) => (
+                    <button type="button" key={l.code} onClick={() => set("postLanguage", l.code)} className={chip(fields.postLanguage === l.code)}>
+                      {l.label}
+                    </button>
+                  ))}
                 </div>
-                <div>
-                  <p className="font-medium text-sm">Événements</p>
-                  <p className="text-xs text-gray-500 mt-0.5">
-                    Ajoutez vos salons, forums et conférences : LinkeePost génère automatiquement un post
-                    d'annonce avant et un post « jour J », avec l'image de l'événement.
-                  </p>
-                </div>
+                <p className="text-[11px] text-gray-400 mt-1">Modifiable à chaque post. L&apos;interface reste en français.</p>
               </div>
-              <div className="bg-gray-50 rounded-xl p-4 flex items-start gap-3">
-                <div className="bg-[#fff1f1] text-[#ff5a5f] p-2.5 rounded-xl shrink-0">
-                  <ImageIcon size={18} />
-                </div>
-                <div>
-                  <p className="font-medium text-sm">Charte graphique</p>
-                  <p className="text-xs text-gray-500 mt-0.5">
-                    Renseignez vos couleurs, votre logo et votre police une fois : elles sont ensuite
-                    appliquées automatiquement aux images générées pour vos posts et carrousels.
-                  </p>
-                </div>
-              </div>
-              <p className="text-xs text-gray-400 text-center pt-1">
-                Retrouvez-les à tout moment dans le menu de gauche.
-              </p>
-            </div>
-          )}
-
-          {step === 6 && (
-            <div className="text-center py-4">
-              {linkedinConnected ? (
-                <p className="text-sm text-green-700 bg-green-50 rounded-lg p-3 inline-flex items-center gap-2">
-                  <Check size={16} /> LinkedIn connecté
-                </p>
-              ) : (
-                <button
-                  onClick={connectLinkedIn}
-                  disabled={saving}
-                  className="inline-flex items-center gap-2 bg-[#0a66c2] hover:bg-[#004182] disabled:bg-gray-300 text-white text-sm font-medium px-5 py-2.5 rounded-lg"
-                >
-                  {saving ? <RefreshCw size={16} className="animate-spin" /> : <Linkedin size={16} />}
-                  Connecter mon compte LinkedIn
-                </button>
-              )}
-              <p className="text-xs text-gray-400 mt-3">
-                Optionnel — vous pourrez le faire à tout moment depuis l'en-tête de l'application.
-              </p>
             </div>
           )}
 
           {/* Navigation */}
           <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-100">
             {step > 0 ? (
-              <button onClick={() => setStep(step - 1)} className="text-sm text-gray-500 hover:text-gray-700">
+              <button type="button" onClick={() => setStep(step - 1)} className="text-sm text-gray-500 hover:text-gray-700">
                 ← Retour
               </button>
             ) : (
               <span />
             )}
-            {step < STEPS.length - 1 ? (
-              <button
-                onClick={() => setStep(step + 1)}
-                disabled={!canNext}
-                className="bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white text-sm font-medium px-5 py-2 rounded-lg flex items-center gap-1.5"
-              >
-                Continuer <ChevronRight size={15} />
-              </button>
-            ) : (
-              <button
-                onClick={finish}
-                disabled={saving}
-                className="bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white text-sm font-medium px-5 py-2 rounded-lg flex items-center gap-1.5"
-              >
-                {saving && <RefreshCw size={14} className="animate-spin" />}
-                Terminer <Check size={15} />
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={advance}
+              disabled={!canNext || saving}
+              className="bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white text-sm font-medium px-5 py-2 rounded-lg flex items-center gap-1.5"
+            >
+              {saving && <RefreshCw size={14} className="animate-spin" />}
+              {step < last ? (
+                <>
+                  Continuer <ChevronRight size={15} />
+                </>
+              ) : (
+                <>
+                  Terminer <Check size={15} />
+                </>
+              )}
+            </button>
           </div>
+          {!canNext && <p className="text-xs text-gray-400 text-right mt-2">{step === 0 ? "Votre nom et votre expertise sont nécessaires pour continuer." : "Décrivez votre activité pour continuer."}</p>}
         </div>
 
-        <button
-          onClick={finish}
-          disabled={saving}
-          className="text-xs text-gray-400 hover:text-gray-600 mt-4 block mx-auto"
-        >
+        <button type="button" onClick={() => save(true)} disabled={saving} className="text-xs text-gray-400 hover:text-gray-600 mt-4 block mx-auto">
           Passer la configuration (modifiable ensuite dans « Profil »)
         </button>
       </div>
