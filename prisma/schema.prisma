@@ -64,6 +64,11 @@ model User {
   subscriptionStatus   String?   // active | trialing | past_due | canceled | ...
   subscriptionInterval String?   // month | year
   currentPeriodEnd     DateTime? // fin de la période payée en cours
+  cancelAtPeriodEnd    Boolean   @default(false) // résiliation programmée : l'abonnement s'arrête à la fin de la période payée
+  // Changement d'offre programmé (descente à l'échéance) : l'offre et la périodicité qui suivront, et la date d'effet
+  scheduledPlan        String?
+  scheduledInterval    String?
+  scheduledAt          DateTime?
 
   linkedin  LinkedInAccount?
   instagram InstagramAccount?

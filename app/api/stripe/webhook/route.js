@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { stripe, planFromPriceId } from "@/lib/stripe";
+import { stripe } from "@/lib/stripe";
+import { syncSubscription } from "@/lib/billingSync";
+import { LIVE_STATUSES } from "@/lib/subscriptionChange";
 import { sendPaymentFailedEmail } from "@/lib/lifecycleEmails";
 
 export const runtime = "nodejs";
@@ -30,6 +32,7 @@ export async function POST(req) {
         if (session.subscription) {
           const sub = await stripe().subscriptions.retrieve(session.subscription);
           await syncSubscription(sub, session.customer, session.metadata?.userId);
+          await cancelReplacedSubscriptions(session.customer, sub.id);
         }
         break;
       }
@@ -62,30 +65,18 @@ export async function POST(req) {
   return NextResponse.json({ received: true });
 }
 
-// Met à jour le compte à partir d'un objet abonnement Stripe.
-async function syncSubscription(sub, customerId, userIdHint) {
-  const priceId = sub.items?.data?.[0]?.price?.id;
-  const map = planFromPriceId(priceId);
-
-  const data = {
-    stripeSubscriptionId: sub.id,
-    subscriptionStatus: sub.status, // active | trialing | past_due | canceled | unpaid | incomplete
-    currentPeriodEnd: sub.current_period_end ? new Date(sub.current_period_end * 1000) : null,
-  };
-  // On ne change le plan que tant que l'abonnement est vivant (pas annulé/impayé)
-  const alive = ["active", "trialing", "past_due"].includes(sub.status);
-  if (map && alive) {
-    data.plan = map.plan;
-    data.subscriptionInterval = map.interval;
-    data.planUpdatedAt = new Date();
-  }
-
-  // Cible : par userId (metadata) si dispo, sinon par client Stripe
-  const where = userIdHint ? { id: userIdHint } : { stripeCustomerId: customerId };
-  await prisma.user.update({ where, data }).catch(async () => {
-    // fallback : retrouver par client si l'id de metadata a échoué
-    if (userIdHint && customerId) {
-      await prisma.user.update({ where: { stripeCustomerId: customerId }, data }).catch(() => {});
+// Un nouvel abonnement remplace les précédents : on résilie les autres abonnements vivants du même client,
+// pour qu'un abonné ne soit jamais facturé deux fois (ancienne fenêtre de paiement restée ouverte, par exemple).
+async function cancelReplacedSubscriptions(customerId, keepId) {
+  if (!customerId) return;
+  try {
+    const { data } = await stripe().subscriptions.list({ customer: customerId, status: "all", limit: 20 });
+    for (const other of data) {
+      if (other.id === keepId || !LIVE_STATUSES.includes(other.status)) continue;
+      await stripe().subscriptions.cancel(other.id, { prorate: true }); // le temps non utilisé est crédité au client
+      console.warn(`[stripe] abonnement ${other.id} résilié : remplacé par ${keepId} (client ${customerId})`);
     }
-  });
+  } catch (e) {
+    console.error("Résiliation des abonnements remplacés impossible:", e?.message);
+  }
 }
