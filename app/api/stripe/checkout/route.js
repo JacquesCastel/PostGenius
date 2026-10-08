@@ -2,7 +2,10 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getUserId } from "@/lib/session";
 import { stripe, stripeConfigured, priceIdFor, appUrl } from "@/lib/stripe";
-import { isPlanId } from "@/lib/plans";
+import { isPlanId, changeKind } from "@/lib/plans";
+import { planFromPriceId } from "@/lib/stripe";
+import { LIVE_STATUSES, applyUpgrade, applyDowngrade, cancelScheduledChange } from "@/lib/subscriptionChange";
+import { syncSubscription } from "@/lib/billingSync";
 
 export const runtime = "nodejs";
 
@@ -22,9 +25,41 @@ export async function POST(req) {
 
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { id: true, email: true, stripeCustomerId: true },
+    select: { id: true, email: true, stripeCustomerId: true, stripeSubscriptionId: true, subscriptionStatus: true },
   });
   if (!user) return NextResponse.json({ error: "Compte introuvable." }, { status: 404 });
+
+  // Déjà abonné : on modifie l'abonnement existant, on n'en crée jamais un second
+  if (user.stripeSubscriptionId && LIVE_STATUSES.includes(user.subscriptionStatus || "")) {
+    let sub = null;
+    try {
+      sub = await stripe().subscriptions.retrieve(user.stripeSubscriptionId);
+    } catch {}
+    if (sub && LIVE_STATUSES.includes(sub.status)) {
+      const current = planFromPriceId(sub.items?.data?.[0]?.price?.id);
+      if (!current) return NextResponse.json({ error: "Votre abonnement actuel n'est pas reconnu : gérez-le depuis « Gérer mon abonnement »." }, { status: 409 });
+      const kind = changeKind(current, { plan, interval: interval === "year" ? "year" : "month" });
+      if (kind === "same" && !sub.cancel_at_period_end && !sub.schedule) return NextResponse.json({ error: "C'est déjà votre offre." }, { status: 400 });
+      if (sub.status === "past_due") return NextResponse.json({ error: "Régularisez d'abord votre paiement (« Gérer mon abonnement »), puis changez d'offre.", code: "past_due" }, { status: 409 });
+      const target = { price, userId: user.id, plan, interval: interval === "year" ? "year" : "month" };
+      try {
+        if (kind === "downgrade") {
+          if (sub.cancel_at_period_end) return NextResponse.json({ error: "Votre abonnement est résilié à l'échéance : reprenez-le d'abord, puis changez d'offre.", code: "canceling" }, { status: 409 });
+          const { effectiveAt } = await applyDowngrade(stripe(), sub, target);
+          await prisma.user.update({ where: { id: user.id }, data: { scheduledPlan: plan, scheduledInterval: target.interval, scheduledAt: effectiveAt } });
+          return NextResponse.json({ scheduled: true, kind, plan, interval: target.interval, at: effectiveAt });
+        }
+        // Montée (ou reprise de l'offre actuelle) : une planification en cours ne permet pas de modifier l'abonnement directement
+        if (sub.schedule) await cancelScheduledChange(stripe(), sub);
+        const fresh = kind === "same" ? await stripe().subscriptions.update(sub.id, { cancel_at_period_end: false }) : await applyUpgrade(stripe(), sub, target);
+        await syncSubscription(fresh, user.stripeCustomerId, user.id);
+        return NextResponse.json({ changed: true, kind, plan, interval: target.interval });
+      } catch (e) {
+        console.error("Changement d'offre:", e?.message);
+        return NextResponse.json({ error: "Le changement d'offre n'a pas pu être effectué (paiement refusé ?). Votre abonnement actuel est inchangé." }, { status: 402 });
+      }
+    }
+  }
 
   // Réutilise le client Stripe existant, sinon le crée
   let customerId = user.stripeCustomerId;

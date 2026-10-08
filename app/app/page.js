@@ -12,7 +12,7 @@ import {
   Compass, Lightbulb, EyeOff, TrendingUp, TrendingDown, Plus, Globe, ChevronUp, Menu,
   AlignLeft, AlignCenter, AlignRight, Move, Server, Clapperboard
 } from "lucide-react";
-import { PLANS, PLAN_IDS, planLabel, planAllows, planOf, trialDaysLeft, accessState } from "@/lib/plans";
+import { PLANS, PLAN_IDS, planLabel, planAllows, planOf, trialDaysLeft, accessState, changeKind, lostFeatures } from "@/lib/plans";
 import { nextSteps, snoozeUntil } from "@/lib/nextSteps";
 import { explainPublishError } from "@/lib/publishError";
 import { isOrgUrn } from "@/lib/publishVoice";
@@ -5731,6 +5731,14 @@ function BillingView({ user, showToast }) {
     incomplete: "Incomplet",
   };
 
+  const fmtDate = (d) => new Date(d).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
+  const hasLive = Boolean(user?.hasBilling) && ["active", "trialing", "past_due"].includes(status || "");
+  const currentInterval = user?.subscriptionInterval === "year" ? "year" : "month";
+  const [confirm, setConfirm] = useState(null); // { id, kind } : changement d'offre à confirmer
+
+  // Nature du passage vers une offre (pour un abonné) : upgrade | downgrade | same
+  const kindOf = (id) => changeKind({ plan: currentPlan, interval: currentInterval }, { plan: id, interval: billingInterval });
+
   const subscribe = async (plan) => {
     setBusy(plan);
     try {
@@ -5741,7 +5749,36 @@ function BillingView({ user, showToast }) {
       });
       const d = await readJson(res);
       if (!res.ok) throw new Error(d.error);
-      window.location.href = d.url;
+      if (d.url) {
+        window.location.href = d.url;
+        return;
+      }
+      // Abonnement modifié (montée) ou changement programmé (descente) : on recharge pour afficher l'état réel
+      showToast(d.scheduled ? `Changement programmé au ${fmtDate(d.at)} ✓` : "Votre offre a changé ✓");
+      setTimeout(() => { window.location.href = "/app?view=billing"; }, 900);
+    } catch (e) {
+      showToast(e.message);
+      setBusy(null);
+      setConfirm(null);
+    }
+  };
+
+  // Abonné : on demande confirmation (ce qui se passe, ce que l'on perd) ; sans abonnement : paiement direct
+  const choose = (id) => {
+    if (!hasLive) return subscribe(id);
+    setConfirm({ id, kind: kindOf(id) });
+  };
+
+  const undo = async (action) => {
+    setBusy(action);
+    try {
+      const res = action === "resume"
+        ? await fetch("/api/stripe/schedule", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "resume" }) })
+        : await fetch("/api/stripe/schedule", { method: "DELETE" });
+      const d = await readJson(res);
+      if (!res.ok) throw new Error(d.error);
+      showToast(action === "resume" ? "Votre abonnement continue ✓" : "Changement annulé ✓");
+      setTimeout(() => { window.location.href = "/app?view=billing"; }, 700);
     } catch (e) {
       showToast(e.message);
       setBusy(null);
@@ -5782,6 +5819,18 @@ function BillingView({ user, showToast }) {
             ) : (
               <p className="text-sm text-gray-500 mt-1">Aucun abonnement actif.</p>
             )}
+            {active && user?.cancelAtPeriodEnd && user?.currentPeriodEnd && (
+              <div className="mt-3 bg-amber-50 border border-amber-200 rounded-xl p-3 text-sm text-amber-900" data-testid="billing-canceling">
+                Résiliation programmée : votre abonnement s&apos;arrête le <strong>{fmtDate(user.currentPeriodEnd)}</strong>. Vous gardez tous vos accès jusque-là.
+                <button type="button" onClick={() => undo("resume")} disabled={busy === "resume"} className="ml-2 font-semibold underline hover:no-underline">Reprendre mon abonnement</button>
+              </div>
+            )}
+            {active && !user?.cancelAtPeriodEnd && user?.scheduledPlan && user?.scheduledAt && (
+              <div className="mt-3 bg-sky-50 border border-sky-200 rounded-xl p-3 text-sm text-sky-900" data-testid="billing-scheduled">
+                Changement programmé : le <strong>{fmtDate(user.scheduledAt)}</strong>, vous passerez à <strong>{planLabel(user.scheduledPlan)}</strong> ({user.scheduledInterval === "year" ? "annuel" : "mensuel"}). D&apos;ici là, vous gardez votre offre actuelle.
+                <button type="button" onClick={() => undo("cancel_schedule")} disabled={busy === "cancel_schedule"} className="ml-2 font-semibold underline hover:no-underline">Annuler ce changement</button>
+              </div>
+            )}
           </div>
           {user?.hasBilling && (
             <button
@@ -5820,7 +5869,8 @@ function BillingView({ user, showToast }) {
           const monthly = p.price;
           const yearly = p.price * 10;
           const price = billingInterval === "year" ? yearly : monthly;
-          const isCurrent = id === currentPlan && active;
+          const isCurrent = id === currentPlan && active && billingInterval === currentInterval && !user?.scheduledPlan && !user?.cancelAtPeriodEnd;
+          const kind = active ? kindOf(id) : null;
           return (
             <div
               key={id}
@@ -5845,14 +5895,14 @@ function BillingView({ user, showToast }) {
                 </div>
               ) : (
                 <button
-                  onClick={() => subscribe(id)}
+                  onClick={() => choose(id)}
                   disabled={busy === id}
                   className={`mt-5 w-full font-semibold px-4 py-2.5 rounded-full flex items-center justify-center gap-2 ${
                     id === "pro" ? "bg-[#ff5a5f] hover:bg-[#f63d44] text-white" : "border-2 border-[#ffd5d6] hover:border-[#ff5a5f] text-[#1b2a4a]"
                   }`}
                 >
                   {busy === id ? <RefreshCw size={15} className="animate-spin" /> : <CreditCard size={15} />}
-                  {active ? "Choisir cette offre" : "S'abonner"}
+                  {!active ? "S'abonner" : kind === "upgrade" ? "Passer à cette offre" : kind === "downgrade" ? "Choisir cette offre" : "Garder cette offre"}
                 </button>
               )}
             </div>
@@ -5863,6 +5913,46 @@ function BillingView({ user, showToast }) {
       <p className="text-xs text-gray-400 text-center">
         Paiement sécurisé par Stripe. Sans engagement, résiliable à tout moment depuis « Gérer mon abonnement ».
       </p>
+
+      {confirm && (() => {
+        const target = PLANS[confirm.id];
+        const targetPrice = billingInterval === "year" ? target.price * 10 : target.price;
+        const unit = billingInterval === "year" ? "an" : "mois";
+        const lost = confirm.kind === "downgrade" ? lostFeatures(currentPlan, confirm.id) : [];
+        return (
+          <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={busy ? undefined : () => setConfirm(null)}>
+            <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-5" onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Changer d'offre" data-testid="plan-confirm">
+              <h3 className="font-semibold text-base">
+                {confirm.kind === "upgrade" ? `Passer à ${target.name} (${billingInterval === "year" ? "annuel" : "mensuel"}) ?` : confirm.kind === "downgrade" ? `Passer à ${target.name} (${billingInterval === "year" ? "annuel" : "mensuel"}) à l'échéance ?` : `Garder ${target.name} ?`}
+              </h3>
+              {confirm.kind === "upgrade" && (
+                <p className="text-sm text-gray-600 mt-2">
+                  Le changement est <strong>immédiat</strong>. La différence, calculée au prorata du temps restant sur votre période, est facturée tout de suite sur votre moyen de paiement ; ensuite {targetPrice} € HT par {unit}. Rien ne change si le paiement échoue.
+                </p>
+              )}
+              {confirm.kind === "downgrade" && (
+                <>
+                  <p className="text-sm text-gray-600 mt-2">
+                    Le changement prendra effet {user?.currentPeriodEnd ? <>le <strong>{fmtDate(user.currentPeriodEnd)}</strong>, à la fin de la période déjà payée</> : "à la fin de la période déjà payée"}. D&apos;ici là, vous gardez {planLabel(currentPlan)}. Ensuite : {targetPrice} € HT par {unit}.
+                  </p>
+                  {lost.length > 0 && (
+                    <div className="mt-3 bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs text-amber-900">
+                      Vous n&apos;aurez plus : {lost.join(", ")}.
+                    </div>
+                  )}
+                </>
+              )}
+              {confirm.kind === "same" && <p className="text-sm text-gray-600 mt-2">Le changement ou la résiliation programmé sera annulé : votre abonnement continue tel quel.</p>}
+              <div className="flex justify-end gap-2 mt-4">
+                <button type="button" onClick={() => setConfirm(null)} disabled={Boolean(busy)} className="px-4 py-2 rounded-lg text-sm text-gray-600 hover:bg-gray-50">Annuler</button>
+                <button type="button" onClick={() => subscribe(confirm.id)} disabled={Boolean(busy)} data-testid="plan-confirm-ok" className="bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white text-sm font-semibold px-4 py-2 rounded-lg flex items-center gap-2">
+                  {busy === confirm.id && <RefreshCw size={14} className="animate-spin" />} Confirmer
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </main>
   );
 }

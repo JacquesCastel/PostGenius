@@ -13,6 +13,7 @@ export async function GET(req) {
       id: true, email: true, name: true, role: true, disabled: true,
       plan: true, trialEndsAt: true, subscriptionStatus: true,
       subscriptionInterval: true, currentPeriodEnd: true, stripeCustomerId: true,
+      cancelAtPeriodEnd: true, scheduledPlan: true, scheduledInterval: true, scheduledAt: true,
     },
   });
   if (!user || user.disabled) return NextResponse.json({ user: null });
@@ -71,6 +72,10 @@ export async function GET(req) {
       subscriptionStatus: user.subscriptionStatus,
       subscriptionInterval: user.subscriptionInterval,
       currentPeriodEnd: user.currentPeriodEnd,
+      cancelAtPeriodEnd: user.cancelAtPeriodEnd,
+      scheduledPlan: user.scheduledPlan,
+      scheduledInterval: user.scheduledInterval,
+      scheduledAt: user.scheduledAt,
       hasBilling: Boolean(user.stripeCustomerId),
       billingEnabled: Boolean(process.env.STRIPE_SECRET_KEY),
     },
