@@ -7,6 +7,7 @@ import { checkPostQuota, checkAccess } from "@/lib/gating";
 import { renderPostTemplate } from "@/lib/templates";
 import { saveImage } from "@/lib/image";
 import { isOrgUrn } from "@/lib/publishVoice";
+import { findKit } from "@/lib/brandKitStore";
 
 const DEFAULT_KIT = {
   primaryColor:   "#0a66c2",
@@ -22,9 +23,9 @@ const DEFAULT_KIT = {
  * Génère un visuel de gabarit et l'attache au draft — en arrière-plan (fire & forget).
  * Appelé uniquement si l'utilisateur a une BrandKit configurée.
  */
-async function attachTemplateImage(draftId, userId, text) {
+async function attachTemplateImage(draftId, userId, text, contextId = null) {
   try {
-    const kitRow = await prisma.brandKit.findUnique({ where: { userId } });
+    const kitRow = await findKit(userId, contextId);
     if (!kitRow) return; // Pas de charte → pas de génération auto
 
     const kit = { ...DEFAULT_KIT, ...kitRow };
@@ -125,7 +126,7 @@ export async function POST(req) {
 
   // Génération auto du visuel de gabarit (fire & forget — uniquement si imageUrl non fournie et BrandKit existe)
   if (!imageUrl && (type === "simple" || !type)) {
-    attachTemplateImage(draft.id, userId, text).catch(() => {});
+    attachTemplateImage(draft.id, userId, text, draftContextId).catch(() => {});
   }
 
   const { generatedText: _omit, ...publicDraft } = draft;

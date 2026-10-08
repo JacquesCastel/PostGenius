@@ -135,7 +135,7 @@ model User {
   contexts Context[]
 
   // --- Charte graphique ---
-  brandKit       BrandKit?
+  brandKits      BrandKit[]
   mediaAssets    MediaAsset[]
   slideTemplates SlideTemplate[]
 
@@ -151,8 +151,11 @@ model User {
 // Utilisée par le moteur Satori pour générer les visuels des posts et carrousels.
 model BrandKit {
   id             String   @id @default(cuid())
-  userId         String   @unique
+  userId         String
   user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // Charte de l'entreprise (nul = entreprise principale). Une charte par (compte, entreprise), garantie par le code.
+  contextId      String?
+  context        Context? @relation(fields: [contextId], references: [id], onDelete: Cascade)
 
   // Couleurs
   primaryColor   String   @default("#0a66c2") // fond principal
@@ -301,6 +304,9 @@ model ContentSource {
   url       String // URL du flux RSS (ou de la page si flux découvert)
   title     String
   createdAt DateTime @default(now())
+  // Entreprise dont la veille suit ce flux (nul = entreprise principale)
+  contextId String?
+  context   Context? @relation(fields: [contextId], references: [id], onDelete: Cascade)
 
   @@unique([userId, url])
 }
@@ -318,6 +324,9 @@ model Campaign {
   status    String   @default("active") // active | archivée
   createdAt DateTime @default(now())
   drafts    Draft[]
+  // Entreprise pour laquelle la campagne est menée (nul = entreprise principale)
+  contextId String?
+  company   Context? @relation(fields: [contextId], references: [id], onDelete: SetNull)
 }
 
 model Draft {
@@ -609,8 +618,11 @@ model Context {
   editorialLine       String? // angle et registre éditorial propres à cette entreprise
   createdAt           DateTime @default(now())
 
-  sources KnowledgeSource[]
-  drafts  Draft[]
+  sources   KnowledgeSource[]
+  drafts    Draft[]
+  campaigns Campaign[]
+  brandKits BrandKit[]
+  feeds     ContentSource[]
 
   @@index([userId])
 }

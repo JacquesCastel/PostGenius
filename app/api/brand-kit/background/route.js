@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { getContextFor } from "@/lib/contexts";
+import { findKit, saveKit } from "@/lib/brandKitStore";
 import { prisma } from "@/lib/db";
 import { getEffectiveUserId as getUserId } from "@/lib/session";
 import fs from "fs/promises";
@@ -15,6 +17,8 @@ export async function POST(req) {
   if (!userId) return NextResponse.json({ error: "Non connecté" }, { status: 401 });
 
   const formData = await req.formData();
+  const contextId = String(formData.get("contextId") ?? "") || null;
+  if (contextId && !(await getContextFor(userId, contextId))) return NextResponse.json({ error: "Entreprise introuvable." }, { status: 400 });
   const file = formData.get("file");
   if (!file || typeof file === "string") {
     return NextResponse.json({ error: "Fichier manquant" }, { status: 400 });
@@ -39,11 +43,7 @@ export async function POST(req) {
 
   const backgroundUrl = `/api/images/backgrounds/${fileName}`;
 
-  await prisma.brandKit.upsert({
-    where: { userId },
-    update: { backgroundUrl },
-    create: { userId, backgroundUrl },
-  });
+  await saveKit(userId, contextId, { backgroundUrl });
 
   return NextResponse.json({ backgroundUrl });
 }
@@ -53,10 +53,9 @@ export async function DELETE(req) {
   const userId = await getUserId(req);
   if (!userId) return NextResponse.json({ error: "Non connecté" }, { status: 401 });
 
-  await prisma.brandKit.update({
-    where: { userId },
-    data: { backgroundUrl: null },
-  }).catch(() => {});
+  const contextId = new URL(req.url).searchParams.get("contextId") || null;
+  const kit = await findKit(userId, contextId);
+  if (kit) await prisma.brandKit.update({ where: { id: kit.id }, data: { backgroundUrl: null } }).catch(() => {});
 
   return NextResponse.json({ ok: true });
 }

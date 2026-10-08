@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { getEffectiveUserId as getUserId } from "@/lib/session";
 import { checkFeature } from "@/lib/gating";
 import { normalizeMood } from "@/lib/moods";
+import { getContextFor } from "@/lib/contexts";
 
 // Campagnes LinkedIn du client
 
@@ -18,6 +19,7 @@ export async function GET(req) {
     orderBy: { createdAt: "desc" },
     include: {
       drafts: { select: { status: true, scheduledAt: true, publishedAt: true } },
+      company: { select: { name: true } },
     },
   });
 
@@ -37,6 +39,8 @@ export async function GET(req) {
         context: c.context,
         mood: c.mood,
         status: c.status,
+        contextId: c.contextId,
+        contextName: c.company?.name ?? null,
         createdAt: c.createdAt,
         postCount: c.drafts.length,
         published: byStatus["publié"] ?? 0,
@@ -56,8 +60,15 @@ export async function POST(req) {
   const feat = await checkFeature(userId, "campaigns", "L'outil de campagne");
   if (!feat.ok) return NextResponse.json({ error: feat.error }, { status: 403 });
 
-  const { name, theme, objective, context, mood } = await req.json();
+  const { name, theme, objective, context, mood, contextId } = await req.json();
   if (!theme?.trim()) return NextResponse.json({ error: "Thème requis." }, { status: 400 });
+  // Entreprise de la campagne (facultatif ; nul = entreprise principale)
+  let ownContextId = null;
+  if (contextId) {
+    const own = await getContextFor(userId, contextId);
+    if (!own) return NextResponse.json({ error: "Entreprise introuvable." }, { status: 400 });
+    ownContextId = own.id;
+  }
 
   const campaign = await prisma.campaign.create({
     data: {
@@ -67,6 +78,7 @@ export async function POST(req) {
       objective: objective?.trim() || null,
       context: context?.trim() || null,
       mood: normalizeMood(mood),
+      contextId: ownContextId,
     },
   });
   return NextResponse.json({ campaign });

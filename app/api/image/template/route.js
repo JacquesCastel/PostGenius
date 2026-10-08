@@ -3,6 +3,8 @@ import { prisma } from "@/lib/db";
 import { getEffectiveUserId as getUserId } from "@/lib/session";
 import { renderPostTemplate, renderCarouselTemplate } from "@/lib/templates";
 import { saveImage } from "@/lib/image";
+import { getContextFor } from "@/lib/contexts";
+import { findKit } from "@/lib/brandKitStore";
 
 export const maxDuration = 60;
 
@@ -32,10 +34,14 @@ export async function POST(req) {
 
   const body = await req.json();
   const { type = "post", text, slides, draftId } = body;
+  // Charte de l'entreprise du post : celle demandée, sinon celle du brouillon, sinon l'entreprise principale
+  let contextId = body.contextId || null;
+  if (!contextId && draftId) contextId = (await prisma.draft.findFirst({ where: { id: String(draftId), userId }, select: { contextId: true } }))?.contextId ?? null;
+  if (contextId && !(await getContextFor(userId, contextId))) contextId = null;
 
   try {
     // Charge le BrandKit de l'utilisateur (ou valeurs par défaut)
-    const kitRow = await prisma.brandKit.findUnique({ where: { userId } });
+    const kitRow = await findKit(userId, contextId);
     const kit = kitRow ?? DEFAULT_KIT;
 
     // Si le logo est une URL relative (/api/images/logos/…), on le résout en URL absolue

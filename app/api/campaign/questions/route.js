@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { getEffectiveUserId as getUserId } from "@/lib/session";
 import { userContextBlock } from "@/lib/campaign";
 import { logUsage } from "@/lib/usage";
+import { userWithContext } from "@/lib/contexts";
 
 // L'IA pose 3 questions de cadrage sur le thème de campagne,
 // en s'appuyant sur le contexte métier déjà connu du client.
@@ -11,10 +12,15 @@ export async function POST(req) {
   const userId = await getUserId(req);
   if (!userId) return NextResponse.json({ error: "Non connecté." }, { status: 401 });
 
-  const { theme, objective } = await req.json();
+  const { theme, objective, contextId } = await req.json();
   if (!theme?.trim()) return NextResponse.json({ error: "Thème requis." }, { status: 400 });
 
-  const user = await prisma.user.findUnique({ where: { id: userId } });
+  let user;
+  try {
+    ({ user } = await userWithContext(userId, contextId || null));
+  } catch (e) {
+    return NextResponse.json({ error: e.message }, { status: 400 });
+  }
 
   const prompt = `Un client prépare une campagne de posts LinkedIn sur le thème : "${theme}"${
     objective ? ` (objectif : ${objective})` : ""

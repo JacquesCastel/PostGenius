@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, createContext, useContext } from "react";
 import {
   Sparkles, FileText, Layers, Video, Copy, Check, Trash2, Send,
   Clock, PenLine, History, RefreshCw, Linkedin, ChevronRight, ChevronLeft, X, LogOut,
@@ -1186,17 +1186,19 @@ function CampaignWizard({ profile, linkedin, orgs, onClose, onLaunched, onProfil
   const [pickedLink, setPickedLink] = useState(null);
   const [veille, setVeille] = useState(null);
   // Point de départ choisi à l'étape 1 : un thème libre, un article, un document ou la veille
+  const { contexts: ents, activeContextId } = useContext(EntreprisesCtx);
+  const [wizCtx, setWizCtx] = useState(initial?.contextId ?? activeContextId ?? null); // entreprise de la campagne
   const [startMode, setStartMode] = useState(initial?.context ? "veille" : "theme");
   const [source, setSource] = useState(null);
   const [qi, setQi] = useState(0); // question de cadrage affichée
   const [questionsKey, setQuestionsKey] = useState(""); // thème et objectif des questions chargées : « Retour » ne les régénère pas
 
   useEffect(() => {
-    fetch("/api/veille")
+    fetch(`/api/veille${wizCtx ? `?contextId=${wizCtx}` : ""}`)
       .then((r) => r.json())
       .then((d) => setVeille(d.items ?? []))
       .catch(() => setVeille([]));
-  }, []);
+  }, [wizCtx]);
 
   const pickArticle = (it) => {
     if (pickedLink === (it.link ?? it.title)) {
@@ -1256,7 +1258,7 @@ function CampaignWizard({ profile, linkedin, orgs, onClose, onLaunched, onProfil
       const res = await fetch("/api/campaign/questions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ theme, objective }),
+        body: JSON.stringify({ theme, objective, contextId: wizCtx || undefined }),
       });
       const data = await readJson(res);
       if (!res.ok) throw new Error(data.error);
@@ -1284,6 +1286,7 @@ function CampaignWizard({ profile, linkedin, orgs, onClose, onLaunched, onProfil
           objective,
           mood,
           context: buildContext(),
+          contextId: wizCtx || undefined,
           ...(withFeedback ? { feedback: fb, previous: sample, history: sampleThread.filter((m) => m.role === "user").map((m) => m.text) } : {}),
         }),
       });
@@ -1347,7 +1350,7 @@ function CampaignWizard({ profile, linkedin, orgs, onClose, onLaunched, onProfil
       const cRes = await fetch("/api/campaigns", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, theme, objective, mood, context: buildContext() }),
+        body: JSON.stringify({ name, theme, objective, mood, context: buildContext(), contextId: wizCtx || undefined }),
       });
       const cData = await readJson(cRes);
       if (!cRes.ok) throw new Error(cData.error);
@@ -1425,6 +1428,16 @@ function CampaignWizard({ profile, linkedin, orgs, onClose, onLaunched, onProfil
                   <X size={13} />
                 </button>
               </p>
+            )}
+            {ents.length > 0 && (
+              <div data-testid="wizard-context">
+                <label className="text-sm font-medium text-gray-700 block mb-2">Pour quelle entreprise ?</label>
+                <div className="flex flex-wrap gap-1.5">
+                  {[{ id: null, label: profile?.companyName || "Entreprise principale" }, ...ents.map((c) => ({ id: c.id, label: c.name }))].map((o) => (
+                    <button key={o.id ?? "main"} type="button" onClick={() => setWizCtx(o.id)} className={`text-xs px-3 py-1.5 rounded-full border ${wizCtx === o.id ? "bg-[#ff5a5f] text-white border-[#ff5a5f]" : "border-gray-200 text-gray-600 hover:border-gray-300"}`}>{o.label}</button>
+                  ))}
+                </div>
+              </div>
             )}
             <div>
               <label className="text-sm font-medium text-gray-700 block mb-2">Sur quoi porte votre campagne ?</label>
@@ -2338,6 +2351,7 @@ function CampaignsView({ profile, linkedin, orgs, showToast, onPlanned, onProfil
                   <div className="min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <h3 className="font-semibold text-base truncate">{c.name}</h3>
+                      {c.contextName && <span className="text-xs bg-sky-50 text-sky-700 px-2 py-0.5 rounded-full max-w-[10rem] truncate" data-testid="campaign-company">{c.contextName}</span>}
                       {c.objective && (
                         <span className="text-xs bg-[#fff1f1] text-[#f63d44] px-2 py-0.5 rounded-full">
                           {c.objective}
@@ -2433,6 +2447,8 @@ function CampaignsView({ profile, linkedin, orgs, showToast, onPlanned, onProfil
 // avec le profil, transformables en posts
 // ----------------------------------------------------------------
 function VeilleBlock({ showToast, onInspire, onCampaign }) {
+  const { activeContextId } = useContext(EntreprisesCtx);
+  const cq = activeContextId ? `contextId=${activeContextId}` : "";
   const [sources, setSources] = useState([]);
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -2441,14 +2457,14 @@ function VeilleBlock({ showToast, onInspire, onCampaign }) {
   const [showAll, setShowAll] = useState(false);
 
   const loadSources = () =>
-    fetch("/api/sources")
+    fetch(`/api/sources${cq ? `?${cq}` : ""}`)
       .then((r) => r.json())
       .then((d) => setSources(d.sources ?? []))
       .catch(() => {});
 
   const loadItems = (force) => {
     setLoading(true);
-    fetch(`/api/veille${force ? "?refresh=1" : ""}`)
+    fetch(`/api/veille?${[force ? "refresh=1" : "", cq].filter(Boolean).join("&")}`)
       .then((r) => r.json())
       .then((d) => setItems(d.items ?? []))
       .catch(() => {})
@@ -2456,14 +2472,15 @@ function VeilleBlock({ showToast, onInspire, onCampaign }) {
   };
 
   useEffect(() => {
+    setItems([]);
     loadSources();
     loadItems();
-  }, []);
+  }, [activeContextId]);
 
   const suggest = async () => {
     setSuggesting(true);
     try {
-      const res = await fetch("/api/sources/suggest", { method: "POST" });
+      const res = await fetch("/api/sources/suggest", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ contextId: activeContextId || undefined }) });
       const data = await readJson(res);
       if (!res.ok) throw new Error(data.error);
       showToast(`${data.added.length} source${data.added.length > 1 ? "s" : ""} en affinité ajoutée${data.added.length > 1 ? "s" : ""} ✓`);
@@ -2483,7 +2500,7 @@ function VeilleBlock({ showToast, onInspire, onCampaign }) {
       const res = await fetch("/api/sources", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: addUrl }),
+        body: JSON.stringify({ url: addUrl, contextId: activeContextId || undefined }),
       });
       const data = await readJson(res);
       if (!res.ok) throw new Error(data.error);
@@ -9173,7 +9190,10 @@ function MonthlyReportModal({ client, onClose }) {
 
 // ── Ligne de tableau client (avec accordéon) ────────────────────────
 // Écrans accessibles par /app?view=… (notifications, bascule de client, retour au tableau de bord agence)
-const DEEP_LINK_VIEWS = ["dashboard", "create", "content", "campaigns", "connections", "profile", "stats", "copilot", "events", "engage", "brand-kit", "billing", "clients", "messages"];
+// Entreprise sélectionnée (voir « Mes entreprises » dans le profil) : partagée par la création, les campagnes, la veille et la charte
+const EntreprisesCtx = createContext({ contexts: [], activeContextId: null, activeContext: null, chooseContext: () => {} });
+
+const DEEP_LINK_VIEWS = ["dashboard", "create", "history", "campaigns", "connections", "profile", "stats", "copilot", "events", "engage", "brand-kit", "billing", "clients", "messages"];
 
 function ClientTableRow({ client, onManage, onViewDrafts, onDelete, deleting, onShowReport }) {
   const [open, setOpen] = useState(false);
@@ -9596,10 +9616,10 @@ function ClientsView({ showToast, onManage }) {
                         <div className="flex items-center gap-1.5">
                           <button onClick={() => setReviewing({ posts })} className="bg-[#ff5a5f] text-white px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-[#e5454a]">Relire</button>
                           {posts.length > 1 && <button onClick={() => setBulkFor({ posts })} className="border border-gray-200 text-gray-600 px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-gray-50">Tout valider</button>}
-                          <button onClick={() => onManage(client, "content")} className="border border-gray-200 text-gray-500 px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-gray-50">Ouvrir l&apos;espace</button>
+                          <button onClick={() => onManage(client, "history")} className="border border-gray-200 text-gray-500 px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-gray-50">Ouvrir l&apos;espace</button>
                         </div>
                       ) : (
-                        <button onClick={() => onManage(client, "content")} className="bg-[#ff5a5f] text-white px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-[#e5454a]">Corriger dans son espace</button>
+                        <button onClick={() => onManage(client, "history")} className="bg-[#ff5a5f] text-white px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-[#e5454a]">Corriger dans son espace</button>
                       )}
                     </li>
                   ))}
@@ -10570,6 +10590,7 @@ function SlideTemplateEditor({ kind, kit, onClose, onSaved, showToast }) {
 }
 
 function BrandKitView({ showToast }) {
+  const { activeContextId, activeContext, contexts: ents } = useContext(EntreprisesCtx);
   const [activeTab, setActiveTab] = useState("charte"); // "charte" | "mediatheque"
   const [kit, setKit] = useState({
     primaryColor:   "#0a66c2",
@@ -10593,12 +10614,13 @@ function BrandKitView({ showToast }) {
   const set = (k, v) => setKit((f) => ({ ...f, [k]: v }));
 
   useEffect(() => {
-    fetch("/api/brand-kit")
+    setLoading(true);
+    fetch(`/api/brand-kit${activeContextId ? `?contextId=${activeContextId}` : ""}`)
       .then((r) => r.json())
       .then((d) => { if (d.brandKit) setKit({ tagline: "", ...d.brandKit }); })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, []);
+  }, [activeContextId]);
 
   const save = async () => {
     setSaving(true);
@@ -10606,7 +10628,7 @@ function BrandKitView({ showToast }) {
       const res = await fetch("/api/brand-kit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(kit),
+        body: JSON.stringify({ ...kit, contextId: activeContextId || null }),
       });
       const d = await res.json();
       if (!res.ok) throw new Error(d.error || "Erreur");
@@ -10625,6 +10647,7 @@ function BrandKitView({ showToast }) {
     try {
       const fd = new FormData();
       fd.append("file", file);
+      if (activeContextId) fd.append("contextId", activeContextId);
       const res = await fetch("/api/brand-kit/logo", { method: "POST", body: fd });
       const d = await res.json();
       if (!res.ok) throw new Error(d.error || "Erreur upload");
@@ -10644,6 +10667,7 @@ function BrandKitView({ showToast }) {
     try {
       const fd = new FormData();
       fd.append("file", file);
+      if (activeContextId) fd.append("contextId", activeContextId);
       const res = await fetch("/api/brand-kit/background", { method: "POST", body: fd });
       const d = await res.json();
       if (!res.ok) throw new Error(d.error || "Erreur upload");
@@ -10658,7 +10682,7 @@ function BrandKitView({ showToast }) {
 
   const removeBg = async () => {
     set("backgroundUrl", null);
-    await fetch("/api/brand-kit/background", { method: "DELETE" }).catch(() => {});
+    await fetch(`/api/brand-kit/background${activeContextId ? `?contextId=${activeContextId}` : ""}`, { method: "DELETE" }).catch(() => {});
   };
 
   // Exemples pour l'aperçu des 3 slides de carrousel (mêmes gabarits que
@@ -10682,7 +10706,7 @@ function BrandKitView({ showToast }) {
       await fetch("/api/brand-kit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(kit),
+        body: JSON.stringify({ ...kit, contextId: activeContextId || null }),
       });
       const body =
         kind === "post"
@@ -10694,7 +10718,7 @@ function BrandKitView({ showToast }) {
       const res = await fetch("/api/image/template", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
+        body: JSON.stringify({ ...body, contextId: activeContextId || undefined }),
       });
       const d = await res.json();
       if (!res.ok) throw new Error(d.error || "Erreur génération");
@@ -10735,6 +10759,13 @@ function BrandKitView({ showToast }) {
       {activeTab === "mediatheque" ? (
         <MediaLibraryView showToast={showToast} />
       ) : (
+      <>
+      {ents.length > 0 && (
+        <p className="text-xs text-gray-500 mb-4" data-testid="kit-company">
+          Charte graphique de : <span className="font-semibold text-gray-700">{activeContext?.name || "l'entreprise principale"}</span>
+          <span className="text-gray-400"> · changez d&apos;entreprise avec le sélecteur en haut de page. Les modèles de slides restent communs.</span>
+        </p>
+      )}
       <div className="grid lg:grid-cols-2 gap-6 items-start">
 
         {/* Colonne gauche — formulaire */}
@@ -10976,6 +11007,7 @@ function BrandKitView({ showToast }) {
           </div>
         </div>
       </div>
+      </>
       )}
     </main>
     {editingKind && (
@@ -12298,6 +12330,7 @@ function TutorialOverlay({ canEvents, onClose }) {
 // même gabarit Satori que la charte graphique (couleurs, logo, police de l'utilisateur).
 // Ne publie rien : images téléchargeables, à poster manuellement en document LinkedIn.
 function CarouselImagesBlock({ slides }) {
+  const { activeContextId } = useContext(EntreprisesCtx);
   const [images, setImages] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -12309,7 +12342,7 @@ function CarouselImagesBlock({ slides }) {
       const res = await fetch("/api/image/template", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type: "carousel", slides }),
+        body: JSON.stringify({ type: "carousel", slides, contextId: activeContextId || undefined }),
       });
       const d = await res.json();
       if (!res.ok) throw new Error(d.error || "Échec de la génération");
@@ -12634,6 +12667,7 @@ export default function Home() {
   // Mes posts : recherche, filtre par campagne, relecture en série et validation groupée
   const [postSearch, setPostSearch] = useState("");
   const [postCampaign, setPostCampaign] = useState("all"); // all | none | id de campagne
+  const [postCompany, setPostCompany] = useState("all"); // all | main | id d'entreprise
   const [reviewOpen, setReviewOpen] = useState(false);
   const [bulkOpen, setBulkOpen] = useState(false);
   const [bulkBusy, setBulkBusy] = useState(false);
@@ -13233,7 +13267,7 @@ export default function Home() {
       const res = await fetch("/api/image/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text, prompt: imagePromptInput, useBrandKit: useBrandKitForImage }),
+        body: JSON.stringify({ text, prompt: imagePromptInput, useBrandKit: useBrandKitForImage, contextId: activeContextId || undefined }),
       });
       const data = await readJson(res);
       if (!res.ok) throw new Error(data.error || "Erreur");
@@ -13263,7 +13297,7 @@ export default function Home() {
       const res = await fetch("/api/image/template", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type: "post", text }),
+        body: JSON.stringify({ type: "post", text, contextId: activeContextId || undefined }),
       });
       const data = await readJson(res);
       if (!res.ok) throw new Error(data.error || "Erreur");
@@ -14139,10 +14173,11 @@ export default function Home() {
   const visiblePosts = postsForTarget.filter(
     (d) =>
       (postCampaign === "all" || (postCampaign === "none" ? !d.campaignId : d.campaignId === postCampaign)) &&
+      (postCompany === "all" || (postCompany === "main" ? !d.contextId : d.contextId === postCompany)) &&
       (!normSearch || `${d.theme ?? ""} ${d.text ?? ""} ${d.campaign?.name ?? ""}`.toLowerCase().includes(normSearch))
   );
   const campaignOptions = [...new Map(postsForTarget.filter((d) => d.campaignId && d.campaign?.name).map((d) => [d.campaignId, d.campaign.name])).entries()];
-  const filtersActive = postCampaign !== "all" || Boolean(normSearch);
+  const filtersActive = postCampaign !== "all" || postCompany !== "all" || Boolean(normSearch);
   const toReview = visiblePosts
     .filter((d) => d.status === "à valider")
     .sort((a, b) => new Date(a.scheduledAt ?? 0) - new Date(b.scheduledAt ?? 0));
@@ -14177,6 +14212,7 @@ export default function Home() {
   // overflow-x-clip et non -hidden : hidden ferait de la racine un conteneur de défilement et
   // casserait position: sticky (barre latérale, barres d'actions).
   return (
+    <EntreprisesCtx.Provider value={{ contexts, activeContextId, activeContext, chooseContext }}>
     <div className="min-h-screen flex overflow-x-clip">
       {/* Tutoriel de première connexion */}
       {showTutorial && <TutorialOverlay canEvents={planAllows(user, "events")} onClose={closeTutorial} />}
@@ -14524,6 +14560,15 @@ export default function Home() {
             <p className="text-xs text-gray-400">Bonjour {user.name || ""} 👋</p>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
+          {contexts.length > 0 && !user.isSuperAdmin && ["dashboard", "create", "campaigns", "brand-kit"].includes(view) && (
+            <label className="flex items-center gap-1.5 text-xs text-gray-500" data-testid="global-context">
+              Entreprise
+              <select value={activeContextId ?? ""} onChange={(e) => chooseContext(e.target.value || null)} aria-label="Entreprise active" className="border border-gray-200 rounded-lg px-2 py-1.5 text-xs bg-white text-gray-700 max-w-[11rem]">
+                <option value="">{profile?.companyName || "Entreprise principale"}</option>
+                {contexts.map((c) => (<option key={c.id} value={c.id}>{c.name}</option>))}
+              </select>
+            </label>
+          )}
           {user.isSuperAdmin ? null : linkedin.connected ? (
             <div className="flex items-center gap-2 text-sm flex-wrap">
               <span className="flex items-center gap-1.5 bg-green-50 text-green-700 px-3 py-1.5 rounded-full text-xs font-medium">
@@ -16006,10 +16051,23 @@ export default function Home() {
                   <option value="none">Sans campagne</option>
                 </select>
               )}
+              {contexts.length > 0 && (
+                <select
+                  value={postCompany}
+                  onChange={(e) => setPostCompany(e.target.value)}
+                  aria-label="Filtrer par entreprise"
+                  data-testid="posts-company-filter"
+                  className="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#ff5a5f] max-w-full"
+                >
+                  <option value="all">Toutes les entreprises</option>
+                  <option value="main">{profile?.companyName || "Entreprise principale"}</option>
+                  {contexts.map((c) => (<option key={c.id} value={c.id}>{c.name}</option>))}
+                </select>
+              )}
               {filtersActive && (
                 <>
                   <span className="text-xs text-gray-400">{visiblePosts.length} post{visiblePosts.length > 1 ? "s" : ""} sur {postsForTarget.length}</span>
-                  <button type="button" onClick={() => { setPostSearch(""); setPostCampaign("all"); }} className="text-xs text-[#ff5a5f] hover:underline">Réinitialiser</button>
+                  <button type="button" onClick={() => { setPostSearch(""); setPostCampaign("all"); setPostCompany("all"); }} className="text-xs text-[#ff5a5f] hover:underline">Réinitialiser</button>
                 </>
               )}
             </div>
@@ -16264,6 +16322,11 @@ export default function Home() {
                                     </button>
                                   );
                                 })()}
+                                {contexts.length > 0 && (
+                                  <button type="button" onClick={() => setPostCompany(p.contextId || "main")} title="Voir seulement cette entreprise" className="bg-sky-50 text-sky-700 px-1.5 py-0.5 rounded-full max-w-[9rem] truncate hover:bg-sky-100" data-testid="post-company-badge">
+                                    {p.contextId ? contexts.find((c) => c.id === p.contextId)?.name ?? "Entreprise" : profile?.companyName || "Principale"}
+                                  </button>
+                                )}
                                 {p.campaign?.name && (
                                   <button type="button" onClick={() => setPostCampaign(p.campaignId)} title="Voir seulement cette campagne" className="bg-[#fff1f1] text-[#f63d44] px-1.5 py-0.5 rounded-full max-w-[10rem] truncate hover:bg-[#ffe0e0]" data-testid="post-campaign-badge">
                                     {p.campaign.name}
@@ -16477,5 +16540,6 @@ export default function Home() {
       )}
       </div>
     </div>
+    </EntreprisesCtx.Provider>
   );
 }

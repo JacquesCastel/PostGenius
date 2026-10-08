@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { getEffectiveUserId as getUserId } from "@/lib/session";
 import { getVeille } from "@/lib/veille";
 import { checkFeature } from "@/lib/gating";
+import { getContextFor } from "@/lib/contexts";
 
 // Articles récents agrégés depuis les sources du client (cache 30 min)
 
@@ -16,9 +17,11 @@ export async function GET(req) {
   const { searchParams } = new URL(req.url);
   const force = searchParams.get("refresh") === "1";
 
-  const sources = await prisma.contentSource.findMany({ where: { userId } });
+  const contextId = searchParams.get("contextId") || null;
+  if (contextId && !(await getContextFor(userId, contextId))) return NextResponse.json({ error: "Entreprise introuvable." }, { status: 400 });
+  const sources = await prisma.contentSource.findMany({ where: { userId, contextId } });
   if (!sources.length) return NextResponse.json({ items: [] });
 
-  const items = await getVeille(userId, sources, { force });
+  const items = await getVeille(userId, sources, { force, scope: contextId ?? "" });
   return NextResponse.json({ items });
 }
