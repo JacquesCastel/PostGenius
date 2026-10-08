@@ -6,6 +6,7 @@ import { parseYouTubeId, youtubeWatchUrl } from "@/lib/youtube";
 import { checkPostQuota, checkAccess } from "@/lib/gating";
 import { renderPostTemplate } from "@/lib/templates";
 import { saveImage } from "@/lib/image";
+import { isOrgUrn } from "@/lib/publishVoice";
 
 const DEFAULT_KIT = {
   primaryColor:   "#0a66c2",
@@ -65,7 +66,7 @@ export async function POST(req) {
   const userId = await getUserId(req);
   if (!userId) return NextResponse.json({ error: "Non connecté." }, { status: 401 });
 
-  const { type, theme, expertise, tone, maxChars, text, generatedText, extra, inspirationUrl, imageUrl, imagePrompt, videoUrl, youtubeUrl, pillarId } =
+  const { type, theme, expertise, tone, maxChars, text, generatedText, extra, inspirationUrl, imageUrl, imagePrompt, videoUrl, youtubeUrl, pillarId, target } =
     await req.json();
   if (!text?.trim()) return NextResponse.json({ error: "Texte requis." }, { status: 400 });
 
@@ -79,6 +80,10 @@ export async function POST(req) {
 
   if (youtubeUrl && !parseYouTubeId(youtubeUrl)) {
     return NextResponse.json({ error: "Lien YouTube invalide." }, { status: 400 });
+  }
+  // Compte de publication prévu à la création : profil ("person", défaut) ou page entreprise
+  if (target !== undefined && target !== "person" && !isOrgUrn(target)) {
+    return NextResponse.json({ error: "Compte de publication invalide." }, { status: 400 });
   }
 
   const access = await checkAccess(userId);
@@ -105,6 +110,7 @@ export async function POST(req) {
       videoUrl: videoUrl || null,
       youtubeUrl: youtubeUrl ? youtubeWatchUrl(parseYouTubeId(youtubeUrl)) : null,
       pillarId: pillarId || null,
+      ...(target ? { target } : {}),
     },
   });
 

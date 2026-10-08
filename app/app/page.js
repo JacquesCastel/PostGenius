@@ -15,6 +15,7 @@ import {
 import { PLANS, PLAN_IDS, planLabel, planAllows, planOf, trialDaysLeft, accessState } from "@/lib/plans";
 import { nextSteps, snoozeUntil } from "@/lib/nextSteps";
 import { explainPublishError } from "@/lib/publishError";
+import { isOrgUrn } from "@/lib/publishVoice";
 import SiteHeader from "@/components/SiteHeader";
 // Polices de la charte graphique, chargées comme polices web pour que l'éditeur de
 // modèle de slide (SlideTemplateEditor) affiche vraiment celle choisie — jusqu'ici
@@ -1818,6 +1819,12 @@ function CampaignWizard({ profile, linkedin, orgs, onClose, onLaunched, onProfil
                         Page : {o.name}
                       </option>
                     ))}
+                  {linkedin?.orgConnected &&
+                    orgs?.map((o) => (
+                      <option key={`both:${o.urn}`} value={`both:${o.urn}`}>
+                        Profil + page {o.name} (2 versions adaptées)
+                      </option>
+                    ))}
                 </select>
               </div>
             </div>
@@ -2281,6 +2288,12 @@ function CampaignsView({ profile, linkedin, orgs, showToast, onPlanned, onProfil
               orgs?.map((o) => (
                 <option key={o.urn} value={o.urn}>
                   Page : {o.name}
+                </option>
+              ))}
+            {linkedin?.orgConnected &&
+              orgs?.map((o) => (
+                <option key={`both:${o.urn}`} value={`both:${o.urn}`}>
+                  Profil + page {o.name} (2 versions)
                 </option>
               ))}
           </select>
@@ -12488,6 +12501,10 @@ export default function Home() {
   const [publishingId, setPublishingId] = useState(null);
   const [orgs, setOrgs] = useState([]);
   const [target, setTarget] = useState("person");
+  // « Profil + page » : le post est écrit deux fois, une version par voix (profil « je », page « nous »)
+  const [pairWith, setPairWith] = useState(null); // urn de la page associée
+  const [pair, setPair] = useState(null); // [{ target, result, history }] une fois générées
+  const [pairTab, setPairTab] = useState(0);
   const [profile, setProfile] = useState(null);
   const [profileLoaded, setProfileLoaded] = useState(false);
   const [linkedinLoaded, setLinkedinLoaded] = useState(false);
@@ -12664,6 +12681,23 @@ export default function Home() {
     showToast("Instagram déconnecté");
   };
 
+  // Voix du post selon la page de publication : profil (« je ») ou page entreprise (« nous »)
+  const voiceFor = (tgt) => (isOrgUrn(tgt) ? { kind: "org", pageName: orgs.find((o) => o.urn === tgt)?.name ?? "" } : { kind: "person" });
+  // Deux versions : posts uniques seulement (ni série ni variantes)
+  const pairActive = Boolean(pairWith) && genMode === "single" && !wantVariants && linkedin.connected && orgs.some((o) => o.urn === pairWith);
+  // Change de version dans la paire : la version quittée garde ses retouches
+  const switchPairTab = (i) => {
+    if (!pair || i === pairTab || loading) return;
+    const next = pair.map((x, k) => (k === pairTab ? { ...x, result, history } : x));
+    setPair(next);
+    setPairTab(i);
+    setResult(next[i].result);
+    setHistory(next[i].history ?? []);
+    setThread([]);
+    setEditingResult(false);
+    setTarget(next[i].target);
+  };
+
   const handleGenerate = async () => {
     setLoading(true);
     setError(null);
@@ -12677,21 +12711,35 @@ export default function Home() {
     setPostImage(null);
     setPostVideo(null);
     setPostYoutube(null);
+    setPair(null);
+    setPairTab(0);
     try {
-      const res = await fetch("/api/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...form,
-          mode: genMode,
-          count: seriesCount,
-          variants: genMode === "single" && wantVariants ? 3 : undefined,
-          inspiration: genMode === "single" ? inspiration : undefined,
-          source: activeSource ? { title: activeSource.title, origin: activeSource.origin, text: activeSource.text } : undefined,
-        }),
+      const body = (tgt) => JSON.stringify({
+        ...form,
+        mode: genMode,
+        count: seriesCount,
+        variants: genMode === "single" && wantVariants ? 3 : undefined,
+        inspiration: genMode === "single" ? inspiration : undefined,
+        source: activeSource ? { title: activeSource.title, origin: activeSource.origin, text: activeSource.text } : undefined,
+        publishAs: voiceFor(tgt),
       });
-      const data = await readJson(res);
-      if (!res.ok) throw new Error(data.error || "Erreur inconnue");
+      const call = async (tgt) => {
+        const r = await fetch("/api/generate", { method: "POST", headers: { "Content-Type": "application/json" }, body: body(tgt) });
+        const d = await readJson(r);
+        if (!r.ok) throw new Error(d.error || "Erreur inconnue");
+        return d;
+      };
+      if (pairActive) {
+        // Deux versions adaptées : celle du profil, celle de la page
+        const [a, b] = await Promise.all([call("person"), call(pairWith)]);
+        setPair([{ target: "person", result: a, history: [] }, { target: pairWith, result: b, history: [] }]);
+        setPairTab(0);
+        setTarget("person");
+        setResult(a);
+        setResultView(true);
+        return;
+      }
+      const data = await call(target);
       if (data.posts) {
         setSeriesResult(data.posts);
       } else if (data.variants) {
@@ -12791,7 +12839,7 @@ export default function Home() {
       const res = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, ...(moodOverride !== undefined ? { mood: moodOverride } : {}), refine: { text: result.text, instruction, history: thread.filter((m) => m.role === "user").map((m) => m.text) } }),
+        body: JSON.stringify({ ...form, publishAs: voiceFor(target), ...(moodOverride !== undefined ? { mood: moodOverride } : {}), refine: { text: result.text, instruction, history: thread.filter((m) => m.role === "user").map((m) => m.text) } }),
       });
       const data = await readJson(res);
       if (!res.ok) throw new Error(data.error || "Erreur inconnue");
@@ -12851,19 +12899,23 @@ export default function Home() {
     setTimeout(() => setCopied(false), 1500);
   };
 
-  const saveDraft = async ({ silent } = {}) => {
-    if (!result) return null;
+  // override : { result, history, target } pour enregistrer une autre version que celle affichée (paire profil + page)
+  const saveDraft = async ({ silent, override } = {}) => {
+    const r = override?.result ?? result;
+    const h = override?.history ?? history;
+    if (!r) return null;
     try {
       const res = await fetch("/api/drafts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...form,
-          text: result.text,
+          target: override?.target ?? target,
+          text: r.text,
           // Version d'origine de l'IA (la plus ancienne de l'historique) : sert à repérer
           // ce que l'utilisateur modifie d'habitude.
-          generatedText: (history[0] ?? result).text,
-          extra: result.extra,
+          generatedText: (h[0] ?? r).text,
+          extra: r.extra,
           inspirationUrl: inspiration?.link ?? null,
           imageUrl: postImage?.url ?? null,
           imagePrompt: postImage?.prompt ?? null,
@@ -12884,6 +12936,8 @@ export default function Home() {
   };
 
   const clearResultArea = () => {
+    setPair(null);
+    setPairTab(0);
     setResultView(false);
     setResult(null);
     setVariants(null);
@@ -13398,6 +13452,21 @@ export default function Home() {
     </div>
   );
 
+  // Paire profil + page : enregistre les deux versions en brouillon (chacune avec sa page de publication)
+  const saveBothFlow = async () => {
+    if (!pair) return;
+    const versions = pair.map((x, k) => (k === pairTab ? { ...x, result, history } : x));
+    const saved = [];
+    for (const v of versions) {
+      const d = await saveDraft({ silent: true, override: v });
+      if (!d) return;
+      saved.push(d);
+    }
+    clearResultArea();
+    setView("history");
+    showToast("Deux brouillons enregistrés : profil et page ✓");
+  };
+
   // Wizard : Brouillon → propose programmer/publier ensuite
   const saveDraftFlow = async () => {
     const d = await saveDraft({ silent: true });
@@ -13584,6 +13653,7 @@ export default function Home() {
     setLinkedin({ connected: false, name: "", orgConnected: false });
     setOrgs([]);
     setTarget("person");
+    setPairWith(null);
   };
 
   const startEdit = (p) => {
@@ -14399,7 +14469,7 @@ export default function Home() {
                   </span>
                 </div>
                 <div className="flex items-center gap-1.5 flex-wrap justify-end">
-                  {linkedin.connected && linkedin.orgConnected && orgs.length > 0 && (
+                  {linkedin.connected && linkedin.orgConnected && orgs.length > 0 && !pair && (
                     <select
                       value={target}
                       onChange={(e) => setTarget(e.target.value)}
@@ -14415,11 +14485,21 @@ export default function Home() {
                     </select>
                   )}
                   <span className="hidden md:inline text-[11px] font-semibold uppercase tracking-wide text-gray-400 mr-1">Terminer</span>
+                  {pair && (
+                    <button
+                      onClick={saveBothFlow}
+                      data-testid="save-both"
+                      className="border border-gray-300 hover:border-[#ff5a5f] hover:text-[#ff5a5f] text-gray-700 text-xs font-medium px-3 py-1.5 rounded-lg flex items-center gap-1.5"
+                      title="Enregistrer la version du profil et celle de la page en brouillon"
+                    >
+                      <Save size={13} /> Les deux en brouillon
+                    </button>
+                  )}
                   <button
                     onClick={saveDraftFlow}
                     className="border border-gray-300 hover:border-[#ff5a5f] hover:text-[#ff5a5f] text-gray-700 text-xs font-medium px-3 py-1.5 rounded-lg flex items-center gap-1.5"
                   >
-                    <Save size={13} /> Brouillon
+                    <Save size={13} /> {pair ? "Cette version" : "Brouillon"}
                   </button>
                   <button
                     onClick={scheduleNow}
@@ -14481,6 +14561,26 @@ export default function Home() {
           <div className="grid lg:grid-cols-2 gap-6 items-start">
             {/* Gauche : le post */}
             <div className="space-y-4 lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto lg:p-1 lg:-m-1">
+            {result && pair && (
+              <div className="space-y-1.5" data-testid="pair-tabs">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  {pair.map((v, i) => (
+                    <button
+                      key={i}
+                      onClick={() => switchPairTab(i)}
+                      className={`text-xs px-3 py-1.5 rounded-full border font-medium ${
+                        i === pairTab ? "bg-[#ff5a5f] text-white border-[#ff5a5f]" : "border-gray-300 text-gray-600 hover:border-[#ff8a8d]"
+                      }`}
+                    >
+                      {i === 0 ? "Profil personnel" : `Page : ${orgs.find((o) => o.urn === v.target)?.name ?? "entreprise"}`}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-[11px] text-gray-400">
+                  {pairTab === 0 ? "Écrit à la première personne, avec votre voix." : "Écrit avec la voix de la marque (« nous »)."} Les retouches, Programmer et Publier s&apos;appliquent à la version affichée.
+                </p>
+              </div>
+            )}
             {result && variants && (
               <div className="flex items-center gap-1.5 flex-wrap">
                 {variants.map((v, i) => (
@@ -14926,6 +15026,42 @@ export default function Home() {
                 ))}
               </div>
             </div>
+
+            {/* Où publier : la voix du post en dépend (profil « je », page « nous ») */}
+            {linkedin.connected && orgs.length > 0 && (
+              <div data-testid="publish-as">
+                <label className="text-sm font-medium text-gray-700 block mb-2">Publier en tant que</label>
+                <div className="flex flex-wrap gap-1.5">
+                  {[
+                    { v: "person", label: `Profil personnel${linkedin.name ? ` (${linkedin.name})` : ""}` },
+                    ...orgs.map((o) => ({ v: o.urn, label: `Page : ${o.name}` })),
+                    ...(genMode === "single" && !wantVariants ? orgs.map((o) => ({ v: `both:${o.urn}`, label: `Profil + page ${o.name}` })) : []),
+                  ].map((o) => {
+                    const current = pairActive ? `both:${pairWith}` : target;
+                    return (
+                      <button
+                        key={o.v}
+                        type="button"
+                        onClick={() => {
+                          if (o.v.startsWith("both:")) { setPairWith(o.v.slice(5)); setTarget("person"); }
+                          else { setPairWith(null); setTarget(o.v); }
+                        }}
+                        className={`text-xs px-3 py-1.5 rounded-full border ${current === o.v ? "bg-[#ff5a5f] text-white border-[#ff5a5f]" : "border-gray-200 text-gray-600 hover:border-gray-300"}`}
+                      >
+                        {o.label}
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="text-[11px] text-gray-400 mt-1.5">
+                  {pairActive
+                    ? "Deux versions adaptées : l'une à la première personne pour votre profil, l'autre avec la voix de la marque pour la page. Vous les relisez chacune."
+                    : isOrgUrn(target)
+                    ? "Le post sera écrit avec la voix de la marque (« nous »), pas la vôtre."
+                    : "Le post sera écrit à la première personne, avec votre voix."}
+                </p>
+              </div>
+            )}
 
             {/* 3 · Réglages : repliés, un résumé suffit tant qu'on ne les change pas */}
             <div className="border border-gray-200 rounded-xl">
