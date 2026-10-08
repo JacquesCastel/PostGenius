@@ -12720,8 +12720,9 @@ function CarouselImagesBlock({ slides }) {
 // Contexte du copilote : ce sur quoi le prochain post va s'appuyer (profil, sources, remarques, posts proches).
 // Même sélection que la génération ; un résumé d'une ligne, le détail se déplie.
 // Contexte propre à un post : public visé, objectif, angle. Pré-rempli depuis le profil ; modifier ici ne change que ce post.
-function PostContextBlock({ profile, value, onChange }) {
-  const [open, setOpen] = useState(false);
+function PostContextBlock({ profile, value, onChange, alwaysOpen = false }) {
+  const [openState, setOpen] = useState(false);
+  const open = alwaysOpen || openState;
   const specific = cleanPostContext(value, profile);
   const goals = (value.goal ?? "").split(",").map((g) => g.trim()).filter(Boolean);
   const toggleGoal = (g) => onChange({ ...value, goal: (goals.includes(g) ? goals.filter((x) => x !== g) : [...goals, g]).join(",") });
@@ -12733,8 +12734,8 @@ function PostContextBlock({ profile, value, onChange }) {
     : "Facultatif — précisez le public ou l'objectif de ce post";
   const inputCls = "w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]";
   return (
-    <div className="border border-gray-200 rounded-xl" data-testid="post-context">
-      <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open} className="w-full flex items-center justify-between gap-3 px-3.5 py-3 text-left">
+    <div className={alwaysOpen ? "" : "border border-gray-200 rounded-xl"} data-testid="post-context">
+      {!alwaysOpen && <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open} className="w-full flex items-center justify-between gap-3 px-3.5 py-3 text-left">
         <span className="min-w-0">
           <span className="block text-sm font-medium text-gray-700">Pour qui, et pour quoi ?{different && <span className="ml-2 text-[10px] font-semibold uppercase text-[#f63d44] bg-[#fff1f1] px-1.5 py-0.5 rounded">adapté à ce post</span>}</span>
           <span className="block text-xs text-gray-400 truncate">{summary}</span>
@@ -12742,9 +12743,9 @@ function PostContextBlock({ profile, value, onChange }) {
         <span className="text-xs text-[#0a66c2] flex items-center gap-1 shrink-0">
           {open ? "Réduire" : "Préciser"} <ChevronDown size={14} className={`transition-transform ${open ? "rotate-180" : ""}`} />
         </span>
-      </button>
+      </button>}
       {open && (
-        <div className="px-3.5 pb-4 space-y-4 border-t border-gray-100 pt-4">
+        <div className={alwaysOpen ? "space-y-4" : "px-3.5 pb-4 space-y-4 border-t border-gray-100 pt-4"}>
           <div>
             <label className="text-sm font-medium text-gray-700 block mb-1.5">Public visé par ce post</label>
             <input type="text" value={value.audience} onChange={(e) => onChange({ ...value, audience: e.target.value })} placeholder="ex : DRH d'ETI, dirigeants de PME…" className={inputCls} data-testid="post-audience" />
@@ -13040,7 +13041,6 @@ export default function Home() {
   const [source, setSource] = useState(null); // { kind, title, origin, text, chars, truncated }
   const [sourceBusy, setSourceBusy] = useState(false);
   const [sourceError, setSourceError] = useState(null);
-  const [settingsOpen, setSettingsOpen] = useState(false);
   const [variants, setVariants] = useState(null);
   const [activeVariant, setActiveVariant] = useState(0);
   const [history, setHistory] = useState([]); // versions précédentes du post
@@ -13131,7 +13131,7 @@ export default function Home() {
   const [createStep, setCreateStep] = useState(null);
   const prevViewRef = useRef(view);
   useEffect(() => {
-    if (view === "create" && prevViewRef.current !== "create") setCreateStep(form.theme.trim() || (genMode === "single" && sourceMode !== "idea" && source) ? "shape" : null);
+    if (view === "create" && prevViewRef.current !== "create") setCreateStep(form.theme.trim() || (genMode === "single" && sourceMode !== "idea" && source) ? (genMode === "single" ? "ctx" : "settings") : null);
     prevViewRef.current = view;
   }, [view]);
   useEffect(() => {
@@ -13146,7 +13146,6 @@ export default function Home() {
   const activeSource = genMode === "single" && sourceMode !== "idea" ? source : null;
   const canGenerate = (form.theme.trim() || activeSource) && form.expertise.trim();
   // Réglages : repliés sauf si l'expertise manque (indispensable) ; le résumé dit ce qui sera appliqué
-  const settingsShown = settingsOpen || !form.expertise.trim();
   const settingsSummary = [
     LANGUAGES.find((l) => l.code === normalizeLanguage(form.language ?? profile?.postLanguage))?.label,
     form.tone,
@@ -13162,7 +13161,11 @@ export default function Home() {
   const createSteps = [
     ...((linkedin.connected && orgs.length > 0) || contexts.length > 0 ? [{ id: "who", label: "Pour qui ?", short: "Pour qui" }] : []),
     { id: "topic", label: "De quoi parler ?", short: "Sujet" },
-    { id: "shape", label: genMode === "series" ? "Réglages" : "Forme et réglages", short: "Forme" },
+    ...(genMode === "single" ? [
+      { id: "ctx", label: "Pour qui, et pour quoi ?", short: "Public" },
+      { id: "shape", label: "Quelle forme ?", short: "Forme" },
+    ] : []),
+    { id: "settings", label: "Réglages", short: "Réglages" },
     { id: "go", label: "Générer", short: "Générer" },
   ];
   const curStep = createSteps.find((x) => x.id === createStep) ?? createSteps[0];
@@ -15781,9 +15784,12 @@ export default function Home() {
 
             </div>
 
+            <div className={stepCls("ctx")}>
+              {genMode === "single" && <PostContextBlock alwaysOpen profile={ctxProfile} value={postCtx} onChange={(v) => { setPostCtxTouched(true); setPostCtx(v); }} />}
+            </div>
+
             <div className={stepCls("shape")}>
-            {/* 2 · Format */}
-            <div className={genMode === "series" ? "hidden" : ""}>
+            <div>
               <label className="text-sm font-medium text-gray-700 block mb-2">Format</label>
               <div className="grid grid-cols-3 gap-2">
                 {POST_TYPES.map(({ id, label, icon: Icon, desc }) => (
@@ -15803,21 +15809,12 @@ export default function Home() {
               </div>
             </div>
 
-            {genMode === "single" && <PostContextBlock profile={ctxProfile} value={postCtx} onChange={(v) => { setPostCtxTouched(true); setPostCtx(v); }} />}
+            </div>
 
-            {/* 3 · Réglages : repliés, un résumé suffit tant qu'on ne les change pas */}
-            <div className="border border-gray-200 rounded-xl">
-              <button type="button" onClick={() => setSettingsOpen((o) => !o)} aria-expanded={settingsShown} className="w-full flex items-center justify-between gap-3 px-3.5 py-3 text-left">
-                <span className="min-w-0">
-                  <span className="block text-sm font-medium text-gray-700">Réglages</span>
-                  <span className="block text-xs text-gray-400 truncate">{settingsSummary}</span>
-                </span>
-                <span className="text-xs text-[#0a66c2] flex items-center gap-1 shrink-0">
-                  {settingsShown ? "Réduire" : "Modifier"} <ChevronDown size={14} className={`transition-transform ${settingsShown ? "rotate-180" : ""}`} />
-                </span>
-              </button>
-              {settingsShown && (
-                <div className="px-3.5 pb-4 space-y-5 border-t border-gray-100 pt-4">
+            <div className={stepCls("settings")}>
+            <div data-testid="settings-block">
+              {true && (
+                <div className="space-y-5">
                   <div>
                     <label className="text-sm font-medium text-gray-700 block mb-2">Votre expertise — « Je suis un(e)… »</label>
                     <input
@@ -15918,7 +15915,6 @@ export default function Home() {
                 </div>
               )}
             </div>
-
             </div>
 
             <div className={stepCls("go")} data-testid="create-recap">
@@ -15927,8 +15923,11 @@ export default function Home() {
                   ["topic", "Sujet", genMode === "series" ? `Série de ${seriesCount} posts · ${form.theme.trim().slice(0, 90) || "à préciser"}` : (activeSource?.title || form.theme.trim().slice(0, 110) || "à préciser")],
                   ...(contexts.length > 0 ? [["who", "Entreprise", activeContext?.name || profile?.companyName || "Entreprise principale"]] : []),
                   ...(linkedin.connected && orgs.length > 0 ? [["who", "Publier en tant que", pairActive ? `Profil + page ${orgs.find((o) => o.urn === pairWith)?.name ?? ""} (deux versions)` : isOrgUrn(target) ? `Page : ${orgs.find((o) => o.urn === target)?.name ?? "entreprise"}` : "Profil personnel"]] : []),
-                  ...(genMode === "single" ? [["shape", "Format", `${POST_TYPES.find((t) => t.id === form.type)?.label ?? "Post simple"}${Object.keys(postCtxSpecific).length ? " · précisions pour ce post" : ""}`]] : []),
-                  ["shape", "Réglages", settingsSummary],
+                  ...(genMode === "single" ? [
+                    ["ctx", "Public et objectif", Object.keys(postCtxSpecific).length ? [postCtxSpecific.audience && `public : ${postCtxSpecific.audience}`, postCtxSpecific.goal && `objectif : ${postCtxSpecific.goal.split(",").join(" + ")}`, postCtxSpecific.angle && `angle : ${postCtxSpecific.angle}`].filter(Boolean).join(" · ") : "Repris de votre profil"],
+                    ["shape", "Format", POST_TYPES.find((t) => t.id === form.type)?.label ?? "Post simple"],
+                  ] : []),
+                  ["settings", "Réglages", settingsSummary],
                 ].map(([id, label, value], k) => (
                   <div key={k} className="flex items-start justify-between gap-3 px-3.5 py-2.5">
                     <div className="min-w-0">
@@ -15970,7 +15969,7 @@ export default function Home() {
                   <button
                     type="button"
                     onClick={() => setCreateStep(createSteps[curIdx + 1].id)}
-                    disabled={(curStep.id === "topic" && !hasTopic) || (curStep.id === "shape" && !form.expertise.trim())}
+                    disabled={(curStep.id === "topic" && !hasTopic) || (curStep.id === "settings" && !form.expertise.trim())}
                     data-testid="create-next"
                     className="flex-1 bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white font-medium py-3 rounded-lg flex items-center justify-center gap-1.5"
                   >
@@ -15986,7 +15985,7 @@ export default function Home() {
               {curStep.id === "topic" && !hasTopic && (
                 <p className="text-xs text-gray-400 text-center">{sourceMode === "link" && genMode === "single" ? "Lisez un article ou décrivez votre idée pour continuer." : sourceMode === "file" && genMode === "single" ? "Lisez un document ou décrivez votre idée pour continuer." : "Décrivez votre sujet pour continuer."}</p>
               )}
-              {curStep.id === "shape" && !form.expertise.trim() && (
+              {curStep.id === "settings" && !form.expertise.trim() && (
                 <p className="text-xs text-gray-400 text-center">Renseignez votre expertise (dans « Réglages ») pour continuer.</p>
               )}
               {curStep.id === "go" && !canGenerate && (
