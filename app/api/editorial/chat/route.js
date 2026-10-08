@@ -5,6 +5,7 @@ import { checkAccess } from "@/lib/gating";
 import { rateLimit } from "@/lib/ratelimit";
 import { logUsage } from "@/lib/usage";
 import { getRemarks } from "@/lib/remarks";
+import { datalakeBlockFor } from "@/lib/datalakeBlock";
 import { chatTurn, sanitizeRecoPatch, MAX_MESSAGE_CHARS } from "@/lib/editorial/chat";
 import { getHistory, proposeFromChat, pendingChatSuggestions } from "@/lib/editorial/chatStore";
 
@@ -54,7 +55,8 @@ export async function POST(req) {
 
   try {
     const [history, remarks] = await Promise.all([getHistory(userId, 40), getRemarks(userId)]);
-    const out = await chatTurn({ user, history, message, reco, remarks });
+    const datalake = await datalakeBlockFor(userId, [reco?.topic, reco?.angle, message].filter(Boolean).join(" "));
+    const out = await chatTurn({ user, history, message, reco, remarks, datalake });
     logUsage(userId, { context: "chat copilote éditorial", inputTokens: out.usage?.input_tokens ?? 0, outputTokens: out.usage?.output_tokens ?? 0 });
 
     // Piste retravaillée : seuls les champs réellement changés sont enregistrés
