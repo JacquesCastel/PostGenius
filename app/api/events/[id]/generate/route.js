@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getEffectiveUserId as getUserId } from "@/lib/session";
 import { logUsage } from "@/lib/usage";
-import { checkFeature } from "@/lib/gating";
+import { checkFeature, limitBody } from "@/lib/gating";
 
 export const maxDuration = 120;
 
@@ -25,7 +25,7 @@ export async function POST(req, { params }) {
     return NextResponse.json({ error: "Clé IA manquante." }, { status: 500 });
 
   const feat = await checkFeature(userId, "events", "Le module Événements");
-  if (!feat.ok) return NextResponse.json({ error: feat.error }, { status: 403 });
+  if (!feat.ok) return NextResponse.json(limitBody(feat), { status: 403 });
 
   const { id } = await params;
   const event = await prisma.event.findUnique({ where: { id } });

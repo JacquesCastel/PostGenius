@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getEffectiveUserId as getUserId } from "@/lib/session";
 import { publishForUser } from "@/lib/publish";
-import { checkFeature } from "@/lib/gating";
+import { checkFeature, limitBody } from "@/lib/gating";
 
 // Publication manuelle immédiate (bouton « Publier sur LinkedIn »).
 // La logique LinkedIn est dans lib/publish.js, partagée avec le cron.
@@ -17,7 +17,7 @@ export async function POST(req) {
   // Publication sur une page entreprise (URN organization) : réservée à l'offre Agence
   if (typeof author === "string" && author.includes("organization")) {
     const feat = await checkFeature(userId, "orgPublish", "La publication sur page entreprise");
-    if (!feat.ok) return NextResponse.json({ error: feat.error }, { status: 403 });
+    if (!feat.ok) return NextResponse.json(limitBody(feat), { status: 403 });
   }
 
   try {

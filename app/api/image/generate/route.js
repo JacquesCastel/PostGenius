@@ -5,7 +5,7 @@ import { prisma } from "@/lib/db";
 import { getEffectiveUserId as getUserId } from "@/lib/session";
 import { saveImage } from "@/lib/image";
 import { logUsage } from "@/lib/usage";
-import { checkImageQuota, checkAccess } from "@/lib/gating";
+import { checkImageQuota, checkAccess, limitBody } from "@/lib/gating";
 
 // Génère une image pour un post : prompt fourni par le client,
 // ou rédigé par Claude à partir du contenu du post + contexte de marque.
@@ -76,7 +76,7 @@ export async function POST(req) {
   const access = await checkAccess(userId);
   if (!access.ok) return NextResponse.json({ error: access.error, code: access.code }, { status: 403 });
   const imgQuota = await checkImageQuota(userId);
-  if (!imgQuota.ok) return NextResponse.json({ error: imgQuota.error }, { status: 403 });
+  if (!imgQuota.ok) return NextResponse.json(limitBody(imgQuota), { status: 403 });
   if (!process.env.OPENAI_API_KEY) {
     return NextResponse.json(
       { error: "OPENAI_API_KEY manquante dans .env (requise pour la génération d'images)." },

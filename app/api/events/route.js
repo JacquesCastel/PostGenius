@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getEffectiveUserId as getUserId } from "@/lib/session";
-import { checkFeature } from "@/lib/gating";
+import { checkFeature, limitBody } from "@/lib/gating";
 
 // Événements (salons, forums…) du client
 
@@ -43,7 +43,7 @@ export async function POST(req) {
   if (!userId) return NextResponse.json({ error: "Non connecté." }, { status: 401 });
 
   const feat = await checkFeature(userId, "events", "Le module Événements");
-  if (!feat.ok) return NextResponse.json({ error: feat.error }, { status: 403 });
+  if (!feat.ok) return NextResponse.json(limitBody(feat), { status: 403 });
 
   const { name, location, url, imageUrl, details, startDate, endDate } = await req.json();
   if (!name?.trim()) return NextResponse.json({ error: "Nom de l'événement requis." }, { status: 400 });

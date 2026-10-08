@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getUserId } from "@/lib/session";
-import { checkFeature } from "@/lib/gating";
+import { checkFeature, limitBody } from "@/lib/gating";
 import { getMonthlyReport } from "@/lib/reports/monthly";
 
 // GET /api/agency/clients/[id]/report?year=2026&month=9
@@ -12,7 +12,7 @@ export async function GET(req, { params }) {
   if (!userId) return NextResponse.json({ error: "Non connecté." }, { status: 401 });
 
   const gate = await checkFeature(userId, "orgStats", "Le rapport de performance");
-  if (!gate.ok) return NextResponse.json({ error: gate.error }, { status: 403 });
+  if (!gate.ok) return NextResponse.json(limitBody(gate), { status: 403 });
 
   const { id: clientId } = await params;
   const client = await prisma.user.findUnique({

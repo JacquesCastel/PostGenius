@@ -3,7 +3,7 @@ import { prisma } from "@/lib/db";
 import { getEffectiveUserId as getUserId } from "@/lib/session";
 import { createKnowledgeSource, guardKnowledgeAdd, fetchPageText, KnowledgeError } from "@/lib/knowledge";
 import { cleanText, sourceView } from "@/lib/knowledgeText";
-import { knowledgeLimit, planOf } from "@/lib/plans";
+import { knowledgeLimit, planOf, upgradeTarget } from "@/lib/plans";
 import { resolveSourceScope } from "@/lib/contexts";
 
 // Base de connaissances du client : liste (GET) et ajout d'une note ou d'un lien (POST).
@@ -22,7 +22,7 @@ export async function GET(req) {
     }),
     prisma.user.findUnique({ where: { id: userId }, select: { plan: true } }),
   ]);
-  return NextResponse.json({ sources: sources.map(sourceView), limit: knowledgeLimit(user), plan: planOf(user).name });
+  return NextResponse.json({ sources: sources.map(sourceView), limit: knowledgeLimit(user), plan: planOf(user).name, upgradeTo: upgradeTarget(planOf(user).id, "knowledge") });
 }
 
 export async function POST(req) {
@@ -49,6 +49,6 @@ export async function POST(req) {
     return NextResponse.json(await createKnowledgeSource(userId, { kind, origin, title, text, ...scope }, quota));
   } catch (e) {
     const status = e instanceof KnowledgeError ? e.status : 400;
-    return NextResponse.json({ error: e.message, ...(e.code ? { code: e.code } : {}) }, { status });
+    return NextResponse.json({ error: e.message, ...(e.code ? { code: e.code } : {}), ...(e.extra ?? {}) }, { status });
   }
 }
