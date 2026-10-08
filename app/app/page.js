@@ -18,6 +18,7 @@ import { nextSteps, snoozeUntil } from "@/lib/nextSteps";
 import { explainPublishError } from "@/lib/publishError";
 import { isOrgUrn } from "@/lib/publishVoice";
 import { cleanPostContext } from "@/lib/postContext";
+import { planSheet, sheetAll } from "@/lib/campaignPlan";
 import { aggregateInsights } from "@/lib/knowledgeText";
 import { overlayProfile } from "@/lib/contextOverlay";
 import SiteHeader from "@/components/SiteHeader";
@@ -2427,8 +2428,9 @@ function PlanEditor({ campaign, onBack, showToast, onChanged, onGoHistory }) {
       load();
     }
   };
-  const generateAll = async () => {
-    const todo = data.items.filter((i) => i.status !== "généré" && !(i.kind === "org" && (!i.target || i.target === "person")));
+  // Rédige une liste de publications à la suite (un appel par publication) ; s'arrête à la première erreur
+  const run = async (ids) => {
+    const todo = ids.map((id) => data.items.find((i) => i.id === id)).filter(Boolean);
     setAll({ done: 0, total: todo.length });
     for (let k = 0; k < todo.length; k++) {
       if (!(await generate(todo[k]))) break;
@@ -2436,9 +2438,31 @@ function PlanEditor({ campaign, onBack, showToast, onChanged, onGoHistory }) {
     }
     setAll(null);
   };
+  const approve = async (approved) => {
+    if (await act({ action: "approveVoices", approved })) showToast(approved ? "Voix validées : la production par lots est ouverte" : "Voix à revoir : réécrivez les publications pilotes");
+  };
+  const rowOf = (i) => ({ item: i, text: i.draft?.text ?? "", issues: i.checks ?? [] });
+  const copy = async (text, ok) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      showToast(ok);
+    } catch {
+      const url = URL.createObjectURL(new Blob([text], { type: "text/plain;charset=utf-8" }));
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${campaign.name.replace(/[^\p{L}\p{N}]+/gu, "-")}.txt`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast("Fiche téléchargée");
+    }
+  };
   if (!data) return <p className="text-sm text-gray-400 p-6">Chargement du plan…</p>;
   const items = data.items;
+  const batches = data.batches;
+  const approved = Boolean(data.campaign.voicesApprovedAt);
+  const pilotRefs = batches.pilots.map((id) => items.find((i) => i.id === id)?.ref).filter(Boolean).join(", ");
   const generated = items.filter((i) => i.status === "généré").length;
+  const issuesTotal = items.reduce((n, i) => n + (i.checks?.length ?? 0), 0);
   const blockedOrg = items.filter((i) => i.kind === "org" && (!i.target || i.target === "person"));
   const firstDate = items.map((i) => i.date).filter(Boolean).sort()[0] ?? "";
   const monday = (d) => { const x = new Date(`${d}T12:00:00`); x.setDate(x.getDate() - ((x.getDay() + 6) % 7)); return x.toISOString().slice(0, 10); };
@@ -2465,13 +2489,45 @@ function PlanEditor({ campaign, onBack, showToast, onChanged, onGoHistory }) {
         <div className="flex items-start justify-between gap-3 flex-wrap">
           <div>
             <h2 className="font-semibold text-base">Plan éditorial · {campaign.name}</h2>
-            <p className="text-xs text-gray-500 mt-1" data-testid="plan-summary">{items.length} publication{items.length > 1 ? "s" : ""} · {generated} rédigée{generated > 1 ? "s" : ""}{data.warnings.length ? ` · ${data.warnings.length} point${data.warnings.length > 1 ? "s" : ""} à vérifier` : ""}</p>
+            <p className="text-xs text-gray-500 mt-1" data-testid="plan-summary">{items.length} publication{items.length > 1 ? "s" : ""} · {generated} rédigée{generated > 1 ? "s" : ""}{data.warnings.length ? ` · ${data.warnings.length} point${data.warnings.length > 1 ? "s" : ""} à vérifier` : ""}{issuesTotal ? ` · ${issuesTotal} remarque${issuesTotal > 1 ? "s" : ""} de contrôle sur les textes` : ""}</p>
           </div>
-          <button type="button" onClick={generateAll} disabled={Boolean(all) || items.length === generated} data-testid="plan-generate-all" className="bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white text-sm font-medium px-3.5 py-1.5 rounded-lg">
-            {all ? `Rédaction ${all.done}/${all.total}…` : items.length === generated && items.length ? "Tout est rédigé" : (items.length - generated) === 1 ? "Rédiger la publication prévue" : `Rédiger les ${items.length - generated} publications prévues`}
-          </button>
+          <div className="flex items-center gap-2 flex-wrap">
+            <button type="button" onClick={() => copy(sheetAll(items.map(rowOf)), "Plan copié : une fiche par publication ✓")} data-testid="plan-copy-all" className="text-xs border border-gray-300 hover:border-[#ff5a5f] hover:text-[#ff5a5f] px-3 py-1.5 rounded-lg">Copier tout le plan</button>
+          </div>
         </div>
         <p className="text-xs text-gray-500 leading-relaxed">Les dates sont des <strong>propositions</strong> : rien n&apos;est programmé ni publié sans votre validation. Chaque texte rédigé arrive dans « Mes posts » à valider, avec le lien exact de la ligne (ajouté automatiquement, jamais écrit par l&apos;IA).</p>
+        <div className="rounded-xl border border-gray-200 p-3.5 space-y-2" data-testid="plan-production">
+          <p className="text-xs font-semibold text-gray-700">Production</p>
+          {!approved && !batches.pilotsDone && (
+            <>
+              <p className="text-xs text-gray-500">On commence par une publication de chaque compte ({pilotRefs}) pour vérifier les voix, avant de rédiger le reste par lots de deux semaines.</p>
+              <button type="button" onClick={() => run(batches.pilotsTodo)} disabled={Boolean(all) || !batches.pilotsTodo.length} data-testid="plan-pilots" className="bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white text-sm font-medium px-3.5 py-1.5 rounded-lg">{all ? `Rédaction ${all.done}/${all.total}…` : `Rédiger les publications pilotes (${pilotRefs})`}</button>
+              {!batches.pilotsTodo.length && <p className="text-xs text-amber-700">Associez d&apos;abord chaque compte « page » à votre page LinkedIn.</p>}
+            </>
+          )}
+          {!approved && batches.pilotsDone && (
+            <>
+              <p className="text-xs text-gray-500">Relisez les publications pilotes ({pilotRefs}) : les deux voix sont-elles justes, les textes distincts ?</p>
+              <div className="flex items-center gap-3 flex-wrap">
+                <button type="button" onClick={() => approve(true)} data-testid="plan-approve" className="bg-[#ff5a5f] hover:bg-[#f63d44] text-white text-sm font-medium px-3.5 py-1.5 rounded-lg">Les voix sont justes : continuer</button>
+                <button type="button" onClick={() => run(batches.pilots)} disabled={Boolean(all)} className="text-xs text-gray-500 hover:text-[#ff5a5f]">Réécrire les pilotes</button>
+              </div>
+            </>
+          )}
+          {approved && (
+            <>
+              {batches.next.length > 0 ? (
+                <div className="flex items-center gap-3 flex-wrap">
+                  <button type="button" onClick={() => run(batches.next)} disabled={Boolean(all)} data-testid="plan-next-batch" className="bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white text-sm font-medium px-3.5 py-1.5 rounded-lg">{all ? `Rédaction ${all.done}/${all.total}…` : `Rédiger le lot suivant (${batches.next.length} publication${batches.next.length > 1 ? "s" : ""}${batches.nextWeeks.length ? ` · semaines du ${new Date(`${batches.nextWeeks[0]}T12:00:00`).toLocaleDateString("fr-FR", { day: "numeric", month: "long" })}` : ""})`}</button>
+                  {batches.remaining > batches.next.length && <button type="button" onClick={() => run(items.filter((i) => i.status !== "généré" && !(i.kind === "org" && (!i.target || i.target === "person"))).map((i) => i.id))} disabled={Boolean(all)} data-testid="plan-all" className="text-xs text-gray-500 hover:text-[#ff5a5f]">Tout rédiger ({batches.remaining})</button>}
+                </div>
+              ) : (
+                <p className="text-xs text-green-700" data-testid="plan-all-done">{batches.remaining ? "Il reste des publications à associer à une page LinkedIn." : "Toutes les publications sont rédigées."}</p>
+              )}
+              <button type="button" onClick={() => approve(false)} className="text-[11px] text-gray-400 hover:text-gray-600">Revoir les voix</button>
+            </>
+          )}
+        </div>
         {data.accounts.length > 0 && (
           <div className="grid sm:grid-cols-2 gap-2" data-testid="plan-accounts">
             {data.accounts.map((a) => (
@@ -2521,6 +2577,7 @@ function PlanEditor({ campaign, onBack, showToast, onChanged, onGoHistory }) {
                   <input type="date" value={it.date ?? ""} onChange={(e) => patchItem(it, { date: e.target.value || null })} className="border border-gray-200 rounded-md px-1.5 py-0.5 text-xs" aria-label={`Date de ${it.ref}`} />
                   <button type="button" onClick={() => setOpenId(open ? null : it.id)} className="flex-1 min-w-[10rem] text-left text-sm text-gray-700 truncate hover:text-[#ff5a5f]">{it.angle || it.objective || "Sans sujet"}</button>
                   <span className={`text-[10px] rounded-full px-2 py-0.5 ${it.status === "généré" ? "bg-green-50 text-green-700" : "bg-gray-100 text-gray-500"}`}>{it.status === "généré" ? (it.draft?.status === "publié" ? "publié" : "rédigé") : "prévu"}</span>
+                  {it.verdict && <button type="button" onClick={() => setOpenId(open ? null : it.id)} data-testid="plan-verdict" data-verdict={it.verdict} className={`text-[10px] rounded-full px-2 py-0.5 ${it.verdict === "ok" ? "bg-green-50 text-green-700" : it.verdict === "warn" ? "bg-amber-50 text-amber-700" : "bg-red-50 text-red-700"}`}>{it.verdict === "ok" ? "conforme" : it.verdict === "warn" ? `${it.checks.length} à vérifier` : `${it.checks.filter((c) => c.severity === "error").length} écart${it.checks.filter((c) => c.severity === "error").length > 1 ? "s" : ""}`}</button>}
                   <button type="button" onClick={() => generate(it)} disabled={busy || Boolean(all) || blocked || it.draft?.status === "publié"} data-testid="plan-item-generate" title={blocked ? "Associez d'abord le compte à une page LinkedIn" : ""} className="text-xs text-white bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 px-2.5 py-1 rounded-lg">{busy ? "Rédaction…" : it.status === "généré" ? "Réécrire" : "Rédiger"}</button>
                 </div>
                 {open && (
@@ -2544,6 +2601,11 @@ function PlanEditor({ campaign, onBack, showToast, onChanged, onGoHistory }) {
                       <Field it={it} k="media" label="Statut du média" />
                       <Field it={it} k="toConfirm" label="Faits à confirmer" />
                     </div>
+                    {it.checks?.length > 0 && (
+                      <ul className="text-xs space-y-1" data-testid="plan-item-checks">
+                        {it.checks.map((c, k) => (<li key={k} className={`flex gap-1.5 ${c.severity === "error" ? "text-red-700" : "text-amber-700"}`}><span>{c.severity === "error" ? "✖" : "⚠"}</span><span>{c.text}</span></li>))}
+                      </ul>
+                    )}
                     {it.draft && (
                       <div className="rounded-lg bg-gray-50 p-3 text-xs text-gray-700 whitespace-pre-wrap" data-testid="plan-item-text">
                         {it.draft.text}
@@ -2553,7 +2615,10 @@ function PlanEditor({ campaign, onBack, showToast, onChanged, onGoHistory }) {
                         </div>
                       </div>
                     )}
-                    <button type="button" onClick={() => removeItem(it)} className="text-[11px] text-gray-400 hover:text-red-600">Retirer cette publication du plan</button>
+                    <div className="flex items-center gap-4">
+                      <button type="button" onClick={() => copy(planSheet(it, rowOf(it)), `Fiche ${it.ref} copiée ✓`)} data-testid="plan-item-copy" className="text-[11px] text-[#0a66c2] hover:underline">Copier la fiche</button>
+                      <button type="button" onClick={() => removeItem(it)} className="text-[11px] text-gray-400 hover:text-red-600">Retirer cette publication du plan</button>
+                    </div>
                   </div>
                 )}
               </div>
