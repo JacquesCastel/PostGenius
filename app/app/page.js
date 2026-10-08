@@ -8596,14 +8596,14 @@ function OnboardingFirstPost({ fields, saving, showToast, onFinish, onBack, forC
 // ----------------------------------------------------------------
 const ONBOARDING_STEPS = [
   { stageId: "identity", short: "Vous", title: "Bienvenue ! Qui êtes-vous ?" },
-  { stageId: "audience", short: "Votre cible", title: "À qui parlez-vous ?" },
+  { stageId: "audience", short: "Entreprise", title: "Et votre entreprise ?" },
   { stageId: "voice", short: "Votre voix", title: "Votre façon d'écrire" },
   { stageId: null, short: "Premier post", title: "Votre premier post" }, // écran final : le copilote écrit sous les yeux du client
 ];
 const ONBOARDING_FORM_STEPS = 3; // les trois premières étapes sont des questions ; la dernière est le premier post
 
-const ONBOARDING_CLIENT_SHORT = ["Le client", "Sa cible", "Sa voix", "Premier post"];
-const ONBOARDING_CLIENT_TITLES = ["Qui est ce client ?", "À qui s'adresse-t-il ?", "Sa façon d'écrire", "Son premier post"];
+const ONBOARDING_CLIENT_SHORT = ["Le client", "Son entreprise", "Sa voix", "Premier post"];
+const ONBOARDING_CLIENT_TITLES = ["Qui est ce client ?", "Et son entreprise ?", "Sa façon d'écrire", "Son premier post"];
 
 function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast, forClient = null, onExit }) {
   // Agence : on configure le compte d'un client. Mêmes étapes, formulées à la troisième personne.
@@ -8743,10 +8743,6 @@ function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast,
                 <input type="text" value={fields.headline} onChange={(e) => set("headline", e.target.value)} placeholder="ex : Consultant SEO @ Acme" className={inputCls} />
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700 block mb-1.5">Entreprise ou marque personnelle</label>
-                <input type="text" value={fields.companyName} onChange={(e) => set("companyName", e.target.value)} placeholder="ex : Acme Conseil" className={inputCls} />
-              </div>
-              <div>
                 <label className="text-sm font-medium text-gray-700 block mb-1.5">{me("Je suis un(e)… *", "Son expertise en une phrase *")}</label>
                 <input
                   type="text"
@@ -8768,6 +8764,11 @@ function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast,
 
           {step === 1 && (
             <div className="space-y-3">
+              <div>
+                <label className="text-sm font-medium text-gray-700 block mb-1.5">{me("Nom de votre entreprise ou de votre marque", "Nom de son entreprise ou de sa marque")}</label>
+                <input type="text" value={fields.companyName} onChange={(e) => set("companyName", e.target.value)} placeholder="ex : Acme Conseil" className={inputCls} data-testid="wizard-company" />
+                <p className="text-[11px] text-gray-400 mt-1">{me("Indépendant ? Indiquez la marque sous laquelle vous travaillez, ou votre nom.", "Indépendant ? Indiquez la marque sous laquelle il travaille, ou son nom.")}</p>
+              </div>
               <div>
                 <label className="text-sm font-medium text-gray-700 block mb-1.5">{me("Votre activité : que faites-vous, pour qui, avec quelle valeur ajoutée ? *", "Son activité : que fait-il, pour qui, avec quelle valeur ajoutée ? *")}</label>
                 <textarea
@@ -11018,28 +11019,29 @@ const hasText = (v) => (typeof v === "string" ? v.trim().length > 0 : Boolean(v)
 const PROFILE_STAGES = [
   {
     id: "identity",
-    title: "Qui vous êtes",
-    time: "2 min",
+    title: "Vous",
+    time: "1 min",
     icon: UserRound,
-    why: "Votre nom, votre titre et votre entreprise personnalisent chaque post : la signature, votre légitimité et le vocabulaire de votre métier.",
+    why: "Cette étape parle de vous, la personne qui signe les posts : votre nom, votre titre et votre expertise donnent la signature, la légitimité et le vocabulaire de votre métier. L'entreprise vient à l'étape suivante.",
     items: [
       { label: "Votre nom", done: (f) => hasText(f.name) },
       { label: "Votre titre professionnel", done: (f) => hasText(f.headline) },
-      { label: "Votre entreprise ou marque", done: (f) => hasText(f.companyName) },
       { label: "Votre expertise en une phrase", done: (f) => hasText(f.expertise) },
     ],
   },
   {
     id: "audience",
-    title: "Votre cible et vos objectifs",
+    title: "Votre entreprise",
     time: "3 min",
     icon: Megaphone,
-    why: "Un bon post parle à quelqu'un de précis. Plus le copilote connaît votre cible et ce que vous visez, plus les sujets, les accroches et les appels à l'action sont pertinents.",
+    why: "Cette étape parle de votre entreprise (ou de votre marque, si vous êtes indépendant) : ce qu'elle fait, à qui elle parle, ce qu'elle vise. C'est le contexte commun à tous vos posts, que vous publiiez depuis votre profil ou depuis la page.",
     items: [
-      { label: "Votre activité", done: (f) => hasText(f.businessDescription) },
-      { label: "Votre cible sur LinkedIn", done: (f) => hasText(f.targetAudience) },
-      { label: "Votre positionnement", done: (f) => hasText(f.market) },
-      { label: "Vos objectifs de communication", done: (f) => hasText(f.commGoals) },
+      { label: "Le nom de l'entreprise ou de la marque", done: (f) => hasText(f.companyName) },
+      { label: "Son activité", done: (f) => hasText(f.businessDescription) },
+      { label: "Sa cible sur LinkedIn", done: (f) => hasText(f.targetAudience) },
+      { label: "Son positionnement", done: (f) => hasText(f.market) },
+      { label: "Ses objectifs de communication", done: (f) => hasText(f.commGoals) },
+      { label: "La voix de sa page entreprise", bonus: true, done: (f) => hasText(f.brandVoice) },
     ],
   },
   {
@@ -11047,7 +11049,7 @@ const PROFILE_STAGES = [
     title: "Votre voix",
     time: "5 min",
     icon: PenLine,
-    why: "C'est ce qui fait que vos posts vous ressemblent. Décrivez votre façon d'écrire, ou faites-la découvrir au copilote à partir de vos anciens posts : c'est l'étape qui change le plus le résultat.",
+    why: "Cette étape parle de votre façon d'écrire, en tant que personne : c'est ce qui fait que vos posts vous ressemblent. Décrivez votre façon d'écrire, ou faites-la découvrir au copilote à partir de vos anciens posts : c'est l'étape qui change le plus le résultat.",
     items: [
       { label: "Vos thèmes favoris", done: (f) => hasText(f.themes) },
       { label: "Vos consignes d'écriture", done: (f) => hasText(f.styleNotes) },
@@ -11081,8 +11083,8 @@ const PROFILE_STAGES = [
 
 // Champ du profil → étape qui le contient (liens « Compléter » venus d'autres écrans)
 const PROFILE_FIELD_STAGE = {
-  name: "identity", headline: "identity", companyName: "identity", expertise: "identity", website: "identity",
-  businessDescription: "audience", targetAudience: "audience", market: "audience", commGoals: "audience",
+  name: "identity", headline: "identity", expertise: "identity",
+  companyName: "audience", website: "audience", brandVoice: "audience", businessDescription: "audience", targetAudience: "audience", market: "audience", commGoals: "audience",
   themes: "voice", styleNotes: "voice", remarks: "voice",
   knowledge: "sources", editorialNote: "sources",
   publishDays: "rhythm",
@@ -11636,6 +11638,7 @@ function ProfileView({ profile, onSaved, showToast, linkedin, onDisconnect, inst
     headline: profile?.headline ?? "",
     website: profile?.website ?? "",
     companyName: profile?.companyName ?? "",
+    brandVoice: profile?.brandVoice ?? "",
     businessDescription: profile?.businessDescription ?? "",
     targetAudience: profile?.targetAudience ?? "",
     market: profile?.market ?? "",
@@ -11843,8 +11846,23 @@ function ProfileView({ profile, onSaved, showToast, linkedin, onDisconnect, inst
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
               <StageHeader index={stageIdx} total={PROFILE_STAGES.length} stage={stage} progress={progress[stageIdx]} />
 
-              {/* 1 · Qui vous êtes */}
+              {/* 1 · Vous */}
               {stage.id === "identity" && (
+                <div className="space-y-4">
+                  <ProfileField label="Votre nom" why="Sert à signer vos posts et à personnaliser le copilote." example="Jacques Castel">
+                    <input type="text" value={fields.name} onChange={(e) => set("name", e.target.value)} placeholder="ex : Jacques Castel" className={input} />
+                  </ProfileField>
+                  <ProfileField id="field-headline" label="Titre professionnel" why="Il fixe votre niveau de langage et votre légitimité : le copilote n'écrit pas de la même façon pour un dirigeant que pour un consultant junior." example="Consultante RH · j'aide les PME à fidéliser leurs équipes">
+                    <input type="text" value={fields.headline} onChange={(e) => set("headline", e.target.value)} placeholder="ex : Consultant SEO @ Acme" className={input} />
+                  </ProfileField>
+                  <ProfileField label="Mon expertise — « Je suis un(e)… »" why="C'est la phrase qui dit au copilote qui parle. Une expertise précise donne des posts précis." example="Consultant en marketing digital spécialisé B2B">
+                    <input type="text" value={fields.expertise} onChange={(e) => set("expertise", e.target.value)} placeholder="ex : consultant en marketing digital spécialisé B2B" className={input} />
+                  </ProfileField>
+                </div>
+              )}
+
+              {/* 2 · Votre entreprise */}
+              {stage.id === "audience" && (
                 <div className="space-y-4">
                   <div className="bg-[#fff1f1] rounded-xl p-3">
                     <label className={label}>Gagnez du temps : votre site internet</label>
@@ -11867,27 +11885,12 @@ function ProfileView({ profile, onSaved, showToast, linkedin, onDisconnect, inst
                       </button>
                     </div>
                     <p className="text-[11px] text-gray-500 mt-1.5">
-                      Le copilote lit votre site et pré-remplit les étapes suivantes (activité, cible, thèmes…). Vous vérifiez, vous corrigez.
+                      Le copilote lit votre site et pré-remplit cette étape et les suivantes (activité, cible, thèmes…). Vous vérifiez, vous corrigez.
                     </p>
                   </div>
-                  <ProfileField label="Votre nom" why="Sert à signer vos posts et à personnaliser le copilote." example="Jacques Castel">
-                    <input type="text" value={fields.name} onChange={(e) => set("name", e.target.value)} placeholder="ex : Jacques Castel" className={input} />
-                  </ProfileField>
-                  <ProfileField id="field-headline" label="Titre professionnel" why="Il fixe votre niveau de langage et votre légitimité : le copilote n'écrit pas de la même façon pour un dirigeant que pour un consultant junior." example="Consultante RH · j'aide les PME à fidéliser leurs équipes">
-                    <input type="text" value={fields.headline} onChange={(e) => set("headline", e.target.value)} placeholder="ex : Consultant SEO @ Acme" className={input} />
-                  </ProfileField>
-                  <ProfileField id="field-companyName" label="Entreprise / marque" why="Le copilote cite votre marque au bon moment, sans la répéter partout." example="Acme Conseil">
+                  <ProfileField id="field-companyName" label="Nom de l'entreprise ou de la marque" why="Le copilote cite la marque au bon moment, sans la répéter partout. Indépendant : indiquez la marque sous laquelle vous travaillez, ou votre nom." example="Acme Conseil">
                     <input type="text" value={fields.companyName} onChange={(e) => set("companyName", e.target.value)} placeholder="ex : Acme Conseil" className={input} />
                   </ProfileField>
-                  <ProfileField label="Mon expertise — « Je suis un(e)… »" why="C'est la phrase qui dit au copilote qui parle. Une expertise précise donne des posts précis." example="Consultant en marketing digital spécialisé B2B">
-                    <input type="text" value={fields.expertise} onChange={(e) => set("expertise", e.target.value)} placeholder="ex : consultant en marketing digital spécialisé B2B" className={input} />
-                  </ProfileField>
-                </div>
-              )}
-
-              {/* 2 · Votre cible et vos objectifs */}
-              {stage.id === "audience" && (
-                <div className="space-y-4">
                   <ProfileField id="field-businessDescription" label="Activité — que faites-vous, pour qui, avec quelle valeur ajoutée ?" why="C'est la matière première des exemples et des cas types : ce que vous vendez, et ce que cela change pour vos clients." example="Cabinet de conseil en transformation digitale pour PME industrielles">
                     <textarea rows={3} value={fields.businessDescription} onChange={(e) => set("businessDescription", e.target.value)} placeholder="ex : cabinet de conseil en transformation digitale pour PME industrielles" className={input} />
                   </ProfileField>
@@ -11907,6 +11910,9 @@ function ProfileView({ profile, onSaved, showToast, linkedin, onDisconnect, inst
                         </button>
                       ))}
                     </div>
+                  </ProfileField>
+                  <ProfileField id="field-brandVoice" label="Voix de la marque sur sa page entreprise" hint="(facultatif)" why="Votre voix personnelle s'écrit en « je ». Une page entreprise parle autrement : « nous », un vocabulaire maison, des choses qu'on évite. Ces consignes ne servent que pour les posts publiés sur la page." example="Nous tutoyons, phrases courtes, pas d'anglicismes, jamais de promesse chiffrée">
+                    <textarea rows={2} value={fields.brandVoice} onChange={(e) => set("brandVoice", e.target.value)} placeholder="ex : nous tutoyons, phrases courtes, jamais de jargon" className={input} data-testid="field-brandVoice-input" />
                   </ProfileField>
                 </div>
               )}
@@ -15161,7 +15167,7 @@ export default function Home() {
                         ))}
                       </div>
                     )}
-                    <p className="text-[11px] text-gray-400 mt-1.5">Reprise de votre profil : modifiez-la à demeure dans l&apos;étape « Qui vous êtes ».</p>
+                    <p className="text-[11px] text-gray-400 mt-1.5">Reprise de votre profil : modifiez-la à demeure dans l&apos;étape « Vous » de votre profil.</p>
                   </div>
 
                   <div>
