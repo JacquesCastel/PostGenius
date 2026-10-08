@@ -18,7 +18,7 @@ export async function GET(req) {
     prisma.knowledgeSource.findMany({
       where: { userId },
       orderBy: { createdAt: "desc" },
-      select: { id: true, kind: true, title: true, origin: true, summary: true, facts: true, pinned: true, charCount: true, createdAt: true, contextId: true, shared: true },
+      select: { id: true, kind: true, title: true, origin: true, summary: true, facts: true, insights: true, pinned: true, charCount: true, createdAt: true, contextId: true, shared: true },
     }),
     prisma.user.findUnique({ where: { id: userId }, select: { plan: true } }),
   ]);
