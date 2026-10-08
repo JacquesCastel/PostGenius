@@ -7,7 +7,7 @@ import {
   AlertCircle, UserPlus, LogIn, UserRound, Save, LayoutDashboard, CalendarDays, List, ExternalLink,
   BarChart3, Eye, MousePointerClick, ThumbsUp, MessageSquare, Share2, Undo2, Layers as LayersIcon,
   Megaphone, ChevronDown, Image as ImageIcon, ShieldCheck, Lock, ArrowUpCircle, MapPin, Bell, Camera,
-  CreditCard, Gauge, Users, Smartphone, Monitor, Minus,
+  CreditCard, Gauge, Users, Smartphone, Database, Monitor, Minus,
   Upload, Wand2, SlidersHorizontal, Type, Crop, Download, Pencil, GripHorizontal,
   Compass, Lightbulb, EyeOff, TrendingUp, TrendingDown, Plus, Globe, ChevronUp, Menu,
   AlignLeft, AlignCenter, AlignRight, Move, Server, Clapperboard
@@ -18,6 +18,7 @@ import { nextSteps, snoozeUntil } from "@/lib/nextSteps";
 import { explainPublishError } from "@/lib/publishError";
 import { isOrgUrn } from "@/lib/publishVoice";
 import { cleanPostContext } from "@/lib/postContext";
+import { aggregateInsights } from "@/lib/knowledgeText";
 import { overlayProfile } from "@/lib/contextOverlay";
 import SiteHeader from "@/components/SiteHeader";
 // Polices de la charte graphique, chargées comme polices web pour que l'éditeur de
@@ -4904,9 +4905,15 @@ function RemarkBox({ onApplyNow, onManage, showToast }) {
 // contexte. Chaque ajout est résumé par l'IA ; seuls le résumé et les faits relevés servent à rédiger,
 // et le post indique les sources utilisées.
 // ----------------------------------------------------------------
-function KnowledgePanel({ showToast, onCount }) {
+// Datalake éditorial : toutes les sources de l'auteur et ce que l'outil en a retenu (thèmes, vocabulaire, positions, faits).
+function KnowledgePanel({ showToast, onCount, activeContextId = null, hasContexts = false }) {
   const [data, setData] = useState(null); // { sources, limit, plan } ; null = chargement
-  const [open, setOpen] = useState(false);
+  const open = true;
+  const [adding, setAdding] = useState(false);
+  const [allCompanies, setAllCompanies] = useState(false);
+  const [kindFilter, setKindFilter] = useState("all");
+  const [themeFilter, setThemeFilter] = useState(null);
+  const [enriching, setEnriching] = useState(null); // { done, total } pendant la relecture des anciennes sources
   const [tab, setTab] = useState("note"); // note | link
   const [title, setTitle] = useState("");
   const [text, setText] = useState("");
@@ -4939,6 +4946,31 @@ function KnowledgePanel({ showToast, onCount }) {
 
   const used = data?.sources?.length ?? 0;
   const full = data && used >= data.limit;
+  // Sources visibles : celles de l'entreprise active + les partagées (sauf « toutes les entreprises »)
+  const inScope = (data?.sources ?? []).filter((x) => !hasContexts || allCompanies || x.shared || (x.contextId ?? null) === (activeContextId ?? null));
+  const visible = inScope.filter((x) => (kindFilter === "all" || x.kind === kindFilter) && (!themeFilter || (x.insights?.themes ?? []).some((t) => t.toLowerCase() === themeFilter)));
+  const synth = aggregateInsights(visible);
+  const allThemes = aggregateInsights(inScope).themes;
+  const unread = (data?.sources ?? []).filter((x) => !x.insights);
+  const enrich = async () => {
+    const todo = unread.slice(0, 20);
+    setEnriching({ done: 0, total: todo.length });
+    for (let i = 0; i < todo.length; i++) {
+      try {
+        const res = await fetch(`/api/knowledge/${todo[i].id}/reanalyze`, { method: "POST" });
+        if (!res.ok) {
+          const d = await readJson(res);
+          showToast(d.error || "Relecture interrompue");
+          break;
+        }
+      } catch {
+        break;
+      }
+      setEnriching({ done: i + 1, total: todo.length });
+    }
+    setEnriching(null);
+    load();
+  };
 
   const add = async () => {
     setBusy(true);
@@ -4992,21 +5024,23 @@ function KnowledgePanel({ showToast, onCount }) {
   const KIND = { note: "Texte", link: "Lien", file: "Fichier", posts: "Posts" };
 
   return (
-    <div id="field-knowledge" className="border border-dashed border-gray-300 rounded-xl p-3">
-      <button type="button" onClick={() => setOpen((o) => !o)} className="w-full text-left flex items-center justify-between gap-2">
-        <span className="text-sm font-medium text-gray-700">
-          Ma base de connaissances{" "}
-          <span className="text-gray-400 font-normal">
-            (documents, articles : les posts s&apos;appuient sur vos faits{data ? ` · ${used}/${data.limit} sources` : ""})
-          </span>
-        </span>
-        <ChevronDown size={15} className={`text-gray-400 transition-transform ${open ? "rotate-180" : ""}`} />
-      </button>
+    <div id="field-knowledge" data-testid="datalake" className="space-y-4">
       {open && (
-        <div className="mt-3 space-y-3">
-          <p className="text-xs text-gray-500 leading-relaxed">
-            Déposez ce qui décrit votre activité : une présentation, une offre, une étude de cas, un article de votre site. L&apos;IA en tire un résumé et des faits précis (chiffres, cas, positions), puis s&apos;en sert pour rédiger vos posts, <strong>sans rien inventer au-delà</strong>. Chaque post indique les sources utilisées. Vos sources ne servent qu&apos;à rédiger vos posts, ne sont partagées avec personne et se suppriment à tout moment.
-          </p>
+        <div className="space-y-4">
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-2">
+            <div className="flex items-start justify-between gap-3 flex-wrap">
+              <div className="min-w-0">
+                <h2 className="font-semibold text-base">Votre datalake éditorial</h2>
+                <p className="text-xs text-gray-500 leading-relaxed mt-1 max-w-2xl">
+                  Documents, articles, liens, notes : tout ce que vous déposez ici est lu par l&apos;IA, qui en retient les thèmes, votre vocabulaire, vos positions et vos faits précis. C&apos;est la mémoire dans laquelle le copilote puise pour écrire juste, <strong>sans rien inventer au-delà</strong>. Vos sources ne sont partagées avec personne et se suppriment à tout moment.
+                </p>
+              </div>
+              <div className="text-right shrink-0">
+                <p className="text-xs text-gray-400" data-testid="datalake-count">{data ? `${used}/${data.limit} sources` : ""}</p>
+                {!full && <button type="button" onClick={() => setAdding((a) => !a)} data-testid="datalake-add-toggle" className="mt-1 bg-[#ff5a5f] hover:bg-[#f63d44] text-white text-sm font-medium px-3.5 py-1.5 rounded-lg">{adding ? "Fermer" : "Ajouter une source"}</button>}
+              </div>
+            </div>
+          </div>
           {data?.error && <p className="text-xs text-red-600">{data.error}</p>}
           {full ? (
             <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-2.5" data-testid="knowledge-full">
@@ -5017,8 +5051,8 @@ function KnowledgePanel({ showToast, onCount }) {
                 </button>
               )}
             </p>
-          ) : (
-            <div className="space-y-2">
+          ) : (adding || (data && used === 0)) && (
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-2" data-testid="datalake-form">
               <div className="flex gap-1.5">
                 <button type="button" onClick={() => setTab("note")} className={chip(tab === "note")}>Coller un texte</button>
                 <button type="button" onClick={() => setTab("link")} className={chip(tab === "link")}>Un lien</button>
@@ -5086,51 +5120,131 @@ function KnowledgePanel({ showToast, onCount }) {
               </button>
             </div>
           )}
-          {data?.sources?.length > 0 && (
-            <ul className="divide-y divide-gray-100 border border-gray-100 rounded-lg">
-              {data.sources.map((s) => (
-                <li key={s.id} className="p-2.5">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium text-gray-800 truncate">
-                        <span className="text-[10px] uppercase tracking-wide bg-gray-100 text-gray-500 rounded px-1.5 py-0.5 mr-1.5">{KIND[s.kind] ?? s.kind}</span>
-                        {s.title}
-                      </p>
-                      <p className="text-[11px] text-gray-400">
-                        {Math.round(s.charCount / 100) / 10} k caractères · {s.facts.length} fait{s.facts.length > 1 ? "s" : ""} retenu{s.facts.length > 1 ? "s" : ""}
-                        {s.origin && s.kind === "link" ? ` · ${s.origin.replace(/^https?:\/\//, "").slice(0, 40)}` : s.origin && s.kind === "file" ? ` · ${s.origin.slice(0, 50)}` : ""}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0 text-xs">
-                      {ctxList.length > 0 && (
-                        <select value={scopeValue(s)} onChange={(e) => patch(s.id, scopeBody(e.target.value))} title="Entreprise à laquelle cette source appartient" aria-label={`Entreprise de la source ${s.title}`} className="border border-gray-200 rounded px-1 py-0.5 text-[11px] bg-white max-w-[130px]">
-                          <option value="main">Principale</option>
-                          {ctxList.map((c) => (<option key={c.id} value={c.id}>{c.name}</option>))}
-                          <option value="shared">Partagée</option>
-                        </select>
-                      )}
-                      <label className="flex items-center gap-1 text-gray-500" title="Cette source est toujours transmise à l'IA, quel que soit le sujet">
-                        <input type="checkbox" checked={s.pinned} onChange={(e) => patch(s.id, { pinned: e.target.checked })} /> Toujours
-                      </label>
-                      <button type="button" onClick={() => setExpanded(expanded === s.id ? null : s.id)} className="text-[#ff5a5f] hover:underline">
-                        {expanded === s.id ? "Masquer" : "Voir"}
-                      </button>
-                      <button type="button" onClick={() => remove(s)} className="text-gray-400 hover:text-red-600">Supprimer</button>
-                    </div>
-                  </div>
-                  {expanded === s.id && (
-                    <div className="mt-2 text-xs text-gray-600 space-y-1.5">
-                      {s.summary && <p>{s.summary}</p>}
-                      {s.facts.length > 0 && (
-                        <ul className="list-disc pl-4 space-y-0.5">
-                          {s.facts.map((f, i) => (<li key={i}>{f}</li>))}
-                        </ul>
-                      )}
-                    </div>
-                  )}
-                </li>
+          {unread.length > 0 && (
+            <div className="rounded-xl border border-[#ffd6d8] bg-[#fff6f6] p-3.5 flex items-center justify-between gap-3 flex-wrap" data-testid="datalake-unread">
+              <p className="text-xs text-gray-700">
+                {unread.length} source{unread.length > 1 ? "s" : ""} ajoutée{unread.length > 1 ? "s" : ""} avant la lecture éditoriale : l&apos;IA peut les relire pour en tirer thèmes, vocabulaire et positions.
+              </p>
+              <button type="button" onClick={enrich} disabled={Boolean(enriching)} data-testid="datalake-enrich" className="text-sm font-medium text-white bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 px-3.5 py-1.5 rounded-lg shrink-0">
+                {enriching ? `Lecture ${enriching.done}/${enriching.total}…` : "Relire mes sources"}
+              </button>
+            </div>
+          )}
+          {data && used > 0 && (
+            <div className="flex items-center gap-2 flex-wrap text-xs">
+              {[["all", "Tout"], ["note", "Textes"], ["link", "Liens"], ["file", "Fichiers"], ["posts", "Posts"]].map(([k, l]) => (
+                <button key={k} type="button" onClick={() => setKindFilter(k)} data-testid={`datalake-kind-${k}`} className={chip(kindFilter === k)}>{l}</button>
               ))}
-            </ul>
+              {hasContexts && (
+                <label className="flex items-center gap-1.5 text-gray-500 ml-auto" data-testid="datalake-all-companies">
+                  <input type="checkbox" checked={allCompanies} onChange={(e) => setAllCompanies(e.target.checked)} /> Toutes mes entreprises
+                </label>
+              )}
+            </div>
+          )}
+          {inScope.length > 0 && synth.themes.length + synth.vocabulary.length + synth.positions.length > 0 && (
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4" data-testid="datalake-synthesis">
+              <h3 className="font-semibold text-sm">Ce que l&apos;outil a retenu</h3>
+              {allThemes.length > 0 && (
+                <div>
+                  <p className="text-[11px] font-medium uppercase tracking-wide text-gray-400 mb-1.5">Thèmes récurrents</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {allThemes.map((t) => {
+                      const on = themeFilter === t.text.toLowerCase();
+                      return (
+                        <button key={t.text} type="button" onClick={() => setThemeFilter(on ? null : t.text.toLowerCase())} data-testid="datalake-theme" className={chip(on)} title={t.sources.join(" · ")}>
+                          {t.text} <span className={on ? "opacity-80" : "text-gray-400"}>×{t.count}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {themeFilter && <p className="text-[11px] text-gray-400 mt-1.5">Sources filtrées sur « {themeFilter} » · <button type="button" onClick={() => setThemeFilter(null)} className="underline">tout afficher</button></p>}
+                </div>
+              )}
+              {synth.vocabulary.length > 0 && (
+                <div>
+                  <p className="text-[11px] font-medium uppercase tracking-wide text-gray-400 mb-1.5">Votre vocabulaire</p>
+                  <div className="flex flex-wrap gap-1.5" data-testid="datalake-vocab">
+                    {synth.vocabulary.map((v) => (<span key={v.text} className="text-xs px-2.5 py-1 rounded-full bg-gray-100 text-gray-700">{v.text}</span>))}
+                  </div>
+                </div>
+              )}
+              {synth.positions.length > 0 && (
+                <div>
+                  <p className="text-[11px] font-medium uppercase tracking-wide text-gray-400 mb-1.5">Vos positions</p>
+                  <ul className="space-y-1.5 text-sm text-gray-700" data-testid="datalake-positions">
+                    {synth.positions.map((v) => (<li key={v.text} className="flex gap-2"><span className="text-[#ff5a5f]">•</span><span>{v.text}</span></li>))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
+          {data && used > 0 && (
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-2" data-testid="datalake-sources">
+              {visible.length === 0 ? (
+                <p className="text-xs text-gray-400 p-4">Aucune source ne correspond à ces filtres{hasContexts && !allCompanies ? " pour cette entreprise" : ""}.</p>
+              ) : (
+              <ul className="divide-y divide-gray-100">
+                {visible.map((s) => (
+                  <li key={s.id} className="p-3" data-testid="datalake-source">
+                    <div className="flex items-start justify-between gap-2 flex-wrap">
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-gray-800 truncate">
+                          <span className="text-[10px] uppercase tracking-wide bg-gray-100 text-gray-500 rounded px-1.5 py-0.5 mr-1.5">{KIND[s.kind] ?? s.kind}</span>
+                          {s.title}
+                        </p>
+                        <p className="text-[11px] text-gray-400">
+                          {Math.round(s.charCount / 100) / 10} k caractères · {s.facts.length} fait{s.facts.length > 1 ? "s" : ""} retenu{s.facts.length > 1 ? "s" : ""}
+                          {s.origin && s.kind === "link" ? ` · ${s.origin.replace(/^https?:\/\//, "").slice(0, 40)}` : s.origin && s.kind === "file" ? ` · ${s.origin.slice(0, 50)}` : ""}
+                        </p>
+                        {s.insights?.themes?.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-1.5">
+                            {s.insights.themes.map((t) => (<span key={t} className="text-[10px] px-2 py-0.5 rounded-full bg-[#fff1f1] text-[#f63d44]">{t}</span>))}
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0 text-xs flex-wrap">
+                        {ctxList.length > 0 && (
+                          <select value={scopeValue(s)} onChange={(e) => patch(s.id, scopeBody(e.target.value))} title="Entreprise à laquelle cette source appartient" aria-label={`Entreprise de la source ${s.title}`} className="border border-gray-200 rounded px-1 py-0.5 text-[11px] bg-white max-w-[130px]">
+                            <option value="main">Principale</option>
+                            {ctxList.map((c) => (<option key={c.id} value={c.id}>{c.name}</option>))}
+                            <option value="shared">Partagée</option>
+                          </select>
+                        )}
+                        <label className="flex items-center gap-1 text-gray-500" title="Cette source est toujours transmise à l'IA, quel que soit le sujet">
+                          <input type="checkbox" checked={s.pinned} onChange={(e) => patch(s.id, { pinned: e.target.checked })} /> Toujours
+                        </label>
+                        <button type="button" onClick={() => setExpanded(expanded === s.id ? null : s.id)} className="text-[#ff5a5f] hover:underline">
+                          {expanded === s.id ? "Masquer" : "Voir"}
+                        </button>
+                        <button type="button" onClick={() => remove(s)} className="text-gray-400 hover:text-red-600">Supprimer</button>
+                      </div>
+                    </div>
+                    {expanded === s.id && (
+                      <div className="mt-2 text-xs text-gray-600 space-y-2">
+                        {s.summary && <p>{s.summary}</p>}
+                        {s.facts.length > 0 && (
+                          <div>
+                            <p className="font-medium text-gray-700 mb-0.5">Faits retenus</p>
+                            <ul className="list-disc pl-4 space-y-0.5">{s.facts.map((f, i) => (<li key={i}>{f}</li>))}</ul>
+                          </div>
+                        )}
+                        {s.insights?.vocabulary?.length > 0 && (
+                          <p><span className="font-medium text-gray-700">Vocabulaire : </span>{s.insights.vocabulary.join(" · ")}</p>
+                        )}
+                        {s.insights?.positions?.length > 0 && (
+                          <div>
+                            <p className="font-medium text-gray-700 mb-0.5">Positions</p>
+                            <ul className="list-disc pl-4 space-y-0.5">{s.insights.positions.map((f, i) => (<li key={i}>{f}</li>))}</ul>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </li>
+                ))}
+              </ul>
+              )}
+            </div>
           )}
         </div>
       )}
@@ -9508,7 +9622,7 @@ const FEATURE_LABELS = {
   orgStats: "Les statistiques de page",
 };
 
-const DEEP_LINK_VIEWS = ["dashboard", "create", "history", "campaigns", "connections", "profile", "stats", "copilot", "events", "engage", "brand-kit", "billing", "clients", "messages"];
+const DEEP_LINK_VIEWS = ["dashboard", "create", "history", "campaigns", "connections", "profile", "stats", "copilot", "events", "engage", "brand-kit", "billing", "clients", "messages", "datalake"];
 
 function ClientTableRow({ client, onManage, onViewDrafts, onDelete, deleting, onShowReport }) {
   const [open, setOpen] = useState(false);
@@ -12129,7 +12243,7 @@ function ContextsManager({ contexts, onChanged, showToast }) {
   );
 }
 
-function ProfileView({ contexts = [], onContextsChanged, profile, onSaved, showToast, linkedin, onDisconnect, instagram, onDisconnectInstagram, canOrgPublish = true, focusField, onFocusHandled, onGoConnections }) {
+function ProfileView({ contexts = [], onContextsChanged, profile, onSaved, showToast, linkedin, onDisconnect, instagram, onDisconnectInstagram, canOrgPublish = true, focusField, onFocusHandled, onGoConnections, onGoDatalake }) {
   const [fields, setFields] = useState({
     name: profile?.name ?? "",
     headline: profile?.headline ?? "",
@@ -12478,7 +12592,12 @@ function ProfileView({ contexts = [], onContextsChanged, profile, onSaved, showT
               {/* 4 · Vos sources */}
               {stage.id === "sources" && (
                 <div className="space-y-4">
-                  <KnowledgePanel showToast={showToast} onCount={(n) => setCounts((c) => ({ ...c, knowledge: n }))} />
+                  <div id="field-knowledge" className="border border-dashed border-gray-300 rounded-xl p-3 flex items-center justify-between gap-3 flex-wrap" data-testid="profile-datalake-link">
+                    <span className="text-sm text-gray-700">
+                      Mon datalake éditorial <span className="text-gray-400 text-xs font-normal">({counts.knowledge} source{counts.knowledge > 1 ? "s" : ""} : documents, articles, liens)</span>
+                    </span>
+                    <button type="button" onClick={() => onGoDatalake?.()} className="text-sm text-[#ff5a5f] font-medium hover:underline">Ouvrir le datalake →</button>
+                  </div>
                   <ProfileField id="field-editorialNote" label="Note pour le copilote éditorial" hint="(modifiable aussi depuis le tableau de bord)" why="Une consigne du moment, pour orienter ses propositions cette semaine. Vous pouvez aussi la modifier en discutant avec lui." example="Cette semaine, je veux plus de retours clients concrets, moins de posts d'opinion">
                     <textarea rows={2} value={fields.editorialNote} onChange={(e) => set("editorialNote", e.target.value)} placeholder="ex : cette semaine, je veux plus de retours clients concrets, moins de posts d'opinion…" maxLength={500} className={input} />
                   </ProfileField>
@@ -12831,6 +12950,7 @@ export default function Home() {
   const [view, setView] = useState("dashboard");
   const [profileFocusField, setProfileFocusField] = useState(null); // champ à mettre en évidence à l'arrivée sur Profil
   const goToProfileField = (field) => {
+    if (field === "knowledge") { setView("datalake"); return; }
     setProfileFocusField(field);
     setView("profile");
   };
@@ -14398,6 +14518,7 @@ export default function Home() {
         { id: "dashboard", label: "Tableau de bord", icon: LayoutDashboard },
         { id: "create", label: "Créer un post", icon: Sparkles, group: "Créer" },
         { id: "campaigns", label: "Campagnes", icon: LayersIcon, requires: "campaigns", featureLabel: "Les campagnes", group: "Créer" },
+        { id: "datalake", label: "Datalake éditorial", icon: Database, group: "Créer" },
         { id: "events", label: "Événements", icon: MapPin, requires: "events", featureLabel: "Le module Événements", group: "Créer" },
         { id: "history", label: "Mes posts", icon: History, badge: drafts.length || null, group: "Piloter" },
         { id: "engage", label: "Interagir", icon: ThumbsUp, group: "Piloter" },
@@ -14440,6 +14561,7 @@ export default function Home() {
     history: "Mes posts",
     engage: "Interagir sur LinkedIn",
     campaigns: "Campagnes",
+    datalake: "Datalake éditorial",
     events: "Événements",
     stats: "Statistiques",
     billing: "Abonnement",
@@ -14948,7 +15070,7 @@ export default function Home() {
             <p className="text-xs text-gray-400">Bonjour {user.name || ""} 👋</p>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
-          {contexts.length > 0 && !user.isSuperAdmin && ["dashboard", "create", "campaigns", "brand-kit"].includes(view) && (
+          {contexts.length > 0 && !user.isSuperAdmin && ["dashboard", "create", "campaigns", "brand-kit", "datalake"].includes(view) && (
             <label className="flex items-center gap-1.5 text-xs text-gray-500" data-testid="global-context">
               Entreprise
               <select value={activeContextId ?? ""} onChange={(e) => chooseContext(e.target.value || null)} aria-label="Entreprise active" className="border border-gray-200 rounded-lg px-2 py-1.5 text-xs bg-white text-gray-700 max-w-[11rem]">
@@ -16322,6 +16444,10 @@ export default function Home() {
         <CopilotView profile={profile} onProfileSaved={setProfile} showToast={showToast} onGoDashboard={() => setView("dashboard")} onGenerateFromReco={generateFromReco} onGoProfileField={goToProfileField} onGoCreate={() => setView("create")} onGoView={setView} />
       ) : view === "billing" ? (
         <BillingView user={user} showToast={showToast} focus={billingFocus} />
+      ) : view === "datalake" ? (
+        <main className="max-w-5xl mx-auto p-6">
+          <KnowledgePanel key={activeContextId ?? "main"} showToast={showToast} activeContextId={activeContextId} hasContexts={contexts.length > 0} />
+        </main>
       ) : view === "brand-kit" ? (
         <BrandKitView showToast={showToast} />
       ) : view === "profile" ? (
@@ -16330,6 +16456,7 @@ export default function Home() {
           contexts={contexts}
           onContextsChanged={loadContexts}
           onGoConnections={() => setView("connections")}
+          onGoDatalake={() => setView("datalake")}
           profile={profile}
           linkedin={linkedin}
           instagram={instagram}
