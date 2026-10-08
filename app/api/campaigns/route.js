@@ -4,6 +4,7 @@ import { getEffectiveUserId as getUserId } from "@/lib/session";
 import { checkFeature, limitBody } from "@/lib/gating";
 import { normalizeMood } from "@/lib/moods";
 import { getContextFor } from "@/lib/contexts";
+import { ensurePlanFromBrief } from "@/lib/campaignPlanStore";
 import { normalizeBrief, compileBriefContext, briefStats, parseBrief } from "@/lib/campaignBrief";
 
 // Campagnes LinkedIn du client
@@ -20,6 +21,7 @@ export async function GET(req) {
     orderBy: { createdAt: "desc" },
     include: {
       drafts: { select: { status: true, scheduledAt: true, publishedAt: true } },
+      plan: { select: { status: true } },
       company: { select: { name: true } },
     },
   });
@@ -39,6 +41,7 @@ export async function GET(req) {
         objective: c.objective,
         context: c.context,
         briefStats: briefStats(parseBrief(c.brief)),
+        planStats: c.plan.length ? { total: c.plan.length, generated: c.plan.filter((p) => p.status === "généré").length } : null,
         mood: c.mood,
         status: c.status,
         contextId: c.contextId,
@@ -92,5 +95,8 @@ export async function POST(req) {
       contextId: ownContextId,
     },
   });
-  return NextResponse.json({ campaign });
+  // Brief importé avec un calendrier : le plan éditorial est préparé (à relire dans la campagne)
+  let planned = 0;
+  if (brief?.calendar?.length) planned = await ensurePlanFromBrief(userId, campaign.id).catch(() => 0);
+  return NextResponse.json({ campaign, planned });
 }

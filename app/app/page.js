@@ -2222,8 +2222,8 @@ function BriefImport({ showToast, onClose, onCreated }) {
           failed++;
         }
       }
-      showToast(`Campagne « ${d.campaign.name} » créée ✓${addUrls.length ? ` · ${added} page${added > 1 ? "s" : ""} ajoutée${added > 1 ? "s" : ""} au datalake${failed ? `, ${failed} en échec` : ""}` : ""}`);
-      onCreated();
+      showToast(`Campagne « ${d.campaign.name} » créée ✓${d.planned ? ` · plan de ${d.planned} publications prêt` : ""}${addUrls.length ? ` · ${added} page${added > 1 ? "s" : ""} ajoutée${added > 1 ? "s" : ""} au datalake${failed ? `, ${failed} en échec` : ""}` : ""}`);
+      onCreated(d.campaign, d.planned);
     } catch (e) {
       showToast(e.message);
     } finally {
@@ -2378,11 +2378,200 @@ function BriefImport({ showToast, onClose, onCreated }) {
   );
 }
 
+// ----------------------------------------------------------------
+// Plan éditorial d'une campagne : une ligne par publication prévue (compte, date proposée, angle, appel à l'action,
+// lien exact, format, brief visuel, faits à confirmer). Les dates sont des PROPOSITIONS : rien n'est programmé ni publié seul.
+// ----------------------------------------------------------------
+function PlanEditor({ campaign, onBack, showToast, onChanged, onGoHistory }) {
+  const [data, setData] = useState(null);
+  const [openId, setOpenId] = useState(null);
+  const [busyIds, setBusyIds] = useState([]);
+  const [all, setAll] = useState(null); // { done, total } pendant « tout rédiger »
+  const [start, setStart] = useState("");
+  const [showWarn, setShowWarn] = useState(false);
+  const base = `/api/campaigns/${campaign.id}/plan`;
+  const load = () => fetch(base).then(readJson).then((d) => (d.error ? showToast(d.error) : setData(d))).catch(() => showToast("Chargement impossible"));
+  useEffect(() => { load(); }, [campaign.id]);
+  const act = async (body) => {
+    const res = await fetch(base, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    const d = await readJson(res);
+    if (!res.ok) { showToast(d.error || "Erreur"); return false; }
+    setData(d);
+    return true;
+  };
+  const patchItem = async (it, patch) => {
+    const res = await fetch(`${base}/${it.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(patch) });
+    const d = await readJson(res);
+    if (!res.ok) { showToast(d.error || "Erreur"); load(); return; }
+    load();
+  };
+  const removeItem = async (it) => {
+    if (!window.confirm(`Retirer la publication ${it.ref} du plan ? Son post rédigé, s'il existe, reste dans « Mes posts ».`)) return;
+    const res = await fetch(`${base}/${it.id}`, { method: "DELETE" });
+    if (res.ok) load();
+    else showToast("Erreur de suppression");
+  };
+  const generate = async (it) => {
+    setBusyIds((l) => [...l, it.id]);
+    try {
+      const res = await fetch(`${base}/${it.id}/generate`, { method: "POST" });
+      const d = await readJson(res);
+      if (!res.ok) throw new Error(d.error || "Erreur");
+      onChanged?.();
+      return true;
+    } catch (e) {
+      showToast(`${it.ref} : ${e.message}`);
+      return false;
+    } finally {
+      setBusyIds((l) => l.filter((x) => x !== it.id));
+      load();
+    }
+  };
+  const generateAll = async () => {
+    const todo = data.items.filter((i) => i.status !== "généré" && !(i.kind === "org" && (!i.target || i.target === "person")));
+    setAll({ done: 0, total: todo.length });
+    for (let k = 0; k < todo.length; k++) {
+      if (!(await generate(todo[k]))) break;
+      setAll({ done: k + 1, total: todo.length });
+    }
+    setAll(null);
+  };
+  if (!data) return <p className="text-sm text-gray-400 p-6">Chargement du plan…</p>;
+  const items = data.items;
+  const generated = items.filter((i) => i.status === "généré").length;
+  const blockedOrg = items.filter((i) => i.kind === "org" && (!i.target || i.target === "person"));
+  const firstDate = items.map((i) => i.date).filter(Boolean).sort()[0] ?? "";
+  const monday = (d) => { const x = new Date(`${d}T12:00:00`); x.setDate(x.getDate() - ((x.getDay() + 6) % 7)); return x.toISOString().slice(0, 10); };
+  const weeks = [];
+  for (const it of items) {
+    const key = it.date ? monday(it.date) : "—";
+    let w = weeks.find((x) => x.key === key);
+    if (!w) { w = { key, items: [] }; weeks.push(w); }
+    w.items.push(it);
+  }
+  const input = "w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]";
+  const Field = ({ it, k, label, rows }) => {
+    const common = { defaultValue: it[k] ?? "", onBlur: (e) => { if (e.target.value !== (it[k] ?? "")) patchItem(it, { [k]: e.target.value }); }, className: input, "aria-label": `${label} ${it.ref}` };
+    return (
+      <label className="text-[11px] text-gray-500 block">{label}
+        {rows ? <textarea key={`${it.id}${k}${it[k]}`} rows={rows} {...common} /> : <input key={`${it.id}${k}${it[k]}`} type="text" {...common} />}
+      </label>
+    );
+  };
+  return (
+    <div className="space-y-4" data-testid="plan-editor">
+      <button onClick={onBack} className="text-sm text-gray-500 hover:text-gray-800 flex items-center gap-1.5"><ChevronLeft size={15} /> Retour aux campagnes</button>
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-3">
+        <div className="flex items-start justify-between gap-3 flex-wrap">
+          <div>
+            <h2 className="font-semibold text-base">Plan éditorial · {campaign.name}</h2>
+            <p className="text-xs text-gray-500 mt-1" data-testid="plan-summary">{items.length} publication{items.length > 1 ? "s" : ""} · {generated} rédigée{generated > 1 ? "s" : ""}{data.warnings.length ? ` · ${data.warnings.length} point${data.warnings.length > 1 ? "s" : ""} à vérifier` : ""}</p>
+          </div>
+          <button type="button" onClick={generateAll} disabled={Boolean(all) || items.length === generated} data-testid="plan-generate-all" className="bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white text-sm font-medium px-3.5 py-1.5 rounded-lg">
+            {all ? `Rédaction ${all.done}/${all.total}…` : items.length === generated && items.length ? "Tout est rédigé" : (items.length - generated) === 1 ? "Rédiger la publication prévue" : `Rédiger les ${items.length - generated} publications prévues`}
+          </button>
+        </div>
+        <p className="text-xs text-gray-500 leading-relaxed">Les dates sont des <strong>propositions</strong> : rien n&apos;est programmé ni publié sans votre validation. Chaque texte rédigé arrive dans « Mes posts » à valider, avec le lien exact de la ligne (ajouté automatiquement, jamais écrit par l&apos;IA).</p>
+        {data.accounts.length > 0 && (
+          <div className="grid sm:grid-cols-2 gap-2" data-testid="plan-accounts">
+            {data.accounts.map((a) => (
+              <label key={a.label} className="text-xs text-gray-600 flex items-center gap-2">
+                <span className="min-w-0 truncate">{a.label} <span className="text-gray-400">({a.kind === "org" ? "page" : "profil"})</span></span>
+                <select value={a.target ?? ""} onChange={(e) => e.target.value && act({ action: "map", account: a.label, target: e.target.value })} aria-label={`Publier ${a.label} sur`} className={`border rounded-lg px-2 py-1 text-xs bg-white ml-auto max-w-[12rem] ${!a.target ? "border-amber-300" : "border-gray-200"}`}>
+                  {!a.target && <option value="">À associer…</option>}
+                  <option value="person">Profil personnel</option>
+                  {data.orgs.map((o) => (<option key={o.urn} value={o.urn}>Page : {o.name}</option>))}
+                </select>
+              </label>
+            ))}
+          </div>
+        )}
+        {blockedOrg.length > 0 && <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-2.5">{data.orgs.length ? "Associez le compte « page » à votre page LinkedIn pour rédiger ses publications." : "Connectez votre page entreprise LinkedIn (Connexions) pour rédiger les publications de la page."}</p>}
+        <div className="flex items-end gap-2 flex-wrap">
+          <label className="text-[11px] text-gray-500">Première publication le
+            <input type="date" value={start || firstDate} onChange={(e) => setStart(e.target.value)} className={`${input} mt-0.5`} data-testid="plan-start" />
+          </label>
+          <button type="button" onClick={async () => { if (await act({ action: "shift", start: start || firstDate })) { showToast("Calendrier décalé : l'espacement est conservé"); onChanged?.(); } }} disabled={!start || start === firstDate} data-testid="plan-shift" className="text-xs border border-gray-300 hover:border-[#ff5a5f] hover:text-[#ff5a5f] disabled:opacity-40 px-3 py-1.5 rounded-lg">Décaler tout le calendrier</button>
+        </div>
+        {data.warnings.length > 0 && (
+          <div>
+            <button type="button" onClick={() => setShowWarn((v) => !v)} className="text-xs text-amber-700 hover:underline" data-testid="plan-warnings-toggle">{showWarn ? "Masquer" : "Voir"} les {data.warnings.length} points à vérifier</button>
+            {showWarn && <ul className="mt-1.5 text-xs text-gray-600 list-disc pl-4 space-y-0.5" data-testid="plan-warnings">{data.warnings.map((w, i) => (<li key={i}>{w.text}</li>))}</ul>}
+          </div>
+        )}
+      </div>
+      {items.length === 0 && (
+        <div className="bg-white rounded-2xl border border-gray-100 p-6 text-center text-sm text-gray-500 space-y-3">
+          <p>Ce plan est vide.</p>
+          <button type="button" onClick={() => act({ action: "import" })} className="text-[#ff5a5f] hover:underline">Reprendre le calendrier du brief</button>
+        </div>
+      )}
+      {weeks.map((w) => (
+        <div key={w.key} className="space-y-2">
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-400 px-1">{w.key === "—" ? "Sans date" : `Semaine du ${new Date(`${w.key}T12:00:00`).toLocaleDateString("fr-FR", { day: "numeric", month: "long" })}`}</p>
+          {w.items.map((it) => {
+            const open = openId === it.id;
+            const busy = busyIds.includes(it.id);
+            const blocked = it.kind === "org" && (!it.target || it.target === "person");
+            return (
+              <div key={it.id} className="bg-white rounded-xl border border-gray-100 shadow-sm" data-testid="plan-item" data-ref={it.ref}>
+                <div className="flex items-center gap-2 p-3 flex-wrap">
+                  <span className="text-xs font-semibold text-gray-700 w-9">{it.ref}</span>
+                  <span className={`text-[10px] uppercase tracking-wide rounded px-1.5 py-0.5 ${it.kind === "org" ? "bg-sky-50 text-sky-700" : "bg-gray-100 text-gray-500"}`}>{it.account}</span>
+                  <input type="date" value={it.date ?? ""} onChange={(e) => patchItem(it, { date: e.target.value || null })} className="border border-gray-200 rounded-md px-1.5 py-0.5 text-xs" aria-label={`Date de ${it.ref}`} />
+                  <button type="button" onClick={() => setOpenId(open ? null : it.id)} className="flex-1 min-w-[10rem] text-left text-sm text-gray-700 truncate hover:text-[#ff5a5f]">{it.angle || it.objective || "Sans sujet"}</button>
+                  <span className={`text-[10px] rounded-full px-2 py-0.5 ${it.status === "généré" ? "bg-green-50 text-green-700" : "bg-gray-100 text-gray-500"}`}>{it.status === "généré" ? (it.draft?.status === "publié" ? "publié" : "rédigé") : "prévu"}</span>
+                  <button type="button" onClick={() => generate(it)} disabled={busy || Boolean(all) || blocked || it.draft?.status === "publié"} data-testid="plan-item-generate" title={blocked ? "Associez d'abord le compte à une page LinkedIn" : ""} className="text-xs text-white bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 px-2.5 py-1 rounded-lg">{busy ? "Rédaction…" : it.status === "généré" ? "Réécrire" : "Rédiger"}</button>
+                </div>
+                {open && (
+                  <div className="border-t border-gray-100 p-3 space-y-2.5">
+                    <div className="grid sm:grid-cols-2 gap-2.5">
+                      <Field it={it} k="objective" label="Objectif" />
+                      <Field it={it} k="format" label="Format" />
+                    </div>
+                    <Field it={it} k="angle" label="Sujet et angle" rows={2} />
+                    <div className="grid sm:grid-cols-2 gap-2.5">
+                      <Field it={it} k="cta" label="Appel à l'action" />
+                      <label className="text-[11px] text-gray-500 block">Lien exact (ou aucun : question sans lien)
+                        <select value={it.url ?? ""} onChange={(e) => patchItem(it, { url: e.target.value || null })} className={`${input} bg-white`} aria-label={`Lien de ${it.ref}`} data-testid="plan-item-url">
+                          <option value="">Aucun lien</option>
+                          {[...new Set([...(it.url ? [it.url] : []), ...data.allowedUrls])].map((u) => (<option key={u} value={u}>{u.replace(/^https?:\/\//, "")}</option>))}
+                        </select>
+                      </label>
+                    </div>
+                    <Field it={it} k="visual" label="Brief visuel (demande de production)" rows={2} />
+                    <div className="grid sm:grid-cols-2 gap-2.5">
+                      <Field it={it} k="media" label="Statut du média" />
+                      <Field it={it} k="toConfirm" label="Faits à confirmer" />
+                    </div>
+                    {it.draft && (
+                      <div className="rounded-lg bg-gray-50 p-3 text-xs text-gray-700 whitespace-pre-wrap" data-testid="plan-item-text">
+                        {it.draft.text}
+                        <div className="mt-2 flex items-center gap-3 text-[11px] text-gray-400">
+                          <span>{it.draft.status === "à valider" ? "À valider" : it.draft.status}{it.draft.scheduledAt ? ` · proposé le ${fmtDateTime(it.draft.scheduledAt)}` : ""}</span>
+                          {onGoHistory && <button type="button" onClick={onGoHistory} className="text-[#0a66c2] hover:underline">Ouvrir dans Mes posts →</button>}
+                        </div>
+                      </div>
+                    )}
+                    <button type="button" onClick={() => removeItem(it)} className="text-[11px] text-gray-400 hover:text-red-600">Retirer cette publication du plan</button>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      ))}
+      <button type="button" onClick={() => act({ action: "add", item: { angle: "Nouvelle publication" } }).then((ok) => ok && showToast("Publication ajoutée au plan"))} data-testid="plan-add" className="text-sm text-[#ff5a5f] hover:underline">+ Ajouter une publication</button>
+    </div>
+  );
+}
+
 function CampaignsView({ profile, linkedin, orgs, showToast, onPlanned, onProfileSaved, onGoHistory, onGoProfile, openWizard, onWizardConsumed }) {
   const [campaigns, setCampaigns] = useState([]);
   const [loaded, setLoaded] = useState(false);
   const [showWizard, setShowWizard] = useState(false);
   const [showImport, setShowImport] = useState(false);
+  const [planOf, setPlanOf] = useState(null); // campagne dont on ouvre le plan éditorial
 
   // Ouverture demandée depuis la sidebar (« Créer une campagne »)
   useEffect(() => {
@@ -2462,6 +2651,14 @@ function CampaignsView({ profile, linkedin, orgs, showToast, onPlanned, onProfil
     loadCampaigns();
   };
 
+  if (planOf) {
+    return (
+      <main className="max-w-4xl mx-auto p-6">
+        <PlanEditor campaign={planOf} onBack={() => { setPlanOf(null); loadCampaigns(); }} showToast={showToast} onChanged={onPlanned} onGoHistory={onGoHistory} />
+      </main>
+    );
+  }
+
   // Import d'un brief : lecture du document, relecture, création
   if (showImport) {
     return (
@@ -2469,7 +2666,7 @@ function CampaignsView({ profile, linkedin, orgs, showToast, onPlanned, onProfil
         <button onClick={() => setShowImport(false)} className="text-sm text-gray-500 hover:text-gray-800 flex items-center gap-1.5">
           <ChevronLeft size={15} /> Retour aux campagnes
         </button>
-        <BriefImport showToast={showToast} onClose={() => setShowImport(false)} onCreated={() => { setShowImport(false); loadCampaigns(); }} />
+        <BriefImport showToast={showToast} onClose={() => setShowImport(false)} onCreated={(c, planned) => { setShowImport(false); loadCampaigns(); if (planned) setPlanOf(c); }} />
       </main>
     );
   }
@@ -2623,6 +2820,11 @@ function CampaignsView({ profile, linkedin, orgs, showToast, onPlanned, onProfil
                     </label>
                   </div>
                   <div className="flex items-center gap-1.5 shrink-0">
+                    {c.planStats || c.briefStats?.calendar ? (
+                      <button onClick={() => setPlanOf({ id: c.id, name: c.name })} data-testid="campaign-plan-open" className="bg-[#ff5a5f] hover:bg-[#f63d44] text-white text-xs font-medium px-3 py-1.5 rounded-lg flex items-center gap-1.5">
+                        <CalendarDays size={12} /> Plan éditorial{c.planStats ? ` (${c.planStats.generated}/${c.planStats.total})` : ""}
+                      </button>
+                    ) : (
                     <button
                       onClick={() => planForCampaign(c)}
                       disabled={planningId !== null || !slotsPreview?.length}
@@ -2635,6 +2837,7 @@ function CampaignsView({ profile, linkedin, orgs, showToast, onPlanned, onProfil
                       )}
                       {planningId === c.id ? "Génération…" : "Générer la suite"}
                     </button>
+                    )}
                     <button
                       onClick={() => setDeleting(c)}
                       className="text-gray-400 hover:text-red-600 p-1.5"
