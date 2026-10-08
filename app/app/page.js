@@ -5003,8 +5003,38 @@ function LanguagePanel({ contextId, contextName, sourceCount, showToast }) {
   );
 }
 
+// Posts de l'auteur dans le datalake : publiés depuis l'application (pour l'entreprise active) et importés. Lus en direct.
+function DatalakePosts({ contextId, onGoHistory }) {
+  const [d, setD] = useState(null);
+  useEffect(() => {
+    fetch(`/api/datalake/posts${contextId ? `?contextId=${encodeURIComponent(contextId)}` : ""}`).then(readJson).then((x) => (x.error ? null : setD(x))).catch(() => {});
+  }, [contextId]);
+  if (!d) return null;
+  const total = d.published + d.imported;
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-2" data-testid="datalake-posts">
+      <div className="flex items-start justify-between gap-3 flex-wrap">
+        <div className="min-w-0">
+          <h3 className="font-semibold text-sm">Vos posts <span className="text-gray-400 font-normal">({total})</span></h3>
+          <p className="text-xs text-gray-500 mt-1 max-w-2xl leading-relaxed">
+            {total === 0
+              ? "Vos posts publiés avec LinkeePost rejoignent automatiquement le datalake : l'outil y apprend votre ton réel. Vous pouvez aussi importer vos anciens posts depuis votre profil."
+              : `${d.published} publié${d.published > 1 ? "s" : ""} avec LinkeePost${d.imported ? ` · ${d.imported} ancien${d.imported > 1 ? "s" : ""} importé${d.imported > 1 ? "s" : ""}` : ""}. Les plus proches du sujet servent d'exemples de voix à chaque rédaction, et nourrissent les éléments de langage proposés.`}
+          </p>
+        </div>
+        {onGoHistory && d.published > 0 && <button type="button" onClick={onGoHistory} className="text-xs text-[#0a66c2] hover:underline shrink-0">Voir mes posts →</button>}
+      </div>
+      {d.recent.length > 0 && (
+        <ul className="divide-y divide-gray-100 text-xs text-gray-600" data-testid="datalake-posts-recent">
+          {d.recent.map((p) => (<li key={p.id} className="py-1.5 truncate">{p.excerpt}</li>))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 // Datalake éditorial : toutes les sources de l'auteur et ce que l'outil en a retenu (thèmes, vocabulaire, positions, faits).
-function KnowledgePanel({ showToast, onCount, activeContextId = null, hasContexts = false }) {
+function KnowledgePanel({ showToast, onCount, activeContextId = null, hasContexts = false, onGoHistory }) {
   const [data, setData] = useState(null); // { sources, limit, plan } ; null = chargement
   const open = true;
   const [adding, setAdding] = useState(false);
@@ -5277,6 +5307,7 @@ function KnowledgePanel({ showToast, onCount, activeContextId = null, hasContext
               )}
             </div>
           )}
+          {data && <DatalakePosts contextId={activeContextId} onGoHistory={onGoHistory} />}
           {data && used > 0 && <LanguagePanel contextId={activeContextId} contextName={hasContexts ? ctxList.find((c) => c.id === activeContextId)?.name ?? "entreprise principale" : ""} sourceCount={inScope.length} showToast={showToast} />}
           {data && used > 0 && (
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-2" data-testid="datalake-sources">
@@ -16547,7 +16578,7 @@ export default function Home() {
         <BillingView user={user} showToast={showToast} focus={billingFocus} />
       ) : view === "datalake" ? (
         <main className="max-w-5xl mx-auto p-6">
-          <KnowledgePanel key={activeContextId ?? "main"} showToast={showToast} activeContextId={activeContextId} hasContexts={contexts.length > 0} />
+          <KnowledgePanel key={activeContextId ?? "main"} showToast={showToast} activeContextId={activeContextId} hasContexts={contexts.length > 0} onGoHistory={() => setView("history")} />
         </main>
       ) : view === "brand-kit" ? (
         <BrandKitView showToast={showToast} />

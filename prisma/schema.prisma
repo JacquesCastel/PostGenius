@@ -646,6 +646,7 @@ model KnowledgeSource {
   text      String // texte extrait (borné)
   summary   String? // résumé produit par l'IA
   facts     String? // JSON : faits et preuves relevés dans le texte (chaque chiffre vérifié dans la source)
+  embedding Json? // vecteur sémantique (résumé, thèmes, faits) pour la recherche par sens ; recalculé quand la lecture change
   insights  String? // JSON : lecture éditoriale { themes[], vocabulary[], positions[] } (vocabulaire vérifié dans la source)
   pinned    Boolean  @default(false) // « toujours utiliser » (ex. présentation de l'entreprise)
   // Entreprise à laquelle la source appartient (nul = entreprise principale). Une source « partagée » sert pour toutes.
