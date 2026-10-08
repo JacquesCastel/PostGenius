@@ -16,7 +16,8 @@ export async function POST(req) {
   if (!feat.ok) return NextResponse.json({ error: feat.error }, { status: 403 });
 
   const { periodDays, themes, target, campaignId } = await req.json();
-  if (target && target !== "person" && !/^urn:li:organization:\d+$/.test(target)) {
+  // "person", urn d'une page, ou "both:urn" (une version pour le profil, une pour la page)
+  if (target && target !== "person" && !/^(both:)?urn:li:organization:\d+$/.test(target)) {
     return NextResponse.json({ error: "Compte de publication invalide." }, { status: 400 });
   }
 
