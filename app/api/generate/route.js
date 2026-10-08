@@ -14,6 +14,8 @@ import { cleanSource, sourceBlock } from "@/lib/generationSource";
 import { REFINE_CHAT_JSON, REFINE_CHAT_INSTRUCTION, historyBlock, cleanRefineChat } from "@/lib/refineChat";
 import { publishVoiceBlock } from "@/lib/publishVoice";
 import { cleanPostContext, postContextBlock } from "@/lib/postContext";
+import { getContextFor } from "@/lib/contexts";
+import { overlayProfile } from "@/lib/contextOverlay";
 import { writingRulesPrompt, WHY_INSTRUCTION, WHY_JSON_FORMAT, cleanWhy } from "@/lib/linkedinRules";
 
 // Génération du post via l'API Claude (Messages API).
@@ -65,6 +67,7 @@ Le 1er plan est une accroche qui retient dans les 3 premières secondes, le dern
   if (profile?.market) profileSpec += `\n- Marché et positionnement : ${profile.market}`;
   if (profile?.commGoals)
     profileSpec += `\n- Objectifs de communication : ${profile.commGoals} (oriente le post vers ces objectifs)`;
+  if (profile?.editorialLine) profileSpec += `\n- Ligne éditoriale de l'entreprise pour ce post (À RESPECTER : angle, registre, sujets à privilégier ou éviter) : ${profile.editorialLine}`;
   if (profile?.styleNotes)
     profileSpec += `\n- Consignes de style de l'auteur (À RESPECTER IMPÉRATIVEMENT) : ${profile.styleNotes}`;
   profileSpec += styleBlock;
@@ -201,6 +204,7 @@ export async function POST(req) {
         styleNotes: true,
         companyName: true,
         brandVoice: true,
+        editorialLine: true,
         businessDescription: true,
         targetAudience: true,
         market: true,
@@ -211,6 +215,13 @@ export async function POST(req) {
     });
   }
 
+  // Entreprise choisie (facultatif ; nul = entreprise principale) : ses champs remplacent ceux de l'entreprise du profil
+  let ctx = null;
+  if (userId && params.contextId) {
+    ctx = await getContextFor(userId, params.contextId);
+    if (!ctx) return NextResponse.json({ error: "Entreprise introuvable." }, { status: 400 });
+    profile = overlayProfile(profile, ctx);
+  }
   // Où le post sera publié (facultatif) : "person" ou "org" + nom de la page
   const voice = params.publishAs?.kind === "org" || params.publishAs?.kind === "person"
     ? { kind: params.publishAs.kind, pageName: typeof params.publishAs.pageName === "string" ? params.publishAs.pageName : "", brandVoice: profile?.brandVoice ?? "" }
@@ -220,7 +231,7 @@ export async function POST(req) {
   const remarks = userId ? await getRemarks(userId) : [];
   // Base de connaissances : sources les plus proches du sujet (jamais bloquant)
   const topic = [theme, source?.title, params.inspiration?.title, params.refine?.text?.slice(0, 400)].filter(Boolean).join(" ");
-  const knowledge = await knowledgeFor(userId, topic);
+  const knowledge = await knowledgeFor(userId, topic, ctx?.id ?? null);
   // Exemples de voix : les posts de l'auteur les plus proches du sujet (corpus), sinon ses posts types
   const styleBlock = await styleExamplesFor(userId, topic, profile?.styleExamples);
   // Langue du post : celle choisie dans le formulaire, sinon celle du profil, sinon le français

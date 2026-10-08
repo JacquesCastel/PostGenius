@@ -95,6 +95,7 @@ model User {
   // --- Contexte métier & communication (outil de campagne) ---
   website             String? // site internet de la marque (analysé par l'IA pour nourrir le profil)
   companyName         String? // nom de l'entreprise ou de la marque personnelle
+  editorialLine       String? // ligne éditoriale de l'entreprise principale (angle, registre, sujets à privilégier ou éviter)
   brandVoice          String? // voix de la marque sur sa page entreprise (« nous », vocabulaire, ce qu'on évite) — distincte de la voix de la personne
   businessDescription String? // activité, produits/services, proposition de valeur
   targetAudience      String? // audience cible sur LinkedIn
@@ -128,6 +129,10 @@ model User {
   managedByUserId String?
   managedBy       User?   @relation("AgencyClients", fields: [managedByUserId], references: [id], onDelete: SetNull)
   clients         User[]  @relation("AgencyClients")
+
+  // --- Plusieurs entreprises pour une même personne ---
+  // L'entreprise « principale » reste portée par les champs ci-dessus ; les autres sont des Context.
+  contexts Context[]
 
   // --- Charte graphique ---
   brandKit       BrandKit?
@@ -345,6 +350,10 @@ model Draft {
 
   eventId String?
   event   Event? @relation(fields: [eventId], references: [id], onDelete: SetNull)
+
+  // Entreprise pour laquelle le post a été écrit (nul = entreprise principale)
+  contextId String?
+  context   Context? @relation(fields: [contextId], references: [id], onDelete: SetNull)
 
   // Pilier éditorial (copilote) — nullable : posts existants non rétroactivement classés
   pillarId String?
@@ -580,6 +589,32 @@ model StylePost {
   @@index([userId])
 }
 
+// Entreprise supplémentaire d'une personne qui travaille pour plusieurs entreprises avec un seul compte LinkedIn.
+// La voix de la personne reste la sienne ; ce qui change d'un post à l'autre, c'est le contexte : activité, cible,
+// positionnement, objectifs, voix de la marque, rôle, thèmes et ligne éditoriale. Les champs de User décrivent
+// l'entreprise principale (contextId nul partout).
+model Context {
+  id                  String   @id @default(cuid())
+  userId              String
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name                String // nom de l'entreprise
+  role                String? // rôle ou titre de la personne dans cette entreprise
+  website             String?
+  businessDescription String?
+  targetAudience      String?
+  market              String?
+  commGoals           String? // CSV
+  brandVoice          String?
+  themes              String? // thématiques, séparées par des virgules
+  editorialLine       String? // angle et registre éditorial propres à cette entreprise
+  createdAt           DateTime @default(now())
+
+  sources KnowledgeSource[]
+  drafts  Draft[]
+
+  @@index([userId])
+}
+
 model KnowledgeSource {
   id        String   @id @default(cuid())
   userId    String
@@ -591,6 +626,10 @@ model KnowledgeSource {
   summary   String? // résumé produit par l'IA
   facts     String? // JSON : faits et preuves relevés dans le texte (chaque chiffre vérifié dans la source)
   pinned    Boolean  @default(false) // « toujours utiliser » (ex. présentation de l'entreprise)
+  // Entreprise à laquelle la source appartient (nul = entreprise principale). Une source « partagée » sert pour toutes.
+  contextId String?
+  context   Context? @relation(fields: [contextId], references: [id], onDelete: Cascade)
+  shared    Boolean  @default(false)
   charCount Int      @default(0)
   createdAt DateTime @default(now())
 

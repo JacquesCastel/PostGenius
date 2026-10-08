@@ -66,7 +66,7 @@ export async function POST(req) {
   const userId = await getUserId(req);
   if (!userId) return NextResponse.json({ error: "Non connecté." }, { status: 401 });
 
-  const { type, theme, expertise, tone, maxChars, text, generatedText, extra, inspirationUrl, imageUrl, imagePrompt, videoUrl, youtubeUrl, pillarId, target } =
+  const { type, theme, expertise, tone, maxChars, text, generatedText, extra, inspirationUrl, imageUrl, imagePrompt, videoUrl, youtubeUrl, pillarId, target, contextId } =
     await req.json();
   if (!text?.trim()) return NextResponse.json({ error: "Texte requis." }, { status: 400 });
 
@@ -84,6 +84,14 @@ export async function POST(req) {
   // Compte de publication prévu à la création : profil ("person", défaut) ou page entreprise
   if (target !== undefined && target !== "person" && !isOrgUrn(target)) {
     return NextResponse.json({ error: "Compte de publication invalide." }, { status: 400 });
+  }
+
+  // Entreprise pour laquelle le post est écrit (facultatif ; nul = entreprise principale)
+  let draftContextId = null;
+  if (contextId) {
+    const own = await prisma.context.findFirst({ where: { id: String(contextId), userId }, select: { id: true } });
+    if (!own) return NextResponse.json({ error: "Entreprise introuvable." }, { status: 400 });
+    draftContextId = own.id;
   }
 
   const access = await checkAccess(userId);
@@ -111,6 +119,7 @@ export async function POST(req) {
       youtubeUrl: youtubeUrl ? youtubeWatchUrl(parseYouTubeId(youtubeUrl)) : null,
       pillarId: pillarId || null,
       ...(target ? { target } : {}),
+      contextId: draftContextId,
     },
   });
 

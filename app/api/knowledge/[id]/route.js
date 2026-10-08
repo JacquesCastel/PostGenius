@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getEffectiveUserId as getUserId } from "@/lib/session";
 import { MAX_PINNED } from "@/lib/knowledgeText";
+import { resolveSourceScope } from "@/lib/contexts";
 
 // Renommer, épingler (« toujours utiliser ») ou supprimer une source de la base de connaissances.
 
@@ -22,6 +23,15 @@ export async function PATCH(req, { params }) {
       if (n >= MAX_PINNED) return NextResponse.json({ error: `Vous pouvez épingler ${MAX_PINNED} sources au plus.` }, { status: 400 });
     }
     data.pinned = body.pinned;
+  }
+  if (body.contextId !== undefined || body.shared !== undefined) {
+    try {
+      const scope = await resolveSourceScope(userId, body);
+      data.contextId = scope.shared ? null : scope.contextId;
+      data.shared = scope.shared;
+    } catch (e) {
+      return NextResponse.json({ error: e.message }, { status: 400 });
+    }
   }
   if (!Object.keys(data).length) return NextResponse.json({ error: "Rien à modifier." }, { status: 400 });
   const { count } = await prisma.knowledgeSource.updateMany({ where: { id, userId }, data });

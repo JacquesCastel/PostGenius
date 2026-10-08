@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getEffectiveUserId as getUserId } from "@/lib/session";
 import { createKnowledgeSource, guardKnowledgeAdd, KnowledgeError } from "@/lib/knowledge";
+import { resolveSourceScope } from "@/lib/contexts";
 import { extractDocumentText, DocError, MAX_FILE_BYTES } from "@/lib/docExtract";
 
 // Ajout d'un document PDF ou Word (.docx) à la base de connaissances : multipart (champ « file », titre facultatif).
@@ -28,11 +29,12 @@ export async function POST(req) {
     }
     if (file.size > MAX_FILE_BYTES) return NextResponse.json({ error: "Fichier trop volumineux (8 Mo au maximum)." }, { status: 413 });
 
+    const scope = await resolveSourceScope(userId, { contextId: form.get("contextId"), shared: form.get("shared") });
     const { kind, text } = await extractDocumentText(Buffer.from(await file.arrayBuffer()));
     const name = String(file.name ?? "document").replace(/[\u0000-\u001F\\/]/g, "").slice(0, 120) || "document";
     const title = String(form.get("title") ?? "").trim().slice(0, 120) || name.replace(/\.(pdf|docx)$/i, "");
     // « origin » garde le nom du fichier : affiché dans la liste ; « kind » reste « file » pour l'interface
-    return NextResponse.json(await createKnowledgeSource(userId, { kind: "file", origin: `${name} (${kind === "pdf" ? "PDF" : "Word"})`, title, text }, quota));
+    return NextResponse.json(await createKnowledgeSource(userId, { kind: "file", origin: `${name} (${kind === "pdf" ? "PDF" : "Word"})`, title, text, ...scope }, quota));
   } catch (e) {
     const status = e instanceof KnowledgeError ? e.status : e instanceof DocError ? 400 : 500;
     if (status === 500) console.error("Erreur ajout de fichier:", e);
