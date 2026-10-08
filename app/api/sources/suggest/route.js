@@ -4,6 +4,7 @@ import { getEffectiveUserId as getUserId } from "@/lib/session";
 import { userContextBlock } from "@/lib/campaign";
 import { resolveSource } from "@/lib/veille";
 import { logUsage } from "@/lib/usage";
+import { userWithContext } from "@/lib/contexts";
 
 // L'IA propose des sources en affinité avec le profil du client ;
 // chaque suggestion est validée techniquement (flux RSS joignable)
@@ -15,7 +16,15 @@ export async function POST(req) {
   const userId = await getUserId(req);
   if (!userId) return NextResponse.json({ error: "Non connecté." }, { status: 401 });
 
-  const user = await prisma.user.findUnique({ where: { id: userId } });
+  // Entreprise concernée (facultatif ; nul = entreprise principale) : les suggestions suivent son contexte
+  const body = await req.json().catch(() => ({}));
+  const contextId = typeof body.contextId === "string" && body.contextId ? body.contextId : null;
+  let user;
+  try {
+    ({ user } = await userWithContext(userId, contextId));
+  } catch (e) {
+    return NextResponse.json({ error: e.message }, { status: 400 });
+  }
 
   const prompt = `Profil d'un professionnel qui publie sur LinkedIn :${userContextBlock(user) || "\n- (inconnu)"}
 - Thématiques favorites : ${user.themes ?? "non renseignées"}
@@ -75,8 +84,8 @@ Réponds UNIQUEMENT en JSON : {"sources": [{"title": "...", "url": "https://..."
     for (const v of valid) {
       const source = await prisma.contentSource.upsert({
         where: { userId_url: { userId, url: v.url } },
-        update: {},
-        create: { userId, url: v.url, title: v.title },
+        update: { contextId },
+        create: { userId, url: v.url, title: v.title, contextId },
       });
       added.push(source);
     }

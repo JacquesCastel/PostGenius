@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import { getContextFor } from "@/lib/contexts";
+import { saveKit } from "@/lib/brandKitStore";
 import { getEffectiveUserId as getUserId } from "@/lib/session";
 import fs from "fs/promises";
 import path from "path";
@@ -15,6 +16,8 @@ export async function POST(req) {
   if (!userId) return NextResponse.json({ error: "Non connecté" }, { status: 401 });
 
   const formData = await req.formData();
+  const contextId = String(formData.get("contextId") ?? "") || null;
+  if (contextId && !(await getContextFor(userId, contextId))) return NextResponse.json({ error: "Entreprise introuvable." }, { status: 400 });
   const file = formData.get("file");
   if (!file || typeof file === "string") {
     return NextResponse.json({ error: "Fichier manquant" }, { status: 400 });
@@ -43,11 +46,7 @@ export async function POST(req) {
   const logoUrl = `/api/images/logos/${fileName}`;
 
   // Enregistre l'URL dans le BrandKit
-  await prisma.brandKit.upsert({
-    where: { userId },
-    update: { logoUrl },
-    create: { userId, logoUrl },
-  });
+  await saveKit(userId, contextId, { logoUrl });
 
   return NextResponse.json({ logoUrl });
 }

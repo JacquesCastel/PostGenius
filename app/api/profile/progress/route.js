@@ -18,7 +18,7 @@ export async function GET(req) {
     prisma.postRemark.count({ where: { userId } }),
     prisma.remarkSuggestion.count({ where: { userId, status: "proposée" } }),
     prisma.linkedInAccount.findUnique({ where: { userId }, select: { personToken: true, personExpiresAt: true } }),
-    prisma.brandKit.findUnique({ where: { userId }, select: { id: true } }),
+    prisma.brandKit.findFirst({ where: { userId }, select: { id: true } }),
     prisma.event.count({ where: { userId } }),
     checkFeature(userId, "events", "Le module Événements"),
     prisma.campaign.count({ where: { userId } }),

@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { getEffectiveUserId as getUserId } from "@/lib/session";
 import { generateText } from "@/lib/campaign";
 import { cleanHistory } from "@/lib/refineChat";
+import { userWithContext } from "@/lib/contexts";
 
 // Post d'exemple pour valider la direction d'une campagne avant
 // la génération en masse. Peut être ajusté avec un retour du client.
@@ -11,10 +12,15 @@ export async function POST(req) {
   const userId = await getUserId(req);
   if (!userId) return NextResponse.json({ error: "Non connecté." }, { status: 401 });
 
-  const { theme, objective, context, feedback, previous, mood, history } = await req.json();
+  const { theme, objective, context, feedback, previous, mood, history, contextId } = await req.json();
   if (!theme?.trim()) return NextResponse.json({ error: "Thème requis." }, { status: 400 });
 
-  const user = await prisma.user.findUnique({ where: { id: userId } });
+  let user;
+  try {
+    ({ user } = await userWithContext(userId, contextId || null));
+  } catch (e) {
+    return NextResponse.json({ error: e.message }, { status: 400 });
+  }
   if (!user?.expertise) {
     return NextResponse.json({ error: "Complétez votre profil (expertise) avant de créer une campagne." }, { status: 400 });
   }
@@ -28,7 +34,7 @@ export async function POST(req) {
   try {
     // Ajustement : l'IA répond en une phrase et peut proposer des « À retenir » (préférences durables, jamais appliquées seules)
     const chat = feedback && previous ? { history: cleanHistory(history) } : null;
-    const { text, reply, remember } = await generateText(user, theme, campaignContext, null, mood, chat);
+    const { text, reply, remember } = await generateText(user, theme, campaignContext, null, mood, chat, null, contextId || null);
     return NextResponse.json({ text, ...(chat ? { reply, remember } : {}) });
   } catch (e) {
     console.error("Erreur sample campagne:", e);

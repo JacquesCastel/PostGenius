@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { getEffectiveUserId as getUserId } from "@/lib/session";
 import { resolveSource } from "@/lib/veille";
 import { checkFeature } from "@/lib/gating";
+import { getContextFor } from "@/lib/contexts";
 
 // Sources de veille du client
 
@@ -10,8 +11,11 @@ export async function GET(req) {
   const userId = await getUserId(req);
   if (!userId) return NextResponse.json({ error: "Non connecté." }, { status: 401 });
 
+  // Flux de l'entreprise demandée (?contextId=…), sinon de l'entreprise principale
+  const contextId = new URL(req.url).searchParams.get("contextId") || null;
+  if (contextId && !(await getContextFor(userId, contextId))) return NextResponse.json({ error: "Entreprise introuvable." }, { status: 400 });
   const sources = await prisma.contentSource.findMany({
-    where: { userId },
+    where: { userId, contextId },
     orderBy: { createdAt: "asc" },
   });
   return NextResponse.json({ sources });
@@ -25,16 +29,17 @@ export async function POST(req) {
   const feat = await checkFeature(userId, "veille", "La veille connectée");
   if (!feat.ok) return NextResponse.json({ error: feat.error }, { status: 403 });
 
-  const { url, title } = await req.json();
+  const { url, title, contextId = null } = await req.json();
   if (!url?.trim()) return NextResponse.json({ error: "URL requise." }, { status: 400 });
+  if (contextId && !(await getContextFor(userId, contextId))) return NextResponse.json({ error: "Entreprise introuvable." }, { status: 400 });
 
   try {
     const { feedUrl } = await resolveSource(url.trim());
     const name = title?.trim() || new URL(feedUrl).hostname.replace(/^www\./, "");
     const source = await prisma.contentSource.upsert({
       where: { userId_url: { userId, url: feedUrl } },
-      update: {},
-      create: { userId, url: feedUrl, title: name },
+      update: { contextId: contextId || null }, // un flux appartient à une seule entreprise : le rajouter ailleurs le déplace
+      create: { userId, url: feedUrl, title: name, contextId: contextId || null },
     });
     return NextResponse.json({ source });
   } catch (e) {
