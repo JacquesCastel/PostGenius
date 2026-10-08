@@ -327,6 +327,7 @@ model Campaign {
   theme     String // thème principal de la campagne
   objective String? // objectif spécifique (leads, notoriété...)
   context   String? // brief enrichi : réponses aux questions IA + exemple validé
+  plan      CampaignPost[]
   brief     String? // JSON : brief structuré importé d'un document (voix par compte, règles, ressources, calendrier) — lib/campaignBrief.js
   mood      String? // humeur éditoriale des posts de la campagne (lib/moods.js), null = aucune
   status    String   @default("active") // active | archivée
@@ -371,6 +372,10 @@ model Draft {
   // Entreprise pour laquelle le post a été écrit (nul = entreprise principale)
   contextId String?
   context   Context? @relation(fields: [contextId], references: [id], onDelete: SetNull)
+
+  // Publication du plan éditorial de la campagne dont ce post est la rédaction
+  campaignPostId String?       @unique
+  campaignPost   CampaignPost? @relation(fields: [campaignPostId], references: [id], onDelete: SetNull)
 
   // Pilier éditorial (copilote) — nullable : posts existants non rétroactivement classés
   pillarId String?
@@ -692,4 +697,33 @@ model LanguageProposal {
   respondedAt DateTime?
 
   @@index([userId, contextId, status])
+}
+
+// Plan éditorial d'une campagne : une ligne par publication prévue (compte, date proposée, angle, appel à l'action, lien exact,
+// format, brief visuel, faits à confirmer). Issu du calendrier du brief ou saisi à la main ; jamais publié seul :
+// sa rédaction est un Draft « à valider ».
+model CampaignPost {
+  id         String   @id @default(cuid())
+  campaignId String
+  campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  userId     String
+  position   Int      @default(0)
+  ref        String // P01, E01…
+  account    String // nom du compte (profil ou page) tel que dans le brief
+  kind       String   @default("person") // person | org
+  target     String? // "person" ou urn de la page LinkedIn (à associer pour un compte « page »)
+  date       String? // AAAA-MM-JJ proposé (Europe/Paris)
+  objective  String   @default("")
+  angle      String   @default("")
+  cta        String   @default("")
+  url        String? // adresse exacte à citer ; nul = « question sans lien »
+  format     String   @default("")
+  visual     String   @default("") // brief visuel : demande de production, pas un fichier livré
+  media      String   @default("") // statut du média (réel, à produire…)
+  toConfirm  String   @default("") // faits à confirmer avant publication
+  status     String   @default("prévu") // prévu | généré
+  createdAt  DateTime @default(now())
+  draft      Draft?
+
+  @@index([campaignId, position])
 }
