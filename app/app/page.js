@@ -5530,7 +5530,7 @@ function DatalakePosts({ contextId, onGoHistory }) {
     fetch(`/api/datalake/posts${contextId ? `?contextId=${encodeURIComponent(contextId)}` : ""}`).then(readJson).then((x) => (x.error ? null : setD(x))).catch(() => {});
   }, [contextId]);
   if (!d) return null;
-  const total = d.published + d.imported;
+  const total = d.published + (d.planned ?? 0) + d.imported;
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-2" data-testid="datalake-posts">
       <div className="flex items-start justify-between gap-3 flex-wrap">
@@ -5538,8 +5538,8 @@ function DatalakePosts({ contextId, onGoHistory }) {
           <h3 className="font-semibold text-sm">Vos posts <span className="text-gray-400 font-normal">({total})</span></h3>
           <p className="text-xs text-gray-500 mt-1 max-w-2xl leading-relaxed">
             {total === 0
-              ? "Vos posts publiés avec LinkeePost rejoignent automatiquement le datalake : l'outil y apprend votre ton réel. Vous pouvez aussi importer vos anciens posts depuis votre profil."
-              : `${d.published} publié${d.published > 1 ? "s" : ""} avec LinkeePost${d.imported ? ` · ${d.imported} ancien${d.imported > 1 ? "s" : ""} importé${d.imported > 1 ? "s" : ""}` : ""}. Les plus proches du sujet servent d'exemples de voix à chaque rédaction, et nourrissent les éléments de langage proposés.`}
+              ? "Vos posts rejoignent automatiquement le datalake dès qu'ils sont publiés, programmés ou à valider : c'est la mémoire de ce que vous avez déjà dit. Vous pouvez aussi importer vos anciens posts depuis votre profil."
+              : `${d.published} publié${d.published > 1 ? "s" : ""}${d.planned ? ` · ${d.planned} prévu${d.planned > 1 ? "s" : ""} (programmé${d.planned > 1 ? "s" : ""} ou à valider)` : ""}${d.imported ? ` · ${d.imported} ancien${d.imported > 1 ? "s" : ""} importé${d.imported > 1 ? "s" : ""}` : ""}. À chaque rédaction, l'outil relit les plus récents et les plus proches du sujet : continuité, pas de répétition, votre ton réel. Ils nourrissent aussi les éléments de langage proposés.`}
           </p>
         </div>
         {onGoHistory && d.published > 0 && <button type="button" onClick={onGoHistory} className="text-xs text-[#0a66c2] hover:underline shrink-0">Voir mes posts →</button>}

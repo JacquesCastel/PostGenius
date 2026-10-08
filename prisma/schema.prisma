@@ -374,6 +374,9 @@ model Draft {
   contextId String?
   context   Context? @relation(fields: [contextId], references: [id], onDelete: SetNull)
 
+  // Vecteur sémantique du texte { h: empreinte du texte, v: vecteur } : mémoire éditoriale (ce que l'auteur a déjà dit)
+  embedding Json?
+
   // Publication du plan éditorial de la campagne dont ce post est la rédaction
   campaignPostId String?       @unique
   campaignPost   CampaignPost? @relation(fields: [campaignPostId], references: [id], onDelete: SetNull)

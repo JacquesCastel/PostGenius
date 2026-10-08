@@ -5,6 +5,7 @@ import { logUsage } from "@/lib/usage";
 import { checkAccess } from "@/lib/gating";
 import { getRemarks, remarksPromptBlock } from "@/lib/remarks";
 import { elementsFor } from "@/lib/languageStore";
+import { memoryFor } from "@/lib/postMemory";
 import { languageBlock } from "@/lib/languageElements";
 import { normalizeVideoExtra } from "@/lib/shootingKit";
 import { normalizeLanguage, languageInstruction, systemPromptFor } from "@/lib/languages";
@@ -236,6 +237,8 @@ export async function POST(req) {
   const knowledge = await knowledgeFor(userId, topic, ctx?.id ?? null);
   // Éléments de langage validés pour cette entreprise : transmis avec les connaissances, dans le même bloc de prompt
   knowledge.block += languageBlock(await elementsFor(userId, ctx?.id ?? null));
+  // Mémoire éditoriale : ce que l'auteur a déjà dit (continuité, pas de répétition) ; sans objet pour la retouche d'un post existant
+  if (!params.refine?.text) knowledge.block += (await memoryFor(userId, topic, { contextId: ctx?.id ?? null })).block;
   // Exemples de voix : les posts de l'auteur les plus proches du sujet (corpus), sinon ses posts types
   const styleBlock = await styleExamplesFor(userId, topic, profile?.styleExamples);
   // Langue du post : celle choisie dans le formulaire, sinon celle du profil, sinon le français
