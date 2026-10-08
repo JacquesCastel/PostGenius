@@ -13,6 +13,7 @@ const STRING_FIELDS = [
   "website",
   "companyName",
   "brandVoice",
+  "editorialLine",
   "businessDescription",
   "targetAudience",
   "market",

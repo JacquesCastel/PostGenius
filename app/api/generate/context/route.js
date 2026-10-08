@@ -9,7 +9,7 @@ export async function POST(req) {
   const body = await req.json().catch(() => ({}));
   const topic = [body.theme, body.sourceTitle].filter((v) => typeof v === "string").join(" ").slice(0, 2000);
   try {
-    return NextResponse.json(await generationContext(userId, topic));
+    return NextResponse.json(await generationContext(userId, topic, typeof body.contextId === "string" ? body.contextId : null));
   } catch (e) {
     console.error("[contexte] lecture impossible :", e.message);
     return NextResponse.json({ error: "Contexte indisponible." }, { status: 500 });

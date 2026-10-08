@@ -4,6 +4,7 @@ import { getEffectiveUserId as getUserId } from "@/lib/session";
 import { createKnowledgeSource, guardKnowledgeAdd, fetchPageText, KnowledgeError } from "@/lib/knowledge";
 import { cleanText, sourceView } from "@/lib/knowledgeText";
 import { knowledgeLimit, planOf } from "@/lib/plans";
+import { resolveSourceScope } from "@/lib/contexts";
 
 // Base de connaissances du client : liste (GET) et ajout d'une note ou d'un lien (POST).
 // Chaque ajout est analysé par l'IA (titre, résumé, faits vérifiés dans la source).
@@ -17,7 +18,7 @@ export async function GET(req) {
     prisma.knowledgeSource.findMany({
       where: { userId },
       orderBy: { createdAt: "desc" },
-      select: { id: true, kind: true, title: true, origin: true, summary: true, facts: true, pinned: true, charCount: true, createdAt: true },
+      select: { id: true, kind: true, title: true, origin: true, summary: true, facts: true, pinned: true, charCount: true, createdAt: true, contextId: true, shared: true },
     }),
     prisma.user.findUnique({ where: { id: userId }, select: { plan: true } }),
   ]);
@@ -32,6 +33,7 @@ export async function POST(req) {
   let kind, title, origin = null, text;
   try {
     const quota = await guardKnowledgeAdd(userId);
+    const scope = await resolveSourceScope(userId, body);
     if (body.kind === "link") {
       const url = String(body.url ?? "").trim();
       if (!/^https?:\/\//i.test(url)) return NextResponse.json({ error: "Collez l'adresse complète d'une page (https://…)." }, { status: 400 });
@@ -44,7 +46,7 @@ export async function POST(req) {
     } else {
       return NextResponse.json({ error: "Type de source inconnu." }, { status: 400 });
     }
-    return NextResponse.json(await createKnowledgeSource(userId, { kind, origin, title, text }, quota));
+    return NextResponse.json(await createKnowledgeSource(userId, { kind, origin, title, text, ...scope }, quota));
   } catch (e) {
     const status = e instanceof KnowledgeError ? e.status : 400;
     return NextResponse.json({ error: e.message, ...(e.code ? { code: e.code } : {}) }, { status });

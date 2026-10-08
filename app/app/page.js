@@ -17,6 +17,7 @@ import { nextSteps, snoozeUntil } from "@/lib/nextSteps";
 import { explainPublishError } from "@/lib/publishError";
 import { isOrgUrn } from "@/lib/publishVoice";
 import { cleanPostContext } from "@/lib/postContext";
+import { overlayProfile } from "@/lib/contextOverlay";
 import SiteHeader from "@/components/SiteHeader";
 // Polices de la charte graphique, chargées comme polices web pour que l'éditeur de
 // modèle de slide (SlideTemplateEditor) affiche vraiment celle choisie — jusqu'ici
@@ -4897,6 +4898,14 @@ function KnowledgePanel({ showToast, onCount }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
   const [expanded, setExpanded] = useState(null);
+  // Plusieurs entreprises : chaque source appartient à une entreprise (« main » = principale) ou est partagée
+  const [ctxList, setCtxList] = useState([]);
+  const [scope, setScope] = useState("main"); // main | id d'une entreprise | shared
+  useEffect(() => {
+    fetch("/api/contexts").then(readJson).then((d) => setCtxList(d.contexts ?? [])).catch(() => {});
+  }, []);
+  const scopeBody = (v) => (v === "shared" ? { shared: true } : v === "main" ? { contextId: null, shared: false } : { contextId: v, shared: false });
+  const scopeValue = (src) => (src.shared ? "shared" : src.contextId ?? "main");
 
   const load = () =>
     fetch("/api/knowledge")
@@ -4922,12 +4931,14 @@ function KnowledgePanel({ showToast, onCount }) {
         const fd = new FormData();
         fd.append("file", file);
         if (title.trim()) fd.append("title", title.trim());
+        if (scope === "shared") fd.append("shared", "true");
+        else if (scope !== "main") fd.append("contextId", scope);
         res = await fetch("/api/knowledge/upload", { method: "POST", body: fd });
       } else {
         res = await fetch("/api/knowledge", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(tab === "link" ? { kind: "link", url, title } : { kind: "note", text, title }),
+          body: JSON.stringify({ ...(tab === "link" ? { kind: "link", url, title } : { kind: "note", text, title }), ...scopeBody(scope) }),
         });
       }
       const d = await readJson(res);
@@ -4990,6 +5001,16 @@ function KnowledgePanel({ showToast, onCount }) {
                 <button type="button" onClick={() => setTab("link")} className={chip(tab === "link")}>Un lien</button>
                 <button type="button" onClick={() => setTab("file")} className={chip(tab === "file")}>PDF ou Word</button>
               </div>
+              {ctxList.length > 0 && (
+                <label className="flex items-center gap-2 text-xs text-gray-600 flex-wrap" data-testid="source-scope">
+                  Pour quelle entreprise ?
+                  <select value={scope} onChange={(e) => setScope(e.target.value)} className="border border-gray-200 rounded-lg px-2 py-1 text-xs bg-white">
+                    <option value="main">Entreprise principale</option>
+                    {ctxList.map((c) => (<option key={c.id} value={c.id}>{c.name}</option>))}
+                    <option value="shared">Toutes mes entreprises (partagée)</option>
+                  </select>
+                </label>
+              )}
               <input
                 type="text"
                 value={title}
@@ -5058,6 +5079,13 @@ function KnowledgePanel({ showToast, onCount }) {
                       </p>
                     </div>
                     <div className="flex items-center gap-2 shrink-0 text-xs">
+                      {ctxList.length > 0 && (
+                        <select value={scopeValue(s)} onChange={(e) => patch(s.id, scopeBody(e.target.value))} title="Entreprise à laquelle cette source appartient" aria-label={`Entreprise de la source ${s.title}`} className="border border-gray-200 rounded px-1 py-0.5 text-[11px] bg-white max-w-[130px]">
+                          <option value="main">Principale</option>
+                          {ctxList.map((c) => (<option key={c.id} value={c.id}>{c.name}</option>))}
+                          <option value="shared">Partagée</option>
+                        </select>
+                      )}
                       <label className="flex items-center gap-1 text-gray-500" title="Cette source est toujours transmise à l'IA, quel que soit le sujet">
                         <input type="checkbox" checked={s.pinned} onChange={(e) => patch(s.id, { pinned: e.target.checked })} /> Toujours
                       </label>
@@ -11041,6 +11069,7 @@ const PROFILE_STAGES = [
       { label: "Sa cible sur LinkedIn", done: (f) => hasText(f.targetAudience) },
       { label: "Son positionnement", done: (f) => hasText(f.market) },
       { label: "Ses objectifs de communication", done: (f) => hasText(f.commGoals) },
+      { label: "Sa ligne éditoriale", bonus: true, done: (f) => hasText(f.editorialLine) },
       { label: "La voix de sa page entreprise", bonus: true, done: (f) => hasText(f.brandVoice) },
     ],
   },
@@ -11084,7 +11113,7 @@ const PROFILE_STAGES = [
 // Champ du profil → étape qui le contient (liens « Compléter » venus d'autres écrans)
 const PROFILE_FIELD_STAGE = {
   name: "identity", headline: "identity", expertise: "identity",
-  companyName: "audience", website: "audience", brandVoice: "audience", businessDescription: "audience", targetAudience: "audience", market: "audience", commGoals: "audience",
+  companyName: "audience", website: "audience", brandVoice: "audience", editorialLine: "audience", businessDescription: "audience", targetAudience: "audience", market: "audience", commGoals: "audience",
   themes: "voice", styleNotes: "voice", remarks: "voice",
   knowledge: "sources", editorialNote: "sources",
   publishDays: "rhythm",
@@ -11632,13 +11661,135 @@ function ConnectionsView({ linkedin, onDisconnect, instagram, onDisconnectInstag
   );
 }
 
-function ProfileView({ profile, onSaved, showToast, linkedin, onDisconnect, instagram, onDisconnectInstagram, canOrgPublish = true, focusField, onFocusHandled, onGoConnections }) {
+// Plusieurs entreprises : une personne qui travaille pour plusieurs entreprises avec un seul compte LinkedIn choisit,
+// à chaque post, le contexte voulu. Sa voix reste la sienne ; l'entreprise principale est celle du profil ci-dessus.
+const EMPTY_CONTEXT = { name: "", role: "", website: "", businessDescription: "", targetAudience: "", market: "", commGoals: "", brandVoice: "", themes: "", editorialLine: "" };
+function ContextsManager({ contexts, onChanged, showToast }) {
+  const [editing, setEditing] = useState(null); // { id?, ...champs }
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState(null);
+  const inputCls = "w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]";
+  const labelCls = "text-xs font-medium text-gray-600 block mb-1";
+  const set = (k, v) => setEditing((e) => ({ ...e, [k]: v }));
+  const goals = (editing?.commGoals ?? "").split(",").filter(Boolean);
+  const save = async () => {
+    if (busy) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const { id, ...fields } = editing;
+      const res = await fetch(id ? `/api/contexts/${id}` : "/api/contexts", { method: id ? "PATCH" : "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(fields) });
+      const d = await readJson(res);
+      if (!res.ok) throw new Error(d.error || "Erreur");
+      showToast(id ? "Entreprise enregistrée ✓" : "Entreprise ajoutée ✓");
+      setEditing(null);
+      onChanged?.();
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+  const remove = async (c) => {
+    if (!window.confirm(`Supprimer l'entreprise « ${c.name} » ? Les sources de sa base de connaissances seront supprimées ; vos posts sont conservés.`)) return;
+    const res = await fetch(`/api/contexts/${c.id}`, { method: "DELETE" });
+    if (res.ok) { showToast("Entreprise supprimée"); onChanged?.(); } else showToast("Erreur de suppression");
+  };
+  return (
+    <div className="border border-dashed border-gray-300 rounded-xl p-4" data-testid="contexts-manager">
+      <p className="text-sm font-medium text-gray-700">Travaillez-vous pour plusieurs entreprises ?</p>
+      <p className="text-xs text-gray-500 mt-1 leading-relaxed">
+        Avec un seul compte LinkedIn, vous choisissez à chaque post l&apos;entreprise concernée. Chacune a son activité, sa cible, sa ligne éditoriale, sa voix de marque et ses sources ; votre voix, elle, reste la vôtre. L&apos;entreprise ci-dessus est votre entreprise principale.
+      </p>
+      {contexts.length > 0 && (
+        <ul className="mt-3 divide-y divide-gray-100 border border-gray-100 rounded-lg">
+          {contexts.map((c) => (
+            <li key={c.id} className="p-3 flex items-start justify-between gap-3" data-testid="context-row">
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-gray-800 truncate">{c.name}{c.role && <span className="text-gray-400 font-normal"> · {c.role}</span>}</p>
+                <p className="text-xs text-gray-400 truncate">{c.businessDescription || "Activité à décrire"}</p>
+              </div>
+              <div className="flex items-center gap-3 text-xs shrink-0">
+                <button type="button" onClick={() => { setError(null); setEditing({ ...EMPTY_CONTEXT, ...Object.fromEntries(Object.entries(c).map(([k, v]) => [k, v ?? ""])) }); }} className="text-[#ff5a5f] hover:underline">Modifier</button>
+                <button type="button" onClick={() => remove(c)} className="text-gray-400 hover:text-red-600">Supprimer</button>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+      {editing ? (
+        <div className="mt-3 space-y-3 bg-gray-50 rounded-xl p-3.5" data-testid="context-form">
+          <div className="grid sm:grid-cols-2 gap-3">
+            <div>
+              <label className={labelCls}>Nom de l&apos;entreprise *</label>
+              <input type="text" value={editing.name} onChange={(e) => set("name", e.target.value)} placeholder="ex : Acme Industrie" className={inputCls} data-testid="context-name" />
+            </div>
+            <div>
+              <label className={labelCls}>Votre rôle dans cette entreprise</label>
+              <input type="text" value={editing.role} onChange={(e) => set("role", e.target.value)} placeholder="ex : Directrice financière" className={inputCls} />
+            </div>
+          </div>
+          <div>
+            <label className={labelCls}>Activité : que fait-elle, pour qui, avec quelle valeur ajoutée ?</label>
+            <textarea rows={2} value={editing.businessDescription} onChange={(e) => set("businessDescription", e.target.value)} className={inputCls} />
+          </div>
+          <div className="grid sm:grid-cols-2 gap-3">
+            <div>
+              <label className={labelCls}>Cible sur LinkedIn</label>
+              <input type="text" value={editing.targetAudience} onChange={(e) => set("targetAudience", e.target.value)} placeholder="ex : DAF d'ETI industrielles" className={inputCls} />
+            </div>
+            <div>
+              <label className={labelCls}>Positionnement</label>
+              <input type="text" value={editing.market} onChange={(e) => set("market", e.target.value)} className={inputCls} />
+            </div>
+          </div>
+          <div>
+            <label className={labelCls}>Objectifs de communication</label>
+            <div className="flex flex-wrap gap-1.5">
+              {COMM_GOALS.map((g) => (
+                <button type="button" key={g} onClick={() => set("commGoals", (goals.includes(g) ? goals.filter((x) => x !== g) : [...goals, g]).join(","))} className={`text-xs px-3 py-1.5 rounded-full border ${goals.includes(g) ? "bg-[#ff5a5f] text-white border-[#ff5a5f]" : "border-gray-200 text-gray-600 hover:border-gray-300"}`}>{g}</button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <label className={labelCls}>Ligne éditoriale <span className="font-normal text-gray-400">(angle, registre, sujets à privilégier ou éviter)</span></label>
+            <textarea rows={2} value={editing.editorialLine} onChange={(e) => set("editorialLine", e.target.value)} placeholder="ex : pédagogique, cas clients, jamais de polémique" className={inputCls} />
+          </div>
+          <div className="grid sm:grid-cols-2 gap-3">
+            <div>
+              <label className={labelCls}>Thématiques <span className="font-normal text-gray-400">(séparées par des virgules)</span></label>
+              <input type="text" value={editing.themes} onChange={(e) => set("themes", e.target.value)} className={inputCls} />
+            </div>
+            <div>
+              <label className={labelCls}>Voix de la marque <span className="font-normal text-gray-400">(pour les posts publiés sur sa page)</span></label>
+              <input type="text" value={editing.brandVoice} onChange={(e) => set("brandVoice", e.target.value)} className={inputCls} />
+            </div>
+          </div>
+          <div>
+            <label className={labelCls}>Site internet <span className="font-normal text-gray-400">(facultatif)</span></label>
+            <input type="text" value={editing.website} onChange={(e) => set("website", e.target.value)} placeholder="https://" className={inputCls} />
+          </div>
+          {error && <p className="text-xs text-red-600">{error}</p>}
+          <div className="flex items-center gap-2">
+            <button type="button" onClick={save} disabled={busy || !editing.name.trim()} data-testid="context-save" className="bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white text-sm font-medium px-4 py-2 rounded-lg">{busy ? "Enregistrement…" : editing.id ? "Enregistrer" : "Ajouter l'entreprise"}</button>
+            <button type="button" onClick={() => setEditing(null)} className="text-sm text-gray-500 px-3 py-2">Annuler</button>
+          </div>
+        </div>
+      ) : (
+        <button type="button" onClick={() => { setError(null); setEditing({ ...EMPTY_CONTEXT }); }} data-testid="context-add" className="mt-3 text-sm font-medium text-[#ff5a5f] hover:underline">+ Ajouter une entreprise</button>
+      )}
+    </div>
+  );
+}
+
+function ProfileView({ contexts = [], onContextsChanged, profile, onSaved, showToast, linkedin, onDisconnect, instagram, onDisconnectInstagram, canOrgPublish = true, focusField, onFocusHandled, onGoConnections }) {
   const [fields, setFields] = useState({
     name: profile?.name ?? "",
     headline: profile?.headline ?? "",
     website: profile?.website ?? "",
     companyName: profile?.companyName ?? "",
     brandVoice: profile?.brandVoice ?? "",
+    editorialLine: profile?.editorialLine ?? "",
     businessDescription: profile?.businessDescription ?? "",
     targetAudience: profile?.targetAudience ?? "",
     market: profile?.market ?? "",
@@ -11911,9 +12062,13 @@ function ProfileView({ profile, onSaved, showToast, linkedin, onDisconnect, inst
                       ))}
                     </div>
                   </ProfileField>
+                  <ProfileField id="field-editorialLine" label="Ligne éditoriale" hint="(facultatif)" why="Votre angle et votre registre pour cette entreprise : pédagogique ou prise de position, cas clients ou actualité du secteur, sujets à éviter. Le copilote s'en sert pour choisir comment aborder chaque thème." example="Pédagogique, cas clients, jamais de polémique">
+                    <textarea rows={2} value={fields.editorialLine} onChange={(e) => set("editorialLine", e.target.value)} placeholder="ex : pédagogique, cas clients, jamais de polémique" className={input} />
+                  </ProfileField>
                   <ProfileField id="field-brandVoice" label="Voix de la marque sur sa page entreprise" hint="(facultatif)" why="Votre voix personnelle s'écrit en « je ». Une page entreprise parle autrement : « nous », un vocabulaire maison, des choses qu'on évite. Ces consignes ne servent que pour les posts publiés sur la page." example="Nous tutoyons, phrases courtes, pas d'anglicismes, jamais de promesse chiffrée">
                     <textarea rows={2} value={fields.brandVoice} onChange={(e) => set("brandVoice", e.target.value)} placeholder="ex : nous tutoyons, phrases courtes, jamais de jargon" className={input} data-testid="field-brandVoice-input" />
                   </ProfileField>
+                  <ContextsManager contexts={contexts} onChanged={onContextsChanged} showToast={showToast} />
                 </div>
               )}
 
@@ -12267,18 +12422,18 @@ function PostContextBlock({ profile, value, onChange }) {
   );
 }
 
-function GenerationContextCard({ theme, sourceTitle, onGoProfile, postContext }) {
+function GenerationContextCard({ theme, sourceTitle, onGoProfile, postContext, contextId }) {
   const [ctx, setCtx] = useState(null);
   const [open, setOpen] = useState(false);
   useEffect(() => {
     const t = setTimeout(async () => {
       try {
-        const res = await fetch("/api/generate/context", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ theme, sourceTitle }) });
+        const res = await fetch("/api/generate/context", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ theme, sourceTitle, contextId }) });
         if (res.ok) setCtx(await res.json());
       } catch {}
     }, 500);
     return () => clearTimeout(t);
-  }, [theme, sourceTitle]);
+  }, [theme, sourceTitle, contextId]);
   if (!ctx) return null;
   const plural = (n, one, many) => `${n} ${n > 1 ? many : one}`;
   const parts = [
@@ -12568,6 +12723,28 @@ export default function Home() {
   const [pair, setPair] = useState(null); // [{ target, result, history }] une fois générées
   const [pairTab, setPairTab] = useState(0);
   const [profile, setProfile] = useState(null);
+  // Plusieurs entreprises : l'entreprise principale est celle du profil, les autres viennent de /api/contexts
+  const [contexts, setContexts] = useState([]);
+  const [activeContextId, setActiveContextId] = useState(null); // null = entreprise principale
+  const loadContexts = () => fetch("/api/contexts").then(readJson).then((d) => setContexts(d.contexts ?? [])).catch(() => {});
+  useEffect(() => {
+    if (user) loadContexts();
+  }, [user?.email]);
+  useEffect(() => {
+    // dernière entreprise utilisée, si elle existe encore
+    try {
+      const saved = window.localStorage.getItem("lp_context");
+      if (saved && contexts.some((c) => c.id === saved)) setActiveContextId((cur) => cur ?? saved);
+    } catch {}
+    if (activeContextId && !contexts.some((c) => c.id === activeContextId)) setActiveContextId(null);
+  }, [contexts]);
+  const chooseContext = (id) => {
+    setActiveContextId(id);
+    setPostCtxTouched(false);
+    try { id ? window.localStorage.setItem("lp_context", id) : window.localStorage.removeItem("lp_context"); } catch {}
+  };
+  const activeContext = contexts.find((c) => c.id === activeContextId) ?? null;
+  const ctxProfile = overlayProfile(profile, activeContext);
   // Contexte propre au post (public, objectif, angle), pré-rempli depuis le profil
   const [postCtx, setPostCtx] = useState({ audience: "", goal: "", angle: "" });
   const [postCtxTouched, setPostCtxTouched] = useState(false);
@@ -12579,10 +12756,10 @@ export default function Home() {
     prevViewRef.current = view;
   }, [view]);
   useEffect(() => {
-    if (postCtxTouched || !profile) return;
-    setPostCtx((c) => ({ ...c, audience: profile.targetAudience ?? "", goal: profile.commGoals ?? "" }));
-  }, [profile?.targetAudience, profile?.commGoals, postCtxTouched]);
-  const postCtxSpecific = cleanPostContext(postCtx, profile);
+    if (postCtxTouched || !ctxProfile) return;
+    setPostCtx((c) => ({ ...c, audience: ctxProfile.targetAudience ?? "", goal: ctxProfile.commGoals ?? "" }));
+  }, [ctxProfile?.targetAudience, ctxProfile?.commGoals, postCtxTouched]);
+  const postCtxSpecific = cleanPostContext(postCtx, ctxProfile);
   const [profileLoaded, setProfileLoaded] = useState(false);
   const [linkedinLoaded, setLinkedinLoaded] = useState(false);
 
@@ -12604,7 +12781,7 @@ export default function Home() {
 
   // Création pas à pas : « Pour qui ? » n'apparaît que s'il y a un choix (page entreprise connectée)
   const createSteps = [
-    ...(linkedin.connected && orgs.length > 0 ? [{ id: "who", label: "Pour qui ?", short: "Pour qui" }] : []),
+    ...((linkedin.connected && orgs.length > 0) || contexts.length > 0 ? [{ id: "who", label: "Pour qui ?", short: "Pour qui" }] : []),
     { id: "topic", label: "De quoi parler ?", short: "Sujet" },
     { id: "shape", label: genMode === "series" ? "Réglages" : "Forme et réglages", short: "Forme" },
     { id: "go", label: "Générer", short: "Générer" },
@@ -12814,6 +12991,7 @@ export default function Home() {
         source: activeSource ? { title: activeSource.title, origin: activeSource.origin, text: activeSource.text } : undefined,
         publishAs: voiceFor(tgt),
         postContext: postCtx,
+        contextId: activeContextId || undefined,
       });
       const call = async (tgt) => {
         const r = await fetch("/api/generate", { method: "POST", headers: { "Content-Type": "application/json" }, body: body(tgt) });
@@ -12931,7 +13109,7 @@ export default function Home() {
       const res = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, publishAs: voiceFor(target), postContext: postCtx, ...(moodOverride !== undefined ? { mood: moodOverride } : {}), refine: { text: result.text, instruction, history: thread.filter((m) => m.role === "user").map((m) => m.text) } }),
+        body: JSON.stringify({ ...form, publishAs: voiceFor(target), postContext: postCtx, contextId: activeContextId || undefined, ...(moodOverride !== undefined ? { mood: moodOverride } : {}), refine: { text: result.text, instruction, history: thread.filter((m) => m.role === "user").map((m) => m.text) } }),
       });
       const data = await readJson(res);
       if (!res.ok) throw new Error(data.error || "Erreur inconnue");
@@ -13003,6 +13181,7 @@ export default function Home() {
         body: JSON.stringify({
           ...form,
           target: override?.target ?? target,
+          contextId: activeContextId || undefined,
           text: r.text,
           // Version d'origine de l'IA (la plus ancienne de l'historique) : sert à repérer
           // ce que l'utilisateur modifie d'habitude.
@@ -14933,6 +15112,26 @@ export default function Home() {
             </div>
 
             <div className={stepCls("who")}>
+            {contexts.length > 0 && (
+              <div data-testid="context-picker">
+                <label className="text-sm font-medium text-gray-700 block mb-2">Pour quelle entreprise ?</label>
+                <div className="flex flex-wrap gap-1.5">
+                  {[{ id: null, label: profile?.companyName || "Entreprise principale" }, ...contexts.map((c) => ({ id: c.id, label: c.name }))].map((o) => (
+                    <button
+                      key={o.id ?? "main"}
+                      type="button"
+                      onClick={() => chooseContext(o.id)}
+                      className={`text-xs px-3 py-1.5 rounded-full border ${activeContextId === o.id ? "bg-[#ff5a5f] text-white border-[#ff5a5f]" : "border-gray-200 text-gray-600 hover:border-gray-300"}`}
+                    >
+                      {o.label}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-[11px] text-gray-400 mt-1.5">
+                  Le contexte de cette entreprise (activité, cible, ligne éditoriale, voix de la marque) et ses sources seront utilisés. Votre voix reste la vôtre.
+                </p>
+              </div>
+            )}
             {/* Où publier : la voix du post en dépend (profil « je », page « nous ») */}
             {linkedin.connected && orgs.length > 0 && (
               <div data-testid="publish-as">
@@ -15117,9 +15316,9 @@ export default function Home() {
                   />
                 </>
               )}
-              {profile?.themes && !source && (sourceMode === "idea" || genMode === "series") && (
+              {ctxProfile?.themes && !source && (sourceMode === "idea" || genMode === "series") && (
                 <div className="flex flex-wrap gap-1.5 mt-2">
-                  {profile.themes
+                  {ctxProfile.themes
                     .split(",")
                     .map((t) => t.trim())
                     .filter(Boolean)
@@ -15174,7 +15373,7 @@ export default function Home() {
               </div>
             </div>
 
-            {genMode === "single" && <PostContextBlock profile={profile} value={postCtx} onChange={(v) => { setPostCtxTouched(true); setPostCtx(v); }} />}
+            {genMode === "single" && <PostContextBlock profile={ctxProfile} value={postCtx} onChange={(v) => { setPostCtxTouched(true); setPostCtx(v); }} />}
 
             {/* 3 · Réglages : repliés, un résumé suffit tant qu'on ne les change pas */}
             <div className="border border-gray-200 rounded-xl">
@@ -15296,6 +15495,7 @@ export default function Home() {
               <div className="rounded-xl border border-gray-200 divide-y divide-gray-100">
                 {[
                   ["topic", "Sujet", genMode === "series" ? `Série de ${seriesCount} posts · ${form.theme.trim().slice(0, 90) || "à préciser"}` : (activeSource?.title || form.theme.trim().slice(0, 110) || "à préciser")],
+                  ...(contexts.length > 0 ? [["who", "Entreprise", activeContext?.name || profile?.companyName || "Entreprise principale"]] : []),
                   ...(linkedin.connected && orgs.length > 0 ? [["who", "Publier en tant que", pairActive ? `Profil + page ${orgs.find((o) => o.urn === pairWith)?.name ?? ""} (deux versions)` : isOrgUrn(target) ? `Page : ${orgs.find((o) => o.urn === target)?.name ?? "entreprise"}` : "Profil personnel"]] : []),
                   ...(genMode === "single" ? [["shape", "Format", `${POST_TYPES.find((t) => t.id === form.type)?.label ?? "Post simple"}${Object.keys(postCtxSpecific).length ? " · précisions pour ce post" : ""}`]] : []),
                   ["shape", "Réglages", settingsSummary],
@@ -15309,7 +15509,7 @@ export default function Home() {
                   </div>
                 ))}
               </div>
-              {genMode === "single" && <GenerationContextCard theme={form.theme} sourceTitle={activeSource?.title ?? ""} onGoProfile={() => setView("profile")} postContext={postCtxSpecific} />}
+              {genMode === "single" && <GenerationContextCard theme={form.theme} sourceTitle={activeSource?.title ?? ""} onGoProfile={() => setView("profile")} postContext={postCtxSpecific} contextId={activeContextId} />}
 
             </div>
 
@@ -15698,6 +15898,8 @@ export default function Home() {
       ) : view === "profile" ? (
         <ProfileView
           key={profile?.email ?? "profile"}
+          contexts={contexts}
+          onContextsChanged={loadContexts}
           onGoConnections={() => setView("connections")}
           profile={profile}
           linkedin={linkedin}
