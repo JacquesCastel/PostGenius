@@ -148,6 +148,8 @@ model User {
   editorialPillars   EditorialPillar[]
   postRemarks        PostRemark[]
   remarkSuggestions  RemarkSuggestion[]
+  languageElements   LanguageElement[]
+  languageProposals  LanguageProposal[]
   remarkAnalysisAt   DateTime? // dernière analyse des modifications de posts (suggestions de remarques)
   editorialRecos     EditorialRecommendation[]
 }
@@ -624,6 +626,8 @@ model Context {
   createdAt           DateTime @default(now())
 
   sources   KnowledgeSource[]
+  languageElements  LanguageElement[]
+  languageProposals LanguageProposal[]
   drafts    Draft[]
   campaigns Campaign[]
   brandKits BrandKit[]
@@ -652,4 +656,38 @@ model KnowledgeSource {
   createdAt DateTime @default(now())
 
   @@index([userId])
+}
+
+// Éléments de langage validés par l'auteur : mots à privilégier, mots à éviter, formulations types.
+// Propres à une entreprise (contextId nul = entreprise principale) ; injectés dans chaque rédaction.
+model LanguageElement {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  contextId String?
+  context   Context? @relation(fields: [contextId], references: [id], onDelete: Cascade)
+  kind      String // use | avoid | phrase
+  text      String
+  createdAt DateTime @default(now())
+
+  @@index([userId, contextId])
+}
+
+// Proposition de l'IA après lecture du datalake, à valider : jamais appliquée seule.
+// Une proposition ignorée n'est jamais reproposée.
+model LanguageProposal {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  contextId   String?
+  context     Context?  @relation(fields: [contextId], references: [id], onDelete: Cascade)
+  kind        String // phrase | use | avoid | line | pillar
+  text        String
+  detail      String? // pilier : sa description ; autres : pourquoi, en une phrase
+  origin      String? // titre de la source d'où vient la proposition
+  status      String    @default("proposée") // proposée | acceptée | ignorée
+  createdAt   DateTime  @default(now())
+  respondedAt DateTime?
+
+  @@index([userId, contextId, status])
 }

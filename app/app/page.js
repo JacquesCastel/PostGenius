@@ -4905,6 +4905,104 @@ function RemarkBox({ onApplyNow, onManage, showToast }) {
 // contexte. Chaque ajout est résumé par l'IA ; seuls le résumé et les faits relevés servent à rédiger,
 // et le post indique les sources utilisées.
 // ----------------------------------------------------------------
+// Éléments de langage : l'IA propose, l'auteur valide. Validés, ils sont injectés dans chaque rédaction de l'entreprise.
+function LanguagePanel({ contextId, contextName, sourceCount, showToast }) {
+  const [data, setData] = useState({ elements: [], proposals: [] });
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState(null);
+  const [editing, setEditing] = useState(null); // { id, text }
+  const qs = contextId ? `?contextId=${encodeURIComponent(contextId)}` : "";
+  const load = () => fetch(`/api/datalake/language${qs}`).then(readJson).then((d) => (d.error ? null : setData(d))).catch(() => {});
+  useEffect(() => { load(); }, [contextId]);
+  const propose = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/datalake/language", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ contextId }) });
+      const d = await readJson(res);
+      if (!res.ok) throw new Error(d.error || "Erreur");
+      setData(d);
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+  const respond = async (p, action, text) => {
+    const res = await fetch(`/api/datalake/language/proposals/${p.id}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action, text }) });
+    const d = await readJson(res);
+    if (!res.ok) { showToast(d.error || "Erreur"); return; }
+    setEditing(null);
+    if (action === "accept") showToast(d.applied === "editorialLine" ? "Ajouté à la ligne éditoriale ✓" : d.applied === "pillar" ? "Pilier créé : à retrouver dans le Copilote IA ✓" : "Ajouté à vos éléments de langage ✓");
+    load();
+  };
+  const removeEl = async (e) => {
+    const res = await fetch(`/api/datalake/language/elements/${e.id}`, { method: "DELETE" });
+    if (res.ok) load();
+    else showToast("Erreur de suppression");
+  };
+  const LABEL = { phrase: "Formulation type", use: "Mot à privilégier", avoid: "À éviter", line: "Ligne éditoriale", pillar: "Pilier" };
+  const groups = [["use", "À privilégier"], ["avoid", "À éviter"], ["phrase", "Formulations types"]];
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4" data-testid="language-panel">
+      <div className="flex items-start justify-between gap-3 flex-wrap">
+        <div className="min-w-0">
+          <h3 className="font-semibold text-sm">Éléments de langage{contextName ? ` · ${contextName}` : ""}</h3>
+          <p className="text-xs text-gray-500 mt-1 max-w-2xl leading-relaxed">
+            Après lecture de vos sources, l&apos;IA propose des mots à garder ou à éviter, des formulations, une ligne éditoriale et des piliers. Rien n&apos;est appliqué sans votre accord ; ce que vous validez sert à chaque post de cette entreprise.
+          </p>
+        </div>
+        <button type="button" onClick={propose} disabled={busy || sourceCount === 0} data-testid="language-propose" className="bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white text-sm font-medium px-3.5 py-1.5 rounded-lg shrink-0">
+          {busy ? "Lecture de vos sources…" : data.proposals.length ? "Proposer d'autres éléments" : "Proposer des éléments de langage"}
+        </button>
+      </div>
+      {error && <p className="text-xs text-red-600" data-testid="language-error">{error}</p>}
+      {data.proposals.length > 0 && (
+        <ul className="space-y-2" data-testid="language-proposals">
+          {data.proposals.map((p) => (
+            <li key={p.id} className="rounded-xl border border-gray-200 p-3" data-testid="language-proposal">
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-[#f63d44] mb-1">{LABEL[p.kind] ?? p.kind}</p>
+              {editing?.id === p.id ? (
+                <input type="text" value={editing.text} onChange={(e) => setEditing({ id: p.id, text: e.target.value })} className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]" data-testid="language-edit" />
+              ) : (
+                <p className="text-sm text-gray-800">{p.text}</p>
+              )}
+              {p.detail && <p className="text-xs text-gray-500 mt-1">{p.detail}</p>}
+              {p.origin && <p className="text-[11px] text-gray-400 mt-0.5">D&apos;après : {p.origin}</p>}
+              <div className="flex items-center gap-3 mt-2 text-xs">
+                <button type="button" onClick={() => respond(p, "accept", editing?.id === p.id ? editing.text : undefined)} data-testid="language-accept" className="font-medium text-white bg-[#ff5a5f] hover:bg-[#f63d44] px-3 py-1 rounded-lg">Ajouter</button>
+                <button type="button" onClick={() => setEditing(editing?.id === p.id ? null : { id: p.id, text: p.text })} className="text-[#0a66c2] hover:underline">{editing?.id === p.id ? "Annuler" : "Modifier"}</button>
+                <button type="button" onClick={() => respond(p, "ignore")} data-testid="language-ignore" className="text-gray-400 hover:text-gray-600">Ignorer</button>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+      {data.elements.length > 0 && (
+        <div className="space-y-3" data-testid="language-elements">
+          {groups.map(([k, label]) => {
+            const items = data.elements.filter((e) => e.kind === k);
+            if (!items.length) return null;
+            return (
+              <div key={k}>
+                <p className="text-[11px] font-medium uppercase tracking-wide text-gray-400 mb-1.5">{label}</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {items.map((e) => (
+                    <span key={e.id} className={`text-xs px-2.5 py-1 rounded-full inline-flex items-center gap-1.5 ${k === "avoid" ? "bg-gray-100 text-gray-500 line-through decoration-gray-400" : "bg-[#fff1f1] text-[#f63d44]"}`} data-testid="language-element">
+                      {e.text}
+                      <button type="button" onClick={() => removeEl(e)} aria-label={`Retirer ${e.text}`} className="no-underline text-gray-400 hover:text-red-600"><X size={11} /></button>
+                    </span>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // Datalake éditorial : toutes les sources de l'auteur et ce que l'outil en a retenu (thèmes, vocabulaire, positions, faits).
 function KnowledgePanel({ showToast, onCount, activeContextId = null, hasContexts = false }) {
   const [data, setData] = useState(null); // { sources, limit, plan } ; null = chargement
@@ -5179,6 +5277,7 @@ function KnowledgePanel({ showToast, onCount, activeContextId = null, hasContext
               )}
             </div>
           )}
+          {data && used > 0 && <LanguagePanel contextId={activeContextId} contextName={hasContexts ? ctxList.find((c) => c.id === activeContextId)?.name ?? "entreprise principale" : ""} sourceCount={inScope.length} showToast={showToast} />}
           {data && used > 0 && (
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-2" data-testid="datalake-sources">
               {visible.length === 0 ? (
@@ -12909,6 +13008,7 @@ function GenerationContextCard({ theme, sourceTitle, onGoProfile, postContext, c
     ctx.profile.filled.length ? "votre profil" : null,
     ctx.sources.length ? plural(ctx.sources.length, "source", "sources") : null,
     ctx.remarks.length ? plural(ctx.remarks.length, "remarque", "remarques") : null,
+    ctx.language ? plural(ctx.language, "élément de langage", "éléments de langage") : null,
     ctx.posts.length ? plural(ctx.posts.length, "de vos posts proches", "de vos posts proches") : null,
   ].filter(Boolean);
   const Row = ({ label, children }) => (
@@ -12934,6 +13034,7 @@ function GenerationContextCard({ theme, sourceTitle, onGoProfile, postContext, c
           <Row label="Profil">{ctx.profile.filled.length ? ctx.profile.filled.join(", ") : "vide"}{ctx.profile.missing.length > 0 && <span className="text-gray-400"> — manque : {ctx.profile.missing.join(", ")}</span>}</Row>
           <Row label="Sources">{ctx.sources.length ? ctx.sources.map((s) => s.title).join(" · ") : ctx.totals.sources ? `aucune ne touche à ce sujet (${ctx.totals.sources} en base)` : "aucune dans votre base de connaissances"}</Row>
           <Row label="Remarques">{ctx.remarks.length ? ctx.remarks.join(" · ") : "aucune pour l’instant"}</Row>
+          {ctx.language > 0 && <Row label="Éléments de langage">{ctx.language} validé{ctx.language > 1 ? "s" : ""} pour cette entreprise</Row>}
           <Row label="Posts proches">{ctx.posts.length ? <span className="block">{ctx.posts.map((p, i) => <span key={i} className="block truncate">« {p} »</span>)}</span> : "aucun exemple de votre voix"}</Row>
           {onGoProfile && <button type="button" onClick={onGoProfile} className="text-xs text-[#ff5a5f] hover:underline pt-1">Compléter mon profil et mes sources</button>}
         </div>

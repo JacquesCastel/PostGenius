@@ -4,6 +4,8 @@ import { getEffectiveUserId as getUserId } from "@/lib/session";
 import { logUsage } from "@/lib/usage";
 import { checkAccess } from "@/lib/gating";
 import { getRemarks, remarksPromptBlock } from "@/lib/remarks";
+import { elementsFor } from "@/lib/languageStore";
+import { languageBlock } from "@/lib/languageElements";
 import { normalizeVideoExtra } from "@/lib/shootingKit";
 import { normalizeLanguage, languageInstruction, systemPromptFor } from "@/lib/languages";
 import { normalizeMood, moodInstruction } from "@/lib/moods";
@@ -232,6 +234,8 @@ export async function POST(req) {
   // Base de connaissances : sources les plus proches du sujet (jamais bloquant)
   const topic = [theme, source?.title, params.inspiration?.title, params.refine?.text?.slice(0, 400)].filter(Boolean).join(" ");
   const knowledge = await knowledgeFor(userId, topic, ctx?.id ?? null);
+  // Éléments de langage validés pour cette entreprise : transmis avec les connaissances, dans le même bloc de prompt
+  knowledge.block += languageBlock(await elementsFor(userId, ctx?.id ?? null));
   // Exemples de voix : les posts de l'auteur les plus proches du sujet (corpus), sinon ses posts types
   const styleBlock = await styleExamplesFor(userId, topic, profile?.styleExamples);
   // Langue du post : celle choisie dans le formulaire, sinon celle du profil, sinon le français
