@@ -7,12 +7,12 @@ import {
   AlertCircle, UserPlus, LogIn, UserRound, Save, LayoutDashboard, CalendarDays, List, ExternalLink,
   BarChart3, Eye, MousePointerClick, ThumbsUp, MessageSquare, Share2, Undo2, Layers as LayersIcon,
   Megaphone, ChevronDown, Image as ImageIcon, ShieldCheck, Lock, ArrowUpCircle, MapPin, Bell, Camera,
-  CreditCard, Gauge, Users, Smartphone, Monitor,
+  CreditCard, Gauge, Users, Smartphone, Monitor, Minus,
   Upload, Wand2, SlidersHorizontal, Type, Crop, Download, Pencil, GripHorizontal,
   Compass, Lightbulb, EyeOff, TrendingUp, TrendingDown, Plus, Globe, ChevronUp, Menu,
   AlignLeft, AlignCenter, AlignRight, Move, Server, Clapperboard
 } from "lucide-react";
-import { PLANS, PLAN_IDS, planLabel, planAllows, planOf, trialDaysLeft, accessState, changeKind, lostFeatures } from "@/lib/plans";
+import { PLANS, PLAN_IDS, planLabel, planAllows, planOf, trialDaysLeft, accessState, changeKind, lostFeatures, gainedFeatures, planWith } from "@/lib/plans";
 import { COMPARE, unlockedBy } from "@/lib/planFeatures";
 import { nextSteps, snoozeUntil } from "@/lib/nextSteps";
 import { explainPublishError } from "@/lib/publishError";
@@ -5715,7 +5715,7 @@ function MiniBars({ values, labels }) {
 // ----------------------------------------------------------------
 // Abonnement / facturation (Stripe Checkout + portail)
 // ----------------------------------------------------------------
-function BillingView({ user, showToast }) {
+function BillingView({ user, showToast, focus = null }) {
   const [billingInterval, setBillingInterval] = useState(user?.subscriptionInterval === "year" ? "year" : "month");
   const [busy, setBusy] = useState(null); // id de l'action en cours
   const currentPlan = planOf(user).id;
@@ -5741,6 +5741,15 @@ function BillingView({ user, showToast }) {
     fetch("/api/billing/usage").then(readJson).then((d) => { if (!d.error) setUsage(d); }).catch(() => {});
   }, []);
   const plan = PLANS[currentPlan];
+  // Arrivée depuis une fonction verrouillée : on met l'offre qui la contient en évidence
+  const [showCompare, setShowCompare] = useState(false);
+  useEffect(() => {
+    if (!focus?.plan) return;
+    const t = setTimeout(() => {
+      document.getElementById("billing-plans")?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 500);
+    return () => clearTimeout(t);
+  }, [focus?.plan]);
   const nextPlanId = PLAN_IDS[PLAN_IDS.indexOf(currentPlan) + 1] ?? null;
   const trialEnd = user?.trialEndsAt ? new Date(user.trialEndsAt) : null;
   const pastDue = status === "past_due";
@@ -5966,7 +5975,7 @@ function BillingView({ user, showToast }) {
           return (
             <div
               key={id}
-              className={`bg-white rounded-2xl p-6 relative ${id === "pro" ? "ring-2 ring-[#ff5a5f] shadow-lg" : "border border-gray-100 shadow-sm"}`}
+              className={`bg-white rounded-2xl p-6 relative ${id === "pro" || focus?.plan === id ? "ring-2 ring-[#ff5a5f] shadow-lg" : "border border-gray-100 shadow-sm"}`}
             >
               {id === "pro" && (
                 <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#ff5a5f] text-white text-xs font-semibold px-3 py-1 rounded-full">
@@ -5981,6 +5990,35 @@ function BillingView({ user, showToast }) {
               {billingInterval === "year" && (
                 <p className="text-xs text-[#ff5a5f] font-medium mt-1">soit {(yearly / 12).toFixed(2)} €/mois</p>
               )}
+              {focus?.plan === id && (
+                <p className="mt-2 text-xs font-semibold text-[#ff5a5f] bg-[#fff1f1] rounded-lg px-2.5 py-1.5" data-testid="plan-focus">
+                  {focus.feature ? `${focus.feature} : inclus avec ${p.name}` : "Offre recommandée"}
+                </p>
+              )}
+              {(() => {
+                // Ce que l'offre apporte : par rapport à l'offre actuelle pour un abonné, sinon par rapport à l'offre du dessous
+                const base = active || (trial != null && trial > 0) ? currentPlan : PLAN_IDS[PLAN_IDS.indexOf(id) - 1] ?? null;
+                const gains = id === currentPlan ? [] : base && PLAN_IDS.indexOf(id) > PLAN_IDS.indexOf(base) ? gainedFeatures(base, id) : [];
+                const lost = base && PLAN_IDS.indexOf(id) < PLAN_IDS.indexOf(base) ? lostFeatures(base, id) : [];
+                const own = !base ? gainedFeatures("essentiel", id) : [];
+                if (!gains.length && !lost.length && !own.length && id !== "essentiel") return null;
+                return (
+                  <div className="mt-4 text-xs" data-testid="plan-gains">
+                    {gains.length > 0 && (
+                      <>
+                        <p className="font-semibold text-gray-500 mb-1.5">{base === currentPlan ? `En plus de ${planLabel(base)}` : `Tout ${planLabel(base)}, plus`}</p>
+                        <ul className="space-y-1">{gains.map((g) => (<li key={g} className="flex items-start gap-1.5 text-gray-700"><Check size={13} className="text-[#ff5a5f] mt-0.5 shrink-0" />{g}</li>))}</ul>
+                      </>
+                    )}
+                    {lost.length > 0 && (
+                      <p className="text-amber-700 bg-amber-50 rounded-lg px-2.5 py-2">Vous n&apos;auriez plus : {lost.join(", ")}.</p>
+                    )}
+                    {!gains.length && !lost.length && id === "essentiel" && (
+                      <ul className="space-y-1">{["15 posts par mois", "Profil de rédaction et publication sur profil", "Programmation et interactions LinkedIn"].map((g) => (<li key={g} className="flex items-start gap-1.5 text-gray-700"><Check size={13} className="text-[#ff5a5f] mt-0.5 shrink-0" />{g}</li>))}</ul>
+                    )}
+                  </div>
+                );
+              })()}
               {isCurrent ? (
                 <div className="mt-5 text-center text-sm font-semibold text-[#ff5a5f] border-2 border-[#ffd5d6] rounded-full py-2.5">
                   Offre actuelle
@@ -6001,6 +6039,46 @@ function BillingView({ user, showToast }) {
           );
         })}
       </div>
+
+      {/* Comparatif détaillé */}
+      <div className="text-center">
+        <button type="button" onClick={() => setShowCompare((v) => !v)} aria-expanded={showCompare} data-testid="compare-toggle" className="text-sm font-semibold text-[#0a66c2] hover:underline">
+          {showCompare ? "Masquer le comparatif détaillé" : "Comparer les offres en détail"}
+        </button>
+      </div>
+      {showCompare && (
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-x-auto" data-testid="compare-table">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-gray-100">
+                <th className="text-left font-medium text-gray-400 px-4 py-3 w-1/2" />
+                {PLAN_IDS.map((id) => (
+                  <th key={id} className={`px-3 py-3 text-center ${id === currentPlan ? "bg-[#fff7f7]" : ""}`}>
+                    <span className="font-bold text-[#1b2a4a]">{PLANS[id].name}</span>
+                    <span className="block text-xs text-gray-400 font-normal">{PLANS[id].price} €/mois</span>
+                    {id === currentPlan && <span className="block text-[10px] font-semibold text-[#ff5a5f] uppercase">votre offre</span>}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {COMPARE.map((row) => (
+                <tr key={row.label} className="border-b border-gray-50 last:border-0">
+                  <td className="px-4 py-2.5 text-gray-700">{row.label}</td>
+                  {PLAN_IDS.map((id) => {
+                    const v = row.value(PLANS[id]);
+                    return (
+                      <td key={id} className={`px-3 py-2.5 text-center ${id === currentPlan ? "bg-[#fff7f7]" : ""}`}>
+                        {v === true ? <Check size={16} className="text-[#ff5a5f] mx-auto" /> : v === false || v == null ? <Minus size={15} className="text-gray-300 mx-auto" /> : <span className="font-semibold text-gray-700">{v}</span>}
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       <p className="text-xs text-gray-400 text-center">
         Paiement sécurisé par Stripe. Sans engagement, résiliable à tout moment depuis « Moyen de paiement et factures ».
@@ -12724,7 +12802,11 @@ export default function Home() {
     if (!res.ok) { showToast("Erreur lors du changement de client"); return; }
     window.location.href = `/app?view=${DEEP_LINK_VIEWS.includes(view) && view !== "clients" ? view : "dashboard"}`;
   };
-  const [upgrade, setUpgrade] = useState(null); // { feature } quand on clique une fonctionnalité verrouillée
+  const [upgrade, setUpgrade] = useState(null); // { feature, requires } quand on clique une fonctionnalité verrouillée
+  const [billingFocus, setBillingFocus] = useState(null); // { plan, feature } : offre à mettre en évidence sur la page Abonnement
+  useEffect(() => {
+    if (view !== "billing") setBillingFocus(null); // la mise en évidence ne vaut que pour cette visite de la page
+  }, [view]);
   const [optimizeText, setOptimizeText] = useState(null); // { text, type } → page Étape 2 plein écran
   const [rewriting, setRewriting] = useState(false);
   const [rewriteScope, setRewriteScope] = useState("all"); // all | hook | body | signature (= conclusion + appel à l'action)
@@ -14569,15 +14651,23 @@ export default function Home() {
               <Lock size={26} />
             </div>
             <h3 className="text-lg font-extrabold">{upgrade.feature} n'est pas dans votre offre</h3>
-            <p className="text-sm text-gray-500 mt-2">
-              Votre offre actuelle : <strong>{plan.name}</strong>. Passez à une offre supérieure pour débloquer cette fonctionnalité.
-            </p>
-            <button
-              onClick={() => { setUpgrade(null); setView("billing"); }}
-              className="mt-5 w-full flex items-center justify-center gap-2 bg-[#ff5a5f] hover:bg-[#f63d44] text-white font-semibold px-5 py-3 rounded-full transition-colors"
-            >
-              <ArrowUpCircle size={17} /> Voir les offres et s'abonner
-            </button>
+            {(() => {
+              const needs = upgrade.requires ? planWith(upgrade.requires) : null; // offre la moins chère qui la contient
+              return (
+                <>
+                  <p className="text-sm text-gray-500 mt-2">
+                    Votre offre actuelle : <strong>{plan.name}</strong>.{needs ? <> Cette fonction est incluse dans l&apos;offre <strong>{PLANS[needs].name}</strong> ({PLANS[needs].price} € HT/mois).</> : " Passez à une offre supérieure pour la débloquer."}
+                  </p>
+                  <button
+                    onClick={() => { setBillingFocus(needs ? { plan: needs, feature: upgrade.feature } : null); setUpgrade(null); setView("billing"); }}
+                    data-testid="upgrade-cta"
+                    className="mt-5 w-full flex items-center justify-center gap-2 bg-[#ff5a5f] hover:bg-[#f63d44] text-white font-semibold px-5 py-3 rounded-full transition-colors"
+                  >
+                    <ArrowUpCircle size={17} /> {needs ? `Découvrir l'offre ${PLANS[needs].name}` : "Voir les offres et s'abonner"}
+                  </button>
+                </>
+              );
+            })()}
             <button onClick={() => setUpgrade(null)} className="mt-3 text-xs text-gray-400 hover:text-gray-600">
               Plus tard
             </button>
@@ -15283,7 +15373,7 @@ export default function Home() {
                 )}
                 {!editingResult && result?.text && !canScore && (
                   <button
-                    onClick={() => setUpgrade({ feature: "Le score d'engagement" })}
+                    onClick={() => setUpgrade({ feature: "Le score d'engagement", requires: "scoring" })}
                     className="w-full flex items-center justify-between gap-2 bg-gray-50 hover:bg-gray-100 text-gray-500 rounded-2xl px-5 py-4 transition-colors"
                   >
                     <span className="flex items-center gap-2.5 text-left">
@@ -16119,7 +16209,7 @@ export default function Home() {
       ) : view === "copilot" ? (
         <CopilotView profile={profile} onProfileSaved={setProfile} showToast={showToast} onGoDashboard={() => setView("dashboard")} onGenerateFromReco={generateFromReco} onGoProfileField={goToProfileField} onGoCreate={() => setView("create")} onGoView={setView} />
       ) : view === "billing" ? (
-        <BillingView user={user} showToast={showToast} />
+        <BillingView user={user} showToast={showToast} focus={billingFocus} />
       ) : view === "brand-kit" ? (
         <BrandKitView showToast={showToast} />
       ) : view === "profile" ? (
