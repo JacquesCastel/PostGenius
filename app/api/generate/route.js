@@ -13,6 +13,7 @@ import { usedSources } from "@/lib/knowledgeText";
 import { cleanSource, sourceBlock } from "@/lib/generationSource";
 import { REFINE_CHAT_JSON, REFINE_CHAT_INSTRUCTION, historyBlock, cleanRefineChat } from "@/lib/refineChat";
 import { publishVoiceBlock } from "@/lib/publishVoice";
+import { cleanPostContext, postContextBlock } from "@/lib/postContext";
 import { writingRulesPrompt, WHY_INSTRUCTION, WHY_JSON_FORMAT, cleanWhy } from "@/lib/linkedinRules";
 
 // Génération du post via l'API Claude (Messages API).
@@ -34,7 +35,7 @@ function extraFormat(type) {
   return `{"title": "...", "items": ["..."]}`;
 }
 
-function buildUserPrompt({ type, theme, expertise, tone, maxChars, refine, mode, count, variants, inspiration, language, mood, source, voice }, profile, remarks = [], knowledge = { picked: [], block: "" }, styleBlock = "") {
+function buildUserPrompt({ type, theme, expertise, tone, maxChars, refine, mode, count, variants, inspiration, language, mood, source, voice, postContext }, profile, remarks = [], knowledge = { picked: [], block: "" }, styleBlock = "") {
   // Les sources de la base de connaissances sont numérotées [S1]… ; le modèle indique celles qu'il a utilisées
   const srcFmt = knowledge.picked.length ? ', "sources": [numéros des sources [S…] réellement utilisées dans le post, ou une liste vide]' : "";
   let extraSpec = "";
@@ -73,6 +74,8 @@ Le 1er plan est une accroche qui retient dans les 3 premières secondes, le dern
   profileSpec += moodInstruction(normalizeMood(mood));
   // Où le post sera publié : profil perso ou page entreprise (la voix change)
   if (voice) profileSpec += publishVoiceBlock(voice.kind, voice.pageName);
+  // Public, objectif et angle propres à ce post
+  profileSpec += postContextBlock(postContext);
 
   // Mode retouche : réécriture d'un post existant selon une consigne
   if (refine?.text && refine?.instruction) {
@@ -211,6 +214,8 @@ export async function POST(req) {
   const voice = params.publishAs?.kind === "org" || params.publishAs?.kind === "person"
     ? { kind: params.publishAs.kind, pageName: typeof params.publishAs.pageName === "string" ? params.publishAs.pageName : "" }
     : null;
+  // Public / objectif / angle de ce post : seuls les écarts avec le profil comptent
+  const postContext = cleanPostContext(params.postContext, profile);
   const remarks = userId ? await getRemarks(userId) : [];
   // Base de connaissances : sources les plus proches du sujet (jamais bloquant)
   const topic = [theme, source?.title, params.inspiration?.title, params.refine?.text?.slice(0, 400)].filter(Boolean).join(" ");
@@ -240,7 +245,7 @@ export async function POST(req) {
           // modèle raccourcit pour tenir dans le budget).
           max_tokens: params.mode === "series" || params.variants || params.type === "carrousel" || params.type === "video" ? 8000 : 2048,
           system: systemPromptFor(SYSTEM_PROMPT, language),
-          messages: [{ role: "user", content: buildUserPrompt({ ...params, theme, source, language, voice }, profile, remarks, knowledge, styleBlock) }],
+          messages: [{ role: "user", content: buildUserPrompt({ ...params, theme, source, language, voice, postContext }, profile, remarks, knowledge, styleBlock) }],
         }),
       });
 

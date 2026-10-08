@@ -16,6 +16,7 @@ import { PLANS, PLAN_IDS, planLabel, planAllows, planOf, trialDaysLeft, accessSt
 import { nextSteps, snoozeUntil } from "@/lib/nextSteps";
 import { explainPublishError } from "@/lib/publishError";
 import { isOrgUrn } from "@/lib/publishVoice";
+import { cleanPostContext } from "@/lib/postContext";
 import SiteHeader from "@/components/SiteHeader";
 // Polices de la charte graphique, chargées comme polices web pour que l'éditeur de
 // modèle de slide (SlideTemplateEditor) affiche vraiment celle choisie — jusqu'ici
@@ -12209,7 +12210,58 @@ function CarouselImagesBlock({ slides }) {
 // ----------------------------------------------------------------
 // Contexte du copilote : ce sur quoi le prochain post va s'appuyer (profil, sources, remarques, posts proches).
 // Même sélection que la génération ; un résumé d'une ligne, le détail se déplie.
-function GenerationContextCard({ theme, sourceTitle, onGoProfile }) {
+// Contexte propre à un post : public visé, objectif, angle. Pré-rempli depuis le profil ; modifier ici ne change que ce post.
+function PostContextBlock({ profile, value, onChange }) {
+  const [open, setOpen] = useState(false);
+  const specific = cleanPostContext(value, profile);
+  const goals = (value.goal ?? "").split(",").map((g) => g.trim()).filter(Boolean);
+  const toggleGoal = (g) => onChange({ ...value, goal: (goals.includes(g) ? goals.filter((x) => x !== g) : [...goals, g]).join(",") });
+  const different = Boolean(specific.audience || specific.goal || specific.angle);
+  const summary = different
+    ? [specific.audience && `public : ${specific.audience}`, specific.goal && `objectif : ${specific.goal.split(",").join(" + ")}`, specific.angle && `angle : ${specific.angle}`].filter(Boolean).join(" · ")
+    : value.audience || value.goal
+    ? "Repris de votre profil — modifiable pour ce post"
+    : "Facultatif — précisez le public ou l'objectif de ce post";
+  const inputCls = "w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]";
+  return (
+    <div className="border border-gray-200 rounded-xl" data-testid="post-context">
+      <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open} className="w-full flex items-center justify-between gap-3 px-3.5 py-3 text-left">
+        <span className="min-w-0">
+          <span className="block text-sm font-medium text-gray-700">Pour qui, et pour quoi ?{different && <span className="ml-2 text-[10px] font-semibold uppercase text-[#f63d44] bg-[#fff1f1] px-1.5 py-0.5 rounded">adapté à ce post</span>}</span>
+          <span className="block text-xs text-gray-400 truncate">{summary}</span>
+        </span>
+        <span className="text-xs text-[#0a66c2] flex items-center gap-1 shrink-0">
+          {open ? "Réduire" : "Préciser"} <ChevronDown size={14} className={`transition-transform ${open ? "rotate-180" : ""}`} />
+        </span>
+      </button>
+      {open && (
+        <div className="px-3.5 pb-4 space-y-4 border-t border-gray-100 pt-4">
+          <div>
+            <label className="text-sm font-medium text-gray-700 block mb-1.5">Public visé par ce post</label>
+            <input type="text" value={value.audience} onChange={(e) => onChange({ ...value, audience: e.target.value })} placeholder="ex : DRH d'ETI, dirigeants de PME…" className={inputCls} data-testid="post-audience" />
+          </div>
+          <div>
+            <label className="text-sm font-medium text-gray-700 block mb-1.5">Objectif de ce post</label>
+            <div className="flex flex-wrap gap-1.5">
+              {COMM_GOALS.map((g) => (
+                <button type="button" key={g} onClick={() => toggleGoal(g)} className={`text-xs px-3 py-1.5 rounded-full border ${goals.includes(g) ? "bg-[#ff5a5f] text-white border-[#ff5a5f]" : "border-gray-200 text-gray-600 hover:border-gray-300"}`}>{g}</button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <label className="text-sm font-medium text-gray-700 block mb-1.5">Angle souhaité <span className="text-gray-400 font-normal">(facultatif)</span></label>
+            <input type="text" value={value.angle} onChange={(e) => onChange({ ...value, angle: e.target.value })} placeholder="ex : retour d'expérience, un chiffre surprenant, prise de position…" className={inputCls} data-testid="post-angle" />
+          </div>
+          <p className="text-[11px] text-gray-400">Ces précisions ne valent que pour ce post : votre profil n&apos;est pas modifié.
+            {different && <button type="button" onClick={() => onChange({ audience: profile?.targetAudience ?? "", goal: profile?.commGoals ?? "", angle: "" })} className="ml-1.5 text-[#ff5a5f] hover:underline">Revenir à mon profil</button>}
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function GenerationContextCard({ theme, sourceTitle, onGoProfile, postContext }) {
   const [ctx, setCtx] = useState(null);
   const [open, setOpen] = useState(false);
   useEffect(() => {
@@ -12224,6 +12276,7 @@ function GenerationContextCard({ theme, sourceTitle, onGoProfile }) {
   if (!ctx) return null;
   const plural = (n, one, many) => `${n} ${n > 1 ? many : one}`;
   const parts = [
+    postContext && (postContext.audience || postContext.goal || postContext.angle) ? "le contexte de ce post" : null,
     ctx.profile.filled.length ? "votre profil" : null,
     ctx.sources.length ? plural(ctx.sources.length, "source", "sources") : null,
     ctx.remarks.length ? plural(ctx.remarks.length, "remarque", "remarques") : null,
@@ -12246,6 +12299,9 @@ function GenerationContextCard({ theme, sourceTitle, onGoProfile }) {
       </button>
       {open && (
         <div className="px-4 pb-3 space-y-1.5 border-t border-gray-200 pt-3">
+          {postContext && (postContext.audience || postContext.goal || postContext.angle) && (
+            <Row label="Ce post">{[postContext.audience && `public : ${postContext.audience}`, postContext.goal && `objectif : ${postContext.goal.split(",").join(" + ")}`, postContext.angle && `angle : ${postContext.angle}`].filter(Boolean).join(" · ")}</Row>
+          )}
           <Row label="Profil">{ctx.profile.filled.length ? ctx.profile.filled.join(", ") : "vide"}{ctx.profile.missing.length > 0 && <span className="text-gray-400"> — manque : {ctx.profile.missing.join(", ")}</span>}</Row>
           <Row label="Sources">{ctx.sources.length ? ctx.sources.map((s) => s.title).join(" · ") : ctx.totals.sources ? `aucune ne touche à ce sujet (${ctx.totals.sources} en base)` : "aucune dans votre base de connaissances"}</Row>
           <Row label="Remarques">{ctx.remarks.length ? ctx.remarks.join(" · ") : "aucune pour l’instant"}</Row>
@@ -12506,6 +12562,14 @@ export default function Home() {
   const [pair, setPair] = useState(null); // [{ target, result, history }] une fois générées
   const [pairTab, setPairTab] = useState(0);
   const [profile, setProfile] = useState(null);
+  // Contexte propre au post (public, objectif, angle), pré-rempli depuis le profil
+  const [postCtx, setPostCtx] = useState({ audience: "", goal: "", angle: "" });
+  const [postCtxTouched, setPostCtxTouched] = useState(false);
+  useEffect(() => {
+    if (postCtxTouched || !profile) return;
+    setPostCtx((c) => ({ ...c, audience: profile.targetAudience ?? "", goal: profile.commGoals ?? "" }));
+  }, [profile?.targetAudience, profile?.commGoals, postCtxTouched]);
+  const postCtxSpecific = cleanPostContext(postCtx, profile);
   const [profileLoaded, setProfileLoaded] = useState(false);
   const [linkedinLoaded, setLinkedinLoaded] = useState(false);
 
@@ -12722,6 +12786,7 @@ export default function Home() {
         inspiration: genMode === "single" ? inspiration : undefined,
         source: activeSource ? { title: activeSource.title, origin: activeSource.origin, text: activeSource.text } : undefined,
         publishAs: voiceFor(tgt),
+        postContext: postCtx,
       });
       const call = async (tgt) => {
         const r = await fetch("/api/generate", { method: "POST", headers: { "Content-Type": "application/json" }, body: body(tgt) });
@@ -12839,7 +12904,7 @@ export default function Home() {
       const res = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, publishAs: voiceFor(target), ...(moodOverride !== undefined ? { mood: moodOverride } : {}), refine: { text: result.text, instruction, history: thread.filter((m) => m.role === "user").map((m) => m.text) } }),
+        body: JSON.stringify({ ...form, publishAs: voiceFor(target), postContext: postCtx, ...(moodOverride !== undefined ? { mood: moodOverride } : {}), refine: { text: result.text, instruction, history: thread.filter((m) => m.role === "user").map((m) => m.text) } }),
       });
       const data = await readJson(res);
       if (!res.ok) throw new Error(data.error || "Erreur inconnue");
@@ -15063,6 +15128,8 @@ export default function Home() {
               </div>
             )}
 
+            {genMode === "single" && <PostContextBlock profile={profile} value={postCtx} onChange={(v) => { setPostCtxTouched(true); setPostCtx(v); }} />}
+
             {/* 3 · Réglages : repliés, un résumé suffit tant qu'on ne les change pas */}
             <div className="border border-gray-200 rounded-xl">
               <button type="button" onClick={() => setSettingsOpen((o) => !o)} aria-expanded={settingsShown} className="w-full flex items-center justify-between gap-3 px-3.5 py-3 text-left">
@@ -15177,7 +15244,7 @@ export default function Home() {
               )}
             </div>
 
-            {genMode === "single" && <GenerationContextCard theme={form.theme} sourceTitle={activeSource?.title ?? ""} onGoProfile={() => setView("profile")} />}
+            {genMode === "single" && <GenerationContextCard theme={form.theme} sourceTitle={activeSource?.title ?? ""} onGoProfile={() => setView("profile")} postContext={postCtxSpecific} />}
 
             <div className="sticky bottom-2 z-10 -mx-1 px-1 pt-2 bg-gradient-to-t from-white via-white to-transparent md:static md:bg-none md:p-0 md:m-0">
               <button
