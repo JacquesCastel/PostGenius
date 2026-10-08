@@ -12571,6 +12571,13 @@ export default function Home() {
   // Contexte propre au post (public, objectif, angle), pré-rempli depuis le profil
   const [postCtx, setPostCtx] = useState({ audience: "", goal: "", angle: "" });
   const [postCtxTouched, setPostCtxTouched] = useState(false);
+  // Création pas à pas : étape courante (null = la première) ; en arrivant avec un sujet déjà posé (recommandation, événement…), on saute la saisie
+  const [createStep, setCreateStep] = useState(null);
+  const prevViewRef = useRef(view);
+  useEffect(() => {
+    if (view === "create" && prevViewRef.current !== "create") setCreateStep(form.theme.trim() || (genMode === "single" && sourceMode !== "idea" && source) ? "shape" : null);
+    prevViewRef.current = view;
+  }, [view]);
   useEffect(() => {
     if (postCtxTouched || !profile) return;
     setPostCtx((c) => ({ ...c, audience: profile.targetAudience ?? "", goal: profile.commGoals ?? "" }));
@@ -12594,6 +12601,20 @@ export default function Home() {
   ]
     .filter(Boolean)
     .join(" · ");
+
+  // Création pas à pas : « Pour qui ? » n'apparaît que s'il y a un choix (page entreprise connectée)
+  const createSteps = [
+    ...(linkedin.connected && orgs.length > 0 ? [{ id: "who", label: "Pour qui ?", short: "Pour qui" }] : []),
+    { id: "topic", label: "De quoi parler ?", short: "Sujet" },
+    { id: "shape", label: genMode === "series" ? "Réglages" : "Forme et réglages", short: "Forme" },
+    { id: "go", label: "Générer", short: "Générer" },
+  ];
+  const curStep = createSteps.find((x) => x.id === createStep) ?? createSteps[0];
+  const curIdx = createSteps.indexOf(curStep);
+  const hasTopic = Boolean(form.theme.trim() || activeSource);
+  const canEnter = (id) => createSteps.findIndex((x) => x.id === id) <= createSteps.findIndex((x) => x.id === "topic") || hasTopic;
+  const goCreateStep = (id) => { if (canEnter(id)) setCreateStep(id); };
+  const stepCls = (id) => (curStep.id === id ? "space-y-5" : "hidden");
 
   // Lit l'article (adresse) ou le document (fichier) choisi : le texte sert ensuite à écrire le post
   const readSource = async () => {
@@ -14897,8 +14918,60 @@ export default function Home() {
       ) : view === "create" ? (
         <main className="max-w-6xl mx-auto p-6 grid md:grid-cols-2 gap-6">
           <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-5 h-fit">
-            <h2 className="font-semibold text-base">Paramètres du post</h2>
+            {/* Parcours pas à pas : une question à la fois */}
+            <div data-testid="create-stepper">
+              <p className="text-xs font-medium text-[#ff5a5f] mb-2">Étape {curIdx + 1} sur {createSteps.length}</p>
+              <div className="flex gap-1.5">
+                {createSteps.map((x, k) => (
+                  <button key={x.id} type="button" onClick={() => goCreateStep(x.id)} disabled={!canEnter(x.id)} data-testid={`step-${x.id}`} className="flex-1 text-left disabled:cursor-default">
+                    <div className={`h-1.5 rounded-full ${k <= curIdx ? "bg-[#ff5a5f]" : "bg-gray-200"}`} />
+                    <p className={`text-[11px] mt-1.5 ${k === curIdx ? "text-[#ff5a5f] font-semibold" : "text-gray-400"}`}>{x.short}</p>
+                  </button>
+                ))}
+              </div>
+              <h2 className="font-semibold text-base mt-3">{curStep.label}</h2>
+            </div>
 
+            <div className={stepCls("who")}>
+            {/* Où publier : la voix du post en dépend (profil « je », page « nous ») */}
+            {linkedin.connected && orgs.length > 0 && (
+              <div data-testid="publish-as">
+                <label className="text-sm font-medium text-gray-700 block mb-2">Publier en tant que</label>
+                <div className="flex flex-wrap gap-1.5">
+                  {[
+                    { v: "person", label: `Profil personnel${linkedin.name ? ` (${linkedin.name})` : ""}` },
+                    ...orgs.map((o) => ({ v: o.urn, label: `Page : ${o.name}` })),
+                    ...(genMode === "single" && !wantVariants ? orgs.map((o) => ({ v: `both:${o.urn}`, label: `Profil + page ${o.name}` })) : []),
+                  ].map((o) => {
+                    const current = pairActive ? `both:${pairWith}` : target;
+                    return (
+                      <button
+                        key={o.v}
+                        type="button"
+                        onClick={() => {
+                          if (o.v.startsWith("both:")) { setPairWith(o.v.slice(5)); setTarget("person"); }
+                          else { setPairWith(null); setTarget(o.v); }
+                        }}
+                        className={`text-xs px-3 py-1.5 rounded-full border ${current === o.v ? "bg-[#ff5a5f] text-white border-[#ff5a5f]" : "border-gray-200 text-gray-600 hover:border-gray-300"}`}
+                      >
+                        {o.label}
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="text-[11px] text-gray-400 mt-1.5">
+                  {pairActive
+                    ? "Deux versions adaptées : l'une à la première personne pour votre profil, l'autre avec la voix de la marque pour la page. Vous les relisez chacune."
+                    : isOrgUrn(target)
+                    ? "Le post sera écrit avec la voix de la marque (« nous »), pas la vôtre."
+                    : "Le post sera écrit à la première personne, avec votre voix."}
+                </p>
+              </div>
+            )}
+
+            </div>
+
+            <div className={stepCls("topic")}>
             {/* Mode : post unique ou série graduée */}
             <div className="grid grid-cols-2 gap-1 bg-gray-100 p-1 rounded-lg">
               <button
@@ -15077,6 +15150,9 @@ export default function Home() {
               )}
             </div>
 
+            </div>
+
+            <div className={stepCls("shape")}>
             {/* 2 · Format */}
             <div className={genMode === "series" ? "hidden" : ""}>
               <label className="text-sm font-medium text-gray-700 block mb-2">Format</label>
@@ -15097,42 +15173,6 @@ export default function Home() {
                 ))}
               </div>
             </div>
-
-            {/* Où publier : la voix du post en dépend (profil « je », page « nous ») */}
-            {linkedin.connected && orgs.length > 0 && (
-              <div data-testid="publish-as">
-                <label className="text-sm font-medium text-gray-700 block mb-2">Publier en tant que</label>
-                <div className="flex flex-wrap gap-1.5">
-                  {[
-                    { v: "person", label: `Profil personnel${linkedin.name ? ` (${linkedin.name})` : ""}` },
-                    ...orgs.map((o) => ({ v: o.urn, label: `Page : ${o.name}` })),
-                    ...(genMode === "single" && !wantVariants ? orgs.map((o) => ({ v: `both:${o.urn}`, label: `Profil + page ${o.name}` })) : []),
-                  ].map((o) => {
-                    const current = pairActive ? `both:${pairWith}` : target;
-                    return (
-                      <button
-                        key={o.v}
-                        type="button"
-                        onClick={() => {
-                          if (o.v.startsWith("both:")) { setPairWith(o.v.slice(5)); setTarget("person"); }
-                          else { setPairWith(null); setTarget(o.v); }
-                        }}
-                        className={`text-xs px-3 py-1.5 rounded-full border ${current === o.v ? "bg-[#ff5a5f] text-white border-[#ff5a5f]" : "border-gray-200 text-gray-600 hover:border-gray-300"}`}
-                      >
-                        {o.label}
-                      </button>
-                    );
-                  })}
-                </div>
-                <p className="text-[11px] text-gray-400 mt-1.5">
-                  {pairActive
-                    ? "Deux versions adaptées : l'une à la première personne pour votre profil, l'autre avec la voix de la marque pour la page. Vous les relisez chacune."
-                    : isOrgUrn(target)
-                    ? "Le post sera écrit avec la voix de la marque (« nous »), pas la vôtre."
-                    : "Le post sera écrit à la première personne, avec votre voix."}
-                </p>
-              </div>
-            )}
 
             {genMode === "single" && <PostContextBlock profile={profile} value={postCtx} onChange={(v) => { setPostCtxTouched(true); setPostCtx(v); }} />}
 
@@ -15250,26 +15290,78 @@ export default function Home() {
               )}
             </div>
 
-            {genMode === "single" && <GenerationContextCard theme={form.theme} sourceTitle={activeSource?.title ?? ""} onGoProfile={() => setView("profile")} postContext={postCtxSpecific} />}
+            </div>
 
-            <div className="sticky bottom-2 z-10 -mx-1 px-1 pt-2 bg-gradient-to-t from-white via-white to-transparent md:static md:bg-none md:p-0 md:m-0">
-              <button
-                onClick={handleGenerate}
-                disabled={!canGenerate || loading}
-                className="w-full bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white font-medium py-3 rounded-lg flex items-center justify-center gap-2"
-              >
-                {loading ? <RefreshCw size={18} className="animate-spin" /> : <Sparkles size={18} />}
-                {loading
-                  ? "Génération en cours…"
-                  : genMode === "series"
-                  ? `Générer la série (${seriesCount} posts)`
-                  : source
-                  ? "Écrire le post à partir de cette source"
-                  : "Générer avec l'IA"}
-              </button>
-              {!canGenerate && (
-                <p className="text-xs text-gray-400 text-center mt-1.5">
-                  {!form.expertise.trim() ? "Renseignez votre expertise (dans « Réglages ») pour générer." : sourceMode === "link" && genMode === "single" ? "Lisez un article ou décrivez votre idée pour générer." : sourceMode === "file" && genMode === "single" ? "Lisez un document ou décrivez votre idée pour générer." : "Décrivez votre sujet pour générer."}
+            <div className={stepCls("go")} data-testid="create-recap">
+              <div className="rounded-xl border border-gray-200 divide-y divide-gray-100">
+                {[
+                  ["topic", "Sujet", genMode === "series" ? `Série de ${seriesCount} posts · ${form.theme.trim().slice(0, 90) || "à préciser"}` : (activeSource?.title || form.theme.trim().slice(0, 110) || "à préciser")],
+                  ...(linkedin.connected && orgs.length > 0 ? [["who", "Publier en tant que", pairActive ? `Profil + page ${orgs.find((o) => o.urn === pairWith)?.name ?? ""} (deux versions)` : isOrgUrn(target) ? `Page : ${orgs.find((o) => o.urn === target)?.name ?? "entreprise"}` : "Profil personnel"]] : []),
+                  ...(genMode === "single" ? [["shape", "Format", `${POST_TYPES.find((t) => t.id === form.type)?.label ?? "Post simple"}${Object.keys(postCtxSpecific).length ? " · précisions pour ce post" : ""}`]] : []),
+                  ["shape", "Réglages", settingsSummary],
+                ].map(([id, label, value], k) => (
+                  <div key={k} className="flex items-start justify-between gap-3 px-3.5 py-2.5">
+                    <div className="min-w-0">
+                      <p className="text-[11px] text-gray-400">{label}</p>
+                      <p className="text-sm text-gray-700 truncate">{value}</p>
+                    </div>
+                    <button type="button" onClick={() => setCreateStep(id)} className="text-xs text-[#0a66c2] hover:underline shrink-0 mt-1">Modifier</button>
+                  </div>
+                ))}
+              </div>
+              {genMode === "single" && <GenerationContextCard theme={form.theme} sourceTitle={activeSource?.title ?? ""} onGoProfile={() => setView("profile")} postContext={postCtxSpecific} />}
+
+            </div>
+
+            <div className="sticky bottom-2 z-10 -mx-1 px-1 pt-2 bg-gradient-to-t from-white via-white to-transparent md:static md:bg-none md:p-0 md:m-0 space-y-2">
+              {curStep.id === "go" ? (
+                <button
+                  onClick={handleGenerate}
+                  disabled={!canGenerate || loading}
+                  data-testid="create-generate"
+                  className="w-full bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white font-medium py-3 rounded-lg flex items-center justify-center gap-2"
+                >
+                  {loading ? <RefreshCw size={18} className="animate-spin" /> : <Sparkles size={18} />}
+                  {loading
+                    ? "Génération en cours…"
+                    : genMode === "series"
+                    ? `Générer la série (${seriesCount} posts)`
+                    : source
+                    ? "Écrire le post à partir de cette source"
+                    : "Générer avec l'IA"}
+                </button>
+              ) : (
+                <div className="flex items-center gap-2">
+                  {curIdx > 0 && (
+                    <button type="button" onClick={() => setCreateStep(createSteps[curIdx - 1].id)} data-testid="create-prev" className="px-4 py-3 rounded-lg border border-gray-200 text-sm text-gray-600 hover:bg-gray-50 flex items-center gap-1">
+                      <ChevronLeft size={15} /> Précédent
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setCreateStep(createSteps[curIdx + 1].id)}
+                    disabled={(curStep.id === "topic" && !hasTopic) || (curStep.id === "shape" && !form.expertise.trim())}
+                    data-testid="create-next"
+                    className="flex-1 bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white font-medium py-3 rounded-lg flex items-center justify-center gap-1.5"
+                  >
+                    Continuer <ChevronRight size={16} />
+                  </button>
+                </div>
+              )}
+              {curStep.id !== "go" && canGenerate && (
+                <button type="button" onClick={handleGenerate} disabled={loading} data-testid="create-quick" className="w-full text-xs text-[#ff5a5f] hover:underline py-1">
+                  {loading ? "Génération en cours…" : "Générer maintenant avec ces choix"}
+                </button>
+              )}
+              {curStep.id === "topic" && !hasTopic && (
+                <p className="text-xs text-gray-400 text-center">{sourceMode === "link" && genMode === "single" ? "Lisez un article ou décrivez votre idée pour continuer." : sourceMode === "file" && genMode === "single" ? "Lisez un document ou décrivez votre idée pour continuer." : "Décrivez votre sujet pour continuer."}</p>
+              )}
+              {curStep.id === "shape" && !form.expertise.trim() && (
+                <p className="text-xs text-gray-400 text-center">Renseignez votre expertise (dans « Réglages ») pour continuer.</p>
+              )}
+              {curStep.id === "go" && !canGenerate && (
+                <p className="text-xs text-gray-400 text-center">
+                  {!form.expertise.trim() ? "Renseignez votre expertise (dans « Réglages ») pour générer." : "Décrivez votre sujet pour générer."}
                 </p>
               )}
             </div>
