@@ -73,7 +73,7 @@ Le 1er plan est une accroche qui retient dans les 3 premières secondes, le dern
   profileSpec += languageInstruction(language);
   profileSpec += moodInstruction(normalizeMood(mood));
   // Où le post sera publié : profil perso ou page entreprise (la voix change)
-  if (voice) profileSpec += publishVoiceBlock(voice.kind, voice.pageName);
+  if (voice) profileSpec += publishVoiceBlock(voice.kind, voice.pageName, voice.brandVoice);
   // Public, objectif et angle propres à ce post
   profileSpec += postContextBlock(postContext);
 
@@ -200,6 +200,7 @@ export async function POST(req) {
         headline: true,
         styleNotes: true,
         companyName: true,
+        brandVoice: true,
         businessDescription: true,
         targetAudience: true,
         market: true,
@@ -212,7 +213,7 @@ export async function POST(req) {
 
   // Où le post sera publié (facultatif) : "person" ou "org" + nom de la page
   const voice = params.publishAs?.kind === "org" || params.publishAs?.kind === "person"
-    ? { kind: params.publishAs.kind, pageName: typeof params.publishAs.pageName === "string" ? params.publishAs.pageName : "" }
+    ? { kind: params.publishAs.kind, pageName: typeof params.publishAs.pageName === "string" ? params.publishAs.pageName : "", brandVoice: profile?.brandVoice ?? "" }
     : null;
   // Public / objectif / angle de ce post : seuls les écarts avec le profil comptent
   const postContext = cleanPostContext(params.postContext, profile);

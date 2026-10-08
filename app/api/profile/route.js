@@ -12,6 +12,7 @@ const STRING_FIELDS = [
   "styleNotes",
   "website",
   "companyName",
+  "brandVoice",
   "businessDescription",
   "targetAudience",
   "market",

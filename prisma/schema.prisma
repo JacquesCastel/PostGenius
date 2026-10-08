@@ -95,6 +95,7 @@ model User {
   // --- Contexte métier & communication (outil de campagne) ---
   website             String? // site internet de la marque (analysé par l'IA pour nourrir le profil)
   companyName         String? // nom de l'entreprise ou de la marque personnelle
+  brandVoice          String? // voix de la marque sur sa page entreprise (« nous », vocabulaire, ce qu'on évite) — distincte de la voix de la personne
   businessDescription String? // activité, produits/services, proposition de valeur
   targetAudience      String? // audience cible sur LinkedIn
   market              String? // marché, concurrence, positionnement
