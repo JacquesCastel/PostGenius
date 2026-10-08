@@ -327,6 +327,7 @@ model Campaign {
   theme     String // thème principal de la campagne
   objective String? // objectif spécifique (leads, notoriété...)
   context   String? // brief enrichi : réponses aux questions IA + exemple validé
+  brief     String? // JSON : brief structuré importé d'un document (voix par compte, règles, ressources, calendrier) — lib/campaignBrief.js
   mood      String? // humeur éditoriale des posts de la campagne (lib/moods.js), null = aucune
   status    String   @default("active") // active | archivée
   createdAt DateTime @default(now())

@@ -4,6 +4,7 @@ import { getEffectiveUserId as getUserId } from "@/lib/session";
 import { checkFeature, limitBody } from "@/lib/gating";
 import { normalizeMood } from "@/lib/moods";
 import { getContextFor } from "@/lib/contexts";
+import { normalizeBrief, compileBriefContext, briefStats, parseBrief } from "@/lib/campaignBrief";
 
 // Campagnes LinkedIn du client
 
@@ -37,6 +38,7 @@ export async function GET(req) {
         theme: c.theme,
         objective: c.objective,
         context: c.context,
+        briefStats: briefStats(parseBrief(c.brief)),
         mood: c.mood,
         status: c.status,
         contextId: c.contextId,
@@ -60,7 +62,15 @@ export async function POST(req) {
   const feat = await checkFeature(userId, "campaigns", "L'outil de campagne");
   if (!feat.ok) return NextResponse.json(limitBody(feat), { status: 403 });
 
-  const { name, theme, objective, context, mood, contextId } = await req.json();
+  const body = await req.json();
+  // Brief importé d'un document : on le re-valide côté serveur et on en tire le texte transmis à chaque rédaction
+  const brief = body.brief ? normalizeBrief(body.brief) : null;
+  const { contextId } = body;
+  const name = body.name || brief?.name;
+  const theme = body.theme || brief?.theme;
+  const objective = body.objective ?? brief?.objective;
+  const context = brief ? compileBriefContext(brief) : body.context;
+  const mood = body.mood ?? brief?.mood;
   if (!theme?.trim()) return NextResponse.json({ error: "Thème requis." }, { status: 400 });
   // Entreprise de la campagne (facultatif ; nul = entreprise principale)
   let ownContextId = null;
@@ -77,6 +87,7 @@ export async function POST(req) {
       theme: theme.trim(),
       objective: objective?.trim() || null,
       context: context?.trim() || null,
+      brief: brief ? JSON.stringify(brief) : null,
       mood: normalizeMood(mood),
       contextId: ownContextId,
     },
