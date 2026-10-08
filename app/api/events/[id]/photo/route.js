@@ -3,7 +3,7 @@ import { prisma } from "@/lib/db";
 import { getEffectiveUserId as getUserId } from "@/lib/session";
 import { saveImage } from "@/lib/image";
 import { logUsage } from "@/lib/usage";
-import { checkFeature } from "@/lib/gating";
+import { checkFeature, limitBody } from "@/lib/gating";
 
 // Reçoit une photo prise sur place et crée un post "en direct" de l'événement.
 export const maxDuration = 60;
@@ -13,7 +13,7 @@ export async function POST(req, { params }) {
   if (!userId) return NextResponse.json({ error: "Non connecté." }, { status: 401 });
 
   const feat = await checkFeature(userId, "events", "Le module Événements");
-  if (!feat.ok) return NextResponse.json({ error: feat.error }, { status: 403 });
+  if (!feat.ok) return NextResponse.json(limitBody(feat), { status: 403 });
 
   const { id } = await params;
   const event = await prisma.event.findUnique({ where: { id } });

@@ -38,6 +38,6 @@ export async function POST(req) {
   } catch (e) {
     const status = e instanceof KnowledgeError ? e.status : e instanceof DocError ? 400 : 500;
     if (status === 500) console.error("Erreur ajout de fichier:", e);
-    return NextResponse.json({ error: status === 500 ? "Échec de la lecture du fichier." : e.message, ...(e.code ? { code: e.code } : {}) }, { status });
+    return NextResponse.json({ error: status === 500 ? "Échec de la lecture du fichier." : e.message, ...(e.code ? { code: e.code } : {}), ...(e.extra ?? {}) }, { status });
   }
 }

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import sharp from "sharp";
 import { prisma } from "@/lib/db";
 import { getEffectiveUserId as getUserId } from "@/lib/session";
-import { checkFeature } from "@/lib/gating";
+import { checkFeature, limitBody } from "@/lib/gating";
 import { decryptToken } from "@/lib/crypto";
 import { readImageFromUrl } from "@/lib/image";
 import { uploadImage } from "@/lib/publish";
@@ -30,7 +30,7 @@ async function context(req, params) {
   const userId = await getUserId(req);
   if (!userId) return { error: "Non connecté.", status: 401 };
   const feat = await checkFeature(userId, "events", "Le module Événements");
-  if (!feat.ok) return { error: feat.error, status: 403 };
+  if (!feat.ok) return { error: feat.error, status: 403, code: feat.code, feature: feat.feature, upgradeTo: feat.upgradeTo };
 
   const { id } = await params;
   const event = await prisma.event.findFirst({ where: { id, userId } });
@@ -107,7 +107,7 @@ const publicFields = (e) => ({
 
 export async function POST(req, { params }) {
   const ctx = await context(req, params);
-  if (ctx.error) return NextResponse.json({ error: ctx.error }, { status: ctx.status });
+  if (ctx.error) return NextResponse.json(limitBody(ctx), { status: ctx.status });
   const { event, token, personUrn, userId } = ctx;
   if (event.linkedinEventId) return NextResponse.json({ error: "Cet événement existe déjà sur LinkedIn." }, { status: 409 });
 
@@ -170,7 +170,7 @@ export async function POST(req, { params }) {
 
 export async function PATCH(req, { params }) {
   const ctx = await context(req, params);
-  if (ctx.error) return NextResponse.json({ error: ctx.error }, { status: ctx.status });
+  if (ctx.error) return NextResponse.json(limitBody(ctx), { status: ctx.status });
   const { event, token, personUrn } = ctx;
   if (!event.linkedinEventId || !event.linkedinPostUrn) {
     return NextResponse.json({ error: "Cet événement n'est pas (encore) publié sur LinkedIn." }, { status: 400 });
@@ -193,7 +193,7 @@ export async function PATCH(req, { params }) {
 
 export async function DELETE(req, { params }) {
   const ctx = await context(req, params);
-  if (ctx.error) return NextResponse.json({ error: ctx.error }, { status: ctx.status });
+  if (ctx.error) return NextResponse.json(limitBody(ctx), { status: ctx.status });
   const { event, token } = ctx;
   if (!event.linkedinPostUrn) return NextResponse.json({ error: "Rien à supprimer sur LinkedIn." }, { status: 400 });
 

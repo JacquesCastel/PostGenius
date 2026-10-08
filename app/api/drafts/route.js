@@ -3,7 +3,7 @@ import { prisma } from "@/lib/db";
 import { getEffectiveUserId as getUserId } from "@/lib/session";
 import { videoPathFromUrl } from "@/lib/video";
 import { parseYouTubeId, youtubeWatchUrl } from "@/lib/youtube";
-import { checkPostQuota, checkAccess } from "@/lib/gating";
+import { checkPostQuota, checkAccess, limitBody } from "@/lib/gating";
 import { renderPostTemplate } from "@/lib/templates";
 import { saveImage } from "@/lib/image";
 import { isOrgUrn } from "@/lib/publishVoice";
@@ -99,7 +99,7 @@ export async function POST(req) {
   if (!access.ok) return NextResponse.json({ error: access.error, code: access.code }, { status: 403 });
 
   const quota = await checkPostQuota(userId);
-  if (!quota.ok) return NextResponse.json({ error: quota.error }, { status: 403 });
+  if (!quota.ok) return NextResponse.json(limitBody(quota), { status: 403 });
 
   const draft = await prisma.draft.create({
     data: {

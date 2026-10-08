@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getEffectiveUserId as getUserId } from "@/lib/session";
 import { planCampaignForUser } from "@/lib/campaign";
-import { checkFeature } from "@/lib/gating";
+import { checkFeature, limitBody } from "@/lib/gating";
 
 // Planifie la création automatique de posts sur les créneaux du rythme
 // de publication, pour la période demandée.
@@ -13,7 +13,7 @@ export async function POST(req) {
   if (!userId) return NextResponse.json({ error: "Non connecté." }, { status: 401 });
 
   const feat = await checkFeature(userId, "campaigns", "L'outil de campagne");
-  if (!feat.ok) return NextResponse.json({ error: feat.error }, { status: 403 });
+  if (!feat.ok) return NextResponse.json(limitBody(feat), { status: 403 });
 
   const { periodDays, themes, target, campaignId } = await req.json();
   // "person", urn d'une page, ou "both:urn" (une version pour le profil, une pour la page)

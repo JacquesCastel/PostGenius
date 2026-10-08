@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getEffectiveUserId as getUserId } from "@/lib/session";
-import { checkFeature } from "@/lib/gating";
+import { checkFeature, limitBody } from "@/lib/gating";
 import { normalizeMood } from "@/lib/moods";
 import { getContextFor } from "@/lib/contexts";
 
@@ -58,7 +58,7 @@ export async function POST(req) {
   if (!userId) return NextResponse.json({ error: "Non connecté." }, { status: 401 });
 
   const feat = await checkFeature(userId, "campaigns", "L'outil de campagne");
-  if (!feat.ok) return NextResponse.json({ error: feat.error }, { status: 403 });
+  if (!feat.ok) return NextResponse.json(limitBody(feat), { status: 403 });
 
   const { name, theme, objective, context, mood, contextId } = await req.json();
   if (!theme?.trim()) return NextResponse.json({ error: "Thème requis." }, { status: 400 });

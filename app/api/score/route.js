@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getEffectiveUserId as getUserId } from "@/lib/session";
 import { logUsage } from "@/lib/usage";
 import { scorePost } from "@/lib/score";
-import { checkFeature } from "@/lib/gating";
+import { checkFeature, limitBody } from "@/lib/gating";
 
 // Score de potentiel d'engagement (heuristique) + conseils IA courts.
 export async function POST(req) {
@@ -10,7 +10,7 @@ export async function POST(req) {
   if (!userId) return NextResponse.json({ error: "Non connecté." }, { status: 401 });
 
   const gate = await checkFeature(userId, "scoring", "Le score d'engagement");
-  if (!gate.ok) return NextResponse.json({ error: gate.error }, { status: 403 });
+  if (!gate.ok) return NextResponse.json(limitBody(gate), { status: 403 });
 
   const { text, type } = await req.json();
   if (!text?.trim()) return NextResponse.json({ error: "Texte requis." }, { status: 400 });

@@ -3,7 +3,7 @@ import { prisma } from "@/lib/db";
 import { getEffectiveUserId as getUserId } from "@/lib/session";
 import { logUsage } from "@/lib/usage";
 import { scorePost } from "@/lib/score";
-import { checkFeature } from "@/lib/gating";
+import { checkFeature, limitBody } from "@/lib/gating";
 import { getRemarks, remarksPromptBlock } from "@/lib/remarks";
 import { ANTI_INVENTION_INSTRUCTION } from "@/lib/linkedinRules";
 
@@ -17,7 +17,7 @@ export async function POST(req) {
     return NextResponse.json({ error: "Clé IA manquante." }, { status: 500 });
 
   const gate = await checkFeature(userId, "scoring", "L'optimisation du post");
-  if (!gate.ok) return NextResponse.json({ error: gate.error }, { status: 403 });
+  if (!gate.ok) return NextResponse.json(limitBody(gate), { status: 403 });
 
   const { text, type, scope = "all", tips } = await req.json();
   if (!text?.trim()) return NextResponse.json({ error: "Texte requis." }, { status: 400 });

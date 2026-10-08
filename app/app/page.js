@@ -5009,8 +5009,13 @@ function KnowledgePanel({ showToast, onCount }) {
           </p>
           {data?.error && <p className="text-xs text-red-600">{data.error}</p>}
           {full ? (
-            <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-2.5">
+            <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-2.5" data-testid="knowledge-full">
               Limite de votre offre atteinte ({data.limit} sources). Supprimez une source pour en ajouter, ou passez à une offre supérieure.
+              {data.upgradeTo && (
+                <button type="button" onClick={() => window.dispatchEvent(new CustomEvent("lp-limit", { detail: { code: "knowledge_limit", limit: data.limit, upgradeTo: data.upgradeTo } }))} className="ml-1.5 font-semibold underline hover:no-underline" data-testid="knowledge-upgrade">
+                  Voir l&apos;offre {PLANS[data.upgradeTo]?.name}
+                </button>
+              )}
             </p>
           ) : (
             <div className="space-y-2">
@@ -9492,6 +9497,17 @@ function MonthlyReportModal({ client, onClose }) {
 // Entreprise sélectionnée (voir « Mes entreprises » dans le profil) : partagée par la création, les campagnes, la veille et la charte
 const EntreprisesCtx = createContext({ contexts: [], activeContextId: null, activeContext: null, chooseContext: () => {} });
 
+// Refus d'offre renvoyés par l'API (code dans la réponse 403) : limites de quota et fonctions non incluses
+const LIMIT_CODES = ["posts_limit", "images_limit", "knowledge_limit", "feature_locked"];
+const FEATURE_LABELS = {
+  campaigns: "L'outil de campagne",
+  events: "Le module Événements",
+  veille: "La veille connectée",
+  scoring: "Le score d'engagement",
+  orgPublish: "La publication sur page entreprise",
+  orgStats: "Les statistiques de page",
+};
+
 const DEEP_LINK_VIEWS = ["dashboard", "create", "history", "campaigns", "connections", "profile", "stats", "copilot", "events", "engage", "brand-kit", "billing", "clients", "messages"];
 
 function ClientTableRow({ client, onManage, onViewDrafts, onDelete, deleting, onShowReport }) {
@@ -12846,6 +12862,32 @@ export default function Home() {
   useEffect(() => {
     if (view !== "billing") setBillingFocus(null); // la mise en évidence ne vaut que pour cette visite de la page
   }, [view]);
+  // Un refus d'offre (limite atteinte, fonction non incluse) ouvre la fenêtre qui propose l'offre concernée, quel que soit
+  // l'écran qui a fait la demande : on lit le code de toute réponse 403 de l'API, sans changer le traitement habituel de l'erreur
+  useEffect(() => {
+    const original = window.fetch;
+    window.fetch = async (...args) => {
+      const res = await original(...args);
+      try {
+        const url = typeof args[0] === "string" ? args[0] : args[0]?.url ?? "";
+        if (res.status === 403 && (url.startsWith("/api/") || url.startsWith(`${window.location.origin}/api/`))) {
+          const d = await res.clone().json().catch(() => null);
+          if (d && LIMIT_CODES.includes(d.code)) {
+            setUpgrade(
+              d.code === "feature_locked"
+                ? { feature: FEATURE_LABELS[d.feature] ?? "Cette fonction", requires: d.feature, upgradeTo: d.upgradeTo ?? null }
+                : { code: d.code, limit: d.limit ?? null, upgradeTo: d.upgradeTo ?? null }
+            );
+          }
+        }
+      } catch {}
+      return res;
+    };
+    // Même fenêtre depuis un message de limite affiché par un écran (ex. base de connaissances pleine)
+    const onLimit = (e) => setUpgrade(e.detail);
+    window.addEventListener("lp-limit", onLimit);
+    return () => { window.fetch = original; window.removeEventListener("lp-limit", onLimit); };
+  }, []);
   const [optimizeText, setOptimizeText] = useState(null); // { text, type } → page Étape 2 plein écran
   const [rewriting, setRewriting] = useState(false);
   const [rewriteScope, setRewriteScope] = useState("all"); // all | hook | body | signature (= conclusion + appel à l'action)
@@ -14689,21 +14731,53 @@ export default function Home() {
             <div className="w-14 h-14 rounded-2xl bg-[#fff1f1] text-[#ff5a5f] flex items-center justify-center mx-auto mb-4">
               <Lock size={26} />
             </div>
-            <h3 className="text-lg font-extrabold">{upgrade.feature} n'est pas dans votre offre</h3>
             {(() => {
-              const needs = upgrade.requires ? planWith(upgrade.requires) : null; // offre la moins chère qui la contient
+              const isLimit = ["posts_limit", "images_limit", "knowledge_limit"].includes(upgrade.code);
+              const needs = isLimit ? upgrade.upgradeTo : upgrade.upgradeTo ?? (upgrade.requires ? planWith(upgrade.requires) : null); // offre la moins chère qui lève le blocage
+              const T = needs ? PLANS[needs] : null;
+              const reset = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1).toLocaleDateString("fr-FR", { month: "long" });
+              let title = `${upgrade.feature} n'est pas dans votre offre`;
+              let body = (
+                <>Votre offre actuelle : <strong>{plan.name}</strong>.{T ? <> Cette fonction est incluse dans l&apos;offre <strong>{T.name}</strong> ({T.price} € HT/mois).</> : " Passez à une offre supérieure pour la débloquer."}</>
+              );
+              let focusLabel = upgrade.feature;
+              if (upgrade.code === "posts_limit") {
+                title = "Limite de posts atteinte";
+                focusLabel = "Les posts illimités";
+                body = <>Votre offre <strong>{plan.name}</strong> comprend {upgrade.limit ?? plan.postsPerMonth} posts par mois et vous les avez utilisés. Le quota repart le 1er {reset}.{T ? <> Avec <strong>{T.name}</strong> ({T.price} € HT/mois), les posts sont illimités.</> : null}</>;
+              } else if (upgrade.code === "images_limit") {
+                const none = upgrade.limit === 0;
+                title = none ? "Les images IA ne sont pas dans votre offre" : "Limite d'images IA atteinte";
+                focusLabel = "Les images IA";
+                body = none
+                  ? <>Votre offre <strong>{plan.name}</strong> ne comprend pas les images générées par IA.{T ? <> Elles sont incluses avec <strong>{T.name}</strong> ({T.imagesPerMonth ?? "illimitées"}{T.imagesPerMonth ? " par mois" : ""}).</> : null}</>
+                  : <>Vous avez utilisé vos {upgrade.limit} images IA de ce mois. Le quota repart le 1er {reset}.{T ? <> Avec <strong>{T.name}</strong> : {T.imagesPerMonth ?? "illimitées"}{T.imagesPerMonth ? " par mois" : ""}.</> : null}</>;
+              } else if (upgrade.code === "knowledge_limit") {
+                title = "Limite de sources atteinte";
+                focusLabel = "Plus de sources de connaissances";
+                body = <>Votre offre <strong>{plan.name}</strong> comprend {upgrade.limit ?? plan.knowledgeSources} sources de connaissances. Supprimez-en une pour en ajouter{T ? <>, ou passez à <strong>{T.name}</strong> ({T.knowledgeSources} sources)</> : null}.</>;
+              }
               return (
                 <>
-                  <p className="text-sm text-gray-500 mt-2">
-                    Votre offre actuelle : <strong>{plan.name}</strong>.{needs ? <> Cette fonction est incluse dans l&apos;offre <strong>{PLANS[needs].name}</strong> ({PLANS[needs].price} € HT/mois).</> : " Passez à une offre supérieure pour la débloquer."}
-                  </p>
-                  <button
-                    onClick={() => { setBillingFocus(needs ? { plan: needs, feature: upgrade.feature } : null); setUpgrade(null); setView("billing"); }}
-                    data-testid="upgrade-cta"
-                    className="mt-5 w-full flex items-center justify-center gap-2 bg-[#ff5a5f] hover:bg-[#f63d44] text-white font-semibold px-5 py-3 rounded-full transition-colors"
-                  >
-                    <ArrowUpCircle size={17} /> {needs ? `Découvrir l'offre ${PLANS[needs].name}` : "Voir les offres et s'abonner"}
-                  </button>
+                  <h3 className="text-lg font-extrabold">{title}</h3>
+                  <p className="text-sm text-gray-500 mt-2" data-testid="upgrade-text">{body}</p>
+                  {needs ? (
+                    <button
+                      onClick={() => { setBillingFocus({ plan: needs, feature: focusLabel }); setUpgrade(null); setView("billing"); }}
+                      data-testid="upgrade-cta"
+                      className="mt-5 w-full flex items-center justify-center gap-2 bg-[#ff5a5f] hover:bg-[#f63d44] text-white font-semibold px-5 py-3 rounded-full transition-colors"
+                    >
+                      <ArrowUpCircle size={17} /> {`Découvrir l'offre ${PLANS[needs].name}`}
+                    </button>
+                  ) : !isLimit ? (
+                    <button
+                      onClick={() => { setBillingFocus(null); setUpgrade(null); setView("billing"); }}
+                      data-testid="upgrade-cta"
+                      className="mt-5 w-full flex items-center justify-center gap-2 bg-[#ff5a5f] hover:bg-[#f63d44] text-white font-semibold px-5 py-3 rounded-full transition-colors"
+                    >
+                      <ArrowUpCircle size={17} /> Voir les offres et s&apos;abonner
+                    </button>
+                  ) : null}
                 </>
               );
             })()}

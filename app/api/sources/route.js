@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getEffectiveUserId as getUserId } from "@/lib/session";
 import { resolveSource } from "@/lib/veille";
-import { checkFeature } from "@/lib/gating";
+import { checkFeature, limitBody } from "@/lib/gating";
 import { getContextFor } from "@/lib/contexts";
 
 // Sources de veille du client
@@ -27,7 +27,7 @@ export async function POST(req) {
   if (!userId) return NextResponse.json({ error: "Non connecté." }, { status: 401 });
 
   const feat = await checkFeature(userId, "veille", "La veille connectée");
-  if (!feat.ok) return NextResponse.json({ error: feat.error }, { status: 403 });
+  if (!feat.ok) return NextResponse.json(limitBody(feat), { status: 403 });
 
   const { url, title, contextId = null } = await req.json();
   if (!url?.trim()) return NextResponse.json({ error: "URL requise." }, { status: 400 });
