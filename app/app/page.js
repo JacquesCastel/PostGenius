@@ -13,6 +13,7 @@ import {
   AlignLeft, AlignCenter, AlignRight, Move, Server, Clapperboard
 } from "lucide-react";
 import { PLANS, PLAN_IDS, planLabel, planAllows, planOf, trialDaysLeft, accessState, changeKind, lostFeatures } from "@/lib/plans";
+import { COMPARE, unlockedBy } from "@/lib/planFeatures";
 import { nextSteps, snoozeUntil } from "@/lib/nextSteps";
 import { explainPublishError } from "@/lib/publishError";
 import { isOrgUrn } from "@/lib/publishVoice";
@@ -5735,6 +5736,14 @@ function BillingView({ user, showToast }) {
   const hasLive = Boolean(user?.hasBilling) && ["active", "trialing", "past_due"].includes(status || "");
   const currentInterval = user?.subscriptionInterval === "year" ? "year" : "month";
   const [confirm, setConfirm] = useState(null); // { id, kind } : changement d'offre à confirmer
+  const [usage, setUsage] = useState(null); // consommation du mois
+  useEffect(() => {
+    fetch("/api/billing/usage").then(readJson).then((d) => { if (!d.error) setUsage(d); }).catch(() => {});
+  }, []);
+  const plan = PLANS[currentPlan];
+  const nextPlanId = PLAN_IDS[PLAN_IDS.indexOf(currentPlan) + 1] ?? null;
+  const trialEnd = user?.trialEndsAt ? new Date(user.trialEndsAt) : null;
+  const pastDue = status === "past_due";
 
   // Nature du passage vers une offre (pour un abonné) : upgrade | downgrade | same
   const kindOf = (id) => changeKind({ plan: currentPlan, interval: currentInterval }, { plan: id, interval: billingInterval });
@@ -5800,24 +5809,45 @@ function BillingView({ user, showToast }) {
 
   return (
     <main className="max-w-5xl mx-auto p-6 space-y-6">
-      {/* État actuel */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+      {/* Alertes : paiement en retard, essai */}
+      {pastDue && (
+        <div className="bg-red-50 border border-red-200 rounded-2xl p-4 text-sm text-red-900 flex items-center justify-between gap-3 flex-wrap" data-testid="billing-pastdue">
+          <span><strong>Votre dernier paiement a échoué.</strong> Mettez à jour votre moyen de paiement pour éviter la suspension de votre accès : vos données sont conservées.</span>
+          <button type="button" onClick={openPortal} disabled={busy === "portal"} className="bg-red-600 hover:bg-red-700 text-white font-semibold px-4 py-2 rounded-full text-sm shrink-0">
+            Mettre à jour mon moyen de paiement
+          </button>
+        </div>
+      )}
+      {!active && trial != null && trial > 0 && (
+        <div className={`rounded-2xl p-4 text-sm flex items-center justify-between gap-3 flex-wrap border ${trial <= 3 ? "bg-red-50 border-red-200 text-red-900" : "bg-amber-50 border-amber-200 text-amber-900"}`} data-testid="billing-trial">
+          <span>
+            <strong>Essai gratuit : {trial} jour{trial > 1 ? "s" : ""} restant{trial > 1 ? "s" : ""}</strong>{trialEnd ? ` (jusqu'au ${fmtDate(trialEnd)})` : ""}. Passé ce délai, l&apos;accès s&apos;arrête sauf abonnement ; vos posts, campagnes et réglages sont conservés.
+          </span>
+          <a href="#billing-plans" className="font-semibold underline hover:no-underline shrink-0">Choisir mon offre</a>
+        </div>
+      )}
+
+      {/* Votre offre */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6" data-testid="billing-current">
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div>
             <p className="text-sm text-gray-500">Votre offre actuelle</p>
-            <p className="text-2xl font-extrabold mt-0.5">{planLabel(currentPlan)}</p>
+            <p className="text-2xl font-extrabold mt-0.5">
+              {planLabel(currentPlan)}
+              <span className="text-base font-semibold text-gray-400 ml-2">
+                {active && user?.subscriptionInterval === "year" ? `${plan.price * 10} € HT/an` : `${plan.price} € HT/mois`}
+              </span>
+            </p>
             {active ? (
               <p className="text-sm text-gray-500 mt-1">
                 {STATUS_LABEL[status] || status}
                 {user?.subscriptionInterval ? ` · facturation ${user.subscriptionInterval === "year" ? "annuelle" : "mensuelle"}` : ""}
-                {user?.currentPeriodEnd ? ` · prochaine échéance le ${new Date(user.currentPeriodEnd).toLocaleDateString("fr-FR")}` : ""}
+                {user?.currentPeriodEnd ? ` · ${user?.cancelAtPeriodEnd ? "accès jusqu'au" : "prochaine échéance le"} ${fmtDate(user.currentPeriodEnd)}` : ""}
               </p>
             ) : trial != null && trial > 0 ? (
-              <p className="text-sm text-amber-600 mt-1">
-                Essai gratuit — {trial} jour{trial > 1 ? "s" : ""} restant{trial > 1 ? "s" : ""}. Abonnez-vous pour continuer après l'essai.
-              </p>
+              <p className="text-sm text-gray-500 mt-1">Essai gratuit de l&apos;offre {planLabel(currentPlan)}, sans abonnement.</p>
             ) : (
-              <p className="text-sm text-gray-500 mt-1">Aucun abonnement actif.</p>
+              <p className="text-sm text-gray-500 mt-1">Aucun abonnement actif : l&apos;accès est suspendu. Vos données sont conservées, tout reprend dès l&apos;abonnement activé.</p>
             )}
             {active && user?.cancelAtPeriodEnd && user?.currentPeriodEnd && (
               <div className="mt-3 bg-amber-50 border border-amber-200 rounded-xl p-3 text-sm text-amber-900" data-testid="billing-canceling">
@@ -5838,9 +5868,71 @@ function BillingView({ user, showToast }) {
               disabled={busy === "portal"}
               className="border-2 border-[#ffd5d6] hover:border-[#ff5a5f] text-[#1b2a4a] font-semibold px-5 py-2.5 rounded-full flex items-center gap-2"
             >
-              {busy === "portal" ? <RefreshCw size={15} className="animate-spin" /> : <CreditCard size={15} />} Gérer mon abonnement
+              {busy === "portal" ? <RefreshCw size={15} className="animate-spin" /> : <CreditCard size={15} />} Moyen de paiement et factures
             </button>
           )}
+        </div>
+
+        {/* Consommation du mois */}
+        {usage && (
+          <div className="mt-5 pt-5 border-t border-gray-100" data-testid="billing-usage">
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">
+              Ce mois-ci <span className="normal-case font-normal">· remis à zéro le {fmtDate(usage.resetAt)}</span>
+            </p>
+            <div className="grid sm:grid-cols-3 gap-4">
+              {[
+                ["Posts générés", usage.posts, ""],
+                ["Images IA", usage.images, ""],
+                ["Sources de connaissances", usage.sources, usage.sources.perClient ? " par client" : ""],
+              ].map(([label, m, suffix]) => {
+                const unlimited = m.limit == null;
+                const none = m.limit === 0;
+                const pct = unlimited || none ? 0 : Math.min(100, Math.round((m.used / m.limit) * 100));
+                const near = !unlimited && !none && pct >= 80;
+                return (
+                  <div key={label} data-testid="usage-meter">
+                    <div className="flex items-baseline justify-between gap-2">
+                      <p className="text-sm font-medium text-gray-700">{label}</p>
+                      <p className="text-sm text-gray-500">{none ? "Non inclus" : unlimited ? `${m.used} · illimité` : `${m.used} / ${m.limit}${suffix}`}</p>
+                    </div>
+                    <div className="h-2 rounded-full bg-gray-100 mt-1.5 overflow-hidden">
+                      <div className={`h-full rounded-full ${near ? (pct >= 100 ? "bg-red-500" : "bg-amber-500") : "bg-[#ff5a5f]"}`} style={{ width: `${unlimited ? 100 : pct}%`, opacity: unlimited ? 0.25 : 1 }} />
+                    </div>
+                    {(near || none) && nextPlanId && (
+                      <p className="text-[11px] mt-1 text-amber-700">{none ? `Inclus avec ${planLabel(nextPlanId)}.` : pct >= 100 ? `Limite atteinte : passez à ${planLabel(nextPlanId)} pour continuer.` : `Vous approchez de la limite : ${planLabel(nextPlanId)} en offre plus.`}</p>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+            {usage.clients != null && (
+              <p className="text-sm text-gray-600 mt-4" data-testid="usage-clients">
+                <strong>{usage.clients}</strong> compte{usage.clients > 1 ? "s" : ""} client{usage.clients > 1 ? "s" : ""} géré{usage.clients > 1 ? "s" : ""}, sans limite de nombre. Le quota de sources s&apos;applique à chacun.
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* Ce que comprend l'offre */}
+        <div className="mt-5 pt-5 border-t border-gray-100" data-testid="billing-included">
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Ce que comprend votre offre {planLabel(currentPlan)}</p>
+          <ul className="grid sm:grid-cols-2 gap-x-6 gap-y-1.5">
+            {COMPARE.map((row) => {
+              const v = row.value(plan);
+              const on = v !== false && v != null;
+              const unlock = on ? null : unlockedBy(row);
+              return (
+                <li key={row.label} className={`text-sm flex items-start gap-2 ${on ? "text-gray-700" : "text-gray-400"}`} data-included={on ? "yes" : "no"}>
+                  {on ? <Check size={15} className="text-[#ff5a5f] mt-0.5 shrink-0" /> : <X size={15} className="text-gray-300 mt-0.5 shrink-0" />}
+                  <span>
+                    {row.label}
+                    {typeof v === "string" && <span className="font-semibold text-gray-600"> : {v}</span>}
+                    {unlock && <span className="ml-1.5 text-[10px] font-semibold uppercase text-[#ff5a5f] bg-[#fff1f1] px-1.5 py-0.5 rounded">avec {planLabel(unlock)}</span>}
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
         </div>
       </div>
 
@@ -5863,7 +5955,7 @@ function BillingView({ user, showToast }) {
       </div>
 
       {/* Cartes d'offres */}
-      <div className="grid md:grid-cols-3 gap-4 items-start">
+      <div id="billing-plans" className="grid md:grid-cols-3 gap-4 items-start">
         {PLAN_IDS.map((id) => {
           const p = PLANS[id];
           const monthly = p.price;
@@ -5881,7 +5973,7 @@ function BillingView({ user, showToast }) {
                   Le plus choisi
                 </span>
               )}
-              <h3 className="font-bold text-lg">{p.name}</h3>
+              <h3 className="font-bold text-lg">{p.name}{!active && trial != null && trial > 0 && id === currentPlan && <span className="ml-2 text-[10px] font-semibold uppercase text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded align-middle">votre essai</span>}</h3>
               <p className="mt-3">
                 <span className="text-3xl font-extrabold">{price} €</span>
                 <span className="text-gray-400 text-sm"> /{billingInterval === "year" ? "an" : "mois"} HT</span>
@@ -5911,7 +6003,7 @@ function BillingView({ user, showToast }) {
       </div>
 
       <p className="text-xs text-gray-400 text-center">
-        Paiement sécurisé par Stripe. Sans engagement, résiliable à tout moment depuis « Gérer mon abonnement ».
+        Paiement sécurisé par Stripe. Sans engagement, résiliable à tout moment depuis « Moyen de paiement et factures ».
       </p>
 
       {confirm && (() => {

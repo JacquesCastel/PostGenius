@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Check, Minus, ChevronRight } from "lucide-react";
 import { getLanding } from "@/lib/landing";
 import { PLANS, PLAN_IDS } from "@/lib/plans";
+import { COMPARE } from "@/lib/planFeatures";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 import PricingCards from "@/components/PricingCards";
@@ -13,27 +14,6 @@ export const metadata = {
   description:
     "Trois offres simples pour piloter votre présence LinkedIn : Essentiel, Pro et Agence. 14 jours d'essai gratuit, sans carte bancaire.",
 };
-
-// Lignes du comparatif. value(plan) → true (inclus) | false (non) | "texte"/nombre
-const COMPARE = [
-  { label: "Posts générés par mois", value: (p) => (p.postsPerMonth == null ? "Illimité" : `${p.postsPerMonth}`) },
-  { label: "Images IA par mois", value: (p) => (p.imagesPerMonth == null ? "Illimité" : p.imagesPerMonth === 0 ? false : `${p.imagesPerMonth}`) },
-  { label: "Profil de rédaction (style, contexte)", value: () => true },
-  { label: "Publication sur profil personnel", value: () => true },
-  { label: "Programmation & pilote automatique", value: () => true },
-  { label: "9 langues de rédaction & humeur éditoriale", value: () => true },
-  { label: "Vidéo : kit de tournage, téléprompteur, import LinkedIn", value: () => true },
-  { label: "Interactions LinkedIn (commenter, réagir)", value: () => true },
-  { label: "Score d'engagement & optimisation des posts", value: (p) => p.scoring },
-  { label: "Campagnes guidées par l'IA", value: (p) => p.campaigns },
-  { label: "Veille connectée & inspirations", value: (p) => p.veille },
-  { label: "Validation avant publication", value: (p) => p.campaigns },
-  { label: "Statistiques détaillées", value: (p) => p.campaigns },
-  { label: "Publication sur page entreprise", value: (p) => p.orgPublish },
-  { label: "Statistiques de page (impressions…)", value: (p) => p.orgStats },
-  { label: "Module Événements (salons, forums, création sur LinkedIn)", value: (p) => p.events },
-  { label: "Support prioritaire", value: (p) => p.id === "agence" },
-];
 
 function Cell({ v }) {
   if (v === true) return <Check size={18} className="text-[#ff5a5f] mx-auto" />;

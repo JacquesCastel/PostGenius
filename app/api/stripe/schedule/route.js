@@ -36,6 +36,6 @@ async function handle(req, action) {
     return NextResponse.json({ ok: true });
   } catch (e) {
     console.error("Abonnement (schedule):", e?.message);
-    return NextResponse.json({ error: "Opération impossible pour l'instant. Réessayez ou passez par « Gérer mon abonnement »." }, { status: 502 });
+    return NextResponse.json({ error: "Opération impossible pour l'instant. Réessayez ou passez par « Moyen de paiement et factures »." }, { status: 502 });
   }
 }

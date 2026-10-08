@@ -37,10 +37,10 @@ export async function POST(req) {
     } catch {}
     if (sub && LIVE_STATUSES.includes(sub.status)) {
       const current = planFromPriceId(sub.items?.data?.[0]?.price?.id);
-      if (!current) return NextResponse.json({ error: "Votre abonnement actuel n'est pas reconnu : gérez-le depuis « Gérer mon abonnement »." }, { status: 409 });
+      if (!current) return NextResponse.json({ error: "Votre abonnement actuel n'est pas reconnu : gérez-le depuis « Moyen de paiement et factures »." }, { status: 409 });
       const kind = changeKind(current, { plan, interval: interval === "year" ? "year" : "month" });
       if (kind === "same" && !sub.cancel_at_period_end && !sub.schedule) return NextResponse.json({ error: "C'est déjà votre offre." }, { status: 400 });
-      if (sub.status === "past_due") return NextResponse.json({ error: "Régularisez d'abord votre paiement (« Gérer mon abonnement »), puis changez d'offre.", code: "past_due" }, { status: 409 });
+      if (sub.status === "past_due") return NextResponse.json({ error: "Régularisez d'abord votre paiement (« Moyen de paiement et factures »), puis changez d'offre.", code: "past_due" }, { status: 409 });
       const target = { price, userId: user.id, plan, interval: interval === "year" ? "year" : "month" };
       try {
         if (kind === "downgrade") {
