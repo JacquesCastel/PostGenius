@@ -5969,15 +5969,23 @@ function BillingView({ user, showToast, focus = null }) {
           const p = PLANS[id];
           const monthly = p.price;
           const yearly = p.price * 10;
-          const price = billingInterval === "year" ? yearly : monthly;
-          const isCurrent = id === currentPlan && active && billingInterval === currentInterval && !user?.scheduledPlan && !user?.cancelAtPeriodEnd;
+          // Offre de l'abonné : la carte est neutralisée (aucun bouton), mise en avant et accompagnée d'un message
+          const mine = id === currentPlan && active;
+          const shownInterval = mine ? currentInterval : billingInterval; // sa carte montre son vrai tarif, quel que soit le sélecteur
+          const price = shownInterval === "year" ? yearly : monthly;
+          const otherInterval = currentInterval === "year" ? "month" : "year";
           const kind = active ? kindOf(id) : null;
           return (
             <div
               key={id}
-              className={`bg-white rounded-2xl p-6 relative ${id === "pro" || focus?.plan === id ? "ring-2 ring-[#ff5a5f] shadow-lg" : "border border-gray-100 shadow-sm"}`}
+              data-testid={mine ? "plan-card-mine" : "plan-card"}
+              className={`rounded-2xl p-6 relative ${mine ? "bg-emerald-50/50 ring-2 ring-emerald-400 shadow-md" : `bg-white ${id === "pro" || focus?.plan === id ? "ring-2 ring-[#ff5a5f] shadow-lg" : "border border-gray-100 shadow-sm"}`}`}
             >
-              {id === "pro" && (
+              {mine ? (
+                <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-emerald-500 text-white text-xs font-semibold px-3 py-1 rounded-full flex items-center gap-1 whitespace-nowrap">
+                  <Check size={12} /> Votre abonnement
+                </span>
+              ) : id === "pro" && (
                 <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#ff5a5f] text-white text-xs font-semibold px-3 py-1 rounded-full">
                   Le plus choisi
                 </span>
@@ -5985,10 +5993,29 @@ function BillingView({ user, showToast, focus = null }) {
               <h3 className="font-bold text-lg">{p.name}{!active && trial != null && trial > 0 && id === currentPlan && <span className="ml-2 text-[10px] font-semibold uppercase text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded align-middle">votre essai</span>}</h3>
               <p className="mt-3">
                 <span className="text-3xl font-extrabold">{price} €</span>
-                <span className="text-gray-400 text-sm"> /{billingInterval === "year" ? "an" : "mois"} HT</span>
+                <span className="text-gray-400 text-sm"> /{shownInterval === "year" ? "an" : "mois"} HT</span>
               </p>
-              {billingInterval === "year" && (
+              {shownInterval === "year" && (
                 <p className="text-xs text-[#ff5a5f] font-medium mt-1">soit {(yearly / 12).toFixed(2)} €/mois</p>
+              )}
+              {mine && (
+                <div className="mt-3 text-sm rounded-xl px-3 py-2.5 bg-emerald-100/70 text-emerald-900" data-testid="plan-mine">
+                  {user?.cancelAtPeriodEnd && user?.currentPeriodEnd ? (
+                    <>
+                      <strong>Résiliation programmée</strong> : votre abonnement s&apos;arrête le {fmtDate(user.currentPeriodEnd)}.
+                      <button type="button" onClick={() => undo("resume")} disabled={busy === "resume"} className="ml-1.5 font-semibold underline hover:no-underline">Reprendre</button>
+                    </>
+                  ) : user?.scheduledPlan && user?.scheduledAt ? (
+                    <>
+                      <strong>C&apos;est votre offre actuelle</strong> jusqu&apos;au {fmtDate(user.scheduledAt)}, puis {planLabel(user.scheduledPlan)}.
+                      <button type="button" onClick={() => undo("cancel_schedule")} disabled={busy === "cancel_schedule"} className="ml-1.5 font-semibold underline hover:no-underline">Annuler ce changement</button>
+                    </>
+                  ) : (
+                    <>
+                      <strong>C&apos;est votre offre actuelle.</strong> Facturation {currentInterval === "year" ? "annuelle" : "mensuelle"}{user?.currentPeriodEnd ? `, prochaine échéance le ${fmtDate(user.currentPeriodEnd)}` : ""}.
+                    </>
+                  )}
+                </div>
               )}
               {focus?.plan === id && (
                 <p className="mt-2 text-xs font-semibold text-[#ff5a5f] bg-[#fff1f1] rounded-lg px-2.5 py-1.5" data-testid="plan-focus">
@@ -6019,10 +6046,22 @@ function BillingView({ user, showToast, focus = null }) {
                   </div>
                 );
               })()}
-              {isCurrent ? (
-                <div className="mt-5 text-center text-sm font-semibold text-[#ff5a5f] border-2 border-[#ffd5d6] rounded-full py-2.5">
-                  Offre actuelle
-                </div>
+              {mine ? (
+                <>
+                  <div className="mt-5 text-center text-sm font-semibold text-emerald-700 bg-emerald-100/60 rounded-full py-2.5 flex items-center justify-center gap-1.5 cursor-default" aria-disabled="true" data-testid="plan-mine-pill">
+                    <Check size={15} /> Votre offre
+                  </div>
+                  {!user?.cancelAtPeriodEnd && !user?.scheduledPlan && (
+                    <button
+                      type="button"
+                      onClick={() => { setBillingInterval(otherInterval); setConfirm({ id, kind: changeKind({ plan: currentPlan, interval: currentInterval }, { plan: id, interval: otherInterval }) }); }}
+                      className="mt-2 w-full text-xs text-[#0a66c2] hover:underline"
+                      data-testid="plan-mine-switch"
+                    >
+                      {otherInterval === "year" ? `Passer en facturation annuelle : ${yearly} € HT/an (2 mois offerts)` : `Repasser en facturation mensuelle : ${monthly} € HT/mois`}
+                    </button>
+                  )}
+                </>
               ) : (
                 <button
                   onClick={() => choose(id)}
