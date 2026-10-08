@@ -2153,10 +2153,236 @@ function CampaignDeleteDialog({ campaign: c, onClose, onDone, showToast }) {
 // ----------------------------------------------------------------
 // Vue « Mes campagnes » : gestion complète des campagnes
 // ----------------------------------------------------------------
+// ----------------------------------------------------------------
+// Import d'un brief de campagne : un document (Word, PDF) ou un texte collé que l'IA structure ; le client relit, corrige
+// puis crée la campagne. Rien n'est inventé : liens et exemples viennent du document, ce qui manque est signalé.
+// ----------------------------------------------------------------
+function BriefImport({ showToast, onClose, onCreated }) {
+  const { contexts: ents, activeContextId } = useContext(EntreprisesCtx);
+  const [stage, setStage] = useState("input"); // input | review
+  const [tab, setTab] = useState("file"); // file | paste
+  const [file, setFile] = useState(null);
+  const [text, setText] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState(null);
+  const [brief, setBrief] = useState(null);
+  const [rulesText, setRulesText] = useState("");
+  const [forbiddenText, setForbiddenText] = useState("");
+  const [ctxId, setCtxId] = useState(activeContextId ?? "");
+  const [addUrls, setAddUrls] = useState([]); // adresses à ajouter au datalake de l'entreprise
+  const [creating, setCreating] = useState(false);
+  const chip = (on) => `text-xs px-3 py-1.5 rounded-full border ${on ? "bg-[#ff5a5f] text-white border-[#ff5a5f]" : "border-gray-200 text-gray-600 hover:border-gray-300"}`;
+  const input = "w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]";
+  const set = (k, v) => setBrief((b) => ({ ...b, [k]: v }));
+  const setAccount = (i, patch) => setBrief((b) => ({ ...b, accounts: b.accounts.map((a, j) => (j === i ? { ...a, ...patch } : a)) }));
+
+  const analyze = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      let res;
+      if (tab === "file") {
+        const fd = new FormData();
+        fd.append("file", file);
+        res = await fetch("/api/campaign/brief", { method: "POST", body: fd });
+      } else {
+        res = await fetch("/api/campaign/brief", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text }) });
+      }
+      const d = await readJson(res);
+      if (!res.ok) throw new Error(d.error || "Erreur");
+      setBrief(d.brief);
+      setRulesText(d.brief.rules.join("\n"));
+      setForbiddenText(d.brief.forbidden.join("\n"));
+      setAddUrls(d.brief.sources.map((x) => x.url));
+      setStage("review");
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const create = async () => {
+    setCreating(true);
+    try {
+      const lines = (t) => t.split("\n").map((x) => x.trim()).filter(Boolean);
+      const payload = { ...brief, rules: lines(rulesText), forbidden: lines(forbiddenText) };
+      const res = await fetch("/api/campaigns", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ brief: payload, contextId: ctxId || undefined }) });
+      const d = await readJson(res);
+      if (!res.ok) throw new Error(d.error || "Erreur");
+      let added = 0;
+      let failed = 0;
+      for (const url of addUrls) {
+        const src = brief.sources.find((x) => x.url === url);
+        try {
+          const r = await fetch("/api/knowledge", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ kind: "link", url, title: src?.label, contextId: ctxId || undefined }) });
+          if (r.ok) added++;
+          else failed++;
+        } catch {
+          failed++;
+        }
+      }
+      showToast(`Campagne « ${d.campaign.name} » créée ✓${addUrls.length ? ` · ${added} page${added > 1 ? "s" : ""} ajoutée${added > 1 ? "s" : ""} au datalake${failed ? `, ${failed} en échec` : ""}` : ""}`);
+      onCreated();
+    } catch (e) {
+      showToast(e.message);
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  if (stage === "input") {
+    return (
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4" data-testid="brief-import">
+        <div>
+          <h2 className="font-semibold text-base">J&apos;ai déjà un brief</h2>
+          <p className="text-xs text-gray-500 mt-1 leading-relaxed max-w-2xl">
+            Déposez le brief reçu (Word ou PDF) ou collez son texte. L&apos;IA en tire le cadre, les voix de chaque compte, les règles, les ressources autorisées et le calendrier ; vous relisez tout avant de créer la campagne. <strong>Rien n&apos;est inventé</strong> : ce qui manque au brief est signalé.
+          </p>
+        </div>
+        <div className="flex gap-1.5">
+          <button type="button" onClick={() => setTab("file")} className={chip(tab === "file")} data-testid="brief-tab-file">Word ou PDF</button>
+          <button type="button" onClick={() => setTab("paste")} className={chip(tab === "paste")} data-testid="brief-tab-paste">Coller le texte</button>
+        </div>
+        {tab === "file" ? (
+          <div>
+            <input
+              type="file"
+              accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+              data-testid="brief-file"
+              onChange={(e) => {
+                const f = e.target.files?.[0] ?? null;
+                if (f && f.size > 8 * 1024 * 1024) { setError("Fichier trop volumineux (8 Mo au maximum)."); setFile(null); return; }
+                setError(null);
+                setFile(f);
+              }}
+              className="text-xs"
+            />
+            <p className="text-[11px] text-gray-400 mt-1">PDF avec texte ou document Word (.docx), 8 Mo au maximum. Le fichier n&apos;est pas conservé.</p>
+          </div>
+        ) : (
+          <textarea rows={10} value={text} onChange={(e) => setText(e.target.value)} placeholder="Collez ici le brief de campagne…" className={input} data-testid="brief-text" />
+        )}
+        {error && <p className="text-xs text-red-600" data-testid="brief-error">{error}</p>}
+        <div className="flex items-center gap-3">
+          <button type="button" onClick={analyze} disabled={busy || (tab === "file" ? !file : text.trim().length < 200)} data-testid="brief-analyze" className="bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white text-sm font-medium px-4 py-2 rounded-lg">
+            {busy ? "Lecture du brief…" : "Analyser le brief"}
+          </button>
+          <button type="button" onClick={onClose} className="text-sm text-gray-500 hover:text-gray-800">Annuler</button>
+        </div>
+      </div>
+    );
+  }
+
+  const Section = ({ title, children, hint }) => (
+    <div className="space-y-2">
+      <div>
+        <h3 className="text-sm font-semibold text-gray-800">{title}</h3>
+        {hint && <p className="text-[11px] text-gray-400">{hint}</p>}
+      </div>
+      {children}
+    </div>
+  );
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-6" data-testid="brief-review">
+      <div>
+        <h2 className="font-semibold text-base">Relisez le brief</h2>
+        <p className="text-xs text-gray-500 mt-1">Tout est modifiable. Les consignes ci-dessous seront appliquées à chaque post de la campagne.</p>
+      </div>
+      {brief.missing.length > 0 && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800 space-y-1" data-testid="brief-missing">
+          <p className="font-medium">À vérifier : ce que le brief ne dit pas (ou pas clairement)</p>
+          <ul className="list-disc pl-4 space-y-0.5">{brief.missing.map((m, i) => (<li key={i}>{m}</li>))}</ul>
+        </div>
+      )}
+      <Section title="La campagne">
+        <div className="grid sm:grid-cols-2 gap-3">
+          <label className="text-xs text-gray-600">Nom<input type="text" value={brief.name} onChange={(e) => set("name", e.target.value)} className={`${input} mt-1`} data-testid="brief-name" /></label>
+          {ents.length > 0 && (
+            <label className="text-xs text-gray-600">Entreprise
+              <select value={ctxId} onChange={(e) => setCtxId(e.target.value)} className={`${input} mt-1 bg-white`} data-testid="brief-company">
+                <option value="">Entreprise principale</option>
+                {ents.map((c) => (<option key={c.id} value={c.id}>{c.name}</option>))}
+              </select>
+            </label>
+          )}
+        </div>
+        <label className="text-xs text-gray-600 block">Thème<textarea rows={2} value={brief.theme} onChange={(e) => set("theme", e.target.value)} className={`${input} mt-1`} data-testid="brief-theme" /></label>
+        <label className="text-xs text-gray-600 block">Objectif<textarea rows={2} value={brief.objective} onChange={(e) => set("objective", e.target.value)} className={`${input} mt-1`} /></label>
+        <label className="text-xs text-gray-600 block">Message à retenir<textarea rows={2} value={brief.message} onChange={(e) => set("message", e.target.value)} className={`${input} mt-1`} /></label>
+        <label className="text-xs text-gray-600 block">Publics<textarea rows={2} value={brief.audiences} onChange={(e) => set("audiences", e.target.value)} className={`${input} mt-1`} /></label>
+        <label className="text-xs text-gray-600 block">Contexte durable<textarea rows={4} value={brief.context} onChange={(e) => set("context", e.target.value)} className={`${input} mt-1`} /></label>
+        {brief.mood && <p className="text-[11px] text-gray-400">Humeur retenue : {MOODS.find((m) => m.code === brief.mood)?.label}</p>}
+      </Section>
+      {brief.accounts.length > 0 && (
+        <Section title="Comptes et voix" hint="Chaque compte écrit avec sa propre voix : le « je » d'un profil et le « nous » d'une agence ne se mélangent pas.">
+          <div className="space-y-3" data-testid="brief-accounts">
+            {brief.accounts.map((a, i) => (
+              <div key={i} className="rounded-xl border border-gray-200 p-3 space-y-2">
+                <p className="text-sm font-medium text-gray-800">
+                  {a.label} <span className="text-[10px] uppercase tracking-wide bg-gray-100 text-gray-500 rounded px-1.5 py-0.5 ml-1">{a.kind === "org" ? "Page entreprise" : "Profil personnel"}</span>
+                  <span className="text-xs text-gray-400 font-normal ml-2">{a.posts ? `${a.posts} posts` : ""}{a.lengthMin && a.lengthMax ? ` · ${a.lengthMin}–${a.lengthMax} caractères` : ""}</span>
+                </p>
+                <textarea rows={3} value={a.voice} onChange={(e) => setAccount(i, { voice: e.target.value })} className={input} aria-label={`Voix de ${a.label}`} />
+              </div>
+            ))}
+          </div>
+        </Section>
+      )}
+      <Section title="Règles de rédaction" hint="Une par ligne. Appliquées à chaque post.">
+        <textarea rows={Math.min(12, Math.max(4, rulesText.split("\n").length + 1))} value={rulesText} onChange={(e) => setRulesText(e.target.value)} className={input} data-testid="brief-rules" />
+      </Section>
+      <Section title="Interdits" hint="Mots, promesses et affirmations à ne jamais écrire. Une par ligne.">
+        <textarea rows={Math.min(10, Math.max(3, forbiddenText.split("\n").length + 1))} value={forbiddenText} onChange={(e) => setForbiddenText(e.target.value)} className={input} data-testid="brief-forbidden" />
+      </Section>
+      {brief.sources.length > 0 && (
+        <Section title="Ressources autorisées" hint="Seules ces adresses pourront être citées. Cochez celles à ajouter au datalake de l'entreprise : l'IA y lira leur contenu pour rédiger juste (compte dans votre quota de sources).">
+          <ul className="divide-y divide-gray-100 border border-gray-100 rounded-lg" data-testid="brief-sources">
+            {brief.sources.map((x) => (
+              <li key={x.url} className="p-2.5 flex items-start gap-2 text-xs">
+                <input type="checkbox" checked={addUrls.includes(x.url)} onChange={(e) => setAddUrls((l) => (e.target.checked ? [...l, x.url] : l.filter((u) => u !== x.url)))} className="mt-0.5" aria-label={`Ajouter ${x.label} au datalake`} />
+                <span className="min-w-0"><span className="font-medium text-gray-800">{x.label}</span> <span className="text-gray-400 break-all">{x.url}</span>{x.note && <span className="block text-gray-500">{x.note}</span>}</span>
+              </li>
+            ))}
+          </ul>
+        </Section>
+      )}
+      {brief.calendar.length > 0 && (
+        <Section title={`Calendrier repéré (${brief.calendar.length} publications)`} hint="Conservé avec la campagne : il servira au plan éditorial, publication par publication.">
+          <div className="overflow-x-auto border border-gray-100 rounded-lg" data-testid="brief-calendar">
+            <table className="w-full text-xs">
+              <thead className="bg-gray-50 text-gray-500"><tr>{["", "Compte", "Date", "Angle", "Appel à l'action"].map((h) => (<th key={h} className="text-left font-medium px-2.5 py-1.5">{h}</th>))}</tr></thead>
+              <tbody className="divide-y divide-gray-100">
+                {brief.calendar.map((c) => (
+                  <tr key={c.ref} className="align-top">
+                    <td className="px-2.5 py-1.5 font-medium text-gray-700 whitespace-nowrap">{c.ref}</td>
+                    <td className="px-2.5 py-1.5 whitespace-nowrap">{c.account}</td>
+                    <td className="px-2.5 py-1.5 whitespace-nowrap">{c.date ? new Date(`${c.date}T12:00:00`).toLocaleDateString("fr-FR", { day: "numeric", month: "short" }) : "—"}</td>
+                    <td className="px-2.5 py-1.5 text-gray-600">{c.angle || c.objective}</td>
+                    <td className="px-2.5 py-1.5 text-gray-500">{c.url ? <span className="break-all">{c.cta ? `${c.cta} · ` : ""}{c.url.replace(/^https?:\/\//, "")}</span> : c.cta || "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Section>
+      )}
+      <div className="flex items-center gap-3 flex-wrap">
+        <button type="button" onClick={create} disabled={creating || !brief.theme.trim()} data-testid="brief-create" className="bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white text-sm font-medium px-4 py-2 rounded-lg">
+          {creating ? "Création…" : "Créer la campagne"}
+        </button>
+        <button type="button" onClick={() => setStage("input")} className="text-sm text-gray-500 hover:text-gray-800">Changer de brief</button>
+        {!brief.theme.trim() && <span className="text-xs text-gray-400">Indiquez un thème pour créer la campagne.</span>}
+      </div>
+    </div>
+  );
+}
+
 function CampaignsView({ profile, linkedin, orgs, showToast, onPlanned, onProfileSaved, onGoHistory, onGoProfile, openWizard, onWizardConsumed }) {
   const [campaigns, setCampaigns] = useState([]);
   const [loaded, setLoaded] = useState(false);
   const [showWizard, setShowWizard] = useState(false);
+  const [showImport, setShowImport] = useState(false);
 
   // Ouverture demandée depuis la sidebar (« Créer une campagne »)
   useEffect(() => {
@@ -2236,6 +2462,18 @@ function CampaignsView({ profile, linkedin, orgs, showToast, onPlanned, onProfil
     loadCampaigns();
   };
 
+  // Import d'un brief : lecture du document, relecture, création
+  if (showImport) {
+    return (
+      <main className="max-w-4xl mx-auto p-6 space-y-4">
+        <button onClick={() => setShowImport(false)} className="text-sm text-gray-500 hover:text-gray-800 flex items-center gap-1.5">
+          <ChevronLeft size={15} /> Retour aux campagnes
+        </button>
+        <BriefImport showToast={showToast} onClose={() => setShowImport(false)} onCreated={() => { setShowImport(false); loadCampaigns(); }} />
+      </main>
+    );
+  }
+
   // Création : wizard intégré à la page (pas de popin)
   if (showWizard) {
     return (
@@ -2275,12 +2513,21 @@ function CampaignsView({ profile, linkedin, orgs, showToast, onPlanned, onProfil
         <p className="text-sm text-gray-500">
           Une campagne = un thème + un brief. Les posts générés se suivent et progressent.
         </p>
-        <button
-          onClick={() => setShowWizard(true)}
-          className="bg-[#ff5a5f] hover:bg-[#f63d44] text-white text-sm font-medium px-4 py-2.5 rounded-lg flex items-center gap-2"
-        >
-          <Sparkles size={15} /> Nouvelle campagne
-        </button>
+        <div className="flex items-center gap-2 flex-wrap">
+          <button
+            onClick={() => setShowImport(true)}
+            data-testid="campaign-import"
+            className="border border-gray-300 hover:border-[#ff5a5f] hover:text-[#ff5a5f] text-gray-700 text-sm font-medium px-4 py-2.5 rounded-lg flex items-center gap-2"
+          >
+            <FileText size={15} /> J&apos;ai déjà un brief
+          </button>
+          <button
+            onClick={() => setShowWizard(true)}
+            className="bg-[#ff5a5f] hover:bg-[#f63d44] text-white text-sm font-medium px-4 py-2.5 rounded-lg flex items-center gap-2"
+          >
+            <Sparkles size={15} /> Nouvelle campagne
+          </button>
+        </div>
       </div>
 
       {campaigns.length > 0 && (
@@ -2415,6 +2662,11 @@ function CampaignsView({ profile, linkedin, orgs, showToast, onPlanned, onProfil
                   </div>
                 </div>
 
+                {c.briefStats && (
+                  <p className="mt-2 text-[11px] text-gray-500" data-testid="campaign-brief-stats">
+                    Brief importé : {c.briefStats.accounts} compte{c.briefStats.accounts > 1 ? "s" : ""} · {c.briefStats.rules} règle{c.briefStats.rules > 1 ? "s" : ""} · {c.briefStats.sources} ressource{c.briefStats.sources > 1 ? "s" : ""}{c.briefStats.calendar ? ` · ${c.briefStats.calendar} publications au calendrier` : ""}
+                  </p>
+                )}
                 {/* Brief */}
                 {c.context && (
                   <div className="mt-3">
