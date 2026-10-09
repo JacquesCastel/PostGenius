@@ -2445,6 +2445,76 @@ function BriefImport({ showToast, onClose, onCreated, draft = null }) {
   );
 }
 
+// Texte rédigé d'une publication du plan : on clique dedans pour le peaufiner (enregistré en quittant la zone),
+// puis on le valide (programmé à la date proposée). Les publications suivantes tiennent compte de ces retouches.
+function PlanText({ it, base, onReload, showToast, onGoHistory }) {
+  const [text, setText] = useState(it.draft.text);
+  const [saved, setSaved] = useState(null); // null | "saving" | "ok" | "error"
+  const [busy, setBusy] = useState(false);
+  const dirty = text !== it.draft.text;
+  const saveText = async () => {
+    if (!dirty) return true;
+    setSaved("saving");
+    try {
+      const res = await fetch(`${base}/${it.id}/text`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text }) });
+      const d = await readJson(res);
+      if (!res.ok) throw new Error(d.error || "Erreur");
+      setSaved("ok");
+      await onReload();
+      return true;
+    } catch (e) {
+      setSaved("error");
+      showToast(e.message);
+      return false;
+    }
+  };
+  const validate = async (validated) => {
+    if (validated && it.checks?.some((c) => c.severity === "error") && !window.confirm(`${it.ref} a ${it.checks.filter((c) => c.severity === "error").length} écart(s) au brief. Le valider quand même ?`)) return;
+    setBusy(true);
+    try {
+      if (!(await saveText())) return;
+      const res = await fetch(`${base}/${it.id}/validate`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ validated }) });
+      const d = await readJson(res);
+      if (!res.ok) throw new Error(d.error || "Erreur");
+      showToast(validated ? `${it.ref} validé : programmé à la date proposée ✓` : `${it.ref} : validation annulée`);
+      await onReload();
+    } catch (e) {
+      showToast(e.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+  const published = it.draft.status === "publié";
+  return (
+    <div className="rounded-lg border border-gray-200 bg-white p-3 space-y-2" data-testid="plan-item-text">
+      <textarea
+        value={text}
+        onChange={(e) => { setText(e.target.value); setSaved(null); }}
+        onBlur={saveText}
+        rows={Math.min(26, Math.max(8, text.split("\n").length + 2))}
+        disabled={published}
+        aria-label={`Texte de ${it.ref}`}
+        className="w-full text-sm leading-relaxed text-gray-800 border border-transparent hover:border-gray-200 focus:border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-[#ff5a5f] resize-y disabled:bg-gray-50"
+        data-testid="plan-item-textarea"
+      />
+      <div className="flex items-center gap-3 flex-wrap text-[11px] text-gray-400">
+        <span>{text.length} caractères</span>
+        <span data-testid="plan-item-save-state">{saved === "saving" ? "Enregistrement…" : saved === "ok" ? "Modifications enregistrées ✓" : saved === "error" ? "Non enregistré" : dirty ? "Modifié : enregistré en quittant la zone" : it.draft.edited ? "Retouché par vous" : ""}</span>
+        <span className="ml-auto">{published ? "Publié" : it.draft.validated ? `Validé · programmé${it.draft.scheduledAt ? ` le ${fmtDateTime(it.draft.scheduledAt)}` : ""}` : it.draft.scheduledAt ? `À valider · proposé le ${fmtDateTime(it.draft.scheduledAt)}` : "À valider · sans date"}</span>
+      </div>
+      <div className="flex items-center gap-3 flex-wrap">
+        {!published && !it.draft.validated && (
+          <button type="button" onClick={() => validate(true)} disabled={busy || text.trim().length < 10} data-testid="plan-item-validate" className="bg-green-600 hover:bg-green-700 disabled:bg-gray-300 text-white text-xs font-medium px-3.5 py-1.5 rounded-lg flex items-center gap-1.5"><Check size={13} /> {busy ? "Validation…" : "Valider ce post"}</button>
+        )}
+        {!published && it.draft.validated && (
+          <button type="button" onClick={() => validate(false)} disabled={busy} data-testid="plan-item-unvalidate" className="text-xs border border-gray-300 hover:border-gray-400 text-gray-600 px-3 py-1.5 rounded-lg">Annuler la validation</button>
+        )}
+        {onGoHistory && <button type="button" onClick={onGoHistory} className="text-[11px] text-[#0a66c2] hover:underline">Ouvrir dans Mes posts →</button>}
+      </div>
+    </div>
+  );
+}
+
 // ----------------------------------------------------------------
 // Plan éditorial d'une campagne : une ligne par publication prévue (compte, date proposée, angle, appel à l'action,
 // lien exact, format, brief visuel, faits à confirmer). Les dates sont des PROPOSITIONS : rien n'est programmé ni publié seul.
@@ -2478,12 +2548,14 @@ function PlanEditor({ campaign, onBack, showToast, onChanged, onGoHistory }) {
     if (res.ok) load();
     else showToast("Erreur de suppression");
   };
-  const generate = async (it) => {
+  const generate = async (it, { quiet = false } = {}) => {
+    if (!quiet && it.draft?.edited && !window.confirm(`Réécrire ${it.ref} effacera vos retouches. Continuer ?`)) return false;
     setBusyIds((l) => [...l, it.id]);
     try {
       const res = await fetch(`${base}/${it.id}/generate`, { method: "POST" });
       const d = await readJson(res);
       if (!res.ok) throw new Error(d.error || "Erreur");
+      if (d.item?.fixes?.length) showToast(`${it.ref} : ${d.item.fixes.join(", ")} (corrigé automatiquement selon le brief)`);
       onChanged?.();
       return true;
     } catch (e) {
@@ -2495,11 +2567,13 @@ function PlanEditor({ campaign, onBack, showToast, onChanged, onGoHistory }) {
     }
   };
   // Rédige une liste de publications à la suite (un appel par publication) ; s'arrête à la première erreur
+  const stopRef = useRef(false);
   const run = async (ids) => {
+    stopRef.current = false;
     const todo = ids.map((id) => data.items.find((i) => i.id === id)).filter(Boolean);
     setAll({ done: 0, total: todo.length });
     for (let k = 0; k < todo.length; k++) {
-      if (!(await generate(todo[k]))) break;
+      if (stopRef.current || !(await generate(todo[k], { quiet: true }))) break;
       setAll({ done: k + 1, total: todo.length });
     }
     setAll(null);
@@ -2562,35 +2636,35 @@ function PlanEditor({ campaign, onBack, showToast, onChanged, onGoHistory }) {
           </div>
         </div>
         <p className="text-xs text-gray-500 leading-relaxed">Les dates sont des <strong>propositions</strong> : rien n&apos;est programmé ni publié sans votre validation. Chaque texte rédigé arrive dans « Mes posts » à valider, avec le lien exact de la ligne (ajouté automatiquement, jamais écrit par l&apos;IA).</p>
-        <div className="rounded-xl border border-gray-200 p-3.5 space-y-2" data-testid="plan-production">
+        <div className="rounded-xl border border-gray-200 p-3.5 space-y-2.5" data-testid="plan-production">
           <p className="text-xs font-semibold text-gray-700">Production</p>
-          {!approved && !batches.pilotsDone && (
+          {!batches.pilotsDone && !approved && (
             <>
-              <p className="text-xs text-gray-500">On commence par une publication de chaque compte ({pilotRefs}) pour vérifier les voix, avant de rédiger le reste par lots de deux semaines.</p>
+              <p className="text-xs text-gray-500">On commence par une publication de chaque compte ({pilotRefs}). Vous les relisez, les retouchez et les validez : toutes les autres s&apos;en inspireront.</p>
               <button type="button" onClick={() => run(batches.pilotsTodo)} disabled={Boolean(all) || !batches.pilotsTodo.length} data-testid="plan-pilots" className="bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white text-sm font-medium px-3.5 py-1.5 rounded-lg">{all ? `Rédaction ${all.done}/${all.total}…` : `Rédiger les publications pilotes (${pilotRefs})`}</button>
               {!batches.pilotsTodo.length && <p className="text-xs text-amber-700">Associez d&apos;abord chaque compte « page » à votre page LinkedIn.</p>}
             </>
           )}
-          {!approved && batches.pilotsDone && (
+          {(batches.pilotsDone || approved) && (
             <>
-              <p className="text-xs text-gray-500">Relisez les publications pilotes ({pilotRefs}) : les deux voix sont-elles justes, les textes distincts ?</p>
-              <div className="flex items-center gap-3 flex-wrap">
-                <button type="button" onClick={() => approve(true)} data-testid="plan-approve" className="bg-[#ff5a5f] hover:bg-[#f63d44] text-white text-sm font-medium px-3.5 py-1.5 rounded-lg">Les voix sont justes : continuer</button>
-                <button type="button" onClick={() => run(batches.pilots)} disabled={Boolean(all)} className="text-xs text-gray-500 hover:text-[#ff5a5f]">Réécrire les pilotes</button>
-              </div>
-            </>
-          )}
-          {approved && (
-            <>
-              {batches.next.length > 0 ? (
+              {!approved && !batches.pilotsValidated && (
+                <p className="text-xs text-gray-500" data-testid="plan-validate-hint">Ouvrez vos publications pilotes ({pilotRefs}), <strong>cliquez dans le texte pour le peaufiner</strong>, puis cliquez « Valider ce post ». Les autres publications seront rédigées à partir de vos versions validées et de vos corrections.</p>
+              )}
+              {(approved || batches.pilotsValidated) && batches.remaining > 0 && (
+                <p className="text-xs text-green-700">Vos versions validées servent de référence : voix, structure, longueur, corrections.</p>
+              )}
+              {batches.remaining > 0 ? (
                 <div className="flex items-center gap-3 flex-wrap">
-                  <button type="button" onClick={() => run(batches.next)} disabled={Boolean(all)} data-testid="plan-next-batch" className="bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white text-sm font-medium px-3.5 py-1.5 rounded-lg">{all ? `Rédaction ${all.done}/${all.total}…` : `Rédiger le lot suivant (${batches.next.length} publication${batches.next.length > 1 ? "s" : ""}${batches.nextWeeks.length ? ` · semaines du ${new Date(`${batches.nextWeeks[0]}T12:00:00`).toLocaleDateString("fr-FR", { day: "numeric", month: "long" })}` : ""})`}</button>
-                  {batches.remaining > batches.next.length && <button type="button" onClick={() => run(items.filter((i) => i.status !== "généré" && !(i.kind === "org" && (!i.target || i.target === "person"))).map((i) => i.id))} disabled={Boolean(all)} data-testid="plan-all" className="text-xs text-gray-500 hover:text-[#ff5a5f]">Tout rédiger ({batches.remaining})</button>}
+                  <button type="button" onClick={async () => { if (!approved && !(await act({ action: "approveVoices", approved: true }))) return; run(items.filter((i) => i.status !== "généré" && !(i.kind === "org" && (!i.target || i.target === "person"))).map((i) => i.id)); }} disabled={Boolean(all) || (!approved && !batches.pilotsValidated)} data-testid="plan-all" className="bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white text-sm font-medium px-3.5 py-1.5 rounded-lg">{all ? `Rédaction ${all.done}/${all.total}…` : `Générer les autres posts (${items.filter((i) => i.status !== "généré" && !(i.kind === "org" && (!i.target || i.target === "person"))).length})`}</button>
+                  {all && <button type="button" onClick={() => { stopRef.current = true; }} className="text-xs text-gray-500 hover:text-red-600" data-testid="plan-stop">Arrêter</button>}
+                  {!all && batches.next.length > 0 && batches.remaining > batches.next.length && (
+                    <button type="button" onClick={async () => { if (!approved && !(await act({ action: "approveVoices", approved: true }))) return; run(batches.next); }} disabled={!approved && !batches.pilotsValidated} data-testid="plan-next-batch" className="text-xs text-[#0a66c2] hover:underline disabled:text-gray-300">Seulement les deux prochaines semaines ({batches.next.length})</button>
+                  )}
                 </div>
               ) : (
-                <p className="text-xs text-green-700" data-testid="plan-all-done">{batches.remaining ? "Il reste des publications à associer à une page LinkedIn." : "Toutes les publications sont rédigées."}</p>
+                <p className="text-xs text-green-700" data-testid="plan-all-done">{items.some((i) => i.kind === "org" && (!i.target || i.target === "person") && i.status !== "généré") ? "Il reste des publications à associer à une page LinkedIn." : "Toutes les publications sont rédigées."}</p>
               )}
-              <button type="button" onClick={() => approve(false)} className="text-[11px] text-gray-400 hover:text-gray-600">Revoir les voix</button>
+              {approved && <button type="button" onClick={() => approve(false)} className="text-[11px] text-gray-400 hover:text-gray-600">Revoir les voix</button>}
             </>
           )}
         </div>
@@ -2642,12 +2716,21 @@ function PlanEditor({ campaign, onBack, showToast, onChanged, onGoHistory }) {
                   <span className={`text-[10px] uppercase tracking-wide rounded px-1.5 py-0.5 ${it.kind === "org" ? "bg-sky-50 text-sky-700" : "bg-gray-100 text-gray-500"}`}>{it.account}</span>
                   <input type="date" value={it.date ?? ""} onChange={(e) => patchItem(it, { date: e.target.value || null })} className="border border-gray-200 rounded-md px-1.5 py-0.5 text-xs" aria-label={`Date de ${it.ref}`} />
                   <button type="button" onClick={() => setOpenId(open ? null : it.id)} className="flex-1 min-w-[10rem] text-left text-sm text-gray-700 truncate hover:text-[#ff5a5f]">{it.angle || it.objective || "Sans sujet"}</button>
-                  <span className={`text-[10px] rounded-full px-2 py-0.5 ${it.status === "généré" ? "bg-green-50 text-green-700" : "bg-gray-100 text-gray-500"}`}>{it.status === "généré" ? (it.draft?.status === "publié" ? "publié" : "rédigé") : "prévu"}</span>
+                  <span className={`text-[10px] rounded-full px-2 py-0.5 ${it.status === "généré" ? (it.draft?.validated ? "bg-green-50 text-green-700" : "bg-purple-100 text-purple-700") : "bg-gray-100 text-gray-500"}`}>{it.status === "généré" ? (it.draft?.status === "publié" ? "publié" : it.draft?.validated ? "validé" : "à valider") : "prévu"}</span>
                   {it.verdict && <button type="button" onClick={() => setOpenId(open ? null : it.id)} data-testid="plan-verdict" data-verdict={it.verdict} className={`text-[10px] rounded-full px-2 py-0.5 ${it.verdict === "ok" ? "bg-green-50 text-green-700" : it.verdict === "warn" ? "bg-amber-50 text-amber-700" : "bg-red-50 text-red-700"}`}>{it.verdict === "ok" ? "conforme" : it.verdict === "warn" ? `${it.checks.length} à vérifier` : `${it.checks.filter((c) => c.severity === "error").length} écart${it.checks.filter((c) => c.severity === "error").length > 1 ? "s" : ""}`}</button>}
                   <button type="button" onClick={() => generate(it)} disabled={busy || Boolean(all) || blocked || it.draft?.status === "publié"} data-testid="plan-item-generate" title={blocked ? "Associez d'abord le compte à une page LinkedIn" : ""} className="text-xs text-white bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 px-2.5 py-1 rounded-lg">{busy ? "Rédaction…" : it.status === "généré" ? "Réécrire" : "Rédiger"}</button>
                 </div>
                 {open && (
                   <div className="border-t border-gray-100 p-3 space-y-2.5">
+                    {it.checks?.length > 0 && (
+                      <ul className="text-xs space-y-1" data-testid="plan-item-checks">
+                        {it.checks.map((c, k) => (<li key={k} className={`flex gap-1.5 ${c.severity === "error" ? "text-red-700" : "text-amber-700"}`}><span>{c.severity === "error" ? "✖" : "⚠"}</span><span>{c.text}</span></li>))}
+                      </ul>
+                    )}
+                    {it.draft && <PlanText key={`${it.id}:${it.draft.text}:${it.draft.status}`} it={it} base={base} onReload={load} showToast={showToast} onGoHistory={onGoHistory} />}
+                    <details open={!it.draft} className="rounded-lg border border-gray-100 px-3 py-2" data-testid="plan-item-params">
+                      <summary className="text-[11px] font-medium text-gray-500 cursor-pointer select-none">Paramètres de la publication (objectif, sujet, lien, brief visuel, faits à confirmer)</summary>
+                      <div className="space-y-2.5 mt-2.5">
                     <div className="grid sm:grid-cols-2 gap-2.5">
                       <Field it={it} k="objective" label="Objectif" />
                       <Field it={it} k="format" label="Format" />
@@ -2667,20 +2750,8 @@ function PlanEditor({ campaign, onBack, showToast, onChanged, onGoHistory }) {
                       <Field it={it} k="media" label="Statut du média" />
                       <Field it={it} k="toConfirm" label="Faits à confirmer" />
                     </div>
-                    {it.checks?.length > 0 && (
-                      <ul className="text-xs space-y-1" data-testid="plan-item-checks">
-                        {it.checks.map((c, k) => (<li key={k} className={`flex gap-1.5 ${c.severity === "error" ? "text-red-700" : "text-amber-700"}`}><span>{c.severity === "error" ? "✖" : "⚠"}</span><span>{c.text}</span></li>))}
-                      </ul>
-                    )}
-                    {it.draft && (
-                      <div className="rounded-lg bg-gray-50 p-3 text-xs text-gray-700 whitespace-pre-wrap" data-testid="plan-item-text">
-                        {it.draft.text}
-                        <div className="mt-2 flex items-center gap-3 text-[11px] text-gray-400">
-                          <span>{it.draft.status === "à valider" ? "À valider" : it.draft.status}{it.draft.scheduledAt ? ` · proposé le ${fmtDateTime(it.draft.scheduledAt)}` : ""}</span>
-                          {onGoHistory && <button type="button" onClick={onGoHistory} className="text-[#0a66c2] hover:underline">Ouvrir dans Mes posts →</button>}
-                        </div>
                       </div>
-                    )}
+                    </details>
                     <div className="flex items-center gap-4">
                       <button type="button" onClick={() => copy(planSheet(it, rowOf(it)), `Fiche ${it.ref} copiée ✓`)} data-testid="plan-item-copy" className="text-[11px] text-[#0a66c2] hover:underline">Copier la fiche</button>
                       <button type="button" onClick={() => removeItem(it)} className="text-[11px] text-gray-400 hover:text-red-600">Retirer cette publication du plan</button>
