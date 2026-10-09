@@ -164,6 +164,26 @@ model Agency {
 
   members AgencyMember[]
   clients User[]         @relation("AgencyClients")
+  invites AgencyInvite[]
+}
+
+// Invitation d'un collaborateur dans l'agence : le lien permet de créer un compte rattaché à l'agence (voir lib/agency.js)
+model AgencyInvite {
+  id             String    @id @default(cuid())
+  agencyId       String
+  agency         Agency    @relation(fields: [agencyId], references: [id], onDelete: Cascade)
+  email          String // adresse invitée (minuscules)
+  token          String    @unique
+  createdAt      DateTime  @default(now())
+  expiresAt      DateTime
+  lastSentAt     DateTime?
+  invitedBy      String? // id du propriétaire
+  revokedAt      DateTime?
+  acceptedAt     DateTime?
+  acceptedUserId String?
+
+  @@index([agencyId])
+  @@index([email])
 }
 
 // Utilisateur de l'agence : un compte, une seule agence. role : owner (souscripteur) | member

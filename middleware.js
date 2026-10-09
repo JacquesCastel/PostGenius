@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getSessionData } from "@/lib/session";
+import { getSessionData } from "@/lib/sessionToken";
 
 // Empêche le cache HTTP du navigateur sur les routes API dépendantes de la
 // session (données par utilisateur/client impersonné) — sans ça, après un
