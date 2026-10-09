@@ -4,6 +4,10 @@ const nextConfig = {
   output: "standalone",
 
   // Packages avec addons natifs (.node) — exclus du bundle webpack, chargés par Node à l'exécution
+  // Le middleware (/api/*) fait tamponner les corps de requêtes : au-delà de 10 Mo par défaut ils sont tronqués, et un envoi d'image
+  // (PNG exporté par l'éditeur, import de la médiathèque) échoue en erreur 500. 25 Mo couvre les plafonds des routes d'image (12 Mo base64, 10 Mo).
+  experimental: { middlewareClientMaxBodySize: "25mb" },
+
   serverExternalPackages: ["@resvg/resvg-js", "satori", "sharp"],
 
   // Les fonts @fontsource sont lues via fs.readFileSync (chemin dynamique) :
