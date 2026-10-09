@@ -6,6 +6,7 @@ import { scorePost } from "@/lib/score";
 import { checkFeature, limitBody } from "@/lib/gating";
 import { getRemarks, remarksPromptBlock } from "@/lib/remarks";
 import { ANTI_INVENTION_INSTRUCTION } from "@/lib/linkedinRules";
+import { cleanFeedback, feedbackBlock, FEEDBACK_OUTPUT_RULE, parseFeedbackOutput } from "@/lib/rewriteFeedback";
 
 // Réécrit un post en appliquant les améliorations d'engagement détectées.
 export const maxDuration = 60;
@@ -19,7 +20,10 @@ export async function POST(req) {
   const gate = await checkFeature(userId, "scoring", "L'optimisation du post");
   if (!gate.ok) return NextResponse.json(limitBody(gate), { status: 403 });
 
-  const { text, type, scope = "all", tips } = await req.json();
+  const { text, type, scope = "all", tips, feedback: rawFeedback } = await req.json();
+  // Commentaire reçu ou consigne libre à intégrer : remplace les pistes d'engagement pour cette réécriture
+  const feedback = cleanFeedback(rawFeedback);
+  if (rawFeedback && !feedback) return NextResponse.json({ error: "Collez un commentaire ou écrivez une consigne." }, { status: 400 });
   if (!text?.trim()) return NextResponse.json({ error: "Texte requis." }, { status: 400 });
 
   // Liste des améliorations à appliquer : critères de forme non réussis (heuristique)
@@ -32,6 +36,7 @@ export async function POST(req) {
     .slice(0, 3)
     .map((t) => `- À ajouter ou renforcer : ${t.trim().slice(0, 300)}`);
   improvements.push(...tipLines);
+  if (feedback) improvements.length = 0;
 
   // Périmètre de la réécriture
   const SCOPE = {
@@ -57,14 +62,13 @@ ${text}
 
 PÉRIMÈTRE : ${scopeInstruction}
 
-Améliore le post pour MAXIMISER son potentiel d'engagement, en appliquant ces pistes (uniquement sur la partie concernée par le périmètre ci-dessus) :
-${improvements.length ? improvements.join("\n") : "- Renforce l'accroche, l'aération et l'incitation à commenter."}
+${feedback ? `${feedbackBlock(feedback)}\nAjuste le post en conséquence (uniquement sur la partie concernée par le périmètre ci-dessus).` : `Améliore le post pour MAXIMISER son potentiel d'engagement, en appliquant ces pistes (uniquement sur la partie concernée par le périmètre ci-dessus) :\n${improvements.length ? improvements.join("\n") : "- Renforce l'accroche, l'aération et l'incitation à commenter."}`}
 
-Règles :${scope === "hook" || scope === "all" ? "\n- La première ligne (accroche) doit faire MOINS de 90 caractères et porter à elle seule l'idée du post : elle seule s'affiche avant le « voir plus ». Une tension (question, chiffre, promesse) peut l'aider à percuter, mais seulement si ça sert le sens — pas une formule obligatoire." : ""}
+Règles :${!feedback && (scope === "hook" || scope === "all") ? "\n- La première ligne (accroche) doit faire MOINS de 90 caractères et porter à elle seule l'idée du post : elle seule s'affiche avant le « voir plus ». Une tension (question, chiffre, promesse) peut l'aider à percuter, mais seulement si ça sert le sens — pas une formule obligatoire." : ""}
 - Garde le même sujet, le même message et la MÊME LANGUE que le post d'origine (ne traduis jamais).
 - Respecte le ton ${user?.tone ? `"${user.tone}"` : "de l'auteur"}.${user?.styleNotes ? `\n- Consignes de style à respecter : ${user.styleNotes}.` : ""}${remarksPromptBlock(remarks)}
 - ${ANTI_INVENTION_INSTRUCTION}
-- Réponds UNIQUEMENT avec le texte du post complet réécrit (aucun commentaire autour).`;
+- ${feedback ? FEEDBACK_OUTPUT_RULE : "Réponds UNIQUEMENT avec le texte du post complet réécrit (aucun commentaire autour)."}`;
 
   let data;
   try {
@@ -87,7 +91,8 @@ Règles :${scope === "hook" || scope === "all" ? "\n- La première ligne (accroc
     return NextResponse.json({ error: "La réécriture a échoué. Réessayez." }, { status: 502 });
   }
 
-  const out = (data?.content?.[0]?.text || "").trim();
+  const parsed = feedback ? parseFeedbackOutput(data?.content?.[0]?.text) : { text: (data?.content?.[0]?.text || "").trim(), note: null };
+  const out = parsed.text;
   if (!out) return NextResponse.json({ error: "Réécriture vide." }, { status: 502 });
 
   logUsage(userId, {
@@ -97,5 +102,5 @@ Règles :${scope === "hook" || scope === "all" ? "\n- La première ligne (accroc
     outputTokens: data?.usage?.output_tokens ?? 0,
   });
 
-  return NextResponse.json({ text: out });
+  return NextResponse.json({ text: out, ...(feedback ? { note: parsed.note } : {}) });
 }

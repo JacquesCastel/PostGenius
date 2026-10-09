@@ -695,7 +695,7 @@ function EngageView({ linkedin, showToast, onConnect, embedded = false, onSent }
 // permission LinkedIn (voir app/api/linkedin/comments/route.js) ; sans elle, l'écran
 // l'explique et renvoie vers le post sur LinkedIn.
 // ----------------------------------------------------------------
-function CommentsPanel({ draft, onClose, showToast }) {
+function CommentsPanel({ draft, onClose, showToast, onIntegrate }) {
   const [comments, setComments] = useState(null); // null = chargement
   const [error, setError] = useState(null);
   const [errorCode, setErrorCode] = useState(null); // "read_forbidden" : lecture refusée par LinkedIn
@@ -794,6 +794,7 @@ function CommentsPanel({ draft, onClose, showToast }) {
               {c.createdAt && (
                 <p className="text-[11px] text-gray-400 mt-1">{new Date(c.createdAt).toLocaleDateString("fr-FR")}</p>
               )}
+              {onIntegrate && <button type="button" onClick={() => onIntegrate(c.text)} data-testid="comment-integrate" className="mt-1.5 text-[11px] text-[#0a66c2] hover:underline">Intégrer dans le post →</button>}
             </div>
           ))}
         </div>
@@ -5397,12 +5398,14 @@ function RefineChat({ thread, loading, mood, onSend, onMood, onEdit, onRemember,
         }}
         className="flex flex-wrap gap-2"
       >
-        <input
-          type="text"
+        <textarea
+          rows={2}
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="« insiste sur le ROI », « termine par une question »…"
-          className="flex-1 min-w-[10rem] border border-gray-300 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
+          onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(input); } }}
+          placeholder="« insiste sur le ROI », « termine par une question »… ou collez un commentaire reçu à intégrer"
+          className="flex-1 min-w-[10rem] border border-gray-300 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#ff5a5f] resize-y"
+          data-testid="refine-input"
         />
         <button type="submit" disabled={loading || !input.trim()} className="bg-gray-900 hover:bg-gray-700 disabled:bg-gray-300 text-white text-xs px-3 py-1.5 rounded-lg">
           Envoyer
@@ -13754,6 +13757,11 @@ export default function Home() {
   const [optimizeText, setOptimizeText] = useState(null); // { text, type } → page Étape 2 plein écran
   const [rewriting, setRewriting] = useState(false);
   const [rewriteScope, setRewriteScope] = useState("all"); // all | hook | body | signature (= conclusion + appel à l'action)
+  // Commentaire reçu (collé) ou consigne libre à intégrer au post
+  const [fbKind, setFbKind] = useState("comment"); // comment | instruction
+  const [fbText, setFbText] = useState("");
+  const [fbHow, setFbHow] = useState("auto");
+  const [fbNote, setFbNote] = useState(null); // ce que l'IA a intégré (ou pourquoi rien)
   const [scoreTips, setScoreTips] = useState(null); // conseils IA affichés dans ScorePanel, appliqués aussi par la réécriture
   const [versions, setVersions] = useState([]); // historique de versions { id, text, label, score }
   const [showTutorial, setShowTutorial] = useState(false); // tutoriel de première connexion
@@ -13798,8 +13806,12 @@ export default function Home() {
 
   // Ouvre la page Étape 2 et initialise l'historique
   // draftId : si fourni, les modifications (texte + image) sont enregistrées dans le brouillon
-  const openOptimize = (text, type, draftId = null, imageUrl = null, imagePrompt = null, videoUrl = null, youtubeUrl = null) => {
+  const openOptimize = (text, type, draftId = null, imageUrl = null, imagePrompt = null, videoUrl = null, youtubeUrl = null, prefillComment = null) => {
     setRewriteScope("all");
+    setFbKind("comment");
+    setFbText(prefillComment ?? "");
+    setFbHow("auto");
+    setFbNote(null);
     setVersions([{ id: Date.now(), text, label: "Version initiale", score: scorePost({ text, type }).score }]);
     setOptimizeText({ text, type, draftId });
     // Reprend l'image déjà associée au brouillon (si on vient de "Mes posts") —
@@ -13860,6 +13872,29 @@ export default function Home() {
       persistOptimized(d.text);
       setVersions((vs) => [...vs, { id: Date.now(), text: d.text, label, score: scorePost({ text: d.text, type: optimizeText.type }).score }]);
       showToast("Post réécrit ✓");
+    } catch (e) {
+      showToast(e.message);
+    } finally {
+      setRewriting(false);
+    }
+  };
+  // Intègre le commentaire collé (ou la consigne) dans le post ; l'ancienne version reste dans l'historique
+  const integrateFeedback = async () => {
+    if (!optimizeText || !fbText.trim()) return;
+    setRewriting(true);
+    setFbNote(null);
+    try {
+      const res = await fetch("/api/score/rewrite", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: optimizeText.text, type: optimizeText.type, scope: rewriteScope, feedback: { kind: fbKind, text: fbText, how: fbHow } }),
+      });
+      const d = await readJson(res);
+      if (!res.ok) throw new Error(d.error);
+      persistOptimized(d.text);
+      setVersions((vs) => [...vs, { id: Date.now(), text: d.text, label: fbKind === "comment" ? "Commentaire intégré" : "Consigne appliquée", score: scorePost({ text: d.text, type: optimizeText.type }).score }]);
+      setFbNote(d.note ?? null);
+      showToast(fbKind === "comment" ? "Commentaire intégré ✓" : "Consigne appliquée ✓");
     } catch (e) {
       showToast(e.message);
     } finally {
@@ -15471,6 +15506,46 @@ export default function Home() {
                 />
               </div>
 
+              {/* Commentaire reçu ou consigne : à coller, puis intégrer au post */}
+              {canScore && (
+                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-2.5" data-testid="feedback-card">
+                  <p className="text-xs font-semibold text-gray-500">Intégrer un commentaire ou une consigne</p>
+                  <div className="flex gap-1.5">
+                    {[["comment", "Commentaire reçu"], ["instruction", "Ma consigne"]].map(([k, l]) => (
+                      <button key={k} type="button" onClick={() => setFbKind(k)} data-testid={`feedback-kind-${k}`} className={`text-xs px-3 py-1.5 rounded-full border ${fbKind === k ? "bg-[#ff5a5f] text-white border-[#ff5a5f]" : "border-gray-200 text-gray-600 hover:border-gray-300"}`}>{l}</button>
+                    ))}
+                  </div>
+                  <textarea
+                    value={fbText}
+                    onChange={(e) => setFbText(e.target.value)}
+                    rows={5}
+                    maxLength={3000}
+                    placeholder={fbKind === "comment" ? "Collez ici le commentaire reçu sur ce post (LinkedIn, email, message…). Il n'est pas recopié : l'IA en tire ce qui sert le post." : "Écrivez ou collez une consigne : « ajoute un exemple chiffré », « réponds à l'objection sur le prix »…"}
+                    className="w-full text-sm border border-gray-200 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-[#ff5a5f] resize-y"
+                    data-testid="feedback-text"
+                  />
+                  {fbKind === "comment" && (
+                    <label className="text-[11px] text-gray-500 flex items-center gap-2 flex-wrap">
+                      Comment l&apos;intégrer ?
+                      <select value={fbHow} onChange={(e) => setFbHow(e.target.value)} className="border border-gray-200 rounded-lg px-2 py-1 text-xs bg-white" data-testid="feedback-how">
+                        <option value="auto">Laisser l&apos;IA décider</option>
+                        <option value="answer">Répondre à l&apos;objection ou à la question</option>
+                        <option value="nuance">Ajouter une précision ou une nuance</option>
+                        <option value="idea">Reprendre l&apos;idée ou l&apos;exemple</option>
+                      </select>
+                    </label>
+                  )}
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <button type="button" onClick={integrateFeedback} disabled={rewriting || fbText.trim().length < 3} data-testid="feedback-apply" className="bg-gray-900 hover:bg-gray-700 disabled:bg-gray-300 text-white text-sm font-medium px-4 py-2 rounded-lg flex items-center gap-2">
+                      {rewriting ? <RefreshCw size={14} className="animate-spin" /> : <Sparkles size={14} />}
+                      {rewriting ? "Intégration…" : fbKind === "comment" ? "Intégrer ce commentaire" : "Appliquer cette consigne"}
+                    </button>
+                    {fbText && <button type="button" onClick={() => { setFbText(""); setFbNote(null); }} className="text-xs text-gray-400 hover:text-gray-600">Effacer</button>}
+                  </div>
+                  {fbNote && <p className="text-xs text-gray-600 bg-gray-50 rounded-lg p-2.5" data-testid="feedback-note"><span className="font-semibold">Ce qui a été fait :</span> {fbNote} <span className="text-gray-400">(l&apos;ancienne version reste dans l&apos;historique)</span></p>}
+                </div>
+              )}
+
               {/* Image du post — absente auparavant de cet écran (bug rapporté). */}
               {renderImageBlock()}
               {renderVideoBlock()}
@@ -15906,7 +15981,7 @@ export default function Home() {
       )}
 
       {commentsDraft && (
-        <CommentsPanel draft={commentsDraft} onClose={() => setCommentsDraft(null)} showToast={showToast} />
+        <CommentsPanel draft={commentsDraft} onClose={() => setCommentsDraft(null)} showToast={showToast} onIntegrate={(t) => { const d = commentsDraft; setCommentsDraft(null); openOptimize(d.text, d.type, d.id, d.imageUrl, d.imagePrompt, d.videoUrl, d.youtubeUrl, t); }} />
       )}
 
       {/* Bandeau d'essai / incident de paiement (seulement si le paiement est actif) */}
