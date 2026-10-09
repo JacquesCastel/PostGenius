@@ -10088,6 +10088,7 @@ function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast,
   const [fields, setFields] = useState({
     name: profile?.name ?? user?.name ?? "",
     headline: profile?.headline ?? "",
+    website: profile?.website ?? "",
     companyName: profile?.companyName ?? "",
     businessDescription: profile?.businessDescription ?? "",
     targetAudience: profile?.targetAudience ?? "",
@@ -10111,6 +10112,45 @@ function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast,
     const v = String(value);
     set(key, (list.includes(v) ? list.filter((x) => x !== v) : [...list, v]).join(","));
   };
+
+  // Analyse du site internet : pré-remplit l'étape « entreprise » (et le reste du profil). Les champs déjà remplis à la main sont gardés.
+  const [analyzing, setAnalyzing] = useState(false);
+  const [analyzed, setAnalyzed] = useState(false);
+  const analyzeSite = async ({ auto = false } = {}) => {
+    if (!hasText(fields.website)) { if (!auto) showToast("Indiquez d'abord l'adresse du site."); return; }
+    setAnalyzing(true);
+    try {
+      const res = await fetch("/api/profile/analyze", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url: fields.website }) });
+      const d = await readJson(res);
+      if (!res.ok) throw new Error(d.error || "Analyse impossible");
+      const f = d.fields || {};
+      const keep = (cur, next) => (auto && hasText(cur) ? cur : next?.trim() || cur);
+      setFields((prev) => ({
+        ...prev,
+        companyName: keep(prev.companyName, f.companyName),
+        businessDescription: keep(prev.businessDescription, f.businessDescription),
+        targetAudience: keep(prev.targetAudience, f.targetAudience),
+        market: keep(prev.market, f.market),
+        themes: keep(prev.themes, f.themes),
+        commGoals: keep(prev.commGoals, f.commGoals),
+        // L'expertise est celle d'une personne : un client d'agence (une entreprise) la renseigne en dernière étape
+        ...(forClient ? {} : { expertise: keep(prev.expertise, f.expertise) }),
+      }));
+      setAnalyzed(true);
+      showToast("Entreprise pré-remplie depuis le site ✓ Vérifiez et corrigez.");
+    } catch (e) {
+      if (!auto) showToast(e.message);
+    } finally {
+      setAnalyzing(false);
+    }
+  };
+  // Site déjà connu (saisi à la création du client) et activité encore vide : l'analyse se lance à l'ouverture de l'étape
+  const autoRan = useRef(false);
+  useEffect(() => {
+    if (flow[step].kind !== "company" || autoRan.current) return;
+    autoRan.current = true;
+    if (hasText(fields.website) && !hasText(fields.businessDescription)) analyzeSite({ auto: true });
+  }, [step]);
 
   const last = flow.length - 1;
   const kind = flow[step].kind;
@@ -10284,6 +10324,17 @@ function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast,
 
           {kind === "company" && (
             <div className="space-y-3">
+              <div className="bg-[#fff1f1] rounded-xl p-3" data-testid="wizard-site">
+                <label className="text-sm font-medium text-gray-700 block mb-1.5">{me("Gagnez du temps : votre site internet", "Gagnez du temps : son site internet")}</label>
+                <div className="flex flex-wrap gap-2">
+                  <input type="text" value={fields.website} onChange={(e) => set("website", e.target.value)} placeholder="https://site.fr" className={`flex-1 min-w-0 ${inputCls}`} data-testid="wizard-website" />
+                  <button type="button" onClick={() => analyzeSite()} disabled={analyzing || !hasText(fields.website)} data-testid="wizard-analyze" className="shrink-0 bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white text-sm font-medium px-4 py-2 rounded-lg flex items-center gap-1.5">
+                    {analyzing ? <RefreshCw size={14} className="animate-spin" /> : <Sparkles size={14} />}
+                    {analyzing ? "Analyse…" : analyzed ? "Analyser à nouveau" : "Analyser"}
+                  </button>
+                </div>
+                <p className="text-[11px] text-gray-500 mt-1.5">Le copilote lit le site et pré-remplit l&apos;activité, la cible, le marché et les thèmes. Vous vérifiez, vous corrigez.</p>
+              </div>
               <div>
                 <label className="text-sm font-medium text-gray-700 block mb-1.5">{me("Nom de votre entreprise ou de votre marque", "Nom de son entreprise ou de sa marque")}</label>
                 <input type="text" value={fields.companyName} onChange={(e) => set("companyName", e.target.value)} placeholder="ex : Acme Conseil" className={inputCls} data-testid="wizard-company" />
