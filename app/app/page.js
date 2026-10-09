@@ -19,6 +19,7 @@ import { explainPublishError } from "@/lib/publishError";
 import { isOrgUrn } from "@/lib/publishVoice";
 import { cleanPostContext } from "@/lib/postContext";
 import { planSheet, sheetAll } from "@/lib/campaignPlan";
+import { parseMentions, findManualTags, insertMention } from "@/lib/mentions";
 import { aggregateInsights } from "@/lib/knowledgeText";
 import { overlayProfile } from "@/lib/contextOverlay";
 import SiteHeader from "@/components/SiteHeader";
@@ -2445,13 +2446,113 @@ function BriefImport({ showToast, onClose, onCreated, draft = null }) {
   );
 }
 
+// Mentions dans un post : pages LinkedIn (vraie mention, publiée avec lien et notification) et personnes (rappel pour les taguer
+// à la main : l'application ne peut pas retrouver l'identifiant LinkedIn d'un membre).
+function MentionTool({ draftId, text, onInsert, mentions, onMentions, getCursor, showToast, postUrl }) {
+  const [open, setOpen] = useState(false);
+  const [list, setList] = useState(null); // { own, saved }
+  const [input, setInput] = useState("");
+  const [name, setName] = useState("");
+  const [needName, setNeedName] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState(null);
+  const load = () => fetch("/api/linkedin/mentions").then(readJson).then((d) => (d.error ? null : setList(d))).catch(() => {});
+  useEffect(() => { if (open && !list) load(); }, [open]);
+  const pick = (m) => {
+    if (!mentions.some((x) => x.urn === m.urn)) onMentions([...mentions, { name: m.name, urn: m.urn }]);
+    onInsert(m.name, getCursor?.());
+    setOpen(false);
+  };
+  const add = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/linkedin/mentions", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ input, name: name || undefined }) });
+      const d = await readJson(res);
+      if (!res.ok) {
+        if (d.code === "manual") setNeedName(true);
+        throw new Error(d.error || "Erreur");
+      }
+      setInput("");
+      setName("");
+      setNeedName(false);
+      load();
+      pick(d.mention);
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+  const forget = async (m) => {
+    await fetch(`/api/linkedin/mentions/${m.id}`, { method: "DELETE" }).catch(() => {});
+    load();
+  };
+  const manual = findManualTags(text, mentions);
+  const used = mentions.filter((m) => text.includes(`@${m.name}`));
+  const chip = "text-xs px-2.5 py-1 rounded-full border border-gray-200 text-gray-700 hover:border-[#ff5a5f] hover:text-[#ff5a5f]";
+  return (
+    <div className="space-y-2" data-testid="mention-tool">
+      <div className="flex items-center gap-2 flex-wrap">
+        <button type="button" onClick={() => setOpen((o) => !o)} disabled={!draftId} data-testid="mention-open" className="text-xs border border-gray-300 hover:border-[#ff5a5f] hover:text-[#ff5a5f] disabled:opacity-50 px-3 py-1.5 rounded-lg">@ Mentionner une page</button>
+        {!draftId && <span className="text-[11px] text-gray-400">Enregistrez le brouillon pour mentionner une page.</span>}
+        {used.map((m) => (<span key={m.urn} className="text-[11px] bg-sky-50 text-sky-700 rounded-full px-2 py-0.5" data-testid="mention-used" title={m.urn}>@{m.name} · page liée</span>))}
+      </div>
+      {open && (
+        <div className="rounded-xl border border-gray-200 p-3 space-y-3 bg-white" data-testid="mention-panel">
+          {list && (list.own.length > 0 || list.saved.length > 0) && (
+            <div className="space-y-1.5">
+              <p className="text-[11px] text-gray-400">Vos pages et celles déjà utilisées : un clic insère la mention.</p>
+              <div className="flex flex-wrap gap-1.5">
+                {[...list.own.map((o) => ({ ...o, own: true })), ...list.saved].map((m) => (
+                  <span key={m.urn} className="inline-flex items-center gap-1">
+                    <button type="button" onClick={() => pick(m)} className={chip} data-testid="mention-pick">@{m.name}</button>
+                    {m.id && <button type="button" onClick={() => forget(m)} aria-label={`Oublier ${m.name}`} className="text-gray-300 hover:text-red-500"><X size={11} /></button>}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+          <div className="space-y-1.5">
+            <p className="text-[11px] text-gray-400">Autre page : collez son adresse LinkedIn (linkedin.com/company/…), son nom court ou son identifiant.</p>
+            <div className="flex gap-2 flex-wrap">
+              <input type="text" value={input} onChange={(e) => setInput(e.target.value)} placeholder="https://www.linkedin.com/company/…" className="flex-1 min-w-[12rem] border border-gray-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]" data-testid="mention-input" />
+              {needName && <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Nom exact de la page" className="flex-1 min-w-[10rem] border border-gray-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]" data-testid="mention-name" />}
+              <button type="button" onClick={add} disabled={busy || !input.trim() || (needName && !name.trim())} data-testid="mention-add" className="bg-gray-900 hover:bg-gray-700 disabled:bg-gray-300 text-white text-xs px-3 py-1.5 rounded-lg">{busy ? "Recherche…" : "Ajouter et mentionner"}</button>
+            </div>
+            {error && <p className="text-xs text-red-600" data-testid="mention-error">{error}</p>}
+            <p className="text-[10px] text-gray-400">Le nom doit être celui de la page sur LinkedIn : si LinkedIn refuse la mention, le post est publié sans elle.</p>
+          </div>
+        </div>
+      )}
+      {manual.length > 0 && (
+        <div className="rounded-lg bg-amber-50 border border-amber-200 p-2.5 text-xs text-amber-800" data-testid="mention-manual">
+          <p className="font-medium">À taguer à la main sur LinkedIn : {manual.map((n) => `@${n}`).join(", ")}</p>
+          <p className="mt-0.5 text-amber-700">LinkeePost ne peut pas taguer une personne : le nom est publié en simple texte. Après publication, {postUrl ? <a href={postUrl} target="_blank" rel="noreferrer" className="underline">ouvrez le post sur LinkedIn</a> : "ouvrez le post sur LinkedIn"}, cliquez « Modifier », supprimez le nom et retapez-le avec « @ » pour choisir la personne.</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // Texte rédigé d'une publication du plan : on clique dedans pour le peaufiner (enregistré en quittant la zone),
 // puis on le valide (programmé à la date proposée). Les publications suivantes tiennent compte de ces retouches.
 function PlanText({ it, base, onReload, showToast, onGoHistory, onOpenMedia }) {
   const [text, setText] = useState(it.draft.text);
   const [saved, setSaved] = useState(null); // null | "saving" | "ok" | "error"
   const [busy, setBusy] = useState(false);
+  const [mentions, setMentions] = useState(() => parseMentions(it.draft.mentions));
+  const taRef = useRef(null);
   const dirty = text !== it.draft.text;
+  const saveMentions = (next) => {
+    setMentions(next);
+    fetch(`/api/drafts/${it.draft.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mentions: next.length ? JSON.stringify(next) : null }) }).catch(() => {});
+  };
+  const insertAt = (name, pos) => {
+    const at = pos ?? taRef.current?.selectionStart ?? text.length;
+    setText((t) => insertMention(t, name, at).text);
+    setSaved(null);
+  };
   const saveText = async () => {
     if (!dirty) return true;
     setSaved("saving");
@@ -2488,6 +2589,7 @@ function PlanText({ it, base, onReload, showToast, onGoHistory, onOpenMedia }) {
   return (
     <div className="rounded-lg border border-gray-200 bg-white p-3 space-y-2" data-testid="plan-item-text">
       <textarea
+        ref={taRef}
         value={text}
         onChange={(e) => { setText(e.target.value); setSaved(null); }}
         onBlur={saveText}
@@ -2502,6 +2604,7 @@ function PlanText({ it, base, onReload, showToast, onGoHistory, onOpenMedia }) {
         <span data-testid="plan-item-save-state">{saved === "saving" ? "Enregistrement…" : saved === "ok" ? "Modifications enregistrées ✓" : saved === "error" ? "Non enregistré" : dirty ? "Modifié : enregistré en quittant la zone" : it.draft.edited ? "Retouché par vous" : ""}</span>
         <span className="ml-auto">{published ? "Publié" : it.draft.validated ? `Validé · programmé${it.draft.scheduledAt ? ` le ${fmtDateTime(it.draft.scheduledAt)}` : ""}` : it.draft.scheduledAt ? `À valider · proposé le ${fmtDateTime(it.draft.scheduledAt)}` : "À valider · sans date"}</span>
       </div>
+      {!published && <MentionTool draftId={it.draft.id} text={text} onInsert={insertAt} mentions={mentions} onMentions={saveMentions} getCursor={() => taRef.current?.selectionStart} showToast={showToast} />}
       {/* Visuels : image (charte, illustration IA, import), vidéo, lien YouTube : gérés dans l'écran d'optimisation du post */}
       <div className="rounded-lg bg-gray-50 p-2.5 flex items-center gap-3 flex-wrap" data-testid="plan-item-media">
         {it.draft.imageUrl && <img src={it.draft.imageUrl} alt={`Image de ${it.ref}`} className="h-14 w-14 object-cover rounded-md border border-gray-200" data-testid="plan-item-image" />}
@@ -13843,6 +13946,8 @@ export default function Home() {
     return () => { window.fetch = original; window.removeEventListener("lp-limit", onLimit); };
   }, []);
   const [optimizeText, setOptimizeText] = useState(null); // { text, type } → page Étape 2 plein écran
+  const [optMentions, setOptMentions] = useState([]);
+  const optAreaRef = useRef(null);
   const [rewriting, setRewriting] = useState(false);
   const [rewriteScope, setRewriteScope] = useState("all"); // all | hook | body | signature (= conclusion + appel à l'action)
   // Commentaire reçu (collé) ou consigne libre à intégrer au post
@@ -13902,6 +14007,7 @@ export default function Home() {
     setFbNote(null);
     setVersions([{ id: Date.now(), text, label: "Version initiale", score: scorePost({ text, type }).score }]);
     setOptimizeText({ text, type, draftId });
+    setOptMentions(draftId ? parseMentions(drafts.find((d) => d.id === draftId)?.mentions) : []);
     // Reprend l'image déjà associée au brouillon (si on vient de "Mes posts") —
     // sinon on garde celle déjà en cours (si on vient de "Créer un post").
     if (draftId) {
@@ -15272,13 +15378,13 @@ export default function Home() {
       const res = await fetch("/api/linkedin/publish", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: p.text, author: target, imageUrl: p.imageUrl ?? null, videoUrl: p.videoUrl ?? null, youtubeUrl: p.youtubeUrl ?? null }),
+        body: JSON.stringify({ text: p.text, author: target, imageUrl: p.imageUrl ?? null, videoUrl: p.videoUrl ?? null, youtubeUrl: p.youtubeUrl ?? null, mentions: parseMentions(p.mentions) }),
       });
       const data = await readJson(res);
       if (!res.ok) throw new Error(data.error || "Erreur de publication");
       await patchDraft(p.id, { status: "publié", postId: data.postId });
       setDrafts((d) => d.map((x) => (x.id === p.id ? { ...x, status: "publié", postId: data.postId } : x)));
-      showToast("Post publié sur LinkedIn 🎉");
+      showToast(data.warning ? `Post publié, mais ${data.warning}` : "Post publié sur LinkedIn 🎉");
       return data.postId ?? true;
     } catch (e) {
       showToast(e.message);
@@ -15589,10 +15695,25 @@ export default function Home() {
                   </button>
                 </div>
                 <textarea
+                  ref={optAreaRef}
                   value={optimizeText.text}
                   onChange={(e) => editOptimizeText(e.target.value)}
                   rows={12}
                   className="w-full text-sm leading-relaxed border border-gray-200 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-[#ff5a5f] resize-y"
+                />
+                <MentionTool
+                  draftId={optimizeText.draftId}
+                  text={optimizeText.text}
+                  mentions={optMentions}
+                  showToast={showToast}
+                  getCursor={() => optAreaRef.current?.selectionStart}
+                  onInsert={(name, pos) => { const r = insertMention(optimizeText.text, name, pos ?? optimizeText.text.length); editOptimizeText(r.text); }}
+                  onMentions={(next) => {
+                    setOptMentions(next);
+                    const json = next.length ? JSON.stringify(next) : null;
+                    setDrafts((ds) => ds.map((x) => (x.id === optimizeText.draftId ? { ...x, mentions: json } : x)));
+                    patchDraft(optimizeText.draftId, { mentions: json }).catch(() => {});
+                  }}
                 />
               </div>
 
@@ -17876,6 +17997,11 @@ export default function Home() {
                                         </a>
                                       )}
                                     </div>
+                                    {p.postId && findManualTags(p.text, parseMentions(p.mentions)).length > 0 && (
+                                      <a href={`https://www.linkedin.com/feed/update/${p.postId}/`} target="_blank" rel="noreferrer" data-testid="manual-tag-reminder" className="rounded-md bg-amber-50 border border-amber-200 text-amber-800 px-2 py-1 hover:bg-amber-100">
+                                        À taguer à la main : {findManualTags(p.text, parseMentions(p.mentions)).map((n) => `@${n}`).join(", ")} → ouvrir le post et utiliser « Modifier »
+                                      </a>
+                                    )}
                                     {p.igPostId && (
                                       <div className="flex items-center justify-end gap-1 text-pink-500">
                                         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>

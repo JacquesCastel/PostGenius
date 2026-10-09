@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getEffectiveUserId as getUserId } from "@/lib/session";
 import { publishForUser } from "@/lib/publish";
+import { parseMentions } from "@/lib/mentions";
 import { checkFeature, limitBody } from "@/lib/gating";
 
 // Publication manuelle immédiate (bouton « Publier sur LinkedIn »).
@@ -12,7 +13,7 @@ export async function POST(req) {
     return NextResponse.json({ error: "Non connecté." }, { status: 401 });
   }
 
-  const { text, author, imageUrl, videoUrl, youtubeUrl } = await req.json();
+  const { text, author, imageUrl, videoUrl, youtubeUrl, mentions } = await req.json();
 
   // Publication sur une page entreprise (URN organization) : réservée à l'offre Agence
   if (typeof author === "string" && author.includes("organization")) {
@@ -21,8 +22,8 @@ export async function POST(req) {
   }
 
   try {
-    const { postId } = await publishForUser(userId, { text, author, imageUrl, videoUrl, youtubeUrl });
-    return NextResponse.json({ ok: true, postId });
+    const { postId, mentionsDropped } = await publishForUser(userId, { text, author, imageUrl, videoUrl, youtubeUrl, mentions: parseMentions(mentions) });
+    return NextResponse.json({ ok: true, postId, ...(mentionsDropped ? { warning: "LinkedIn a refusé la mention : le post est publié sans mention. Taguez la page à la main sur LinkedIn." } : {}) });
   } catch (e) {
     const msg = e.message || "Échec de la publication.";
     const status = /non connecté|expiré|reconnectez/i.test(msg) ? 401 : 502;

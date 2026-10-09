@@ -150,6 +150,7 @@ model User {
   remarkSuggestions  RemarkSuggestion[]
   languageElements   LanguageElement[]
   languageProposals  LanguageProposal[]
+  savedMentions      SavedMention[]
   remarkAnalysisAt   DateTime? // dernière analyse des modifications de posts (suggestions de remarques)
   editorialRecos     EditorialRecommendation[]
 }
@@ -375,6 +376,9 @@ model Draft {
   // Entreprise pour laquelle le post a été écrit (nul = entreprise principale)
   contextId String?
   context   Context? @relation(fields: [contextId], references: [id], onDelete: SetNull)
+
+  // Pages LinkedIn mentionnées dans le texte (« @Nom » → @[Nom](urn)) : JSON [{ name, urn }]
+  mentions String?
 
   // Vecteur sémantique du texte { h: empreinte du texte, v: vecteur } : mémoire éditoriale (ce que l'auteur a déjà dit)
   embedding Json?
@@ -732,4 +736,16 @@ model CampaignPost {
   draft      Draft?
 
   @@index([campaignId, position])
+}
+
+// Pages LinkedIn que le client a déjà mentionnées (ou ajoutées) : proposées à nouveau d'un clic dans l'éditeur de post.
+model SavedMention {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String // nom exact de la page sur LinkedIn (la mention doit le reprendre à l'identique)
+  urn       String // urn:li:organization:ID
+  createdAt DateTime @default(now())
+
+  @@unique([userId, urn])
 }
