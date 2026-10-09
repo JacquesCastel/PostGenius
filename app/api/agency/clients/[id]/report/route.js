@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { getUserId } from "@/lib/session";
+import { requireAgency, ownClient } from "@/lib/agency";
 import { checkFeature, limitBody } from "@/lib/gating";
 import { getMonthlyReport } from "@/lib/reports/monthly";
 
@@ -8,18 +8,15 @@ import { getMonthlyReport } from "@/lib/reports/monthly";
 // Rapport mensuel de performance d'un client géré — réservé à l'offre Agence
 // (même garde que les statistiques de page entreprise : orgStats).
 export async function GET(req, { params }) {
-  const userId = await getUserId(req);
-  if (!userId) return NextResponse.json({ error: "Non connecté." }, { status: 401 });
+  const auth = await requireAgency(req);
+  if (auth.error) return NextResponse.json({ error: auth.error }, { status: auth.status });
 
-  const gate = await checkFeature(userId, "orgStats", "Le rapport de performance");
+  const gate = await checkFeature(auth.userId, "orgStats", "Le rapport de performance");
   if (!gate.ok) return NextResponse.json(limitBody(gate), { status: 403 });
 
   const { id: clientId } = await params;
-  const client = await prisma.user.findUnique({
-    where: { id: clientId },
-    select: { managedByUserId: true, name: true, companyName: true },
-  });
-  if (!client || client.managedByUserId !== userId) {
+  const client = await ownClient(auth.agencyId, clientId, { name: true, companyName: true });
+  if (!client) {
     return NextResponse.json({ error: "Client introuvable" }, { status: 404 });
   }
 

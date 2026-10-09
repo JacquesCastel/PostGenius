@@ -1,20 +1,17 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { getUserId } from "@/lib/session";
+import { requireAgency, ownClient } from "@/lib/agency";
 
 // DELETE /api/agency/clients/[id] — supprime un client et toutes ses données
 export async function DELETE(req, { params }) {
-  const userId = await getUserId(req);
-  if (!userId) return NextResponse.json({ error: "Non connecté" }, { status: 401 });
+  const auth = await requireAgency(req);
+  if (auth.error) return NextResponse.json({ error: auth.error }, { status: auth.status });
 
   const { id: clientId } = await params;
 
   // Vérifie que ce client appartient bien à cette agence
-  const client = await prisma.user.findUnique({
-    where: { id: clientId },
-    select: { managedByUserId: true },
-  });
-  if (!client || client.managedByUserId !== userId) {
+  const client = await ownClient(auth.agencyId, clientId);
+  if (!client) {
     return NextResponse.json({ error: "Client introuvable" }, { status: 404 });
   }
 
@@ -25,15 +22,12 @@ export async function DELETE(req, { params }) {
 
 // PATCH /api/agency/clients/[id] — met à jour le profil client
 export async function PATCH(req, { params }) {
-  const userId = await getUserId(req);
-  if (!userId) return NextResponse.json({ error: "Non connecté" }, { status: 401 });
+  const auth = await requireAgency(req);
+  if (auth.error) return NextResponse.json({ error: auth.error }, { status: auth.status });
 
   const { id: clientId } = await params;
-  const client = await prisma.user.findUnique({
-    where: { id: clientId },
-    select: { managedByUserId: true },
-  });
-  if (!client || client.managedByUserId !== userId) {
+  const client = await ownClient(auth.agencyId, clientId);
+  if (!client) {
     return NextResponse.json({ error: "Client introuvable" }, { status: 404 });
   }
 

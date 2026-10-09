@@ -1,21 +1,17 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { getUserId } from "@/lib/session";
+import { requireAgency } from "@/lib/agency";
 
 // PATCH /api/agency/posts/:id — l'agence relit un post d'un de ses clients
 // sans changer de compte : modifier le texte, ou le valider (à valider → programmé).
 export async function PATCH(req, { params }) {
-  const userId = await getUserId(req);
-  if (!userId) return NextResponse.json({ error: "Non connecté" }, { status: 401 });
-  const agency = await prisma.user.findUnique({ where: { id: userId }, select: { plan: true } });
-  if (!agency || agency.plan !== "agence") {
-    return NextResponse.json({ error: "Réservé au plan Agence" }, { status: 403 });
-  }
+  const auth = await requireAgency(req);
+  if (auth.error) return NextResponse.json({ error: auth.error }, { status: auth.status });
   const { id } = await params;
   const body = await req.json().catch(() => ({}));
 
   const draft = await prisma.draft.findFirst({
-    where: { id, user: { managedByUserId: userId } },
+    where: { id, user: { agencyId: auth.agencyId } },
     select: { id: true, status: true, postId: true },
   });
   if (!draft) return NextResponse.json({ error: "Post introuvable" }, { status: 404 });
