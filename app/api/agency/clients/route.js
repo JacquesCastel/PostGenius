@@ -42,7 +42,9 @@ export async function POST(req) {
       tone, themes, styleNotes,
       guided,
     } = await req.json();
-    if (!name?.trim()) return NextResponse.json({ error: "Nom requis" }, { status: 400 });
+    // Un client est une entreprise : son nom sert aussi de nom du compte, tant qu'aucune personne n'est ajoutée
+    const clientName = (companyName?.trim() || name?.trim() || "");
+    if (!clientName) return NextResponse.json({ error: "Le nom de l'entreprise est requis." }, { status: 400 });
 
     // Email : soit fourni, soit généré (le client ne se connecte jamais)
     const clientEmail = email?.trim() ||
@@ -53,7 +55,7 @@ export async function POST(req) {
 
     const client = await prisma.user.create({
       data: {
-        name: name.trim(),
+        name: clientName,
         email: clientEmail,
         password,
         companyName:         companyName?.trim()         || null,
