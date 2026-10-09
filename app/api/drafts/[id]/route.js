@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { getEffectiveUserId as getUserId } from "@/lib/session";
 import { videoPathFromUrl } from "@/lib/video";
 import { parseYouTubeId, youtubeWatchUrl } from "@/lib/youtube";
+import { parisDay } from "@/lib/campaignPlan";
 
 // PATCH : modifier texte/statut — DELETE : supprimer
 // La clause where inclut toujours userId : un client ne touche que SES brouillons.
@@ -54,6 +55,11 @@ export async function PATCH(req, { params }) {
     },
   });
   if (count === 0) return NextResponse.json({ error: "Brouillon introuvable." }, { status: 404 });
+  // Post issu du plan éditorial d'une campagne : déplacé dans le calendrier, la ligne du plan suit
+  if (scheduledAt) {
+    const d = await prisma.draft.findFirst({ where: { id, userId }, select: { campaignPostId: true } });
+    if (d?.campaignPostId) await prisma.campaignPost.update({ where: { id: d.campaignPostId }, data: { date: parisDay(new Date(scheduledAt)) } }).catch(() => {});
+  }
   return NextResponse.json({ ok: true });
 }
 

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getEffectiveUserId as getUserId } from "@/lib/session";
 import { checkFeature, limitBody } from "@/lib/gating";
-import { getPlan, addItem, shiftItems, mapAccount, ensurePlanFromBrief, PlanError } from "@/lib/campaignPlanStore";
+import { getPlan, approveVoices, addItem, shiftItems, mapAccount, ensurePlanFromBrief, PlanError } from "@/lib/campaignPlanStore";
 
 // Plan éditorial d'une campagne : lecture (GET) et actions (POST : add, shift, map, import).
 const fail = (e) => NextResponse.json({ error: e.message, ...(e.extra ?? {}) }, { status: e instanceof PlanError ? e.status : 500 });
@@ -29,6 +29,7 @@ export async function POST(req, { params }) {
     else if (body.action === "shift") await shiftItems(userId, id, body.start);
     else if (body.action === "map") await mapAccount(userId, id, { account: body.account, target: body.target });
     else if (body.action === "import") await ensurePlanFromBrief(userId, id);
+    else if (body.action === "approveVoices") await approveVoices(userId, id, body.approved !== false);
     else return NextResponse.json({ error: "Action inconnue." }, { status: 400 });
     return NextResponse.json(await getPlan(userId, id));
   } catch (e) {

@@ -328,6 +328,7 @@ model Campaign {
   objective String? // objectif spécifique (leads, notoriété...)
   context   String? // brief enrichi : réponses aux questions IA + exemple validé
   plan      CampaignPost[]
+  voicesApprovedAt DateTime? // le client a validé les voix sur les publications pilotes : la production peut se faire par lots
   brief     String? // JSON : brief structuré importé d'un document (voix par compte, règles, ressources, calendrier) — lib/campaignBrief.js
   mood      String? // humeur éditoriale des posts de la campagne (lib/moods.js), null = aucune
   status    String   @default("active") // active | archivée
@@ -372,6 +373,9 @@ model Draft {
   // Entreprise pour laquelle le post a été écrit (nul = entreprise principale)
   contextId String?
   context   Context? @relation(fields: [contextId], references: [id], onDelete: SetNull)
+
+  // Vecteur sémantique du texte { h: empreinte du texte, v: vecteur } : mémoire éditoriale (ce que l'auteur a déjà dit)
+  embedding Json?
 
   // Publication du plan éditorial de la campagne dont ce post est la rédaction
   campaignPostId String?       @unique
