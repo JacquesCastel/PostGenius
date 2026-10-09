@@ -170,6 +170,21 @@ function AuthScreen({ onAuth }) {
       setMode("login");
     }
     // Lien d'invitation de test : l'adresse invitée est pré-remplie et l'accès offert annoncé
+    const teamToken = params.get("team");
+    if (teamToken) {
+      setMode("register");
+      fetch(`/api/team-invitations/${encodeURIComponent(teamToken)}`)
+        .then(readJson)
+        .then((d) => {
+          if (d.valid) {
+            setInvite({ token: teamToken, team: true, agency: d.agency });
+            setFields((f) => ({ ...f, email: d.email }));
+          } else {
+            setInvite({ invalid: true });
+          }
+        })
+        .catch(() => setInvite({ invalid: true }));
+    }
     const token = params.get("invite");
     if (token) {
       setMode("register");
@@ -207,7 +222,7 @@ function AuthScreen({ onAuth }) {
       const res = await fetch(`/api/auth/${mode === "login" ? "login" : "register"}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(mode === "register" ? { ...fields, plan, ...(invite?.token ? { invite: invite.token } : {}) } : fields),
+        body: JSON.stringify(mode === "register" ? { ...fields, plan, ...(invite?.token ? (invite.team ? { team: invite.token } : { invite: invite.token }) : {}) } : fields),
       });
       const data = await readJson(res);
       if (!res.ok) throw new Error(data.error || "Erreur");
@@ -327,6 +342,8 @@ function AuthScreen({ onAuth }) {
                 ? "Content de vous revoir."
                 : mode === "forgot"
                 ? "Indiquez votre email, on vous envoie un lien."
+                : invite?.team
+                ? `Vous rejoignez l'équipe « ${invite.agency} » : aucun abonnement à prévoir.`
                 : invite?.token
                 ? `Invitation de test : accès ${invite.planName} gratuit pendant ${invite.accessDays} jours, sans carte bancaire.`
                 : "Gratuit pendant 14 jours, sans carte bancaire."}
@@ -386,7 +403,9 @@ function AuthScreen({ onAuth }) {
               {mode === "login"
                 ? "Se connecter"
                 : mode === "register"
-                ? plan || invite?.token
+                ? invite?.team
+                  ? "Rejoindre l'équipe"
+                  : plan || invite?.token
                   ? "Démarrer mon essai gratuit"
                   : "Créer mon compte"
                 : "Envoyer le lien"}
@@ -10880,6 +10899,92 @@ function NewClientDialog({ value, onChange, error, busy, onSubmit, onClose }) {
   );
 }
 
+// Équipe de l'agence : les utilisateurs (1 à 5), les invitations en attente. Seul le propriétaire invite et retire.
+function TeamPanel({ showToast }) {
+  const [data, setData] = useState(null);
+  const [open, setOpen] = useState(false);
+  const [email, setEmail] = useState("");
+  const [busy, setBusy] = useState(false);
+  const load = () => fetch("/api/agency/team").then(readJson).then((d) => (d.error ? null : setData(d))).catch(() => {});
+  useEffect(() => { load(); }, []);
+  if (!data) return null;
+  const owner = data.me.role === "owner";
+  const used = data.members.length + data.invites.length;
+  const full = used >= data.max;
+  const call = async (url, method, body, ok) => {
+    setBusy(true);
+    try {
+      const res = await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: body ? JSON.stringify(body) : undefined });
+      const d = await readJson(res);
+      if (!res.ok) throw new Error(d.error || "Erreur");
+      if (ok) showToast(typeof ok === "function" ? ok(d) : ok);
+      await load();
+      return d;
+    } catch (e) {
+      showToast(e.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+  const copy = async (link) => {
+    try { await navigator.clipboard.writeText(link); showToast("Lien copié"); } catch { window.prompt("Copiez ce lien :", link); }
+  };
+  const invite = async (e) => {
+    e.preventDefault();
+    if (!email.trim() || busy) return;
+    const d = await call("/api/agency/team", "POST", { email }, (r) => (r.emailSent ? "Invitation envoyée par e-mail" : "Invitation créée, e-mail non envoyé : copiez le lien"));
+    if (d) { if (!d.emailSent && d.invite?.link) copy(d.invite.link); setEmail(""); }
+  };
+  return (
+    <section className="bg-white border border-gray-100 rounded-2xl shadow-sm mb-6" data-testid="agency-team">
+      <button type="button" onClick={() => setOpen((o) => !o)} className="w-full px-4 py-3 flex items-center justify-between gap-3 text-left">
+        <span className="flex items-center gap-2"><Users size={15} className="text-[#ff5a5f]" /><span className="font-semibold text-sm text-[#1b2a4a]">Équipe de l&apos;agence</span><span className="text-xs text-gray-400" data-testid="team-count">{data.members.length} utilisateur{data.members.length > 1 ? "s" : ""} sur {data.max}</span></span>
+        <ChevronRight size={15} className={`text-gray-400 transition-transform ${open ? "rotate-90" : ""}`} />
+      </button>
+      {open && (
+        <div className="px-4 pb-4 space-y-3 border-t border-gray-100 pt-3">
+          <ul className="divide-y divide-gray-100">
+            {data.members.map((m) => (
+              <li key={m.userId} className="py-2 flex items-center gap-3 text-sm" data-testid="team-member">
+                <div className="min-w-0 flex-1"><p className="font-medium text-[#1b2a4a] truncate">{m.name || m.email}{m.userId === data.me.userId && <span className="text-gray-400 font-normal"> (vous)</span>}</p><p className="text-xs text-gray-400 truncate">{m.email}</p></div>
+                <span className={`text-[11px] rounded-full px-2 py-0.5 ${m.role === "owner" ? "bg-purple-50 text-purple-700" : "bg-gray-100 text-gray-600"}`}>{m.role === "owner" ? "Propriétaire" : "Membre"}</span>
+                {owner && m.role !== "owner" && (
+                  <button type="button" disabled={busy} onClick={() => { if (window.confirm(`Retirer ${m.name || m.email} de l'agence ? Il perdra aussitôt l'accès aux clients.`)) call(`/api/agency/team/members/${m.userId}`, "DELETE", null, "Collaborateur retiré"); }} data-testid="team-remove" className="text-xs text-gray-400 hover:text-red-600">Retirer</button>
+                )}
+              </li>
+            ))}
+            {data.invites.map((i) => (
+              <li key={i.id} className="py-2 flex items-center gap-3 text-sm" data-testid="team-invite">
+                <div className="min-w-0 flex-1"><p className="font-medium text-gray-600 truncate">{i.email}</p><p className="text-xs text-gray-400">Invitation en attente</p></div>
+                {owner && (
+                  <>
+                    <button type="button" onClick={() => copy(i.link)} className="text-xs text-[#0a66c2] hover:underline">Copier le lien</button>
+                    <button type="button" disabled={busy} onClick={() => call(`/api/agency/team/invites/${i.id}`, "POST", null, (r) => (r.emailSent ? "Invitation renvoyée" : "E-mail non envoyé : copiez le lien"))} className="text-xs text-[#0a66c2] hover:underline">Renvoyer</button>
+                    <button type="button" disabled={busy} onClick={() => call(`/api/agency/team/invites/${i.id}`, "DELETE", null, "Invitation annulée")} className="text-xs text-gray-400 hover:text-red-600">Annuler</button>
+                  </>
+                )}
+              </li>
+            ))}
+          </ul>
+          {owner ? (
+            full ? (
+              <p className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg p-2.5" data-testid="team-full">Votre agence compte {data.max} utilisateurs (invitations comprises). Pour en ajouter, contactez-nous.</p>
+            ) : (
+              <form onSubmit={invite} className="flex gap-2 flex-wrap">
+                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="e-mail du collaborateur" className="flex-1 min-w-[14rem] border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]" data-testid="team-email" />
+                <button type="submit" disabled={busy || !email.trim()} data-testid="team-invite-send" className="bg-[#ff5a5f] hover:bg-[#e5454a] disabled:bg-gray-300 text-white text-sm font-semibold px-4 py-2 rounded-xl">Inviter</button>
+              </form>
+            )
+          ) : (
+            <p className="text-xs text-gray-400">Seul le propriétaire de l&apos;agence invite ou retire des collaborateurs.</p>
+          )}
+          <p className="text-[11px] text-gray-400">Chaque collaborateur a son propre identifiant et accède à tous les clients de l&apos;agence. Sans abonnement à prévoir : l&apos;offre Agence couvre jusqu&apos;à {data.max} utilisateurs.</p>
+        </div>
+      )}
+    </section>
+  );
+}
+
 function ClientsView({ showToast, onManage }) {
   const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -11027,6 +11132,8 @@ function ClientsView({ showToast, onManage }) {
             <UserPlus size={15} /> Ajouter un client
           </button>
         </div>
+
+        <TeamPanel showToast={showToast} />
 
         {loading ? (
           <div className="text-center py-20 text-gray-300 text-sm">Chargement…</div>

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { getSessionData } from "@/lib/session";
+import { getSessionData, clientAccessible } from "@/lib/session";
 import { isAdminUser } from "@/lib/admin";
 
 export async function GET(req) {
@@ -52,7 +52,7 @@ export async function GET(req) {
 
   // Infos sur le client impersonné (mode agence)
   let impersonating = null;
-  if (session.clientId) {
+  if (session.clientId && (await clientAccessible(session))) {
     const client = await prisma.user.findUnique({
       where: { id: session.clientId },
       select: { id: true, name: true, companyName: true, email: true },
