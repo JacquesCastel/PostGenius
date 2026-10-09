@@ -17,7 +17,7 @@ export async function GET(req) {
   const includeArchived = searchParams.get("all") === "1";
 
   const campaigns = await prisma.campaign.findMany({
-    where: { userId, ...(includeArchived ? {} : { status: "active" }) },
+    where: { userId, status: includeArchived ? { not: "brouillon" } : "active" },
     orderBy: { createdAt: "desc" },
     include: {
       drafts: { select: { status: true, scheduledAt: true, publishedAt: true } },
@@ -26,8 +26,11 @@ export async function GET(req) {
     },
   });
 
+  // Créations en cours : reprises là où on les a laissées
+  const drafts = includeArchived ? [] : await prisma.campaign.findMany({ where: { userId, status: "brouillon" }, orderBy: { updatedAt: "desc" }, take: 20, select: { id: true, name: true, draftState: true, updatedAt: true } });
   const now = new Date();
   return NextResponse.json({
+    drafts: drafts.map((d) => { let state = null; try { state = JSON.parse(d.draftState ?? "null"); } catch {} return { id: d.id, name: d.name, kind: state?.kind ?? "wizard", updatedAt: d.updatedAt, state: state?.state ?? null }; }),
     campaigns: campaigns.map((c) => {
       const byStatus = {};
       for (const d of c.drafts) byStatus[d.status] = (byStatus[d.status] ?? 0) + 1;
@@ -83,8 +86,7 @@ export async function POST(req) {
     ownContextId = own.id;
   }
 
-  const campaign = await prisma.campaign.create({
-    data: {
+  const data = {
       userId,
       name: name?.trim() || theme.trim().slice(0, 60),
       theme: theme.trim(),
@@ -93,8 +95,12 @@ export async function POST(req) {
       brief: brief ? JSON.stringify(brief) : null,
       mood: normalizeMood(mood),
       contextId: ownContextId,
-    },
-  });
+  };
+  // Création reprise d'un brouillon : le brouillon devient la campagne (même identifiant), son état de travail est effacé
+  let campaign;
+  const draft = body.draftId ? await prisma.campaign.findFirst({ where: { id: String(body.draftId), userId, status: "brouillon" }, select: { id: true } }) : null;
+  if (draft) campaign = await prisma.campaign.update({ where: { id: draft.id }, data: { ...data, status: "active", draftState: null } });
+  else campaign = await prisma.campaign.create({ data });
   // Brief importé avec un calendrier : le plan éditorial est préparé (à relire dans la campagne)
   let planned = 0;
   if (brief?.calendar?.length) planned = await ensurePlanFromBrief(userId, campaign.id).catch(() => 0);
