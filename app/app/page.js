@@ -2447,7 +2447,7 @@ function BriefImport({ showToast, onClose, onCreated, draft = null }) {
 
 // Texte rédigé d'une publication du plan : on clique dedans pour le peaufiner (enregistré en quittant la zone),
 // puis on le valide (programmé à la date proposée). Les publications suivantes tiennent compte de ces retouches.
-function PlanText({ it, base, onReload, showToast, onGoHistory }) {
+function PlanText({ it, base, onReload, showToast, onGoHistory, onOpenMedia }) {
   const [text, setText] = useState(it.draft.text);
   const [saved, setSaved] = useState(null); // null | "saving" | "ok" | "error"
   const [busy, setBusy] = useState(false);
@@ -2502,6 +2502,17 @@ function PlanText({ it, base, onReload, showToast, onGoHistory }) {
         <span data-testid="plan-item-save-state">{saved === "saving" ? "Enregistrement…" : saved === "ok" ? "Modifications enregistrées ✓" : saved === "error" ? "Non enregistré" : dirty ? "Modifié : enregistré en quittant la zone" : it.draft.edited ? "Retouché par vous" : ""}</span>
         <span className="ml-auto">{published ? "Publié" : it.draft.validated ? `Validé · programmé${it.draft.scheduledAt ? ` le ${fmtDateTime(it.draft.scheduledAt)}` : ""}` : it.draft.scheduledAt ? `À valider · proposé le ${fmtDateTime(it.draft.scheduledAt)}` : "À valider · sans date"}</span>
       </div>
+      {/* Visuels : image (charte, illustration IA, import), vidéo, lien YouTube : gérés dans l'écran d'optimisation du post */}
+      <div className="rounded-lg bg-gray-50 p-2.5 flex items-center gap-3 flex-wrap" data-testid="plan-item-media">
+        {it.draft.imageUrl && <img src={it.draft.imageUrl} alt={`Image de ${it.ref}`} className="h-14 w-14 object-cover rounded-md border border-gray-200" data-testid="plan-item-image" />}
+        <div className="min-w-0 text-[11px] text-gray-500 flex-1">
+          <p className="font-medium text-gray-700">{it.draft.imageUrl || it.draft.videoUrl || it.draft.youtubeUrl ? `Média joint : ${[it.draft.imageUrl && "image", it.draft.videoUrl && "vidéo", it.draft.youtubeUrl && "lien YouTube"].filter(Boolean).join(", ")}` : "Aucun média joint"}</p>
+          {it.visual && <p className="truncate" title={it.visual}>Brief visuel : {it.visual}</p>}
+        </div>
+        {onOpenMedia && !published && (
+          <button type="button" onClick={async () => { if (!(await saveText())) return; onOpenMedia({ ...it.draft, text }, it.visual); }} data-testid="plan-item-media-open" className="text-xs border border-gray-300 hover:border-[#ff5a5f] hover:text-[#ff5a5f] px-3 py-1.5 rounded-lg shrink-0">{it.draft.imageUrl || it.draft.videoUrl || it.draft.youtubeUrl ? "Gérer le visuel" : "Ajouter une image, une vidéo ou générer par IA"}</button>
+        )}
+      </div>
       <div className="flex items-center gap-3 flex-wrap">
         {!published && !it.draft.validated && (
           <button type="button" onClick={() => validate(true)} disabled={busy || text.trim().length < 10} data-testid="plan-item-validate" className="bg-green-600 hover:bg-green-700 disabled:bg-gray-300 text-white text-xs font-medium px-3.5 py-1.5 rounded-lg flex items-center gap-1.5"><Check size={13} /> {busy ? "Validation…" : "Valider ce post"}</button>
@@ -2519,7 +2530,7 @@ function PlanText({ it, base, onReload, showToast, onGoHistory }) {
 // Plan éditorial d'une campagne : une ligne par publication prévue (compte, date proposée, angle, appel à l'action,
 // lien exact, format, brief visuel, faits à confirmer). Les dates sont des PROPOSITIONS : rien n'est programmé ni publié seul.
 // ----------------------------------------------------------------
-function PlanEditor({ campaign, onBack, showToast, onChanged, onGoHistory }) {
+function PlanEditor({ campaign, onBack, showToast, onChanged, onGoHistory, onOpenMedia }) {
   const [data, setData] = useState(null);
   const [openId, setOpenId] = useState(null);
   const [busyIds, setBusyIds] = useState([]);
@@ -2529,6 +2540,12 @@ function PlanEditor({ campaign, onBack, showToast, onChanged, onGoHistory }) {
   const base = `/api/campaigns/${campaign.id}/plan`;
   const load = () => fetch(base).then(readJson).then((d) => (d.error ? showToast(d.error) : setData(d))).catch(() => showToast("Chargement impossible"));
   useEffect(() => { load(); }, [campaign.id]);
+  // Retour de l'écran d'optimisation (image, vidéo, lien YouTube ajoutés) : on recharge les publications
+  useEffect(() => {
+    const h = () => load();
+    window.addEventListener("lp-optimize-closed", h);
+    return () => window.removeEventListener("lp-optimize-closed", h);
+  }, [campaign.id]);
   const act = async (body) => {
     const res = await fetch(base, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
     const d = await readJson(res);
@@ -2647,7 +2664,7 @@ function PlanEditor({ campaign, onBack, showToast, onChanged, onGoHistory }) {
           )}
           {(batches.pilotsDone || approved) && (
             <>
-              {!approved && !batches.pilotsValidated && (
+              {!approved && !batches.pilotsValidated && batches.remaining > 0 && (
                 <p className="text-xs text-gray-500" data-testid="plan-validate-hint">Ouvrez vos publications pilotes ({pilotRefs}), <strong>cliquez dans le texte pour le peaufiner</strong>, puis cliquez « Valider ce post ». Les autres publications seront rédigées à partir de vos versions validées et de vos corrections.</p>
               )}
               {(approved || batches.pilotsValidated) && batches.remaining > 0 && (
@@ -2727,7 +2744,7 @@ function PlanEditor({ campaign, onBack, showToast, onChanged, onGoHistory }) {
                         {it.checks.map((c, k) => (<li key={k} className={`flex gap-1.5 ${c.severity === "error" ? "text-red-700" : "text-amber-700"}`}><span>{c.severity === "error" ? "✖" : "⚠"}</span><span>{c.text}</span></li>))}
                       </ul>
                     )}
-                    {it.draft && <PlanText key={`${it.id}:${it.draft.text}:${it.draft.status}`} it={it} base={base} onReload={load} showToast={showToast} onGoHistory={onGoHistory} />}
+                    {it.draft && <PlanText key={`${it.id}:${it.draft.text}:${it.draft.status}`} it={it} base={base} onReload={load} showToast={showToast} onGoHistory={onGoHistory} onOpenMedia={onOpenMedia} />}
                     <details open={!it.draft} className="rounded-lg border border-gray-100 px-3 py-2" data-testid="plan-item-params">
                       <summary className="text-[11px] font-medium text-gray-500 cursor-pointer select-none">Paramètres de la publication (objectif, sujet, lien, brief visuel, faits à confirmer)</summary>
                       <div className="space-y-2.5 mt-2.5">
@@ -2768,7 +2785,7 @@ function PlanEditor({ campaign, onBack, showToast, onChanged, onGoHistory }) {
   );
 }
 
-function CampaignsView({ profile, linkedin, orgs, showToast, onPlanned, onProfileSaved, onGoHistory, onGoProfile, openWizard, onWizardConsumed }) {
+function CampaignsView({ profile, linkedin, orgs, showToast, onPlanned, onProfileSaved, onGoHistory, onGoProfile, openWizard, onWizardConsumed, onOpenMedia }) {
   const [campaigns, setCampaigns] = useState([]);
   const [loaded, setLoaded] = useState(false);
   const [showWizard, setShowWizard] = useState(false);
@@ -2858,7 +2875,7 @@ function CampaignsView({ profile, linkedin, orgs, showToast, onPlanned, onProfil
   if (planOf) {
     return (
       <main className="max-w-4xl mx-auto p-6">
-        <PlanEditor campaign={planOf} onBack={() => { setPlanOf(null); loadCampaigns(); }} showToast={showToast} onChanged={onPlanned} onGoHistory={onGoHistory} />
+        <PlanEditor campaign={planOf} onBack={() => { setPlanOf(null); loadCampaigns(); }} showToast={showToast} onChanged={onPlanned} onGoHistory={onGoHistory} onOpenMedia={onOpenMedia} />
       </main>
     );
   }
@@ -13877,7 +13894,7 @@ export default function Home() {
 
   // Ouvre la page Étape 2 et initialise l'historique
   // draftId : si fourni, les modifications (texte + image) sont enregistrées dans le brouillon
-  const openOptimize = (text, type, draftId = null, imageUrl = null, imagePrompt = null, videoUrl = null, youtubeUrl = null, prefillComment = null) => {
+  const openOptimize = (text, type, draftId = null, imageUrl = null, imagePrompt = null, videoUrl = null, youtubeUrl = null, prefillComment = null, prefillImagePrompt = null) => {
     setRewriteScope("all");
     setFbKind("comment");
     setFbText(prefillComment ?? "");
@@ -13895,7 +13912,7 @@ export default function Home() {
       setPostVideo(videoUrl ? { url: videoUrl, name: "Vidéo du post" } : null);
       setPostYoutube(youtubeUrl ? { url: youtubeUrl, id: parseYouTubeId(youtubeUrl) } : null);
       setYoutubeInput("");
-      setImagePromptInput("");
+      setImagePromptInput(prefillImagePrompt ?? "");
     }
   };
 
@@ -14676,6 +14693,8 @@ export default function Home() {
   // brouillon existant (Mes posts) — sinon c'est l'image du post en cours de
   // création, à conserver quand on revient sur "Créer un post".
   const closeOptimize = () => {
+    // Le plan éditorial (s'il est ouvert derrière) recharge ses publications : un visuel ou une vidéo a pu être ajouté
+    if (optimizeText?.draftId) window.dispatchEvent(new CustomEvent("lp-optimize-closed"));
     if (optimizeText?.draftId) {
       setPostImage(null);
       setPostVideo(null);
@@ -17278,6 +17297,7 @@ export default function Home() {
             onProfileSaved={setProfile}
             onGoHistory={() => setView("history")}
             onGoProfile={() => setView("connections")}
+            onOpenMedia={(d, visual) => { setImageSourceTab(visual ? "illustration" : "text"); openOptimize(d.text, "simple", d.id, d.imageUrl, d.imagePrompt, d.videoUrl, d.youtubeUrl, null, visual ? String(visual).slice(0, 400) : null); }}
             onPlanned={() =>
               fetch("/api/drafts")
                 .then((r) => r.json())
