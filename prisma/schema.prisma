@@ -331,8 +331,10 @@ model Campaign {
   voicesApprovedAt DateTime? // le client a validé les voix sur les publications pilotes : la production peut se faire par lots
   brief     String? // JSON : brief structuré importé d'un document (voix par compte, règles, ressources, calendrier) — lib/campaignBrief.js
   mood      String? // humeur éditoriale des posts de la campagne (lib/moods.js), null = aucune
-  status    String   @default("active") // active | archivée
+  status    String   @default("active") // active | archivée | brouillon (création en cours, enregistrée au fil de l'eau)
+  draftState String? // JSON : état de l'assistant ou de la relecture du brief, pour reprendre la création où on l'a laissée
   createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
   drafts    Draft[]
   // Entreprise pour laquelle la campagne est menée (nul = entreprise principale)
   contextId String?

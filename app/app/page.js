@@ -1164,37 +1164,49 @@ function CampaignLaunched({ result, theme, linkedin, onClose, onGoHistory, onGoP
   );
 }
 
-function CampaignWizard({ profile, linkedin, orgs, onClose, onLaunched, onProfileSaved, onGoHistory, onGoProfile, showToast, initial, inline = false }) {
-  const [step, setStep] = useState(0);
-  const [name, setName] = useState(initial?.name ?? "");
-  const [theme, setTheme] = useState(initial?.theme ?? "");
-  const [objective, setObjective] = useState("");
-  const [mood, setMood] = useState(null);
-  const [questions, setQuestions] = useState(null);
-  const [answers, setAnswers] = useState([]);
-  const [sample, setSample] = useState(null);
-  const [sampleApproved, setSampleApproved] = useState(false);
+function CampaignWizard({ profile, linkedin, orgs, onClose, onLaunched, onProfileSaved, onGoHistory, onGoProfile, showToast, initial, inline = false, draft = null }) {
+  const d0 = draft?.state ?? {}; // brouillon repris : on repart de là où l'assistant a été laissé
+  const [step, setStep] = useState(d0.step ?? 0);
+  const [name, setName] = useState(d0.name ?? initial?.name ?? "");
+  const [theme, setTheme] = useState(d0.theme ?? initial?.theme ?? "");
+  const [objective, setObjective] = useState(d0.objective ?? "");
+  const [mood, setMood] = useState(d0.mood ?? null);
+  const [questions, setQuestions] = useState(d0.questions ?? null);
+  const [answers, setAnswers] = useState(d0.answers ?? []);
+  const [sample, setSample] = useState(d0.sample ?? null);
+  const [sampleApproved, setSampleApproved] = useState(d0.sampleApproved ?? false);
   const [feedback, setFeedback] = useState("");
-  const [sampleThread, setSampleThread] = useState([]); // ajustements de l'exemple : { role, text, remember? }
+  const [sampleThread, setSampleThread] = useState(d0.sampleThread ?? []); // ajustements de l'exemple : { role, text, remember? }
   const [launched, setLaunched] = useState(null); // résultat du lancement : { created, skipped, status }
-  const [periodDays, setPeriodDays] = useState(7);
-  const [target, setTarget] = useState("person");
+  const [periodDays, setPeriodDays] = useState(d0.periodDays ?? 7);
+  const [target, setTarget] = useState(d0.target ?? "person");
   // Rythme de publication : choisi ici si le client ne l'a pas encore fait, enregistré dans son profil au lancement
-  const [days, setDays] = useState(profile?.publishDays ?? "");
-  const [time, setTime] = useState(profile?.publishTime ?? "09:00");
-  const [validate, setValidate] = useState(profile?.requireValidation ?? true);
+  const [days, setDays] = useState(d0.days ?? profile?.publishDays ?? "");
+  const [time, setTime] = useState(d0.time ?? profile?.publishTime ?? "09:00");
+  const [validate, setValidate] = useState(d0.validate ?? profile?.requireValidation ?? true);
   const [busy, setBusy] = useState(false);
   // Article de veille servant de point de départ (pré-rempli via `initial` ou choisi à l'étape 1)
-  const [seedContext, setSeedContext] = useState(initial?.context ?? "");
-  const [pickedLink, setPickedLink] = useState(null);
+  const [seedContext, setSeedContext] = useState(d0.seedContext ?? initial?.context ?? "");
+  const [pickedLink, setPickedLink] = useState(d0.pickedLink ?? null);
   const [veille, setVeille] = useState(null);
   // Point de départ choisi à l'étape 1 : un thème libre, un article, un document ou la veille
   const { contexts: ents, activeContextId } = useContext(EntreprisesCtx);
-  const [wizCtx, setWizCtx] = useState(initial?.contextId ?? activeContextId ?? null); // entreprise de la campagne
-  const [startMode, setStartMode] = useState(initial?.context ? "veille" : "theme");
+  const [wizCtx, setWizCtx] = useState(draft ? d0.wizCtx ?? null : initial?.contextId ?? activeContextId ?? null); // entreprise de la campagne
+  const [startMode, setStartMode] = useState(d0.startMode ?? (initial?.context ? "veille" : "theme"));
   const [source, setSource] = useState(null);
-  const [qi, setQi] = useState(0); // question de cadrage affichée
-  const [questionsKey, setQuestionsKey] = useState(""); // thème et objectif des questions chargées : « Retour » ne les régénère pas
+  const [qi, setQi] = useState(d0.qi ?? 0); // question de cadrage affichée
+  const [questionsKey, setQuestionsKey] = useState(d0.questionsKey ?? ""); // thème et objectif des questions chargées : « Retour » ne les régénère pas
+  // Brouillon : la création est enregistrée au fil de l'eau dès qu'un thème ou un nom est saisi
+  const autosave = useDraftAutosave({
+    enabled: !launched && !busy && Boolean(theme.trim() || name.trim()),
+    kind: "wizard",
+    getState: () => ({ step, name, theme, objective, mood, questions, answers, sample, sampleApproved, sampleThread, periodDays, target, days, time, validate, seedContext, pickedLink, wizCtx, startMode, qi, questionsKey }),
+    name: name || theme.slice(0, 60),
+    theme,
+    contextId: wizCtx,
+    initialId: draft?.id ?? null,
+    deps: [step, name, theme, objective, mood, questions, answers, sample, sampleApproved, sampleThread, periodDays, target, days, time, validate, seedContext, pickedLink, wizCtx, startMode, qi],
+  });
 
   useEffect(() => {
     fetch(`/api/veille${wizCtx ? `?contextId=${wizCtx}` : ""}`)
@@ -1353,7 +1365,7 @@ function CampaignWizard({ profile, linkedin, orgs, onClose, onLaunched, onProfil
       const cRes = await fetch("/api/campaigns", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, theme, objective, mood, context: buildContext(), contextId: wizCtx || undefined }),
+        body: JSON.stringify({ name, theme, objective, mood, context: buildContext(), contextId: wizCtx || undefined, draftId: autosave.id || undefined }),
       });
       const cData = await readJson(cRes);
       if (!cRes.ok) throw new Error(cData.error);
@@ -1399,6 +1411,7 @@ function CampaignWizard({ profile, linkedin, orgs, onClose, onLaunched, onProfil
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-semibold text-base flex items-center gap-2">
             <Sparkles size={18} className="text-[#ff5a5f]" /> Nouvelle campagne LinkedIn
+            {!launched && <DraftBadge status={autosave.status} />}
           </h3>
           {!inline && (
             <button onClick={onClose} className="text-gray-400 hover:text-gray-600 p-1">
@@ -2154,26 +2167,76 @@ function CampaignDeleteDialog({ campaign: c, onClose, onDone, showToast }) {
 // ----------------------------------------------------------------
 // Vue « Mes campagnes » : gestion complète des campagnes
 // ----------------------------------------------------------------
+// Enregistrement automatique d'une création de campagne en cours (brouillon côté serveur) : premier enregistrement à la
+// première modification, puis mise à jour 1,2 s après chaque changement. Rien n'est créé tant que rien n'est saisi.
+function useDraftAutosave({ enabled, kind, getState, name, theme, contextId, initialId = null, deps }) {
+  const [id, setId] = useState(initialId);
+  const idRef = useRef(initialId);
+  const [status, setStatus] = useState(initialId ? "saved" : "idle"); // idle | saving | saved | error
+  const first = useRef(true);
+  const chain = useRef(Promise.resolve());
+  const latest = useRef({});
+  latest.current = { getState, name, theme, contextId, kind };
+  const save = () => {
+    chain.current = chain.current.then(async () => {
+      const { getState: gs, name: n, theme: t, contextId: c, kind: k } = latest.current;
+      const payload = JSON.stringify({ kind: k, state: gs(), name: n, theme: t, contextId: c || undefined });
+      setStatus("saving");
+      try {
+        let res = idRef.current
+          ? await fetch(`/api/campaigns/drafts/${idRef.current}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: payload })
+          : await fetch("/api/campaigns/drafts", { method: "POST", headers: { "Content-Type": "application/json" }, body: payload });
+        // Brouillon supprimé ailleurs : on en recrée un plutôt que de perdre le travail
+        if (res.status === 404 && idRef.current) {
+          idRef.current = null;
+          res = await fetch("/api/campaigns/drafts", { method: "POST", headers: { "Content-Type": "application/json" }, body: payload });
+        }
+        const d = await readJson(res);
+        if (!res.ok) throw new Error(d.error || "Erreur");
+        if (d.id) { idRef.current = d.id; setId(d.id); }
+        setStatus("saved");
+        return true;
+      } catch {
+        setStatus("error");
+        return false;
+      }
+    });
+    return chain.current;
+  };
+  useEffect(() => {
+    if (!enabled) return undefined;
+    // Un brouillon qu'on vient de rouvrir n'est pas réenregistré tant qu'on n'y a rien changé
+    if (first.current) { first.current = false; if (initialId) return undefined; }
+    const t = setTimeout(save, 1200);
+    return () => clearTimeout(t);
+  }, [enabled, ...deps]);
+  return { id, status, saveNow: save, forget: () => { idRef.current = null; setId(null); setStatus("idle"); } };
+}
+const DraftBadge = ({ status }) => (status === "idle" ? null : <span className="text-[11px] text-gray-400" data-testid="draft-status">{status === "saving" ? "Enregistrement…" : status === "error" ? "Brouillon non enregistré" : "Brouillon enregistré ✓"}</span>);
+
 // ----------------------------------------------------------------
 // Import d'un brief de campagne : un document (Word, PDF) ou un texte collé que l'IA structure ; le client relit, corrige
 // puis crée la campagne. Rien n'est inventé : liens et exemples viennent du document, ce qui manque est signalé.
 // ----------------------------------------------------------------
-function BriefImport({ showToast, onClose, onCreated }) {
+function BriefImport({ showToast, onClose, onCreated, draft = null }) {
   const { contexts: ents, activeContextId } = useContext(EntreprisesCtx);
-  const [stage, setStage] = useState("input"); // input | review
+  const d0 = draft?.state ?? null;
+  const [stage, setStage] = useState(d0?.brief ? "review" : "input"); // input | review
   const [tab, setTab] = useState("file"); // file | paste
   const [file, setFile] = useState(null);
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
-  const [brief, setBrief] = useState(null);
-  const [rulesText, setRulesText] = useState("");
-  const [forbiddenText, setForbiddenText] = useState("");
-  const [ctxId, setCtxId] = useState(activeContextId ?? "");
-  const [addUrls, setAddUrls] = useState([]); // adresses à ajouter au datalake de l'entreprise
+  const [brief, setBrief] = useState(d0?.brief ?? null);
+  const [rulesText, setRulesText] = useState(d0?.rulesText ?? "");
+  const [forbiddenText, setForbiddenText] = useState(d0?.forbiddenText ?? "");
+  const [ctxId, setCtxId] = useState(d0 ? d0.ctxId ?? "" : activeContextId ?? "");
+  const [addUrls, setAddUrls] = useState(d0?.addUrls ?? []); // adresses à ajouter au datalake de l'entreprise
   const [creating, setCreating] = useState(false);
   const chip = (on) => `text-xs px-3 py-1.5 rounded-full border ${on ? "bg-[#ff5a5f] text-white border-[#ff5a5f]" : "border-gray-200 text-gray-600 hover:border-gray-300"}`;
   const input = "w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]";
+  // Brouillon : la relecture est enregistrée au fil de l'eau (l'analyse du brief n'est jamais à refaire)
+  const autosave = useDraftAutosave({ enabled: stage === "review" && Boolean(brief) && !creating, kind: "brief", getState: () => ({ brief, rulesText, forbiddenText, ctxId, addUrls }), name: brief?.name, theme: brief?.theme, contextId: ctxId, initialId: draft?.id ?? null, deps: [brief, rulesText, forbiddenText, ctxId, addUrls] });
   const set = (k, v) => setBrief((b) => ({ ...b, [k]: v }));
   const setAccount = (i, patch) => setBrief((b) => ({ ...b, accounts: b.accounts.map((a, j) => (j === i ? { ...a, ...patch } : a)) }));
 
@@ -2208,7 +2271,7 @@ function BriefImport({ showToast, onClose, onCreated }) {
     try {
       const lines = (t) => t.split("\n").map((x) => x.trim()).filter(Boolean);
       const payload = { ...brief, rules: lines(rulesText), forbidden: lines(forbiddenText) };
-      const res = await fetch("/api/campaigns", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ brief: payload, contextId: ctxId || undefined }) });
+      const res = await fetch("/api/campaigns", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ brief: payload, contextId: ctxId || undefined, draftId: autosave.id || undefined }) });
       const d = await readJson(res);
       if (!res.ok) throw new Error(d.error || "Erreur");
       let added = 0;
@@ -2372,7 +2435,9 @@ function BriefImport({ showToast, onClose, onCreated }) {
         <button type="button" onClick={create} disabled={creating || !brief.theme.trim()} data-testid="brief-create" className="bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white text-sm font-medium px-4 py-2 rounded-lg">
           {creating ? "Création…" : "Créer la campagne"}
         </button>
-        <button type="button" onClick={() => setStage("input")} className="text-sm text-gray-500 hover:text-gray-800">Changer de brief</button>
+        <button type="button" onClick={async () => { await autosave.saveNow(); showToast("Brouillon enregistré : retrouvez-le dans Campagnes"); onClose(); }} data-testid="brief-save-exit" className="text-sm text-[#0a66c2] hover:underline">Enregistrer et quitter</button>
+        <button type="button" onClick={async () => { if (autosave.id) { if (!window.confirm("Abandonner ce brouillon et changer de brief ?")) return; await fetch(`/api/campaigns/${autosave.id}`, { method: "DELETE" }).catch(() => {}); autosave.forget(); } setStage("input"); }} className="text-sm text-gray-500 hover:text-gray-800">Changer de brief</button>
+        <DraftBadge status={autosave.status} />
         {!brief.theme.trim() && <span className="text-xs text-gray-400">Indiquez un thème pour créer la campagne.</span>}
       </div>
     </div>
@@ -2637,6 +2702,8 @@ function CampaignsView({ profile, linkedin, orgs, showToast, onPlanned, onProfil
   const [showWizard, setShowWizard] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [planOf, setPlanOf] = useState(null); // campagne dont on ouvre le plan éditorial
+  const [drafts, setDrafts] = useState([]); // créations en cours (brouillons)
+  const [resumeDraft, setResumeDraft] = useState(null); // brouillon qu'on reprend
 
   // Ouverture demandée depuis la sidebar (« Créer une campagne »)
   useEffect(() => {
@@ -2653,7 +2720,7 @@ function CampaignsView({ profile, linkedin, orgs, showToast, onPlanned, onProfil
   const loadCampaigns = () =>
     fetch("/api/campaigns")
       .then((r) => r.json())
-      .then((d) => setCampaigns(d.campaigns ?? []))
+      .then((d) => { setCampaigns(d.campaigns ?? []); setDrafts(d.drafts ?? []); })
       .catch(() => {})
       .finally(() => setLoaded(true));
 
@@ -2728,10 +2795,10 @@ function CampaignsView({ profile, linkedin, orgs, showToast, onPlanned, onProfil
   if (showImport) {
     return (
       <main className="max-w-4xl mx-auto p-6 space-y-4">
-        <button onClick={() => setShowImport(false)} className="text-sm text-gray-500 hover:text-gray-800 flex items-center gap-1.5">
+        <button onClick={() => { setShowImport(false); setResumeDraft(null); loadCampaigns(); }} className="text-sm text-gray-500 hover:text-gray-800 flex items-center gap-1.5">
           <ChevronLeft size={15} /> Retour aux campagnes
         </button>
-        <BriefImport showToast={showToast} onClose={() => setShowImport(false)} onCreated={(c, planned) => { setShowImport(false); loadCampaigns(); if (planned) setPlanOf(c); }} />
+        <BriefImport key={resumeDraft?.id ?? "new"} draft={resumeDraft} showToast={showToast} onClose={() => { setShowImport(false); setResumeDraft(null); loadCampaigns(); }} onCreated={(c, planned) => { setShowImport(false); setResumeDraft(null); loadCampaigns(); if (planned) setPlanOf(c); }} />
       </main>
     );
   }
@@ -2741,12 +2808,14 @@ function CampaignsView({ profile, linkedin, orgs, showToast, onPlanned, onProfil
     return (
       <main className="max-w-4xl mx-auto p-6 space-y-4">
         <button
-          onClick={() => setShowWizard(false)}
+          onClick={() => { setShowWizard(false); setResumeDraft(null); loadCampaigns(); }}
           className="text-sm text-gray-500 hover:text-gray-800 flex items-center gap-1.5"
         >
           <ChevronLeft size={15} /> Retour aux campagnes
         </button>
         <CampaignWizard
+          key={resumeDraft?.id ?? "new"}
+          draft={resumeDraft}
           inline
           profile={profile}
           linkedin={linkedin}
@@ -2757,6 +2826,7 @@ function CampaignsView({ profile, linkedin, orgs, showToast, onPlanned, onProfil
           onGoProfile={onGoProfile}
           onClose={() => {
             setShowWizard(false);
+            setResumeDraft(null);
             loadCampaigns();
           }}
           onLaunched={() => {
@@ -2791,6 +2861,26 @@ function CampaignsView({ profile, linkedin, orgs, showToast, onPlanned, onProfil
           </button>
         </div>
       </div>
+
+      {drafts.length > 0 && (
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-2" data-testid="campaign-drafts">
+          <h3 className="text-sm font-semibold text-gray-800">Brouillons <span className="text-gray-400 font-normal">({drafts.length}) : créations en cours, enregistrées automatiquement</span></h3>
+          <ul className="divide-y divide-gray-100">
+            {drafts.map((d) => (
+              <li key={d.id} className="py-2 flex items-center justify-between gap-3 flex-wrap" data-testid="campaign-draft">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-gray-800 truncate">{d.name}</p>
+                  <p className="text-[11px] text-gray-400">{d.kind === "brief" ? "Brief importé · relecture" : "Assistant"} · modifié le {fmtDateTime(d.updatedAt)}</p>
+                </div>
+                <div className="flex items-center gap-3 text-xs shrink-0">
+                  <button type="button" onClick={() => { setResumeDraft(d); if (d.kind === "brief") setShowImport(true); else setShowWizard(true); }} data-testid="campaign-draft-resume" className="bg-[#ff5a5f] hover:bg-[#f63d44] text-white font-medium px-3 py-1.5 rounded-lg">Reprendre</button>
+                  <button type="button" onClick={async () => { if (!window.confirm(`Supprimer le brouillon « ${d.name} » ?`)) return; const r = await fetch(`/api/campaigns/${d.id}`, { method: "DELETE" }); if (r.ok) loadCampaigns(); else showToast("Erreur de suppression"); }} className="text-gray-400 hover:text-red-600">Supprimer</button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {campaigns.length > 0 && (
         <div className="flex items-center gap-2 flex-wrap text-sm">

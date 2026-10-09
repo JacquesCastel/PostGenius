@@ -21,7 +21,7 @@ export async function GET(req) {
     prisma.brandKit.findFirst({ where: { userId }, select: { id: true } }),
     prisma.event.count({ where: { userId } }),
     checkFeature(userId, "events", "Le module Événements"),
-    prisma.campaign.count({ where: { userId } }),
+    prisma.campaign.count({ where: { userId, status: { not: "brouillon" } } }),
     checkFeature(userId, "campaigns", "L'outil de campagne"),
     prisma.draft.count({ where: { userId, status: "erreur" } }),
     prisma.draft.count({ where: { userId, status: "à valider" } }),
