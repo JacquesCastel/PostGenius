@@ -19,7 +19,7 @@ export async function GET(req) {
     prisma.draft.count({ where: { userId, createdAt: { gte: monthStart } } }),
     prisma.usageEvent.aggregate({ where: { userId, kind: "image", createdAt: { gte: monthStart } }, _sum: { images: true } }),
     prisma.knowledgeSource.count({ where: { userId } }),
-    user.plan === "agence" ? prisma.user.count({ where: { managedByUserId: userId } }) : Promise.resolve(null),
+    user.plan === "agence" ? prisma.user.count({ where: { agency: { members: { some: { userId } } } } }) : Promise.resolve(null),
   ]);
 
   return NextResponse.json({

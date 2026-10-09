@@ -1,17 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { getUserId } from "@/lib/session";
+import { requireAgency } from "@/lib/agency";
 import bcrypt from "bcryptjs";
 
-// Vérifie que l'utilisateur est bien sur le plan Agence
-async function requireAgency(req) {
-  const userId = await getUserId(req);
-  if (!userId) return { error: "Non connecté", status: 401 };
-  const user = await prisma.user.findUnique({ where: { id: userId }, select: { plan: true } });
-  if (!user) return { error: "Utilisateur introuvable", status: 404 };
-  if (user.plan !== "agence") return { error: "Réservé au plan Agence", status: 403 };
-  return { userId };
-}
 
 // GET /api/agency/clients — liste les clients de l'agence
 export async function GET(req) {
@@ -20,7 +11,7 @@ export async function GET(req) {
 
   try {
     const clients = await prisma.user.findMany({
-      where: { managedByUserId: auth.userId },
+      where: { agencyId: auth.agencyId },
       select: {
         id: true,
         name: true,
@@ -74,7 +65,7 @@ export async function POST(req) {
         themes:              themes?.trim()               || null,
         styleNotes:          styleNotes?.trim()           || null,
         plan: "agence",
-        managedByUserId: auth.userId,
+        agencyId: auth.agencyId,
         // Création guidée : le profil est complété ensuite avec le parcours d'onboarding, dans l'espace du client
         // (compagnon, import de posts, premier post). Sans `guided`, le profil est considéré comme rempli.
         onboardedAt: guided === true ? null : new Date(),

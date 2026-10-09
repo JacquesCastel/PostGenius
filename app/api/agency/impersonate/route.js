@@ -1,21 +1,20 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { requireAgency, ownClient } from "@/lib/agency";
 import { getUserId, createSessionToken, sessionCookieOptions, SESSION_COOKIE } from "@/lib/session";
 
 // POST /api/agency/impersonate — démarre l'impersonation d'un client
 export async function POST(req) {
-  const userId = await getUserId(req);
-  if (!userId) return NextResponse.json({ error: "Non connecté" }, { status: 401 });
+  const auth = await requireAgency(req);
+  if (auth.error) return NextResponse.json({ error: auth.error }, { status: auth.status });
+  const userId = auth.userId;
 
   const { clientId } = await req.json();
   if (!clientId) return NextResponse.json({ error: "clientId requis" }, { status: 400 });
 
   // Vérifie que ce client appartient à l'agence
-  const client = await prisma.user.findUnique({
-    where: { id: clientId },
-    select: { managedByUserId: true, name: true, companyName: true },
-  });
-  if (!client || client.managedByUserId !== userId) {
+  const client = await ownClient(auth.agencyId, clientId, { name: true, companyName: true });
+  if (!client) {
     return NextResponse.json({ error: "Client introuvable" }, { status: 404 });
   }
 

@@ -129,11 +129,12 @@ model User {
   editorialNote String?
 
   // --- Multi-compte Agence ---
-  // Si managedByUserId est renseigné, ce compte est un client géré par une agence.
+  // Si agencyId est renseigné, ce compte est un client géré par cette agence (une entreprise, voir Agency).
   // Le client n'a pas de mot de passe utilisable et n'accède jamais à l'outil.
-  managedByUserId String?
-  managedBy       User?   @relation("AgencyClients", fields: [managedByUserId], references: [id], onDelete: SetNull)
-  clients         User[]  @relation("AgencyClients")
+  agencyId String?
+  agency   Agency? @relation("AgencyClients", fields: [agencyId], references: [id], onDelete: SetNull)
+  // Si le compte est un utilisateur de l'agence (propriétaire ou membre)
+  agencyMembership AgencyMember?
 
   // --- Plusieurs entreprises pour une même personne ---
   // L'entreprise « principale » reste portée par les champs ci-dessus ; les autres sont des Context.
@@ -153,6 +154,29 @@ model User {
   savedMentions      SavedMention[]
   remarkAnalysisAt   DateTime? // dernière analyse des modifications de posts (suggestions de remarques)
   editorialRecos     EditorialRecommendation[]
+}
+
+// Agence : l'entreprise cliente de l'offre Agence. Elle a 1 à n utilisateurs et gère des clients (comptes gérés).
+model Agency {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+
+  members AgencyMember[]
+  clients User[]         @relation("AgencyClients")
+}
+
+// Utilisateur de l'agence : un compte, une seule agence. role : owner (souscripteur) | member
+model AgencyMember {
+  id        String   @id @default(cuid())
+  agencyId  String
+  agency    Agency   @relation(fields: [agencyId], references: [id], onDelete: Cascade)
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      String   @default("member")
+  createdAt DateTime @default(now())
+
+  @@index([agencyId])
 }
 
 // Charte graphique : couleurs, logo, police, style de fond

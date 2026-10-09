@@ -1,15 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { getUserId } from "@/lib/session";
+import { requireAgency } from "@/lib/agency";
 
-async function requireAgency(req) {
-  const userId = await getUserId(req);
-  if (!userId) return { error: "Non connecté", status: 401 };
-  const user = await prisma.user.findUnique({ where: { id: userId }, select: { plan: true } });
-  if (!user) return { error: "Utilisateur introuvable", status: 404 };
-  if (user.plan !== "agence") return { error: "Réservé au plan Agence", status: 403 };
-  return { userId };
-}
 
 // Calcule le % de complétion du profil et la liste des champs manquants
 function computeCompletion(client) {
@@ -35,7 +27,7 @@ export async function GET(req) {
 
   try {
     const clients = await prisma.user.findMany({
-      where: { managedByUserId: auth.userId },
+      where: { agencyId: auth.agencyId },
       select: {
         id: true, name: true, email: true, companyName: true, onboardedAt: true,
         headline: true, businessDescription: true, targetAudience: true,
