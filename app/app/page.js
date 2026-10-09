@@ -40,7 +40,7 @@ import ShootingKit from "@/components/ShootingKit";
 import { LANGUAGES, normalizeLanguage } from "@/lib/languages";
 import { MOODS } from "@/lib/moods";
 import { parseYouTubeId, youtubeWatchUrl, youtubeEmbedUrl, youtubeThumbUrl } from "@/lib/youtube";
-import ImageEditor from "@/components/ImageEditor";
+import ImageEditor, { canvasToSafePng } from "@/components/ImageEditor";
 import { scorePost } from "@/lib/score";
 import { markdownToHtml } from "@/lib/markdown";
 import { parsePostUrn, REACTIONS } from "@/lib/linkedinPost";
@@ -11594,7 +11594,7 @@ function SlideTemplateEditor({ kind, kit, onClose, onSaved, showToast }) {
       const res = await fetch("/api/image/upload", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ image: canvas.toDataURL("image/png") }),
+        body: JSON.stringify({ image: canvasToSafePng(canvas) }),
       });
       const d = await readJson(res);
       if (!res.ok) throw new Error(d.error || "Erreur");

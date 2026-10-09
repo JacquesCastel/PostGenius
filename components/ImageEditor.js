@@ -83,7 +83,28 @@ async function exportImage(src, croppedAreaPixels, rotation, filterCss, targetWi
     out.width,
     out.height
   );
-  return out.toDataURL("image/png", 0.92);
+  return canvasToSafePng(out);
+}
+
+// PNG prêt à l'envoi : plus grand côté limité (1600 px, largement suffisant pour LinkedIn) et poids borné ; une photo
+// exportée en PNG à pleine résolution pèse vite plus de 10 Mo et ne peut plus être envoyée.
+export function canvasToSafePng(canvas, maxSide = 1600, maxChars = 9_000_000) {
+  let c = canvas;
+  const resize = (s) => {
+    const o = document.createElement("canvas");
+    o.width = Math.max(1, Math.round(c.width * s));
+    o.height = Math.max(1, Math.round(c.height * s));
+    o.getContext("2d").drawImage(c, 0, 0, o.width, o.height);
+    return o;
+  };
+  const scale = Math.min(1, maxSide / Math.max(c.width, c.height));
+  if (scale < 1) c = resize(scale);
+  let url = c.toDataURL("image/png");
+  for (let i = 0; i < 4 && url.length > maxChars && c.width > 400; i++) {
+    c = resize(0.75);
+    url = c.toDataURL("image/png");
+  }
+  return url;
 }
 
 export default function ImageEditor({ src, onSave, onCancel }) {

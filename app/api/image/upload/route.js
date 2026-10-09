@@ -16,7 +16,12 @@ export async function POST(req) {
   const access = await checkAccess(userId);
   if (!access.ok) return NextResponse.json({ error: access.error, code: access.code }, { status: 403 });
 
-  const { image } = await req.json();
+  let image;
+  try {
+    ({ image } = await req.json());
+  } catch {
+    return NextResponse.json({ error: "Image illisible (trop lourde pour être envoyée ?). Réduisez-la et réessayez." }, { status: 413 });
+  }
   if (typeof image !== "string" || !image.startsWith("data:image/png")) {
     return NextResponse.json({ error: "Image invalide (PNG attendu)." }, { status: 400 });
   }
@@ -29,7 +34,7 @@ export async function POST(req) {
     const { url } = await saveImage(b64);
     return NextResponse.json({ url });
   } catch (e) {
-    console.error("Erreur upload image:", e);
-    return NextResponse.json({ error: "Échec de l'enregistrement de l'image." }, { status: 500 });
+    console.error("Erreur upload image:", e.code ?? "", e.message);
+    return NextResponse.json({ error: e.code === "ENOSPC" ? "Le disque du serveur est plein : l'image n'a pas pu être enregistrée. Contactez le support." : ["EACCES", "ENOENT", "ENOTDIR", "EROFS"].includes(e.code) ? "Le stockage des images est indisponible (dossier non accessible en écriture). Contactez le support." : "Échec de l'enregistrement de l'image." }, { status: 500 });
   }
 }

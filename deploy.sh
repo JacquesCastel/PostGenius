@@ -26,8 +26,9 @@ git pull
 # depuis l'hôte le peut. Idempotent : ne fait rien si déjà en place (c'était le
 # cas pour data/images, jamais fait pour data/logos et data/backgrounds --
 # d'où l'échec silencieux en production : EACCES sur mkdir '/app/data/logos').
-mkdir -p /opt/postgenius/data/images /opt/postgenius/data/logos /opt/postgenius/data/backgrounds /opt/postgenius/data/videos /opt/postgenius/data/state
-chmod 777 /opt/postgenius/data/images /opt/postgenius/data/logos /opt/postgenius/data/backgrounds /opt/postgenius/data/videos /opt/postgenius/data/state
+# media : médiathèque (images importées dans Charte graphique et Médiathèque) -- oublié jusqu'ici : import = erreur 500 (EACCES)
+mkdir -p /opt/postgenius/data/images /opt/postgenius/data/logos /opt/postgenius/data/backgrounds /opt/postgenius/data/videos /opt/postgenius/data/state /opt/postgenius/data/media
+chmod 777 /opt/postgenius/data/images /opt/postgenius/data/logos /opt/postgenius/data/backgrounds /opt/postgenius/data/videos /opt/postgenius/data/state /opt/postgenius/data/media
 
 # ── Lecture du .env sur l'hôte (avant d'entrer dans Docker) ─────────────────
 # Le .env appartient à root:root rw-r-----, donc lisible par root sur l'hôte

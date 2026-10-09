@@ -26,7 +26,12 @@ export async function POST(req) {
   const userId = await getUserId(req);
   if (!userId) return NextResponse.json({ error: "Non connecté" }, { status: 401 });
 
-  const formData = await req.formData();
+  let formData;
+  try {
+    formData = await req.formData();
+  } catch {
+    return NextResponse.json({ error: "Envoi du fichier illisible (fichier trop lourd ou connexion coupée)." }, { status: 400 });
+  }
   const file = formData.get("file");
   const category = (formData.get("category") || "asset").toString();
 
@@ -57,7 +62,13 @@ export async function POST(req) {
     height = meta.height ?? null;
   } catch {}
 
-  const { fileName, url } = await saveMediaFile(buffer, file.type);
+  let saved;
+  try {
+    saved = await saveMediaFile(buffer, file.type);
+  } catch (e) {
+    return NextResponse.json({ error: e.message || "Échec de l'enregistrement de l'image." }, { status: 500 });
+  }
+  const { fileName, url } = saved;
 
   const asset = await prisma.mediaAsset.create({
     data: {
