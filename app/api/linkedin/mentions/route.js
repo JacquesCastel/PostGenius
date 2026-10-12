@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getEffectiveUserId as getUserId } from "@/lib/session";
 import { decryptToken } from "@/lib/crypto";
-import { parseOrgRef } from "@/lib/mentions";
+import { parseOrgRef, parsePersonRef } from "@/lib/mentions";
 
 // Pages LinkedIn mentionnables dans un post : les siennes, celles déjà utilisées (GET), et ajout d'une page par son adresse,
 // son nom court ou son identifiant (POST). Les personnes ne sont pas mentionnables par l'application (voir lib/mentions.js).
@@ -19,9 +19,80 @@ async function ownPages(userId) {
   }
 }
 
+// Accès aux API de personnes : réservé aux comptes administrateurs d'une page (jeton « pages »)
+async function orgAuth(userId) {
+  const acc = await prisma.linkedInAccount.findUnique({ where: { userId }, select: { orgToken: true } });
+  const token = decryptToken(acc?.orgToken);
+  const orgs = await ownPages(userId);
+  if (!token || !orgs.length) return null;
+  return { orgs, headers: { Authorization: `Bearer ${token}`, "LinkedIn-Version": process.env.LINKEDIN_VERSION || "202604", "X-Restli-Protocol-Version": "2.0.0" } };
+}
+const PERSON_URN = /urn:li:person:[A-Za-z0-9_-]+/;
+const asText = (v) => (typeof v === "string" ? v : v?.localized ? Object.values(v.localized)[0] : "");
+function personName(el) {
+  const direct = asText(el?.name) || asText(el?.localizedName) || asText(el?.fullName);
+  if (direct) return direct.trim();
+  const first = asText(el?.localizedFirstName) || asText(el?.firstName);
+  const last = asText(el?.localizedLastName) || asText(el?.lastName);
+  return `${first} ${last}`.trim();
+}
+
+// Recherche d'une personne par son nom parmi les abonnés de la page (peopleTypeahead : réservé aux abonnés, selon LinkedIn)
+async function searchPeople(userId, q) {
+  const auth = await orgAuth(userId);
+  if (!auth) return { error: "Connectez d'abord votre page LinkedIn (menu « Connexions ») : la recherche de personnes passe par une page dont vous êtes administrateur." };
+  const found = [];
+  let refused = null;
+  for (const org of auth.orgs.slice(0, 3)) {
+    try {
+      const res = await fetch(`${LI_API}/rest/peopleTypeahead?q=organizationFollowers&organization=${encodeURIComponent(org.urn)}&keywords=${encodeURIComponent(q)}`, { headers: auth.headers });
+      const txt = await res.text();
+      if (!res.ok) { console.error("[mentions] peopleTypeahead refusé :", res.status, txt.slice(0, 300)); refused = res.status; continue; }
+      let d = {};
+      try { d = JSON.parse(txt); } catch {}
+      for (const el of d.elements ?? []) {
+        const urn = PERSON_URN.exec(JSON.stringify(el))?.[0];
+        const name = personName(el);
+        if (urn && name && !found.some((f) => f.urn === urn)) found.push({ name, urn });
+      }
+    } catch (e) {
+      console.error("[mentions] peopleTypeahead :", e.message);
+    }
+  }
+  if (!found.length && refused) return { error: `LinkedIn refuse la recherche de personnes pour cette application (code ${refused}). Collez plutôt l'adresse du profil et son nom exact.` };
+  return { people: found.slice(0, 8) };
+}
+
+// Adresse de profil → identifiant de membre (vanityUrl : l'ensemble des profils retrouvés dépend de LinkedIn)
+async function resolveProfile(userId, vanity) {
+  const auth = await orgAuth(userId);
+  if (!auth) return { error: "Connectez d'abord votre page LinkedIn (menu « Connexions ») : la recherche d'une personne passe par une page dont vous êtes administrateur." };
+  const url = `https://www.linkedin.com/in/${vanity}`;
+  let lastStatus = null;
+  for (const org of auth.orgs.slice(0, 3)) {
+    try {
+      const res = await fetch(`${LI_API}/rest/vanityUrl?q=vanityUrlAsOrganization&vanityUrl=${encodeURIComponent(url)}&organization=${encodeURIComponent(org.urn)}`, { headers: auth.headers });
+      const txt = await res.text();
+      if (!res.ok) { console.error("[mentions] vanityUrl refusé :", res.status, txt.slice(0, 300)); lastStatus = res.status; continue; }
+      const urn = PERSON_URN.exec(txt)?.[0];
+      if (urn) return { urn };
+      lastStatus = 404;
+    } catch (e) {
+      console.error("[mentions] vanityUrl :", e.message);
+    }
+  }
+  return { error: `LinkedIn n'a pas retrouvé ce profil${lastStatus ? ` (code ${lastStatus})` : ""} : un profil public peut rester introuvable. Essayez la recherche par nom (abonnés de votre page), ou taguez la personne à la main après publication.` };
+}
+
 export async function GET(req) {
   const userId = await getUserId(req);
   if (!userId) return NextResponse.json({ error: "Non connecté." }, { status: 401 });
+  const q = new URL(req.url).searchParams.get("q")?.trim();
+  if (q) {
+    if (q.length < 2) return NextResponse.json({ people: [] });
+    const r = await searchPeople(userId, q.slice(0, 80));
+    return NextResponse.json(r, { status: r.error ? 422 : 200 });
+  }
   const [own, saved] = await Promise.all([ownPages(userId), prisma.savedMention.findMany({ where: { userId }, orderBy: { createdAt: "desc" }, take: MAX_SAVED, select: { id: true, name: true, urn: true } })]);
   const ownUrns = new Set(own.map((o) => o.urn));
   return NextResponse.json({ own, saved: saved.filter((s) => !ownUrns.has(s.urn)) });
@@ -57,6 +128,29 @@ export async function POST(req) {
   const userId = await getUserId(req);
   if (!userId) return NextResponse.json({ error: "Non connecté." }, { status: 401 });
   const body = await req.json().catch(() => ({}));
+  // Personne : adresse de profil (ou identifiant de membre) + nom exact tel qu'affiché sur son profil
+  const person = parsePersonRef(body.input);
+  if (person) {
+    const pname = String(body.name ?? "").replace(/\s+/g, " ").trim().slice(0, 120);
+    if (!pname) return NextResponse.json({ error: "Indiquez le nom exact de la personne, tel qu'il s'affiche sur son profil LinkedIn : la mention n'est cliquable que s'il est identique.", code: "person_name" }, { status: 422 });
+    let purn = person.urn;
+    if (!purn) {
+      const r = await resolveProfile(userId, person.vanity);
+      if (r.error) return NextResponse.json({ error: r.error, code: "person_failed" }, { status: 422 });
+      purn = r.urn;
+    }
+    if ((await prisma.savedMention.count({ where: { userId } })) >= MAX_SAVED) return NextResponse.json({ error: "Trop de mentions enregistrées : supprimez-en." }, { status: 400 });
+    const savedP = await prisma.savedMention.upsert({ where: { userId_urn: { userId, urn: purn } }, create: { userId, urn: purn, name: pname }, update: { name: pname }, select: { id: true, name: true, urn: true } });
+    return NextResponse.json({ mention: savedP });
+  }
+  // Personne déjà identifiée (résultat de recherche par nom)
+  if (/^urn:li:person:/.test(String(body.urn ?? "")) && body.name) {
+    const nm = String(body.name).replace(/\s+/g, " ").trim().slice(0, 120);
+    const u = String(body.urn).trim();
+    if (!/^urn:li:person:[A-Za-z0-9_-]+$/.test(u) || !nm) return NextResponse.json({ error: "Mention invalide." }, { status: 400 });
+    const s2 = await prisma.savedMention.upsert({ where: { userId_urn: { userId, urn: u } }, create: { userId, urn: u, name: nm }, update: { name: nm }, select: { id: true, name: true, urn: true } });
+    return NextResponse.json({ mention: s2 });
+  }
   const ref = parseOrgRef(body.input);
   if (!ref && /linkedin\.com\/(in|pub)\//i.test(String(body.input ?? ""))) return NextResponse.json({ error: "Les personnes ne peuvent pas être mentionnées depuis LinkeePost : seules les pages (linkedin.com/company/…) le peuvent. Taguez la personne à la main après publication." }, { status: 400 });
   if (!ref) return NextResponse.json({ error: "Collez l'adresse de la page LinkedIn (https://www.linkedin.com/company/…), son nom court ou son identifiant." }, { status: 400 });
