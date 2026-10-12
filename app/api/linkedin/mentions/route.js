@@ -33,15 +33,21 @@ async function lookup(userId, ref) {
   if (!token) return { error: "no_token" };
   const headers = { Authorization: `Bearer ${token}`, "LinkedIn-Version": process.env.LINKEDIN_VERSION || "202604", "X-Restli-Protocol-Version": "2.0.0" };
   try {
-    const url = ref.id ? `${LI_API}/rest/organizations/${ref.id}` : `${LI_API}/rest/organizations?q=vanityName&vanityName=${encodeURIComponent(ref.vanity)}`;
-    const res = await fetch(url, { headers });
-    if (res.status === 401 || res.status === 403) return { error: "forbidden" };
-    if (res.status === 404) return { error: "not_found" };
-    if (!res.ok) return { error: "failed" };
-    const d = await res.json();
-    const org = ref.id ? d : d.elements?.[0];
-    if (!org?.id || !(org.localizedName || org.name)) return { error: "not_found" };
-    return { id: String(org.id), name: String(org.localizedName ?? org.name) };
+    // Deux familles d'API : « rest » (versionnée) puis « v2 » (ancienne), l'une ou l'autre selon les droits de l'application
+    const urls = ref.id
+      ? [`${LI_API}/rest/organizations/${ref.id}`, `${LI_API}/v2/organizations/${ref.id}`]
+      : [`${LI_API}/rest/organizations?q=vanityName&vanityName=${encodeURIComponent(ref.vanity)}`, `${LI_API}/v2/organizations?q=vanityName&vanityName=${encodeURIComponent(ref.vanity)}`];
+    let last = "failed";
+    for (const url of urls) {
+      const res = await fetch(url, { headers });
+      if (res.status === 404) { last = "not_found"; continue; }
+      if (!res.ok) { console.error("[mentions] recherche de page refusée :", res.status, url.replace(LI_API, "")); last = res.status === 401 || res.status === 403 ? "forbidden" : "failed"; continue; }
+      const d = await res.json();
+      const org = ref.id ? d : d.elements?.[0];
+      if (!org?.id || !(org.localizedName || org.name)) { last = "not_found"; continue; }
+      return { id: String(org.id), name: String(org.localizedName ?? org.name) };
+    }
+    return { error: last };
   } catch {
     return { error: "failed" };
   }
@@ -56,7 +62,9 @@ export async function POST(req) {
   if (!ref) return NextResponse.json({ error: "Collez l'adresse de la page LinkedIn (https://www.linkedin.com/company/…), son nom court ou son identifiant." }, { status: 400 });
   const typedName = String(body.name ?? "").replace(/\s+/g, " ").trim().slice(0, 120);
 
-  let id = ref.id ?? null;
+  // Identifiant saisi à la main (quand LinkedIn ne permet pas de retrouver la page par son adresse)
+  const typedId = /^\d{3,}$/.test(String(body.id ?? "").trim()) ? String(body.id).trim() : null;
+  let id = ref.id ?? typedId;
   let name = typedName;
   // Identifiant + nom fournis : rien à chercher chez LinkedIn
   if (!(id && name)) {
