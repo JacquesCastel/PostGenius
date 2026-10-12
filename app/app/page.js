@@ -2474,6 +2474,13 @@ function MentionTool({ draftId, text, onInsert, mentions, onMentions, getCursor,
   const [name, setName] = useState("");
   const [needName, setNeedName] = useState(false);
   const [pageId, setPageId] = useState("");
+  // Personnes : recherche par nom (abonnés de la page) ou adresse de profil + nom exact
+  const [personQ, setPersonQ] = useState("");
+  const [people, setPeople] = useState(null);
+  const [searching, setSearching] = useState(false);
+  const [profileUrl, setProfileUrl] = useState("");
+  const [profileName, setProfileName] = useState("");
+  const [personError, setPersonError] = useState(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
   const load = () => fetch("/api/linkedin/mentions").then(readJson).then((d) => (d.error ? null : setList(d))).catch(() => {});
@@ -2505,6 +2512,41 @@ function MentionTool({ draftId, text, onInsert, mentions, onMentions, getCursor,
       setBusy(false);
     }
   };
+  const searchPeople = async () => {
+    if (personQ.trim().length < 2) return;
+    setSearching(true);
+    setPersonError(null);
+    setPeople(null);
+    try {
+      const res = await fetch(`/api/linkedin/mentions?q=${encodeURIComponent(personQ.trim())}`);
+      const d = await readJson(res);
+      if (!res.ok) throw new Error(d.error || "Recherche impossible");
+      setPeople(d.people ?? []);
+    } catch (e) {
+      setPersonError(e.message);
+    } finally {
+      setSearching(false);
+    }
+  };
+  const addPerson = async (body) => {
+    setBusy(true);
+    setPersonError(null);
+    try {
+      const res = await fetch("/api/linkedin/mentions", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+      const d = await readJson(res);
+      if (!res.ok) throw new Error(d.error || "Erreur");
+      setPersonQ("");
+      setPeople(null);
+      setProfileUrl("");
+      setProfileName("");
+      load();
+      pick(d.mention);
+    } catch (e) {
+      setPersonError(e.message);
+    } finally {
+      setBusy(false);
+    }
+  };
   const forget = async (m) => {
     await fetch(`/api/linkedin/mentions/${m.id}`, { method: "DELETE" }).catch(() => {});
     load();
@@ -2515,9 +2557,9 @@ function MentionTool({ draftId, text, onInsert, mentions, onMentions, getCursor,
   return (
     <div className="space-y-2" data-testid="mention-tool">
       <div className="flex items-center gap-2 flex-wrap">
-        <button type="button" onClick={() => setOpen((o) => !o)} disabled={!draftId} data-testid="mention-open" className="text-xs border border-gray-300 hover:border-[#ff5a5f] hover:text-[#ff5a5f] disabled:opacity-50 px-3 py-1.5 rounded-lg">@ Mentionner une page</button>
+        <button type="button" onClick={() => setOpen((o) => !o)} disabled={!draftId} data-testid="mention-open" className="text-xs border border-gray-300 hover:border-[#ff5a5f] hover:text-[#ff5a5f] disabled:opacity-50 px-3 py-1.5 rounded-lg">@ Mentionner une page ou une personne</button>
         {!draftId && <span className="text-[11px] text-gray-400">Enregistrez le brouillon pour mentionner une page.</span>}
-        {used.map((m) => (<span key={m.urn} className="text-[11px] bg-sky-50 text-sky-700 rounded-full px-2 py-0.5" data-testid="mention-used" title={m.urn}>@{m.name} · page liée</span>))}
+        {used.map((m) => (<span key={m.urn} className="text-[11px] bg-sky-50 text-sky-700 rounded-full px-2 py-0.5" data-testid="mention-used" title={m.urn}>@{m.name} · mention liée</span>))}
       </div>
       {open && (
         <div className="rounded-xl border border-gray-200 p-3 space-y-3 bg-white" data-testid="mention-panel">
@@ -2545,12 +2587,31 @@ function MentionTool({ draftId, text, onInsert, mentions, onMentions, getCursor,
             {error && <p className="text-xs text-red-600" data-testid="mention-error">{error}</p>}
             <p className="text-[10px] text-gray-400">Le nom doit être celui de la page sur LinkedIn : si LinkedIn refuse la mention, le post est publié sans elle.</p>
           </div>
+          <div className="space-y-1.5 border-t border-gray-100 pt-3" data-testid="mention-person">
+            <p className="text-[11px] font-medium text-gray-600">Une personne</p>
+            <p className="text-[11px] text-gray-400">Recherche par nom parmi les abonnés de votre page, ou collez l&apos;adresse de son profil (linkedin.com/in/…) avec son nom exact. LinkedIn ne retrouve pas toutes les personnes : sinon, taguez-la à la main après publication.</p>
+            <div className="flex gap-2 flex-wrap">
+              <input type="text" value={personQ} onChange={(e) => setPersonQ(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); searchPeople(); } }} placeholder="Nom de la personne" className="flex-1 min-w-[10rem] border border-gray-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]" data-testid="mention-person-q" />
+              <button type="button" onClick={searchPeople} disabled={searching || personQ.trim().length < 2} data-testid="mention-person-search" className="bg-gray-900 hover:bg-gray-700 disabled:bg-gray-300 text-white text-xs px-3 py-1.5 rounded-lg">{searching ? "Recherche…" : "Chercher"}</button>
+            </div>
+            {people && (people.length ? (
+              <div className="flex flex-wrap gap-1.5" data-testid="mention-person-results">
+                {people.map((x) => (<button key={x.urn} type="button" disabled={busy} onClick={() => addPerson({ urn: x.urn, name: x.name })} className={chip}>@{x.name}</button>))}
+              </div>
+            ) : <p className="text-[11px] text-gray-400">Aucun abonné trouvé avec ce nom.</p>)}
+            <div className="flex gap-2 flex-wrap">
+              <input type="text" value={profileUrl} onChange={(e) => setProfileUrl(e.target.value)} placeholder="https://www.linkedin.com/in/…" className="flex-1 min-w-[12rem] border border-gray-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]" data-testid="mention-profile-url" />
+              <input type="text" value={profileName} onChange={(e) => setProfileName(e.target.value)} placeholder="Nom exact sur son profil" className="flex-1 min-w-[10rem] border border-gray-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]" data-testid="mention-profile-name" />
+              <button type="button" onClick={() => addPerson({ input: profileUrl, name: profileName })} disabled={busy || !profileUrl.trim() || !profileName.trim()} data-testid="mention-profile-add" className="bg-gray-900 hover:bg-gray-700 disabled:bg-gray-300 text-white text-xs px-3 py-1.5 rounded-lg">Ajouter et mentionner</button>
+            </div>
+            {personError && <p className="text-xs text-red-600" data-testid="mention-person-error">{personError}</p>}
+          </div>
         </div>
       )}
       {manual.length > 0 && (
         <div className="rounded-lg bg-amber-50 border border-amber-200 p-2.5 text-xs text-amber-800" data-testid="mention-manual">
           <p className="font-medium">À taguer à la main sur LinkedIn : {manual.map((n) => `@${n}`).join(", ")}</p>
-          <p className="mt-0.5 text-amber-700">LinkeePost ne peut pas taguer une personne : le nom est publié en simple texte. Après publication, {postUrl ? <a href={postUrl} target="_blank" rel="noreferrer" className="underline">ouvrez le post sur LinkedIn</a> : "ouvrez le post sur LinkedIn"}, cliquez « Modifier », supprimez le nom et retapez-le avec « @ » pour choisir la personne.</p>
+          <p className="mt-0.5 text-amber-700">Ce nom n&apos;est pas relié à un profil LinkedIn (voir « Une personne » ci-dessus) : il est publié en simple texte. Après publication, {postUrl ? <a href={postUrl} target="_blank" rel="noreferrer" className="underline">ouvrez le post sur LinkedIn</a> : "ouvrez le post sur LinkedIn"}, cliquez « Modifier », supprimez le nom et retapez-le avec « @ » pour choisir la personne.</p>
         </div>
       )}
     </div>
