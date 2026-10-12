@@ -15948,6 +15948,10 @@ export default function Home() {
   // "Mes posts" : ne montre que les posts du profil actuellement sélectionné
   // dans "Publier en tant que" (même sélecteur, réutilisé comme filtre d'affichage).
   const postsForTarget = drafts.filter((d) => (d.target || "person") === target);
+  // Nombre de posts par compte de publication (affiché dans le sélecteur) et comptes inconnus : un post rattaché à une page qui n'est pas dans la liste reste visible
+  const targetCounts = {};
+  for (const d of drafts) targetCounts[d.target || "person"] = (targetCounts[d.target || "person"] ?? 0) + 1;
+  const orphanTargets = Object.keys(targetCounts).filter((t) => t !== "person" && !orgs.some((o) => o.urn === t));
   // Filtres de « Mes posts » : recherche dans le texte et le thème, et campagne d'origine
   const normSearch = postSearch.trim().toLowerCase();
   const visiblePosts = postsForTarget.filter(
@@ -17867,7 +17871,7 @@ export default function Home() {
               (ce select fixe aussi le compte utilisé par les actions rapides "Publier") */}
           <div className="flex items-center justify-end mb-4 flex-wrap gap-3">
             {/* Le sélecteur reste visible même si une connexion LinkedIn a expiré : sans lui, les posts d'une page (programmés compris) deviennent introuvables */}
-            {(linkedin.connected || linkedin.orgConnected || orgs.length > 0) && (
+            {(linkedin.connected || linkedin.orgConnected || orgs.length > 0 || orphanTargets.length > 0) && (
               <label className="flex items-center gap-2 text-sm text-gray-600 flex-wrap">
                 Publier en tant que :
                 <select
@@ -17875,11 +17879,14 @@ export default function Home() {
                   onChange={(e) => setTarget(e.target.value)}
                   className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#ff5a5f] max-w-full"
                 >
-                  <option value="person">Profil personnel{linkedin.name ? ` (${linkedin.name})` : ""}{!linkedin.connected ? " (non connecté)" : ""}</option>
+                  <option value="person">Profil personnel{linkedin.name ? ` (${linkedin.name})` : ""}{!linkedin.connected ? " (non connecté)" : ""} · {targetCounts.person ?? 0} post{(targetCounts.person ?? 0) > 1 ? "s" : ""}</option>
                   {orgs.map((o) => (
                     <option key={o.urn} value={o.urn}>
-                      Page : {o.name}{!linkedin.orgConnected ? " (non connectée)" : ""}
+                      Page : {o.name}{!linkedin.orgConnected ? " (non connectée)" : ""} · {targetCounts[o.urn] ?? 0} post{(targetCounts[o.urn] ?? 0) > 1 ? "s" : ""}
                     </option>
+                  ))}
+                  {orphanTargets.map((t) => (
+                    <option key={t} value={t}>Autre page ({t.split(":").pop()}) · {targetCounts[t]} post{targetCounts[t] > 1 ? "s" : ""}</option>
                   ))}
                 </select>
               </label>
@@ -18025,7 +18032,10 @@ export default function Home() {
             ) : (
               <div className="bg-white rounded-2xl border border-dashed border-gray-200 p-12 text-center text-gray-400 max-w-xl mx-auto">
                 <History size={32} className="mx-auto mb-3" />
-                <p className="text-sm">Aucun post pour ce profil — changez de profil ci-dessus pour voir les autres.</p>
+                <p className="text-sm">Aucun post pour ce compte — changez de compte ci-dessus pour voir les autres.</p>
+                {Object.keys(targetCounts).length > 0 && (
+                  <p className="text-xs mt-2" data-testid="posts-elsewhere">Vos posts sont rattachés à : {Object.entries(targetCounts).map(([t, n]) => `${t === "person" ? "Profil personnel" : orgs.find((o) => o.urn === t)?.name ? `Page : ${orgs.find((o) => o.urn === t).name}` : `Autre page (${t.split(":").pop()})`} (${n})`).join(", ")}.</p>
+                )}
               </div>
             )
           ) : (
