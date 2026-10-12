@@ -14590,7 +14590,7 @@ export default function Home() {
 
   // Création pas à pas : « Pour qui ? » n'apparaît que s'il y a un choix (page entreprise connectée)
   const createSteps = [
-    ...((linkedin.connected && orgs.length > 0) || contexts.length > 0 ? [{ id: "who", label: "Pour qui ?", short: "Pour qui" }] : []),
+    ...((linkedin.connected && linkedin.orgConnected && orgs.length > 0) || contexts.length > 0 ? [{ id: "who", label: "Pour qui ?", short: "Pour qui" }] : []),
     { id: "topic", label: "De quoi parler ?", short: "Sujet" },
     ...(genMode === "single" ? [
       { id: "ctx", label: "Pour qui, et pour quoi ?", short: "Public" },
@@ -14664,12 +14664,11 @@ export default function Home() {
       .then((r) => r.json())
       .then((d) => {
         setLinkedin(d);
-        if (d.orgConnected) {
-          fetch("/api/linkedin/organizations")
-            .then((r) => r.json())
-            .then((o) => setOrgs(o.organizations ?? []))
-            .catch(() => {});
-        }
+        // Les pages connues sont chargées même si leur connexion a expiré (le serveur renvoie alors la liste enregistrée) : leurs posts restent consultables
+        fetch("/api/linkedin/organizations")
+          .then((r) => r.json())
+          .then((o) => setOrgs(o.organizations ?? []))
+          .catch(() => {});
       })
       .catch(() => {})
       .finally(() => setLinkedinLoaded(true));
@@ -14722,9 +14721,7 @@ export default function Home() {
       if (li === "connected" || li === "org_connected" || li === "stats_connected") {
         fetch("/api/linkedin/me").then((r) => r.json()).then((d) => {
           setLinkedin(d);
-          if (d.orgConnected) {
-            fetch("/api/linkedin/organizations").then((r) => r.json()).then((o) => setOrgs(o.organizations ?? [])).catch(() => {});
-          }
+          fetch("/api/linkedin/organizations").then((r) => r.json()).then((o) => setOrgs(o.organizations ?? [])).catch(() => {});
         }).catch(() => {});
       }
       window.history.replaceState({}, "", "/app");
@@ -14765,7 +14762,7 @@ export default function Home() {
   // Voix du post selon la page de publication : profil (« je ») ou page entreprise (« nous »)
   const voiceFor = (tgt) => (isOrgUrn(tgt) ? { kind: "org", pageName: orgs.find((o) => o.urn === tgt)?.name ?? "" } : { kind: "person" });
   // Deux versions : posts uniques seulement (ni série ni variantes)
-  const pairActive = Boolean(pairWith) && genMode === "single" && !wantVariants && linkedin.connected && orgs.some((o) => o.urn === pairWith);
+  const pairActive = Boolean(pairWith) && genMode === "single" && !wantVariants && linkedin.connected && linkedin.orgConnected && orgs.some((o) => o.urn === pairWith);
   // Change de version dans la paire : la version quittée garde ses retouches
   const switchPairTab = (i) => {
     if (!pair || i === pairTab || loading) return;
@@ -17056,7 +17053,7 @@ export default function Home() {
               </div>
             )}
             {/* Où publier : la voix du post en dépend (profil « je », page « nous ») */}
-            {linkedin.connected && orgs.length > 0 && (
+            {linkedin.connected && linkedin.orgConnected && orgs.length > 0 && (
               <div data-testid="publish-as">
                 <label className="text-sm font-medium text-gray-700 block mb-2">Publier en tant que</label>
                 <div className="flex flex-wrap gap-1.5">
@@ -17412,7 +17409,7 @@ export default function Home() {
                 {[
                   ["topic", "Sujet", genMode === "series" ? `Série de ${seriesCount} posts · ${form.theme.trim().slice(0, 90) || "à préciser"}` : (activeSource?.title || form.theme.trim().slice(0, 110) || "à préciser")],
                   ...(contexts.length > 0 ? [["who", "Entreprise", activeContext?.name || profile?.companyName || "Entreprise principale"]] : []),
-                  ...(linkedin.connected && orgs.length > 0 ? [["who", "Publier en tant que", pairActive ? `Profil + page ${orgs.find((o) => o.urn === pairWith)?.name ?? ""} (deux versions)` : isOrgUrn(target) ? `Page : ${orgs.find((o) => o.urn === target)?.name ?? "entreprise"}` : "Profil personnel"]] : []),
+                  ...(linkedin.connected && linkedin.orgConnected && orgs.length > 0 ? [["who", "Publier en tant que", pairActive ? `Profil + page ${orgs.find((o) => o.urn === pairWith)?.name ?? ""} (deux versions)` : isOrgUrn(target) ? `Page : ${orgs.find((o) => o.urn === target)?.name ?? "entreprise"}` : "Profil personnel"]] : []),
                   ...(genMode === "single" ? [
                     ["ctx", "Public et objectif", Object.keys(postCtxSpecific).length ? [postCtxSpecific.audience && `public : ${postCtxSpecific.audience}`, postCtxSpecific.goal && `objectif : ${postCtxSpecific.goal.split(",").join(" + ")}`, postCtxSpecific.angle && `angle : ${postCtxSpecific.angle}`].filter(Boolean).join(" · ") : "Repris de votre profil"],
                     ["shape", "Format", POST_TYPES.find((t) => t.id === form.type)?.label ?? "Post simple"],
@@ -17702,7 +17699,7 @@ export default function Home() {
                       avant publication (modifiable dans Profil).
                     </p>
                   )}
-                  {linkedin.connected && orgs.length > 0 && (
+                  {linkedin.connected && linkedin.orgConnected && orgs.length > 0 && (
                     <label className="flex items-center gap-2 text-xs text-gray-600 flex-wrap">
                       Publier en tant que :
                       <select
@@ -17869,7 +17866,8 @@ export default function Home() {
           {/* Barre d'options — le profil sélectionné filtre aussi la liste ci-dessous
               (ce select fixe aussi le compte utilisé par les actions rapides "Publier") */}
           <div className="flex items-center justify-end mb-4 flex-wrap gap-3">
-            {linkedin.connected && (
+            {/* Le sélecteur reste visible même si une connexion LinkedIn a expiré : sans lui, les posts d'une page (programmés compris) deviennent introuvables */}
+            {(linkedin.connected || linkedin.orgConnected || orgs.length > 0) && (
               <label className="flex items-center gap-2 text-sm text-gray-600 flex-wrap">
                 Publier en tant que :
                 <select
@@ -17877,13 +17875,12 @@ export default function Home() {
                   onChange={(e) => setTarget(e.target.value)}
                   className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#ff5a5f] max-w-full"
                 >
-                  <option value="person">Profil personnel{linkedin.name ? ` (${linkedin.name})` : ""}</option>
-                  {linkedin.orgConnected &&
-                    orgs.map((o) => (
-                      <option key={o.urn} value={o.urn}>
-                        Page : {o.name}
-                      </option>
-                    ))}
+                  <option value="person">Profil personnel{linkedin.name ? ` (${linkedin.name})` : ""}{!linkedin.connected ? " (non connecté)" : ""}</option>
+                  {orgs.map((o) => (
+                    <option key={o.urn} value={o.urn}>
+                      Page : {o.name}{!linkedin.orgConnected ? " (non connectée)" : ""}
+                    </option>
+                  ))}
                 </select>
               </label>
             )}
