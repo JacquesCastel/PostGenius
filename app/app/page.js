@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, createContext, useContext } from "react";
+import { useState, useEffect, useRef, createContext, useContext, useMemo } from "react";
 import {
   Sparkles, FileText, Layers, Video, Copy, Check, Trash2, Send,
   Clock, PenLine, History, RefreshCw, Linkedin, ChevronRight, ChevronLeft, X, LogOut,
@@ -449,7 +449,7 @@ function AuthScreen({ onAuth }) {
 // ----------------------------------------------------------------
 // Modal de programmation : date/heure + compte de publication
 // ----------------------------------------------------------------
-function ScheduleModal({ draft, linkedin, orgs, profile, onClose, onScheduled, showToast, statusAfter = "programmé" }) {
+function ScheduleModal({ draft, linkedin, orgs, profile, onClose, onScheduled, showToast, statusAfter = "programmé", clientName = null }) {
   // Par défaut : prochain créneau du rythme de publication, sinon demain 9 h
   const preferredSlot = nextPreferredSlots(profile, 1)?.[0] ?? null;
   const defaultWhen = () => {
@@ -460,13 +460,18 @@ function ScheduleModal({ draft, linkedin, orgs, profile, onClose, onScheduled, s
     return toDatetimeLocal(d);
   };
   const [when, setWhen] = useState(defaultWhen());
-  const [tgt, setTgt] = useState(draft.target ?? "person");
+  // Espace d'un client d'agence : le post va sur sa page, pas sur le profil de la personne dont le compte LinkedIn est connecté
+  const [tgt, setTgt] = useState(clientName && (draft.target ?? "person") === "person" && orgs?.length ? orgs[0].urn : draft.target ?? "person");
   const [saving, setSaving] = useState(false);
 
   const submit = async () => {
     const date = new Date(when);
     if (isNaN(date) || date <= new Date()) {
       showToast("Choisissez une date dans le futur");
+      return;
+    }
+    if (clientName && tgt === "person") {
+      showToast("Dans l'espace d'un client, on publie sur sa page entreprise : choisissez-la dans la liste.");
       return;
     }
     setSaving(true);
@@ -534,7 +539,7 @@ function ScheduleModal({ draft, linkedin, orgs, profile, onClose, onScheduled, s
               onChange={(e) => setTgt(e.target.value)}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
             >
-              <option value="person">Profil personnel{linkedin.name ? ` (${linkedin.name})` : ""}</option>
+              {!linkedin.clientSpace && <option value="person">Profil personnel{linkedin.name ? ` (${linkedin.name})` : ""}</option>}
               {linkedin.orgConnected &&
                 orgs.map((o) => (
                   <option key={o.urn} value={o.urn}>
@@ -1901,7 +1906,7 @@ function CampaignWizard({ profile, linkedin, orgs, onClose, onLaunched, onProfil
                   onChange={(e) => setTarget(e.target.value)}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
                 >
-                  <option value="person">Profil personnel</option>
+                  {!linkedin?.clientSpace && <option value="person">Profil personnel</option>}
                   {linkedin?.orgConnected &&
                     orgs?.map((o) => (
                       <option key={o.urn} value={o.urn}>
@@ -3383,7 +3388,7 @@ function CampaignsView({ profile, linkedin, orgs, showToast, onPlanned, onProfil
             onChange={(e) => setPlanTarget(e.target.value)}
             className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
           >
-            <option value="person">Profil personnel</option>
+            {!linkedin?.clientSpace && <option value="person">Profil personnel</option>}
             {linkedin?.orgConnected &&
               orgs?.map((o) => (
                 <option key={o.urn} value={o.urn}>
@@ -9384,7 +9389,7 @@ function DashboardView({ drafts, canVeille = true, canEvents = false, canScore =
                     onChange={(e) => setPlanTarget(e.target.value)}
                     className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
                   >
-                    <option value="person">Profil personnel</option>
+                    {!linkedin?.clientSpace && <option value="person">Profil personnel</option>}
                     {linkedin?.orgConnected &&
                       orgs?.map((o) => (
                         <option key={o.urn} value={o.urn}>
@@ -13531,10 +13536,15 @@ function ProfileCompanion({ stage, progress, missing, nextStage, values, onApply
 // Connexions : les comptes LinkedIn (profil, page entreprise, statistiques) et Instagram. Une entrée de menu à part,
 // toujours accessible : elle ne dépend plus de l'étape du parcours du Profil qui est ouverte.
 // ----------------------------------------------------------------
-function ConnectionsView({ linkedin, onDisconnect, instagram, onDisconnectInstagram, canOrgPublish = true }) {
+function ConnectionsView({ linkedin, onDisconnect, instagram, onDisconnectInstagram, canOrgPublish = true, clientName = null }) {
   return (
     <main className="max-w-3xl mx-auto p-6">
       <p className="text-sm text-gray-500 mb-2">Les comptes que LinkeePost utilise pour publier vos posts et lire leurs statistiques. La connexion quitte brièvement la page, puis vous y revenez.</p>
+        {clientName && (
+          <p className="text-xs text-sky-800 bg-sky-50 border border-sky-200 rounded-xl p-3 mt-3" data-testid="client-connections-note">
+            Espace de <strong>{clientName}</strong> : seule sa page entreprise LinkedIn est utilisée pour publier. Votre profil personnel n&apos;apparaît pas ici et ne sert jamais pour ce client.
+          </p>
+        )}
         {/* Connexions */}
         <div className="mt-6">
           <div className="flex items-center gap-2.5 mb-3">
@@ -13547,6 +13557,7 @@ function ConnectionsView({ linkedin, onDisconnect, instagram, onDisconnectInstag
             </div>
           </div>
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm divide-y divide-gray-100">
+            {!clientName && (<>
             {/* Profil personnel */}
             <div className="p-5 flex items-center justify-between gap-3 flex-wrap">
               <div className="flex items-center gap-3">
@@ -13587,6 +13598,7 @@ function ConnectionsView({ linkedin, onDisconnect, instagram, onDisconnectInstag
               )}
             </div>
 
+            </>)}
             {/* Page entreprise */}
             <div className="p-5 flex items-start justify-between gap-3 flex-wrap">
               <div className="flex items-start gap-3 flex-1">
@@ -13622,6 +13634,7 @@ function ConnectionsView({ linkedin, onDisconnect, instagram, onDisconnectInstag
               )}
             </div>
 
+            {!clientName && (<>
             {/* Mentions de personnes dans les posts de profil : le profil est aussi connecté par l'application des pages (identifiants de membre propres à chaque application) */}
             {linkedin.connected && (
               <div className="p-5 flex items-start justify-between gap-3 flex-wrap" data-testid="member-connection">
@@ -13644,6 +13657,8 @@ function ConnectionsView({ linkedin, onDisconnect, instagram, onDisconnectInstag
               </div>
             )}
 
+            </>)}
+            {!clientName && (<>
             {/* Statistiques du profil personnel — app LinkedIn dédiée, indépendante
                 de la page entreprise (Community Management API ne peut cohabiter
                 avec Share on LinkedIn / Sign In with LinkedIn sur la même app) */}
@@ -13676,6 +13691,7 @@ function ConnectionsView({ linkedin, onDisconnect, instagram, onDisconnectInstag
               )}
             </div>
 
+            </>)}
             {/* Instagram */}
             <div className="p-5 flex items-center justify-between gap-3 flex-wrap">
               <div className="flex items-center gap-3">
@@ -14887,10 +14903,20 @@ export default function Home() {
   const [editingId, setEditingId] = useState(null);
   const [editText, setEditText] = useState("");
   const [toast, setToast] = useState(null);
-  const [linkedin, setLinkedin] = useState({ connected: false, name: "", orgConnected: false });
+  const [linkedinRaw, setLinkedin] = useState({ connected: false, name: "", orgConnected: false });
+  // Espace d'un client d'agence (hors vue support) : tout reste dans le client. Seule SA page entreprise compte pour publier ;
+  // le profil personnel connecté (celui de la personne qui a branché la page) n'est ni affiché, ni proposé, ni utilisé.
+  const clientSpace = Boolean(impersonating && !impersonating.support);
+  const linkedin = useMemo(
+    () => (clientSpace ? { ...linkedinRaw, clientSpace: true, connected: Boolean(linkedinRaw.orgConnected), name: "", personExpiresAt: null, memberConnected: false, statsConnected: false } : linkedinRaw),
+    [linkedinRaw, clientSpace]
+  );
   const [instagram, setInstagram] = useState(null); // null = chargement, false = non connecté, objet = connecté
   const [publishingId, setPublishingId] = useState(null);
   const [orgs, setOrgs] = useState([]);
+  useEffect(() => {
+    if (clientSpace && orgs.length) setTarget((t) => (t === "person" ? orgs[0].urn : t));
+  }, [impersonating?.id, orgs.length]);
   const [target, setTarget] = useState("person");
   // « Profil + page » : le post est écrit deux fois, une version par voix (profil « je », page « nous »)
   const [pairWith, setPairWith] = useState(null); // urn de la page associée
@@ -16084,6 +16110,10 @@ export default function Home() {
       showToast("Connectez d'abord votre compte LinkedIn");
       return false;
     }
+    if (clientSpace && target === "person") {
+      showToast("Dans l'espace d'un client, on publie sur sa page entreprise : choisissez-la dans « Publier en tant que » (ou connectez-la dans « Connexions »).");
+      return false;
+    }
     setPublishingId(p.id);
     try {
       const res = await fetch("/api/linkedin/publish", {
@@ -16321,10 +16351,12 @@ export default function Home() {
 
   // "Mes posts" : ne montre que les posts du profil actuellement sélectionné
   // dans "Publier en tant que" (même sélecteur, réutilisé comme filtre d'affichage).
-  const postsForTarget = drafts.filter((d) => (d.target || "person") === target);
+  // Espace client : un post resté rattaché au « profil » (ancien réglage) est rangé avec la page du client, jamais avec un profil
+  const effTarget = (d) => (clientSpace && (!d.target || d.target === "person") && orgs.length ? orgs[0].urn : d.target || "person");
+  const postsForTarget = drafts.filter((d) => effTarget(d) === target);
   // Nombre de posts par compte de publication (affiché dans le sélecteur) et comptes inconnus : un post rattaché à une page qui n'est pas dans la liste reste visible
   const targetCounts = {};
-  for (const d of drafts) targetCounts[d.target || "person"] = (targetCounts[d.target || "person"] ?? 0) + 1;
+  for (const d of drafts) targetCounts[effTarget(d)] = (targetCounts[effTarget(d)] ?? 0) + 1;
   const orphanTargets = Object.keys(targetCounts).filter((t) => t !== "person" && !orgs.some((o) => o.urn === t));
   // Filtres de « Mes posts » : recherche dans le texte et le thème, et campagne d'origine
   const normSearch = postSearch.trim().toLowerCase();
@@ -16923,6 +16955,7 @@ export default function Home() {
           linkedin={linkedin}
           orgs={orgs}
           profile={profile}
+          clientName={clientSpace ? impersonating.companyName || impersonating.name : null}
           statusAfter={scheduleStatus}
           showToast={showToast}
           onClose={() => {
@@ -17509,9 +17542,9 @@ export default function Home() {
                 <label className="text-sm font-medium text-gray-700 block mb-2">Publier en tant que</label>
                 <div className="flex flex-wrap gap-1.5">
                   {[
-                    { v: "person", label: `Profil personnel${linkedin.name ? ` (${linkedin.name})` : ""}` },
+                    ...(linkedin.clientSpace ? [] : [{ v: "person", label: `Profil personnel${linkedin.name ? ` (${linkedin.name})` : ""}` }]),
                     ...orgs.map((o) => ({ v: o.urn, label: `Page : ${o.name}` })),
-                    ...(genMode === "single" && !wantVariants ? orgs.map((o) => ({ v: `both:${o.urn}`, label: `Profil + page ${o.name}` })) : []),
+                    ...(genMode === "single" && !wantVariants && !linkedin.clientSpace ? orgs.map((o) => ({ v: `both:${o.urn}`, label: `Profil + page ${o.name}` })) : []),
                   ].map((o) => {
                     const current = pairActive ? `both:${pairWith}` : target;
                     return (
@@ -18158,9 +18191,11 @@ export default function Home() {
                         onChange={(e) => setTarget(e.target.value)}
                         className="border border-gray-300 rounded-lg px-2 py-1 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-[#ff5a5f] max-w-full"
                       >
-                        <option value="person">
-                          Profil personnel{linkedin.name ? ` (${linkedin.name})` : ""}
-                        </option>
+                        {!linkedin.clientSpace && (
+                          <option value="person">
+                            Profil personnel{linkedin.name ? ` (${linkedin.name})` : ""}
+                          </option>
+                        )}
                         {linkedin.orgConnected &&
                           orgs.map((o) => (
                             <option key={o.urn} value={o.urn}>
@@ -18294,7 +18329,7 @@ export default function Home() {
           }}
         />
       ) : view === "connections" ? (
-        <ConnectionsView linkedin={linkedin} onDisconnect={disconnect} instagram={instagram} onDisconnectInstagram={disconnectInstagram} canOrgPublish={plan.orgPublish} />
+        <ConnectionsView clientName={clientSpace ? impersonating.companyName || impersonating.name : null} linkedin={linkedin} onDisconnect={disconnect} instagram={instagram} onDisconnectInstagram={disconnectInstagram} canOrgPublish={plan.orgPublish} />
       ) : view === "clients" ? (
         <ClientsView
           showToast={showToast}
@@ -18326,7 +18361,7 @@ export default function Home() {
                   onChange={(e) => setTarget(e.target.value)}
                   className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#ff5a5f] max-w-full"
                 >
-                  <option value="person">Profil personnel{linkedin.name ? ` (${linkedin.name})` : ""}{!linkedin.connected ? " (non connecté)" : ""} · {targetCounts.person ?? 0} post{(targetCounts.person ?? 0) > 1 ? "s" : ""}</option>
+                  {!linkedin.clientSpace && <option value="person">Profil personnel{linkedin.name ? ` (${linkedin.name})` : ""}{!linkedin.connected ? " (non connecté)" : ""} · {targetCounts.person ?? 0} post{(targetCounts.person ?? 0) > 1 ? "s" : ""}</option>}
                   {orgs.map((o) => (
                     <option key={o.urn} value={o.urn}>
                       Page : {o.name}{!linkedin.orgConnected ? " (non connectée)" : ""} · {targetCounts[o.urn] ?? 0} post{(targetCounts[o.urn] ?? 0) > 1 ? "s" : ""}
