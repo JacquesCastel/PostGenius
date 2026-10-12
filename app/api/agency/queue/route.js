@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { requireAgency } from "@/lib/agency";
+import { requireAgency, clientScope } from "@/lib/agency";
 
 
 // GET /api/agency/queue — posts à traiter (à valider, en erreur) de tous les clients
@@ -11,7 +11,7 @@ export async function GET(req) {
     const drafts = await prisma.draft.findMany({
       where: {
         status: { in: ["à valider", "erreur"] },
-        user: { agencyId: auth.agencyId },
+        user: clientScope(auth),
       },
       select: {
         id: true, status: true, text: true, type: true, imageUrl: true,

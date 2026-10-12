@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { requireAgency } from "@/lib/agency";
+import { requireAgency, clientScope } from "@/lib/agency";
 import bcrypt from "bcryptjs";
 
 
@@ -11,7 +11,7 @@ export async function GET(req) {
 
   try {
     const clients = await prisma.user.findMany({
-      where: { agencyId: auth.agencyId },
+      where: clientScope(auth),
       select: {
         id: true,
         name: true,
@@ -74,6 +74,9 @@ export async function POST(req) {
       },
       select: { id: true, name: true, email: true, companyName: true, headline: true, createdAt: true },
     });
+
+    // Le collaborateur qui crée un client y est affecté (utile quand l'agence cloisonne ses clients)
+    if (auth.role !== "owner") await prisma.clientAccess.create({ data: { agencyId: auth.agencyId, clientId: client.id, memberId: auth.userId } });
 
     return NextResponse.json({ client }, { status: 201 });
   } catch (e) {

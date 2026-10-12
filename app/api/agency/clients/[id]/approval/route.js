@@ -10,7 +10,7 @@ export async function GET(req, { params }) {
   const auth = await requireAgency(req);
   if (auth.error) return NextResponse.json({ error: auth.error }, { status: auth.status });
   const { id } = await params;
-  if (!(await ownClient(auth.agencyId, id))) return NextResponse.json({ error: "Client introuvable" }, { status: 404 });
+  if (!(await ownClient(auth, id))) return NextResponse.json({ error: "Client introuvable" }, { status: 404 });
   const link = await prisma.approvalLink.findUnique({ where: { userId: id } });
   return NextResponse.json({ link: link ? { url: approvalUrl(link.token), sentTo: link.sentTo, lastSentAt: link.lastSentAt } : null });
 }
@@ -20,7 +20,7 @@ export async function POST(req, { params }) {
   const auth = await requireAgency(req);
   if (auth.error) return NextResponse.json({ error: auth.error }, { status: auth.status });
   const { id } = await params;
-  const client = await ownClient(auth.agencyId, id, { id: true, name: true, companyName: true, agency: { select: { name: true } } });
+  const client = await ownClient(auth, id, { id: true, name: true, companyName: true, agency: { select: { name: true } } });
   if (!client) return NextResponse.json({ error: "Client introuvable" }, { status: 404 });
   const body = await req.json().catch(() => ({}));
   const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";

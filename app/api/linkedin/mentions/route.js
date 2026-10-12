@@ -93,6 +93,15 @@ async function resolveProfile(userId, vanity) {
 // Si LINKEDIN_ORG_SCOPES est défini sur le serveur, il doit contenir r_organization_followers.
 const PEOPLE_SEARCH = process.env.LINKEDIN_PEOPLE_SEARCH !== "0";
 
+// Agence qui cloisonne : un collaborateur ne retrouve que les personnes des clients qui lui sont affectés
+async function restrictedScope(userId, agencyId) {
+  const [ag, mem] = await Promise.all([
+    prisma.agency.findUnique({ where: { id: agencyId }, select: { restrictClients: true } }),
+    prisma.agencyMember.findUnique({ where: { userId }, select: { role: true } }),
+  ]);
+  return ag?.restrictClients && mem?.role !== "owner" ? { accessAsClient: { some: { memberId: userId } } } : {};
+}
+
 // Personnes déjà connectées à LinkeePost (leur profil LinkedIn est relié) : l'équipe de l'agence et les personnes de ses clients
 async function connectedPeople(req, userId) {
   const session = await getSessionData(req);
@@ -103,7 +112,7 @@ async function connectedPeople(req, userId) {
   if (mem) {
     const [members, clients] = await Promise.all([
       prisma.agencyMember.findMany({ where: { agencyId: mem.agencyId }, select: { userId: true } }),
-      prisma.user.findMany({ where: { agencyId: mem.agencyId }, select: { id: true } }),
+      prisma.user.findMany({ where: { agencyId: mem.agencyId, ...(await restrictedScope(real, mem.agencyId)) }, select: { id: true } }),
     ]);
     ids = [...members.map((m) => m.userId), ...clients.map((c) => c.id)];
   }

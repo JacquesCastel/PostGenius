@@ -10978,7 +10978,7 @@ const FEATURE_LABELS = {
   orgStats: "Les statistiques de page",
 };
 
-const DEEP_LINK_VIEWS = ["dashboard", "create", "history", "campaigns", "connections", "profile", "stats", "copilot", "events", "engage", "brand-kit", "billing", "clients", "messages", "datalake"];
+const DEEP_LINK_VIEWS = ["dashboard", "create", "history", "campaigns", "connections", "profile", "stats", "copilot", "events", "engage", "brand-kit", "billing", "clients", "queue", "followup", "team", "messages", "datalake"];
 
 function ClientTableRow({ client, onManage, onViewDrafts, onDelete, deleting, onShowReport, onApproval }) {
   const [open, setOpen] = useState(false);
@@ -11288,7 +11288,82 @@ function TeamPanel({ showToast }) {
   );
 }
 
-function ClientsView({ showToast, onManage }) {
+// Affectation des clients aux collaborateurs (propriétaire de l'agence). Sans cloisonnement, tous voient tous les clients ;
+// avec, chaque collaborateur ne voit que les clients qui lui sont affectés. Le propriétaire voit toujours tout.
+function ClientAssignments({ clients, showToast }) {
+  const [data, setData] = useState(undefined); // undefined = chargement, null = pas propriétaire
+  const [busy, setBusy] = useState(false);
+  useEffect(() => {
+    fetch("/api/agency/access").then(async (r) => (r.ok ? setData(await r.json()) : setData(null))).catch(() => setData(null));
+  }, []);
+  if (!data) return null;
+  const staff = data.members.filter((m) => m.role !== "owner");
+  const put = async (body) => {
+    setBusy(true);
+    try {
+      const res = await fetch("/api/agency/access", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(d.error || "Erreur");
+      return true;
+    } catch (e) {
+      showToast(e.message);
+      return false;
+    } finally {
+      setBusy(false);
+    }
+  };
+  const toggleRestrict = async () => {
+    const next = !data.restrict;
+    if (next && !window.confirm("Cloisonner les clients ? Chaque collaborateur ne verra plus que les clients qui lui sont affectés (vous voyez toujours tout). Pensez à les affecter ensuite.")) return;
+    if (await put({ restrict: next })) setData((d) => ({ ...d, restrict: next }));
+  };
+  const toggleMember = async (clientId, memberId) => {
+    const cur = data.access[clientId] ?? [];
+    const next = cur.includes(memberId) ? cur.filter((x) => x !== memberId) : [...cur, memberId];
+    if (await put({ clientId, memberIds: next })) setData((d) => ({ ...d, access: { ...d.access, [clientId]: next } }));
+  };
+  return (
+    <section className="bg-white border border-gray-100 rounded-2xl shadow-sm mb-6 overflow-hidden" data-testid="client-assignments">
+      <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between gap-3 flex-wrap">
+        <div>
+          <h3 className="font-semibold text-sm text-[#1b2a4a]">Affectation des clients</h3>
+          <p className="text-xs text-gray-400 mt-0.5">{data.restrict ? "Chaque collaborateur ne voit que les clients qui lui sont affectés. Un client peut avoir plusieurs collaborateurs." : "Aujourd'hui, tous les collaborateurs voient tous les clients. Activez le cloisonnement pour les séparer."}</p>
+        </div>
+        <button type="button" onClick={toggleRestrict} disabled={busy} data-testid="restrict-toggle" className={`text-xs font-semibold px-3 py-1.5 rounded-lg border ${data.restrict ? "bg-[#ff5a5f] text-white border-[#ff5a5f]" : "border-gray-300 text-gray-700 hover:border-[#ff5a5f]"}`}>
+          {data.restrict ? "Cloisonnement actif" : "Cloisonner les clients"}
+        </button>
+      </div>
+      {staff.length === 0 ? (
+        <p className="text-sm text-gray-400 px-4 py-4">Invitez d&apos;abord un collaborateur (bloc « Équipe de l&apos;agence » ci-dessus) pour pouvoir lui affecter des clients.</p>
+      ) : clients.length === 0 ? (
+        <p className="text-sm text-gray-400 px-4 py-4">Aucun client pour l&apos;instant.</p>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead><tr className="text-xs text-gray-400 text-left border-b border-gray-100">
+              <th className="px-4 py-2 font-semibold">Client</th>
+              {staff.map((m) => <th key={m.id} className="px-3 py-2 font-semibold text-center" title={m.email}>{m.name || m.email}</th>)}
+            </tr></thead>
+            <tbody>
+              {clients.map((c) => (
+                <tr key={c.id} className="border-b border-gray-50" data-testid="assignment-row">
+                  <td className="px-4 py-2 font-medium text-[#1b2a4a]">{c.companyName || c.name}</td>
+                  {staff.map((m) => (
+                    <td key={m.id} className="px-3 py-2 text-center">
+                      <input type="checkbox" checked={(data.access[c.id] ?? []).includes(m.id)} onChange={() => toggleMember(c.id, m.id)} disabled={busy} aria-label={`${m.name || m.email} : ${c.companyName || c.name}`} data-testid="assignment-box" />
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function ClientsView({ showToast, onManage, section = "clients", onSection }) {
   const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [panelClient, setPanelClient] = useState(null); // client pour le panel brouillons
@@ -11424,23 +11499,34 @@ function ClientsView({ showToast, onManage }) {
         {/* En-tête */}
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-xl font-bold text-[#1b2a4a]">Tableau de bord clients</h2>
-            <p className="text-sm text-gray-400 mt-0.5">
-              {loading ? "Chargement…" : clients.length
+            <p className="text-sm text-gray-500">
+              {section === "clients" ? (loading ? "Chargement…" : clients.length
                 ? `${clients.length} client${clients.length > 1 ? "s" : ""} · vue synthétique`
-                : "Ajoutez vos premiers clients"}
+                : "Ajoutez vos premiers clients")
+                : section === "queue" ? "Posts de tous vos clients qui attendent une action de votre part."
+                : section === "followup" ? "Ce qui a été publié, validé et reste à traiter, mois par mois, pour chaque client."
+                : "Les collaborateurs de l'agence et les clients qu'ils gèrent."}
             </p>
           </div>
-          <button onClick={openCreate}
-            className="flex items-center gap-2 bg-[#ff5a5f] text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-[#e5454a] transition-colors">
-            <UserPlus size={15} /> Ajouter un client
-          </button>
+          {section === "clients" && (
+            <button onClick={openCreate}
+              className="flex items-center gap-2 bg-[#ff5a5f] text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-[#e5454a] transition-colors">
+              <UserPlus size={15} /> Ajouter un client
+            </button>
+          )}
         </div>
 
-        <TeamPanel showToast={showToast} />
-        {clients.length > 0 && <FollowupPanel showToast={showToast} />}
+        {section === "team" && <TeamPanel showToast={showToast} />}
+        {section === "team" && <ClientAssignments clients={clients} showToast={showToast} />}
+        {section === "followup" && clients.length > 0 && <FollowupPanel defaultOpen showToast={showToast} />}
+        {section === "clients" && queueCounts["à valider"] + queueCounts.erreur > 0 && (
+          <button type="button" onClick={() => onSection?.("queue")} data-testid="queue-banner" className="w-full text-left mb-4 flex items-center justify-between gap-3 bg-amber-50 border border-amber-200 hover:bg-amber-100 rounded-xl px-4 py-3">
+            <span className="text-sm text-amber-900"><strong>{queueCounts["à valider"] + queueCounts.erreur}</strong> post{queueCounts["à valider"] + queueCounts.erreur > 1 ? "s" : ""} à traiter ({queueCounts["à valider"]} à valider, {queueCounts.erreur} en erreur)</span>
+            <span className="text-xs font-semibold text-amber-900 flex items-center gap-1">Voir <ChevronRight size={13} /></span>
+          </button>
+        )}
 
-        {loading ? (
+        {section === "team" || section === "followup" ? null : loading ? (
           <div className="text-center py-20 text-gray-300 text-sm">Chargement…</div>
         ) : clients.length === 0 ? (
           /* État vide */
@@ -11460,7 +11546,7 @@ function ClientsView({ showToast, onManage }) {
         ) : (
           <>
           {/* File « À traiter » : relire et valider sans changer de compte */}
-          {queueCounts["à valider"] + queueCounts.erreur > 0 && (
+          {section === "queue" && (
             <section className="bg-white border border-gray-100 rounded-2xl shadow-sm mb-6 overflow-hidden" data-testid="agency-queue">
               <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between gap-3 flex-wrap">
                 <div>
@@ -11512,6 +11598,7 @@ function ClientsView({ showToast, onManage }) {
             </section>
           )}
 
+          {section === "clients" && (<>
           {clients.length > 6 && (
             <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Rechercher un client…" aria-label="Rechercher un client"
               className="w-full sm:w-72 border border-gray-200 rounded-xl px-4 py-2 text-sm mb-3 focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]" />
@@ -11548,6 +11635,7 @@ function ClientsView({ showToast, onManage }) {
               </tbody>
             </table>
           </div>
+          </>)}
           </>
         )}
       </main>
@@ -11579,12 +11667,12 @@ function ClientsView({ showToast, onManage }) {
 }
 
 // Suivi du mois, une ligne par client : publiés, validés par le client, en attente ; exportable en CSV (Excel)
-function FollowupPanel({ showToast }) {
+function FollowupPanel({ showToast, defaultOpen = false }) {
   const now = new Date();
   const [period, setPeriod] = useState({ year: now.getFullYear(), month: now.getMonth() + 1 });
   const [rows, setRows] = useState(null);
   const [error, setError] = useState(null);
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(defaultOpen);
   useEffect(() => {
     if (!open) return;
     setRows(null);
@@ -14612,6 +14700,15 @@ export default function Home() {
     if (support) { setView("admin"); window.location.reload(); return; }
     window.location.href = "/app?view=clients";
   };
+  // Compte Agence : l'application est organisée autour des CLIENTS. Sans client ouvert, on est dans l'agence (clients, à traiter, suivi, équipe,
+  // compte) ; dans un client, on a le menu de CE client. Pas de menu « personnel » : l'agence ne publie pas pour elle-même.
+  const agencyHome = user?.plan === "agence" && !impersonating && !user?.isSuperAdmin;
+  const clientMode = Boolean(impersonating && !impersonating.support);
+  const [clientTool, setClientTool] = useState(null); // "approval" | "report" : outils du client ouvert depuis le bandeau
+  useEffect(() => {
+    if (agencyHome && !["clients", "queue", "followup", "team", "billing", "brand-kit", "admin", "content", "messages"].includes(view)) setView("clients");
+    if (clientMode && ["billing", "clients", "queue", "followup", "team"].includes(view)) setView("dashboard");
+  }, [agencyHome, clientMode, view]);
   // Agence : bascule d'un client à l'autre sans repasser par le tableau de bord, en restant sur le même écran
   const [agencyClients, setAgencyClients] = useState([]);
   useEffect(() => {
@@ -16184,7 +16281,7 @@ export default function Home() {
       </div>
     );
   }
-  if (!profile?.onboardedAt && !user.isSuperAdmin) {
+  if (!profile?.onboardedAt && !user.isSuperAdmin && !agencyHome) {
     return (
       <OnboardingWizard
         forClient={impersonating && !impersonating.support ? impersonating : null}
@@ -16227,6 +16324,37 @@ export default function Home() {
         { id: "admin", label: "Administration", icon: ShieldCheck },
         { id: "content", label: "Contenu du site", icon: PenLine },
         { id: "messages", label: "Messages", icon: MessageSquare },
+      ]
+    : agencyHome
+    ? [
+        { id: "clients", label: "Clients", icon: Users },
+        { id: "queue", label: "À traiter", icon: Check },
+        { id: "followup", label: "Suivi et rapports", icon: BarChart3 },
+        { id: "team", label: "Équipe", icon: UserRound },
+        { id: "billing", label: "Abonnement", icon: CreditCard, group: "Compte" },
+        { id: "brand-kit", label: "Charte de l'agence", icon: ImageIcon, group: "Compte" },
+        ...(user.isAdmin
+          ? [
+              { id: "admin", label: "Administration", icon: ShieldCheck, group: "Administration" },
+              { id: "content", label: "Contenu du site", icon: PenLine, group: "Administration" },
+              { id: "messages", label: "Messages", icon: MessageSquare, group: "Administration" },
+            ]
+          : []),
+      ]
+    : clientMode
+    ? [
+        { id: "dashboard", label: "Tableau de bord", icon: LayoutDashboard },
+        { id: "create", label: "Créer un post", icon: Sparkles, group: "Créer" },
+        { id: "campaigns", label: "Campagnes", icon: LayersIcon, requires: "campaigns", featureLabel: "Les campagnes", group: "Créer" },
+        { id: "datalake", label: "Datalake éditorial", icon: Database, group: "Créer" },
+        { id: "events", label: "Événements", icon: MapPin, requires: "events", featureLabel: "Le module Événements", group: "Créer" },
+        { id: "history", label: "Posts", icon: History, badge: drafts.length || null, group: "Piloter" },
+        { id: "engage", label: "Interagir", icon: ThumbsUp, group: "Piloter" },
+        { id: "stats", label: "Statistiques", icon: BarChart3, group: "Piloter" },
+        { id: "copilot", label: "Copilote IA", icon: Compass, group: "Piloter" },
+        { id: "profile", label: "Profil du client", icon: UserRound, group: "Client" },
+        { id: "connections", label: "Page LinkedIn", icon: Linkedin, group: "Client" },
+        { id: "brand-kit", label: "Charte graphique", icon: ImageIcon, group: "Client" },
       ]
     : [
         { id: "dashboard", label: "Tableau de bord", icon: LayoutDashboard },
@@ -16282,7 +16410,10 @@ export default function Home() {
     profile: "Mon profil",
     "connections": "Connexions",
     "brand-kit": "Charte graphique",
-    clients: "Mes clients",
+    clients: "Clients",
+    queue: "À traiter",
+    followup: "Suivi et rapports",
+    team: "Équipe de l'agence",
     admin: "Administration",
     content: "Contenu du site",
     messages: "Messages de contact",
@@ -16747,7 +16878,7 @@ export default function Home() {
                 Compte d'administration — hors offres, sans accès aux outils de création.
               </p>
             </div>
-          ) : (
+          ) : clientMode ? null : (
             <div className="rounded-2xl bg-[#fff1f1] p-3">
               <p className="text-[11px] text-gray-500">Votre offre</p>
               <p className="font-bold text-[#ff5a5f] flex items-center gap-1.5">
@@ -16879,7 +17010,7 @@ export default function Home() {
         <header className="px-6 pt-6 pb-1 flex items-center justify-between flex-wrap gap-3 max-w-5xl mx-auto">
           <div>
             <h1 className="text-xl font-bold">{VIEW_TITLES[view]}</h1>
-            <p className="text-xs text-gray-400">Bonjour {user.name || ""} 👋</p>
+            <p className="text-xs text-gray-400">{agencyHome ? `Agence · ${user.name || ""}` : clientMode ? `Client : ${impersonating.companyName || impersonating.name}` : `Bonjour ${user.name || ""} 👋`}</p>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
           {contexts.length > 0 && !user.isSuperAdmin && ["dashboard", "create", "campaigns", "brand-kit", "datalake"].includes(view) && (
@@ -16891,7 +17022,7 @@ export default function Home() {
               </select>
             </label>
           )}
-          {user.isSuperAdmin ? null : linkedin.connected ? (
+          {user.isSuperAdmin || agencyHome ? null : linkedin.connected ? (
             <div className="flex items-center gap-2 text-sm flex-wrap">
               <span className="flex items-center gap-1.5 bg-green-50 text-green-700 px-3 py-1.5 rounded-full text-xs font-medium">
                 <span className="w-2 h-2 bg-green-500 rounded-full" />
@@ -17039,10 +17170,19 @@ export default function Home() {
             >
               {impersonating.support ? "← Quitter la vue support" : "← Revenir à mes clients"}
             </button>
+            {clientMode && (
+              <>
+                <button type="button" onClick={() => setClientTool("approval")} data-testid="banner-approval" className="text-xs font-semibold border border-amber-300 bg-white hover:bg-amber-100 rounded-lg px-2.5 py-1">Lien de validation</button>
+                <button type="button" onClick={() => setClientTool("report")} data-testid="banner-report" className="text-xs font-semibold border border-amber-300 bg-white hover:bg-amber-100 rounded-lg px-2.5 py-1">Rapport</button>
+              </>
+            )}
             </span>
           </div>
         </div>
       )}
+
+      {clientMode && clientTool === "approval" && <ApprovalLinkDialog client={impersonating} showToast={showToast} onClose={() => setClientTool(null)} />}
+      {clientMode && clientTool === "report" && <MonthlyReportModal client={impersonating} onClose={() => setClientTool(null)} />}
 
       {view === "dashboard" ? (
         <DashboardView
@@ -18330,8 +18470,10 @@ export default function Home() {
         />
       ) : view === "connections" ? (
         <ConnectionsView clientName={clientSpace ? impersonating.companyName || impersonating.name : null} linkedin={linkedin} onDisconnect={disconnect} instagram={instagram} onDisconnectInstagram={disconnectInstagram} canOrgPublish={plan.orgPublish} />
-      ) : view === "clients" ? (
+      ) : ["clients", "queue", "followup", "team"].includes(view) ? (
         <ClientsView
+          section={view}
+          onSection={setView}
           showToast={showToast}
           onManage={async (client, targetView = "dashboard") => {
             const res = await fetch("/api/agency/impersonate", {

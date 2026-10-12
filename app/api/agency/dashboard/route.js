@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { requireAgency } from "@/lib/agency";
+import { requireAgency, clientScope } from "@/lib/agency";
 
 
 // Calcule le % de complétion du profil et la liste des champs manquants
@@ -27,7 +27,7 @@ export async function GET(req) {
 
   try {
     const clients = await prisma.user.findMany({
-      where: { agencyId: auth.agencyId },
+      where: clientScope(auth),
       select: {
         id: true, name: true, email: true, companyName: true, onboardedAt: true,
         headline: true, businessDescription: true, targetAudience: true,

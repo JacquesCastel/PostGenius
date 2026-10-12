@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { requireAgency } from "@/lib/agency";
+import { requireAgency, clientScope } from "@/lib/agency";
 import { checkFeature, limitBody } from "@/lib/gating";
 import { getMonthlyReport } from "@/lib/reports/monthly";
 
@@ -17,7 +17,7 @@ export async function GET(req) {
   const month = Number(sp.get("month")) || now.getMonth() + 1;
   if (month < 1 || month > 12) return NextResponse.json({ error: "Mois invalide." }, { status: 400 });
 
-  const clients = await prisma.user.findMany({ where: { agencyId: auth.agencyId }, select: { id: true, name: true, companyName: true }, orderBy: { createdAt: "asc" } });
+  const clients = await prisma.user.findMany({ where: clientScope(auth), select: { id: true, name: true, companyName: true }, orderBy: { createdAt: "asc" } });
   const rows = [];
   for (const c of clients) {
     const [r, awaitingClient, changeRequests, scheduled] = await Promise.all([

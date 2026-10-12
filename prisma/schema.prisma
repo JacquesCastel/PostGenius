@@ -137,6 +137,9 @@ model User {
   agencyMembership AgencyMember?
   // Lien de validation pour le client final (agence) : voir ApprovalLink
   approvalLink ApprovalLink?
+  // Affectations (voir ClientAccess) : ce compte comme client affecté à des collaborateurs, ou comme collaborateur affecté à des clients
+  accessAsClient ClientAccess[] @relation("ClientAccessClient")
+  accessAsMember ClientAccess[] @relation("ClientAccessMember")
   // Lien de partage du rapport mensuel (agence) : voir ReportLink
   reportLink ReportLink?
 
@@ -170,6 +173,25 @@ model Agency {
   members AgencyMember[]
   clients User[]         @relation("AgencyClients")
   invites AgencyInvite[]
+  // Cloisonnement : si vrai, un collaborateur (non propriétaire) ne voit que les clients qui lui sont affectés (ClientAccess)
+  restrictClients Boolean @default(false)
+  accesses        ClientAccess[]
+}
+
+// Affectation d'un client d'agence à un collaborateur (un client peut avoir 1 à n collaborateurs). Le propriétaire de l'agence voit toujours tout.
+model ClientAccess {
+  id        String   @id @default(cuid())
+  agencyId  String
+  agency    Agency   @relation(fields: [agencyId], references: [id], onDelete: Cascade)
+  clientId  String
+  client    User     @relation("ClientAccessClient", fields: [clientId], references: [id], onDelete: Cascade)
+  memberId  String
+  member    User     @relation("ClientAccessMember", fields: [memberId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([clientId, memberId])
+  @@index([agencyId])
+  @@index([memberId])
 }
 
 // Lien de validation d'un client d'agence : le client final relit et valide (ou demande des modifications) sans compte.

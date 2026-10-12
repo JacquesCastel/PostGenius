@@ -13,7 +13,7 @@ export async function POST(req) {
   if (!clientId) return NextResponse.json({ error: "clientId requis" }, { status: 400 });
 
   // Vérifie que ce client appartient à l'agence
-  const client = await ownClient(auth.agencyId, clientId, { name: true, companyName: true });
+  const client = await ownClient(auth, clientId, { name: true, companyName: true });
   if (!client) {
     return NextResponse.json({ error: "Client introuvable" }, { status: 404 });
   }
