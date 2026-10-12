@@ -2467,7 +2467,7 @@ function BriefImport({ showToast, onClose, onCreated, draft = null }) {
 
 // Mentions dans un post : pages LinkedIn (vraie mention, publiée avec lien et notification) et personnes (rappel pour les taguer
 // à la main : l'application ne peut pas retrouver l'identifiant LinkedIn d'un membre).
-function MentionTool({ draftId, text, onInsert, mentions, onMentions, getCursor, showToast, postUrl, onMarkPublished }) {
+function MentionTool({ draftId, local, text, onInsert, mentions, onMentions, getCursor, showToast, postUrl, onMarkPublished }) {
   const [memberConnected, setMemberConnected] = useState(true); // profil connecté pour les mentions de personnes (vrai par défaut : pas d'alerte avant lecture)
   useEffect(() => { fetch("/api/linkedin/me").then(readJson).then((d) => setMemberConnected(Boolean(d.memberConnected))).catch(() => {}); }, []);
   const [open, setOpen] = useState(false);
@@ -2578,9 +2578,9 @@ function MentionTool({ draftId, text, onInsert, mentions, onMentions, getCursor,
   return (
     <div className="space-y-2" data-testid="mention-tool">
       <div className="flex items-center gap-2 flex-wrap">
-        <button type="button" onClick={() => setOpen((o) => !o)} disabled={!draftId} data-testid="mention-open" className="text-xs border border-gray-300 hover:border-[#ff5a5f] hover:text-[#ff5a5f] disabled:opacity-50 px-3 py-1.5 rounded-lg">@ Mentionner</button>
+        <button type="button" onClick={() => setOpen((o) => !o)} disabled={!draftId && !local} data-testid="mention-open" className="text-xs border border-gray-300 hover:border-[#ff5a5f] hover:text-[#ff5a5f] disabled:opacity-50 px-3 py-1.5 rounded-lg">@ Mentionner</button>
         <button type="button" onClick={openLinkedIn} disabled={!text.trim()} data-testid="mention-open-linkedin" title="Ouvre l'éditeur de LinkedIn avec le texte du post : vous y taguez les personnes, puis vous publiez depuis LinkedIn" className="text-xs border border-gray-300 hover:border-[#0a66c2] hover:text-[#0a66c2] disabled:opacity-50 px-3 py-1.5 rounded-lg">Taguer dans LinkedIn ↗</button>
-        {!draftId && <span className="text-[11px] text-gray-400">Enregistrez le brouillon pour mentionner une page.</span>}
+        {!draftId && !local && <span className="text-[11px] text-gray-400">Enregistrez le brouillon pour mentionner une page.</span>}
         {used.map((m) => (<span key={m.urn} className="text-[11px] bg-sky-50 text-sky-700 rounded-full px-2 py-0.5" data-testid="mention-used" title={m.urn}>@{m.name} · mention liée</span>))}
       </div>
       {open && (
@@ -14521,6 +14521,8 @@ export default function Home() {
     return () => window.removeEventListener("pagehide", flush);
   }, []);
   const [editingResult, setEditingResult] = useState(false);
+  const [resultMentions, setResultMentions] = useState([]); // pages/personnes taguées dans le post en cours de création (enregistrées avec le brouillon)
+  const resultAreaRef = useRef(null);
   const [resultDraftText, setResultDraftText] = useState("");
   const [reanalyzing, setReanalyzing] = useState(false);
   const [resultView, setResultView] = useState(false); // true : page dédiée au post généré (sinon paramètres + carte « Revoir le post »)
@@ -15068,6 +15070,7 @@ export default function Home() {
           videoUrl: postVideo?.url ?? null,
           youtubeUrl: postYoutube?.url ?? null,
           pillarId: activeReco?.pillarId ?? null,
+          mentions: resultMentions.filter((m) => r.text.includes(`@${m.name}`)),
         }),
       });
       const data = await readJson(res);
@@ -15090,6 +15093,7 @@ export default function Home() {
     setHistory([]);
     setThread([]);
     setEditingResult(false);
+    setResultMentions([]);
     setPostImage(null);
     setPostVideo(null);
     setPostYoutube(null);
@@ -16936,6 +16940,7 @@ export default function Home() {
                   {editingResult ? (
                     <div className="space-y-2">
                       <textarea
+                        ref={resultAreaRef}
                         dir="auto"
                         value={resultDraftText}
                         onChange={(e) => setResultDraftText(e.target.value)}
@@ -16973,6 +16978,24 @@ export default function Home() {
                     </>
                   )}
 
+                  {/* Taguer une page ou une personne dès la création : les mentions suivent le brouillon (Programmer, Publier) */}
+                  <div className="mt-3 pt-3 border-t border-gray-100">
+                    <MentionTool
+                      local
+                      text={editingResult ? resultDraftText : result.text}
+                      mentions={resultMentions}
+                      onMentions={setResultMentions}
+                      showToast={showToast}
+                      getCursor={() => (editingResult ? resultAreaRef.current?.selectionStart : undefined)}
+                      onInsert={(name, pos) => {
+                        if (editingResult) setResultDraftText((t) => insertMention(t, name, pos ?? t.length).text);
+                        else {
+                          setHistory((h) => [...h, result]);
+                          setResult((r) => ({ ...r, text: insertMention(r.text, name).text }));
+                        }
+                      }}
+                    />
+                  </div>
                 </div>
 
                 {result.extra && form.type === "video" && (
