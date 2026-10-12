@@ -25,6 +25,8 @@ export async function PATCH(req, { params }) {
     if (!text) return NextResponse.json({ error: "Le texte est vide" }, { status: 400 });
     if (text.length > 3000) return NextResponse.json({ error: "Texte trop long" }, { status: 400 });
     data.text = text;
+    data.clientFeedback = null; // la demande du client est prise en compte : le post lui est de nouveau soumis
+    data.clientFeedbackAt = null;
   }
   if (body.status !== undefined) {
     if (body.status !== "programmé" || draft.status !== "à valider") {
@@ -32,6 +34,8 @@ export async function PATCH(req, { params }) {
     }
     data.status = "programmé";
     data.publishError = null;
+    data.clientFeedback = null;
+    data.clientFeedbackAt = null;
   }
   if (!Object.keys(data).length) return NextResponse.json({ error: "Rien à modifier" }, { status: 400 });
 

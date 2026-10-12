@@ -10,7 +10,7 @@ import {
   CreditCard, Gauge, Users, Smartphone, Database, Monitor, Minus,
   Upload, Wand2, SlidersHorizontal, Type, Crop, Download, Pencil, GripHorizontal,
   Compass, Lightbulb, EyeOff, TrendingUp, TrendingDown, Plus, Globe, ChevronUp, Menu,
-  AlignLeft, AlignCenter, AlignRight, Move, Server, Clapperboard
+  AlignLeft, AlignCenter, AlignRight, Move, Server, Clapperboard, Link2
 } from "lucide-react";
 import { PLANS, PLAN_IDS, planLabel, planAllows, planOf, trialDaysLeft, accessState, changeKind, lostFeatures, gainedFeatures, planWith } from "@/lib/plans";
 import { COMPARE, unlockedBy } from "@/lib/planFeatures";
@@ -2027,6 +2027,7 @@ function ReviewPostsModal({ posts, linkedinConnected, onValidate, onSaveText, on
                 <span className="flex items-center gap-1 text-purple-700"><Clock size={12} /> Prévu {fmtDateTime(post.scheduledAt)}</span>
                 <span>{(editing ? text : post.text).length} caractères</span>
               </div>
+              {post.clientFeedback && <p className="text-xs text-amber-900 bg-amber-50 border border-amber-200 rounded-lg p-2.5" data-testid="review-client-feedback"><strong>Demande du client :</strong> « {post.clientFeedback} »<span className="block text-amber-700 mt-0.5">Modifier le texte renvoie le post au client pour validation.</span></p>}
               {post.imageUrl && <img src={post.imageUrl} alt="" className="rounded-xl w-full max-h-56 object-cover" />}
               {editing ? (
                 <textarea dir="auto" value={text} onChange={(e) => setText(e.target.value)} rows={12} autoFocus className="w-full border border-gray-300 rounded-lg p-3 text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]" />
@@ -10851,7 +10852,7 @@ const FEATURE_LABELS = {
 
 const DEEP_LINK_VIEWS = ["dashboard", "create", "history", "campaigns", "connections", "profile", "stats", "copilot", "events", "engage", "brand-kit", "billing", "clients", "messages", "datalake"];
 
-function ClientTableRow({ client, onManage, onViewDrafts, onDelete, deleting, onShowReport }) {
+function ClientTableRow({ client, onManage, onViewDrafts, onDelete, deleting, onShowReport, onApproval }) {
   const [open, setOpen] = useState(false);
   const { completion, linkedin } = client;
   const linkedInOk = Boolean(linkedin?.personName);
@@ -10959,6 +10960,10 @@ function ClientTableRow({ client, onManage, onViewDrafts, onDelete, deleting, on
               className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition-colors
                 ${client.pendingCount > 0 ? "bg-amber-50 border-amber-200 text-amber-700" : "border-gray-200 text-gray-400 hover:bg-gray-50"}`}>
               <FileText size={11} />{client.pendingCount > 0 ? client.pendingCount : ""}
+            </button>
+            <button onClick={() => onApproval(client)} data-testid="approval-open"
+              className="p-1.5 rounded-lg border border-gray-200 text-gray-400 hover:bg-gray-50 transition-colors" title="Lien de validation pour le client">
+              <Link2 size={13} />
             </button>
             <button onClick={() => onShowReport(client)}
               className="p-1.5 rounded-lg border border-gray-200 text-gray-400 hover:bg-gray-50 transition-colors" title="Rapport mensuel">
@@ -11160,6 +11165,7 @@ function ClientsView({ showToast, onManage }) {
   const [loading, setLoading] = useState(true);
   const [panelClient, setPanelClient] = useState(null); // client pour le panel brouillons
   const [reportClient, setReportClient] = useState(null); // client pour le rapport mensuel
+  const [approvalClient, setApprovalClient] = useState(null); // client pour le lien de validation
   // Création d'un client : nom (et entreprise), puis le profil se complète dans l'espace du client avec le parcours guidé
   const [creating, setCreating] = useState(false);
   const [newClient, setNewClient] = useState({ companyName: "", website: "", email: "" });
@@ -11206,7 +11212,7 @@ function ClientsView({ showToast, onManage }) {
   const saveQueueText = async (p, text) => {
     try {
       await patchPost(p.id, { text });
-      setQueue((q) => q.map((x) => (x.id === p.id ? { ...x, text } : x)));
+      setQueue((q) => q.map((x) => (x.id === p.id ? { ...x, text, clientFeedback: null } : x)));
     } catch (e) {
       showToast(e.message);
       throw e;
@@ -11354,6 +11360,11 @@ function ClientsView({ showToast, onManage }) {
                         ) : (
                           <p className="text-xs text-gray-400 mt-0.5 line-clamp-1">{posts[0].text}</p>
                         )}
+                        {queueTab !== "erreur" && posts.some((p) => p.clientFeedback) && (
+                          <p className="text-[11px] text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-2 py-1 mt-1 line-clamp-2" data-testid="queue-client-feedback">
+                            Le client demande une modification : « {posts.find((p) => p.clientFeedback).clientFeedback} »{posts.filter((p) => p.clientFeedback).length > 1 ? ` (+${posts.filter((p) => p.clientFeedback).length - 1})` : ""}
+                          </p>
+                        )}
                         {!client.linkedinConnected && <p className="text-[11px] text-amber-700 mt-0.5">LinkedIn non connecté pour ce client</p>}
                       </div>
                       {queueTab === "à valider" ? (
@@ -11402,6 +11413,7 @@ function ClientsView({ showToast, onManage }) {
                     onDelete={deleteClient}
                     deleting={deleting}
                     onShowReport={setReportClient}
+                    onApproval={setApprovalClient}
                   />
                 ))}
               </tbody>
@@ -11430,7 +11442,73 @@ function ClientsView({ showToast, onManage }) {
 
       {/* Rapport mensuel */}
       {reportClient && <MonthlyReportModal client={reportClient} onClose={() => setReportClient(null)} />}
+
+      {/* Lien de validation du client final */}
+      {approvalClient && <ApprovalLinkDialog client={approvalClient} showToast={showToast} onClose={() => setApprovalClient(null)} />}
     </>
+  );
+}
+
+// Lien de validation d'un client : il relit et valide ses posts sans compte. Copiable, envoyable par e-mail, régénérable (l'ancien cesse de fonctionner).
+function ApprovalLinkDialog({ client, showToast, onClose }) {
+  const [link, setLink] = useState(undefined); // undefined = chargement, null = pas encore créé
+  const [email, setEmail] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState(null);
+  const call = async (method, body) => {
+    const res = await fetch(`/api/agency/clients/${client.id}/approval`, { method, headers: { "Content-Type": "application/json" }, body: body ? JSON.stringify(body) : undefined });
+    const d = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(d.error || "Erreur");
+    return d;
+  };
+  useEffect(() => { call("GET").then((d) => setLink(d.link)).catch((e) => { setError(e.message); setLink(null); }); }, []);
+  const run = async (body, done) => {
+    if (busy) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const d = await call("POST", body);
+      setLink(d.link);
+      done?.(d);
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+  const copy = async () => { try { await navigator.clipboard.writeText(link.url); showToast("Lien copié ✓"); } catch { showToast("Copie impossible : sélectionnez le lien."); } };
+  const name = client.companyName || client.name;
+  return (
+    <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg p-5 space-y-4" onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Lien de validation" data-testid="approval-dialog">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="font-semibold text-sm">Validation par {name}</p>
+            <p className="text-xs text-gray-500 mt-0.5">Le client relit ses posts « à valider », les valide ou demande des modifications, sans créer de compte. Un post validé est programmé à sa date prévue.</p>
+          </div>
+          <button type="button" onClick={onClose} className="text-gray-400 hover:text-gray-600 p-1" aria-label="Fermer"><X size={18} /></button>
+        </div>
+        {link === undefined ? (
+          <p className="text-sm text-gray-400 flex items-center gap-2"><RefreshCw size={14} className="animate-spin" /> Chargement…</p>
+        ) : link === null ? (
+          <button type="button" onClick={() => run({})} disabled={busy} className="bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white text-sm font-medium px-4 py-2 rounded-lg" data-testid="approval-create">Créer le lien de validation</button>
+        ) : (
+          <div className="space-y-3">
+            <div className="flex gap-2">
+              <input readOnly value={link.url} onFocus={(e) => e.target.select()} className="flex-1 min-w-0 border border-gray-200 rounded-lg px-3 py-2 text-xs bg-gray-50" data-testid="approval-url" />
+              <button type="button" onClick={copy} className="border border-gray-300 hover:border-[#ff5a5f] hover:text-[#ff5a5f] text-sm px-3 py-2 rounded-lg">Copier</button>
+            </div>
+            <div className="flex gap-2">
+              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Envoyer par e-mail à…" className="flex-1 min-w-0 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]" data-testid="approval-email" />
+              <button type="button" disabled={busy || !email.trim()} onClick={() => run({ email }, (d) => { if (d.mailed) { showToast("Lien envoyé ✓"); setEmail(""); } else setError("E-mail non envoyé (messagerie non configurée sur le serveur). Copiez le lien et envoyez-le vous-même."); })} className="bg-gray-900 hover:bg-gray-700 disabled:bg-gray-300 text-white text-sm px-4 py-2 rounded-lg" data-testid="approval-send">Envoyer</button>
+            </div>
+            {link.sentTo && <p className="text-[11px] text-gray-400">Dernier envoi : {link.sentTo}{link.lastSentAt ? ` · ${fmtDateTime(link.lastSentAt)}` : ""}</p>}
+            <button type="button" disabled={busy} onClick={() => { if (window.confirm("Régénérer le lien ? L'ancien lien cessera de fonctionner : pensez à envoyer le nouveau au client.")) run({ regenerate: true }, () => showToast("Nouveau lien créé ✓")); }} className="text-xs text-gray-500 hover:text-red-600 underline" data-testid="approval-regenerate">Régénérer le lien (l&apos;ancien cesse de fonctionner)</button>
+          </div>
+        )}
+        {error && <p className="text-xs text-red-600" data-testid="approval-error">{error}</p>}
+      </div>
+    </div>
   );
 }
 

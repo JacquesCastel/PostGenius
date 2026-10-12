@@ -15,7 +15,7 @@ export async function GET(req) {
       },
       select: {
         id: true, status: true, text: true, type: true, imageUrl: true,
-        scheduledAt: true, publishError: true, createdAt: true,
+        scheduledAt: true, publishError: true, createdAt: true, clientFeedback: true, clientFeedbackAt: true,
         campaign: { select: { name: true } },
         user: { select: { id: true, name: true, companyName: true, linkedin: { select: { personName: true } } } },
       },
@@ -25,6 +25,7 @@ export async function GET(req) {
     const items = drafts.map((d) => ({
       id: d.id, status: d.status, text: d.text, type: d.type, imageUrl: d.imageUrl,
       scheduledAt: d.scheduledAt, publishError: d.publishError, createdAt: d.createdAt,
+      clientFeedback: d.clientFeedback, clientFeedbackAt: d.clientFeedbackAt,
       campaign: d.campaign,
       client: {
         id: d.user.id, name: d.user.name, companyName: d.user.companyName,

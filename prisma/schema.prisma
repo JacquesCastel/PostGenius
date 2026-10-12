@@ -135,6 +135,8 @@ model User {
   agency   Agency? @relation("AgencyClients", fields: [agencyId], references: [id], onDelete: SetNull)
   // Si le compte est un utilisateur de l'agence (propriétaire ou membre)
   agencyMembership AgencyMember?
+  // Lien de validation pour le client final (agence) : voir ApprovalLink
+  approvalLink ApprovalLink?
 
   // --- Plusieurs entreprises pour une même personne ---
   // L'entreprise « principale » reste portée par les champs ci-dessus ; les autres sont des Context.
@@ -165,6 +167,18 @@ model Agency {
   members AgencyMember[]
   clients User[]         @relation("AgencyClients")
   invites AgencyInvite[]
+}
+
+// Lien de validation d'un client d'agence : le client final relit et valide (ou demande des modifications) sans compte.
+// Un seul lien par client ; le régénérer invalide l'ancien.
+model ApprovalLink {
+  id         String    @id @default(cuid())
+  userId     String    @unique
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token      String    @unique
+  createdAt  DateTime  @default(now())
+  lastSentAt DateTime?
+  sentTo     String? // dernière adresse à laquelle le lien a été envoyé
 }
 
 // Invitation d'un collaborateur dans l'agence : le lien permet de créer un compte rattaché à l'agence (voir lib/agency.js)
@@ -429,6 +443,10 @@ model Draft {
 
   // Pages LinkedIn mentionnées dans le texte (« @Nom » → @[Nom](urn)) : JSON [{ name, urn }]
   mentions String?
+
+  // Demande de modification faite par le client final depuis son lien de validation (nul = aucune en attente)
+  clientFeedback   String?
+  clientFeedbackAt DateTime?
 
   // Vecteur sémantique du texte { h: empreinte du texte, v: vecteur } : mémoire éditoriale (ce que l'auteur a déjà dit)
   embedding Json?
