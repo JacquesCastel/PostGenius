@@ -9,6 +9,7 @@ import { saveImage } from "@/lib/image";
 import { isOrgUrn } from "@/lib/publishVoice";
 import { findKit } from "@/lib/brandKitStore";
 import { sanitizeMentions, parseMentions } from "@/lib/mentions";
+import { cleanPoll, cleanSlides } from "@/lib/postExtras";
 
 const DEFAULT_KIT = {
   primaryColor:   "#0a66c2",
@@ -68,7 +69,7 @@ export async function POST(req) {
   const userId = await getUserId(req);
   if (!userId) return NextResponse.json({ error: "Non connecté." }, { status: 401 });
 
-  const { type, theme, expertise, tone, maxChars, text, generatedText, extra, inspirationUrl, imageUrl, imagePrompt, videoUrl, youtubeUrl, pillarId, target, contextId, mentions } =
+  const { type, theme, expertise, tone, maxChars, text, generatedText, extra, inspirationUrl, imageUrl, imagePrompt, videoUrl, youtubeUrl, pillarId, target, contextId, mentions, poll, documentSlides } =
     await req.json();
   if (!text?.trim()) return NextResponse.json({ error: "Texte requis." }, { status: 400 });
 
@@ -122,6 +123,8 @@ export async function POST(req) {
       pillarId: pillarId || null,
       ...(target ? { target } : {}),
       contextId: draftContextId,
+      poll: (() => { const c = cleanPoll(poll); return c ? JSON.stringify(c) : null; })(),
+      documentSlides: (() => { const c = cleanSlides(documentSlides); return c.length ? JSON.stringify(c) : null; })(),
       // Pages et personnes taguées dès la création (voir MentionTool)
       mentions: (() => { const m = sanitizeMentions(typeof mentions === "string" ? parseMentions(mentions) : mentions); return m.length ? JSON.stringify(m) : null; })(),
     },

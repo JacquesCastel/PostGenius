@@ -5,6 +5,7 @@ import { videoPathFromUrl } from "@/lib/video";
 import { parseYouTubeId, youtubeWatchUrl } from "@/lib/youtube";
 import { parisDay } from "@/lib/campaignPlan";
 import { sanitizeMentions } from "@/lib/mentions";
+import { cleanPoll, cleanSlides } from "@/lib/postExtras";
 
 // PATCH : modifier texte/statut — DELETE : supprimer
 // La clause where inclut toujours userId : un client ne touche que SES brouillons.
@@ -14,7 +15,7 @@ export async function PATCH(req, { params }) {
   if (!userId) return NextResponse.json({ error: "Non connecté." }, { status: 401 });
 
   const { id } = await params;
-  const { text, status, postId, scheduledAt, target, imageUrl, imagePrompt, videoUrl, youtubeUrl, mentions } = await req.json();
+  const { text, status, postId, scheduledAt, target, imageUrl, imagePrompt, videoUrl, youtubeUrl, mentions, poll, documentSlides } = await req.json();
 
   if (videoUrl) {
     try {
@@ -48,6 +49,8 @@ export async function PATCH(req, { params }) {
       ...(scheduledAt !== undefined && { scheduledAt: scheduledAt ? new Date(scheduledAt) : null }),
       ...(target !== undefined && { target }),
       ...(mentions !== undefined && { mentions: mentions === null ? null : JSON.stringify(sanitizeMentions(typeof mentions === "string" ? (() => { try { return JSON.parse(mentions); } catch { return []; } })() : mentions)) }),
+      ...(poll !== undefined && { poll: (() => { const c = cleanPoll(poll); return c ? JSON.stringify(c) : null; })() }),
+      ...(documentSlides !== undefined && { documentSlides: (() => { const c = cleanSlides(documentSlides); return c.length ? JSON.stringify(c) : null; })() }),
       ...(imageUrl !== undefined && { imageUrl }),
       ...(imagePrompt !== undefined && { imagePrompt }),
       ...(videoUrl !== undefined && { videoUrl }),

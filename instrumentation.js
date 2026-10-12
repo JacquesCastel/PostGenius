@@ -4,6 +4,11 @@
 // (voir vercel.json) — ce fichier est alors sans effet durable, sans danger.
 
 export async function register() {
+  // Configuration à vérifier en production : sans elle, des fonctions échouent silencieusement côté utilisateur
+  if (process.env.NEXT_RUNTIME === "nodejs" && process.env.NODE_ENV === "production") {
+    if (!process.env.SMTP_HOST) console.warn("[config] SMTP_HOST absent : aucun e-mail ne partira (invitations d'équipe, liens de validation client, notifications, mot de passe oublié).");
+    if (!process.env.APP_URL || /localhost|127\.0\.0\.1/.test(process.env.APP_URL)) console.warn("[config] APP_URL absent ou local : les liens envoyés (validation client, rapports, invitations) pointeront vers une mauvaise adresse.");
+  }
   if (process.env.NEXT_RUNTIME === "nodejs" && process.env.DISABLE_LOCAL_SCHEDULER !== "1") {
     const { runDuePublications } = await import("./lib/scheduler");
     setInterval(() => {

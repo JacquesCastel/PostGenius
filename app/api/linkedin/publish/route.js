@@ -13,7 +13,7 @@ export async function POST(req) {
     return NextResponse.json({ error: "Non connecté." }, { status: 401 });
   }
 
-  const { text, author, imageUrl, videoUrl, youtubeUrl, mentions } = await req.json();
+  const { text, author, imageUrl, videoUrl, youtubeUrl, mentions, poll, documentSlides, documentTitle } = await req.json();
 
   // Publication sur une page entreprise (URN organization) : réservée à l'offre Agence
   if (typeof author === "string" && author.includes("organization")) {
@@ -22,7 +22,7 @@ export async function POST(req) {
   }
 
   try {
-    const { postId, mentionsDropped, personMentionsSkipped } = await publishForUser(userId, { text, author, imageUrl, videoUrl, youtubeUrl, mentions: parseMentions(mentions) });
+    const { postId, mentionsDropped, personMentionsSkipped } = await publishForUser(userId, { text, author, imageUrl, videoUrl, youtubeUrl, mentions: parseMentions(mentions), poll, documentSlides, documentTitle });
     return NextResponse.json({ ok: true, postId, ...(personMentionsSkipped ? { warning: "Les personnes mentionnées ne sont pas taguées : pour un post de profil, connectez votre profil dans « Connexions » (mentions de personnes), ou utilisez « Taguer dans LinkedIn »." } : mentionsDropped ? { warning: "LinkedIn a refusé la mention : le post est publié sans mention. Taguez la page à la main sur LinkedIn." } : {}) });
   } catch (e) {
     const msg = e.message || "Échec de la publication.";

@@ -174,7 +174,10 @@ export default function FonctionnalitesPage() {
           title="Des posts prêts à publier en un clic"
           text="Un thème, un ton, une humeur, et l'IA rédige : accroche forte, corps aéré, question finale, hashtags. Post simple, carrousel ou vidéo — vous retouchez, demandez des variantes ou faites réécrire, dans la langue de votre audience."
           points={[
-            "Posts simples, carrousels (plan de slides) et scripts vidéo",
+            "Posts simples, carrousels (publiés en document PDF sur LinkedIn) et scripts vidéo",
+            "Sondages LinkedIn : une question, 2 à 4 réponses, la durée de votre choix",
+            "Bibliothèque de contenus : accroches, conclusions et posts qui ont marché, réutilisables en un clic",
+            "Mentions de pages et de personnes dès la création du post",
             "9 langues : français, anglais, espagnol, allemand, italien, portugais, néerlandais, arabe, polonais",
             "Humeur éditoriale : joie, coup de gueule, stress, fierté, doute…, modifiable après coup",
             "Retouche, variantes et réécriture guidée, toujours dans votre style",
@@ -427,6 +430,28 @@ export default function FonctionnalitesPage() {
               ))}
             </div>
             <p className="text-xs text-[#5a6b85] mt-3 flex items-center gap-1.5"><BarChart3 size={13} className="text-[#ff5a5f]" /> Engagement en hausse, semaine après semaine</p>
+          </Card>
+        </Feature>
+
+        {/* Validation par le client (offre Agence) */}
+        <Feature
+          tag="Validation client · offre Agence"
+          title="Vos clients valident sans créer de compte"
+          text="Chaque client reçoit un lien privé : il relit ses posts, les valide d'un clic ou demande une modification. Un post validé est programmé à sa date ; une demande de modification arrive dans votre file « À traiter »."
+          points={[
+            "Un lien secret par client, envoyé par e-mail ou copié, révocable à tout moment",
+            "Validation ou demande de modification avec commentaire, sur mobile comme sur ordinateur",
+            "Vous êtes prévenu par e-mail de chaque décision",
+            "Rapport mensuel partageable en lecture seule, aux couleurs de votre agence, et suivi par client exportable en CSV",
+          ]}
+        >
+          <Card>
+            <p className="text-xs font-semibold text-gray-400 mb-2">Posts à valider</p>
+            <div className="rounded-xl border border-gray-100 p-3 text-sm">« Nous ouvrons notre nouveau site… »</div>
+            <div className="flex gap-2 mt-3">
+              <span className="text-xs font-semibold bg-green-600 text-white px-3 py-1.5 rounded-lg flex items-center gap-1"><Check size={12} /> Valider ce post</span>
+              <span className="text-xs font-medium border border-gray-300 text-gray-600 px-3 py-1.5 rounded-lg">Demander une modification</span>
+            </div>
           </Card>
         </Feature>
 

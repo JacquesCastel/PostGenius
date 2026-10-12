@@ -20,6 +20,8 @@ import { isOrgUrn } from "@/lib/publishVoice";
 import { cleanPostContext } from "@/lib/postContext";
 import { planSheet, sheetAll } from "@/lib/campaignPlan";
 import { parseMentions, findManualTags, insertMention } from "@/lib/mentions";
+import { insertSnippet, SNIPPET_KINDS } from "@/lib/snippets";
+import { POLL_DURATIONS, POLL_QUESTION_MAX, POLL_OPTION_MAX, pollProblem } from "@/lib/postExtras";
 import { aggregateInsights } from "@/lib/knowledgeText";
 import { overlayProfile } from "@/lib/contextOverlay";
 import SiteHeader from "@/components/SiteHeader";
@@ -37,6 +39,7 @@ import "@fontsource/raleway/400.css";
 import "@fontsource/raleway/700.css";
 import SiteFooter from "@/components/SiteFooter";
 import LpMark from "@/components/LpMark";
+import MonthlyReportBody from "@/components/MonthlyReportBody";
 import ShootingKit from "@/components/ShootingKit";
 import { LANGUAGES, normalizeLanguage } from "@/lib/languages";
 import { MOODS } from "@/lib/moods";
@@ -721,6 +724,20 @@ function CommentsPanel({ draft, onClose, showToast, onIntegrate }) {
   const [errorCode, setErrorCode] = useState(null); // "read_forbidden" : lecture refusée par LinkedIn
   const [replyText, setReplyText] = useState("");
   const [sending, setSending] = useState(false);
+  // Suggestions de réponse par l'IA : proposées pour un commentaire, jamais envoyées sans clic
+  const [suggest, setSuggest] = useState(null); // { id, loading, replies, error }
+  const [replyTo, setReplyTo] = useState(null); // commentaire auquel la réponse en cours répond (fil de discussion)
+  const suggestReplies = async (c) => {
+    setSuggest({ id: c.id, loading: true });
+    try {
+      const res = await fetch("/api/linkedin/comments/suggest", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ draftId: draft.id, commentText: c.text, authorName: c.authorName }) });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(d.error || "Erreur");
+      setSuggest({ id: c.id, replies: d.replies });
+    } catch (e) {
+      setSuggest({ id: c.id, error: e.message });
+    }
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -750,13 +767,14 @@ function CommentsPanel({ draft, onClose, showToast, onIntegrate }) {
       const res = await fetch("/api/linkedin/comments", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ draftId: draft.id, text: replyText }),
+        body: JSON.stringify({ draftId: draft.id, text: replyText, parentCommentUrn: replyTo?.commentUrn || undefined }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Erreur");
       setComments((c) => [...(c ?? []), errorCode === "read_forbidden" ? { ...data.comment, authorName: "Vous" } : data.comment]);
       setReplyText("");
-      if (errorCode === "read_forbidden") showToast("Commentaire publié sur LinkedIn ✓");
+      setReplyTo(null);
+      if (errorCode === "read_forbidden" || replyTo) showToast("Réponse publiée sur LinkedIn ✓");
     } catch (e) {
       showToast(e.message);
     } finally {
@@ -814,11 +832,30 @@ function CommentsPanel({ draft, onClose, showToast, onIntegrate }) {
               {c.createdAt && (
                 <p className="text-[11px] text-gray-400 mt-1">{new Date(c.createdAt).toLocaleDateString("fr-FR")}</p>
               )}
-              {onIntegrate && <button type="button" onClick={() => onIntegrate(c.text)} data-testid="comment-integrate" className="mt-1.5 text-[11px] text-[#0a66c2] hover:underline">Intégrer dans le post →</button>}
+              <div className="flex gap-3 flex-wrap">
+                {onIntegrate && <button type="button" onClick={() => onIntegrate(c.text)} data-testid="comment-integrate" className="mt-1.5 text-[11px] text-[#0a66c2] hover:underline">Intégrer dans le post →</button>}
+                <button type="button" onClick={() => suggestReplies(c)} disabled={suggest?.loading} data-testid="comment-suggest" className="mt-1.5 text-[11px] text-[#ff5a5f] hover:underline disabled:opacity-50">Proposer une réponse</button>
+              </div>
+              {suggest?.id === c.id && (
+                <div className="mt-2 space-y-1.5" data-testid="comment-suggestions">
+                  {suggest.loading && <p className="text-[11px] text-gray-400 flex items-center gap-1.5"><RefreshCw size={11} className="animate-spin" /> Rédaction des réponses…</p>}
+                  {suggest.error && <p className="text-[11px] text-red-600">{suggest.error}</p>}
+                  {suggest.replies?.map((r, i) => (
+                    <button key={i} type="button" onClick={() => { setReplyText(r); setReplyTo(c); setSuggest(null); }} data-testid="comment-suggestion" className="block w-full text-left text-xs bg-white border border-gray-200 hover:border-[#ff5a5f] rounded-lg p-2 whitespace-pre-wrap">{r}</button>
+                  ))}
+                  {suggest.replies && <p className="text-[10px] text-gray-400">Cliquez une proposition pour la placer dans la zone de réponse : vous pouvez la modifier avant d&apos;envoyer.</p>}
+                </div>
+              )}
             </div>
           ))}
         </div>
 
+        {replyTo && (
+          <p className="px-3 pt-2 text-[11px] text-gray-500 flex items-center gap-1.5 shrink-0" data-testid="reply-to">
+            Réponse à {replyTo.authorName || "un membre LinkedIn"}
+            <button type="button" onClick={() => setReplyTo(null)} className="text-gray-400 hover:text-gray-700" aria-label="Annuler la réponse ciblée"><X size={11} /></button>
+          </p>
+        )}
         <div className="flex gap-2 p-3 border-t border-gray-100 shrink-0">
           <input
             type="text"
@@ -2468,6 +2505,122 @@ function BriefImport({ showToast, onClose, onCreated, draft = null }) {
 
 // Mentions dans un post : pages LinkedIn (vraie mention, publiée avec lien et notification) et personnes (rappel pour les taguer
 // à la main : l'application ne peut pas retrouver l'identifiant LinkedIn d'un membre).
+// Bibliothèque de contenus réutilisables (posts qui ont marché, accroches, conclusions, blocs) : insérer en un clic,
+// enregistrer le texte (ou la sélection) pour plus tard, ou s'en servir comme modèle pour l'IA.
+const SNIPPET_LABELS = { post: "Post", accroche: "Accroche", conclusion: "Conclusion", bloc: "Bloc" };
+function SnippetTool({ text, setText, getCursor, getSelection, onTemplate, contextId, showToast }) {
+  const [open, setOpen] = useState(false);
+  const [list, setList] = useState(null);
+  const [filter, setFilter] = useState("all");
+  const [kind, setKind] = useState("post");
+  const [title, setTitle] = useState("");
+  const [busy, setBusy] = useState(false);
+  const q = contextId ? `?contextId=${encodeURIComponent(contextId)}` : "";
+  const load = () => fetch(`/api/snippets${q}`).then(readJson).then((d) => (d.error ? null : setList(d.snippets))).catch(() => {});
+  useEffect(() => { if (open) load(); }, [open, contextId]);
+  const selection = open ? (getSelection?.() ?? "") : "";
+  const save = async () => {
+    const chosen = (getSelection?.() ?? "").trim();
+    const body = chosen || text;
+    if (busy || !body.trim()) return;
+    setBusy(true);
+    try {
+      const res = await fetch("/api/snippets", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ kind, title, text: body, contextId: contextId || undefined }) });
+      const d = await readJson(res);
+      if (!res.ok) throw new Error(d.error || "Erreur");
+      setTitle("");
+      showToast(chosen ? "Sélection enregistrée dans la bibliothèque ✓" : "Post enregistré dans la bibliothèque ✓");
+      load();
+    } catch (e) {
+      showToast(e.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+  const used = (sn) => fetch(`/api/snippets/${sn.id}`, { method: "PATCH" }).then(load).catch(() => {});
+  const insert = (sn) => { setText(insertSnippet(text, sn, getCursor?.())); used(sn); setOpen(false); };
+  const forget = async (sn) => { await fetch(`/api/snippets/${sn.id}`, { method: "DELETE" }).catch(() => {}); load(); };
+  const shown = (list ?? []).filter((sn) => filter === "all" || sn.kind === filter);
+  return (
+    <div className="space-y-2" data-testid="snippet-tool">
+      <button type="button" onClick={() => setOpen((o) => !o)} data-testid="snippet-open" className="text-xs border border-gray-300 hover:border-[#ff5a5f] hover:text-[#ff5a5f] px-3 py-1.5 rounded-lg">Bibliothèque</button>
+      {open && (
+        <div className="rounded-xl border border-gray-200 p-3 space-y-3 bg-white" data-testid="snippet-panel">
+          <div className="space-y-1.5">
+            <p className="text-[11px] text-gray-400">{selection.trim() ? "Enregistrer la partie sélectionnée du texte :" : "Enregistrer le texte actuel (ou sélectionnez-en une partie) :"}</p>
+            <div className="flex gap-2 flex-wrap">
+              <select value={kind} onChange={(e) => setKind(e.target.value)} className="border border-gray-200 rounded-lg px-2 py-1.5 text-xs" data-testid="snippet-kind">
+                {SNIPPET_KINDS.map((k) => <option key={k} value={k}>{SNIPPET_LABELS[k]}</option>)}
+              </select>
+              <input value={title} onChange={(e) => setTitle(e.target.value)} maxLength={80} placeholder="Titre (facultatif)" className="flex-1 min-w-0 border border-gray-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]" data-testid="snippet-title" />
+              <button type="button" onClick={save} disabled={busy || !text.trim()} className="bg-gray-900 hover:bg-gray-700 disabled:bg-gray-300 text-white text-xs px-3 py-1.5 rounded-lg" data-testid="snippet-save">Enregistrer</button>
+            </div>
+          </div>
+          <div className="flex gap-1.5 flex-wrap">
+            {["all", ...SNIPPET_KINDS].map((k) => (
+              <button key={k} type="button" onClick={() => setFilter(k)} className={`text-[11px] px-2.5 py-1 rounded-full border ${filter === k ? "bg-[#ff5a5f] text-white border-[#ff5a5f]" : "border-gray-200 text-gray-600"}`}>{k === "all" ? "Tous" : SNIPPET_LABELS[k]}</button>
+            ))}
+          </div>
+          {list === null ? <p className="text-xs text-gray-400">Chargement…</p> : shown.length === 0 ? <p className="text-xs text-gray-400">Rien ici pour l&apos;instant : enregistrez un post qui a bien marché, une accroche ou une conclusion à retrouver.</p> : (
+            <ul className="space-y-1.5 max-h-72 overflow-y-auto">
+              {shown.map((sn) => (
+                <li key={sn.id} className="border border-gray-100 rounded-lg p-2 text-xs" data-testid="snippet-item">
+                  <div className="flex items-center gap-2">
+                    <span className="bg-gray-100 text-gray-600 rounded-full px-2 py-0.5 text-[10px] font-medium">{SNIPPET_LABELS[sn.kind]}</span>
+                    <span className="font-medium text-gray-700 truncate flex-1">{sn.title || sn.text.split("\n")[0].slice(0, 60)}</span>
+                    {sn.uses > 0 && <span className="text-[10px] text-gray-400">{sn.uses}×</span>}
+                    <button type="button" onClick={() => forget(sn)} aria-label="Supprimer de la bibliothèque" className="text-gray-300 hover:text-red-500"><X size={12} /></button>
+                  </div>
+                  <p className="text-gray-500 mt-1 line-clamp-2 whitespace-pre-wrap">{sn.text}</p>
+                  <div className="flex gap-3 mt-1.5">
+                    <button type="button" onClick={() => insert(sn)} className="text-[#ff5a5f] hover:underline" data-testid="snippet-insert">Insérer</button>
+                    {onTemplate && <button type="button" onClick={() => { onTemplate(sn.text); setOpen(false); }} className="text-[#0a66c2] hover:underline" data-testid="snippet-template">Utiliser comme modèle</button>}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Sondage LinkedIn : une question, 2 à 4 réponses, une durée. Il remplace l'image ou la vidéo du post (LinkedIn n'accepte qu'une pièce jointe).
+function PollTool({ poll, onChange, hasMedia }) {
+  const active = poll != null;
+  const set = (patch) => onChange({ ...poll, ...patch });
+  const setOption = (i, v) => set({ options: poll.options.map((o, j) => (j === i ? v.slice(0, POLL_OPTION_MAX) : o)) });
+  return (
+    <div className="space-y-2" data-testid="poll-tool">
+      <button type="button" onClick={() => onChange(active ? null : { question: "", options: ["", ""], duration: "THREE_DAYS" })} data-testid="poll-toggle" className={`text-xs border px-3 py-1.5 rounded-lg ${active ? "border-[#ff5a5f] text-[#ff5a5f]" : "border-gray-300 hover:border-[#ff5a5f] hover:text-[#ff5a5f]"}`}>
+        {active ? "Retirer le sondage" : "Ajouter un sondage"}
+      </button>
+      {active && (
+        <div className="rounded-xl border border-gray-200 p-3 space-y-2 bg-white" data-testid="poll-panel">
+          <input value={poll.question} onChange={(e) => set({ question: e.target.value.slice(0, POLL_QUESTION_MAX) })} placeholder="Votre question" className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]" data-testid="poll-question" />
+          <p className="text-[11px] text-gray-400 text-right -mt-1">{poll.question.length} / {POLL_QUESTION_MAX}</p>
+          {poll.options.map((o, i) => (
+            <div key={i} className="flex gap-2 items-center">
+              <input value={o} onChange={(e) => setOption(i, e.target.value)} placeholder={`Réponse ${i + 1} (${POLL_OPTION_MAX} caractères max)`} className="flex-1 min-w-0 border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]" data-testid="poll-option" />
+              {poll.options.length > 2 && <button type="button" onClick={() => set({ options: poll.options.filter((_, j) => j !== i) })} aria-label="Retirer cette réponse" className="text-gray-300 hover:text-red-500"><X size={14} /></button>}
+            </div>
+          ))}
+          <div className="flex items-center gap-3 flex-wrap">
+            {poll.options.length < 4 && <button type="button" onClick={() => set({ options: [...poll.options, ""] })} className="text-xs text-[#ff5a5f] hover:underline" data-testid="poll-add-option">+ Ajouter une réponse</button>}
+            <label className="text-xs text-gray-500 flex items-center gap-1.5 ml-auto">Durée
+              <select value={poll.duration} onChange={(e) => set({ duration: e.target.value })} className="border border-gray-200 rounded-lg px-2 py-1 text-xs" data-testid="poll-duration">
+                {Object.entries(POLL_DURATIONS).map(([k, l]) => <option key={k} value={k}>{l}</option>)}
+              </select>
+            </label>
+          </div>
+          <p className="text-[11px] text-gray-400">Le texte du post accompagne le sondage.{hasMedia ? " L'image ou la vidéo du post ne sera pas publiée : un post LinkedIn n'a qu'une pièce jointe." : ""}</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function MentionTool({ draftId, local, text, onInsert, mentions, onMentions, getCursor, showToast, postUrl, onMarkPublished }) {
   const [memberConnected, setMemberConnected] = useState(true); // profil connecté pour les mentions de personnes (vrai par défaut : pas d'alerte avant lecture)
   useEffect(() => { fetch("/api/linkedin/me").then(readJson).then((d) => setMemberConnected(Boolean(d.memberConnected))).catch(() => {}); }, []);
@@ -10706,6 +10859,26 @@ function MonthlyReportModal({ client, onClose }) {
   const primary = brandKit?.primaryColor || "#1b2a4a";
   const accent = brandKit?.accentColor || "#ff5a5f";
 
+  // Lien de partage en lecture seule (page /rapport/…) : créé à la demande, copié dans le presse-papiers
+  const [shareBusy, setShareBusy] = useState(false);
+  const [shareUrl, setShareUrl] = useState(null);
+  const shareReport = async (regenerate = false) => {
+    if (shareBusy) return;
+    if (regenerate && !window.confirm("Régénérer le lien ? L'ancien lien cessera de fonctionner.")) return;
+    setShareBusy(true);
+    try {
+      const res = await fetch(`/api/agency/clients/${client.id}/report-link`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ regenerate }) });
+      const d = await readJson(res);
+      if (!res.ok) throw new Error(d.error || "Erreur");
+      setShareUrl(d.link.url);
+      try { await navigator.clipboard.writeText(d.link.url); setError(null); } catch {}
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setShareBusy(false);
+    }
+  };
+
   const pct = (n) => (n == null ? "—" : `${(n * 100).toFixed(1)} %`);
   const monthLabel = new Date(year, month - 1, 1).toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
   const changeMonth = (delta) => {
@@ -10733,6 +10906,9 @@ function MonthlyReportModal({ client, onClose }) {
             Rapport mensuel
           </h3>
           <div className="flex items-center gap-2">
+            <button onClick={() => shareReport(false)} disabled={shareBusy} data-testid="report-share" className="text-xs font-medium text-gray-500 hover:text-gray-700 border border-gray-200 rounded-lg px-2.5 py-1.5">
+              Partager au client
+            </button>
             <button onClick={() => window.print()} className="text-xs font-medium text-gray-500 hover:text-gray-700 border border-gray-200 rounded-lg px-2.5 py-1.5">
               Imprimer / Exporter en PDF
             </button>
@@ -10741,6 +10917,14 @@ function MonthlyReportModal({ client, onClose }) {
             </button>
           </div>
         </div>
+
+        {shareUrl && (
+          <div className="mb-3 text-xs bg-green-50 border border-green-200 rounded-lg p-2.5 space-y-1 print:hidden" data-testid="report-share-box">
+            <p className="font-medium text-green-800">Lien de partage (copié) : le client voit ce rapport en lecture seule, mois par mois.</p>
+            <input readOnly value={shareUrl} onFocus={(e) => e.target.select()} className="w-full border border-green-200 rounded px-2 py-1 bg-white" data-testid="report-share-url" />
+            <button type="button" onClick={() => shareReport(true)} className="underline text-gray-500 hover:text-red-600">Régénérer le lien (l&apos;ancien cesse de fonctionner)</button>
+          </div>
+        )}
 
         {/* En-tête imprimé : logo de l'agence si renseigné, jamais la marque LinkeePost */}
         {brandKit?.logoUrl && (
@@ -10766,68 +10950,7 @@ function MonthlyReportModal({ client, onClose }) {
         ) : error ? (
           <p className="text-sm text-red-500 py-6 text-center">{error}</p>
         ) : (
-          <div className="space-y-5">
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              {[
-                { label: "Posts publiés", value: data.report.postsPublished },
-                { label: "Impressions", value: data.report.totalImpressions.toLocaleString("fr-FR") },
-                { label: "Engagement moyen", value: pct(data.report.avgEngagementRate) },
-                { label: "Recos suivies", value: `${data.report.recommendations.followed}/${data.report.recommendations.proposed || 0}` },
-              ].map((k) => (
-                <div key={k.label} className="bg-gray-50 rounded-xl p-3">
-                  <p className="text-lg font-bold" style={{ color: primary }}>{k.value}</p>
-                  <p className="text-[11px] text-gray-400">{k.label}</p>
-                </div>
-              ))}
-            </div>
-
-            {data.report.topPosts.length > 0 && (
-              <div>
-                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Meilleurs posts</p>
-                <div className="space-y-2">
-                  {data.report.topPosts.map((p) => (
-                    <div key={p.id} className="border border-gray-100 rounded-xl p-3">
-                      <div className="flex items-center justify-between gap-2">
-                        <p className="text-xs font-medium text-gray-700 truncate">{p.theme}</p>
-                        <span className="text-xs font-semibold shrink-0" style={{ color: accent }}>{pct(p.engagementRate)}</span>
-                      </div>
-                      <p className="text-xs text-gray-400 mt-0.5 line-clamp-2">{p.excerpt}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <div>
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
-                Tous les posts publiés ce mois ({data.report.posts.length})
-              </p>
-              {data.report.posts.length === 0 ? (
-                <p className="text-xs text-gray-300">Aucun post publié sur ce mois.</p>
-              ) : (
-                <div className="space-y-1.5 max-h-64 overflow-y-auto print:max-h-none print:overflow-visible">
-                  {data.report.posts.map((p) => (
-                    <div key={p.id} className="flex items-center justify-between gap-3 text-xs border-b border-gray-50 py-1.5">
-                      <span className="text-gray-400 shrink-0">
-                        {new Date(p.publishedAt).toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" })}
-                      </span>
-                      <span className="text-gray-600 truncate flex-1">{p.theme}</span>
-                      <span className="text-gray-400 shrink-0">
-                        {p.impressions != null ? `${pct(p.engagementRate)} · ${p.impressions.toLocaleString("fr-FR")} imp.` : "stats à venir"}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {data.report.postsPublished > data.report.postsWithStats && (
-              <p className="text-[11px] text-gray-300">
-                {data.report.postsPublished - data.report.postsWithStats} post(s) sans statistiques pour l'instant
-                (mesurées à J+1 et J+7 après publication).
-              </p>
-            )}
-          </div>
+          <MonthlyReportBody report={data.report} primary={primary} accent={accent} />
         )}
       </div>
     </div>
@@ -11310,6 +11433,7 @@ function ClientsView({ showToast, onManage }) {
         </div>
 
         <TeamPanel showToast={showToast} />
+        {clients.length > 0 && <FollowupPanel showToast={showToast} />}
 
         {loading ? (
           <div className="text-center py-20 text-gray-300 text-sm">Chargement…</div>
@@ -11446,6 +11570,77 @@ function ClientsView({ showToast, onManage }) {
       {/* Lien de validation du client final */}
       {approvalClient && <ApprovalLinkDialog client={approvalClient} showToast={showToast} onClose={() => setApprovalClient(null)} />}
     </>
+  );
+}
+
+// Suivi du mois, une ligne par client : publiés, validés par le client, en attente ; exportable en CSV (Excel)
+function FollowupPanel({ showToast }) {
+  const now = new Date();
+  const [period, setPeriod] = useState({ year: now.getFullYear(), month: now.getMonth() + 1 });
+  const [rows, setRows] = useState(null);
+  const [error, setError] = useState(null);
+  const [open, setOpen] = useState(false);
+  useEffect(() => {
+    if (!open) return;
+    setRows(null);
+    setError(null);
+    fetch(`/api/agency/followup?year=${period.year}&month=${period.month}`)
+      .then(readJson)
+      .then((d) => { if (d.error) throw new Error(d.error); setRows(d.rows); })
+      .catch((e) => setError(e.message));
+  }, [open, period]);
+  const label = new Date(period.year, period.month - 1, 1).toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
+  const change = (delta) => { const d = new Date(period.year, period.month - 1 + delta, 1); setPeriod({ year: d.getFullYear(), month: d.getMonth() + 1 }); };
+  const pct = (n) => (n == null ? "" : `${(n * 100).toFixed(1).replace(".", ",")} %`);
+  const exportCsv = () => {
+    const head = ["Client", "Posts publiés", "Impressions", "Engagement moyen", "Validés par le client", "À valider (chez le client)", "Modifications demandées", "Programmés"];
+    const lines = [head, ...rows.map((r) => [r.name, r.published, r.impressions, pct(r.engagementRate), r.clientApproved, r.awaitingClient, r.changeRequests, r.scheduled])];
+    const csv = "\uFEFF" + lines.map((l) => l.map((v) => `"${String(v ?? "").replace(/"/g, '""')}"`).join(";")).join("\r\n");
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+    a.download = `suivi-clients-${period.year}-${String(period.month).padStart(2, "0")}.csv`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+    showToast("Suivi exporté ✓");
+  };
+  return (
+    <section className="bg-white border border-gray-100 rounded-2xl shadow-sm mb-6 overflow-hidden" data-testid="followup-panel">
+      <button type="button" onClick={() => setOpen((o) => !o)} className="w-full px-4 py-3 flex items-center justify-between text-left" data-testid="followup-toggle">
+        <span><span className="font-semibold text-sm text-[#1b2a4a]">Suivi mensuel par client</span><span className="text-xs text-gray-400 ml-2">publiés, validés par le client, en attente</span></span>
+        <ChevronDown size={15} className={`text-gray-400 transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+      {open && (
+        <div className="px-4 pb-4 space-y-3 border-t border-gray-100 pt-3">
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <div className="flex items-center gap-2 text-sm text-gray-600">
+              <button type="button" onClick={() => change(-1)} className="p-1 hover:bg-gray-100 rounded" aria-label="Mois précédent"><ChevronDown size={14} className="rotate-90" /></button>
+              <span className="capitalize font-medium">{label}</span>
+              <button type="button" onClick={() => change(1)} disabled={period.year === now.getFullYear() && period.month === now.getMonth() + 1} className="p-1 hover:bg-gray-100 rounded disabled:opacity-30" aria-label="Mois suivant"><ChevronDown size={14} className="-rotate-90" /></button>
+            </div>
+            <button type="button" onClick={exportCsv} disabled={!rows?.length} className="text-xs font-medium border border-gray-200 hover:bg-gray-50 disabled:opacity-40 rounded-lg px-3 py-1.5" data-testid="followup-csv">Exporter en CSV</button>
+          </div>
+          {error ? <p className="text-sm text-red-500">{error}</p> : !rows ? <p className="text-sm text-gray-400">Chargement…</p> : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead><tr className="text-xs text-gray-400 text-left border-b border-gray-100">
+                  <th className="py-2 pr-3 font-semibold">Client</th><th className="py-2 px-2 font-semibold text-center">Publiés</th><th className="py-2 px-2 font-semibold text-center">Impressions</th><th className="py-2 px-2 font-semibold text-center">Engagement</th><th className="py-2 px-2 font-semibold text-center">Validés par le client</th><th className="py-2 px-2 font-semibold text-center">À valider</th><th className="py-2 px-2 font-semibold text-center">Modif. demandées</th><th className="py-2 pl-2 font-semibold text-center">Programmés</th>
+                </tr></thead>
+                <tbody>
+                  {rows.map((r) => (
+                    <tr key={r.id} className="border-b border-gray-50" data-testid="followup-row">
+                      <td className="py-2 pr-3 font-medium text-[#1b2a4a]">{r.name}</td>
+                      {[r.published, r.impressions.toLocaleString("fr-FR"), pct(r.engagementRate) || "—", r.clientApproved, r.awaitingClient, r.changeRequests, r.scheduled].map((v, i) => (
+                        <td key={i} className="py-2 px-2 text-center text-gray-600">{v === 0 ? <span className="text-gray-300">0</span> : v}</td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+    </section>
   );
 }
 
@@ -14178,7 +14373,7 @@ function TutorialOverlay({ canEvents, onClose }) {
 // (result.extra.slides — voir buildUserPrompt dans app/api/generate/route.js), via le
 // même gabarit Satori que la charte graphique (couleurs, logo, police de l'utilisateur).
 // Ne publie rien : images téléchargeables, à poster manuellement en document LinkedIn.
-function CarouselImagesBlock({ slides }) {
+function CarouselImagesBlock({ slides, onImages }) {
   const { activeContextId } = useContext(EntreprisesCtx);
   const [images, setImages] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -14196,10 +14391,28 @@ function CarouselImagesBlock({ slides }) {
       const d = await res.json();
       if (!res.ok) throw new Error(d.error || "Échec de la génération");
       setImages(d.urls ?? []);
+      setAsPdf(true);
+      onImages?.(d.urls ?? []);
     } catch (e) {
       setError(e.message);
     } finally {
       setLoading(false);
+    }
+  };
+  // Publier le carrousel en document PDF sur LinkedIn (coché par défaut dès que les images existent)
+  const [asPdf, setAsPdf] = useState(false);
+  const togglePdf = (on) => { setAsPdf(on); onImages?.(on ? images : null); };
+  const downloadPdf = async () => {
+    try {
+      const res = await fetch("/api/image/carousel-pdf", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ urls: images }) });
+      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || "Erreur");
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(await res.blob());
+      a.download = "carrousel.pdf";
+      a.click();
+      URL.revokeObjectURL(a.href);
+    } catch (e) {
+      setError(e.message);
     }
   };
 
@@ -14238,8 +14451,12 @@ function CarouselImagesBlock({ slides }) {
               </a>
             ))}
           </div>
-          <p className="text-[11px] text-gray-400 mt-2">
-            À poster manuellement en document LinkedIn (carrousel) — la publication automatique n'est pas encore disponible.
+          <label className="flex items-center gap-2 text-xs text-gray-600 mt-3" data-testid="carousel-pdf-toggle">
+            <input type="checkbox" checked={asPdf} onChange={(e) => togglePdf(e.target.checked)} /> Publier ce carrousel en document PDF sur LinkedIn
+          </label>
+          <p className="text-[11px] text-gray-400 mt-1">
+            Les slides sont assemblées en PDF au moment de la publication (immédiate ou programmée), avec le texte du post au-dessus.{" "}
+            <button type="button" onClick={downloadPdf} className="underline hover:text-[#ff5a5f]" data-testid="carousel-pdf-download">Télécharger le PDF</button>
           </p>
         </>
       )}
@@ -14428,6 +14645,7 @@ export default function Home() {
   }, []);
   const [optimizeText, setOptimizeText] = useState(null); // { text, type } → page Étape 2 plein écran
   const [optMentions, setOptMentions] = useState([]);
+  const [optPoll, setOptPoll] = useState(null);
   const optAreaRef = useRef(null);
   const [rewriting, setRewriting] = useState(false);
   const [rewriteScope, setRewriteScope] = useState("all"); // all | hook | body | signature (= conclusion + appel à l'action)
@@ -14489,6 +14707,7 @@ export default function Home() {
     setVersions([{ id: Date.now(), text, label: "Version initiale", score: scorePost({ text, type }).score }]);
     setOptimizeText({ text, type, draftId });
     setOptMentions(draftId ? parseMentions(drafts.find((d) => d.id === draftId)?.mentions) : []);
+    setOptPoll(draftId ? (() => { try { return JSON.parse(drafts.find((d) => d.id === draftId)?.poll ?? "null"); } catch { return null; } })() : null);
     // Reprend l'image déjà associée au brouillon (si on vient de "Mes posts") —
     // sinon on garde celle déjà en cours (si on vient de "Créer un post").
     if (draftId) {
@@ -14599,6 +14818,8 @@ export default function Home() {
     return () => window.removeEventListener("pagehide", flush);
   }, []);
   const [editingResult, setEditingResult] = useState(false);
+  const [resultPoll, setResultPoll] = useState(null); // sondage du post en cours de création (enregistré avec le brouillon)
+  const [resultSlides, setResultSlides] = useState(null); // images du carrousel à publier en PDF (null = pas de PDF)
   const [resultMentions, setResultMentions] = useState([]); // pages/personnes taguées dans le post en cours de création (enregistrées avec le brouillon)
   const resultAreaRef = useRef(null);
   const [resultDraftText, setResultDraftText] = useState("");
@@ -15129,6 +15350,8 @@ export default function Home() {
     const r = override?.result ?? result;
     const h = override?.history ?? history;
     if (!r) return null;
+    const pollIssue = resultPoll ? pollProblem(resultPoll) : null;
+    if (pollIssue) { showToast(`${pollIssue} Complétez-le ou retirez-le avant d'enregistrer.`); return null; }
     try {
       const res = await fetch("/api/drafts", {
         method: "POST",
@@ -15149,6 +15372,8 @@ export default function Home() {
           youtubeUrl: postYoutube?.url ?? null,
           pillarId: activeReco?.pillarId ?? null,
           mentions: resultMentions.filter((m) => r.text.includes(`@${m.name}`)),
+          poll: resultPoll,
+          documentSlides: r.extra?.slides ? resultSlides : null,
         }),
       });
       const data = await readJson(res);
@@ -15172,6 +15397,8 @@ export default function Home() {
     setThread([]);
     setEditingResult(false);
     setResultMentions([]);
+    setResultPoll(null);
+    setResultSlides(null);
     setPostImage(null);
     setPostVideo(null);
     setPostYoutube(null);
@@ -15862,7 +16089,7 @@ export default function Home() {
       const res = await fetch("/api/linkedin/publish", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: p.text, author: target, imageUrl: p.imageUrl ?? null, videoUrl: p.videoUrl ?? null, youtubeUrl: p.youtubeUrl ?? null, mentions: parseMentions(p.mentions) }),
+        body: JSON.stringify({ text: p.text, author: target, imageUrl: p.imageUrl ?? null, videoUrl: p.videoUrl ?? null, youtubeUrl: p.youtubeUrl ?? null, mentions: parseMentions(p.mentions), poll: p.poll ?? null, documentSlides: p.documentSlides ?? null, documentTitle: p.theme ?? null }),
       });
       const data = await readJson(res);
       if (!res.ok) throw new Error(data.error || "Erreur de publication");
@@ -16212,6 +16439,34 @@ export default function Home() {
                     }
                   } : undefined}
                 />
+                <div className="mt-2">
+                  <SnippetTool
+                    text={optimizeText.text}
+                    contextId={activeContextId || undefined}
+                    showToast={showToast}
+                    getCursor={() => optAreaRef.current?.selectionStart}
+                    getSelection={() => { const t = optAreaRef.current; return t ? t.value.slice(t.selectionStart, t.selectionEnd) : ""; }}
+                    setText={editOptimizeText}
+                  />
+                </div>
+                {optimizeText.draftId && (
+                  <div className="mt-2">
+                    <PollTool
+                      poll={optPoll}
+                      hasMedia={Boolean(postImage || postVideo || postYoutube)}
+                      onChange={(next) => {
+                        setOptPoll(next);
+                        const ready = next && next.question.trim() && next.options.filter((o) => o.trim()).length >= 2;
+                        const json = next ? JSON.stringify(next) : null;
+                        // un sondage incomplet reste à l'écran sans être enregistré ; retirer le sondage l'efface du brouillon
+                        if (!next || ready) {
+                          setDrafts((ds) => ds.map((x) => (x.id === optimizeText.draftId ? { ...x, poll: ready ? json : null } : x)));
+                          patchDraft(optimizeText.draftId, { poll: ready ? next : null }).catch(() => {});
+                        }
+                      }}
+                    />
+                  </div>
+                )}
               </div>
 
               {/* Commentaire reçu ou consigne : à coller, puis intégrer au post */}
@@ -17073,6 +17328,23 @@ export default function Home() {
                         }
                       }}
                     />
+                    <div className="mt-2">
+                      <SnippetTool
+                        text={editingResult ? resultDraftText : result.text}
+                        contextId={activeContextId || undefined}
+                        showToast={showToast}
+                        getCursor={() => (editingResult ? resultAreaRef.current?.selectionStart : undefined)}
+                        getSelection={() => { const t = resultAreaRef.current; return editingResult && t ? t.value.slice(t.selectionStart, t.selectionEnd) : ""; }}
+                        setText={(t) => {
+                          if (editingResult) setResultDraftText(t);
+                          else { setHistory((h) => [...h, result]); setResult((r) => ({ ...r, text: t })); }
+                        }}
+                        onTemplate={(tpl) => handleRefine(`Réécris ce post en t'inspirant de la structure, du rythme et du style de ce modèle, sans en reprendre le contenu ni les faits :\n\n${tpl}`)}
+                      />
+                    </div>
+                    <div className="mt-2">
+                      <PollTool poll={resultPoll} onChange={setResultPoll} hasMedia={Boolean(postImage || postVideo || postYoutube || resultSlides?.length)} />
+                    </div>
                   </div>
                 </div>
 
@@ -17094,7 +17366,7 @@ export default function Home() {
                       ))}
                     </ul>
                     {form.type === "carrousel" && result.extra.slides?.length > 0 && (
-                      <CarouselImagesBlock key={result.text} slides={result.extra.slides} />
+                      <CarouselImagesBlock key={result.text} slides={result.extra.slides} onImages={setResultSlides} />
                     )}
                   </div>
                 )}
