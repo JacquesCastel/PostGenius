@@ -50,11 +50,14 @@ async function searchPeople(userId, q) {
       if (!res.ok) { console.error("[mentions] peopleTypeahead refusé :", res.status, txt.slice(0, 300)); refused = res.status; continue; }
       let d = {};
       try { d = JSON.parse(txt); } catch {}
+      let kept = 0;
       for (const el of d.elements ?? []) {
         const urn = PERSON_URN.exec(JSON.stringify(el))?.[0];
         const name = personName(el);
-        if (urn && name && !found.some((f) => f.urn === urn)) found.push({ name, urn });
+        if (urn && name && !found.some((f) => f.urn === urn)) { found.push({ name, urn }); kept++; }
       }
+      // Trace : combien d'éléments renvoyés par LinkedIn, combien exploitables ; si aucun, début de la réponse brute (diagnostic, sans clé ni jeton)
+      console.log(`[mentions] peopleTypeahead ${org.urn} : ${d.elements?.length ?? 0} élément(s) renvoyé(s), ${kept} exploitable(s)${kept ? "" : ` · réponse : ${txt.slice(0, 600)}`}`);
     } catch (e) {
       console.error("[mentions] peopleTypeahead :", e.message);
     }
@@ -76,6 +79,7 @@ async function resolveProfile(userId, vanity) {
       if (!res.ok) { console.error("[mentions] vanityUrl refusé :", res.status, txt.slice(0, 300)); lastStatus = res.status; continue; }
       const urn = PERSON_URN.exec(txt)?.[0];
       if (urn) return { urn };
+      console.log(`[mentions] vanityUrl ${org.urn} : réponse sans identifiant de membre · ${txt.slice(0, 600)}`);
       lastStatus = 404;
     } catch (e) {
       console.error("[mentions] vanityUrl :", e.message);
