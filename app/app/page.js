@@ -2557,7 +2557,7 @@ function MentionTool({ draftId, text, onInsert, mentions, onMentions, getCursor,
   return (
     <div className="space-y-2" data-testid="mention-tool">
       <div className="flex items-center gap-2 flex-wrap">
-        <button type="button" onClick={() => setOpen((o) => !o)} disabled={!draftId} data-testid="mention-open" className="text-xs border border-gray-300 hover:border-[#ff5a5f] hover:text-[#ff5a5f] disabled:opacity-50 px-3 py-1.5 rounded-lg">@ Mentionner une page ou une personne</button>
+        <button type="button" onClick={() => setOpen((o) => !o)} disabled={!draftId} data-testid="mention-open" className="text-xs border border-gray-300 hover:border-[#ff5a5f] hover:text-[#ff5a5f] disabled:opacity-50 px-3 py-1.5 rounded-lg">@ Mentionner</button>
         {!draftId && <span className="text-[11px] text-gray-400">Enregistrez le brouillon pour mentionner une page.</span>}
         {used.map((m) => (<span key={m.urn} className="text-[11px] bg-sky-50 text-sky-700 rounded-full px-2 py-0.5" data-testid="mention-used" title={m.urn}>@{m.name} · mention liée</span>))}
       </div>
@@ -2587,6 +2587,19 @@ function MentionTool({ draftId, text, onInsert, mentions, onMentions, getCursor,
             {error && <p className="text-xs text-red-600" data-testid="mention-error">{error}</p>}
             <p className="text-[10px] text-gray-400">Le nom doit être celui de la page sur LinkedIn : si LinkedIn refuse la mention, le post est publié sans elle.</p>
           </div>
+          {list && list.team?.length > 0 && (
+            <div className="space-y-1.5 border-t border-gray-100 pt-3" data-testid="mention-team">
+              <p className="text-[11px] font-medium text-gray-600">Personnes connectées à LinkeePost</p>
+              <p className="text-[11px] text-gray-400">L&apos;équipe et les personnes de vos clients : si LinkedIn n&apos;accepte pas la mention, le post part sans elle (avertissement).</p>
+              <div className="flex flex-wrap gap-1.5">
+                {list.team.map((m) => (<button key={m.urn} type="button" onClick={() => pick(m)} className={chip} data-testid="mention-team-pick">@{m.name}</button>))}
+              </div>
+            </div>
+          )}
+          {list && !list.peopleSearch && (
+            <p className="text-[11px] text-gray-400 border-t border-gray-100 pt-3" data-testid="mention-person-note">Autre personne : LinkedIn ne permet pas à l&apos;application de la retrouver. Écrivez son nom avec « @ » dans le texte : un rappel vous invite à la taguer à la main après publication.</p>
+          )}
+          {list?.peopleSearch && (
           <div className="space-y-1.5 border-t border-gray-100 pt-3" data-testid="mention-person">
             <p className="text-[11px] font-medium text-gray-600">Une personne</p>
             <p className="text-[11px] text-gray-400">Recherche par nom parmi les abonnés de votre page, ou collez l&apos;adresse de son profil (linkedin.com/in/…) avec son nom exact. LinkedIn ne retrouve pas toutes les personnes : sinon, taguez-la à la main après publication.</p>
@@ -2606,6 +2619,7 @@ function MentionTool({ draftId, text, onInsert, mentions, onMentions, getCursor,
             </div>
             {personError && <p className="text-xs text-red-600" data-testid="mention-person-error">{personError}</p>}
           </div>
+          )}
         </div>
       )}
       {manual.length > 0 && (
