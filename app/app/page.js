@@ -2467,13 +2467,32 @@ function BriefImport({ showToast, onClose, onCreated, draft = null }) {
 
 // Mentions dans un post : pages LinkedIn (vraie mention, publiée avec lien et notification) et personnes (rappel pour les taguer
 // à la main : l'application ne peut pas retrouver l'identifiant LinkedIn d'un membre).
-function MentionTool({ draftId, text, onInsert, mentions, onMentions, getCursor, showToast, postUrl }) {
+function MentionTool({ draftId, text, onInsert, mentions, onMentions, getCursor, showToast, postUrl, onMarkPublished }) {
   const [open, setOpen] = useState(false);
   const [list, setList] = useState(null); // { own, saved }
   const [input, setInput] = useState("");
   const [name, setName] = useState("");
   const [needName, setNeedName] = useState(false);
   const [pageId, setPageId] = useState("");
+  const [opened, setOpened] = useState(false); // l'éditeur de LinkedIn a été ouvert : on propose de marquer le post comme publié
+  const [marking, setMarking] = useState(false);
+  // Taguer des personnes : LinkedIn ne permet pas de les retrouver depuis l'application. On ouvre son éditeur avec le texte du post (copié aussi
+  // dans le presse-papiers) : les « @ » y sont retapés normalement, puis le post est publié depuis LinkedIn.
+  const openLinkedIn = async () => {
+    try { await navigator.clipboard.writeText(text); } catch {}
+    window.open(`https://www.linkedin.com/feed/?shareActive=true&text=${encodeURIComponent(text)}`, "_blank", "noopener");
+    setOpened(true);
+    showToast("Texte copié. Dans LinkedIn, s'il n'est pas déjà dans l'éditeur, collez-le (Ctrl+V), puis retapez « @ » devant chaque nom.");
+  };
+  const markPublished = async () => {
+    if (marking || !window.confirm("Ce post est bien publié sur LinkedIn ? Il passera dans « Publié » et ne partira plus à sa date prévue.")) return;
+    setMarking(true);
+    try {
+      await onMarkPublished();
+    } finally {
+      setMarking(false);
+    }
+  };
   // Personnes : recherche par nom (abonnés de la page) ou adresse de profil + nom exact
   const [personQ, setPersonQ] = useState("");
   const [people, setPeople] = useState(null);
@@ -2558,6 +2577,7 @@ function MentionTool({ draftId, text, onInsert, mentions, onMentions, getCursor,
     <div className="space-y-2" data-testid="mention-tool">
       <div className="flex items-center gap-2 flex-wrap">
         <button type="button" onClick={() => setOpen((o) => !o)} disabled={!draftId} data-testid="mention-open" className="text-xs border border-gray-300 hover:border-[#ff5a5f] hover:text-[#ff5a5f] disabled:opacity-50 px-3 py-1.5 rounded-lg">@ Mentionner</button>
+        <button type="button" onClick={openLinkedIn} disabled={!text.trim()} data-testid="mention-open-linkedin" title="Ouvre l'éditeur de LinkedIn avec le texte du post : vous y taguez les personnes, puis vous publiez depuis LinkedIn" className="text-xs border border-gray-300 hover:border-[#0a66c2] hover:text-[#0a66c2] disabled:opacity-50 px-3 py-1.5 rounded-lg">Taguer dans LinkedIn ↗</button>
         {!draftId && <span className="text-[11px] text-gray-400">Enregistrez le brouillon pour mentionner une page.</span>}
         {used.map((m) => (<span key={m.urn} className="text-[11px] bg-sky-50 text-sky-700 rounded-full px-2 py-0.5" data-testid="mention-used" title={m.urn}>@{m.name} · mention liée</span>))}
       </div>
@@ -2620,6 +2640,12 @@ function MentionTool({ draftId, text, onInsert, mentions, onMentions, getCursor,
             {personError && <p className="text-xs text-red-600" data-testid="mention-person-error">{personError}</p>}
           </div>
           )}
+        </div>
+      )}
+      {opened && onMarkPublished && (
+        <div className="rounded-lg bg-blue-50 border border-blue-200 p-2.5 text-xs text-blue-900 flex items-center gap-3 flex-wrap" data-testid="mention-opened">
+          <span className="flex-1 min-w-[12rem]">Publiez le post dans LinkedIn (en retapant « @ » devant les noms à taguer), puis revenez ici pour le marquer comme publié.</span>
+          <button type="button" onClick={markPublished} disabled={marking} data-testid="mention-mark-published" className="bg-[#0a66c2] hover:bg-[#004182] disabled:bg-gray-300 text-white px-3 py-1.5 rounded-lg">{marking ? "Enregistrement…" : "J'ai publié sur LinkedIn"}</button>
         </div>
       )}
       {manual.length > 0 && (
@@ -2701,7 +2727,17 @@ function PlanText({ it, base, onReload, showToast, onGoHistory, onOpenMedia }) {
         <span data-testid="plan-item-save-state">{saved === "saving" ? "Enregistrement…" : saved === "ok" ? "Modifications enregistrées ✓" : saved === "error" ? "Non enregistré" : dirty ? "Modifié : enregistré en quittant la zone" : it.draft.edited ? "Retouché par vous" : ""}</span>
         <span className="ml-auto">{published ? "Publié" : it.draft.validated ? `Validé · programmé${it.draft.scheduledAt ? ` le ${fmtDateTime(it.draft.scheduledAt)}` : ""}` : it.draft.scheduledAt ? `À valider · proposé le ${fmtDateTime(it.draft.scheduledAt)}` : "À valider · sans date"}</span>
       </div>
-      {!published && <MentionTool draftId={it.draft.id} text={text} onInsert={insertAt} mentions={mentions} onMentions={saveMentions} getCursor={() => taRef.current?.selectionStart} showToast={showToast} />}
+      {!published && <MentionTool draftId={it.draft.id} text={text} onInsert={insertAt} mentions={mentions} onMentions={saveMentions} getCursor={() => taRef.current?.selectionStart} showToast={showToast}
+        onMarkPublished={async () => {
+          try {
+            const res = await fetch(`/api/drafts/${it.draft.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text, status: "publié" }) });
+            if (!res.ok) throw new Error((await readJson(res)).error || "Erreur");
+            showToast(`${it.ref} marqué comme publié ✓`);
+            await onReload();
+          } catch (e) {
+            showToast(e.message);
+          }
+        }} />}
       {/* Visuels : image (charte, illustration IA, import), vidéo, lien YouTube : gérés dans l'écran d'optimisation du post */}
       <div className="rounded-lg bg-gray-50 p-2.5 flex items-center gap-3 flex-wrap" data-testid="plan-item-media">
         {it.draft.imageUrl && <img src={it.draft.imageUrl} alt={`Image de ${it.ref}`} className="h-14 w-14 object-cover rounded-md border border-gray-200" data-testid="plan-item-image" />}
@@ -16055,6 +16091,15 @@ export default function Home() {
                     setDrafts((ds) => ds.map((x) => (x.id === optimizeText.draftId ? { ...x, mentions: json } : x)));
                     patchDraft(optimizeText.draftId, { mentions: json }).catch(() => {});
                   }}
+                  onMarkPublished={optimizeText.draftId ? async () => {
+                    try {
+                      await patchDraft(optimizeText.draftId, { text: optimizeText.text, status: "publié" });
+                      setDrafts((ds) => ds.map((x) => (x.id === optimizeText.draftId ? { ...x, text: optimizeText.text, status: "publié" } : x)));
+                      showToast("Post marqué comme publié ✓");
+                    } catch (e) {
+                      showToast(e.message);
+                    }
+                  } : undefined}
                 />
               </div>
 
