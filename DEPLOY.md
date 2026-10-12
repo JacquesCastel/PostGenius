@@ -86,7 +86,8 @@ Caddy obtient le certificat HTTPS automatiquement dès que le DNS pointe.
 - **Base de dev** : sur https://console.neon.tech, créer une branche `development`
   du projet et mettre sa connection string dans le `DATABASE_URL` du `.env`
   LOCAL — le dev n'écrit plus jamais en prod.
-- **SMTP** (mot de passe oublié) : créer un compte https://www.brevo.com (300
+- **SMTP** (mot de passe oublié, invitations d'équipe, liens de validation client,
+  notifications à l'agence) : créer un compte https://www.brevo.com (300
   emails/jour gratuits) → SMTP & API → remplir `SMTP_HOST=smtp-relay.brevo.com`,
   `SMTP_PORT=587`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM` dans le .env serveur,
   puis `docker compose up -d`.
@@ -165,3 +166,19 @@ Caddy obtient le certificat HTTPS automatiquement dès que le DNS pointe.
      docker run --rm -v /opt/postgenius:/src -w /src node:22-alpine \
        sh -c "npm ci >/dev/null 2>&1 && npx prisma generate >/dev/null 2>&1 && rm -rf .next && DATABASE_URL=postgresql://x:x@localhost/x npx next build >/dev/null 2>&1; grep -c 'Essai gratuit' .next/server/app/index.html"
      ```
+
+## 9. Vérifier une mise en production (parcours agence)
+Le serveur écrit `[config] …` au démarrage si `SMTP_HOST` ou `APP_URL` manque
+(`docker compose logs app | grep "\[config\]"`). Ensuite, dans l'application :
+1. **Client** : « Mes clients » → créer un client → compléter son profil → connecter sa page LinkedIn.
+2. **Validation client** : icône chaîne du client → créer le lien → l'envoyer à une adresse de test →
+   ouvrir le lien dans une fenêtre privée → valider un post et en refuser un avec commentaire →
+   vérifier que la demande apparaît dans « À traiter ».
+3. **Rapport** : icône graphique du client → « Partager au client » → ouvrir le lien en fenêtre privée.
+4. **Publication** : un post avec une mention, un sondage, et un carrousel en PDF (nécessite les images
+   générées) sur la page du client ; contrôler le rendu sur LinkedIn.
+5. **Commentaires** : « Mes posts » → Commentaires → « Proposer une réponse » (lecture sous réserve de
+   l'accès LinkedIn aux commentaires de la page).
+Les migrations de ce développement sont additives (`prisma db push` ne supprime rien) : tables
+`ApprovalLink`, `ReportLink`, `Snippet`, colonnes `Draft.clientFeedback`, `clientFeedbackAt`, `clientApprovedAt`,
+`poll`, `documentSlides`.
