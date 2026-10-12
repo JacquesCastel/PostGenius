@@ -2473,6 +2473,7 @@ function MentionTool({ draftId, text, onInsert, mentions, onMentions, getCursor,
   const [input, setInput] = useState("");
   const [name, setName] = useState("");
   const [needName, setNeedName] = useState(false);
+  const [pageId, setPageId] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
   const load = () => fetch("/api/linkedin/mentions").then(readJson).then((d) => (d.error ? null : setList(d))).catch(() => {});
@@ -2486,7 +2487,7 @@ function MentionTool({ draftId, text, onInsert, mentions, onMentions, getCursor,
     setBusy(true);
     setError(null);
     try {
-      const res = await fetch("/api/linkedin/mentions", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ input, name: name || undefined }) });
+      const res = await fetch("/api/linkedin/mentions", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ input, name: name || undefined, id: pageId || undefined }) });
       const d = await readJson(res);
       if (!res.ok) {
         if (d.code === "manual") setNeedName(true);
@@ -2494,6 +2495,7 @@ function MentionTool({ draftId, text, onInsert, mentions, onMentions, getCursor,
       }
       setInput("");
       setName("");
+      setPageId("");
       setNeedName(false);
       load();
       pick(d.mention);
@@ -2536,8 +2538,9 @@ function MentionTool({ draftId, text, onInsert, mentions, onMentions, getCursor,
             <p className="text-[11px] text-gray-400">Autre page : collez son adresse LinkedIn (linkedin.com/company/…), son nom court ou son identifiant.</p>
             <div className="flex gap-2 flex-wrap">
               <input type="text" value={input} onChange={(e) => setInput(e.target.value)} placeholder="https://www.linkedin.com/company/…" className="flex-1 min-w-[12rem] border border-gray-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]" data-testid="mention-input" />
+              {needName && <input type="text" value={pageId} onChange={(e) => setPageId(e.target.value.replace(/\D/g, ""))} placeholder="Identifiant numérique" inputMode="numeric" className="w-40 border border-gray-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]" data-testid="mention-id" />}
               {needName && <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Nom exact de la page" className="flex-1 min-w-[10rem] border border-gray-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]" data-testid="mention-name" />}
-              <button type="button" onClick={add} disabled={busy || !input.trim() || (needName && !name.trim())} data-testid="mention-add" className="bg-gray-900 hover:bg-gray-700 disabled:bg-gray-300 text-white text-xs px-3 py-1.5 rounded-lg">{busy ? "Recherche…" : "Ajouter et mentionner"}</button>
+              <button type="button" onClick={add} disabled={busy || !input.trim() || (needName && (!name.trim() || (!pageId && !/\d{3,}/.test(input))))} data-testid="mention-add" className="bg-gray-900 hover:bg-gray-700 disabled:bg-gray-300 text-white text-xs px-3 py-1.5 rounded-lg">{busy ? "Recherche…" : "Ajouter et mentionner"}</button>
             </div>
             {error && <p className="text-xs text-red-600" data-testid="mention-error">{error}</p>}
             <p className="text-[10px] text-gray-400">Le nom doit être celui de la page sur LinkedIn : si LinkedIn refuse la mention, le post est publié sans elle.</p>
