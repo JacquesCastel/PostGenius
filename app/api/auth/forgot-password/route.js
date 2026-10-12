@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import crypto from "crypto";
 import { prisma } from "@/lib/db";
 import { sendMail, isMailerConfigured } from "@/lib/mailer";
+import { buildEmail } from "@/lib/emailLayout";
 import { rateLimit, clientIp } from "@/lib/ratelimit";
 
 // Demande de réinitialisation : génère un token (1 h, usage unique) et envoie
