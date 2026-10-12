@@ -37,7 +37,8 @@ export async function GET(req) {
   url.searchParams.set(
     "scope",
     process.env.LINKEDIN_ORG_SCOPES ||
-      "w_organization_social rw_organization_admin r_organization_social_feed w_organization_social_feed"
+      // r_organization_followers : permet de retrouver les abonnés de la page pour les mentionner (recherche de personnes) ; LINKEDIN_PEOPLE_SEARCH=0 la retire
+      `w_organization_social rw_organization_admin r_organization_social_feed w_organization_social_feed${process.env.LINKEDIN_PEOPLE_SEARCH === "0" ? "" : " r_organization_followers"}`
   );
 
   const res = NextResponse.redirect(url.toString());

@@ -85,8 +85,9 @@ async function resolveProfile(userId, vanity) {
 }
 
 // La recherche de personnes chez LinkedIn demande la permission r_organization_followers (accès restreint, accordé par LinkedIn).
-// Désactivée par défaut : LINKEDIN_PEOPLE_SEARCH=1 la réactive une fois la permission obtenue et ajoutée à LINKEDIN_ORG_SCOPES.
-const PEOPLE_SEARCH = process.env.LINKEDIN_PEOPLE_SEARCH === "1";
+// Active par défaut (la permission est demandée à la connexion de la page, voir auth-org) ; LINKEDIN_PEOPLE_SEARCH=0 la désactive.
+// Si LINKEDIN_ORG_SCOPES est défini sur le serveur, il doit contenir r_organization_followers.
+const PEOPLE_SEARCH = process.env.LINKEDIN_PEOPLE_SEARCH !== "0";
 
 // Personnes déjà connectées à LinkeePost (leur profil LinkedIn est relié) : l'équipe de l'agence et les personnes de ses clients
 async function connectedPeople(req, userId) {
