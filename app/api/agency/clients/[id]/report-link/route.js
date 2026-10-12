@@ -10,7 +10,7 @@ async function guard(req, params) {
   const gate = await checkFeature(auth.userId, "orgStats", "Le rapport de performance");
   if (!gate.ok) return { res: NextResponse.json(limitBody(gate), { status: 403 }) };
   const { id } = await params;
-  if (!(await ownClient(auth.agencyId, id))) return { res: NextResponse.json({ error: "Client introuvable" }, { status: 404 }) };
+  if (!(await ownClient(auth, id))) return { res: NextResponse.json({ error: "Client introuvable" }, { status: 404 }) };
   return { auth, id };
 }
 

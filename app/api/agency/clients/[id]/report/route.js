@@ -15,7 +15,7 @@ export async function GET(req, { params }) {
   if (!gate.ok) return NextResponse.json(limitBody(gate), { status: 403 });
 
   const { id: clientId } = await params;
-  const client = await ownClient(auth.agencyId, clientId, { name: true, companyName: true });
+  const client = await ownClient(auth, clientId, { name: true, companyName: true });
   if (!client) {
     return NextResponse.json({ error: "Client introuvable" }, { status: 404 });
   }

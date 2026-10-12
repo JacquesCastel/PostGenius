@@ -10,7 +10,7 @@ export async function DELETE(req, { params }) {
   const { id: clientId } = await params;
 
   // Vérifie que ce client appartient bien à cette agence
-  const client = await ownClient(auth.agencyId, clientId);
+  const client = await ownClient(auth, clientId);
   if (!client) {
     return NextResponse.json({ error: "Client introuvable" }, { status: 404 });
   }
@@ -26,7 +26,7 @@ export async function PATCH(req, { params }) {
   if (auth.error) return NextResponse.json({ error: auth.error }, { status: auth.status });
 
   const { id: clientId } = await params;
-  const client = await ownClient(auth.agencyId, clientId);
+  const client = await ownClient(auth, clientId);
   if (!client) {
     return NextResponse.json({ error: "Client introuvable" }, { status: 404 });
   }
