@@ -137,6 +137,8 @@ model User {
   agencyMembership AgencyMember?
   // Lien de validation pour le client final (agence) : voir ApprovalLink
   approvalLink ApprovalLink?
+  // Lien de partage du rapport mensuel (agence) : voir ReportLink
+  reportLink ReportLink?
 
   // --- Plusieurs entreprises pour une même personne ---
   // L'entreprise « principale » reste portée par les champs ci-dessus ; les autres sont des Context.
@@ -179,6 +181,17 @@ model ApprovalLink {
   createdAt  DateTime  @default(now())
   lastSentAt DateTime?
   sentTo     String? // dernière adresse à laquelle le lien a été envoyé
+}
+
+// Lien de partage en lecture seule du rapport mensuel d'un client d'agence. createdBy = utilisateur de l'agence dont la charte habille le rapport.
+// Un seul lien par client ; le régénérer invalide l'ancien.
+model ReportLink {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  createdBy String
+  createdAt DateTime @default(now())
 }
 
 // Invitation d'un collaborateur dans l'agence : le lien permet de créer un compte rattaché à l'agence (voir lib/agency.js)
@@ -447,6 +460,8 @@ model Draft {
   // Demande de modification faite par le client final depuis son lien de validation (nul = aucune en attente)
   clientFeedback   String?
   clientFeedbackAt DateTime?
+  // Date à laquelle le client final a validé le post depuis son lien (nul = validé par l'agence, ou pas encore)
+  clientApprovedAt DateTime?
 
   // Vecteur sémantique du texte { h: empreinte du texte, v: vecteur } : mémoire éditoriale (ce que l'auteur a déjà dit)
   embedding Json?

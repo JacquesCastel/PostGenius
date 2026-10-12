@@ -21,7 +21,7 @@ export async function POST(req, { params }) {
   if (draft.status !== "à valider") return NextResponse.json({ error: "Ce post a déjà été traité.", code: "done" }, { status: 409 });
 
   if (action === "approve") {
-    await prisma.draft.update({ where: { id: draft.id }, data: { status: "programmé", publishError: null, clientFeedback: null, clientFeedbackAt: null } });
+    await prisma.draft.update({ where: { id: draft.id }, data: { status: "programmé", publishError: null, clientFeedback: null, clientFeedbackAt: null, clientApprovedAt: new Date() } });
   } else {
     await prisma.draft.update({ where: { id: draft.id }, data: { clientFeedback: note, clientFeedbackAt: new Date() } });
   }

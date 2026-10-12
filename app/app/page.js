@@ -37,6 +37,7 @@ import "@fontsource/raleway/400.css";
 import "@fontsource/raleway/700.css";
 import SiteFooter from "@/components/SiteFooter";
 import LpMark from "@/components/LpMark";
+import MonthlyReportBody from "@/components/MonthlyReportBody";
 import ShootingKit from "@/components/ShootingKit";
 import { LANGUAGES, normalizeLanguage } from "@/lib/languages";
 import { MOODS } from "@/lib/moods";
@@ -10706,6 +10707,26 @@ function MonthlyReportModal({ client, onClose }) {
   const primary = brandKit?.primaryColor || "#1b2a4a";
   const accent = brandKit?.accentColor || "#ff5a5f";
 
+  // Lien de partage en lecture seule (page /rapport/…) : créé à la demande, copié dans le presse-papiers
+  const [shareBusy, setShareBusy] = useState(false);
+  const [shareUrl, setShareUrl] = useState(null);
+  const shareReport = async (regenerate = false) => {
+    if (shareBusy) return;
+    if (regenerate && !window.confirm("Régénérer le lien ? L'ancien lien cessera de fonctionner.")) return;
+    setShareBusy(true);
+    try {
+      const res = await fetch(`/api/agency/clients/${client.id}/report-link`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ regenerate }) });
+      const d = await readJson(res);
+      if (!res.ok) throw new Error(d.error || "Erreur");
+      setShareUrl(d.link.url);
+      try { await navigator.clipboard.writeText(d.link.url); setError(null); } catch {}
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setShareBusy(false);
+    }
+  };
+
   const pct = (n) => (n == null ? "—" : `${(n * 100).toFixed(1)} %`);
   const monthLabel = new Date(year, month - 1, 1).toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
   const changeMonth = (delta) => {
@@ -10733,6 +10754,9 @@ function MonthlyReportModal({ client, onClose }) {
             Rapport mensuel
           </h3>
           <div className="flex items-center gap-2">
+            <button onClick={() => shareReport(false)} disabled={shareBusy} data-testid="report-share" className="text-xs font-medium text-gray-500 hover:text-gray-700 border border-gray-200 rounded-lg px-2.5 py-1.5">
+              Partager au client
+            </button>
             <button onClick={() => window.print()} className="text-xs font-medium text-gray-500 hover:text-gray-700 border border-gray-200 rounded-lg px-2.5 py-1.5">
               Imprimer / Exporter en PDF
             </button>
@@ -10741,6 +10765,14 @@ function MonthlyReportModal({ client, onClose }) {
             </button>
           </div>
         </div>
+
+        {shareUrl && (
+          <div className="mb-3 text-xs bg-green-50 border border-green-200 rounded-lg p-2.5 space-y-1 print:hidden" data-testid="report-share-box">
+            <p className="font-medium text-green-800">Lien de partage (copié) : le client voit ce rapport en lecture seule, mois par mois.</p>
+            <input readOnly value={shareUrl} onFocus={(e) => e.target.select()} className="w-full border border-green-200 rounded px-2 py-1 bg-white" data-testid="report-share-url" />
+            <button type="button" onClick={() => shareReport(true)} className="underline text-gray-500 hover:text-red-600">Régénérer le lien (l&apos;ancien cesse de fonctionner)</button>
+          </div>
+        )}
 
         {/* En-tête imprimé : logo de l'agence si renseigné, jamais la marque LinkeePost */}
         {brandKit?.logoUrl && (
@@ -10766,68 +10798,7 @@ function MonthlyReportModal({ client, onClose }) {
         ) : error ? (
           <p className="text-sm text-red-500 py-6 text-center">{error}</p>
         ) : (
-          <div className="space-y-5">
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              {[
-                { label: "Posts publiés", value: data.report.postsPublished },
-                { label: "Impressions", value: data.report.totalImpressions.toLocaleString("fr-FR") },
-                { label: "Engagement moyen", value: pct(data.report.avgEngagementRate) },
-                { label: "Recos suivies", value: `${data.report.recommendations.followed}/${data.report.recommendations.proposed || 0}` },
-              ].map((k) => (
-                <div key={k.label} className="bg-gray-50 rounded-xl p-3">
-                  <p className="text-lg font-bold" style={{ color: primary }}>{k.value}</p>
-                  <p className="text-[11px] text-gray-400">{k.label}</p>
-                </div>
-              ))}
-            </div>
-
-            {data.report.topPosts.length > 0 && (
-              <div>
-                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Meilleurs posts</p>
-                <div className="space-y-2">
-                  {data.report.topPosts.map((p) => (
-                    <div key={p.id} className="border border-gray-100 rounded-xl p-3">
-                      <div className="flex items-center justify-between gap-2">
-                        <p className="text-xs font-medium text-gray-700 truncate">{p.theme}</p>
-                        <span className="text-xs font-semibold shrink-0" style={{ color: accent }}>{pct(p.engagementRate)}</span>
-                      </div>
-                      <p className="text-xs text-gray-400 mt-0.5 line-clamp-2">{p.excerpt}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <div>
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
-                Tous les posts publiés ce mois ({data.report.posts.length})
-              </p>
-              {data.report.posts.length === 0 ? (
-                <p className="text-xs text-gray-300">Aucun post publié sur ce mois.</p>
-              ) : (
-                <div className="space-y-1.5 max-h-64 overflow-y-auto print:max-h-none print:overflow-visible">
-                  {data.report.posts.map((p) => (
-                    <div key={p.id} className="flex items-center justify-between gap-3 text-xs border-b border-gray-50 py-1.5">
-                      <span className="text-gray-400 shrink-0">
-                        {new Date(p.publishedAt).toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" })}
-                      </span>
-                      <span className="text-gray-600 truncate flex-1">{p.theme}</span>
-                      <span className="text-gray-400 shrink-0">
-                        {p.impressions != null ? `${pct(p.engagementRate)} · ${p.impressions.toLocaleString("fr-FR")} imp.` : "stats à venir"}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {data.report.postsPublished > data.report.postsWithStats && (
-              <p className="text-[11px] text-gray-300">
-                {data.report.postsPublished - data.report.postsWithStats} post(s) sans statistiques pour l'instant
-                (mesurées à J+1 et J+7 après publication).
-              </p>
-            )}
-          </div>
+          <MonthlyReportBody report={data.report} primary={primary} accent={accent} />
         )}
       </div>
     </div>
@@ -11310,6 +11281,7 @@ function ClientsView({ showToast, onManage }) {
         </div>
 
         <TeamPanel showToast={showToast} />
+        {clients.length > 0 && <FollowupPanel showToast={showToast} />}
 
         {loading ? (
           <div className="text-center py-20 text-gray-300 text-sm">Chargement…</div>
@@ -11446,6 +11418,77 @@ function ClientsView({ showToast, onManage }) {
       {/* Lien de validation du client final */}
       {approvalClient && <ApprovalLinkDialog client={approvalClient} showToast={showToast} onClose={() => setApprovalClient(null)} />}
     </>
+  );
+}
+
+// Suivi du mois, une ligne par client : publiés, validés par le client, en attente ; exportable en CSV (Excel)
+function FollowupPanel({ showToast }) {
+  const now = new Date();
+  const [period, setPeriod] = useState({ year: now.getFullYear(), month: now.getMonth() + 1 });
+  const [rows, setRows] = useState(null);
+  const [error, setError] = useState(null);
+  const [open, setOpen] = useState(false);
+  useEffect(() => {
+    if (!open) return;
+    setRows(null);
+    setError(null);
+    fetch(`/api/agency/followup?year=${period.year}&month=${period.month}`)
+      .then(readJson)
+      .then((d) => { if (d.error) throw new Error(d.error); setRows(d.rows); })
+      .catch((e) => setError(e.message));
+  }, [open, period]);
+  const label = new Date(period.year, period.month - 1, 1).toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
+  const change = (delta) => { const d = new Date(period.year, period.month - 1 + delta, 1); setPeriod({ year: d.getFullYear(), month: d.getMonth() + 1 }); };
+  const pct = (n) => (n == null ? "" : `${(n * 100).toFixed(1).replace(".", ",")} %`);
+  const exportCsv = () => {
+    const head = ["Client", "Posts publiés", "Impressions", "Engagement moyen", "Validés par le client", "À valider (chez le client)", "Modifications demandées", "Programmés"];
+    const lines = [head, ...rows.map((r) => [r.name, r.published, r.impressions, pct(r.engagementRate), r.clientApproved, r.awaitingClient, r.changeRequests, r.scheduled])];
+    const csv = "\uFEFF" + lines.map((l) => l.map((v) => `"${String(v ?? "").replace(/"/g, '""')}"`).join(";")).join("\r\n");
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+    a.download = `suivi-clients-${period.year}-${String(period.month).padStart(2, "0")}.csv`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+    showToast("Suivi exporté ✓");
+  };
+  return (
+    <section className="bg-white border border-gray-100 rounded-2xl shadow-sm mb-6 overflow-hidden" data-testid="followup-panel">
+      <button type="button" onClick={() => setOpen((o) => !o)} className="w-full px-4 py-3 flex items-center justify-between text-left" data-testid="followup-toggle">
+        <span><span className="font-semibold text-sm text-[#1b2a4a]">Suivi mensuel par client</span><span className="text-xs text-gray-400 ml-2">publiés, validés par le client, en attente</span></span>
+        <ChevronDown size={15} className={`text-gray-400 transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+      {open && (
+        <div className="px-4 pb-4 space-y-3 border-t border-gray-100 pt-3">
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <div className="flex items-center gap-2 text-sm text-gray-600">
+              <button type="button" onClick={() => change(-1)} className="p-1 hover:bg-gray-100 rounded" aria-label="Mois précédent"><ChevronDown size={14} className="rotate-90" /></button>
+              <span className="capitalize font-medium">{label}</span>
+              <button type="button" onClick={() => change(1)} disabled={period.year === now.getFullYear() && period.month === now.getMonth() + 1} className="p-1 hover:bg-gray-100 rounded disabled:opacity-30" aria-label="Mois suivant"><ChevronDown size={14} className="-rotate-90" /></button>
+            </div>
+            <button type="button" onClick={exportCsv} disabled={!rows?.length} className="text-xs font-medium border border-gray-200 hover:bg-gray-50 disabled:opacity-40 rounded-lg px-3 py-1.5" data-testid="followup-csv">Exporter en CSV</button>
+          </div>
+          {error ? <p className="text-sm text-red-500">{error}</p> : !rows ? <p className="text-sm text-gray-400">Chargement…</p> : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead><tr className="text-xs text-gray-400 text-left border-b border-gray-100">
+                  <th className="py-2 pr-3 font-semibold">Client</th><th className="py-2 px-2 font-semibold text-center">Publiés</th><th className="py-2 px-2 font-semibold text-center">Impressions</th><th className="py-2 px-2 font-semibold text-center">Engagement</th><th className="py-2 px-2 font-semibold text-center">Validés par le client</th><th className="py-2 px-2 font-semibold text-center">À valider</th><th className="py-2 px-2 font-semibold text-center">Modif. demandées</th><th className="py-2 pl-2 font-semibold text-center">Programmés</th>
+                </tr></thead>
+                <tbody>
+                  {rows.map((r) => (
+                    <tr key={r.id} className="border-b border-gray-50" data-testid="followup-row">
+                      <td className="py-2 pr-3 font-medium text-[#1b2a4a]">{r.name}</td>
+                      {[r.published, r.impressions.toLocaleString("fr-FR"), pct(r.engagementRate) || "—", r.clientApproved, r.awaitingClient, r.changeRequests, r.scheduled].map((v, i) => (
+                        <td key={i} className="py-2 px-2 text-center text-gray-600">{v === 0 ? <span className="text-gray-300">0</span> : v}</td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+    </section>
   );
 }
 
