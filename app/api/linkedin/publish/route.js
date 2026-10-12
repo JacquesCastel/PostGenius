@@ -22,8 +22,8 @@ export async function POST(req) {
   }
 
   try {
-    const { postId, mentionsDropped } = await publishForUser(userId, { text, author, imageUrl, videoUrl, youtubeUrl, mentions: parseMentions(mentions) });
-    return NextResponse.json({ ok: true, postId, ...(mentionsDropped ? { warning: "LinkedIn a refusé la mention : le post est publié sans mention. Taguez la page à la main sur LinkedIn." } : {}) });
+    const { postId, mentionsDropped, personMentionsSkipped } = await publishForUser(userId, { text, author, imageUrl, videoUrl, youtubeUrl, mentions: parseMentions(mentions) });
+    return NextResponse.json({ ok: true, postId, ...(personMentionsSkipped ? { warning: "Les personnes mentionnées ne sont pas taguées : pour un post de profil, connectez votre profil dans « Connexions » (mentions de personnes), ou utilisez « Taguer dans LinkedIn »." } : mentionsDropped ? { warning: "LinkedIn a refusé la mention : le post est publié sans mention. Taguez la page à la main sur LinkedIn." } : {}) });
   } catch (e) {
     const msg = e.message || "Échec de la publication.";
     const status = /non connecté|expiré|reconnectez/i.test(msg) ? 401 : 502;
