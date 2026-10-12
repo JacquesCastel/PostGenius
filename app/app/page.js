@@ -9026,7 +9026,7 @@ function DashboardView({ drafts, canVeille = true, canEvents = false, canScore =
               className="accent-[#ff5a5f]"
             />
             Pilote automatique{" "}
-            <span className="text-gray-400">(alimente chaque semaine la dernière campagne)</span>
+            <span className="text-gray-400">(alimente chaque semaine la dernière campagne active ; sans campagne active, rien n&apos;est généré)</span>
           </label>
         </div>
         {!profile?.publishDays ? (
