@@ -21,6 +21,7 @@ import { cleanPostContext } from "@/lib/postContext";
 import { planSheet, sheetAll } from "@/lib/campaignPlan";
 import { parseMentions, findManualTags, insertMention } from "@/lib/mentions";
 import { insertSnippet, SNIPPET_KINDS } from "@/lib/snippets";
+import { POLL_DURATIONS, POLL_QUESTION_MAX, POLL_OPTION_MAX, pollProblem } from "@/lib/postExtras";
 import { aggregateInsights } from "@/lib/knowledgeText";
 import { overlayProfile } from "@/lib/contextOverlay";
 import SiteHeader from "@/components/SiteHeader";
@@ -2579,6 +2580,41 @@ function SnippetTool({ text, setText, getCursor, getSelection, onTemplate, conte
               ))}
             </ul>
           )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Sondage LinkedIn : une question, 2 à 4 réponses, une durée. Il remplace l'image ou la vidéo du post (LinkedIn n'accepte qu'une pièce jointe).
+function PollTool({ poll, onChange, hasMedia }) {
+  const active = poll != null;
+  const set = (patch) => onChange({ ...poll, ...patch });
+  const setOption = (i, v) => set({ options: poll.options.map((o, j) => (j === i ? v.slice(0, POLL_OPTION_MAX) : o)) });
+  return (
+    <div className="space-y-2" data-testid="poll-tool">
+      <button type="button" onClick={() => onChange(active ? null : { question: "", options: ["", ""], duration: "THREE_DAYS" })} data-testid="poll-toggle" className={`text-xs border px-3 py-1.5 rounded-lg ${active ? "border-[#ff5a5f] text-[#ff5a5f]" : "border-gray-300 hover:border-[#ff5a5f] hover:text-[#ff5a5f]"}`}>
+        {active ? "Retirer le sondage" : "Ajouter un sondage"}
+      </button>
+      {active && (
+        <div className="rounded-xl border border-gray-200 p-3 space-y-2 bg-white" data-testid="poll-panel">
+          <input value={poll.question} onChange={(e) => set({ question: e.target.value.slice(0, POLL_QUESTION_MAX) })} placeholder="Votre question" className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]" data-testid="poll-question" />
+          <p className="text-[11px] text-gray-400 text-right -mt-1">{poll.question.length} / {POLL_QUESTION_MAX}</p>
+          {poll.options.map((o, i) => (
+            <div key={i} className="flex gap-2 items-center">
+              <input value={o} onChange={(e) => setOption(i, e.target.value)} placeholder={`Réponse ${i + 1} (${POLL_OPTION_MAX} caractères max)`} className="flex-1 min-w-0 border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]" data-testid="poll-option" />
+              {poll.options.length > 2 && <button type="button" onClick={() => set({ options: poll.options.filter((_, j) => j !== i) })} aria-label="Retirer cette réponse" className="text-gray-300 hover:text-red-500"><X size={14} /></button>}
+            </div>
+          ))}
+          <div className="flex items-center gap-3 flex-wrap">
+            {poll.options.length < 4 && <button type="button" onClick={() => set({ options: [...poll.options, ""] })} className="text-xs text-[#ff5a5f] hover:underline" data-testid="poll-add-option">+ Ajouter une réponse</button>}
+            <label className="text-xs text-gray-500 flex items-center gap-1.5 ml-auto">Durée
+              <select value={poll.duration} onChange={(e) => set({ duration: e.target.value })} className="border border-gray-200 rounded-lg px-2 py-1 text-xs" data-testid="poll-duration">
+                {Object.entries(POLL_DURATIONS).map(([k, l]) => <option key={k} value={k}>{l}</option>)}
+              </select>
+            </label>
+          </div>
+          <p className="text-[11px] text-gray-400">Le texte du post accompagne le sondage.{hasMedia ? " L'image ou la vidéo du post ne sera pas publiée : un post LinkedIn n'a qu'une pièce jointe." : ""}</p>
         </div>
       )}
     </div>
@@ -14337,7 +14373,7 @@ function TutorialOverlay({ canEvents, onClose }) {
 // (result.extra.slides — voir buildUserPrompt dans app/api/generate/route.js), via le
 // même gabarit Satori que la charte graphique (couleurs, logo, police de l'utilisateur).
 // Ne publie rien : images téléchargeables, à poster manuellement en document LinkedIn.
-function CarouselImagesBlock({ slides }) {
+function CarouselImagesBlock({ slides, onImages }) {
   const { activeContextId } = useContext(EntreprisesCtx);
   const [images, setImages] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -14355,10 +14391,28 @@ function CarouselImagesBlock({ slides }) {
       const d = await res.json();
       if (!res.ok) throw new Error(d.error || "Échec de la génération");
       setImages(d.urls ?? []);
+      setAsPdf(true);
+      onImages?.(d.urls ?? []);
     } catch (e) {
       setError(e.message);
     } finally {
       setLoading(false);
+    }
+  };
+  // Publier le carrousel en document PDF sur LinkedIn (coché par défaut dès que les images existent)
+  const [asPdf, setAsPdf] = useState(false);
+  const togglePdf = (on) => { setAsPdf(on); onImages?.(on ? images : null); };
+  const downloadPdf = async () => {
+    try {
+      const res = await fetch("/api/image/carousel-pdf", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ urls: images }) });
+      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || "Erreur");
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(await res.blob());
+      a.download = "carrousel.pdf";
+      a.click();
+      URL.revokeObjectURL(a.href);
+    } catch (e) {
+      setError(e.message);
     }
   };
 
@@ -14397,8 +14451,12 @@ function CarouselImagesBlock({ slides }) {
               </a>
             ))}
           </div>
-          <p className="text-[11px] text-gray-400 mt-2">
-            À poster manuellement en document LinkedIn (carrousel) — la publication automatique n'est pas encore disponible.
+          <label className="flex items-center gap-2 text-xs text-gray-600 mt-3" data-testid="carousel-pdf-toggle">
+            <input type="checkbox" checked={asPdf} onChange={(e) => togglePdf(e.target.checked)} /> Publier ce carrousel en document PDF sur LinkedIn
+          </label>
+          <p className="text-[11px] text-gray-400 mt-1">
+            Les slides sont assemblées en PDF au moment de la publication (immédiate ou programmée), avec le texte du post au-dessus.{" "}
+            <button type="button" onClick={downloadPdf} className="underline hover:text-[#ff5a5f]" data-testid="carousel-pdf-download">Télécharger le PDF</button>
           </p>
         </>
       )}
@@ -14587,6 +14645,7 @@ export default function Home() {
   }, []);
   const [optimizeText, setOptimizeText] = useState(null); // { text, type } → page Étape 2 plein écran
   const [optMentions, setOptMentions] = useState([]);
+  const [optPoll, setOptPoll] = useState(null);
   const optAreaRef = useRef(null);
   const [rewriting, setRewriting] = useState(false);
   const [rewriteScope, setRewriteScope] = useState("all"); // all | hook | body | signature (= conclusion + appel à l'action)
@@ -14648,6 +14707,7 @@ export default function Home() {
     setVersions([{ id: Date.now(), text, label: "Version initiale", score: scorePost({ text, type }).score }]);
     setOptimizeText({ text, type, draftId });
     setOptMentions(draftId ? parseMentions(drafts.find((d) => d.id === draftId)?.mentions) : []);
+    setOptPoll(draftId ? (() => { try { return JSON.parse(drafts.find((d) => d.id === draftId)?.poll ?? "null"); } catch { return null; } })() : null);
     // Reprend l'image déjà associée au brouillon (si on vient de "Mes posts") —
     // sinon on garde celle déjà en cours (si on vient de "Créer un post").
     if (draftId) {
@@ -14758,6 +14818,8 @@ export default function Home() {
     return () => window.removeEventListener("pagehide", flush);
   }, []);
   const [editingResult, setEditingResult] = useState(false);
+  const [resultPoll, setResultPoll] = useState(null); // sondage du post en cours de création (enregistré avec le brouillon)
+  const [resultSlides, setResultSlides] = useState(null); // images du carrousel à publier en PDF (null = pas de PDF)
   const [resultMentions, setResultMentions] = useState([]); // pages/personnes taguées dans le post en cours de création (enregistrées avec le brouillon)
   const resultAreaRef = useRef(null);
   const [resultDraftText, setResultDraftText] = useState("");
@@ -15288,6 +15350,8 @@ export default function Home() {
     const r = override?.result ?? result;
     const h = override?.history ?? history;
     if (!r) return null;
+    const pollIssue = resultPoll ? pollProblem(resultPoll) : null;
+    if (pollIssue) { showToast(`${pollIssue} Complétez-le ou retirez-le avant d'enregistrer.`); return null; }
     try {
       const res = await fetch("/api/drafts", {
         method: "POST",
@@ -15308,6 +15372,8 @@ export default function Home() {
           youtubeUrl: postYoutube?.url ?? null,
           pillarId: activeReco?.pillarId ?? null,
           mentions: resultMentions.filter((m) => r.text.includes(`@${m.name}`)),
+          poll: resultPoll,
+          documentSlides: r.extra?.slides ? resultSlides : null,
         }),
       });
       const data = await readJson(res);
@@ -15331,6 +15397,8 @@ export default function Home() {
     setThread([]);
     setEditingResult(false);
     setResultMentions([]);
+    setResultPoll(null);
+    setResultSlides(null);
     setPostImage(null);
     setPostVideo(null);
     setPostYoutube(null);
@@ -16021,7 +16089,7 @@ export default function Home() {
       const res = await fetch("/api/linkedin/publish", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: p.text, author: target, imageUrl: p.imageUrl ?? null, videoUrl: p.videoUrl ?? null, youtubeUrl: p.youtubeUrl ?? null, mentions: parseMentions(p.mentions) }),
+        body: JSON.stringify({ text: p.text, author: target, imageUrl: p.imageUrl ?? null, videoUrl: p.videoUrl ?? null, youtubeUrl: p.youtubeUrl ?? null, mentions: parseMentions(p.mentions), poll: p.poll ?? null, documentSlides: p.documentSlides ?? null, documentTitle: p.theme ?? null }),
       });
       const data = await readJson(res);
       if (!res.ok) throw new Error(data.error || "Erreur de publication");
@@ -16381,6 +16449,24 @@ export default function Home() {
                     setText={editOptimizeText}
                   />
                 </div>
+                {optimizeText.draftId && (
+                  <div className="mt-2">
+                    <PollTool
+                      poll={optPoll}
+                      hasMedia={Boolean(postImage || postVideo || postYoutube)}
+                      onChange={(next) => {
+                        setOptPoll(next);
+                        const ready = next && next.question.trim() && next.options.filter((o) => o.trim()).length >= 2;
+                        const json = next ? JSON.stringify(next) : null;
+                        // un sondage incomplet reste à l'écran sans être enregistré ; retirer le sondage l'efface du brouillon
+                        if (!next || ready) {
+                          setDrafts((ds) => ds.map((x) => (x.id === optimizeText.draftId ? { ...x, poll: ready ? json : null } : x)));
+                          patchDraft(optimizeText.draftId, { poll: ready ? next : null }).catch(() => {});
+                        }
+                      }}
+                    />
+                  </div>
+                )}
               </div>
 
               {/* Commentaire reçu ou consigne : à coller, puis intégrer au post */}
@@ -17256,6 +17342,9 @@ export default function Home() {
                         onTemplate={(tpl) => handleRefine(`Réécris ce post en t'inspirant de la structure, du rythme et du style de ce modèle, sans en reprendre le contenu ni les faits :\n\n${tpl}`)}
                       />
                     </div>
+                    <div className="mt-2">
+                      <PollTool poll={resultPoll} onChange={setResultPoll} hasMedia={Boolean(postImage || postVideo || postYoutube || resultSlides?.length)} />
+                    </div>
                   </div>
                 </div>
 
@@ -17277,7 +17366,7 @@ export default function Home() {
                       ))}
                     </ul>
                     {form.type === "carrousel" && result.extra.slides?.length > 0 && (
-                      <CarouselImagesBlock key={result.text} slides={result.extra.slides} />
+                      <CarouselImagesBlock key={result.text} slides={result.extra.slides} onImages={setResultSlides} />
                     )}
                   </div>
                 )}

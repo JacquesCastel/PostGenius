@@ -464,6 +464,11 @@ model Draft {
   // Date à laquelle le client final a validé le post depuis son lien (nul = validé par l'agence, ou pas encore)
   clientApprovedAt DateTime?
 
+  // Sondage LinkedIn joint au post : JSON { question, options, duration } (voir lib/postExtras.js). Remplace toute image ou vidéo.
+  poll String?
+  // Carrousel publié en document PDF : JSON des adresses des images des slides, dans l'ordre
+  documentSlides String?
+
   // Vecteur sémantique du texte { h: empreinte du texte, v: vecteur } : mémoire éditoriale (ce que l'auteur a déjà dit)
   embedding Json?
 
