@@ -20,6 +20,7 @@ import { isOrgUrn } from "@/lib/publishVoice";
 import { cleanPostContext } from "@/lib/postContext";
 import { planSheet, sheetAll } from "@/lib/campaignPlan";
 import { parseMentions, findManualTags, insertMention } from "@/lib/mentions";
+import { insertSnippet, SNIPPET_KINDS } from "@/lib/snippets";
 import { aggregateInsights } from "@/lib/knowledgeText";
 import { overlayProfile } from "@/lib/contextOverlay";
 import SiteHeader from "@/components/SiteHeader";
@@ -2503,6 +2504,87 @@ function BriefImport({ showToast, onClose, onCreated, draft = null }) {
 
 // Mentions dans un post : pages LinkedIn (vraie mention, publiée avec lien et notification) et personnes (rappel pour les taguer
 // à la main : l'application ne peut pas retrouver l'identifiant LinkedIn d'un membre).
+// Bibliothèque de contenus réutilisables (posts qui ont marché, accroches, conclusions, blocs) : insérer en un clic,
+// enregistrer le texte (ou la sélection) pour plus tard, ou s'en servir comme modèle pour l'IA.
+const SNIPPET_LABELS = { post: "Post", accroche: "Accroche", conclusion: "Conclusion", bloc: "Bloc" };
+function SnippetTool({ text, setText, getCursor, getSelection, onTemplate, contextId, showToast }) {
+  const [open, setOpen] = useState(false);
+  const [list, setList] = useState(null);
+  const [filter, setFilter] = useState("all");
+  const [kind, setKind] = useState("post");
+  const [title, setTitle] = useState("");
+  const [busy, setBusy] = useState(false);
+  const q = contextId ? `?contextId=${encodeURIComponent(contextId)}` : "";
+  const load = () => fetch(`/api/snippets${q}`).then(readJson).then((d) => (d.error ? null : setList(d.snippets))).catch(() => {});
+  useEffect(() => { if (open) load(); }, [open, contextId]);
+  const selection = open ? (getSelection?.() ?? "") : "";
+  const save = async () => {
+    const chosen = (getSelection?.() ?? "").trim();
+    const body = chosen || text;
+    if (busy || !body.trim()) return;
+    setBusy(true);
+    try {
+      const res = await fetch("/api/snippets", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ kind, title, text: body, contextId: contextId || undefined }) });
+      const d = await readJson(res);
+      if (!res.ok) throw new Error(d.error || "Erreur");
+      setTitle("");
+      showToast(chosen ? "Sélection enregistrée dans la bibliothèque ✓" : "Post enregistré dans la bibliothèque ✓");
+      load();
+    } catch (e) {
+      showToast(e.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+  const used = (sn) => fetch(`/api/snippets/${sn.id}`, { method: "PATCH" }).then(load).catch(() => {});
+  const insert = (sn) => { setText(insertSnippet(text, sn, getCursor?.())); used(sn); setOpen(false); };
+  const forget = async (sn) => { await fetch(`/api/snippets/${sn.id}`, { method: "DELETE" }).catch(() => {}); load(); };
+  const shown = (list ?? []).filter((sn) => filter === "all" || sn.kind === filter);
+  return (
+    <div className="space-y-2" data-testid="snippet-tool">
+      <button type="button" onClick={() => setOpen((o) => !o)} data-testid="snippet-open" className="text-xs border border-gray-300 hover:border-[#ff5a5f] hover:text-[#ff5a5f] px-3 py-1.5 rounded-lg">Bibliothèque</button>
+      {open && (
+        <div className="rounded-xl border border-gray-200 p-3 space-y-3 bg-white" data-testid="snippet-panel">
+          <div className="space-y-1.5">
+            <p className="text-[11px] text-gray-400">{selection.trim() ? "Enregistrer la partie sélectionnée du texte :" : "Enregistrer le texte actuel (ou sélectionnez-en une partie) :"}</p>
+            <div className="flex gap-2 flex-wrap">
+              <select value={kind} onChange={(e) => setKind(e.target.value)} className="border border-gray-200 rounded-lg px-2 py-1.5 text-xs" data-testid="snippet-kind">
+                {SNIPPET_KINDS.map((k) => <option key={k} value={k}>{SNIPPET_LABELS[k]}</option>)}
+              </select>
+              <input value={title} onChange={(e) => setTitle(e.target.value)} maxLength={80} placeholder="Titre (facultatif)" className="flex-1 min-w-0 border border-gray-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]" data-testid="snippet-title" />
+              <button type="button" onClick={save} disabled={busy || !text.trim()} className="bg-gray-900 hover:bg-gray-700 disabled:bg-gray-300 text-white text-xs px-3 py-1.5 rounded-lg" data-testid="snippet-save">Enregistrer</button>
+            </div>
+          </div>
+          <div className="flex gap-1.5 flex-wrap">
+            {["all", ...SNIPPET_KINDS].map((k) => (
+              <button key={k} type="button" onClick={() => setFilter(k)} className={`text-[11px] px-2.5 py-1 rounded-full border ${filter === k ? "bg-[#ff5a5f] text-white border-[#ff5a5f]" : "border-gray-200 text-gray-600"}`}>{k === "all" ? "Tous" : SNIPPET_LABELS[k]}</button>
+            ))}
+          </div>
+          {list === null ? <p className="text-xs text-gray-400">Chargement…</p> : shown.length === 0 ? <p className="text-xs text-gray-400">Rien ici pour l&apos;instant : enregistrez un post qui a bien marché, une accroche ou une conclusion à retrouver.</p> : (
+            <ul className="space-y-1.5 max-h-72 overflow-y-auto">
+              {shown.map((sn) => (
+                <li key={sn.id} className="border border-gray-100 rounded-lg p-2 text-xs" data-testid="snippet-item">
+                  <div className="flex items-center gap-2">
+                    <span className="bg-gray-100 text-gray-600 rounded-full px-2 py-0.5 text-[10px] font-medium">{SNIPPET_LABELS[sn.kind]}</span>
+                    <span className="font-medium text-gray-700 truncate flex-1">{sn.title || sn.text.split("\n")[0].slice(0, 60)}</span>
+                    {sn.uses > 0 && <span className="text-[10px] text-gray-400">{sn.uses}×</span>}
+                    <button type="button" onClick={() => forget(sn)} aria-label="Supprimer de la bibliothèque" className="text-gray-300 hover:text-red-500"><X size={12} /></button>
+                  </div>
+                  <p className="text-gray-500 mt-1 line-clamp-2 whitespace-pre-wrap">{sn.text}</p>
+                  <div className="flex gap-3 mt-1.5">
+                    <button type="button" onClick={() => insert(sn)} className="text-[#ff5a5f] hover:underline" data-testid="snippet-insert">Insérer</button>
+                    {onTemplate && <button type="button" onClick={() => { onTemplate(sn.text); setOpen(false); }} className="text-[#0a66c2] hover:underline" data-testid="snippet-template">Utiliser comme modèle</button>}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function MentionTool({ draftId, local, text, onInsert, mentions, onMentions, getCursor, showToast, postUrl, onMarkPublished }) {
   const [memberConnected, setMemberConnected] = useState(true); // profil connecté pour les mentions de personnes (vrai par défaut : pas d'alerte avant lecture)
   useEffect(() => { fetch("/api/linkedin/me").then(readJson).then((d) => setMemberConnected(Boolean(d.memberConnected))).catch(() => {}); }, []);
@@ -16289,6 +16371,16 @@ export default function Home() {
                     }
                   } : undefined}
                 />
+                <div className="mt-2">
+                  <SnippetTool
+                    text={optimizeText.text}
+                    contextId={activeContextId || undefined}
+                    showToast={showToast}
+                    getCursor={() => optAreaRef.current?.selectionStart}
+                    getSelection={() => { const t = optAreaRef.current; return t ? t.value.slice(t.selectionStart, t.selectionEnd) : ""; }}
+                    setText={editOptimizeText}
+                  />
+                </div>
               </div>
 
               {/* Commentaire reçu ou consigne : à coller, puis intégrer au post */}
@@ -17150,6 +17242,20 @@ export default function Home() {
                         }
                       }}
                     />
+                    <div className="mt-2">
+                      <SnippetTool
+                        text={editingResult ? resultDraftText : result.text}
+                        contextId={activeContextId || undefined}
+                        showToast={showToast}
+                        getCursor={() => (editingResult ? resultAreaRef.current?.selectionStart : undefined)}
+                        getSelection={() => { const t = resultAreaRef.current; return editingResult && t ? t.value.slice(t.selectionStart, t.selectionEnd) : ""; }}
+                        setText={(t) => {
+                          if (editingResult) setResultDraftText(t);
+                          else { setHistory((h) => [...h, result]); setResult((r) => ({ ...r, text: t })); }
+                        }}
+                        onTemplate={(tpl) => handleRefine(`Réécris ce post en t'inspirant de la structure, du rythme et du style de ce modèle, sans en reprendre le contenu ni les faits :\n\n${tpl}`)}
+                      />
+                    </div>
                   </div>
                 </div>
 

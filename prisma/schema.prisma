@@ -156,6 +156,7 @@ model User {
   languageElements   LanguageElement[]
   languageProposals  LanguageProposal[]
   savedMentions      SavedMention[]
+  snippets           Snippet[]
   remarkAnalysisAt   DateTime? // dernière analyse des modifications de posts (suggestions de remarques)
   editorialRecos     EditorialRecommendation[]
 }
@@ -819,6 +820,21 @@ model CampaignPost {
   draft      Draft?
 
   @@index([campaignId, position])
+}
+
+// Bibliothèque de contenus réutilisables : posts qui ont bien marché, accroches, conclusions, blocs. Par entreprise (contextId nul = principale).
+model Snippet {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  contextId String?
+  kind      String // post | accroche | conclusion | bloc
+  title     String?
+  text      String
+  uses      Int      @default(0) // nombre d'insertions : les plus utilisés remontent en tête
+  createdAt DateTime @default(now())
+
+  @@index([userId, contextId])
 }
 
 // Pages LinkedIn que le client a déjà mentionnées (ou ajoutées) : proposées à nouveau d'un clic dans l'éditeur de post.
