@@ -2468,6 +2468,8 @@ function BriefImport({ showToast, onClose, onCreated, draft = null }) {
 // Mentions dans un post : pages LinkedIn (vraie mention, publiée avec lien et notification) et personnes (rappel pour les taguer
 // à la main : l'application ne peut pas retrouver l'identifiant LinkedIn d'un membre).
 function MentionTool({ draftId, text, onInsert, mentions, onMentions, getCursor, showToast, postUrl, onMarkPublished }) {
+  const [memberConnected, setMemberConnected] = useState(true); // profil connecté pour les mentions de personnes (vrai par défaut : pas d'alerte avant lecture)
+  useEffect(() => { fetch("/api/linkedin/me").then(readJson).then((d) => setMemberConnected(Boolean(d.memberConnected))).catch(() => {}); }, []);
   const [open, setOpen] = useState(false);
   const [list, setList] = useState(null); // { own, saved }
   const [input, setInput] = useState("");
@@ -2641,6 +2643,9 @@ function MentionTool({ draftId, text, onInsert, mentions, onMentions, getCursor,
           </div>
           )}
         </div>
+      )}
+      {!memberConnected && used.some((m) => m.urn.startsWith("urn:li:person:")) && (
+        <p className="text-[11px] text-amber-800 bg-amber-50 border border-amber-200 rounded-lg p-2" data-testid="mention-member-hint">Pour qu&apos;une personne soit taguée dans un post de <strong>profil</strong>, connectez votre profil dans « Connexions » (mentions de personnes). Dans un post de page, aucune connexion de plus n&apos;est nécessaire.</p>
       )}
       {opened && onMarkPublished && (
         <div className="rounded-lg bg-blue-50 border border-blue-200 p-2.5 text-xs text-blue-900 flex items-center gap-3 flex-wrap" data-testid="mention-opened">
@@ -13344,6 +13349,28 @@ function ConnectionsView({ linkedin, onDisconnect, instagram, onDisconnectInstag
               )}
             </div>
 
+            {/* Mentions de personnes dans les posts de profil : le profil est aussi connecté par l'application des pages (identifiants de membre propres à chaque application) */}
+            {linkedin.connected && (
+              <div className="p-5 flex items-start justify-between gap-3 flex-wrap" data-testid="member-connection">
+                <div className="flex items-start gap-3 flex-1">
+                  <div className={`p-2 rounded-xl shrink-0 mt-0.5 ${linkedin.memberConnected ? "bg-green-50 text-green-600" : "bg-gray-100 text-gray-400"}`}>
+                    <Linkedin size={18} />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium">Mentions de personnes (profil)</p>
+                    {linkedin.memberConnected ? (
+                      <p className="text-xs text-gray-500">Connecté{linkedin.memberName ? ` en tant que ${linkedin.memberName}` : ""}{linkedin.memberExpiresAt && <> · expire le {new Date(linkedin.memberExpiresAt).toLocaleDateString("fr-FR")}</>}</p>
+                    ) : (
+                      <p className="text-xs text-gray-400">Pour taguer des personnes dans un post de profil, LinkedIn exige que le post soit publié par l&apos;application qui les retrouve : connectez votre profil ici (une seule fois). Sans cela, utilisez « Taguer dans LinkedIn ».</p>
+                    )}
+                  </div>
+                </div>
+                <a href="/api/linkedin/auth-member" data-testid="member-connect" className={linkedin.memberConnected ? "text-xs border border-gray-200 hover:border-[#ff5a5f] text-gray-700 px-3 py-1.5 rounded-xl shrink-0" : "text-xs bg-[#0a66c2] hover:bg-[#004182] text-white px-3 py-1.5 rounded-xl shrink-0 transition-colors"}>
+                  {linkedin.memberConnected ? "Reconnecter" : "Connecter"}
+                </a>
+              </div>
+            )}
+
             {/* Statistiques du profil personnel — app LinkedIn dédiée, indépendante
                 de la page entreprise (Community Management API ne peut cohabiter
                 avec Share on LinkedIn / Sign In with LinkedIn sur la même app) */}
@@ -14738,6 +14765,8 @@ export default function Home() {
     const LI_MESSAGES = {
       connected: "LinkedIn connecté ✓",
       org_connected: "Page entreprise connectée ✓",
+      member_connected: "Profil connecté pour les mentions de personnes ✓",
+      member_error: liMsg ? `Erreur (mentions de personnes) : ${liMsg}` : "Erreur LinkedIn (mentions de personnes) — consultez le terminal du serveur",
       stats_connected: "Statistiques du profil connectées ✓",
       refused: liMsg || "Vous avez refusé l'autorisation LinkedIn",
       org_refused: liMsg ? `Page entreprise refusée : ${liMsg}` : "Autorisation refusée pour la page entreprise",
@@ -14754,7 +14783,7 @@ export default function Home() {
       setView("connections"); // au retour de LinkedIn, on voit tout de suite l'état des connexions
       showToast(LI_MESSAGES[li] ?? "Connexion LinkedIn échouée");
       // Recharger le statut LinkedIn si connexion réussie (perso, org ou stats)
-      if (li === "connected" || li === "org_connected" || li === "stats_connected") {
+      if (li === "connected" || li === "org_connected" || li === "stats_connected" || li === "member_connected") {
         fetch("/api/linkedin/me").then((r) => r.json()).then((d) => {
           setLinkedin(d);
           fetch("/api/linkedin/organizations").then((r) => r.json()).then((o) => setOrgs(o.organizations ?? [])).catch(() => {});

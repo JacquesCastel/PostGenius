@@ -32,6 +32,8 @@ export async function GET(req) {
   }
   if (!oauthTargetMatches(req, userId)) return NextResponse.redirect(`${appUrl}/app?linkedin=target_mismatch`);
 
+  // Mode « profil par l'application des pages » (voir auth-member) : on enregistre le jeton de membre, sans toucher à la page entreprise
+  const memberMode = req.cookies.get("li_org_member")?.value === "1";
   const clientId = process.env.LINKEDIN_ORG_CLIENT_ID || process.env.LINKEDIN_CLIENT_ID;
   const clientSecret = process.env.LINKEDIN_ORG_CLIENT_SECRET || process.env.LINKEDIN_CLIENT_SECRET;
   const redirectUri = process.env.LINKEDIN_ORG_REDIRECT_URI || `${appUrl}/api/linkedin/callback-org`;
@@ -48,6 +50,31 @@ export async function GET(req) {
       throw new Error("Échange de token échoué: " + txt);
     }
     const { access_token, expires_in } = await tokenRes.json();
+
+    if (memberMode) {
+      // Identité du membre pour CETTE application (identifiant propre à l'application)
+      const meRes = await fetch("https://api.linkedin.com/v2/me", { headers: { Authorization: `Bearer ${access_token}` } });
+      const meTxt = await meRes.text();
+      if (!meRes.ok) {
+        console.error("LinkedIn profil (app des pages) :", meRes.status, meTxt.slice(0, 300));
+        throw new Error(`Profil non lu par LinkedIn (code ${meRes.status}) : la permission r_basicprofile manque peut-être à l'application des pages.`);
+      }
+      const me = JSON.parse(meTxt);
+      const sub = String(me.id ?? "");
+      if (!/^[A-Za-z0-9_-]+$/.test(sub)) throw new Error("Identifiant de membre introuvable dans la réponse de LinkedIn.");
+      const memberData = {
+        memberToken: encryptToken(access_token),
+        memberSub: sub,
+        memberName: [me.localizedFirstName, me.localizedLastName].filter(Boolean).join(" ") || null,
+        memberExpiresAt: new Date(Date.now() + (expires_in ?? 5184000) * 1000),
+      };
+      await prisma.linkedInAccount.upsert({ where: { userId }, update: memberData, create: { userId, ...memberData } });
+      const resM = NextResponse.redirect(`${appUrl}/app?linkedin=member_connected`);
+      resM.cookies.delete("li_org_oauth_state");
+      resM.cookies.delete("li_org_member");
+      clearOauthTarget(resM);
+      return resM;
+    }
 
     const liHeaders = {
       Authorization: `Bearer ${access_token}`,
@@ -104,6 +131,6 @@ export async function GET(req) {
   } catch (e) {
     console.error("Erreur callback org:", e.message);
     const msg = encodeURIComponent(e.message.slice(0, 200));
-    return NextResponse.redirect(`${appUrl}/app?linkedin=org_error&msg=${msg}`);
+    return NextResponse.redirect(`${appUrl}/app?linkedin=${req.cookies.get("li_org_member")?.value === "1" ? "member_error" : "org_error"}&msg=${msg}`);
   }
 }

@@ -11,6 +11,7 @@ export async function GET(req) {
   const now = new Date();
   const personValid = acc?.personToken && (!acc.personExpiresAt || acc.personExpiresAt > now);
   const orgValid = acc?.orgToken && (!acc.orgExpiresAt || acc.orgExpiresAt > now);
+  const memberValid = acc?.memberToken && acc?.memberSub && (!acc.memberExpiresAt || acc.memberExpiresAt > now);
   const statsValid = acc?.statsToken && (!acc.statsExpiresAt || acc.statsExpiresAt > now);
 
   return NextResponse.json({
@@ -19,6 +20,9 @@ export async function GET(req) {
     personExpiresAt: personValid ? acc.personExpiresAt : null,
     orgConnected: Boolean(orgValid),
     orgExpiresAt: orgValid ? acc.orgExpiresAt : null,
+    memberConnected: Boolean(memberValid),
+    memberName: memberValid ? acc.memberName ?? "" : "",
+    memberExpiresAt: memberValid ? acc.memberExpiresAt : null,
     statsConnected: Boolean(statsValid),
     statsExpiresAt: statsValid ? acc.statsExpiresAt : null,
   });

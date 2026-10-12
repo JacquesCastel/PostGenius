@@ -287,6 +287,12 @@ model LinkedInAccount {
   orgUrn          String?   // urn:li:organization:ID de la première page (compat)
   orgName         String?   // nom de la première page (compat)
   orgAccounts     String?   // JSON : [{urn, name}, ...] — toutes les pages admin
+  // Profil connecté par l'app des pages (celle qui retrouve les personnes à mentionner) : les identifiants de membre sont propres à chaque
+  // application, une mention de personne n'est reconnue que si le post est publié par la même application.
+  memberToken     String?
+  memberSub       String?
+  memberName      String?
+  memberExpiresAt DateTime?
   statsToken      String?   // app dédiée "PostGenius Stats" (Community Management API,
   statsExpiresAt  DateTime? // seule permission possible pour r_member_postAnalytics)
 }
