@@ -14477,9 +14477,12 @@ function TutorialOverlay({ canEvents, onClose }) {
 // (result.extra.slides — voir buildUserPrompt dans app/api/generate/route.js), via le
 // même gabarit Satori que la charte graphique (couleurs, logo, police de l'utilisateur).
 // Ne publie rien : images téléchargeables, à poster manuellement en document LinkedIn.
-function CarouselImagesBlock({ slides, onImages }) {
+function CarouselImagesBlock({ slides, onImages, initial = null }) {
   const { activeContextId } = useContext(EntreprisesCtx);
-  const [images, setImages] = useState(null);
+  const start = (() => { try { const a = typeof initial === "string" ? JSON.parse(initial) : initial; return Array.isArray(a) && a.length ? a : null; } catch { return null; } })();
+  const [images, setImages] = useState(start);
+  // Publier le carrousel en document PDF sur LinkedIn (coché dès que les images existent)
+  const [asPdf, setAsPdf] = useState(Boolean(start));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -14503,8 +14506,6 @@ function CarouselImagesBlock({ slides, onImages }) {
       setLoading(false);
     }
   };
-  // Publier le carrousel en document PDF sur LinkedIn (coché par défaut dès que les images existent)
-  const [asPdf, setAsPdf] = useState(false);
   const togglePdf = (on) => { setAsPdf(on); onImages?.(on ? images : null); };
   const downloadPdf = async () => {
     try {
@@ -14521,20 +14522,27 @@ function CarouselImagesBlock({ slides, onImages }) {
   };
 
   return (
-    <div className="border-t border-gray-100 mt-4 pt-4">
+    <div className="border-t border-gray-100 mt-4 pt-4" data-testid="carousel-block">
+      <p className="text-sm font-semibold text-[#1b2a4a]">Carrousel PDF pour LinkedIn</p>
+      <p className="text-xs text-gray-500 mt-0.5 mb-3">
+        {images
+          ? "Vos slides sont prêtes. Cochée, la case ci-dessous fait publier le carrousel en document PDF avec votre post."
+          : "Créez les slides (aux couleurs de votre charte) : elles sont assemblées en un PDF publié sur LinkedIn avec le texte du post."}
+      </p>
       {!images ? (
         <button
           onClick={generate}
           disabled={loading}
-          className="bg-gray-900 hover:bg-gray-700 disabled:bg-gray-300 text-white text-xs font-medium px-4 py-2 rounded-lg flex items-center gap-1.5"
+          data-testid="carousel-generate"
+          className="bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white text-sm font-semibold px-5 py-2.5 rounded-xl flex items-center gap-2"
         >
-          {loading ? <RefreshCw size={13} className="animate-spin" /> : <ImageIcon size={13} />}
-          {loading ? "Génération des slides…" : "Générer les images du carrousel"}
+          {loading ? <RefreshCw size={14} className="animate-spin" /> : <Layers size={14} />}
+          {loading ? "Création des slides…" : "Créer les slides et le PDF"}
         </button>
       ) : (
         <>
           <div className="flex items-center justify-between mb-2">
-            <p className="text-xs font-medium text-gray-500">{images.length} image{images.length > 1 ? "s" : ""} générée{images.length > 1 ? "s" : ""}</p>
+            <p className="text-xs font-medium text-gray-500">{images.length} slide{images.length > 1 ? "s" : ""}</p>
             <button onClick={generate} disabled={loading} className="text-xs text-gray-500 hover:text-[#ff5a5f] flex items-center gap-1">
               {loading ? <RefreshCw size={12} className="animate-spin" /> : <RefreshCw size={12} />} Régénérer
             </button>
@@ -14555,11 +14563,11 @@ function CarouselImagesBlock({ slides, onImages }) {
               </a>
             ))}
           </div>
-          <label className="flex items-center gap-2 text-xs text-gray-600 mt-3" data-testid="carousel-pdf-toggle">
+          <label className="flex items-center gap-2 text-sm font-medium text-[#1b2a4a] mt-3 cursor-pointer" data-testid="carousel-pdf-toggle">
             <input type="checkbox" checked={asPdf} onChange={(e) => togglePdf(e.target.checked)} /> Publier ce carrousel en document PDF sur LinkedIn
           </label>
           <p className="text-[11px] text-gray-400 mt-1">
-            Les slides sont assemblées en PDF au moment de la publication (immédiate ou programmée), avec le texte du post au-dessus.{" "}
+            Le PDF est assemblé au moment de la publication (immédiate ou programmée).{" "}
             <button type="button" onClick={downloadPdf} className="underline hover:text-[#ff5a5f]" data-testid="carousel-pdf-download">Télécharger le PDF</button>
           </p>
         </>
@@ -16612,6 +16620,23 @@ export default function Home() {
                     setText={editOptimizeText}
                   />
                 </div>
+                {optimizeText.draftId && (() => {
+                  const dr = drafts.find((x) => x.id === optimizeText.draftId);
+                  return dr?.type === "carrousel" && dr.extra?.slides?.length > 0 ? (
+                    <div className="mt-2 rounded-xl border border-gray-200 p-3 bg-white">
+                      <CarouselImagesBlock
+                        key={dr.id}
+                        slides={dr.extra.slides}
+                        initial={dr.documentSlides}
+                        onImages={(urls) => {
+                          const json = urls?.length ? JSON.stringify(urls) : null;
+                          setDrafts((ds) => ds.map((x) => (x.id === dr.id ? { ...x, documentSlides: json } : x)));
+                          patchDraft(dr.id, { documentSlides: urls?.length ? urls : null }).catch(() => {});
+                        }}
+                      />
+                    </div>
+                  ) : null;
+                })()}
                 {optimizeText.draftId && (
                   <div className="mt-2">
                     <PollTool
