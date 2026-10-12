@@ -722,6 +722,20 @@ function CommentsPanel({ draft, onClose, showToast, onIntegrate }) {
   const [errorCode, setErrorCode] = useState(null); // "read_forbidden" : lecture refusée par LinkedIn
   const [replyText, setReplyText] = useState("");
   const [sending, setSending] = useState(false);
+  // Suggestions de réponse par l'IA : proposées pour un commentaire, jamais envoyées sans clic
+  const [suggest, setSuggest] = useState(null); // { id, loading, replies, error }
+  const [replyTo, setReplyTo] = useState(null); // commentaire auquel la réponse en cours répond (fil de discussion)
+  const suggestReplies = async (c) => {
+    setSuggest({ id: c.id, loading: true });
+    try {
+      const res = await fetch("/api/linkedin/comments/suggest", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ draftId: draft.id, commentText: c.text, authorName: c.authorName }) });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(d.error || "Erreur");
+      setSuggest({ id: c.id, replies: d.replies });
+    } catch (e) {
+      setSuggest({ id: c.id, error: e.message });
+    }
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -751,13 +765,14 @@ function CommentsPanel({ draft, onClose, showToast, onIntegrate }) {
       const res = await fetch("/api/linkedin/comments", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ draftId: draft.id, text: replyText }),
+        body: JSON.stringify({ draftId: draft.id, text: replyText, parentCommentUrn: replyTo?.commentUrn || undefined }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Erreur");
       setComments((c) => [...(c ?? []), errorCode === "read_forbidden" ? { ...data.comment, authorName: "Vous" } : data.comment]);
       setReplyText("");
-      if (errorCode === "read_forbidden") showToast("Commentaire publié sur LinkedIn ✓");
+      setReplyTo(null);
+      if (errorCode === "read_forbidden" || replyTo) showToast("Réponse publiée sur LinkedIn ✓");
     } catch (e) {
       showToast(e.message);
     } finally {
@@ -815,11 +830,30 @@ function CommentsPanel({ draft, onClose, showToast, onIntegrate }) {
               {c.createdAt && (
                 <p className="text-[11px] text-gray-400 mt-1">{new Date(c.createdAt).toLocaleDateString("fr-FR")}</p>
               )}
-              {onIntegrate && <button type="button" onClick={() => onIntegrate(c.text)} data-testid="comment-integrate" className="mt-1.5 text-[11px] text-[#0a66c2] hover:underline">Intégrer dans le post →</button>}
+              <div className="flex gap-3 flex-wrap">
+                {onIntegrate && <button type="button" onClick={() => onIntegrate(c.text)} data-testid="comment-integrate" className="mt-1.5 text-[11px] text-[#0a66c2] hover:underline">Intégrer dans le post →</button>}
+                <button type="button" onClick={() => suggestReplies(c)} disabled={suggest?.loading} data-testid="comment-suggest" className="mt-1.5 text-[11px] text-[#ff5a5f] hover:underline disabled:opacity-50">Proposer une réponse</button>
+              </div>
+              {suggest?.id === c.id && (
+                <div className="mt-2 space-y-1.5" data-testid="comment-suggestions">
+                  {suggest.loading && <p className="text-[11px] text-gray-400 flex items-center gap-1.5"><RefreshCw size={11} className="animate-spin" /> Rédaction des réponses…</p>}
+                  {suggest.error && <p className="text-[11px] text-red-600">{suggest.error}</p>}
+                  {suggest.replies?.map((r, i) => (
+                    <button key={i} type="button" onClick={() => { setReplyText(r); setReplyTo(c); setSuggest(null); }} data-testid="comment-suggestion" className="block w-full text-left text-xs bg-white border border-gray-200 hover:border-[#ff5a5f] rounded-lg p-2 whitespace-pre-wrap">{r}</button>
+                  ))}
+                  {suggest.replies && <p className="text-[10px] text-gray-400">Cliquez une proposition pour la placer dans la zone de réponse : vous pouvez la modifier avant d&apos;envoyer.</p>}
+                </div>
+              )}
             </div>
           ))}
         </div>
 
+        {replyTo && (
+          <p className="px-3 pt-2 text-[11px] text-gray-500 flex items-center gap-1.5 shrink-0" data-testid="reply-to">
+            Réponse à {replyTo.authorName || "un membre LinkedIn"}
+            <button type="button" onClick={() => setReplyTo(null)} className="text-gray-400 hover:text-gray-700" aria-label="Annuler la réponse ciblée"><X size={11} /></button>
+          </p>
+        )}
         <div className="flex gap-2 p-3 border-t border-gray-100 shrink-0">
           <input
             type="text"
