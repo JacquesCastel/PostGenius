@@ -2557,7 +2557,7 @@ function MentionTool({ draftId, text, onInsert, mentions, onMentions, getCursor,
   return (
     <div className="space-y-2" data-testid="mention-tool">
       <div className="flex items-center gap-2 flex-wrap">
-        <button type="button" onClick={() => setOpen((o) => !o)} disabled={!draftId} data-testid="mention-open" className="text-xs border border-gray-300 hover:border-[#ff5a5f] hover:text-[#ff5a5f] disabled:opacity-50 px-3 py-1.5 rounded-lg">@ Mentionner une page ou une personne</button>
+        <button type="button" onClick={() => setOpen((o) => !o)} disabled={!draftId} data-testid="mention-open" className="text-xs border border-gray-300 hover:border-[#ff5a5f] hover:text-[#ff5a5f] disabled:opacity-50 px-3 py-1.5 rounded-lg">@ Mentionner</button>
         {!draftId && <span className="text-[11px] text-gray-400">Enregistrez le brouillon pour mentionner une page.</span>}
         {used.map((m) => (<span key={m.urn} className="text-[11px] bg-sky-50 text-sky-700 rounded-full px-2 py-0.5" data-testid="mention-used" title={m.urn}>@{m.name} · mention liée</span>))}
       </div>
@@ -2587,6 +2587,19 @@ function MentionTool({ draftId, text, onInsert, mentions, onMentions, getCursor,
             {error && <p className="text-xs text-red-600" data-testid="mention-error">{error}</p>}
             <p className="text-[10px] text-gray-400">Le nom doit être celui de la page sur LinkedIn : si LinkedIn refuse la mention, le post est publié sans elle.</p>
           </div>
+          {list && list.team?.length > 0 && (
+            <div className="space-y-1.5 border-t border-gray-100 pt-3" data-testid="mention-team">
+              <p className="text-[11px] font-medium text-gray-600">Personnes connectées à LinkeePost</p>
+              <p className="text-[11px] text-gray-400">L&apos;équipe et les personnes de vos clients : si LinkedIn n&apos;accepte pas la mention, le post part sans elle (avertissement).</p>
+              <div className="flex flex-wrap gap-1.5">
+                {list.team.map((m) => (<button key={m.urn} type="button" onClick={() => pick(m)} className={chip} data-testid="mention-team-pick">@{m.name}</button>))}
+              </div>
+            </div>
+          )}
+          {list && !list.peopleSearch && (
+            <p className="text-[11px] text-gray-400 border-t border-gray-100 pt-3" data-testid="mention-person-note">Autre personne : LinkedIn ne permet pas à l&apos;application de la retrouver. Écrivez son nom avec « @ » dans le texte : un rappel vous invite à la taguer à la main après publication.</p>
+          )}
+          {list?.peopleSearch && (
           <div className="space-y-1.5 border-t border-gray-100 pt-3" data-testid="mention-person">
             <p className="text-[11px] font-medium text-gray-600">Une personne</p>
             <p className="text-[11px] text-gray-400">Recherche par nom parmi les abonnés de votre page, ou collez l&apos;adresse de son profil (linkedin.com/in/…) avec son nom exact. LinkedIn ne retrouve pas toutes les personnes : sinon, taguez-la à la main après publication.</p>
@@ -2606,6 +2619,7 @@ function MentionTool({ draftId, text, onInsert, mentions, onMentions, getCursor,
             </div>
             {personError && <p className="text-xs text-red-600" data-testid="mention-person-error">{personError}</p>}
           </div>
+          )}
         </div>
       )}
       {manual.length > 0 && (
@@ -14576,7 +14590,7 @@ export default function Home() {
 
   // Création pas à pas : « Pour qui ? » n'apparaît que s'il y a un choix (page entreprise connectée)
   const createSteps = [
-    ...((linkedin.connected && orgs.length > 0) || contexts.length > 0 ? [{ id: "who", label: "Pour qui ?", short: "Pour qui" }] : []),
+    ...((linkedin.connected && linkedin.orgConnected && orgs.length > 0) || contexts.length > 0 ? [{ id: "who", label: "Pour qui ?", short: "Pour qui" }] : []),
     { id: "topic", label: "De quoi parler ?", short: "Sujet" },
     ...(genMode === "single" ? [
       { id: "ctx", label: "Pour qui, et pour quoi ?", short: "Public" },
@@ -14650,12 +14664,11 @@ export default function Home() {
       .then((r) => r.json())
       .then((d) => {
         setLinkedin(d);
-        if (d.orgConnected) {
-          fetch("/api/linkedin/organizations")
-            .then((r) => r.json())
-            .then((o) => setOrgs(o.organizations ?? []))
-            .catch(() => {});
-        }
+        // Les pages connues sont chargées même si leur connexion a expiré (le serveur renvoie alors la liste enregistrée) : leurs posts restent consultables
+        fetch("/api/linkedin/organizations")
+          .then((r) => r.json())
+          .then((o) => setOrgs(o.organizations ?? []))
+          .catch(() => {});
       })
       .catch(() => {})
       .finally(() => setLinkedinLoaded(true));
@@ -14708,9 +14721,7 @@ export default function Home() {
       if (li === "connected" || li === "org_connected" || li === "stats_connected") {
         fetch("/api/linkedin/me").then((r) => r.json()).then((d) => {
           setLinkedin(d);
-          if (d.orgConnected) {
-            fetch("/api/linkedin/organizations").then((r) => r.json()).then((o) => setOrgs(o.organizations ?? [])).catch(() => {});
-          }
+          fetch("/api/linkedin/organizations").then((r) => r.json()).then((o) => setOrgs(o.organizations ?? [])).catch(() => {});
         }).catch(() => {});
       }
       window.history.replaceState({}, "", "/app");
@@ -14751,7 +14762,7 @@ export default function Home() {
   // Voix du post selon la page de publication : profil (« je ») ou page entreprise (« nous »)
   const voiceFor = (tgt) => (isOrgUrn(tgt) ? { kind: "org", pageName: orgs.find((o) => o.urn === tgt)?.name ?? "" } : { kind: "person" });
   // Deux versions : posts uniques seulement (ni série ni variantes)
-  const pairActive = Boolean(pairWith) && genMode === "single" && !wantVariants && linkedin.connected && orgs.some((o) => o.urn === pairWith);
+  const pairActive = Boolean(pairWith) && genMode === "single" && !wantVariants && linkedin.connected && linkedin.orgConnected && orgs.some((o) => o.urn === pairWith);
   // Change de version dans la paire : la version quittée garde ses retouches
   const switchPairTab = (i) => {
     if (!pair || i === pairTab || loading) return;
@@ -17042,7 +17053,7 @@ export default function Home() {
               </div>
             )}
             {/* Où publier : la voix du post en dépend (profil « je », page « nous ») */}
-            {linkedin.connected && orgs.length > 0 && (
+            {linkedin.connected && linkedin.orgConnected && orgs.length > 0 && (
               <div data-testid="publish-as">
                 <label className="text-sm font-medium text-gray-700 block mb-2">Publier en tant que</label>
                 <div className="flex flex-wrap gap-1.5">
@@ -17398,7 +17409,7 @@ export default function Home() {
                 {[
                   ["topic", "Sujet", genMode === "series" ? `Série de ${seriesCount} posts · ${form.theme.trim().slice(0, 90) || "à préciser"}` : (activeSource?.title || form.theme.trim().slice(0, 110) || "à préciser")],
                   ...(contexts.length > 0 ? [["who", "Entreprise", activeContext?.name || profile?.companyName || "Entreprise principale"]] : []),
-                  ...(linkedin.connected && orgs.length > 0 ? [["who", "Publier en tant que", pairActive ? `Profil + page ${orgs.find((o) => o.urn === pairWith)?.name ?? ""} (deux versions)` : isOrgUrn(target) ? `Page : ${orgs.find((o) => o.urn === target)?.name ?? "entreprise"}` : "Profil personnel"]] : []),
+                  ...(linkedin.connected && linkedin.orgConnected && orgs.length > 0 ? [["who", "Publier en tant que", pairActive ? `Profil + page ${orgs.find((o) => o.urn === pairWith)?.name ?? ""} (deux versions)` : isOrgUrn(target) ? `Page : ${orgs.find((o) => o.urn === target)?.name ?? "entreprise"}` : "Profil personnel"]] : []),
                   ...(genMode === "single" ? [
                     ["ctx", "Public et objectif", Object.keys(postCtxSpecific).length ? [postCtxSpecific.audience && `public : ${postCtxSpecific.audience}`, postCtxSpecific.goal && `objectif : ${postCtxSpecific.goal.split(",").join(" + ")}`, postCtxSpecific.angle && `angle : ${postCtxSpecific.angle}`].filter(Boolean).join(" · ") : "Repris de votre profil"],
                     ["shape", "Format", POST_TYPES.find((t) => t.id === form.type)?.label ?? "Post simple"],
@@ -17688,7 +17699,7 @@ export default function Home() {
                       avant publication (modifiable dans Profil).
                     </p>
                   )}
-                  {linkedin.connected && orgs.length > 0 && (
+                  {linkedin.connected && linkedin.orgConnected && orgs.length > 0 && (
                     <label className="flex items-center gap-2 text-xs text-gray-600 flex-wrap">
                       Publier en tant que :
                       <select
@@ -17855,7 +17866,8 @@ export default function Home() {
           {/* Barre d'options — le profil sélectionné filtre aussi la liste ci-dessous
               (ce select fixe aussi le compte utilisé par les actions rapides "Publier") */}
           <div className="flex items-center justify-end mb-4 flex-wrap gap-3">
-            {linkedin.connected && (
+            {/* Le sélecteur reste visible même si une connexion LinkedIn a expiré : sans lui, les posts d'une page (programmés compris) deviennent introuvables */}
+            {(linkedin.connected || linkedin.orgConnected || orgs.length > 0) && (
               <label className="flex items-center gap-2 text-sm text-gray-600 flex-wrap">
                 Publier en tant que :
                 <select
@@ -17863,13 +17875,12 @@ export default function Home() {
                   onChange={(e) => setTarget(e.target.value)}
                   className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#ff5a5f] max-w-full"
                 >
-                  <option value="person">Profil personnel{linkedin.name ? ` (${linkedin.name})` : ""}</option>
-                  {linkedin.orgConnected &&
-                    orgs.map((o) => (
-                      <option key={o.urn} value={o.urn}>
-                        Page : {o.name}
-                      </option>
-                    ))}
+                  <option value="person">Profil personnel{linkedin.name ? ` (${linkedin.name})` : ""}{!linkedin.connected ? " (non connecté)" : ""}</option>
+                  {orgs.map((o) => (
+                    <option key={o.urn} value={o.urn}>
+                      Page : {o.name}{!linkedin.orgConnected ? " (non connectée)" : ""}
+                    </option>
+                  ))}
                 </select>
               </label>
             )}

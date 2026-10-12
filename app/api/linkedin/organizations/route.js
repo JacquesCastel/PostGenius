@@ -13,7 +13,15 @@ export async function GET(req) {
 
   const acc = await prisma.linkedInAccount.findUnique({ where: { userId } });
   const token = decryptToken(acc?.orgToken);
-  if (!token) return NextResponse.json({ organizations: [] });
+  // Pas de jeton valable : on renvoie les pages enregistrées lors de la dernière connexion (leurs posts restent consultables)
+  if (!token) {
+    try {
+      const cached = JSON.parse(acc?.orgAccounts ?? "[]").filter((o) => o?.urn && o?.name);
+      return NextResponse.json({ organizations: cached, cached: true });
+    } catch {
+      return NextResponse.json({ organizations: [] });
+    }
+  }
 
   const headers = {
     Authorization: `Bearer ${token}`,

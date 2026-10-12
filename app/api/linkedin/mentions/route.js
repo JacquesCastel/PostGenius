@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { getEffectiveUserId as getUserId } from "@/lib/session";
+import { getEffectiveUserId as getUserId, getSessionData } from "@/lib/session";
 import { decryptToken } from "@/lib/crypto";
 import { parseOrgRef, parsePersonRef } from "@/lib/mentions";
 
@@ -59,7 +59,7 @@ async function searchPeople(userId, q) {
       console.error("[mentions] peopleTypeahead :", e.message);
     }
   }
-  if (!found.length && refused) return { error: `LinkedIn refuse la recherche de personnes pour cette application (code ${refused}). Collez plutôt l'adresse du profil et son nom exact.` };
+  if (!found.length && refused) return { error: `LinkedIn refuse la recherche de personnes (code ${refused}) : l'application des pages n'a pas la permission r_organization_followers. Collez plutôt l'adresse du profil et son nom exact.` };
   return { people: found.slice(0, 8) };
 }
 
@@ -84,18 +84,43 @@ async function resolveProfile(userId, vanity) {
   return { error: `LinkedIn n'a pas retrouvé ce profil${lastStatus ? ` (code ${lastStatus})` : ""} : un profil public peut rester introuvable. Essayez la recherche par nom (abonnés de votre page), ou taguez la personne à la main après publication.` };
 }
 
+// La recherche de personnes chez LinkedIn demande la permission r_organization_followers (accès restreint, accordé par LinkedIn).
+// Désactivée par défaut : LINKEDIN_PEOPLE_SEARCH=1 la réactive une fois la permission obtenue et ajoutée à LINKEDIN_ORG_SCOPES.
+const PEOPLE_SEARCH = process.env.LINKEDIN_PEOPLE_SEARCH === "1";
+
+// Personnes déjà connectées à LinkeePost (leur profil LinkedIn est relié) : l'équipe de l'agence et les personnes de ses clients
+async function connectedPeople(req, userId) {
+  const session = await getSessionData(req);
+  const real = session?.userId;
+  if (!real) return [];
+  const mem = await prisma.agencyMember.findUnique({ where: { userId: real }, select: { agencyId: true } });
+  let ids = [];
+  if (mem) {
+    const [members, clients] = await Promise.all([
+      prisma.agencyMember.findMany({ where: { agencyId: mem.agencyId }, select: { userId: true } }),
+      prisma.user.findMany({ where: { agencyId: mem.agencyId }, select: { id: true } }),
+    ]);
+    ids = [...members.map((m) => m.userId), ...clients.map((c) => c.id)];
+  }
+  ids = ids.filter((id) => id !== userId);
+  if (!ids.length) return [];
+  const accs = await prisma.linkedInAccount.findMany({ where: { userId: { in: ids }, personSub: { not: null }, personName: { not: null } }, select: { personSub: true, personName: true } });
+  return accs.filter((a) => /^[A-Za-z0-9_-]+$/.test(a.personSub)).map((a) => ({ name: a.personName, urn: `urn:li:person:${a.personSub}` }));
+}
+
 export async function GET(req) {
   const userId = await getUserId(req);
   if (!userId) return NextResponse.json({ error: "Non connecté." }, { status: 401 });
   const q = new URL(req.url).searchParams.get("q")?.trim();
   if (q) {
+    if (!PEOPLE_SEARCH) return NextResponse.json({ error: "La recherche de personnes n'est pas activée." }, { status: 404 });
     if (q.length < 2) return NextResponse.json({ people: [] });
     const r = await searchPeople(userId, q.slice(0, 80));
     return NextResponse.json(r, { status: r.error ? 422 : 200 });
   }
   const [own, saved] = await Promise.all([ownPages(userId), prisma.savedMention.findMany({ where: { userId }, orderBy: { createdAt: "desc" }, take: MAX_SAVED, select: { id: true, name: true, urn: true } })]);
   const ownUrns = new Set(own.map((o) => o.urn));
-  return NextResponse.json({ own, saved: saved.filter((s) => !ownUrns.has(s.urn)) });
+  return NextResponse.json({ own, saved: saved.filter((s) => !ownUrns.has(s.urn)), team: await connectedPeople(req, userId), peopleSearch: PEOPLE_SEARCH });
 }
 
 async function lookup(userId, ref) {
@@ -130,6 +155,7 @@ export async function POST(req) {
   const body = await req.json().catch(() => ({}));
   // Personne : adresse de profil (ou identifiant de membre) + nom exact tel qu'affiché sur son profil
   const person = parsePersonRef(body.input);
+  if (person && !person.urn && !PEOPLE_SEARCH) return NextResponse.json({ error: "LinkedIn ne permet pas à l'application de retrouver une personne à partir de son profil. Taguez-la à la main après publication (rappel automatique).", code: "person_failed" }, { status: 422 });
   if (person) {
     const pname = String(body.name ?? "").replace(/\s+/g, " ").trim().slice(0, 120);
     if (!pname) return NextResponse.json({ error: "Indiquez le nom exact de la personne, tel qu'il s'affiche sur son profil LinkedIn : la mention n'est cliquable que s'il est identique.", code: "person_name" }, { status: 422 });
