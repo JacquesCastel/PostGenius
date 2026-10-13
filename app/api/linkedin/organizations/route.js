@@ -12,7 +12,9 @@ export async function GET(req) {
   if (!userId) return NextResponse.json({ organizations: [] });
 
   const acc = await prisma.linkedInAccount.findUnique({ where: { userId } });
-  const token = decryptToken(acc?.orgToken);
+  // Jeton expiré ou révoqué (marqué plus bas lors d'un 401) : on ne rappelle pas LinkedIn, on attend la reconnexion
+  const expired = Boolean(acc?.orgExpiresAt && acc.orgExpiresAt < new Date());
+  const token = expired ? null : decryptToken(acc?.orgToken);
   // Pas de jeton valable : on renvoie les pages enregistrées lors de la dernière connexion (leurs posts restent consultables)
   if (!token) {
     try {
