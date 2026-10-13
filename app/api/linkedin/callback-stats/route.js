@@ -21,7 +21,8 @@ export async function GET(req) {
   const userId = target.userId;
 
   if (error || !code) {
-    console.error("LinkedIn stats OAuth refusé:", error, errorDescription);
+    if (error === "invalid_scope_error") console.warn("[linkedin] statistiques de profil : accès pas encore approuvé par LinkedIn pour cette application");
+    else console.error("LinkedIn stats OAuth refusé:", error, errorDescription);
     // invalid_scope_error : LinkedIn refuse le scope r_member_postAnalytics tant que
     // le produit "Community Management API" n'est pas approuvé sur cette app dédiée
     // (revue manuelle LinkedIn — pas un bug côté app). On évite d'exposer le texte

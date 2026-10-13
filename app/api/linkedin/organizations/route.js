@@ -66,7 +66,14 @@ export async function GET(req) {
 
       return NextResponse.json({ organizations });
     }
-    console.warn("organizationAcls:", aclRes.status, await aclRes.text());
+    if (aclRes.status === 401) {
+      // Jeton révoqué (l'utilisateur LinkedIn a retiré l'accès, ou un autre jeton l'a remplacé) ou expiré : on le marque expiré.
+      // L'application demande alors de reconnecter la page, au lieu de rappeler LinkedIn à chaque chargement d'écran.
+      await prisma.linkedInAccount.update({ where: { userId }, data: { orgExpiresAt: new Date(Date.now() - 1000) } }).catch(() => {});
+      console.warn(`[linkedin] jeton de la page révoqué ou expiré pour le compte ${userId} : reconnexion demandée`);
+    } else {
+      console.warn(`[linkedin] liste des pages refusée (HTTP ${aclRes.status}) pour le compte ${userId}`);
+    }
   } catch (e) {
     console.error("Erreur organizations live:", e.message);
   }
