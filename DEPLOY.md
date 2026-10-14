@@ -182,3 +182,14 @@ Le serveur écrit `[config] …` au démarrage si `SMTP_HOST` ou `APP_URL` manqu
 Les migrations de ce développement sont additives (`prisma db push` ne supprime rien) : tables
 `ApprovalLink`, `ReportLink`, `Snippet`, colonnes `Draft.clientFeedback`, `clientFeedbackAt`, `clientApprovedAt`,
 `poll`, `documentSlides`.
+
+## 10. Quotas et e-mails d'accompagnement
+- **Quotas** : limites par offre modifiables dans Administration → « Limites des offres » (posts, images, sources ; -1 = illimité ;
+  vide = valeur d'origine de `lib/plans.js`). Réglage par compte : bouton « Quotas » sur la ligne du compte. Réglage par client d'agence :
+  bouton jauge sur la ligne du client (propriétaire de l'agence). Les prix et les fonctions incluses restent dans le code (liés à Stripe).
+- **E-mails** (nécessitent `SMTP_HOST`, une passe par heure) : alertes de quota à 80 % puis 100 % (e-mail de service) ; accueil aux jours 1, 3
+  et 7 ; récapitulatif le lundi dès 8 h (avec lien de désinscription) ; pour l'agence, relances de validation (tous les 3 jours, 3 fois) et
+  rapport du mois le 1er, **uniquement** pour les clients où l'agence a coché l'option dans « Lien de validation ».
+- **Lancer un envoi tout de suite** (administrateur) : `POST /api/admin/emails/run` avec `{"job":"quota|onboarding|digest|reminders|reports"}`.
+  Chaque message reste unique : un envoi déjà fait n'est jamais répété.
+- Migration additive : tables `PlanConfig`, colonnes `User.quotaOverrides`, `User.emailOptOut`, et réglages d'envoi sur `ApprovalLink`.

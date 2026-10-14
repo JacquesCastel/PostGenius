@@ -12010,6 +12010,17 @@ function ApprovalLinkDialog({ client, showToast, onClose }) {
               <button type="button" disabled={busy || !email.trim()} onClick={() => run({ email }, (d) => { if (d.mailed) { showToast("Lien envoyé ✓"); setEmail(""); } else setError("E-mail non envoyé (messagerie non configurée sur le serveur). Copiez le lien et envoyez-le vous-même."); })} className="bg-gray-900 hover:bg-gray-700 disabled:bg-gray-300 text-white text-sm px-4 py-2 rounded-lg" data-testid="approval-send">Envoyer</button>
             </div>
             {link.sentTo && <p className="text-[11px] text-gray-400">Dernier envoi : {link.sentTo}{link.lastSentAt ? ` · ${fmtDateTime(link.lastSentAt)}` : ""}</p>}
+            <div className="rounded-lg bg-gray-50 border border-gray-100 p-3 space-y-2" data-testid="approval-auto">
+              <p className="text-xs font-semibold text-gray-600">Envois automatiques au client</p>
+              {!link.sentTo ? (
+                <p className="text-[11px] text-gray-400">Envoyez d&apos;abord le lien par e-mail : c&apos;est cette adresse qui recevra les relances et le rapport.</p>
+              ) : (
+                <>
+                  <label className="flex items-start gap-2 text-xs text-gray-700 cursor-pointer"><input type="checkbox" checked={Boolean(link.autoReminders)} disabled={busy} onChange={(e) => run({ autoReminders: e.target.checked })} className="mt-0.5" data-testid="approval-auto-reminders" /><span>Relancer le client tous les 3 jours (3 fois au plus) tant que des posts attendent sa validation.</span></label>
+                  <label className="flex items-start gap-2 text-xs text-gray-700 cursor-pointer"><input type="checkbox" checked={Boolean(link.autoReport)} disabled={busy} onChange={(e) => run({ autoReport: e.target.checked })} className="mt-0.5" data-testid="approval-auto-report" /><span>Lui envoyer son rapport du mois précédent le 1er de chaque mois.</span></label>
+                </>
+              )}
+            </div>
             <button type="button" disabled={busy} onClick={() => { if (window.confirm("Régénérer le lien ? L'ancien lien cessera de fonctionner : pensez à envoyer le nouveau au client.")) run({ regenerate: true }, () => showToast("Nouveau lien créé ✓")); }} className="text-xs text-gray-500 hover:text-red-600 underline" data-testid="approval-regenerate">Régénérer le lien (l&apos;ancien cesse de fonctionner)</button>
           </div>
         )}

@@ -145,7 +145,7 @@ model User {
   // Limites propres à ce compte (JSON { postsPerMonth, imagesPerMonth, knowledgeSources } ; nombre, ou -1 = illimité ; clé absente = limite de l'offre).
   // Fixées par l'administrateur, ou par l'agence pour ses clients.
   quotaOverrides Json?
-  // Ne plus recevoir les e-mails d'accompagnement (accueil, récapitulatif, alertes de quota) ; les e-mails de service restent envoyés
+  // Ne plus recevoir les e-mails d'accompagnement (accueil, récapitulatif hebdomadaire) ; les e-mails de service (alertes de quota, validation, mot de passe) restent envoyés
   emailOptOut Boolean @default(false)
 
   // --- Plusieurs entreprises pour une même personne ---
