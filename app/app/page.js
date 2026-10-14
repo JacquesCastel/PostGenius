@@ -4185,10 +4185,106 @@ function AdminInvitationsCard({ showToast }) {
   );
 }
 
+// Administration : limites de chaque offre (posts, images, sources) et réglage d'un compte. Valeur vide = valeur d'origine ; « -1 » = illimité.
+// Les prix et les fonctions incluses ne se modifient pas ici : ils sont liés à Stripe et au code.
+function AdminPlansCard({ showToast }) {
+  const [plans, setPlans] = useState(null);
+  const [forms, setForms] = useState({});
+  const [busy, setBusy] = useState(null);
+  const toForm = (p) => Object.fromEntries(QUOTA_ROWS.map(([k]) => [k, p.effective[k] === p.code[k] ? "" : p.effective[k] == null ? "-1" : String(p.effective[k])]));
+  const load = () => fetch("/api/admin/plans").then(readJson).then((d) => { if (d.error) throw new Error(d.error); setPlans(d.plans); setForms(Object.fromEntries(d.plans.map((p) => [p.id, toForm(p)]))); }).catch((e) => showToast(e.message));
+  useEffect(() => { load(); }, []);
+  if (!plans) return null;
+  const save = async (id) => {
+    setBusy(id);
+    try {
+      const res = await fetch("/api/admin/plans", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ planId: id, limits: forms[id] }) });
+      const d = await readJson(res);
+      if (!res.ok) throw new Error(d.error || "Erreur");
+      showToast("Limites enregistrées ✓");
+      await load();
+    } catch (e) {
+      showToast(e.message);
+    } finally {
+      setBusy(null);
+    }
+  };
+  const show = (v) => (v == null ? "illimité" : v);
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5" data-testid="admin-plans">
+      <p className="text-sm font-semibold">Limites des offres</p>
+      <p className="text-xs text-gray-400 mt-0.5 mb-3">Valeur d'origine en grisé. Vide = valeur d'origine, -1 = illimité. La modification s'applique à tous les comptes de l'offre (hors réglage propre à un compte).</p>
+      <div className="grid md:grid-cols-3 gap-4">
+        {plans.map((p) => (
+          <div key={p.id} className="border border-gray-100 rounded-xl p-3 space-y-2" data-testid={`admin-plan-${p.id}`}>
+            <p className="text-sm font-semibold">{p.name} <span className="text-xs text-gray-400 font-normal">· {p.price} € HT/mois</span></p>
+            {QUOTA_ROWS.map(([k, label]) => (
+              <label key={k} className="flex items-center gap-2 text-xs">
+                <span className="flex-1 text-gray-600">{label.replace(" ce mois-ci", " / mois")}</span>
+                <input type="number" min={-1} value={forms[p.id]?.[k] ?? ""} onChange={(e) => setForms((f) => ({ ...f, [p.id]: { ...f[p.id], [k]: e.target.value } }))} placeholder={String(show(p.code[k]))} className="w-24 border border-gray-200 rounded-lg px-2 py-1 text-right" data-testid={`admin-plan-${p.id}-${k}`} />
+              </label>
+            ))}
+            <button type="button" onClick={() => save(p.id)} disabled={busy === p.id} className="text-xs bg-gray-900 hover:bg-gray-700 disabled:bg-gray-300 text-white px-3 py-1.5 rounded-lg" data-testid={`admin-plan-${p.id}-save`}>Enregistrer</button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// Réglage des limites d'un compte précis (administrateur)
+function AdminQuotaDialog({ user, showToast, onClose }) {
+  const [data, setData] = useState(null);
+  const [form, setForm] = useState({});
+  const [busy, setBusy] = useState(false);
+  const url = `/api/admin/users/${user.id}/quota`;
+  const fill = (d) => { setData(d); setForm(Object.fromEntries(QUOTA_ROWS.map(([k]) => [k, d.overrides?.[k] === undefined ? "" : d.overrides[k] < 0 ? "-1" : String(d.overrides[k])]))); };
+  useEffect(() => { fetch(url).then(readJson).then((d) => (d.error ? showToast(d.error) : fill(d))).catch(() => {}); }, []);
+  const save = async () => {
+    setBusy(true);
+    try {
+      const res = await fetch(url, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
+      const d = await readJson(res);
+      if (!res.ok) throw new Error(d.error || "Erreur");
+      fill(d);
+      showToast("Limites du compte enregistrées ✓");
+    } catch (e) {
+      showToast(e.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-5 space-y-4" onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Limites du compte" data-testid="admin-quota-dialog">
+        <div className="flex items-start justify-between gap-3">
+          <div><p className="font-semibold text-sm">Limites de {user.name || user.email}</p><p className="text-xs text-gray-500 mt-0.5">Offre {planLabel(user.plan || "pro")}. Vide = limite de l&apos;offre ; -1 = illimité.</p></div>
+          <button type="button" onClick={onClose} className="text-gray-400 hover:text-gray-600 p-1" aria-label="Fermer"><X size={18} /></button>
+        </div>
+        {!data ? <p className="text-sm text-gray-400">Chargement…</p> : (
+          <>
+            <UsageMeter limits={data.limits} usage={data.usage} compact />
+            <div className="space-y-2">
+              {QUOTA_ROWS.map(([k, label]) => (
+                <label key={k} className="flex items-center gap-3 text-sm">
+                  <span className="flex-1 text-gray-700">{label.replace(" ce mois-ci", " par mois")}</span>
+                  <input type="number" min={-1} value={form[k] ?? ""} onChange={(e) => setForm((f) => ({ ...f, [k]: e.target.value }))} placeholder={data.plan[k] == null ? "illimité" : String(data.plan[k])} className="w-28 border border-gray-200 rounded-lg px-3 py-1.5 text-sm text-right" data-testid={`admin-quota-${k}`} />
+                </label>
+              ))}
+            </div>
+            <button type="button" onClick={save} disabled={busy} className="bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white text-sm font-semibold px-4 py-2 rounded-lg" data-testid="admin-quota-save">Enregistrer</button>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function AdminView({ showToast }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [quotaUser, setQuotaUser] = useState(null); // compte dont l'administrateur règle les limites
 
   const load = () => {
     setLoading(true);
@@ -4311,6 +4407,8 @@ function AdminView({ showToast }) {
       <AdminStripeCard />
       <AdminFunnelCard />
       <AdminInvitationsCard showToast={showToast} />
+      <AdminPlansCard showToast={showToast} />
+      {quotaUser && <AdminQuotaDialog user={quotaUser} showToast={showToast} onClose={() => setQuotaUser(null)} />}
 
       {/* Totaux plateforme */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
@@ -4440,6 +4538,14 @@ function AdminView({ showToast }) {
                 <td className="p-3">
                   {!u.isAdmin && (
                     <div className="flex gap-1 justify-end">
+                      <button
+                        onClick={() => setQuotaUser(u)}
+                        data-testid="admin-quota-open"
+                        className="text-[11px] border border-gray-300 text-gray-600 hover:bg-gray-50 px-2 py-1 rounded-lg inline-flex items-center gap-1"
+                        title="Limites de ce compte"
+                      >
+                        <Gauge size={11} /> Quotas
+                      </button>
                       <button
                         onClick={() => viewAs(u)}
                         className="text-[11px] border border-sky-300 text-sky-700 hover:bg-sky-50 px-2 py-1 rounded-lg inline-flex items-center gap-1"
@@ -7065,6 +7171,19 @@ function MiniBars({ values, labels }) {
 // ----------------------------------------------------------------
 // Abonnement / facturation (Stripe Checkout + portail)
 // ----------------------------------------------------------------
+function UsageCard() {
+  const [d, setD] = useState(null);
+  useEffect(() => { fetch("/api/usage").then(readJson).then((x) => (x.error ? null : setD(x))).catch(() => {}); }, []);
+  if (!d) return null;
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-4" data-testid="usage-card">
+      <p className="text-sm font-semibold mb-3">Votre usage ce mois-ci</p>
+      <UsageMeter limits={d.limits} usage={d.usage} />
+      <p className="text-[11px] text-gray-400 mt-3">Les compteurs de posts et d&apos;images repartent à zéro le 1er de chaque mois.</p>
+    </div>
+  );
+}
+
 function BillingView({ user, showToast, focus = null }) {
   const [billingInterval, setBillingInterval] = useState(user?.subscriptionInterval === "year" ? "year" : "month");
   const [busy, setBusy] = useState(null); // id de l'action en cours
@@ -7185,6 +7304,8 @@ function BillingView({ user, showToast, focus = null }) {
           <a href="#billing-plans" className="font-semibold underline hover:no-underline shrink-0">Choisir mon offre</a>
         </div>
       )}
+
+      <UsageCard />
 
       {/* Votre offre */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6" data-testid="billing-current">
@@ -10987,7 +11108,7 @@ const FEATURE_LABELS = {
 
 const DEEP_LINK_VIEWS = ["dashboard", "create", "history", "campaigns", "connections", "profile", "stats", "copilot", "events", "engage", "brand-kit", "billing", "clients", "queue", "followup", "team", "messages", "datalake"];
 
-function ClientTableRow({ client, onManage, onViewDrafts, onDelete, deleting, onShowReport, onApproval }) {
+function ClientTableRow({ client, onManage, onViewDrafts, onDelete, deleting, onShowReport, onApproval, onQuota }) {
   const [open, setOpen] = useState(false);
   const { completion, linkedin } = client;
   const linkedInOk = Boolean(linkedin?.personName);
@@ -11096,6 +11217,12 @@ function ClientTableRow({ client, onManage, onViewDrafts, onDelete, deleting, on
                 ${client.pendingCount > 0 ? "bg-amber-50 border-amber-200 text-amber-700" : "border-gray-200 text-gray-400 hover:bg-gray-50"}`}>
               <FileText size={11} />{client.pendingCount > 0 ? client.pendingCount : ""}
             </button>
+            {onQuota && (
+              <button onClick={() => onQuota(client)} data-testid="quota-open"
+                className="p-1.5 rounded-lg border border-gray-200 text-gray-400 hover:bg-gray-50 transition-colors" title="Quotas du client">
+                <Gauge size={13} />
+              </button>
+            )}
             <button onClick={() => onApproval(client)} data-testid="approval-open"
               className="p-1.5 rounded-lg border border-gray-200 text-gray-400 hover:bg-gray-50 transition-colors" title="Lien de validation pour le client">
               <Link2 size={13} />
@@ -11370,12 +11497,95 @@ function ClientAssignments({ clients, showToast }) {
   );
 }
 
+// Consommation du mois par rapport aux limites du compte : une barre par ressource, orange dès 80 %, rouge à 100 %.
+const QUOTA_ROWS = [["postsPerMonth", "Posts ce mois-ci"], ["imagesPerMonth", "Images IA ce mois-ci"], ["knowledgeSources", "Sources de connaissances"]];
+function UsageMeter({ limits, usage, compact = false }) {
+  return (
+    <div className={compact ? "space-y-2" : "space-y-3"} data-testid="usage-meter">
+      {QUOTA_ROWS.map(([key, label]) => {
+        const limit = limits?.[key];
+        const used = usage?.[key] ?? 0;
+        const unlimited = limit == null;
+        const ratio = unlimited || limit === 0 ? (limit === 0 ? 1 : 0) : Math.min(1, used / limit);
+        const tone = ratio >= 1 ? "bg-red-500" : ratio >= 0.8 ? "bg-amber-500" : "bg-[#ff5a5f]";
+        return (
+          <div key={key} data-testid={`usage-${key}`}>
+            <div className="flex justify-between text-xs mb-1">
+              <span className="text-gray-600">{label}</span>
+              <span className={`font-semibold ${ratio >= 1 ? "text-red-600" : ratio >= 0.8 ? "text-amber-700" : "text-gray-700"}`}>
+                {unlimited ? `${used} · illimité` : limit === 0 ? "non inclus" : `${used} / ${limit}`}
+              </span>
+            </div>
+            {!unlimited && <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden"><div className={`h-full ${tone}`} style={{ width: `${ratio * 100}%` }} /></div>}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// Quotas d'un client d'agence (propriétaire) : limites propres au client, par-dessus celles de l'offre. Champ vide = pas de limite propre.
+function ClientQuotaDialog({ client, showToast, onClose }) {
+  const [data, setData] = useState(null);
+  const [form, setForm] = useState({ postsPerMonth: "", imagesPerMonth: "", knowledgeSources: "" });
+  const [busy, setBusy] = useState(false);
+  const url = `/api/agency/clients/${client.id}/quota`;
+  const fill = (d) => { setData(d); setForm(Object.fromEntries(QUOTA_ROWS.map(([k]) => [k, d.overrides?.[k] === undefined ? "" : d.overrides[k] < 0 ? "-1" : String(d.overrides[k])]))); };
+  useEffect(() => { fetch(url).then(readJson).then((d) => (d.error ? showToast(d.error) : fill(d))).catch(() => {}); }, []);
+  const save = async () => {
+    setBusy(true);
+    try {
+      const res = await fetch(url, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
+      const d = await readJson(res);
+      if (!res.ok) throw new Error(d.error || "Erreur");
+      fill(d);
+      showToast("Quotas enregistrés ✓");
+    } catch (e) {
+      showToast(e.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+  const name = client.companyName || client.name;
+  const planText = (k) => (data?.plan?.[k] == null ? "illimité" : String(data.plan[k]));
+  return (
+    <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg p-5 space-y-4" onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Quotas du client" data-testid="quota-dialog">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="font-semibold text-sm">Quotas de {name}</p>
+            <p className="text-xs text-gray-500 mt-0.5">Fixez une limite pour que ce client ne consomme pas tout. Laissez vide pour garder la limite de l&apos;offre ; « -1 » = illimité.</p>
+          </div>
+          <button type="button" onClick={onClose} className="text-gray-400 hover:text-gray-600 p-1" aria-label="Fermer"><X size={18} /></button>
+        </div>
+        {!data ? <p className="text-sm text-gray-400">Chargement…</p> : (
+          <>
+            <UsageMeter limits={data.limits} usage={data.usage} />
+            <div className="space-y-2">
+              {QUOTA_ROWS.map(([k, label]) => (
+                <label key={k} className="flex items-center gap-3 text-sm">
+                  <span className="flex-1 text-gray-700">{label.replace(" ce mois-ci", " par mois")}</span>
+                  <input type="number" min={-1} value={form[k]} onChange={(e) => setForm((f) => ({ ...f, [k]: e.target.value }))} placeholder={planText(k)} className="w-28 border border-gray-200 rounded-lg px-3 py-1.5 text-sm text-right focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]" data-testid={`quota-${k}`} />
+                </label>
+              ))}
+            </div>
+            <button type="button" onClick={save} disabled={busy} className="bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white text-sm font-semibold px-4 py-2 rounded-lg" data-testid="quota-save">Enregistrer</button>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function ClientsView({ showToast, onManage, section = "clients", onSection }) {
   const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [panelClient, setPanelClient] = useState(null); // client pour le panel brouillons
   const [reportClient, setReportClient] = useState(null); // client pour le rapport mensuel
   const [approvalClient, setApprovalClient] = useState(null); // client pour le lien de validation
+  const [quotaClient, setQuotaClient] = useState(null); // client dont le propriétaire règle les quotas
+  const [isOwner, setIsOwner] = useState(false); // seul le propriétaire de l'agence règle quotas et affectations
+  useEffect(() => { fetch("/api/agency/access").then((r) => setIsOwner(r.ok)).catch(() => {}); }, []);
   // Création d'un client : nom (et entreprise), puis le profil se complète dans l'espace du client avec le parcours guidé
   const [creating, setCreating] = useState(false);
   const [newClient, setNewClient] = useState({ companyName: "", website: "", email: "" });
@@ -11637,6 +11847,7 @@ function ClientsView({ showToast, onManage, section = "clients", onSection }) {
                     deleting={deleting}
                     onShowReport={setReportClient}
                     onApproval={setApprovalClient}
+                    onQuota={isOwner ? setQuotaClient : undefined}
                   />
                 ))}
               </tbody>
@@ -11669,6 +11880,7 @@ function ClientsView({ showToast, onManage, section = "clients", onSection }) {
 
       {/* Lien de validation du client final */}
       {approvalClient && <ApprovalLinkDialog client={approvalClient} showToast={showToast} onClose={() => setApprovalClient(null)} />}
+      {quotaClient && <ClientQuotaDialog client={quotaClient} showToast={showToast} onClose={() => setQuotaClient(null)} />}
     </>
   );
 }
@@ -11798,6 +12010,17 @@ function ApprovalLinkDialog({ client, showToast, onClose }) {
               <button type="button" disabled={busy || !email.trim()} onClick={() => run({ email }, (d) => { if (d.mailed) { showToast("Lien envoyé ✓"); setEmail(""); } else setError("E-mail non envoyé (messagerie non configurée sur le serveur). Copiez le lien et envoyez-le vous-même."); })} className="bg-gray-900 hover:bg-gray-700 disabled:bg-gray-300 text-white text-sm px-4 py-2 rounded-lg" data-testid="approval-send">Envoyer</button>
             </div>
             {link.sentTo && <p className="text-[11px] text-gray-400">Dernier envoi : {link.sentTo}{link.lastSentAt ? ` · ${fmtDateTime(link.lastSentAt)}` : ""}</p>}
+            <div className="rounded-lg bg-gray-50 border border-gray-100 p-3 space-y-2" data-testid="approval-auto">
+              <p className="text-xs font-semibold text-gray-600">Envois automatiques au client</p>
+              {!link.sentTo ? (
+                <p className="text-[11px] text-gray-400">Envoyez d&apos;abord le lien par e-mail : c&apos;est cette adresse qui recevra les relances et le rapport.</p>
+              ) : (
+                <>
+                  <label className="flex items-start gap-2 text-xs text-gray-700 cursor-pointer"><input type="checkbox" checked={Boolean(link.autoReminders)} disabled={busy} onChange={(e) => run({ autoReminders: e.target.checked })} className="mt-0.5" data-testid="approval-auto-reminders" /><span>Relancer le client tous les 3 jours (3 fois au plus) tant que des posts attendent sa validation.</span></label>
+                  <label className="flex items-start gap-2 text-xs text-gray-700 cursor-pointer"><input type="checkbox" checked={Boolean(link.autoReport)} disabled={busy} onChange={(e) => run({ autoReport: e.target.checked })} className="mt-0.5" data-testid="approval-auto-report" /><span>Lui envoyer son rapport du mois précédent le 1er de chaque mois.</span></label>
+                </>
+              )}
+            </div>
             <button type="button" disabled={busy} onClick={() => { if (window.confirm("Régénérer le lien ? L'ancien lien cessera de fonctionner : pensez à envoyer le nouveau au client.")) run({ regenerate: true }, () => showToast("Nouveau lien créé ✓")); }} className="text-xs text-gray-500 hover:text-red-600 underline" data-testid="approval-regenerate">Régénérer le lien (l&apos;ancien cesse de fonctionner)</button>
           </div>
         )}

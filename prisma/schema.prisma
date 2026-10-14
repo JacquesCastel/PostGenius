@@ -142,6 +142,11 @@ model User {
   accessAsMember ClientAccess[] @relation("ClientAccessMember")
   // Lien de partage du rapport mensuel (agence) : voir ReportLink
   reportLink ReportLink?
+  // Limites propres à ce compte (JSON { postsPerMonth, imagesPerMonth, knowledgeSources } ; nombre, ou -1 = illimité ; clé absente = limite de l'offre).
+  // Fixées par l'administrateur, ou par l'agence pour ses clients.
+  quotaOverrides Json?
+  // Ne plus recevoir les e-mails d'accompagnement (accueil, récapitulatif hebdomadaire) ; les e-mails de service (alertes de quota, validation, mot de passe) restent envoyés
+  emailOptOut Boolean @default(false)
 
   // --- Plusieurs entreprises pour une même personne ---
   // L'entreprise « principale » reste portée par les champs ci-dessus ; les autres sont des Context.
@@ -204,6 +209,12 @@ model ApprovalLink {
   createdAt  DateTime  @default(now())
   lastSentAt DateTime?
   sentTo     String? // dernière adresse à laquelle le lien a été envoyé
+  // Envois automatiques au client, décidés par l'agence (désactivés par défaut)
+  autoReminders  Boolean   @default(false) // relance tous les 3 jours (3 fois au plus) tant que des posts attendent sa validation
+  autoReport     Boolean   @default(false) // rapport du mois précédent, le 1er du mois
+  remindersSent  Int       @default(0)
+  lastReminderAt DateTime?
+  lastReportKey  String? // « AAAA-MM » du dernier rapport envoyé
 }
 
 // Lien de partage en lecture seule du rapport mensuel d'un client d'agence. createdBy = utilisateur de l'agence dont la charte habille le rapport.
@@ -874,4 +885,11 @@ model SavedMention {
   createdAt DateTime @default(now())
 
   @@unique([userId, urn])
+}
+
+// Limites des offres modifiées depuis l'administration (par-dessus les valeurs de lib/plans.js). limits : { postsPerMonth, imagesPerMonth, knowledgeSources } ; -1 = illimité.
+model PlanConfig {
+  planId    String   @id
+  limits    Json
+  updatedAt DateTime @updatedAt
 }
