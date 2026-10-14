@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getSessionData, clientAccessible } from "@/lib/session";
 import { isAdminUser } from "@/lib/admin";
+import { effectiveLimits } from "@/lib/quotas";
 
 export async function GET(req) {
   const session = await getSessionData(req);
@@ -42,6 +43,7 @@ export async function GET(req) {
           subscriptionStatus: client.subscriptionStatus,
           subscriptionInterval: client.subscriptionInterval,
           currentPeriodEnd: client.currentPeriodEnd,
+          limits: await effectiveLimits(client.id),
           hasBilling: false, // pas d'accès au portail de facturation en vue support
           billingEnabled: Boolean(process.env.STRIPE_SECRET_KEY),
         },
@@ -60,11 +62,15 @@ export async function GET(req) {
     if (client) impersonating = client;
   }
 
+  // Limites du compte dont on voit les données : le client ouvert (mode agence), sinon le compte lui-même
+  const limits = await effectiveLimits(impersonating?.id ?? user.id);
+
   return NextResponse.json({
     user: {
       id: user.id,
       email: user.email,
       name: user.name,
+      limits,
       isAdmin: isAdminUser(user),
       isSuperAdmin: user.role === "admin",
       plan: user.plan,
