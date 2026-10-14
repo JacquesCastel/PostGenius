@@ -8397,7 +8397,7 @@ function CopilotWorkspace({ profile, onProfileSaved, showToast, onGenerateFromRe
 // format, et le réglage de la publication autonome (déplacé depuis Profil
 // pour que le pilotage ne dépende plus uniquement du profil).
 // ----------------------------------------------------------------
-function CopilotSettings({ profile, onProfileSaved, showToast, onGoDashboard }) {
+function CopilotSettings({ profile, onProfileSaved, showToast, onGoDashboard, clientSpace = false }) {
   const [stats, setStats] = useState(null);
   const [pillars, setPillars] = useState([]);
   const [watch, setWatch] = useState([]);
@@ -8629,7 +8629,13 @@ function CopilotSettings({ profile, onProfileSaved, showToast, onGoDashboard }) 
         </p>
       )}
 
-      {/* Publication autonome */}
+      {/* Publication autonome : jamais dans l'espace d'un client (l'agence valide ses posts) */}
+      {clientSpace ? (
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5" data-testid="autopublish-locked">
+          <p className="text-sm font-semibold">Publication autonome</p>
+          <p className="text-xs text-gray-500 mt-1">Indisponible pour un client d&apos;agence : ses posts passent toujours par une validation avant d&apos;être publiés.</p>
+        </div>
+      ) : (
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
         <div className="flex items-center justify-between flex-wrap gap-2 mb-1">
           <p className="text-sm font-semibold">Publication autonome</p>
@@ -8670,6 +8676,7 @@ function CopilotSettings({ profile, onProfileSaved, showToast, onGoDashboard }) 
           </p>
         )}
       </div>
+      )}
 
       {/* Poids appris */}
       <div className="grid sm:grid-cols-2 gap-4">
@@ -8924,7 +8931,7 @@ function CopilotSettings({ profile, onProfileSaved, showToast, onGoDashboard }) 
 
 // Copilote IA : deux onglets. « Propositions » (par défaut) est l'espace de travail ;
 // « Réglages et suivi » garde le pilotage du moteur (publication autonome, poids appris, piliers…).
-function CopilotView({ profile, onProfileSaved, showToast, onGoDashboard, onGenerateFromReco, onGoProfileField, onGoCreate, onGoView }) {
+function CopilotView({ profile, onProfileSaved, showToast, onGoDashboard, onGenerateFromReco, onGoProfileField, onGoCreate, onGoView, clientSpace = false }) {
   const [tab, setTab] = useState("work"); // work | settings
   const tabBtn = (id, label) => (
     <button
@@ -8960,7 +8967,7 @@ function CopilotView({ profile, onProfileSaved, showToast, onGoDashboard, onGene
           onGoView={onGoView}
         />
       ) : (
-        <CopilotSettings profile={profile} onProfileSaved={onProfileSaved} showToast={showToast} onGoDashboard={onGoDashboard} />
+        <CopilotSettings profile={profile} onProfileSaved={onProfileSaved} showToast={showToast} onGoDashboard={onGoDashboard}  clientSpace={clientSpace} />
       )}
     </main>
   );
@@ -18458,7 +18465,7 @@ export default function Home() {
       ) : view === "stats" ? (
         <StatsView linkedin={linkedin} orgs={orgs} profile={profile} drafts={drafts} showToast={showToast} onConnect={() => setView("connections")} />
       ) : view === "copilot" ? (
-        <CopilotView profile={profile} onProfileSaved={setProfile} showToast={showToast} onGoDashboard={() => setView("dashboard")} onGenerateFromReco={generateFromReco} onGoProfileField={goToProfileField} onGoCreate={() => setView("create")} onGoView={setView} />
+        <CopilotView profile={profile} onProfileSaved={setProfile} showToast={showToast} onGoDashboard={() => setView("dashboard")} onGenerateFromReco={generateFromReco} onGoProfileField={goToProfileField} onGoCreate={() => setView("create")} onGoView={setView} clientSpace={clientSpace} />
       ) : view === "billing" ? (
         <BillingView user={user} showToast={showToast} focus={billingFocus} />
       ) : view === "datalake" ? (

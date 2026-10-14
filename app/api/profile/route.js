@@ -69,6 +69,12 @@ export async function PUT(req) {
   // Fin de l'onboarding (wizard de première connexion)
   if (body.onboarded === true) data.onboardedAt = new Date();
 
+  // Client d'agence : pas de publication autonome, quoi qu'envoie l'écran
+  if ("autoPublishThreshold" in data && data.autoPublishThreshold != null) {
+    const u = await prisma.user.findUnique({ where: { id: userId }, select: { agencyId: true } });
+    if (u?.agencyId) data.autoPublishThreshold = null;
+  }
+
   const profile = await prisma.user.update({ where: { id: userId }, data, select: SELECT });
   return NextResponse.json({ profile });
 }
