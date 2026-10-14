@@ -4283,18 +4283,22 @@ function AdminQuotaDialog({ user, showToast, onClose }) {
 // Administration : envoi de messages d'exemple à son propre e-mail, pour juger le rendu et vérifier que l'envoi fonctionne sur le serveur.
 function AdminEmailsCard({ showToast }) {
   const [d, setD] = useState(null);
-  const [sel, setSel] = useState("quota80");
+  const [sel, setSel] = useState("live:quota");
+  const [acct, setAcct] = useState("");
   const [busy, setBusy] = useState(false);
   useEffect(() => { fetch("/api/admin/emails").then(readJson).then((x) => (x.error ? null : setD(x))).catch(() => {}); }, []);
   if (!d) return null;
   const groups = [...new Set(d.tests.map((t) => t.group))];
+  const cur = d.tests.find((t) => t.id === sel);
+  const live = sel.startsWith("live:");
+  const accounts = d.accounts.filter((a) => cur?.needs === "un client d'agence" ? a.client : true);
   const send = async () => {
     setBusy(true);
     try {
-      const res = await fetch("/api/admin/emails/test", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: sel }) });
+      const res = await fetch("/api/admin/emails/test", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: sel, userId: acct || undefined }) });
       const r = await readJson(res);
       if (!res.ok) throw new Error(r.error || "Erreur");
-      showToast(`Message d'exemple envoyé à ${r.to} ✓`);
+      showToast(`Message envoyé à ${r.to} ✓${r.note ? ` ${r.note}` : ""}`);
     } catch (e) {
       showToast(e.message);
     } finally {
@@ -4307,7 +4311,7 @@ function AdminEmailsCard({ showToast }) {
         <p className="text-sm font-semibold">E-mails : envoi d&apos;un message d&apos;exemple</p>
         <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${d.smtp ? "bg-green-50 text-green-700" : "bg-amber-50 text-amber-800"}`} data-testid="admin-emails-status">{d.smtp ? "Envoi configuré" : "Envoi non configuré (SMTP_HOST absent)"}</span>
       </div>
-      <p className="text-xs text-gray-400 mb-3">Le message part uniquement vers votre adresse ({d.to}), jamais vers un autre compte. Les liens de validation et de rapport sont des exemples.{d.from ? ` Expéditeur : ${d.from}.` : ""}</p>
+      <p className="text-xs text-gray-400 mb-3">Le message part uniquement vers votre adresse ({d.to}), jamais vers un autre compte. Les messages « Avec un compte réel » utilisent les vrais chiffres et les vrais liens du compte choisi ; les autres sont des exemples.{d.from ? ` Expéditeur : ${d.from}.` : ""}</p>
       <div className="flex gap-2 flex-wrap">
         <select value={sel} onChange={(e) => setSel(e.target.value)} className="flex-1 min-w-[16rem] border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white" data-testid="admin-emails-select">
           {groups.map((g) => (
@@ -4316,7 +4320,13 @@ function AdminEmailsCard({ showToast }) {
             </optgroup>
           ))}
         </select>
-        <button type="button" onClick={send} disabled={busy || !d.smtp} className="bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white text-sm font-semibold px-4 py-2 rounded-lg" data-testid="admin-emails-send">{busy ? "Envoi…" : "M'envoyer ce message"}</button>
+        {live && (
+          <select value={acct} onChange={(e) => setAcct(e.target.value)} className="flex-1 min-w-[16rem] border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white" data-testid="admin-emails-account">
+            <option value="">Compte : choisir…</option>
+            {accounts.map((a) => <option key={a.id} value={a.id}>{a.label}</option>)}
+          </select>
+        )}
+        <button type="button" onClick={send} disabled={busy || !d.smtp || (live && !acct)} className="bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white text-sm font-semibold px-4 py-2 rounded-lg" data-testid="admin-emails-send">{busy ? "Envoi…" : "M'envoyer ce message"}</button>
       </div>
     </div>
   );
