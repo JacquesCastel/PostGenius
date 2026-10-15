@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { memoClear } from "@/lib/memoCache";
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin";
 import { FOOTER_PAGE_KEYS, FOOTER_PAGE_DEFAULTS } from "@/lib/footer-pages";
@@ -41,5 +42,6 @@ export async function PUT(req, { params }) {
     create: { key: `page-${key}`, value: JSON.stringify(page) },
   });
 
+  memoClear(); // le site public affiche aussitôt la modification
   return NextResponse.json({ ok: true, page });
 }

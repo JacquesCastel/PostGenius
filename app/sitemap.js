@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { memo, MEMO_TTL } from "@/lib/memoCache";
 
 export const dynamic = "force-dynamic";
 
@@ -20,12 +21,8 @@ const PAGES = [
 
 // Pages publiques + articles de blog publiés
 export default async function sitemap() {
-  let articles = [];
-  try {
-    articles = await prisma.article.findMany({ where: { published: true }, select: { slug: true, updatedAt: true }, orderBy: { publishedAt: "desc" } });
-  } catch {
-    // Base indisponible : le plan du site reste valable avec les pages fixes
-  }
+  // Base indisponible : le plan du site reste valable avec les pages fixes
+  const articles = await memo("sitemap:articles", MEMO_TTL, () => prisma.article.findMany({ where: { published: true }, select: { slug: true, updatedAt: true }, orderBy: { publishedAt: "desc" } }), []);
   return [
     ...PAGES.map(([path, priority]) => ({ url: `${SITE}${path}`, priority })),
     ...articles.map((a) => ({ url: `${SITE}/blog/${a.slug}`, lastModified: a.updatedAt, priority: 0.6 })),

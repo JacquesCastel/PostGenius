@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { memoClear } from "@/lib/memoCache";
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin";
 import { slugify } from "@/lib/markdown";
@@ -41,5 +42,6 @@ export async function POST(req) {
       publishedAt: published ? new Date() : null,
     },
   });
+  memoClear(); // le site public affiche aussitôt la modification
   return NextResponse.json({ article });
 }

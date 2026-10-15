@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
+import { memo, MEMO_TTL } from "@/lib/memoCache";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 
@@ -17,15 +18,7 @@ function fmtDate(d) {
 }
 
 export default async function BlogIndex() {
-  let articles = [];
-  try {
-    articles = await prisma.article.findMany({
-      where: { published: true },
-      orderBy: { publishedAt: "desc" },
-    });
-  } catch {
-    articles = [];
-  }
+  const articles = await memo("blog:list", MEMO_TTL, () => prisma.article.findMany({ where: { published: true }, orderBy: { publishedAt: "desc" } }), []);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-rose-50 via-orange-50/40 to-sky-50 text-[#1b2a4a] flex flex-col">
