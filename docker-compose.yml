@@ -15,6 +15,31 @@ services:
     expose:
       - "3000"
 
+  # Mesure d'audience Umami auto-hébergée : ne démarre que si COMPOSE_PROFILES=stats est défini dans .env (voir DEPLOY.md)
+  umami:
+    profiles: ["stats"]
+    image: ghcr.io/umami-software/umami:postgresql-latest
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://umami:${UMAMI_DB_PASSWORD:-}@umami-db:5432/umami
+      APP_SECRET: ${UMAMI_APP_SECRET:-}
+      DISABLE_TELEMETRY: "1"
+    expose:
+      - "3000"
+    depends_on:
+      - umami-db
+
+  umami-db:
+    profiles: ["stats"]
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: umami
+      POSTGRES_USER: umami
+      POSTGRES_PASSWORD: ${UMAMI_DB_PASSWORD:-}
+    volumes:
+      - umami_db:/var/lib/postgresql/data
+
   caddy:
     image: caddy:2-alpine
     restart: unless-stopped
@@ -31,3 +56,4 @@ services:
 volumes:
   caddy_data:
   caddy_config:
+  umami_db:

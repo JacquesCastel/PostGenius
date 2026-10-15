@@ -193,3 +193,30 @@ Les migrations de ce développement sont additives (`prisma db push` ne supprime
 - **Lancer un envoi tout de suite** (administrateur) : `POST /api/admin/emails/run` avec `{"job":"quota|onboarding|digest|reminders|reports"}`.
   Chaque message reste unique : un envoi déjà fait n'est jamais répété.
 - Migration additive : tables `PlanConfig`, colonnes `User.quotaOverrides`, `User.emailOptOut`, et réglages d'envoi sur `ApprovalLink`.
+
+
+## 11. Mesure d'audience (Umami, sans cookie)
+
+Le site public peut mesurer ses visites avec **Umami** : aucun cookie, aucune donnée personnelle, donc **pas de bandeau de consentement**.
+Le script n'est chargé que sur les pages publiques (jamais dans `/app`, `/valider`, `/rapport`, `/reset-password`) et respecte « Do Not Track ».
+Sans les deux variables `UMAMI_*` du `.env`, rien n'est chargé.
+
+**Option A : Umami Cloud** (le plus simple, aucun serveur à gérer)
+1. Créer un compte sur https://cloud.umami.is, puis ajouter le site `postgenius.network`.
+2. Dans `.env` : `UMAMI_SCRIPT_URL=https://cloud.umami.is/script.js` et `UMAMI_WEBSITE_ID=` (l'identifiant du site, un UUID).
+3. `./deploy.sh`.
+
+**Option B : auto-hébergé** (les données restent chez vous)
+1. Créer un enregistrement DNS `stats.postgenius.network` vers le serveur (même adresse que `postgenius.network`).
+2. Dans `.env` : `COMPOSE_PROFILES=stats`, `UMAMI_DB_PASSWORD=` (mot de passe long), `UMAMI_APP_SECRET=` (`openssl rand -hex 32`).
+3. Ajouter dans le `Caddyfile` :
+   ```
+   stats.postgenius.network {
+   	reverse_proxy umami:3000
+   }
+   ```
+4. `./deploy.sh`, puis ouvrir `https://stats.postgenius.network` (identifiants initiaux `admin` / `umami` : **à changer immédiatement**).
+5. Ajouter le site `postgenius.network`, puis dans `.env` : `UMAMI_SCRIPT_URL=https://stats.postgenius.network/script.js` et `UMAMI_WEBSITE_ID=` (l'UUID du site). `./deploy.sh`.
+
+Vérifier : ouvrir le site en navigation privée, puis voir la visite apparaître dans Umami (« Temps réel »). Les visites de `/app` n'y figurent pas.
+La politique de confidentialité (anglais dans le code, français dans l'Administration) mentionne cette mesure.
