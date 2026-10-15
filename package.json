@@ -20,13 +20,13 @@
     "jose": "^6.0.0",
     "lucide-react": "^0.460.0",
     "mammoth": "^1.13.0",
-    "next": "^15.3.0",
-    "nodemailer": "^6.9.0",
+    "next": "^15.5.28",
+    "nodemailer": "^10.1.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-easy-crop": "^6.2.3",
     "satori": "^0.26.0",
-    "sharp": "^0.35.3",
+    "sharp": "^0.35.5",
     "stripe": "^17.0.0",
     "unpdf": "^1.8.1",
     "web-push": "^3.6.7"
@@ -35,5 +35,8 @@
     "@tailwindcss/postcss": "^4.1.0",
     "prisma": "^6.8.0",
     "tailwindcss": "^4.1.0"
+  },
+  "overrides": {
+    "postcss": "^8.5.12"
   }
 }
