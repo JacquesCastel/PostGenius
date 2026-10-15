@@ -4281,6 +4281,76 @@ function AdminQuotaDialog({ user, showToast, onClose }) {
 }
 
 // Administration : envoi de messages d'exemple à son propre e-mail, pour juger le rendu et vérifier que l'envoi fonctionne sur le serveur.
+// Administration : les e-mails automatiques en service (ce qui part tout seul, à qui, et depuis quand), avec un envoi immédiat par type
+function AdminAutomationCard({ showToast }) {
+  const [d, setD] = useState(null);
+  const [busy, setBusy] = useState(null);
+  const load = () => fetch("/api/admin/emails/automation").then(readJson).then((x) => (x.error ? null : setD(x))).catch(() => {});
+  useEffect(() => { load(); }, []);
+  if (!d) return null;
+  const fmt = (v) => (v ? new Date(v).toLocaleString("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "—");
+  const summary = (r) => (!r ? "pas encore passé depuis le redémarrage" : r.result?.error ? `erreur : ${r.result.error}` : r.result?.skipped ? `passé ${fmt(r.at)} (rien à faire : ${r.result.skipped === true ? "hors horaire" : r.result.skipped})` : `passé ${fmt(r.at)} · ${r.result?.sent ?? 0} envoyé(s)`);
+  const launch = async (j) => {
+    if (!window.confirm(`Lancer « ${j.label} » maintenant ?\n\nDe vrais e-mails partent aux comptes concernés. Chaque message n'est envoyé qu'une fois : un envoi déjà fait n'est jamais répété.`)) return;
+    setBusy(j.run);
+    try {
+      const res = await fetch("/api/admin/emails/run", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ job: j.run }) });
+      const r = await readJson(res);
+      if (!res.ok) throw new Error(r.error || "Erreur");
+      showToast(`${j.label} : ${r.result?.sent ?? 0} e-mail(s) envoyé(s) ✓`);
+      load();
+    } catch (e) {
+      showToast(e.message);
+    } finally {
+      setBusy(null);
+    }
+  };
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5" data-testid="admin-automation">
+      <div className="flex items-center justify-between flex-wrap gap-2 mb-1">
+        <p className="text-sm font-semibold">E-mails automatiques</p>
+        <div className="flex gap-1.5 flex-wrap">
+          <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${d.smtp ? "bg-green-50 text-green-700" : "bg-amber-50 text-amber-800"}`}>{d.smtp ? "Envoi configuré" : "Envoi non configuré"}</span>
+          <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${d.scheduler ? "bg-green-50 text-green-700" : "bg-amber-50 text-amber-800"}`}>{d.scheduler ? "Planificateur actif (passe chaque heure)" : "Planificateur désactivé"}</span>
+        </div>
+      </div>
+      <p className="text-xs text-gray-400 mb-3">Ces messages partent tout seuls. Les administrateurs n'en reçoivent aucun : pour voir un message, utilisez « M&apos;envoyer ce message » plus bas. Les chiffres couvrent les 30 derniers jours.</p>
+      <div className="overflow-x-auto">
+        <table className="w-full text-xs">
+          <thead>
+            <tr className="text-left text-gray-400">
+              <th className="py-1.5 pr-3 font-medium">Message</th>
+              <th className="py-1.5 pr-3 font-medium">Quand</th>
+              <th className="py-1.5 pr-3 font-medium text-right">Envoyés</th>
+              <th className="py-1.5 pr-3 font-medium text-right">Concernés</th>
+              <th className="py-1.5 pr-3 font-medium">Dernière passe</th>
+              <th />
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-50">
+            {d.jobs.map((j) => (
+              <tr key={j.id} data-testid={`auto-${j.id}`}>
+                <td className="py-2 pr-3 font-medium text-gray-800">{j.label}</td>
+                <td className="py-2 pr-3 text-gray-500 max-w-[16rem]">{j.when}</td>
+                <td className="py-2 pr-3 text-right tabular-nums">{j.sent}</td>
+                <td className="py-2 pr-3 text-right tabular-nums">{j.eligible ?? "—"}</td>
+                <td className="py-2 pr-3 text-gray-500">{j.run || j.id === "trial" ? summary(j.lastRun) : j.last ? `dernier : ${fmt(j.last)}` : "à l'événement"}</td>
+                <td className="py-2 text-right">
+                  {j.run && (
+                    <button type="button" onClick={() => launch(j)} disabled={busy === j.run || !d.smtp} className="text-[11px] border border-gray-200 hover:border-[#ff5a5f] hover:text-[#ff5a5f] disabled:opacity-40 px-2 py-1 rounded-lg whitespace-nowrap">
+                      {busy === j.run ? "Envoi…" : "Lancer maintenant"}
+                    </button>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
 function AdminEmailsCard({ showToast }) {
   const [d, setD] = useState(null);
   const [sel, setSel] = useState("live:quota");
@@ -4460,6 +4530,7 @@ function AdminView({ showToast }) {
       <AdminFunnelCard />
       <AdminInvitationsCard showToast={showToast} />
       <AdminPlansCard showToast={showToast} />
+      <AdminAutomationCard showToast={showToast} />
       <AdminEmailsCard showToast={showToast} />
       {quotaUser && <AdminQuotaDialog user={quotaUser} showToast={showToast} onClose={() => setQuotaUser(null)} />}
 
