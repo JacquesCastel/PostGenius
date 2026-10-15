@@ -4597,7 +4597,12 @@ function AdminView({ showToast }) {
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <div className="rounded-2xl p-5 text-white bg-gradient-to-br from-[#ff5a5f] to-pink-500 shadow-lg shadow-[#ffd5d6]">
           <p className="text-3xl font-bold">{data.totals.users}</p>
-          <p className="text-sm text-white/80 mt-1">Utilisateurs{data.totals.agencyClients ? ` (+ ${data.totals.agencyClients} clients d'agence)` : ""}</p>
+          <p
+            className="text-sm text-white/80 mt-1 truncate"
+            title={`Utilisateurs${data.totals.agencyClients ? ` (+ ${data.totals.agencyClients} clients d'agence)` : ""}`}
+          >
+            Utilisateurs{data.totals.agencyClients ? ` (+${data.totals.agencyClients} agence)` : ""}
+          </p>
         </div>
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
           <p className="text-3xl font-bold text-sky-600">{newThisWeek}</p>
