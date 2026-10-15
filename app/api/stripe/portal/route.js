@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getUserId } from "@/lib/session";
+import { isAgencyCollaborator } from "@/lib/agency";
 import { stripe, stripeConfigured, appUrl } from "@/lib/stripe";
 
 export const runtime = "nodejs";
@@ -12,6 +13,7 @@ export async function POST(req) {
 
   const userId = await getUserId(req);
   if (!userId) return NextResponse.json({ error: "Non connecté." }, { status: 401 });
+  if (await isAgencyCollaborator(userId)) return NextResponse.json({ error: "L'abonnement est géré par le propriétaire de l'agence." }, { status: 403 });
 
   const user = await prisma.user.findUnique({
     where: { id: userId },
