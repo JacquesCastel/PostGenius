@@ -735,7 +735,7 @@ function CommentsPanel({ draft, onClose, showToast, onIntegrate }) {
   const suggestReplies = async (c) => {
     setSuggest({ id: c.id, loading: true });
     try {
-      const res = await fetch("/api/linkedin/comments/suggest", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ draftId: draft.id, commentText: c.text, authorName: c.authorName }) });
+      const res = await fetch("/api/linkedin/comments/suggest", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ draftId: draft.id, commentText: c.text }) });
       const d = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(d.error || "Erreur");
       setSuggest({ id: c.id, replies: d.replies });
@@ -14063,6 +14063,29 @@ function ConnectionsView({ linkedin, onDisconnect, instagram, onDisconnectInstag
             </div>
 
             </>)}
+            {/* Données LinkedIn : suppression à la demande */}
+            <div className="p-5 flex items-center justify-between gap-3 flex-wrap" data-testid="linkedin-delete-data">
+              <div className="max-w-xl">
+                <p className="text-sm font-medium">Données LinkedIn</p>
+                <p className="text-xs text-gray-400">Déconnecte LinkedIn et efface ce que LinkeePost en conserve{clientName ? " pour ce client" : ""} : connexions, statistiques de posts, interactions et personnes taguées. Vos posts restent.</p>
+              </div>
+              <button
+                type="button"
+                onClick={async () => {
+                  if (!window.confirm("Supprimer toutes les données LinkedIn conservées par LinkeePost" + (clientName ? ` pour ${clientName}` : "") + " ? Cette action est définitive : il faudra reconnecter LinkedIn pour publier de nouveau.")) return;
+                  try {
+                    const res = await fetch("/api/linkedin/delete-data", { method: "POST" });
+                    if (!res.ok) throw new Error();
+                    window.location.reload();
+                  } catch {
+                    window.alert("La suppression a échoué. Réessayez, ou écrivez-nous.");
+                  }
+                }}
+                className="text-xs border border-gray-200 hover:border-red-400 hover:text-red-600 text-gray-700 px-3 py-1.5 rounded-xl shrink-0"
+              >
+                Supprimer mes données LinkedIn
+              </button>
+            </div>
             {/* Instagram */}
             <div className="p-5 flex items-center justify-between gap-3 flex-wrap">
               <div className="flex items-center gap-3">

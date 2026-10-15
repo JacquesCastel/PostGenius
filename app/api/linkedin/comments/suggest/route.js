@@ -7,7 +7,7 @@ import { rateLimit } from "@/lib/ratelimit";
 import { getRemarks } from "@/lib/remarks";
 import { buildReplyPrompt, cleanReplies } from "@/lib/commentReply";
 
-// POST { draftId, commentText, authorName } → { replies: [3 variantes] }. Rien n'est envoyé à LinkedIn ici.
+// POST { draftId, commentText } → { replies: [3 variantes] }. Rien n'est envoyé à LinkedIn ici. Le nom du commentateur n'est jamais transmis à l'IA.
 export async function POST(req) {
   const userId = await getUserId(req);
   if (!userId) return NextResponse.json({ error: "Non connecté." }, { status: 401 });
@@ -18,7 +18,7 @@ export async function POST(req) {
     return NextResponse.json({ error: "Trop de suggestions sur la dernière heure. Réessayez plus tard." }, { status: 429 });
   }
 
-  const { draftId, commentText, authorName } = await req.json().catch(() => ({}));
+  const { draftId, commentText } = await req.json().catch(() => ({}));
   if (!draftId || !String(commentText ?? "").trim()) return NextResponse.json({ error: "Post et commentaire requis." }, { status: 400 });
   const draft = await prisma.draft.findFirst({ where: { id: String(draftId), userId }, select: { text: true, target: true } });
   if (!draft) return NextResponse.json({ error: "Post introuvable." }, { status: 404 });
@@ -28,7 +28,7 @@ export async function POST(req) {
     getRemarks(userId).catch(() => []),
     prisma.linkedInAccount.findUnique({ where: { userId }, select: { orgName: true } }),
   ]);
-  const prompt = buildReplyPrompt({ postText: draft.text, commentText, authorName, target: draft.target, profile, pageName: acc?.orgName, remarks });
+  const prompt = buildReplyPrompt({ postText: draft.text, commentText, target: draft.target, profile, pageName: acc?.orgName, remarks });
 
   try {
     const res = await fetch("https://api.anthropic.com/v1/messages", {
