@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireAgency, MAX_AGENCY_MEMBERS } from "@/lib/agency";
-import { seatsUsed, createTeamInvite, teamInviteView, sendTeamInviteEmail } from "@/lib/agencyTeam";
+import { seatsUsed, createTeamInvite, teamInviteView, sendTeamInviteEmail, notifySeatsLimit, CONTACT_EMAIL } from "@/lib/agencyTeam";
 import { isEmail, normalizeEmail } from "@/lib/invites";
 
 // GET : l'équipe de l'agence (tous les utilisateurs de l'agence la voient) ; POST : inviter un collaborateur (propriétaire)
@@ -17,6 +17,7 @@ export async function GET(req) {
     agency: agency?.name ?? "",
     me: { userId: auth.userId, role: auth.role },
     max: MAX_AGENCY_MEMBERS,
+    contactEmail: CONTACT_EMAIL,
     members: members.map((m) => ({ userId: m.userId, role: m.role, name: m.user.name, email: m.user.email, since: m.createdAt })),
     invites: invites.map(teamInviteView).filter((i) => i.status === "pending"),
   });
@@ -36,7 +37,8 @@ export async function POST(req) {
   // Une relance de la même adresse ne prend pas de place en plus
   const again = await prisma.agencyInvite.count({ where: { agencyId: auth.agencyId, email, acceptedAt: null, revokedAt: null, expiresAt: { gt: new Date() } } });
   if (!again && (await seatsUsed(auth.agencyId)) >= MAX_AGENCY_MEMBERS) {
-    return NextResponse.json({ error: `Votre agence compte déjà ${MAX_AGENCY_MEMBERS} utilisateurs (invitations en attente comprises). Au-delà, contactez-nous.`, code: "seats_limit" }, { status: 403 });
+    await notifySeatsLimit({ agencyId: auth.agencyId, ownerId: auth.userId }); // prévient l'équipe LinkeePost, une seule fois par agence
+    return NextResponse.json({ error: `Votre agence compte déjà ${MAX_AGENCY_MEMBERS} utilisateurs (invitations en attente comprises). Au-delà, écrivez-nous à ${CONTACT_EMAIL}.`, code: "seats_limit" }, { status: 403 });
   }
   const [agency, me] = await Promise.all([
     prisma.agency.findUnique({ where: { id: auth.agencyId }, select: { name: true } }),

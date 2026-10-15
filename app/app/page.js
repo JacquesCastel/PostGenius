@@ -11604,7 +11604,7 @@ function TeamPanel({ showToast }) {
           </ul>
           {owner ? (
             full ? (
-              <p className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg p-2.5" data-testid="team-full">Votre agence compte {data.max} utilisateurs (invitations comprises). Pour en ajouter, contactez-nous.</p>
+              <p className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg p-2.5" data-testid="team-full">Votre agence compte {data.max} utilisateurs (invitations comprises). Pour en ajouter, <a href={`mailto:${data.contactEmail || "contact@postgenius.network"}?subject=${encodeURIComponent(`Agence ${data.agency || ""} : plus de ${data.max} utilisateurs`)}&body=${encodeURIComponent(`Bonjour,\n\nL'agence ${data.agency || ""} souhaite ajouter des utilisateurs au-delà de ${data.max}.\n\nNombre d'utilisateurs souhaité :\n`)}`} className="font-semibold underline" data-testid="team-contact">contactez-nous</a>.</p>
             ) : (
               <form onSubmit={invite} className="flex gap-2 flex-wrap">
                 <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="e-mail du collaborateur" className="flex-1 min-w-[14rem] border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]" data-testid="team-email" />
