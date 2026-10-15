@@ -47,7 +47,7 @@ async function searchPeople(userId, q) {
     try {
       const res = await fetch(`${LI_API}/rest/peopleTypeahead?q=organizationFollowers&organization=${encodeURIComponent(org.urn)}&keywords=${encodeURIComponent(q)}`, { headers: auth.headers });
       const txt = await res.text();
-      if (!res.ok) { console.error("[mentions] peopleTypeahead refusé :", res.status, txt.slice(0, 300)); refused = res.status; continue; }
+      if (!res.ok) { console.error("[mentions] peopleTypeahead refusé :", res.status); refused = res.status; continue; }
       let d = {};
       try { d = JSON.parse(txt); } catch {}
       let kept = 0;
@@ -56,8 +56,8 @@ async function searchPeople(userId, q) {
         const name = personName(el);
         if (urn && name && !found.some((f) => f.urn === urn)) { found.push({ name, urn }); kept++; }
       }
-      // Trace : combien d'éléments renvoyés par LinkedIn, combien exploitables ; si aucun, début de la réponse brute (diagnostic, sans clé ni jeton)
-      console.log(`[mentions] peopleTypeahead ${org.urn} : ${d.elements?.length ?? 0} élément(s) renvoyé(s), ${kept} exploitable(s)${kept ? "" : ` · réponse : ${txt.slice(0, 600)}`}`);
+      // Trace : combien d'éléments renvoyés par LinkedIn, combien exploitables. Jamais le contenu de la réponse : il contient des noms de membres.
+      console.log(`[mentions] peopleTypeahead ${org.urn} : ${d.elements?.length ?? 0} élément(s) renvoyé(s), ${kept} exploitable(s)`);
     } catch (e) {
       console.error("[mentions] peopleTypeahead :", e.message);
     }
@@ -76,10 +76,10 @@ async function resolveProfile(userId, vanity) {
     try {
       const res = await fetch(`${LI_API}/rest/vanityUrl?q=vanityUrlAsOrganization&vanityUrl=${encodeURIComponent(url)}&organization=${encodeURIComponent(org.urn)}`, { headers: auth.headers });
       const txt = await res.text();
-      if (!res.ok) { console.error("[mentions] vanityUrl refusé :", res.status, txt.slice(0, 300)); lastStatus = res.status; continue; }
+      if (!res.ok) { console.error("[mentions] vanityUrl refusé :", res.status); lastStatus = res.status; continue; }
       const urn = PERSON_URN.exec(txt)?.[0];
       if (urn) return { urn };
-      console.log(`[mentions] vanityUrl ${org.urn} : réponse sans identifiant de membre · ${txt.slice(0, 600)}`);
+      console.log(`[mentions] vanityUrl ${org.urn} : réponse sans identifiant de membre`);
       lastStatus = 404;
     } catch (e) {
       console.error("[mentions] vanityUrl :", e.message);

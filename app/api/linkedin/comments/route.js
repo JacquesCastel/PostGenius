@@ -80,7 +80,7 @@ export async function GET(req) {
           console.warn("[linkedin] lecture des commentaires non autorisée (403) : permission pas encore approuvée par LinkedIn pour cette app");
         }
       } else {
-        console.error("LinkedIn comments GET:", res.status, raw);
+        console.error("LinkedIn comments GET:", res.status); // pas le corps : il peut contenir des données de membres
       }
       if (res.status === 401) return NextResponse.json({ error: "Session LinkedIn expirée — reconnectez la page entreprise." }, { status: 401 });
       if (res.status === 403) {

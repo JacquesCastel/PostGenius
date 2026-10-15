@@ -5,6 +5,11 @@ services:
     env_file: .env
     environment:
       NODE_ENV: production
+    logging: # journaux limités à 5 fichiers de 10 Mo : ils ne s'accumulent pas indéfiniment
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
     volumes:
       - ./data:/app/data # images générées (persistantes entre déploiements)
     expose:
