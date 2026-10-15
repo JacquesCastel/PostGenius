@@ -893,3 +893,18 @@ model PlanConfig {
   limits    Json
   updatedAt DateTime @updatedAt
 }
+
+// Journal des e-mails envoyés par l'application (type, destinataire masqué, résultat) : sert à vérifier en production que chaque message part,
+// et à voir les échecs d'envoi. Conservé 90 jours.
+model EmailLog {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  kind      String // type de message (bienvenue, quota, recapitulatif, relance-client…)
+  toMasked  String // adresse masquée : j***@domaine.fr
+  subject   String
+  status    String // envoyé | échec
+  error     String? // cause de l'échec (authentification SMTP, expéditeur refusé…)
+
+  @@index([createdAt])
+  @@index([kind, createdAt])
+}
