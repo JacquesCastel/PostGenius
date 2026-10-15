@@ -3,6 +3,9 @@ const nextConfig = {
   // Build autonome pour Docker (copie minimale dans l'image finale)
   output: "standalone",
 
+  // Ne pas annoncer la technologie du serveur dans chaque réponse
+  poweredByHeader: false,
+
   // Packages avec addons natifs (.node) — exclus du bundle webpack, chargés par Node à l'exécution
   // Le middleware (/api/*) fait tamponner les corps de requêtes : au-delà de 10 Mo par défaut ils sont tronqués, et un envoi d'image
   // (PNG exporté par l'éditeur, import de la médiathèque) échoue en erreur 500. 25 Mo couvre les plafonds des routes d'image (12 Mo base64, 10 Mo).
@@ -26,6 +29,8 @@ const nextConfig = {
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
           { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
+          // HTTPS imposé aux navigateurs pendant 1 an (le site n'est servi qu'en HTTPS ; pas de sous-domaines ni de « preload » : réversible)
+          { key: "Strict-Transport-Security", value: "max-age=31536000" },
         ],
       },
     ];
