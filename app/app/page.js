@@ -11762,7 +11762,7 @@ function ClientQuotaDialog({ client, showToast, onClose }) {
   );
 }
 
-function ClientsView({ showToast, onManage, section = "clients", onSection }) {
+function ClientsView({ showToast, onManage, section = "clients", onSection, canCreate = true }) {
   const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [panelClient, setPanelClient] = useState(null); // client pour le panel brouillons
@@ -11910,7 +11910,7 @@ function ClientsView({ showToast, onManage, section = "clients", onSection }) {
                 : "Les collaborateurs de l'agence et les clients qu'ils gèrent."}
             </p>
           </div>
-          {section === "clients" && (
+          {section === "clients" && canCreate && (
             <button onClick={openCreate}
               className="flex items-center gap-2 bg-[#ff5a5f] text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-[#e5454a] transition-colors">
               <UserPlus size={15} /> Ajouter un client
@@ -11938,12 +11938,12 @@ function ClientsView({ showToast, onManage, section = "clients", onSection }) {
             </div>
             <h3 className="font-bold text-lg text-[#1b2a4a] mb-1">Ajoutez votre premier client</h3>
             <p className="text-sm text-gray-400 text-center max-w-xs mb-6">
-              Chaque client dispose de son propre espace : profil, posts, campagnes et connexion LinkedIn.
+              Chaque client dispose de son propre espace : profil, posts, campagnes et connexion LinkedIn.{!canCreate ? " Le propriétaire de l'agence doit vous en affecter un." : ""}
             </p>
-            <button onClick={openCreate}
+            {canCreate && <button onClick={openCreate}
               className="flex items-center gap-2 bg-[#ff5a5f] text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-[#e5454a] transition-colors">
               <UserPlus size={16} /> Créer le premier compte client
-            </button>
+            </button>}
           </div>
         ) : (
           <>
@@ -15150,11 +15150,13 @@ export default function Home() {
   // compte) ; dans un client, on a le menu de CE client. Pas de menu « personnel » : l'agence ne publie pas pour elle-même.
   const agencyHome = user?.plan === "agence" && !impersonating && !user?.isSuperAdmin;
   const clientMode = Boolean(impersonating && !impersonating.support);
+  const agencyCollab = Boolean(user?.agencyCollaborator); // collaborateur simple : l'abonnement, la charte de l'agence et la création de clients restent au propriétaire
   const [clientTool, setClientTool] = useState(null); // "approval" | "report" : outils du client ouvert depuis le bandeau
   useEffect(() => {
     if (agencyHome && !["clients", "queue", "followup", "team", "billing", "brand-kit", "admin", "content", "messages"].includes(view)) setView("clients");
+    if (agencyHome && agencyCollab && ["billing", "brand-kit"].includes(view)) setView("clients");
     if (clientMode && ["billing", "clients", "queue", "followup", "team"].includes(view)) setView("dashboard");
-  }, [agencyHome, clientMode, view]);
+  }, [agencyHome, agencyCollab, clientMode, view]);
   // Agence : bascule d'un client à l'autre sans repasser par le tableau de bord, en restant sur le même écran
   const [agencyClients, setAgencyClients] = useState([]);
   useEffect(() => {
@@ -16777,8 +16779,12 @@ export default function Home() {
         { id: "queue", label: "À traiter", icon: Check },
         { id: "followup", label: "Suivi et rapports", icon: BarChart3 },
         { id: "team", label: "Équipe", icon: UserRound },
-        { id: "billing", label: "Abonnement", icon: CreditCard, group: "Compte" },
-        { id: "brand-kit", label: "Charte de l'agence", icon: ImageIcon, group: "Compte" },
+        ...(agencyCollab
+          ? []
+          : [
+              { id: "billing", label: "Abonnement", icon: CreditCard, group: "Compte" },
+              { id: "brand-kit", label: "Charte de l'agence", icon: ImageIcon, group: "Compte" },
+            ]),
         ...(user.isAdmin
           ? [
               { id: "admin", label: "Administration", icon: ShieldCheck, group: "Administration" },
@@ -17341,7 +17347,7 @@ export default function Home() {
                 Compte d'administration — hors offres, sans accès aux outils de création.
               </p>
             </div>
-          ) : clientMode ? null : (
+          ) : clientMode || agencyCollab ? null : (
             <div className="rounded-2xl bg-[#fff1f1] p-3">
               <p className="text-[11px] text-gray-500">Votre offre</p>
               <p className="font-bold text-[#ff5a5f] flex items-center gap-1.5">
@@ -17575,7 +17581,7 @@ export default function Home() {
       )}
 
       {/* Bandeau d'essai / incident de paiement (seulement si le paiement est actif) */}
-      {user.billingEnabled && (() => {
+      {user.billingEnabled && !agencyCollab && (() => {
         const st = accessState(user);
         const left = trialDaysLeft(user);
         if (st === "past_due") {
@@ -18935,6 +18941,7 @@ export default function Home() {
         <ConnectionsView clientName={clientSpace ? impersonating.companyName || impersonating.name : null} linkedin={linkedin} onDisconnect={disconnect} instagram={instagram} onDisconnectInstagram={disconnectInstagram} canOrgPublish={plan.orgPublish} />
       ) : ["clients", "queue", "followup", "team"].includes(view) ? (
         <ClientsView
+          canCreate={!agencyCollab}
           section={view}
           onSection={setView}
           showToast={showToast}

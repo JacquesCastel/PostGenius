@@ -65,9 +65,12 @@ export async function GET(req) {
   // Limites du compte dont on voit les données : le client ouvert (mode agence), sinon le compte lui-même
   const limits = await effectiveLimits(impersonating?.id ?? user.id);
 
+  const membership = await prisma.agencyMember.findUnique({ where: { userId: user.id }, select: { role: true } });
+
   return NextResponse.json({
     user: {
       id: user.id,
+      agencyCollaborator: Boolean(membership && membership.role !== "owner"), // simple collaborateur : ni abonnement, ni charte de l'agence, ni création de client
       email: user.email,
       name: user.name,
       limits,

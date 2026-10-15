@@ -34,6 +34,7 @@ export async function GET(req) {
 export async function POST(req) {
   const auth = await requireAgency(req);
   if (auth.error) return NextResponse.json({ error: auth.error }, { status: auth.status });
+  if (auth.role !== "owner") return NextResponse.json({ error: "Seul le propriétaire de l'agence peut créer un client." }, { status: 403 });
 
   try {
     const {
