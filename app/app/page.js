@@ -11904,8 +11904,8 @@ function ClientsView({ showToast, onManage, section = "clients", onSection, canC
             <p className="text-sm text-gray-500">
               {section === "clients" ? (loading ? "Chargement…" : clients.length
                 ? `${clients.length} client${clients.length > 1 ? "s" : ""} · vue synthétique`
-                : "Ajoutez vos premiers clients")
-                : section === "queue" ? "Posts de tous vos clients qui attendent une action de votre part."
+                : canCreate ? "Ajoutez vos premiers clients" : "Aucun client ne vous est affecté pour l'instant")
+                : section === "queue" ? (canCreate ? "Posts de tous vos clients qui attendent une action de votre part." : "Posts de vos clients qui attendent une action de votre part.")
                 : section === "followup" ? "Ce qui a été publié, validé et reste à traiter, mois par mois, pour chaque client."
                 : "Les collaborateurs de l'agence et les clients qu'ils gèrent."}
             </p>
@@ -11936,9 +11936,9 @@ function ClientsView({ showToast, onManage, section = "clients", onSection, canC
             <div className="w-16 h-16 rounded-2xl bg-[#fff1f1] flex items-center justify-center mb-5">
               <Users size={28} className="text-[#ff5a5f]" />
             </div>
-            <h3 className="font-bold text-lg text-[#1b2a4a] mb-1">Ajoutez votre premier client</h3>
+            <h3 className="font-bold text-lg text-[#1b2a4a] mb-1">{canCreate ? "Ajoutez votre premier client" : "Aucun client affecté"}</h3>
             <p className="text-sm text-gray-400 text-center max-w-xs mb-6">
-              Chaque client dispose de son propre espace : profil, posts, campagnes et connexion LinkedIn.{!canCreate ? " Le propriétaire de l'agence doit vous en affecter un." : ""}
+              {canCreate ? "Chaque client dispose de son propre espace : profil, posts, campagnes et connexion LinkedIn." : "Le propriétaire de l'agence doit vous affecter vos clients. Ils apparaîtront ici."}
             </p>
             {canCreate && <button onClick={openCreate}
               className="flex items-center gap-2 bg-[#ff5a5f] text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-[#e5454a] transition-colors">
@@ -16775,7 +16775,7 @@ export default function Home() {
       ]
     : agencyHome
     ? [
-        { id: "clients", label: "Clients", icon: Users },
+        { id: "clients", label: agencyCollab ? "Mes clients" : "Clients", icon: Users },
         { id: "queue", label: "À traiter", icon: Check },
         { id: "followup", label: "Suivi et rapports", icon: BarChart3 },
         { id: "team", label: "Équipe", icon: UserRound },
@@ -16862,7 +16862,7 @@ export default function Home() {
     profile: "Mon profil",
     "connections": "Connexions",
     "brand-kit": "Charte graphique",
-    clients: "Clients",
+    clients: agencyCollab ? "Mes clients" : "Clients",
     queue: "À traiter",
     followup: "Suivi et rapports",
     team: "Équipe de l'agence",
