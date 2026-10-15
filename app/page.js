@@ -15,7 +15,8 @@ export const dynamic = "force-dynamic";
 export const metadata = {
   title: "LinkeePost — Vos campagnes LinkedIn en pilote automatique",
   description:
-    "L'IA qui transforme votre expertise en campagnes LinkedIn : posts en 9 langues, humeur éditoriale, vidéo avec kit de tournage, veille connectée, programmation automatique, interactions et statistiques. Essai gratuit 14 jours.",
+    "L'IA qui transforme votre expertise en campagnes LinkedIn : posts en 9 langues, veille, programmation et statistiques. Essai gratuit 14 jours.",
+  alternates: { canonical: "/" },
 };
 
 const FEATURES = [
@@ -66,6 +67,25 @@ export default async function Landing() {
 
   return (
     <div className="relative overflow-hidden text-[#1b2a4a] bg-gradient-to-b from-rose-50 via-orange-50/40 to-sky-50">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify([
+            { "@context": "https://schema.org", "@type": "Organization", name: "LinkeePost", url: "https://postgenius.network", logo: "https://postgenius.network/icon.svg" },
+            {
+              "@context": "https://schema.org",
+              "@type": "SoftwareApplication",
+              name: "LinkeePost",
+              applicationCategory: "BusinessApplication",
+              operatingSystem: "Web",
+              inLanguage: "fr",
+              url: "https://postgenius.network",
+              description: "Création, validation, programmation et suivi de posts LinkedIn assistés par IA, pour indépendants et agences.",
+              offers: { "@type": "Offer", price: "0", priceCurrency: "EUR", description: "Essai gratuit 14 jours, sans carte bancaire" },
+            },
+          ]).replace(/</g, "\\u003c"),
+        }}
+      />
       {/* Halos décoratifs */}
       <div className="pointer-events-none absolute -top-32 -left-32 w-[28rem] h-[28rem] rounded-full bg-rose-200/40 blur-3xl" />
       <div className="pointer-events-none absolute top-48 -right-24 w-[24rem] h-[24rem] rounded-full bg-sky-200/40 blur-3xl" />

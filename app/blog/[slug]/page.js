@@ -26,7 +26,14 @@ export async function generateMetadata({ params }) {
   return {
     title: `${a.title} — LinkeePost`,
     description: a.excerpt || undefined,
-    openGraph: a.coverImage ? { images: [a.coverImage] } : undefined,
+    alternates: { canonical: `/blog/${a.slug}` },
+    openGraph: {
+      type: "article",
+      title: a.title,
+      description: a.excerpt || undefined,
+      publishedTime: a.publishedAt ? new Date(a.publishedAt).toISOString() : undefined,
+      ...(a.coverImage ? { images: [a.coverImage] } : {}),
+    },
   };
 }
 
@@ -41,6 +48,23 @@ export default async function ArticlePage({ params }) {
     <div className="min-h-screen bg-gradient-to-b from-rose-50/60 via-white to-white text-[#1b2a4a]">
       <SiteHeader />
 
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Article",
+            headline: a.title,
+            description: a.excerpt || undefined,
+            datePublished: a.publishedAt ? new Date(a.publishedAt).toISOString() : undefined,
+            dateModified: new Date(a.updatedAt).toISOString(),
+            image: a.coverImage || undefined,
+            inLanguage: "fr",
+            author: { "@type": "Organization", name: "LinkeePost" },
+            publisher: { "@type": "Organization", name: "LinkeePost" },
+          }).replace(/</g, "\\u003c"),
+        }}
+      />
       <article className="max-w-4xl mx-auto px-6 py-12">
         <Link href="/blog" className="text-sm text-[#ff5a5f] font-medium hover:underline">
           ← Tous les articles

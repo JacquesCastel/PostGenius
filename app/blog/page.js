@@ -9,6 +9,7 @@ export const dynamic = "force-dynamic";
 export const metadata = {
   title: "Blog — LinkeePost",
   description: "Conseils et stratégies pour réussir sur LinkedIn : contenu, campagnes, régularité et engagement.",
+  alternates: { canonical: "/blog" },
 };
 
 function fmtDate(d) {

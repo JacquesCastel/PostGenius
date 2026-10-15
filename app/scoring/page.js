@@ -9,7 +9,8 @@ import SiteFooter from "@/components/SiteFooter";
 export const metadata = {
   title: "Le score d'engagement — LinkeePost",
   description:
-    "Comment LinkeePost calcule le potentiel d'engagement de vos posts LinkedIn : une analyse instantanée sur 7 critères, des conseils par l'IA, et une réécriture ciblée pour faire grimper votre score.",
+    "Comment LinkeePost évalue le potentiel d'engagement de vos posts LinkedIn : analyse sur 7 critères, conseils de l'IA et réécriture ciblée.",
+  alternates: { canonical: "/scoring" },
 };
 
 const CRITERIA = [

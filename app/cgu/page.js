@@ -4,7 +4,7 @@ import SiteFooter from "@/components/SiteFooter";
 import { getFooterPage } from "@/lib/footer-pages";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Conditions générales d'utilisation — LinkeePost" };
+export const metadata = { title: "Conditions générales d'utilisation — LinkeePost", alternates: { canonical: "/cgu" } };
 
 export default async function CGU() {
   const page = await getFooterPage("cgu");

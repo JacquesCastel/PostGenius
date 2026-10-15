@@ -13,6 +13,7 @@ export const metadata = {
   title: "Tarifs — LinkeePost",
   description:
     "Trois offres simples pour piloter votre présence LinkedIn : Essentiel, Pro et Agence. 14 jours d'essai gratuit, sans carte bancaire.",
+  alternates: { canonical: "/tarifs" },
 };
 
 function Cell({ v }) {

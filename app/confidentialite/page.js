@@ -4,7 +4,7 @@ import SiteFooter from "@/components/SiteFooter";
 import { getFooterPage } from "@/lib/footer-pages";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Politique de confidentialité — LinkeePost" };
+export const metadata = { title: "Politique de confidentialité — LinkeePost", alternates: { canonical: "/confidentialite" } };
 
 export default async function Confidentialite() {
   const page = await getFooterPage("confidentialite");
