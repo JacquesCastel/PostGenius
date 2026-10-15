@@ -1,4 +1,5 @@
 import "./globals.css";
+import Analytics from "@/components/Analytics";
 
 const SITE = (process.env.APP_URL || "https://postgenius.network").replace(/\/$/, "");
 
@@ -15,7 +16,10 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="fr">
-      <body className="bg-slate-100 text-gray-900 antialiased">{children}</body>
+      <body className="bg-slate-100 text-gray-900 antialiased">
+        {children}
+        <Analytics />
+      </body>
     </html>
   );
 }
