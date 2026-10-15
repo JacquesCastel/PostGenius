@@ -4290,8 +4290,8 @@ function AdminEmailsCard({ showToast }) {
   if (!d) return null;
   const groups = [...new Set(d.tests.map((t) => t.group))];
   const cur = d.tests.find((t) => t.id === sel);
-  const live = sel.startsWith("live:");
-  const accounts = d.accounts.filter((a) => cur?.needs === "un client d'agence" ? a.client : true);
+  const live = sel.startsWith("live:") && cur?.needs !== "aucun";
+  const accounts = d.accounts.filter((a) => (cur?.needs === "un client d'agence" ? a.client : cur?.needs === "un membre d'agence" ? a.member : true));
   const send = async () => {
     setBusy(true);
     try {

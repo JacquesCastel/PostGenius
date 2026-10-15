@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import crypto from "crypto";
 import { prisma } from "@/lib/db";
 import { sendMail, isMailerConfigured } from "@/lib/mailer";
-import { buildEmail } from "@/lib/emailLayout";
+import { resetMail } from "@/lib/authEmails";
 import { rateLimit, clientIp } from "@/lib/ratelimit";
 
 // Demande de réinitialisation : génère un token (1 h, usage unique) et envoie
@@ -42,14 +42,7 @@ export async function POST(req) {
   try {
     sent = await sendMail({
       to: user.email,
-      ...buildEmail({
-        subject: "LinkeePost — Réinitialisation de votre mot de passe",
-        eyebrow: "Sécurité",
-        title: "Choisissez un nouveau mot de passe",
-        preheader: "Votre lien de réinitialisation est valable 1 heure.",
-        paragraphs: ["Bonjour,", "Vous avez demandé à réinitialiser votre mot de passe. Le lien ci-dessous est valable <strong>1 heure</strong>.", "Si vous n'êtes pas à l'origine de cette demande, ignorez cet e-mail : votre mot de passe reste inchangé."],
-        cta: { label: "Choisir un nouveau mot de passe", url: link },
-      }),
+      ...resetMail(link),
     });
   } catch (e) {
     console.error("[mail] Envoi SMTP échoué :", e.message);

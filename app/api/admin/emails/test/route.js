@@ -16,8 +16,8 @@ export async function POST(req) {
   if (!isMailerConfigured()) return NextResponse.json({ error: "L'envoi d'e-mails n'est pas configuré sur le serveur (SMTP_HOST absent).", code: "smtp" }, { status: 503 });
   let mail, note = null;
   if (live) {
-    if (!userId) return NextResponse.json({ error: "Choisissez un compte." }, { status: 400 });
-    const r = await buildLiveTest(id, String(userId), admin);
+    if (!userId && !LIVE_TESTS.find((t) => t.id === id)?.needs?.startsWith("aucun")) return NextResponse.json({ error: "Choisissez un compte." }, { status: 400 });
+    const r = await buildLiveTest(id, userId ? String(userId) : null, admin);
     if (r.error) return NextResponse.json({ error: r.error }, { status: 422 });
     ({ mail, note } = r);
   } else {

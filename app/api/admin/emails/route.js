@@ -13,7 +13,7 @@ export async function GET(req) {
     from: process.env.SMTP_FROM || null,
     to: admin.email,
     tests: [...EMAIL_TESTS, ...LIVE_TESTS].map(({ id, group, label, needs }) => ({ id, group, label, needs: needs ?? null })),
-    accounts: (await prisma.user.findMany({ where: { disabled: false }, select: { id: true, name: true, email: true, companyName: true, plan: true, agencyId: true }, orderBy: { createdAt: "desc" }, take: 500 }))
-      .map((u) => ({ id: u.id, client: Boolean(u.agencyId), label: u.agencyId ? `${u.companyName || u.name} (client d'agence)` : `${u.name || u.email} — ${u.email}` })),
+    accounts: (await prisma.user.findMany({ where: { disabled: false }, select: { id: true, name: true, email: true, companyName: true, plan: true, agencyId: true, agencyMembership: { select: { agencyId: true } } }, orderBy: { createdAt: "desc" }, take: 500 }))
+      .map((u) => ({ id: u.id, client: Boolean(u.agencyId), member: Boolean(u.agencyMembership), label: u.agencyId ? `${u.companyName || u.name} (client d'agence)` : `${u.name || u.email} — ${u.email}` })),
   });
 }
