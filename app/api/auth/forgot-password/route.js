@@ -41,6 +41,7 @@ export async function POST(req) {
   let sent = false;
   try {
     sent = await sendMail({
+      kind: "mot-de-passe",
       to: user.email,
       ...resetMail(link),
     });

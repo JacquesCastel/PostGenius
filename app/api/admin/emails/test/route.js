@@ -24,7 +24,7 @@ export async function POST(req) {
     mail = test.build({ id: admin.id, email: admin.email, name: admin.name });
   }
   try {
-    const ok = await sendMail({ to: admin.email, ...mail, subject: `[TEST] ${mail.subject}` });
+    const ok = await sendMail({ kind: "test", to: admin.email, ...mail, subject: `[TEST] ${mail.subject}` });
     if (!ok) return NextResponse.json({ error: "Message non envoyé." }, { status: 502 });
     return NextResponse.json({ ok: true, to: admin.email, note });
   } catch (e) {

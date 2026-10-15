@@ -4351,6 +4351,63 @@ function AdminAutomationCard({ showToast }) {
   );
 }
 
+// Administration : journal des e-mails réellement envoyés (par type sur 30 jours, avec les échecs d'envoi et les derniers messages)
+function AdminEmailLogCard() {
+  const [d, setD] = useState(null);
+  const [open, setOpen] = useState(false);
+  useEffect(() => { fetch("/api/admin/emails/log").then(readJson).then((x) => (x.error ? null : setD(x))).catch(() => {}); }, []);
+  if (!d) return null;
+  const fmt = (v) => (v ? new Date(v).toLocaleString("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "jamais");
+  const failedTotal = d.rows.reduce((n, r) => n + r.failed, 0);
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5" data-testid="admin-email-log">
+      <div className="flex items-center justify-between flex-wrap gap-2 mb-1">
+        <p className="text-sm font-semibold">Journal des envois</p>
+        <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${failedTotal ? "bg-red-50 text-red-700" : "bg-green-50 text-green-700"}`}>{failedTotal ? `${failedTotal} échec(s) sur 30 jours` : "Aucun échec sur 30 jours"}</span>
+      </div>
+      <p className="text-xs text-gray-400 mb-3">Chaque message réellement envoyé est noté ici (adresse masquée, conservé 90 jours). Un type à « jamais » n&apos;a pas encore eu l&apos;occasion de partir : ce n&apos;est pas une panne tant que son déclencheur ne s&apos;est pas produit. Messages d&apos;exemple de l&apos;administration : {d.tests.sent} envoyé(s).</p>
+      <div className="overflow-x-auto">
+        <table className="w-full text-xs">
+          <thead>
+            <tr className="text-left text-gray-400">
+              <th className="py-1.5 pr-3 font-medium">Message</th>
+              <th className="py-1.5 pr-3 font-medium">Part quand</th>
+              <th className="py-1.5 pr-3 font-medium text-right">Envoyés (30 j)</th>
+              <th className="py-1.5 pr-3 font-medium text-right">Échecs</th>
+              <th className="py-1.5 font-medium">Dernier envoi</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-50">
+            {d.rows.map((r) => (
+              <tr key={r.kind} data-testid={`log-${r.kind}`}>
+                <td className="py-2 pr-3 font-medium text-gray-800">{r.label}</td>
+                <td className="py-2 pr-3 text-gray-500">{r.trigger}</td>
+                <td className="py-2 pr-3 text-right tabular-nums">{r.sent}</td>
+                <td className={`py-2 pr-3 text-right tabular-nums ${r.failed ? "text-red-600 font-semibold" : ""}`}>{r.failed}</td>
+                <td className="py-2 text-gray-500">{fmt(r.last)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <button type="button" onClick={() => setOpen((o) => !o)} className="mt-3 text-xs text-[#ff5a5f] hover:underline">{open ? "Masquer les derniers messages" : "Voir les 40 derniers messages"}</button>
+      {open && (
+        <ul className="mt-2 divide-y divide-gray-50 text-xs">
+          {d.recent.map((m) => (
+            <li key={m.id} className="py-1.5 flex gap-3 flex-wrap">
+              <span className="text-gray-400 w-28 shrink-0">{fmt(m.createdAt)}</span>
+              <span className={`w-14 shrink-0 font-semibold ${m.status === "envoyé" ? "text-green-700" : "text-red-600"}`}>{m.status}</span>
+              <span className="text-gray-500 w-44 shrink-0 truncate">{m.toMasked}</span>
+              <span className="flex-1 min-w-[10rem] truncate text-gray-700">{m.subject}{m.error ? ` — ${m.error}` : ""}</span>
+            </li>
+          ))}
+          {d.recent.length === 0 && <li className="py-2 text-gray-400">Aucun envoi enregistré pour l&apos;instant.</li>}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 function AdminEmailsCard({ showToast }) {
   const [d, setD] = useState(null);
   const [sel, setSel] = useState("live:quota");
@@ -4531,6 +4588,7 @@ function AdminView({ showToast }) {
       <AdminInvitationsCard showToast={showToast} />
       <AdminPlansCard showToast={showToast} />
       <AdminAutomationCard showToast={showToast} />
+      <AdminEmailLogCard />
       <AdminEmailsCard showToast={showToast} />
       {quotaUser && <AdminQuotaDialog user={quotaUser} showToast={showToast} onClose={() => setQuotaUser(null)} />}
 
