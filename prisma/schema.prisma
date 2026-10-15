@@ -210,8 +210,8 @@ model ApprovalLink {
   lastSentAt DateTime?
   sentTo     String? // dernière adresse à laquelle le lien a été envoyé
   // Envois automatiques au client, décidés par l'agence (désactivés par défaut)
-  autoReminders  Boolean   @default(false) // relance tous les 3 jours (3 fois au plus) tant que des posts attendent sa validation
-  autoReport     Boolean   @default(false) // rapport du mois précédent, le 1er du mois
+  autoReminders  Boolean   @default(true)  // relance tous les 3 jours (3 fois au plus) tant que des posts attendent sa validation
+  autoReport     Boolean   @default(true)  // rapport du mois précédent, le 1er du mois
   remindersSent  Int       @default(0)
   lastReminderAt DateTime?
   lastReportKey  String? // « AAAA-MM » du dernier rapport envoyé
