@@ -22,6 +22,11 @@ const nextConfig = {
 
   async headers() {
     return [
+      // Pages privées ou à lien secret : jamais indexées
+      ...["/app", "/valider/:path*", "/rapport/:path*", "/reset-password"].map((source) => ({
+        source,
+        headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }],
+      })),
       {
         source: "/(.*)",
         headers: [

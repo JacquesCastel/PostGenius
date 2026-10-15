@@ -10,7 +10,8 @@ import SiteFooter from "@/components/SiteFooter";
 export const metadata = {
   title: "Fonctionnalités — LinkeePost",
   description:
-    "Profil de rédaction, posts en 9 langues avec humeur éditoriale, campagnes guidées par l'IA, veille connectée, images et vidéos, programmation automatique, interactions LinkedIn, événements et statistiques. Toutes les fonctionnalités de LinkeePost en détail.",
+    "Profil de rédaction, posts en 9 langues, campagnes guidées par l'IA, veille, images et vidéos, programmation et statistiques : toutes les fonctions de LinkeePost.",
+  alternates: { canonical: "/fonctionnalites" },
 };
 
 const PIPELINE = [

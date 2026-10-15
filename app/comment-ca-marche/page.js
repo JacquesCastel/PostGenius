@@ -9,7 +9,8 @@ import SiteFooter from "@/components/SiteFooter";
 export const metadata = {
   title: "Comment ça marche — LinkeePost",
   description:
-    "De l'inscription à la statistique : découvrez étape par étape comment LinkeePost transforme votre expertise en posts et campagnes LinkedIn — en 9 langues, avec vidéo et interactions — publiés en pilote automatique.",
+    "De l'inscription à la statistique : comment LinkeePost transforme votre expertise en posts et campagnes LinkedIn publiés en pilote automatique.",
+  alternates: { canonical: "/comment-ca-marche" },
 };
 
 const STEPS = [

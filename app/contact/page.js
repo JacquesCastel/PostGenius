@@ -7,6 +7,7 @@ export const metadata = {
   title: "Contact — LinkeePost",
   description:
     "Une question sur LinkeePost, une demande de démo ou un besoin spécifique ? Écrivez-nous, nous répondons rapidement.",
+  alternates: { canonical: "/contact" },
 };
 
 const POINTS = [

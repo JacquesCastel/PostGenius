@@ -4,7 +4,7 @@ import SiteFooter from "@/components/SiteFooter";
 import { getFooterPage } from "@/lib/footer-pages";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Mentions légales — LinkeePost" };
+export const metadata = { title: "Mentions légales — LinkeePost", alternates: { canonical: "/mentions-legales" } };
 
 export default async function MentionsLegales() {
   const page = await getFooterPage("mentions-legales");
