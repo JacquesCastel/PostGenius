@@ -4334,7 +4334,7 @@ function AdminAutomationCard({ showToast }) {
                 <td className="py-2 pr-3 text-gray-500 max-w-[16rem]">{j.when}</td>
                 <td className="py-2 pr-3 text-right tabular-nums">{j.sent}</td>
                 <td className="py-2 pr-3 text-right tabular-nums">{j.eligible ?? "—"}</td>
-                <td className="py-2 pr-3 text-gray-500">{j.run || j.id === "trial" ? summary(j.lastRun) : j.last ? `dernier : ${fmt(j.last)}` : "à l'événement"}</td>
+                <td className="py-2 pr-3 text-gray-500">{j.run || j.id === "trial" || j.id === "trialEnded" ? summary(j.lastRun) : j.last ? `dernier : ${fmt(j.last)}` : "à l'événement"}</td>
                 <td className="py-2 text-right">
                   {j.run && (
                     <button type="button" onClick={() => launch(j)} disabled={busy === j.run || !d.smtp} className="text-[11px] border border-gray-200 hover:border-[#ff5a5f] hover:text-[#ff5a5f] disabled:opacity-40 px-2 py-1 rounded-lg whitespace-nowrap">
@@ -4683,11 +4683,14 @@ function AdminView({ showToast }) {
                       </option>
                     ))}
                   </select>
-                  {u.trialEndsAt && new Date(u.trialEndsAt) > new Date() && (
-                    <p className="text-[10px] text-amber-600 mt-0.5">
-                      essai · {Math.ceil((new Date(u.trialEndsAt) - Date.now()) / 86400000)} j
-                    </p>
-                  )}
+                  {!u.isAdmin && (() => {
+                    const st = accessState(u);
+                    if (st === "active") return <p className="text-[10px] text-green-700 mt-0.5">abonné</p>;
+                    if (st === "past_due") return <p className="text-[10px] text-red-600 mt-0.5 font-semibold">paiement en échec</p>;
+                    if (st === "expired") return <p className="text-[10px] mt-0.5"><span className="bg-red-100 text-red-700 font-semibold px-1.5 py-0.5 rounded-full" data-testid="admin-trial-expired">essai terminé le {new Date(u.trialEndsAt).toLocaleDateString("fr-FR")}</span></p>;
+                    if (u.trialEndsAt) return <p className="text-[10px] text-amber-600 mt-0.5">essai · {trialDaysLeft(u)} j</p>;
+                    return null;
+                  })()}
                 </td>
                 <td className="p-3 text-right">
                   <span className="font-medium">{u.published}</span>
