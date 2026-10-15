@@ -24,6 +24,8 @@ export async function GET(req) {
         trialEndsAt: true,
         subscriptionStatus: true,
         createdAt: true,
+        agencyId: true,
+        agency: { select: { name: true } },
         onboardedAt: true,
         linkedin: { select: { personToken: true, orgToken: true } },
         _count: { select: { drafts: true, campaigns: true } },
@@ -61,6 +63,8 @@ export async function GET(req) {
       trialEndsAt: u.trialEndsAt,
       subscriptionStatus: u.subscriptionStatus,
       createdAt: u.createdAt,
+      agencyClient: Boolean(u.agencyId), // compte géré par une agence (le client ne se connecte jamais), pas un utilisateur
+      agencyName: u.agency?.name ?? null,
       onboarded: Boolean(u.onboardedAt),
       linkedinConnected: Boolean(u.linkedin?.personToken),
       orgConnected: Boolean(u.linkedin?.orgToken),
@@ -92,14 +96,15 @@ export async function GET(req) {
 
   const totals = rows.reduce(
     (acc, r) => ({
-      users: acc.users + 1,
+      users: acc.users + (r.agencyClient ? 0 : 1),
+      agencyClients: acc.agencyClients + (r.agencyClient ? 1 : 0),
       published: acc.published + r.published,
       inputTokens30: acc.inputTokens30 + r.usage30.inputTokens,
       outputTokens30: acc.outputTokens30 + r.usage30.outputTokens,
       images30: acc.images30 + r.usage30.images,
       cost30: acc.cost30 + r.usage30.cost,
     }),
-    { users: 0, published: 0, inputTokens30: 0, outputTokens30: 0, images30: 0, cost30: 0 }
+    { users: 0, agencyClients: 0, published: 0, inputTokens30: 0, outputTokens30: 0, images30: 0, cost30: 0 }
   );
 
   return NextResponse.json({ totals, users: rows });
