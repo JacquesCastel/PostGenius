@@ -4544,13 +4544,15 @@ function AdminView({ showToast }) {
 
   const filteredUsers = (data?.users ?? []).filter((u) => {
     const q = search.trim().toLowerCase();
-    if (!q) return showAgencyClients || !u.agencyClient; // les comptes clients des agences ne sont pas des utilisateurs : repliés par défaut (la recherche les retrouve)
+    // les comptes clients et les collaborateurs d'une agence font partie d'un compte agence, ce ne sont pas des utilisateurs à part : repliés par défaut (la recherche les retrouve)
+    if (!q) return showAgencyClients || !(u.agencyClient || u.agencyMember);
     return u.email?.toLowerCase().includes(q) || u.name?.toLowerCase().includes(q);
   });
 
   const newThisWeek = (data?.users ?? []).filter(
-    (u) => !u.agencyClient && Date.now() - new Date(u.createdAt).getTime() < 7 * 86400000
+    (u) => !u.agencyClient && !u.agencyMember && Date.now() - new Date(u.createdAt).getTime() < 7 * 86400000
   ).length;
+  const agencyAccounts = (data?.totals?.agencyClients ?? 0) + (data?.totals?.agencyMembers ?? 0);
 
   const exportCsv = () => {
     const header = ["email", "nom", "inscrit_le", "offre", "posts_publies", "posts_total", "campagnes", "cout_30j_usd", "cout_total_usd", "statut", "linkedin_connecte"];
@@ -4599,9 +4601,9 @@ function AdminView({ showToast }) {
           <p className="text-3xl font-bold">{data.totals.users}</p>
           <p
             className="text-sm text-white/80 mt-1 truncate"
-            title={`Utilisateurs${data.totals.agencyClients ? ` (+ ${data.totals.agencyClients} clients d'agence)` : ""}`}
+            title={`Utilisateurs${agencyAccounts ? ` (+ ${data.totals.agencyClients} clients et ${data.totals.agencyMembers ?? 0} collaborateurs d'agence)` : ""}`}
           >
-            Utilisateurs{data.totals.agencyClients ? ` (+${data.totals.agencyClients} agence)` : ""}
+            Utilisateurs{agencyAccounts ? ` (+${agencyAccounts} agence)` : ""}
           </p>
         </div>
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
@@ -4636,10 +4638,10 @@ function AdminView({ showToast }) {
           placeholder="Rechercher par email ou nom…"
           className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
         />
-        {data.totals.agencyClients > 0 && (
+        {agencyAccounts > 0 && (
           <label className="flex items-center gap-1.5 text-sm text-gray-600 shrink-0 cursor-pointer" data-testid="toggle-agency-clients">
             <input type="checkbox" checked={showAgencyClients} onChange={(e) => setShowAgencyClients(e.target.checked)} />
-            Clients d&apos;agence ({data.totals.agencyClients})
+            Clients et collaborateurs d&apos;agence ({agencyAccounts})
           </label>
         )}
         <button
@@ -4678,7 +4680,7 @@ function AdminView({ showToast }) {
                       </span>
                     )}
                   </p>
-                  <p className="text-xs text-gray-400">{u.agencyClient ? `Client de ${u.agencyName || "une agence"}` : u.email}</p>
+                  <p className="text-xs text-gray-400">{u.agencyClient ? `Client de ${u.agencyName || "une agence"}` : u.agencyMember ? `Collaborateur de ${u.agencyName || "une agence"} · ${u.email}` : u.email}</p>
                 </td>
                 <td className="p-3 text-xs text-gray-500">
                   {new Date(u.createdAt).toLocaleDateString("fr-FR")}
