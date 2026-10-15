@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { memoClear } from "@/lib/memoCache";
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin";
 import { getLanding, LANDING_DEFAULTS } from "@/lib/landing";
@@ -30,5 +31,6 @@ export async function PUT(req) {
     create: { key: "landing", value: JSON.stringify(content) },
   });
 
+  memoClear(); // le site public affiche aussitôt la modification
   return NextResponse.json({ ok: true, content });
 }

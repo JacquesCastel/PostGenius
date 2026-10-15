@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
+import { memo, MEMO_TTL } from "@/lib/memoCache";
 import { markdownToHtml } from "@/lib/markdown";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
@@ -11,12 +12,8 @@ function fmtDate(d) {
   return new Date(d).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
 }
 
-async function getArticle(slug) {
-  try {
-    return await prisma.article.findUnique({ where: { slug } });
-  } catch {
-    return null;
-  }
+function getArticle(slug) {
+  return memo(`article:${slug}`, MEMO_TTL, () => prisma.article.findUnique({ where: { slug } }), null);
 }
 
 export async function generateMetadata({ params }) {

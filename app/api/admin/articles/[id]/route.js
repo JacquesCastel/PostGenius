@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { memoClear } from "@/lib/memoCache";
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin";
 import { slugify } from "@/lib/markdown";
@@ -34,6 +35,7 @@ export async function PATCH(req, { params }) {
   }
 
   const article = await prisma.article.update({ where: { id }, data });
+  memoClear();
   return NextResponse.json({ article });
 }
 
@@ -43,5 +45,6 @@ export async function DELETE(req, { params }) {
 
   const { id } = await params;
   await prisma.article.delete({ where: { id } });
+  memoClear(); // le site public affiche aussitôt la modification
   return NextResponse.json({ ok: true });
 }
