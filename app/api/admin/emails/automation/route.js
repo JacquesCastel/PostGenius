@@ -6,7 +6,7 @@ import { lastRuns } from "@/lib/engagementEmails";
 
 // GET — état des e-mails automatiques : ce qui est actif, ce qui est parti sur 30 jours, qui est concerné maintenant, dernière passe (administrateur)
 const DAY = 86400000;
-const GROUPS = { welcome: "welcome", onboarding: "onboarding", trial_ending: "trial", payment_failed: "payment", quota: "quota", digest: "digest" };
+const GROUPS = { welcome: "welcome", onboarding: "onboarding", trial_ending: "trial", trial_ended: "trialEnded", payment_failed: "payment", quota: "quota", digest: "digest" };
 
 export async function GET(req) {
   if (!(await requireAdmin(req))) return NextResponse.json({ error: "Accès refusé." }, { status: 403 });
@@ -33,6 +33,7 @@ export async function GET(req) {
   const users = people.filter((u) => !isAdminUser(u));
   const onboarding = users.filter((u) => !u.emailOptOut && !u.agencyMembership && new Date(u.createdAt).getTime() >= now - 10 * DAY && new Date(u.createdAt).getTime() <= now - DAY).length;
   const trial = users.filter((u) => u.trialEndsAt && new Date(u.trialEndsAt).getTime() > now && new Date(u.trialEndsAt).getTime() <= now + 3 * DAY && !["active", "trialing"].includes(u.subscriptionStatus)).length;
+  const trialEnded = users.filter((u) => u.trialEndsAt && new Date(u.trialEndsAt).getTime() <= now && new Date(u.trialEndsAt).getTime() > now - 7 * DAY && !["active", "trialing", "past_due"].includes(u.subscriptionStatus)).length;
   const digest = users.filter((u) => !u.emailOptOut).length;
   const [reminders, reports, remindedLinks, reportedLinks] = await Promise.all([
     prisma.approvalLink.count({ where: { autoReminders: true, sentTo: { not: null } } }),
@@ -46,6 +47,7 @@ export async function GET(req) {
     { id: "welcome", label: "Bienvenue", when: "À l'inscription", sent: sent.welcome?.n ?? 0, last: sent.welcome?.last ?? null, eligible: null, run: null },
     { id: "onboarding", label: "Accueil (jours 1, 3 et 7)", when: "1 à 10 jours après l'inscription, hors comptes d'agence", sent: sent.onboarding?.n ?? 0, last: sent.onboarding?.last ?? null, eligible: onboarding, lastRun: run("onboarding"), run: "onboarding" },
     { id: "trial", label: "Fin d'essai", when: "3 jours avant la fin de l'essai", sent: sent.trial?.n ?? 0, last: sent.trial?.last ?? null, eligible: trial, lastRun: run("trial"), run: null },
+    { id: "trialEnded", label: "Essai terminé", when: "À la fin de l'essai, sans abonnement (une seule fois)", sent: sent.trialEnded?.n ?? 0, last: sent.trialEnded?.last ?? null, eligible: trialEnded, lastRun: run("trial"), run: null },
     { id: "payment", label: "Paiement échoué", when: "Quand Stripe signale un échec de paiement", sent: sent.payment?.n ?? 0, last: sent.payment?.last ?? null, eligible: null, run: null },
     { id: "quota", label: "Alerte de quota", when: "À 80 % puis à 100 % d'une limite", sent: sent.quota?.n ?? 0, last: sent.quota?.last ?? null, eligible: null, lastRun: run("quota"), run: "quota" },
     { id: "digest", label: "Récapitulatif de la semaine", when: "Chaque lundi à partir de 8 h (heure du serveur), s'il y a de l'activité", sent: sent.digest?.n ?? 0, last: sent.digest?.last ?? null, eligible: digest, lastRun: run("digest"), run: "digest" },
