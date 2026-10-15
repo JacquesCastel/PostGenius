@@ -5,6 +5,7 @@ import { logUsage } from "@/lib/usage";
 import { scorePost } from "@/lib/score";
 import { checkFeature, limitBody } from "@/lib/gating";
 import { getRemarks, remarksPromptBlock } from "@/lib/remarks";
+import { authorBlockFor } from "@/lib/datalakeBlock";
 import { ANTI_INVENTION_INSTRUCTION } from "@/lib/linkedinRules";
 import { cleanFeedback, feedbackBlock, FEEDBACK_OUTPUT_RULE, parseFeedbackOutput } from "@/lib/rewriteFeedback";
 
@@ -54,6 +55,8 @@ export async function POST(req) {
   });
 
   const remarks = await getRemarks(userId);
+  // Datalake de l'auteur (sources, éléments de langage, exemples de voix) pour que la réécriture reste dans sa voix et ses faits
+  const authorBlock = await authorBlockFor(userId, String(text).slice(0, 600));
 
   const prompt = `Voici un post LinkedIn :
 """
@@ -66,7 +69,7 @@ ${feedback ? `${feedbackBlock(feedback)}\nAjuste le post en conséquence (unique
 
 Règles :${!feedback && (scope === "hook" || scope === "all") ? "\n- La première ligne (accroche) doit faire MOINS de 90 caractères et porter à elle seule l'idée du post : elle seule s'affiche avant le « voir plus ». Une tension (question, chiffre, promesse) peut l'aider à percuter, mais seulement si ça sert le sens — pas une formule obligatoire." : ""}
 - Garde le même sujet, le même message et la MÊME LANGUE que le post d'origine (ne traduis jamais).
-- Respecte le ton ${user?.tone ? `"${user.tone}"` : "de l'auteur"}.${user?.styleNotes ? `\n- Consignes de style à respecter : ${user.styleNotes}.` : ""}${remarksPromptBlock(remarks)}
+- Respecte le ton ${user?.tone ? `"${user.tone}"` : "de l'auteur"}.${user?.styleNotes ? `\n- Consignes de style à respecter : ${user.styleNotes}.` : ""}${remarksPromptBlock(remarks)}${authorBlock}
 - ${ANTI_INVENTION_INSTRUCTION}
 - ${feedback ? FEEDBACK_OUTPUT_RULE : "Réponds UNIQUEMENT avec le texte du post complet réécrit (aucun commentaire autour)."}`;
 

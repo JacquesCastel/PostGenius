@@ -6,6 +6,7 @@ import { logUsage } from "@/lib/usage";
 import { rateLimit } from "@/lib/ratelimit";
 import { getRemarks } from "@/lib/remarks";
 import { buildReplyPrompt, cleanReplies } from "@/lib/commentReply";
+import { authorBlockFor } from "@/lib/datalakeBlock";
 
 // POST { draftId, commentText } → { replies: [3 variantes] }. Rien n'est envoyé à LinkedIn ici. Le nom du commentateur n'est jamais transmis à l'IA.
 export async function POST(req) {
@@ -20,7 +21,7 @@ export async function POST(req) {
 
   const { draftId, commentText } = await req.json().catch(() => ({}));
   if (!draftId || !String(commentText ?? "").trim()) return NextResponse.json({ error: "Post et commentaire requis." }, { status: 400 });
-  const draft = await prisma.draft.findFirst({ where: { id: String(draftId), userId }, select: { text: true, target: true } });
+  const draft = await prisma.draft.findFirst({ where: { id: String(draftId), userId }, select: { text: true, target: true, contextId: true } });
   if (!draft) return NextResponse.json({ error: "Post introuvable." }, { status: 404 });
 
   const [profile, remarks, acc] = await Promise.all([
@@ -28,7 +29,9 @@ export async function POST(req) {
     getRemarks(userId).catch(() => []),
     prisma.linkedInAccount.findUnique({ where: { userId }, select: { orgName: true } }),
   ]);
-  const prompt = buildReplyPrompt({ postText: draft.text, commentText, target: draft.target, profile, pageName: acc?.orgName, remarks });
+  // Sujet = le post seul : le texte du commentaire n'est pas envoyé au service de vectorisation
+  const authorBlock = await authorBlockFor(userId, String(draft.text).slice(0, 600), { contextId: draft.contextId ?? null });
+  const prompt = buildReplyPrompt({ postText: draft.text, commentText, target: draft.target, profile, pageName: acc?.orgName, remarks, authorBlock });
 
   try {
     const res = await fetch("https://api.anthropic.com/v1/messages", {

@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { getEffectiveUserId as getUserId } from "@/lib/session";
 import { logUsage } from "@/lib/usage";
 import { checkFeature, limitBody } from "@/lib/gating";
+import { authorBlockFor } from "@/lib/datalakeBlock";
 
 export const maxDuration = 120;
 
@@ -50,6 +51,9 @@ export async function POST(req, { params }) {
     user?.styleNotes && `- Consignes de style (À RESPECTER) : ${user.styleNotes}`,
   ].filter(Boolean).join("\n");
 
+  // Datalake de l'auteur : sources, éléments de langage, exemples de voix, ce qu'il a déjà publié
+  const authorBlock = await authorBlockFor(userId, [event.name, event.details?.slice(0, 400)].filter(Boolean).join(" "), { memory: true });
+
   const sameDay = new Date(event.startDate).toDateString() === new Date(event.endDate).toDateString();
   const periode = sameDay ? `le ${fmtFr(event.startDate)}` : `du ${fmtFr(event.startDate)} au ${fmtFr(event.endDate)}`;
 
@@ -62,11 +66,13 @@ ${event.url ? `Lien : ${event.url}` : ""}
 ${event.details ? `Contexte de l'événement : ${event.details.slice(0, 1000)}` : ""}
 
 Profil de l'auteur :
-${profileSpec || "(non renseigné)"}
+${profileSpec || "(non renseigné)"}${authorBlock}
 
 Génère 2 posts LinkedIn en ${languageName(user?.postLanguage)}, dans le style de l'auteur, courts (accroche forte, 2 à 4 phrases aérées, 2-3 hashtags, et le lien de l'événement s'il existe) :
 1. "annonce" — à publier quelques jours AVANT : nous serons présents à ${event.name} ${periode}, venez nous rencontrer.
 2. "jourJ" — à publier LE JOUR de l'ouverture : nous y sommes, retrouvez-nous${event.location ? ` (${event.location})` : ""}, n'oubliez pas que nous sommes à ${event.name}${sameDay ? "" : ` jusqu'à la fin ${fmtFr(event.endDate)}`}.
+
+Si les consignes de style, les éléments de langage ou les exemples de l'auteur contredisent ces indications de forme (hashtags, longueur, ton, tutoiement), ce sont les siens qui priment. N'invente aucun fait sur l'événement ou l'entreprise.
 
 Réponds UNIQUEMENT en JSON valide :
 {"posts":[{"kind":"annonce","text":"..."},{"kind":"jourJ","text":"..."}]}`;
