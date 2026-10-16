@@ -8,21 +8,30 @@ export default function SiteFooter() {
     <>
     <footer className="mt-10 border-t border-rose-100/70 pt-10 pb-8">
       <div className="max-w-6xl mx-auto px-6">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-[#7c8aa3]">
-          <div className="flex items-center gap-2">
-            <div className="bg-[#ff5a5f] text-white p-1.5 rounded-lg">
-              <LpMark size={14} />
+        <div className="grid gap-10 md:grid-cols-[1.4fr_1fr_1fr_1fr] text-sm text-[#7c8aa3]">
+          <div>
+            <div className="flex items-center gap-2 whitespace-nowrap">
+              <div className="bg-[#ff5a5f] text-white p-1.5 rounded-lg">
+                <LpMark size={14} />
+              </div>
+              <span className="font-bold text-[#1b2a4a]">LinkeePost</span>
             </div>
-            <span className="font-bold text-[#1b2a4a]">LinkeePost</span>
-            <span>© {new Date().getFullYear()}</span>
+            <p className="mt-3 max-w-xs leading-relaxed">Votre expertise, vos mots, vos posts : des publications LinkedIn écrites à partir de ce que vous savez.</p>
           </div>
-          <nav className="flex flex-wrap items-center justify-center gap-5">
+          <nav aria-label="Produit" className="flex flex-col gap-2.5">
+            <p className="text-xs font-semibold uppercase tracking-wide text-[#1b2a4a]">Produit</p>
             <Link href="/fonctionnalites" className="hover:text-[#ff5a5f]">Fonctionnalités</Link>
             <Link href="/comment-ca-marche" className="hover:text-[#ff5a5f]">Comment ça marche</Link>
             <Link href="/scoring" className="hover:text-[#ff5a5f]">Contrôle de forme</Link>
             <Link href="/tarifs" className="hover:text-[#ff5a5f]">Tarifs</Link>
+          </nav>
+          <nav aria-label="Ressources" className="flex flex-col gap-2.5">
+            <p className="text-xs font-semibold uppercase tracking-wide text-[#1b2a4a]">Ressources</p>
             <Link href="/blog" className="hover:text-[#ff5a5f]">Blog</Link>
             <Link href="/contact" className="hover:text-[#ff5a5f]">Contact</Link>
+          </nav>
+          <nav aria-label="Informations légales" className="flex flex-col gap-2.5">
+            <p className="text-xs font-semibold uppercase tracking-wide text-[#1b2a4a]">Informations légales</p>
             <Link href="/mentions-legales" className="hover:text-[#ff5a5f]">Mentions légales</Link>
             <Link href="/cgu" className="hover:text-[#ff5a5f]">CGU</Link>
             <Link href="/confidentialite" className="hover:text-[#ff5a5f]">Confidentialité</Link>
@@ -31,7 +40,8 @@ export default function SiteFooter() {
         </div>
 
         {/* Contenu SEO (petit) */}
-        <p className="text-[11px] leading-relaxed text-gray-400 mt-8 max-w-4xl mx-auto text-center">
+        <div className="mt-10 pt-6 border-t border-rose-100/70">
+        <p className="text-[11px] leading-relaxed text-gray-400 max-w-4xl">
           <strong className="font-semibold text-gray-500">LinkeePost</strong> est l'outil tout-en-un pour gérer
           votre présence sur <Link href="/fonctionnalites" className="hover:text-[#ff5a5f] underline">LinkedIn</Link> :
           génération de posts par intelligence artificielle, création de carrousels et de scripts vidéo, campagnes
@@ -45,6 +55,8 @@ export default function SiteFooter() {
           {" "}et nos <Link href="/blog" className="hover:text-[#ff5a5f] underline">conseils pour réussir sur LinkedIn</Link>.
           Essai gratuit 14 jours, sans carte bancaire.
         </p>
+        <p className="text-xs text-[#7c8aa3] mt-6">© {new Date().getFullYear()} LinkeePost</p>
+        </div>
       </div>
     </footer>
     <ChatWidget />
