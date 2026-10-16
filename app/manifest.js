@@ -4,7 +4,7 @@ export default function manifest() {
   return {
     name: "LinkeePost",
     short_name: "LinkeePost",
-    description: "Vos campagnes LinkedIn en pilote automatique.",
+    description: "Votre expertise, vos mots, vos posts LinkedIn.",
     start_url: "/app",
     display: "standalone",
     background_color: "#fff1f1",
