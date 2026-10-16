@@ -206,16 +206,16 @@ export default function FonctionnalitesPage() {
           </Card>
         </Feature>
 
-        {/* Score d'engagement (offre Pro) */}
+        {/* Contrôle de forme (offre Pro) */}
         <Feature
           reverse
-          tag="Score d'engagement · offre Pro"
-          title="Un score d'engagement, et l'optimisation en un clic"
-          text="Chaque post reçoit une note sur 100, avec des conseils concrets critère par critère. Réécrivez l'accroche, le corps ou la signature : le score se recalcule en direct, et l'historique conserve chaque version. Inclus à partir de l'offre Pro."
+          tag="Contrôle de forme · offre Pro"
+          title="Un contrôle de forme, et la réécriture en un clic"
+          text="Chaque post reçoit une note de forme sur 100, calculée par une grille de règles fixes : accroche, longueur, aération, appel à l'action. L'IA propose en plus des conseils de fond. Ce n'est pas une prévision de résultats : c'est un indicateur de qualité de forme. Réécrivez l'accroche, le corps ou la signature, et l'historique conserve chaque version. Inclus à partir de l'offre Pro."
           points={[
-            "Note sur 100 + conseils personnalisés par l'IA",
+            "Grille de règles fixes, détaillée critère par critère",
             "Réécriture ciblée : accroche, corps ou signature",
-            "Score en direct et historique des versions restaurables",
+            "Note recalculée à chaque modification, historique des versions",
           ]}
         >
           <Card>
@@ -226,8 +226,8 @@ export default function FonctionnalitesPage() {
               </div>
               <div className="flex-1">
                 <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-sm font-semibold">Potentiel d'engagement</span>
-                  <span className="text-sm font-bold text-[#16a34a]">Excellent</span>
+                  <span className="text-sm font-semibold">Note de forme</span>
+                  <span className="text-sm font-bold text-[#16a34a]">Bien construit</span>
                 </div>
                 <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
                   <div className="h-full rounded-full bg-[#16a34a]" style={{ width: "82%" }} />
