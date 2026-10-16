@@ -13,7 +13,7 @@ import SiteFooter from "@/components/SiteFooter";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "LinkeePost — Des posts LinkedIn qui partent de ce que vous savez",
+  title: "LinkeePost — Votre expertise, vos mots, vos posts LinkedIn",
   description:
     "Déposez vos documents, vos liens et vos anciens posts : LinkeePost rédige, programme et publie des posts LinkedIn dans votre voix, à partir de vos propres faits. Essai gratuit 14 jours.",
   alternates: { canonical: "/" },
