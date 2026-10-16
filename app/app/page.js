@@ -7224,7 +7224,7 @@ function ScorePanel({ text, type, recomputing, onTips }) {
       <div className="flex items-start gap-3">
         <div className="w-9 h-9 rounded-xl bg-[#ff5a5f] text-white flex items-center justify-center font-extrabold shrink-0">2</div>
         <div>
-          <h3 className="font-extrabold text-lg leading-tight">Optimisez le potentiel d'engagement</h3>
+          <h3 className="font-extrabold text-lg leading-tight">Contrôlez la forme de votre post</h3>
           <p className="text-sm text-gray-400 mt-0.5">Des pistes concrètes, élément par élément, pour améliorer votre post avant de le publier.</p>
         </div>
       </div>
@@ -9809,7 +9809,7 @@ function DashboardView({ drafts, canVeille = true, canEvents = false, canScore =
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-sm font-semibold">Potentiel moyen</span>
+                <span className="text-sm font-semibold">Note de forme moyenne</span>
                 <span className="text-sm font-bold" style={{ color: avgColor }}>{avgLevel}</span>
               </div>
               <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
@@ -9826,7 +9826,7 @@ function DashboardView({ drafts, canVeille = true, canEvents = false, canScore =
             </div>
           </div>
           <button onClick={onGoHistory} className="text-xs text-[#ff5a5f] hover:underline mt-4 inline-flex items-center gap-1">
-            Optimiser mes posts <ChevronRight size={13} />
+            Améliorer mes posts <ChevronRight size={13} />
           </button>
         </div>
       )}
@@ -14956,7 +14956,7 @@ function TutorialOverlay({ canEvents, onClose }) {
     { icon: PenLine, title: "1 · Créez un post", text: "Dans « Créer un post », partez d'une idée, d'un article (son adresse) ou d'un document (PDF, Word). Le copilote rédige avec votre profil, vos sources et vos remarques." },
     { icon: MessageSquare, title: "2 · Améliorez-le en discutant", text: "Dites ce que vous voulez changer : le post est réécrit. Quand une demande revient, le copilote propose de la retenir pour tous vos prochains posts." },
     { icon: Compass, title: "3 · Laissez le copilote proposer", text: "Dans « Copilote IA », il propose quoi publier et pourquoi, selon vos objectifs. Vous discutez avec lui pour affiner une piste, puis vous la transformez en post." },
-    { icon: BarChart3, title: "4 · Mesurez et optimisez", text: "Chaque post reçoit une note sur 100 avec des conseils concrets. Sur la page d'optimisation, réécrivez l'accroche ou la conclusion : le score se recalcule en direct." },
+    { icon: BarChart3, title: "4 · Contrôlez la forme", text: "Chaque post reçoit une note de forme sur 100 avec des conseils concrets (un contrôle de règles, pas une prédiction de performance). Réécrivez l'accroche ou la conclusion : la note se recalcule en direct." },
     { icon: Clock, title: "5 · Programmez et publiez", text: "Choisissez vos jours et votre heure : les posts partent seuls sur LinkedIn, après votre validation si vous le souhaitez. Les campagnes planifient une série d'un coup." },
     ...(canEvents
       ? [{ icon: MapPin, title: "6 · Couvrez vos événements", text: "Ajoutez vos salons et forums : LinkeePost prépare des posts de présence et vous notifie le jour J pour poster une photo en direct." }]
@@ -17351,9 +17351,9 @@ export default function Home() {
                 <div className="w-14 h-14 rounded-2xl bg-[#fff1f1] text-[#ff5a5f] flex items-center justify-center mx-auto mb-4">
                   <Lock size={26} />
                 </div>
-                <h3 className="font-extrabold text-lg">Score & optimisation d'engagement</h3>
+                <h3 className="font-extrabold text-lg">Contrôle de forme et réécriture</h3>
                 <p className="text-sm text-gray-500 mt-2 max-w-sm mx-auto">
-                  Notez le potentiel de chaque post sur 100, recevez des conseils par l'IA et réécrivez l'accroche, le corps ou la signature en un clic.
+                  Notez la forme de chaque post sur 100, recevez des conseils de l'IA et réécrivez l'accroche, le corps ou la signature en un clic.
                   Cette fonctionnalité est incluse à partir de l'offre <strong>Pro</strong>.
                 </p>
                 <div className="mt-5 flex flex-col items-center gap-2">
@@ -18176,8 +18176,8 @@ export default function Home() {
                         <BarChart3 size={18} />
                       </span>
                       <span>
-                        <span className="block font-bold text-sm">Voir et optimiser le potentiel d'engagement</span>
-                        <span className="block text-xs text-[#5a6b85]">Score détaillé + conseils pour améliorer votre post</span>
+                        <span className="block font-bold text-sm">Voir et améliorer la forme du post</span>
+                        <span className="block text-xs text-[#5a6b85]">Note de forme détaillée + conseils pour améliorer votre post</span>
                       </span>
                     </span>
                     <ChevronRight size={20} className="text-[#ff5a5f] shrink-0" />
@@ -18194,7 +18194,7 @@ export default function Home() {
                       </span>
                       <span>
                         <span className="block font-bold text-sm flex items-center gap-1.5">
-                          Score & optimisation d'engagement <Lock size={13} />
+                          Contrôle de forme et réécriture <Lock size={13} />
                         </span>
                         <span className="block text-xs text-gray-400">Inclus à partir de l'offre Pro — cliquez pour découvrir</span>
                       </span>
@@ -19414,7 +19414,7 @@ export default function Home() {
                                 {canScore && p.status !== "publié" && (() => {
                                   const sc = scorePost({ text: p.text, type: p.type }).score;
                                   return (
-                                    <button type="button" onClick={() => openOptimize(p.text, p.type, p.id, p.imageUrl, p.imagePrompt, p.videoUrl, p.youtubeUrl)} title="Score d'engagement : cliquez pour l'améliorer" className={`px-1.5 py-0.5 rounded-full font-medium ${scoreTone(sc)}`} data-testid="post-score">
+                                    <button type="button" onClick={() => openOptimize(p.text, p.type, p.id, p.imageUrl, p.imagePrompt, p.videoUrl, p.youtubeUrl)} title="Note de forme : cliquez pour l'améliorer" className={`px-1.5 py-0.5 rounded-full font-medium ${scoreTone(sc)}`} data-testid="post-score">
                                       Score {sc}
                                     </button>
                                   );
