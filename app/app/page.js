@@ -17126,7 +17126,8 @@ export default function Home() {
               <ChevronLeft size={18} /> Fermer
             </button>
           </div>
-          <div className="max-w-6xl mx-auto p-6 grid lg:grid-cols-2 gap-6 items-start">
+          <div className="max-w-6xl mx-auto p-6 space-y-6">
+          <div className="grid lg:grid-cols-2 gap-6 items-start">
             {/* Gauche : aperçu du post + actions (collés au scroll) */}
             <div className="lg:sticky lg:top-20 space-y-4">
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
@@ -17261,11 +17262,43 @@ export default function Home() {
               {renderVideoBlock()}
               {renderYoutubeBlock()}
 
+            </div>
+            {/* Droite : module d'optimisation (réservé Pro/Agence) */}
+            {canScore ? (
+              <ScorePanel text={optimizeText.text} type={optimizeText.type} recomputing={rewriting} onTips={setScoreTips} />
+            ) : (
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 md:p-8 text-center">
+                <div className="w-14 h-14 rounded-2xl bg-[#fff1f1] text-[#ff5a5f] flex items-center justify-center mx-auto mb-4">
+                  <Lock size={26} />
+                </div>
+                <h3 className="font-extrabold text-lg">Contrôle de forme et réécriture</h3>
+                <p className="text-sm text-gray-500 mt-2 max-w-sm mx-auto">
+                  Notez la forme de chaque post sur 100, recevez des conseils de l'IA et réécrivez l'accroche, le corps ou la signature en un clic.
+                  Cette fonctionnalité est incluse à partir de l'offre <strong>Pro</strong>.
+                </p>
+                <div className="mt-5 flex flex-col items-center gap-2">
+                  <a
+                    href="/tarifs"
+                    className="inline-flex items-center gap-2 bg-[#ff5a5f] hover:bg-[#f63d44] text-white font-semibold px-6 py-3 rounded-full transition-colors"
+                  >
+                    <ArrowUpCircle size={17} /> Faire évoluer mon offre
+                  </a>
+                  <a href="/scoring" className="text-xs font-medium text-[#ff5a5f] hover:underline">
+                    En savoir plus sur le contrôle de forme
+                  </a>
+                </div>
+              </div>
+            )}
+          </div>
+            {/* Bas de page, sur deux colonnes (hors de la zone collante du haut) : après avoir lu la note et les conseils, on choisit la partie à réécrire, puis on retrouve l'historique */}
+            {canScore && (
+              <div className="grid lg:grid-cols-2 gap-6 items-start" data-testid="optimize-actions">
+                <div className="space-y-4">
               {/* Niveau de réécriture (comme le choix du format) — réservé Pro/Agence */}
               {canScore && (
                 <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
                   <p className="text-xs font-semibold text-gray-500 mb-0.5">Partie à réécrire</p>
-                  <p className="text-[11px] text-gray-400 mb-2">Le reste du post reste identique. La réécriture applique les points en rouge et les conseils IA à droite.</p>
+                  <p className="text-[11px] text-gray-400 mb-2">Le reste du post reste identique. La réécriture applique les points en rouge et les conseils IA du contrôle de forme.</p>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                     {[
                       { id: "all", label: "Tout le post" },
@@ -17308,7 +17341,8 @@ export default function Home() {
                 </button>
               </div>
 
-              {/* Historique des versions */}
+                </div>
+                <div>
               {versions.length > 1 && (
                 <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
                   <p className="text-xs font-semibold text-gray-500 mb-2 flex items-center gap-1.5">
@@ -17342,30 +17376,11 @@ export default function Home() {
                   </div>
                 </div>
               )}
-            </div>
-            {/* Droite : module d'optimisation (réservé Pro/Agence) */}
-            {canScore ? (
-              <ScorePanel text={optimizeText.text} type={optimizeText.type} recomputing={rewriting} onTips={setScoreTips} />
-            ) : (
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 md:p-8 text-center">
-                <div className="w-14 h-14 rounded-2xl bg-[#fff1f1] text-[#ff5a5f] flex items-center justify-center mx-auto mb-4">
-                  <Lock size={26} />
-                </div>
-                <h3 className="font-extrabold text-lg">Contrôle de forme et réécriture</h3>
-                <p className="text-sm text-gray-500 mt-2 max-w-sm mx-auto">
-                  Notez la forme de chaque post sur 100, recevez des conseils de l'IA et réécrivez l'accroche, le corps ou la signature en un clic.
-                  Cette fonctionnalité est incluse à partir de l'offre <strong>Pro</strong>.
-                </p>
-                <div className="mt-5 flex flex-col items-center gap-2">
-                  <a
-                    href="/tarifs"
-                    className="inline-flex items-center gap-2 bg-[#ff5a5f] hover:bg-[#f63d44] text-white font-semibold px-6 py-3 rounded-full transition-colors"
-                  >
-                    <ArrowUpCircle size={17} /> Faire évoluer mon offre
-                  </a>
-                  <a href="/scoring" className="text-xs font-medium text-[#ff5a5f] hover:underline">
-                    En savoir plus sur le contrôle de forme
-                  </a>
+                  {versions.length <= 1 && (
+                    <div className="rounded-2xl border border-dashed border-gray-200 p-4 text-xs text-gray-400 flex items-start gap-2" data-testid="versions-hint">
+                      <History size={13} className="mt-0.5 shrink-0" /> Chaque réécriture est conservée ici : vous pourrez revenir à n'importe quelle version.
+                    </div>
+                  )}
                 </div>
               </div>
             )}
