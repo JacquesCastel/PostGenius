@@ -2,7 +2,7 @@ import Link from "next/link";
 import {
   Sparkles, Megaphone, Eye, Clock, BarChart3, Image as ImageIcon,
   Check, ChevronRight, ShieldCheck, CalendarDays, Layers, PlayCircle, ArrowUp, MapPin, UserRound,
-  Gauge, PenLine, MessageCircle, Video, Languages, ThumbsUp,
+  Gauge, PenLine, MessageCircle, Video, Languages, ThumbsUp, BookOpen, Mic, History,
 } from "lucide-react";
 import { getLanding } from "@/lib/landing";
 import SiteHeader from "@/components/SiteHeader";
@@ -13,39 +13,47 @@ import SiteFooter from "@/components/SiteFooter";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "LinkeePost — Vos campagnes LinkedIn en pilote automatique",
+  title: "LinkeePost — Votre expertise, vos mots, vos posts LinkedIn",
   description:
-    "L'IA qui transforme votre expertise en campagnes LinkedIn : posts en 9 langues, veille, programmation et statistiques. Essai gratuit 14 jours.",
+    "Déposez vos documents, vos liens et vos anciens posts : LinkeePost rédige, programme et publie des posts LinkedIn dans votre voix, à partir de vos propres faits. Essai gratuit 14 jours.",
   alternates: { canonical: "/" },
 };
 
 const FEATURES = [
-  { icon: UserRound, title: "Profil de rédaction", text: "Activité, cible, marché, ton et rythme — décrits une fois (ou déduits de votre site par l'IA), et chaque contenu est calibré à votre image." },
-  { icon: Megaphone, title: "Campagnes guidées par l'IA", text: "Un thème, un brief cadré par l'IA, un post d'exemple à valider — puis une série de posts qui progressent vers votre message clé." },
-  { icon: Eye, title: "Veille connectée", text: "LinkeePost surveille les sources de votre secteur et ancre vos posts dans l'actualité. Un article pertinent devient un post." },
-  { icon: MessageCircle, title: "Copilote éditorial", text: "Un agent avec qui échanger pour savoir quoi publier : il propose des idées argumentées, pose des questions et apprend de vos choix (Générer/Ignorer) au fil du temps." },
-  { icon: ImageIcon, title: "Illustrations générées", text: "Une image cohérente avec le contenu, générée par IA et publiée avec le post. Prompt automatique ou personnalisé." },
-  { icon: Clock, title: "Publication à votre rythme", text: "Choisissez vos jours et votre heure : les posts partent seuls, après votre validation si vous le souhaitez." },
-  { icon: MapPin, title: "Module Événements", text: "Salons et forums : posts de présence générés et programmés autour des dates, et création de l'événement lui-même sur LinkedIn au nom de votre page. Le jour J, une notification vous invite à poster une photo en direct. (Offre Agence)" },
-  { icon: Layers, title: "Carrousels & scripts vidéo", text: "Au-delà du post simple : carrousels publiés en document PDF, sondages LinkedIn et scripts vidéo générés par l'IA — les formats qui engagent le plus." },
-  { icon: Video, title: "Vidéo : kit de tournage et import", text: "Un plan de tournage plan par plan, un téléprompteur pour lire face caméra, puis l'import de votre vidéo (jusqu'à 200 Mo) publiée directement sur LinkedIn. Un lien YouTube s'affiche aussi sous forme de carte dans le post." },
-  { icon: Languages, title: "9 langues, votre humeur", text: "Rédigez en français, anglais, espagnol, allemand, italien, portugais, néerlandais, arabe ou polonais. Choisissez l'humeur du post — joie, coup de gueule, stress, fierté… — pour orienter l'approche éditoriale." },
-  { icon: Check, title: "Validation par vos clients", text: "Offre Agence : chaque client relit et valide ses posts depuis un lien privé, sans compte, ou demande une modification. Rapports mensuels partageables aux couleurs de votre agence." },
-  { icon: ThumbsUp, title: "Interagir sur LinkedIn", text: "Commentez et réagissez à n'importe quel post LinkedIn depuis LinkeePost, avec un journal de vos interactions. Les compteurs de commentaires et de réactions de vos posts s'affichent dans vos statistiques." },
-  { icon: BarChart3, title: "Statistiques et suivi", text: "Progression de chaque campagne, posts publiés et à venir, commentaires, réactions et engagement — avec les impressions de vos pages entreprise — pour savoir ce qui fonctionne." },
+  { icon: BookOpen, title: "Base de connaissances", text: "Déposez documents, liens et notes : LinkeePost en retient les faits et les cas, et vos posts sont conçus pour les reprendre fidèlement, sans en inventer. Chaque post indique les sources qu'il a utilisées." },
+  { icon: Mic, title: "Votre voix", text: "Consignes de style, mots à privilégier, mots à bannir, formulations types, anciens posts comme exemples : le ton et le rythme restent les vôtres, et vos consignes priment sur les règles génériques." },
+  { icon: History, title: "Mémoire éditoriale", text: "LinkeePost sait ce que vous avez déjà publié ou programmé : il assure la continuité sans se répéter, ni reprendre la même accroche." },
+  { icon: Megaphone, title: "Campagnes guidées", text: "Un thème, un brief cadré avec l'IA, un post d'exemple à valider — puis une série de posts qui progressent vers votre message clé, planifiée sur vos créneaux." },
+  { icon: MessageCircle, title: "Copilote éditorial", text: "Un agent avec qui échanger pour savoir quoi publier : il s'appuie sur votre base de connaissances, propose des idées argumentées et apprend de vos choix (Générer / Ignorer)." },
+  { icon: Check, title: "Validation avant publication", text: "Chaque post attend votre accord. Offre Agence : le client relit et valide depuis un lien privé, sans compte, et reçoit un rapport mensuel à vos couleurs." },
+  { icon: Layers, title: "Carrousels, vidéo, images", text: "Au-delà du texte : carrousels en PDF, sondages, kit de tournage et téléprompteur pour la vidéo, illustrations générées par IA. Offres Pro et Agence." },
+  { icon: BarChart3, title: "Statistiques et suivi", text: "Progression des campagnes, posts publiés et à venir, commentaires, réactions et impressions de vos pages : les retours réels de LinkedIn, pas des estimations." },
 ];
 
 const STEPS = [
-  { n: "1", icon: ShieldCheck, title: "Décrivez votre environnement", text: "Activité, cible, marché, objectifs, style et rythme : 5 minutes au départ, l'IA s'en souvient pour toujours." },
-  { n: "2", icon: Layers, title: "Lancez une campagne", text: "Un thème — le vôtre, ou une idée proposée par le copilote éditorial — puis un post d'exemple à valider : la série se génère et se planifie sur vos créneaux." },
-  { n: "3", icon: CalendarDays, title: "Validez, c'est publié", text: "Chaque post attend votre feu vert puis part automatiquement sur LinkedIn, image comprise. Suivez les retombées." },
+  { n: "1", icon: BookOpen, title: "Déposez votre matière", text: "Documents, liens, anciens posts : LinkeePost en tire des faits et du vocabulaire. Vous validez ce qu'il retient." },
+  { n: "2", icon: Mic, title: "Fixez votre voix", text: "Consignes de style, mots à privilégier ou à bannir, humeur, rythme de publication : décrits une fois, appliqués à chaque post." },
+  { n: "3", icon: CalendarDays, title: "Générez, validez, publiez", text: "Chaque post attend votre accord, puis part sur LinkedIn à l'heure choisie, image comprise. Suivez les retombées réelles." },
+];
+
+const PILLARS = [
+  { icon: BookOpen, title: "Votre matière", text: "Vos documents et vos liens deviennent des faits que le post est conçu pour reprendre fidèlement, avec les sources utilisées indiquées." },
+  { icon: Mic, title: "Votre voix", text: "Vos mots à privilégier, vos mots à bannir, vos anciens posts comme exemples : vos consignes passent avant tout le reste." },
+  { icon: History, title: "Votre mémoire", text: "LinkeePost sait ce que vous avez déjà publié : il assure la continuité sans se répéter." },
+];
+
+const ORIGIN = [
+  { n: "1", title: "Vos sources", text: "Faits, chiffres et cas tirés de ce que vous avez déposé" },
+  { n: "2", title: "Vos consignes", text: "Style, vocabulaire, ligne éditoriale" },
+  { n: "3", title: "Vos posts passés", text: "Exemples de voix et mémoire de ce qui est déjà dit" },
+  { n: "4", title: "Le post", text: "Rédigé, avec les sources utilisées indiquées" },
 ];
 
 const PROOFS = [
   { big: "14 j", small: "d'essai gratuit" },
   { big: "0 €", small: "sans carte bancaire" },
   { big: "100 %", small: "API officielle LinkedIn" },
-  { big: "5 min", small: "pour lancer une campagne" },
+  { big: "9", small: "langues de rédaction" },
 ];
 
 function BackToTop() {
@@ -100,7 +108,7 @@ export default async function Landing() {
             <p className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#ff5a5f] bg-[#fff1f1] px-3 py-1.5 rounded-full mb-5">
               <Sparkles size={13} /> {hero.badge}
             </p>
-            <h1 className="text-4xl md:text-5xl font-extrabold leading-tight">
+            <h1 className="text-3xl sm:text-4xl lg:text-[2.75rem] font-extrabold leading-tight">
               {hero.title} <span className="text-[#ff5a5f]">{hero.titleAccent}</span>
             </h1>
             <p className="text-lg text-[#5a6b85] mt-5 max-w-xl">{hero.subtitle}</p>
@@ -120,14 +128,14 @@ export default async function Landing() {
           {/* Aperçu produit avec cartes flottantes */}
           <div className="relative">
             <div className="absolute -top-4 -left-4 bg-white rounded-2xl shadow-xl shadow-rose-200/40 px-4 py-3 z-10 hidden sm:block">
-              <p className="text-[10px] text-gray-400">Publiés ce mois-ci</p>
-              <p className="text-2xl font-extrabold text-[#ff5a5f]">12</p>
+              <p className="text-[10px] text-gray-400">Sources déposées</p>
+              <p className="text-2xl font-extrabold text-[#ff5a5f]">14</p>
             </div>
             <div className="absolute -bottom-5 -right-3 bg-white rounded-2xl shadow-xl shadow-sky-200/40 px-4 py-3 z-10 hidden sm:flex items-center gap-2">
-              <BarChart3 size={18} className="text-sky-500" />
+              <BookOpen size={18} className="text-sky-500" />
               <div>
-                <p className="text-[10px] text-gray-400">Engagement</p>
-                <p className="text-sm font-bold">+38 %</p>
+                <p className="text-[10px] text-gray-400">Sources utilisées</p>
+                <p className="text-sm font-bold">2 sur ce post</p>
               </div>
             </div>
 
@@ -148,6 +156,12 @@ export default async function Landing() {
                   <p className="text-xs text-gray-600 leading-relaxed">« L'accessibilité numérique devient un critère d'appel d'offres »</p>
                   <span className="text-[11px] text-[#ff5a5f] font-semibold mt-1.5 inline-block">En faire un post →</span>
                 </div>
+                <div className="rounded-2xl border border-gray-100 p-4">
+                  <p className="text-xs font-semibold mb-1.5 flex items-center gap-1.5">
+                    <BookOpen size={13} className="text-[#ff5a5f]" /> D&apos;où vient ce post
+                  </p>
+                  <p className="text-xs text-gray-600 leading-relaxed">Guide accessibilité (source 1) · vos mots à privilégier · votre dernier post sur le sujet</p>
+                </div>
               </div>
             </div>
           </div>
@@ -165,12 +179,53 @@ export default async function Landing() {
           </div>
         </section>
 
+        {/* Trois piliers */}
+        <section className="max-w-6xl mx-auto px-6 py-10">
+          <div className="grid md:grid-cols-3 gap-6">
+            {PILLARS.map((x) => (
+              <div key={x.title} className="bg-white rounded-3xl border border-white shadow-lg shadow-rose-100/40 p-6">
+                <div className="p-3 rounded-2xl bg-[#fff1f1] text-[#ff5a5f] w-fit mb-4"><x.icon size={22} /></div>
+                <h3 className="font-bold mb-2">{x.title}</h3>
+                <p className="text-sm text-[#5a6b85] leading-relaxed">{x.text}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* D'où vient chaque post */}
+        <section className="max-w-5xl mx-auto px-6 py-14">
+          <p className="text-center text-sm font-semibold text-[#ff5a5f]">Ce qui nous distingue</p>
+          <h2 className="text-3xl md:text-4xl font-extrabold text-center mt-2">D&apos;où vient chaque post</h2>
+          <p className="text-[#5a6b85] text-center mt-3 max-w-2xl mx-auto">
+            Un générateur ordinaire repart de zéro à chaque fois. LinkeePost part de ce que votre entreprise sait déjà, et vous montre les sources qu&apos;il a utilisées.
+          </p>
+          <div className="grid md:grid-cols-4 gap-4 mt-10">
+            {ORIGIN.map((o) => (
+              <div key={o.n} className="bg-white rounded-3xl border border-white shadow-lg shadow-sky-100/40 p-5 text-center">
+                <div className="w-9 h-9 rounded-xl bg-[#ff5a5f] text-white flex items-center justify-center font-bold mx-auto">{o.n}</div>
+                <h3 className="font-bold mt-3 mb-1 text-sm">{o.title}</h3>
+                <p className="text-xs text-[#5a6b85] leading-relaxed">{o.text}</p>
+              </div>
+            ))}
+          </div>
+          <div className="grid md:grid-cols-2 gap-6 mt-10">
+            <div className="rounded-3xl bg-white border border-white shadow-lg shadow-rose-100/40 p-6">
+              <p className="text-xs font-semibold text-[#ff5a5f] mb-1.5">Indépendants et consultants</p>
+              <p className="text-sm text-[#5a6b85] leading-relaxed">Votre expertise est déjà écrite quelque part : dans vos documents, vos présentations, vos articles. LinkeePost la remet en forme, sans que vous repartiez d&apos;une page blanche.</p>
+            </div>
+            <div className="rounded-3xl bg-white border border-white shadow-lg shadow-rose-100/40 p-6">
+              <p className="text-xs font-semibold text-[#ff5a5f] mb-1.5">Agences</p>
+              <p className="text-sm text-[#5a6b85] leading-relaxed">Un client, une mémoire : les sources, le vocabulaire et l&apos;historique de chaque client restent séparés. Vos collaborateurs travaillent chacun sur leurs clients, et le client valide ses posts depuis un lien, sans compte.</p>
+            </div>
+          </div>
+        </section>
+
         {/* Fonctionnalités */}
         <section id="fonctionnalites" className="max-w-6xl mx-auto px-6 py-20">
           <BackToTop />
           <p className="text-center text-sm font-semibold text-[#ff5a5f]">Ce que fait LinkeePost</p>
-          <h2 className="text-3xl md:text-4xl font-extrabold text-center mt-2">Bien plus qu'un générateur de posts</h2>
-          <p className="text-[#5a6b85] text-center mt-3 max-w-2xl mx-auto">Un outil de gestion de campagne complet, du brief à la statistique.</p>
+          <h2 className="text-3xl md:text-4xl font-extrabold text-center mt-2">Tout ce qu'il faut autour du texte</h2>
+          <p className="text-[#5a6b85] text-center mt-3 max-w-2xl mx-auto">De la matière au post publié, puis aux retours réels.</p>
           <div className="grid md:grid-cols-3 gap-6 mt-12">
             {FEATURES.map((f) => (
               <div key={f.title} className="bg-white rounded-3xl border border-white shadow-lg shadow-rose-100/40 p-6 hover:-translate-y-1 transition-transform">
@@ -192,24 +247,25 @@ export default async function Landing() {
           </div>
         </section>
 
-        {/* Atout : Score d'engagement */}
+        {/* Contrôle de forme (indicateur de mise en forme, pas une prédiction) */}
         <section className="max-w-6xl mx-auto px-6 py-10">
           <div className="rounded-[2.5rem] bg-gradient-to-br from-[#1b2a4a] to-[#2b3f6b] text-white p-8 md:p-12 shadow-2xl shadow-sky-200/40 grid lg:grid-cols-2 gap-10 items-center relative overflow-hidden">
             <div className="pointer-events-none absolute -top-16 -right-16 w-64 h-64 bg-[#ff5a5f]/20 rounded-full blur-3xl" />
             <div className="relative">
               <p className="inline-flex items-center gap-1.5 text-xs font-semibold text-white bg-[#ff5a5f] px-3 py-1.5 rounded-full mb-5">
-                <Gauge size={13} /> Exclusivité LinkeePost
+                <Gauge size={13} /> Contrôle de forme
               </p>
               <h2 className="text-3xl md:text-4xl font-extrabold leading-tight">
-                Un <span className="text-[#ff8a8d]">score d'engagement</span> sur chaque post, avant de publier
+                Un <span className="text-[#ff8a8d]">contrôle de forme</span> avant de publier
               </h2>
               <p className="text-white/80 mt-4 leading-relaxed">
-                LinkeePost note le potentiel de votre post sur 100 et vous explique, critère par critère, comment l'améliorer.
-                Réécrivez l'accroche, le corps ou la signature en un clic — et voyez le score grimper en direct.
+                LinkeePost vérifie la mise en forme de votre post (accroche, longueur, aération, appel à l&apos;action) avec une grille de règles fixes : le même texte obtient toujours la même note. L&apos;IA y ajoute des conseils de fond.
+                C&apos;est un indicateur de qualité de forme, pas une prévision de vues ou de réactions.
               </p>
               <ul className="mt-5 space-y-2.5">
                 {[
-                  "Score instantané + conseils personnalisés par l'IA",
+                  "Grille de règles fixes, détaillée critère par critère",
+                  "Conseils de fond proposés par l'IA, en plus de la grille",
                   "Réécriture ciblée : accroche, corps ou signature",
                   "Historique des versions, restaurables à tout moment",
                 ].map((t) => (
@@ -223,7 +279,7 @@ export default async function Landing() {
                   href="/scoring"
                   className="bg-white text-[#1b2a4a] font-semibold px-6 py-3 rounded-full hover:bg-rose-50 transition-colors inline-flex items-center justify-center gap-2"
                 >
-                  Comment on calcule votre score <ChevronRight size={16} />
+                  Comment on calcule la note <ChevronRight size={16} />
                 </Link>
                 <Link
                   href="/app"
@@ -244,8 +300,8 @@ export default async function Landing() {
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center justify-between mb-1.5">
-                      <p className="text-sm font-semibold">Potentiel d'engagement</p>
-                      <span className="text-sm font-bold text-[#16a34a]">Excellent</span>
+                      <p className="text-sm font-semibold">Note de forme</p>
+                      <span className="text-sm font-bold text-[#16a34a]">Bien construit</span>
                     </div>
                     <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
                       <div className="h-full rounded-full bg-[#16a34a]" style={{ width: "82%" }} />
@@ -254,10 +310,10 @@ export default async function Landing() {
                 </div>
                 <div className="mt-5 space-y-2">
                   {[
-                    { label: "Accroche percutante", ok: true },
-                    { label: "Question pour engager", ok: true },
-                    { label: "Hashtags à ajouter", ok: false },
-                    { label: "Appel à l'action", ok: true },
+                    { label: "Accroche courte et claire", ok: true },
+                    { label: "Paragraphes aérés", ok: true },
+                    { label: "Longueur dans la cible", ok: true },
+                    { label: "Appel à l'action à préciser", ok: false },
                   ].map((f) => (
                     <div
                       key={f.label}

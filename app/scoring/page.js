@@ -7,9 +7,9 @@ import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 
 export const metadata = {
-  title: "Le score d'engagement — LinkeePost",
+  title: "Le contrôle de forme — LinkeePost",
   description:
-    "Comment LinkeePost évalue le potentiel d'engagement de vos posts LinkedIn : analyse sur 7 critères, conseils de l'IA et réécriture ciblée.",
+    "Comment LinkeePost contrôle la forme de vos posts LinkedIn : une grille de 7 critères à règles fixes, des conseils de fond de l'IA et une réécriture ciblée. Un indicateur de qualité, pas une prévision de résultats.",
   alternates: { canonical: "/scoring" },
 };
 
@@ -59,14 +59,14 @@ export default function ScoringPage() {
         <section className="max-w-5xl mx-auto px-6 pt-12 pb-10 grid lg:grid-cols-2 gap-10 items-center">
           <div>
             <p className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#ff5a5f] bg-[#fff1f1] px-3 py-1.5 rounded-full mb-5">
-              <Gauge size={13} /> Score d'engagement
+              <Gauge size={13} /> Contrôle de forme
             </p>
             <h1 className="text-4xl md:text-5xl font-extrabold leading-tight">
-              Savez-vous si votre post va <span className="text-[#ff5a5f]">marcher</span>, avant de le publier ?
+              Votre post est-il <span className="text-[#ff5a5f]">bien construit</span> avant de le publier ?
             </h1>
             <p className="text-lg text-[#5a6b85] mt-5">
-              LinkeePost note le potentiel d'engagement de chaque post sur 100, vous montre exactement quoi améliorer,
-              et réécrit pour vous ce qui doit l'être. Voici comment.
+              LinkeePost contrôle la forme de chaque post avec une grille de règles fixes, note sur 100, vous montre quoi améliorer
+              et réécrit ce qui doit l'être. Ce n'est pas une prévision de résultats : voici ce qu'il mesure, et ce qu'il ne mesure pas.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 mt-7">
               <Link href="/app" className="bg-[#ff5a5f] hover:bg-[#f63d44] text-white font-semibold px-7 py-3.5 rounded-full shadow-lg shadow-rose-300/50 inline-flex items-center justify-center gap-2 transition-colors">
@@ -87,7 +87,7 @@ export default function ScoringPage() {
               </div>
               <div className="flex-1">
                 <div className="flex items-center justify-between mb-1.5">
-                  <p className="text-sm font-semibold">Potentiel d'engagement</p>
+                  <p className="text-sm font-semibold">Note de forme</p>
                   <span className="text-sm font-bold text-[#16a34a]">Excellent</span>
                 </div>
                 <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
@@ -134,7 +134,7 @@ export default function ScoringPage() {
         <section className="max-w-5xl mx-auto px-6 py-14">
           <h2 className="text-3xl md:text-4xl font-extrabold text-center">Les 7 critères, et leur poids</h2>
           <p className="text-[#5a6b85] text-center mt-3 max-w-2xl mx-auto">
-            Le score sur 100 se répartit entre sept critères. Pour chacun, LinkeePost vous dit où vous en êtes et comment progresser.
+            La note sur 100 se répartit entre sept critères, calculés par des règles fixes (le même texte obtient toujours la même note). L'IA n'intervient que pour proposer des conseils de fond, en plus. Pour chacun, LinkeePost vous dit où vous en êtes et comment progresser.
           </p>
           <p className="text-[#5a6b85] text-center mt-2 max-w-2xl mx-auto text-sm">
             Le principe éditorial : la <strong>pyramide inversée</strong> (l'essentiel d'abord, les détails ensuite, le secondaire en dernier), pas une formule imposée. Seule l'accroche doit vraiment tenir avant le « voir plus » : le reste — question, hashtags, émojis, appel à l'action — n'est qu'une option que le texte peut saisir s'il s'y prête, jamais une case à cocher. Zéro hashtag ou zéro émoji obtient déjà la meilleure note si le post n'en a pas besoin.
@@ -182,7 +182,7 @@ export default function ScoringPage() {
             <div>
               <h3 className="font-bold mb-1.5">Un indicateur de qualité, pas une boule de cristal</h3>
               <p className="text-sm text-[#5a6b85] leading-relaxed">
-                Le score reflète le respect des bonnes pratiques qui favorisent l'engagement — il ne prédit pas un nombre de vues ou de likes,
+                La note reflète le respect de bonnes pratiques de mise en forme — elle ne prédit pas un nombre de vues ou de likes,
                 car la performance réelle dépend aussi de votre réseau, du sujet et du moment. C'est un copilote qui vous évite les erreurs
                 classiques et vous pousse vers vos meilleurs posts. La décision finale reste la vôtre.
               </p>

@@ -7236,7 +7236,7 @@ function ScorePanel({ text, type, recomputing, onTips }) {
         </div>
         <div className="flex-1">
           <div className="flex items-center justify-between mb-1.5">
-            <p className="text-sm font-semibold">Potentiel d'engagement</p>
+            <p className="text-sm font-semibold">Note de forme</p>
             {recomputing ? (
               <span className="text-sm font-medium text-gray-400 flex items-center gap-1.5">
                 <RefreshCw size={13} className="animate-spin" /> Recalcul…
@@ -7248,7 +7248,7 @@ function ScorePanel({ text, type, recomputing, onTips }) {
           <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
             <div className="h-full rounded-full transition-[width,background-color] duration-300" style={{ width: `${display}%`, background: color }} />
           </div>
-          <p className="text-[11px] text-gray-400 mt-2">Estimation indicative basée sur les bonnes pratiques — ce n'est pas une prédiction de performance réelle.</p>
+          <p className="text-[11px] text-gray-400 mt-2">Indicateur de forme (règles fixes) — ce n'est pas une prédiction de performance réelle.</p>
         </div>
       </div>
 
@@ -9768,7 +9768,7 @@ function DashboardView({ drafts, canVeille = true, canEvents = false, canScore =
       </DashSection>
 
       {(!canScore || avgScore != null) && (
-      <DashSection id="score" title="Score d'engagement" icon={BarChart3} hint="Le potentiel moyen de vos posts">
+      <DashSection id="score" title="Note de forme" icon={BarChart3} hint="La note de forme moyenne de vos posts">
       {!canScore && (
         <a
           href="/tarifs"
@@ -9779,7 +9779,7 @@ function DashboardView({ drafts, canVeille = true, canEvents = false, canScore =
               <div className="p-2.5 rounded-xl bg-gray-100 text-gray-400 shrink-0"><BarChart3 size={18} /></div>
               <div className="min-w-0">
                 <p className="text-sm font-semibold flex items-center gap-1.5">
-                  Score d'engagement de vos posts <Lock size={13} className="text-gray-400" />
+                  Note de forme de vos posts <Lock size={13} className="text-gray-400" />
                 </p>
                 <p className="text-xs text-gray-500 mt-0.5">Notez et optimisez vos posts — inclus à partir de l'offre Pro.</p>
               </div>
@@ -9794,7 +9794,7 @@ function DashboardView({ drafts, canVeille = true, canEvents = false, canScore =
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
           <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
             <p className="text-sm font-semibold flex items-center gap-1.5">
-              <BarChart3 size={15} className="text-[#ff5a5f]" /> Score d'engagement moyen de vos posts
+              <BarChart3 size={15} className="text-[#ff5a5f]" /> Note de forme moyenne de vos posts
             </p>
             <span className="text-xs text-gray-400">
               {scores.length} post{scores.length > 1 ? "s" : ""} analysé{scores.length > 1 ? "s" : ""}
@@ -11300,7 +11300,7 @@ const FEATURE_LABELS = {
   campaigns: "L'outil de campagne",
   events: "Le module Événements",
   veille: "La veille connectée",
-  scoring: "Le score d'engagement",
+  scoring: "Le contrôle de forme",
   orgPublish: "La publication sur page entreprise",
   orgStats: "Les statistiques de page",
 };
@@ -17263,7 +17263,7 @@ export default function Home() {
                     <ArrowUpCircle size={17} /> Faire évoluer mon offre
                   </a>
                   <a href="/scoring" className="text-xs font-medium text-[#ff5a5f] hover:underline">
-                    En savoir plus sur le score d'engagement
+                    En savoir plus sur le contrôle de forme
                   </a>
                 </div>
               </div>
@@ -18083,7 +18083,7 @@ export default function Home() {
                 )}
                 {!editingResult && result?.text && !canScore && (
                   <button
-                    onClick={() => setUpgrade({ feature: "Le score d'engagement", requires: "scoring" })}
+                    onClick={() => setUpgrade({ feature: "Le contrôle de forme", requires: "scoring" })}
                     className="w-full flex items-center justify-between gap-2 bg-gray-50 hover:bg-gray-100 text-gray-500 rounded-2xl px-5 py-4 transition-colors"
                   >
                     <span className="flex items-center gap-2.5 text-left">
