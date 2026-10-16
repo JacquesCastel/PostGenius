@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { getSessionData, clientAccessible } from "@/lib/session";
 import { isAdminUser } from "@/lib/admin";
 import { effectiveLimits } from "@/lib/quotas";
+import { accessSubject } from "@/lib/agencyAccess";
 
 export async function GET(req) {
   const session = await getSessionData(req);
@@ -57,7 +58,7 @@ export async function GET(req) {
   if (session.clientId && (await clientAccessible(session))) {
     const client = await prisma.user.findUnique({
       where: { id: session.clientId },
-      select: { id: true, name: true, companyName: true, email: true },
+      select: { id: true, name: true, companyName: true, email: true, personalProfile: true },
     });
     if (client) impersonating = client;
   }
@@ -66,11 +67,21 @@ export async function GET(req) {
   const limits = await effectiveLimits(impersonating?.id ?? user.id);
 
   const membership = await prisma.agencyMember.findUnique({ where: { userId: user.id }, select: { role: true } });
+  const collaborator = Boolean(membership && membership.role !== "owner");
+  // Un collaborateur n'a ni essai ni abonnement propres : son accès est celui du propriétaire de l'agence (écran de blocage compris)
+  if (collaborator) {
+    const subject = await accessSubject(user.id);
+    if (subject?.viaAgency) {
+      user.trialEndsAt = subject.trialEndsAt;
+      user.subscriptionStatus = subject.subscriptionStatus;
+      user.currentPeriodEnd = subject.currentPeriodEnd;
+    }
+  }
 
   return NextResponse.json({
     user: {
       id: user.id,
-      agencyCollaborator: Boolean(membership && membership.role !== "owner"), // simple collaborateur : ni abonnement, ni charte de l'agence, ni création de client
+      agencyCollaborator: collaborator, // simple collaborateur : ni abonnement, ni charte de l'agence, ni création de client
       email: user.email,
       name: user.name,
       limits,

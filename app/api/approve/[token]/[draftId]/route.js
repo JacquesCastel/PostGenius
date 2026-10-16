@@ -25,6 +25,6 @@ export async function POST(req, { params }) {
   } else {
     await prisma.draft.update({ where: { id: draft.id }, data: { clientFeedback: note, clientFeedbackAt: new Date() } });
   }
-  notifyAgencyOfDecision({ agencyId: link.user.agencyId, clientName: link.user.companyName || link.user.name, approved: action === "approve", comment: note });
+  notifyAgencyOfDecision({ agencyId: link.user.agencyId, clientId: link.user.id, clientName: link.user.companyName || link.user.name, approved: action === "approve", comment: note });
   return NextResponse.json({ ok: true });
 }

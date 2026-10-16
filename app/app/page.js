@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, createContext, useContext, useMemo } from "react";
+import { NotificationBell, AgencyPlanning } from "@/components/AgencyExtras";
 import {
   Sparkles, FileText, Layers, Video, Copy, Check, Trash2, Send,
   Clock, PenLine, History, RefreshCw, Linkedin, ChevronRight, ChevronLeft, X, LogOut,
@@ -7856,13 +7857,14 @@ function PaywallScreen({ user, showToast, onLogout }) {
           <div className="w-14 h-14 rounded-2xl bg-[#fff1f1] text-[#ff5a5f] flex items-center justify-center mx-auto mb-4">
             <Lock size={26} />
           </div>
-          <h1 className="text-2xl md:text-3xl font-extrabold">Votre essai gratuit est terminé</h1>
-          <p className="text-[#5a6b85] mt-2 max-w-xl mx-auto">
-            Abonnez-vous pour continuer à utiliser LinkeePost. Vos posts, campagnes et réglages sont conservés —
-            tout reprend dès l'abonnement activé.
+          <h1 className="text-2xl md:text-3xl font-extrabold">{user.agencyCollaborator ? "L'accès de votre agence est suspendu" : "Votre essai gratuit est terminé"}</h1>
+          <p className="text-[#5a6b85] mt-2 max-w-xl mx-auto" data-testid="paywall-text">
+            {user.agencyCollaborator
+              ? "L'essai gratuit ou l'abonnement de votre agence est terminé. Prévenez le propriétaire de l'agence : tout reprend, avec vos clients et vos posts, dès que l'abonnement est activé."
+              : "Abonnez-vous pour continuer à utiliser LinkeePost. Vos posts, campagnes et réglages sont conservés — tout reprend dès l'abonnement activé."}
           </p>
         </div>
-        <BillingView user={user} showToast={showToast} />
+        {!user.agencyCollaborator && <BillingView user={user} showToast={showToast} />}
       </div>
     </div>
   );
@@ -11305,9 +11307,9 @@ const FEATURE_LABELS = {
   orgStats: "Les statistiques de page",
 };
 
-const DEEP_LINK_VIEWS = ["dashboard", "create", "history", "campaigns", "connections", "profile", "stats", "copilot", "events", "engage", "brand-kit", "billing", "clients", "queue", "followup", "team", "messages", "datalake"];
+const DEEP_LINK_VIEWS = ["dashboard", "create", "history", "campaigns", "connections", "profile", "stats", "copilot", "events", "engage", "brand-kit", "billing", "clients", "queue", "followup", "team", "planning", "messages", "datalake"];
 
-function ClientTableRow({ client, onManage, onViewDrafts, onDelete, deleting, onShowReport, onApproval, onQuota }) {
+function ClientTableRow({ client, team = [], restrict = false, onManage, onViewDrafts, onDelete, deleting, onShowReport, onApproval, onQuota }) {
   const [open, setOpen] = useState(false);
   const { completion, linkedin } = client;
   const linkedInOk = Boolean(linkedin?.personName);
@@ -11338,6 +11340,13 @@ function ClientTableRow({ client, onManage, onViewDrafts, onDelete, deleting, on
               <p className="font-semibold text-sm text-[#1b2a4a] truncate">{client.companyName || client.name}</p>
               {client.companyName && client.name && client.name !== client.companyName && <p className="text-xs text-gray-400 truncate">Personne : {client.name}</p>}
               {client.onboarded === false && <p className="text-[10px] font-semibold text-amber-600" data-testid="client-unconfigured">Configuration à terminer</p>}
+              {team.length > 0 && (
+                <p className="text-[10px] mt-0.5 truncate" data-testid="client-assignees" title="Équipiers affectés à ce client">
+                  {(client.assignees ?? []).length
+                    ? <span className="text-gray-500">Équipe : {(client.assignees ?? []).map((id) => team.find((m) => m.id === id)?.name).filter(Boolean).join(", ")}</span>
+                    : restrict ? <span className="font-semibold text-amber-600">Non affecté : visible du propriétaire seulement</span> : <span className="text-gray-300">Toute l&apos;équipe</span>}
+                </p>
+              )}
             </div>
           </div>
         </td>
@@ -11499,7 +11508,7 @@ function ClientTableRow({ client, onManage, onViewDrafts, onDelete, deleting, on
 // ── Vue principale Clients ──────────────────────────────────────────
 // Nouveau client : trois champs seulement. Le reste du profil se complète ensuite dans l'espace du client, avec le
 // même parcours guidé que pour un utilisateur (compagnon, import d'anciens posts, premier post).
-function NewClientDialog({ value, onChange, error, busy, onSubmit, onClose }) {
+function NewClientDialog({ staff = [], value, onChange, error, busy, onSubmit, onClose }) {
   const inputCls = "w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]";
   const labelCls = "block text-xs font-medium text-gray-500 mb-1.5";
   return (
@@ -11521,6 +11530,22 @@ function NewClientDialog({ value, onChange, error, busy, onSubmit, onClose }) {
           <label className={labelCls}>E-mail <span className="text-gray-300 font-normal">(facultatif, le client ne se connecte pas lui-même)</span></label>
           <input type="email" value={value.email} onChange={(e) => onChange({ ...value, email: e.target.value })} placeholder="marie@acme.fr" className={inputCls} />
         </div>
+        {staff.length > 0 && (
+          <div data-testid="new-client-members">
+            <label className={labelCls}>Équipiers qui gèrent ce client <span className="text-gray-300 font-normal">(plusieurs possibles, modifiable ensuite)</span></label>
+            <div className="flex flex-wrap gap-2">
+              {staff.map((m) => {
+                const on = (value.memberIds ?? []).includes(m.id);
+                return (
+                  <button key={m.id} type="button" aria-pressed={on} onClick={() => onChange({ ...value, memberIds: on ? value.memberIds.filter((x) => x !== m.id) : [...(value.memberIds ?? []), m.id] })}
+                    className={`text-xs font-semibold px-3 py-1.5 rounded-full border ${on ? "bg-[#ff5a5f] text-white border-[#ff5a5f]" : "border-gray-300 text-gray-600 hover:border-[#ff5a5f]"}`}>
+                    {m.name || m.email}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
         {error && (
           <div className="bg-red-50 border border-red-100 text-red-600 rounded-xl px-4 py-3 text-sm flex items-center gap-2"><AlertCircle size={15} /> {error}</div>
         )}
@@ -11784,10 +11809,13 @@ function ClientsView({ showToast, onManage, section = "clients", onSection, canC
   const [approvalClient, setApprovalClient] = useState(null); // client pour le lien de validation
   const [quotaClient, setQuotaClient] = useState(null); // client dont le propriétaire règle les quotas
   const [isOwner, setIsOwner] = useState(false); // seul le propriétaire de l'agence règle quotas et affectations
-  useEffect(() => { fetch("/api/agency/access").then((r) => setIsOwner(r.ok)).catch(() => {}); }, []);
+  const [staff, setStaff] = useState([]); // collaborateurs affectables (hors propriétaire)
+  const [teamFilter, setTeamFilter] = useState(""); // filtre « équipier » de la liste des clients
+  useEffect(() => { fetch("/api/agency/access").then(async (r) => { setIsOwner(r.ok); if (r.ok) setStaff(((await r.json()).members ?? []).filter((m) => m.role !== "owner")); }).catch(() => {}); }, []);
+  const [dash, setDash] = useState({ members: [], restrict: false }); // équipe et cloisonnement, pour afficher les équipiers affectés
   // Création d'un client : nom (et entreprise), puis le profil se complète dans l'espace du client avec le parcours guidé
   const [creating, setCreating] = useState(false);
-  const [newClient, setNewClient] = useState({ companyName: "", website: "", email: "" });
+  const [newClient, setNewClient] = useState({ companyName: "", website: "", email: "", memberIds: [] });
   const [formError, setFormError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [deleting, setDeleting] = useState(null);
@@ -11802,7 +11830,7 @@ function ClientsView({ showToast, onManage, section = "clients", onSection, canC
   const loadAll = () => {
     fetch("/api/agency/dashboard")
       .then((r) => r.json())
-      .then((d) => setClients(d.clients ?? []))
+      .then((d) => { setClients(d.clients ?? []); setDash({ members: d.members ?? [], restrict: Boolean(d.restrict) }); })
       .catch(() => {})
       .finally(() => setLoading(false));
     fetch("/api/agency/queue")
@@ -11860,10 +11888,16 @@ function ClientsView({ showToast, onManage, section = "clients", onSection, canC
   })();
   const queueCounts = { "à valider": queue.filter((i) => i.status === "à valider").length, erreur: queue.filter((i) => i.status === "erreur").length };
   const q = search.trim().toLowerCase();
-  const shownClients = q ? clients.filter((c) => `${c.name} ${c.companyName ?? ""}`.toLowerCase().includes(q)) : clients;
+  const byTeam = teamFilter ? clients.filter((c) => (teamFilter === "none" ? !(c.assignees ?? []).length : (c.assignees ?? []).includes(teamFilter))) : clients;
+  const shownClients = q ? byTeam.filter((c) => `${c.name} ${c.companyName ?? ""}`.toLowerCase().includes(q)) : byTeam;
+  // Synthèse de l'agence (sur les clients visibles de l'utilisateur)
+  const sum = clients.reduce((a, c) => ({
+    toValidate: a.toValidate + (c.toValidateCount ?? 0), errors: a.errors + (c.errorCount ?? 0), scheduled: a.scheduled + (c.scheduledCount ?? 0),
+    published: a.published + (c.publishedThisMonth ?? 0), unconfigured: a.unconfigured + (c.onboarded === false ? 1 : 0),
+  }), { toValidate: 0, errors: 0, scheduled: 0, published: 0, unconfigured: 0 });
 
   const openCreate = () => {
-    setNewClient({ companyName: "", website: "", email: "" });
+    setNewClient({ companyName: "", website: "", email: "", memberIds: [] });
     setFormError(null);
     setCreating(true);
   };
@@ -11910,7 +11944,7 @@ function ClientsView({ showToast, onManage, section = "clients", onSection, canC
   // ── TABLEAU DE BORD ──────────────────────────────────────────────
   return (
     <>
-      {creating && <NewClientDialog value={newClient} onChange={setNewClient} error={formError} busy={submitting} onSubmit={createClient} onClose={() => setCreating(false)} />}
+      {creating && <NewClientDialog staff={isOwner ? staff : []} value={newClient} onChange={setNewClient} error={formError} busy={submitting} onSubmit={createClient} onClose={() => setCreating(false)} />}
       <main className="max-w-6xl mx-auto p-6">
         {/* En-tête */}
         <div className="flex items-center justify-between mb-6">
@@ -11921,6 +11955,7 @@ function ClientsView({ showToast, onManage, section = "clients", onSection, canC
                 : canCreate ? "Ajoutez vos premiers clients" : "Aucun client ne vous est affecté pour l'instant")
                 : section === "queue" ? (canCreate ? "Posts de tous vos clients qui attendent une action de votre part." : "Posts de vos clients qui attendent une action de votre part.")
                 : section === "followup" ? "Ce qui a été publié, validé et reste à traiter, mois par mois, pour chaque client."
+                : section === "planning" ? "Tous les posts de vos clients sur un calendrier : filtrez par client, équipier, statut ou type."
                 : "Les collaborateurs de l'agence et les clients qu'ils gèrent."}
             </p>
           </div>
@@ -11932,6 +11967,7 @@ function ClientsView({ showToast, onManage, section = "clients", onSection, canC
           )}
         </div>
 
+        {section === "planning" && <AgencyPlanning showToast={showToast} onManage={onManage} />}
         {section === "team" && <TeamPanel showToast={showToast} />}
         {section === "team" && <ClientAssignments clients={clients} showToast={showToast} />}
         {section === "followup" && clients.length > 0 && <FollowupPanel defaultOpen showToast={showToast} />}
@@ -11942,7 +11978,7 @@ function ClientsView({ showToast, onManage, section = "clients", onSection, canC
           </button>
         )}
 
-        {section === "team" || section === "followup" ? null : loading ? (
+        {section === "team" || section === "followup" || section === "planning" ? null : loading ? (
           <div className="text-center py-20 text-gray-300 text-sm">Chargement…</div>
         ) : clients.length === 0 ? (
           /* État vide */
@@ -12015,9 +12051,35 @@ function ClientsView({ showToast, onManage, section = "clients", onSection, canC
           )}
 
           {section === "clients" && (<>
-          {clients.length > 6 && (
-            <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Rechercher un client…" aria-label="Rechercher un client"
-              className="w-full sm:w-72 border border-gray-200 rounded-xl px-4 py-2 text-sm mb-3 focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]" />
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4" data-testid="agency-summary">
+            {[
+              ["Clients", clients.length, "text-[#1b2a4a]", "clients"],
+              ["À valider", sum.toValidate, sum.toValidate ? "text-amber-600" : "text-[#1b2a4a]", "queue"],
+              ["Erreurs", sum.errors, sum.errors ? "text-red-600" : "text-[#1b2a4a]", "queue"],
+              ["Programmés", sum.scheduled, "text-blue-700", "planning"],
+              ["Publiés ce mois-ci", sum.published, "text-green-700", "followup"],
+            ].map(([label, value, tone, target]) => (
+              <button key={label} type="button" onClick={() => onSection?.(target)} className="text-left bg-white border border-gray-100 rounded-2xl shadow-sm px-4 py-3 hover:border-[#ff5a5f] transition-colors" data-testid="summary-tile">
+                <p className="text-xs text-gray-400">{label}</p>
+                <p className={`text-2xl font-extrabold mt-0.5 ${tone}`}>{value}</p>
+              </button>
+            ))}
+          </div>
+          {sum.unconfigured > 0 && <p className="text-xs text-amber-700 mb-3" data-testid="summary-unconfigured">{sum.unconfigured} client{sum.unconfigured > 1 ? "s" : ""} à configurer.</p>}
+          {(clients.length > 6 || (isOwner && staff.length > 0)) && (
+            <div className="flex flex-wrap items-center gap-2 mb-3">
+              {clients.length > 6 && (
+                <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Rechercher un client…" aria-label="Rechercher un client"
+                  className="w-full sm:w-72 border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]" />
+              )}
+              {isOwner && staff.length > 0 && (
+                <select value={teamFilter} onChange={(e) => setTeamFilter(e.target.value)} aria-label="Filtrer par équipier" className="border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white text-gray-700" data-testid="clients-team-filter">
+                  <option value="">Toute l&apos;équipe</option>
+                  {staff.map((m) => <option key={m.id} value={m.id}>{m.name || m.email}</option>)}
+                  <option value="none">Non affectés</option>
+                </select>
+              )}
+            </div>
           )}
           <div className="bg-white border border-gray-100 rounded-2xl overflow-x-auto shadow-sm">
             <table className="w-full text-sm">
@@ -12047,6 +12109,8 @@ function ClientsView({ showToast, onManage, section = "clients", onSection, canC
                     onShowReport={setReportClient}
                     onApproval={setApprovalClient}
                     onQuota={isOwner ? setQuotaClient : undefined}
+                    team={isOwner ? dash.members : []}
+                    restrict={dash.restrict}
                   />
                 ))}
               </tbody>
@@ -14053,14 +14117,35 @@ function ProfileCompanion({ stage, progress, missing, nextStage, values, onApply
 // Connexions : les comptes LinkedIn (profil, page entreprise, statistiques) et Instagram. Une entrée de menu à part,
 // toujours accessible : elle ne dépend plus de l'étape du parcours du Profil qui est ouverte.
 // ----------------------------------------------------------------
-function ConnectionsView({ linkedin, onDisconnect, instagram, onDisconnectInstagram, canOrgPublish = true, clientName = null }) {
+function ConnectionsView({ linkedin, onDisconnect, instagram, onDisconnectInstagram, canOrgPublish = true, clientName = null, clientId = null, personalOk = false }) {
+  const [savingPersonal, setSavingPersonal] = useState(false);
+  // Active / retire le profil personnel de ce client (en plus de sa page) ; rechargement : tout l'espace en dépend
+  const togglePersonal = async () => {
+    setSavingPersonal(true);
+    try {
+      const res = await fetch(`/api/agency/clients/${clientId}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ personalProfile: !personalOk }) });
+      if (!res.ok) throw new Error();
+      window.location.reload();
+    } catch {
+      setSavingPersonal(false);
+    }
+  };
   return (
     <main className="max-w-3xl mx-auto p-6">
       <p className="text-sm text-gray-500 mb-2">Les comptes que LinkeePost utilise pour publier vos posts et lire leurs statistiques. La connexion quitte brièvement la page, puis vous y revenez.</p>
         {clientName && (
-          <p className="text-xs text-sky-800 bg-sky-50 border border-sky-200 rounded-xl p-3 mt-3" data-testid="client-connections-note">
-            Espace de <strong>{clientName}</strong> : seule sa page entreprise LinkedIn est utilisée pour publier. Votre profil personnel n&apos;apparaît pas ici et ne sert jamais pour ce client.
-          </p>
+          <div className="text-xs text-sky-800 bg-sky-50 border border-sky-200 rounded-xl p-3 mt-3" data-testid="client-connections-note">
+            {personalOk ? (
+              <p>Espace de <strong>{clientName}</strong> : ce client publie par sa <strong>page entreprise</strong> et/ou par le <strong>profil personnel</strong> d&apos;une personne du client. Connectez ce profil avec le compte LinkedIn de cette personne, jamais avec le vôtre.</p>
+            ) : (
+              <p>Espace de <strong>{clientName}</strong> : seule sa page entreprise LinkedIn est utilisée pour publier. Votre profil personnel n&apos;apparaît pas ici et ne sert jamais pour ce client.</p>
+            )}
+            {clientId && (
+              <button type="button" onClick={togglePersonal} disabled={savingPersonal} className="mt-2 font-semibold underline underline-offset-2 disabled:opacity-50" data-testid="client-personal-toggle">
+                {personalOk ? "Ne plus gérer de profil personnel pour ce client" : "Ce client a aussi un profil personnel à gérer"}
+              </button>
+            )}
+          </div>
         )}
         {/* Connexions */}
         <div className="mt-6">
@@ -14074,7 +14159,7 @@ function ConnectionsView({ linkedin, onDisconnect, instagram, onDisconnectInstag
             </div>
           </div>
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm divide-y divide-gray-100">
-            {!clientName && (<>
+            {(!clientName || personalOk) && (<>
             {/* Profil personnel */}
             <div className="p-5 flex items-center justify-between gap-3 flex-wrap">
               <div className="flex items-center gap-3">
@@ -15167,9 +15252,9 @@ export default function Home() {
   const agencyCollab = Boolean(user?.agencyCollaborator); // collaborateur simple : l'abonnement, la charte de l'agence et la création de clients restent au propriétaire
   const [clientTool, setClientTool] = useState(null); // "approval" | "report" : outils du client ouvert depuis le bandeau
   useEffect(() => {
-    if (agencyHome && !["clients", "queue", "followup", "team", "billing", "brand-kit", "admin", "content", "messages"].includes(view)) setView("clients");
+    if (agencyHome && !["clients", "queue", "planning", "followup", "team", "billing", "brand-kit", "admin", "content", "messages"].includes(view)) setView("clients");
     if (agencyHome && agencyCollab && ["billing", "brand-kit"].includes(view)) setView("clients");
-    if (clientMode && ["billing", "clients", "queue", "followup", "team"].includes(view)) setView("dashboard");
+    if (clientMode && ["billing", "clients", "queue", "followup", "team", "planning"].includes(view)) setView("dashboard");
   }, [agencyHome, agencyCollab, clientMode, view]);
   // Agence : bascule d'un client à l'autre sans repasser par le tableau de bord, en restant sur le même écran
   const [agencyClients, setAgencyClients] = useState([]);
@@ -15466,15 +15551,21 @@ export default function Home() {
   // Espace d'un client d'agence (hors vue support) : tout reste dans le client. Seule SA page entreprise compte pour publier ;
   // le profil personnel connecté (celui de la personne qui a branché la page) n'est ni affiché, ni proposé, ni utilisé.
   const clientSpace = Boolean(impersonating && !impersonating.support);
+  // Exception : un client déclaré « avec profil personnel » (une personne du client a son propre compte) peut publier par sa page ET/OU son profil
+  const personalOk = clientSpace && Boolean(impersonating?.personalProfile);
   const linkedin = useMemo(
-    () => (clientSpace ? { ...linkedinRaw, clientSpace: true, connected: Boolean(linkedinRaw.orgConnected), name: "", personExpiresAt: null, memberConnected: false, statsConnected: false } : linkedinRaw),
-    [linkedinRaw, clientSpace]
+    () => (clientSpace
+      ? personalOk
+        ? { ...linkedinRaw, clientSpace: false, memberConnected: false, statsConnected: false }
+        : { ...linkedinRaw, clientSpace: true, connected: Boolean(linkedinRaw.orgConnected), name: "", personExpiresAt: null, memberConnected: false, statsConnected: false }
+      : linkedinRaw),
+    [linkedinRaw, clientSpace, personalOk]
   );
   const [instagram, setInstagram] = useState(null); // null = chargement, false = non connecté, objet = connecté
   const [publishingId, setPublishingId] = useState(null);
   const [orgs, setOrgs] = useState([]);
   useEffect(() => {
-    if (clientSpace && orgs.length) setTarget((t) => (t === "person" ? orgs[0].urn : t));
+    if (clientSpace && !personalOk && orgs.length) setTarget((t) => (t === "person" ? orgs[0].urn : t));
   }, [impersonating?.id, orgs.length]);
   const [target, setTarget] = useState("person");
   // « Profil + page » : le post est écrit deux fois, une version par voix (profil « je », page « nous »)
@@ -16669,7 +16760,7 @@ export default function Home() {
       showToast("Connectez d'abord votre compte LinkedIn");
       return false;
     }
-    if (clientSpace && target === "person") {
+    if (clientSpace && !personalOk && target === "person") {
       showToast("Dans l'espace d'un client, on publie sur sa page entreprise : choisissez-la dans « Publier en tant que » (ou connectez-la dans « Connexions »).");
       return false;
     }
@@ -16791,6 +16882,7 @@ export default function Home() {
     ? [
         { id: "clients", label: agencyCollab ? "Mes clients" : "Clients", icon: Users },
         { id: "queue", label: "À traiter", icon: Check },
+        { id: "planning", label: "Planning", icon: CalendarDays },
         { id: "followup", label: "Suivi et rapports", icon: BarChart3 },
         { id: "team", label: "Équipe", icon: UserRound },
         ...(agencyCollab
@@ -16878,6 +16970,7 @@ export default function Home() {
     "brand-kit": "Charte graphique",
     clients: agencyCollab ? "Mes clients" : "Clients",
     queue: "À traiter",
+    planning: "Planning de l'agence",
     followup: "Suivi et rapports",
     team: "Équipe de l'agence",
     admin: "Administration",
@@ -16949,7 +17042,7 @@ export default function Home() {
   // "Mes posts" : ne montre que les posts du profil actuellement sélectionné
   // dans "Publier en tant que" (même sélecteur, réutilisé comme filtre d'affichage).
   // Espace client : un post resté rattaché au « profil » (ancien réglage) est rangé avec la page du client, jamais avec un profil
-  const effTarget = (d) => (clientSpace && (!d.target || d.target === "person") && orgs.length ? orgs[0].urn : d.target || "person");
+  const effTarget = (d) => (clientSpace && !personalOk && (!d.target || d.target === "person") && orgs.length ? orgs[0].urn : d.target || "person");
   const postsForTarget = drafts.filter((d) => effTarget(d) === target);
   // Nombre de posts par compte de publication (affiché dans le sélecteur) et comptes inconnus : un post rattaché à une page qui n'est pas dans la liste reste visible
   const targetCounts = {};
@@ -17496,6 +17589,7 @@ export default function Home() {
             <p className="text-xs text-gray-400">{agencyHome ? `Agence · ${user.name || ""}` : clientMode ? `Client : ${impersonating.companyName || impersonating.name}` : `Bonjour ${user.name || ""} 👋`}</p>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
+          {agencyHome && !user.isSuperAdmin && <NotificationBell onOpenView={setView} />}
           {contexts.length > 0 && !user.isSuperAdmin && ["dashboard", "create", "campaigns", "brand-kit", "datalake"].includes(view) && (
             <label className="flex items-center gap-1.5 text-xs text-gray-500" data-testid="global-context">
               Entreprise
@@ -18952,8 +19046,8 @@ export default function Home() {
           }}
         />
       ) : view === "connections" ? (
-        <ConnectionsView clientName={clientSpace ? impersonating.companyName || impersonating.name : null} linkedin={linkedin} onDisconnect={disconnect} instagram={instagram} onDisconnectInstagram={disconnectInstagram} canOrgPublish={plan.orgPublish} />
-      ) : ["clients", "queue", "followup", "team"].includes(view) ? (
+        <ConnectionsView clientName={clientSpace ? impersonating.companyName || impersonating.name : null} clientId={clientSpace ? impersonating.id : null} personalOk={personalOk} linkedin={linkedin} onDisconnect={disconnect} instagram={instagram} onDisconnectInstagram={disconnectInstagram} canOrgPublish={plan.orgPublish} />
+      ) : ["clients", "queue", "followup", "team", "planning"].includes(view) ? (
         <ClientsView
           canCreate={!agencyCollab}
           section={view}

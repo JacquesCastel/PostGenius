@@ -36,7 +36,9 @@ export async function PATCH(req, { params }) {
     "styleNotes", "website", "businessDescription", "targetAudience"];
   const data = {};
   for (const k of allowed) if (body[k] !== undefined) data[k] = body[k];
+  // Profil personnel à gérer pour ce client (en plus de sa page entreprise) : un simple booléen
+  if (typeof body.personalProfile === "boolean") data.personalProfile = body.personalProfile;
 
-  const updated = await prisma.user.update({ where: { id: clientId }, data });
+  const updated = await prisma.user.update({ where: { id: clientId }, data, select: { id: true, name: true, companyName: true, personalProfile: true } });
   return NextResponse.json({ client: updated });
 }

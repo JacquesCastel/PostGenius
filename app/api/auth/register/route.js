@@ -5,6 +5,7 @@ import { createSessionToken, SESSION_COOKIE, sessionCookieOptions } from "@/lib/
 import { rateLimit, clientIp } from "@/lib/ratelimit";
 import { isPlanId, DEFAULT_PLAN, TRIAL_DAYS } from "@/lib/plans";
 import { sendWelcomeEmail } from "@/lib/lifecycleEmails";
+import { notifyAgency } from "@/lib/agencyNotify";
 import { INVITE_PLAN, INVITE_ACCESS_DAYS, inviteStatus, normalizeEmail } from "@/lib/invites";
 
 export async function POST(req) {
@@ -49,6 +50,9 @@ export async function POST(req) {
       if (e.message === "invitation-used") return NextResponse.json({ error: "Cette invitation a déjà été utilisée ou n'est plus valide." }, { status: 400 });
       throw e;
     }
+    // Le propriétaire est prévenu (cloche) : il lui reste à affecter des clients au nouveau membre
+    const ownerRow = await prisma.agencyMember.findFirst({ where: { agencyId: ti.agencyId, role: "owner" }, select: { userId: true } });
+    if (ownerRow) await notifyAgency({ agencyId: ti.agencyId, userIds: [ownerRow.userId], kind: "member_joined", view: "team", title: `${member.name || member.email} a rejoint l'équipe`, body: "Affectez-lui des clients pour qu'il puisse commencer." });
     const resTeam = NextResponse.json({ user: { id: member.id, email: member.email, name: member.name, plan: member.plan, trialEndsAt: null, billingEnabled: Boolean(process.env.STRIPE_SECRET_KEY) } });
     resTeam.cookies.set(SESSION_COOKIE, await createSessionToken(member.id), sessionCookieOptions());
     return resTeam;
