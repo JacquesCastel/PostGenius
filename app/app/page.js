@@ -4352,6 +4352,77 @@ function AdminAutomationCard({ showToast }) {
   );
 }
 
+// Administration : prévisualisation des rapports mensuels envoyés aux clients d'agence (rien n'est envoyé ici)
+const REPORT_STATUS = {
+  partira: { label: "Partira", cls: "bg-green-50 text-green-700" },
+  "partira-sans-stats": { label: "Partira, sans statistiques", cls: "bg-amber-50 text-amber-800" },
+  "ne-partira-pas": { label: "Ne partira pas", cls: "bg-red-50 text-red-600" },
+  "deja-fait": { label: "Déjà traité", cls: "bg-gray-100 text-gray-500" },
+};
+function AdminReportsPreviewCard() {
+  const [d, setD] = useState(null);
+  const [filter, setFilter] = useState("");
+  useEffect(() => { fetch("/api/admin/emails/reports-preview").then(readJson).then((x) => (x.error ? null : setD(x))).catch(() => {}); }, []);
+  if (!d) return null;
+  const rows = filter ? d.rows.filter((r) => r.status === filter) : d.rows;
+  const chip = (key, label, n, cls) => (
+    <button key={key} type="button" onClick={() => setFilter(filter === key ? "" : key)} className={`text-[11px] font-semibold px-2.5 py-1 rounded-full border ${filter === key ? "border-[#ff5a5f]" : "border-transparent"} ${cls}`} data-testid={`reports-chip-${key}`}>
+      {label} : {n}
+    </button>
+  );
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5" data-testid="admin-reports-preview">
+      <p className="text-sm font-semibold">Rapports clients : prévisualisation</p>
+      <p className="text-xs text-gray-400 mt-0.5 mb-3" data-testid="reports-period">
+        Rapport de <strong>{d.period.label}</strong> —{" "}
+        {d.period.inWindow ? "les envois partent du 1er au 3 du mois, dès 8 h (fenêtre ouverte)." : `envoi le ${new Date(d.period.sendOn).toLocaleDateString("fr-FR", { day: "numeric", month: "long" })}, dès 8 h.`}
+        {!d.smtp && <span className="text-amber-700 font-semibold"> Envoi d&apos;e-mails non configuré.</span>}
+      </p>
+      {d.rows.length === 0 ? (
+        <p className="text-sm text-gray-400">Aucun client d&apos;agence pour l&apos;instant.</p>
+      ) : (
+        <>
+          <div className="flex flex-wrap gap-1.5 mb-3">
+            {chip("partira", "Partiront", d.summary.partira, "bg-green-50 text-green-700")}
+            {chip("partira-sans-stats", "Sans statistiques", d.summary.partiraSansStats, "bg-amber-50 text-amber-800")}
+            {chip("ne-partira-pas", "Ne partiront pas", d.summary.nePartiraPas, "bg-red-50 text-red-600")}
+            {d.summary.dejaFait > 0 && chip("deja-fait", "Déjà traités", d.summary.dejaFait, "bg-gray-100 text-gray-500")}
+          </div>
+          <div className="overflow-x-auto max-h-96 overflow-y-auto">
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="text-left text-gray-400 sticky top-0 bg-white">
+                  <th className="py-1.5 pr-3 font-medium">Client</th>
+                  <th className="py-1.5 pr-3 font-medium">Destinataire</th>
+                  <th className="py-1.5 pr-3 font-medium text-right">Posts</th>
+                  <th className="py-1.5 pr-3 font-medium text-right">Avec stats</th>
+                  <th className="py-1.5 pr-3 font-medium text-right">Impressions</th>
+                  <th className="py-1.5 font-medium">Verdict</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {rows.map((r) => (
+                  <tr key={r.id} data-testid="report-row" data-status={r.status}>
+                    <td className="py-2 pr-3 align-top"><span className="font-medium text-gray-800">{r.client}</span>{r.agency && <span className="block text-[11px] text-gray-400">{r.agency}</span>}</td>
+                    <td className="py-2 pr-3 align-top text-gray-500">{r.to ?? "—"}</td>
+                    <td className="py-2 pr-3 align-top text-right tabular-nums">{r.posts}</td>
+                    <td className="py-2 pr-3 align-top text-right tabular-nums">{r.withStats}</td>
+                    <td className="py-2 pr-3 align-top text-right tabular-nums">{r.impressions == null ? "—" : r.impressions.toLocaleString("fr-FR")}</td>
+                    <td className="py-2 align-top">
+                      <span className={`inline-block text-[11px] font-semibold px-2 py-0.5 rounded-full ${REPORT_STATUS[r.status].cls}`}>{REPORT_STATUS[r.status].label}</span>
+                      {r.reasons.map((t, i) => <span key={i} className="block text-[11px] text-gray-500 mt-0.5 max-w-xs">{t}</span>)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 // Administration : journal des e-mails réellement envoyés (par type sur 30 jours, avec les échecs d'envoi et les derniers messages)
 function AdminEmailLogCard() {
   const [d, setD] = useState(null);
@@ -4592,6 +4663,7 @@ function AdminView({ showToast }) {
       <AdminInvitationsCard showToast={showToast} />
       <AdminPlansCard showToast={showToast} />
       <AdminAutomationCard showToast={showToast} />
+      <AdminReportsPreviewCard />
       <AdminEmailLogCard />
       <AdminEmailsCard showToast={showToast} />
       {quotaUser && <AdminQuotaDialog user={quotaUser} showToast={showToast} onClose={() => setQuotaUser(null)} />}
