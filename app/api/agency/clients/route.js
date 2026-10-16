@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { requireAgency, clientScope, MAX_AGENCY_CLIENTS } from "@/lib/agency";
 import { notifySeatsLimit, CONTACT_EMAIL } from "@/lib/agencyTeam";
 import { notifyAgency, clientLabel } from "@/lib/agencyNotify";
+import { assignedMail } from "@/lib/teamEmails";
 import bcrypt from "bcryptjs";
 
 
@@ -91,7 +92,7 @@ export async function POST(req) {
       const valid = await prisma.agencyMember.findMany({ where: { agencyId: auth.agencyId, userId: { in: memberIds.map(String) }, role: { not: "owner" } }, select: { userId: true } });
       if (valid.length) {
         await prisma.clientAccess.createMany({ data: valid.map((m) => ({ agencyId: auth.agencyId, clientId: client.id, memberId: m.userId })), skipDuplicates: true });
-        await notifyAgency({ agencyId: auth.agencyId, clientId: client.id, userIds: valid.map((m) => m.userId), kind: "assigned", view: "clients", title: `Le client ${clientLabel(client)} vous est affecté`, body: "Il apparaît maintenant dans « Mes clients »." });
+        await notifyAgency({ agencyId: auth.agencyId, clientId: client.id, userIds: valid.map((m) => m.userId), kind: "assigned", view: "clients", title: `Le client ${clientLabel(client)} vous est affecté`, body: "Il apparaît maintenant dans « Mes clients ».", email: assignedMail(clientLabel(client)) });
       }
     }
 

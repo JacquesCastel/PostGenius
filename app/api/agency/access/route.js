@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireAgency } from "@/lib/agency";
 import { notifyAgency, clientLabel } from "@/lib/agencyNotify";
+import { assignedMail } from "@/lib/teamEmails";
 
 // Affectation des clients aux collaborateurs — réservé au propriétaire de l'agence.
 // GET : { restrict, members: [{ id, name, email, role }], access: { [clientId]: [memberId] } }
@@ -51,7 +52,7 @@ export async function PUT(req) {
     const added = ids.filter((id) => !before.has(id));
     if (added.length) {
       const c = await prisma.user.findUnique({ where: { id: client.id }, select: { name: true, companyName: true } });
-      await notifyAgency({ agencyId, clientId: client.id, userIds: added, kind: "assigned", view: "clients", title: `Le client ${clientLabel(c)} vous est affecté`, body: "Il apparaît maintenant dans « Mes clients »." });
+      await notifyAgency({ agencyId, clientId: client.id, userIds: added, kind: "assigned", view: "clients", title: `Le client ${clientLabel(c)} vous est affecté`, body: "Il apparaît maintenant dans « Mes clients ».", email: assignedMail(clientLabel(c)) });
     }
     return NextResponse.json({ ok: true, memberIds: ids });
   }
