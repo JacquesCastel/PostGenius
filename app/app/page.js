@@ -15317,6 +15317,7 @@ export default function Home() {
   const optAreaRef = useRef(null);
   const [rewriting, setRewriting] = useState(false);
   const [rewriteScope, setRewriteScope] = useState("all"); // all | hook | body | signature (= conclusion + appel à l'action)
+  const [optHistoryOpen, setOptHistoryOpen] = useState(false); // téléphone : l'historique du pied de page se déplie à la demande
   // Commentaire reçu (collé) ou consigne libre à intégrer au post
   const [fbKind, setFbKind] = useState("comment"); // comment | instruction
   const [fbText, setFbText] = useState("");
@@ -17290,101 +17291,94 @@ export default function Home() {
               </div>
             )}
           </div>
-            {/* Bas de page, sur deux colonnes (hors de la zone collante du haut) : après avoir lu la note et les conseils, on choisit la partie à réécrire, puis on retrouve l'historique */}
-            {canScore && (
-              <div className="grid lg:grid-cols-2 gap-6 items-start" data-testid="optimize-actions">
-                <div className="space-y-4">
-              {/* Niveau de réécriture (comme le choix du format) — réservé Pro/Agence */}
-              {canScore && (
-                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
-                  <p className="text-xs font-semibold text-gray-500 mb-0.5">Partie à réécrire</p>
-                  <p className="text-[11px] text-gray-400 mb-2">Le reste du post reste identique. La réécriture applique les points en rouge et les conseils IA du contrôle de forme.</p>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          </div>
+          {/* Pied de page fixe : toujours visible pendant qu'on lit les conseils et qu'on modifie le post.
+              Gauche : partie à réécrire + boutons. Droite : historique des versions (sur téléphone, replié). */}
+          {canScore && (
+            <div className="sticky bottom-0 z-10 bg-white/95 backdrop-blur border-t border-gray-200 shadow-[0_-6px_18px_rgba(15,23,42,0.07)]" data-testid="optimize-actions">
+              <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 grid grid-cols-[minmax(0,1fr)] lg:grid-cols-2 gap-x-6 gap-y-2 items-start">
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold text-gray-500 mb-1.5">Partie à réécrire <span className="font-normal text-gray-400 hidden sm:inline">· le reste du post reste identique</span></p>
+                  <div className="flex gap-1.5 overflow-x-auto pb-0.5">
                     {[
                       { id: "all", label: "Tout le post" },
                       { id: "hook", label: "Accroche" },
                       { id: "body", label: "Corps" },
                       { id: "signature", label: "Conclusion & appel à l'action" },
-                    ].map((s) => (
+                    ].map((sc) => (
                       <button
-                        key={s.id}
-                        onClick={() => setRewriteScope(s.id)}
-                        className={`text-sm font-medium leading-tight px-3 py-2 rounded-xl border transition-colors ${
-                          rewriteScope === s.id
+                        key={sc.id}
+                        onClick={() => setRewriteScope(sc.id)}
+                        className={`shrink-0 whitespace-nowrap text-xs font-medium px-3 py-1.5 rounded-full border transition-colors ${
+                          rewriteScope === sc.id
                             ? "bg-[#ff5a5f] text-white border-[#ff5a5f]"
                             : "bg-white text-[#1b2a4a] border-gray-200 hover:border-[#ffd5d6]"
                         }`}
                       >
-                        {s.label}
+                        {sc.label}
                       </button>
                     ))}
                   </div>
-                </div>
-              )}
-
-              <div className="flex flex-col sm:flex-row gap-3">
-                {canScore && (
-                  <button
-                    onClick={rewriteOptimized}
-                    disabled={rewriting}
-                    className="flex-1 bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white font-semibold px-5 py-3 rounded-full flex items-center justify-center gap-2"
-                  >
-                    {rewriting ? <RefreshCw size={16} className="animate-spin" /> : <Sparkles size={16} />}
-                    {rewriting ? "Réécriture…" : "Réécrire avec ces conseils"}
-                  </button>
-                )}
-                <button
-                  onClick={closeOptimize}
-                  className="flex-1 border-2 border-[#ffd5d6] hover:border-[#ff5a5f] text-[#1b2a4a] font-semibold px-5 py-3 rounded-full"
-                >
-                  Fermer
-                </button>
-              </div>
-
-                </div>
-                <div>
-              {versions.length > 1 && (
-                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
-                  <p className="text-xs font-semibold text-gray-500 mb-2 flex items-center gap-1.5">
-                    <History size={13} /> Historique des versions
-                  </p>
-                  <div className="space-y-1.5">
-                    {versions.map((v, i) => {
-                      const current = v.text === optimizeText.text;
-                      return (
-                        <div
-                          key={v.id}
-                          className={`flex items-center justify-between gap-2 rounded-xl px-3 py-2 ${current ? "bg-[#fff1f1]" : "hover:bg-gray-50"}`}
-                        >
-                          <div className="min-w-0">
-                            <p className="text-sm font-medium truncate">V{i + 1} · {v.label}</p>
-                            <p className="text-[11px] text-gray-400">Score {v.score}/100</p>
-                          </div>
-                          {current ? (
-                            <span className="text-[11px] font-semibold text-[#ff5a5f] shrink-0">Affichée</span>
-                          ) : (
-                            <button
-                              onClick={() => restoreVersion(v)}
-                              className="text-xs font-semibold text-[#ff5a5f] hover:underline shrink-0"
-                            >
-                              Restaurer
-                            </button>
-                          )}
-                        </div>
-                      );
-                    })}
+                  <div className="flex gap-2 mt-2">
+                    <button
+                      onClick={rewriteOptimized}
+                      disabled={rewriting}
+                      className="flex-1 bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white text-sm font-semibold px-4 py-2 rounded-full flex items-center justify-center gap-2"
+                    >
+                      {rewriting ? <RefreshCw size={15} className="animate-spin" /> : <Sparkles size={15} />}
+                      {rewriting ? "Réécriture…" : "Réécrire avec ces conseils"}
+                    </button>
+                    <button
+                      onClick={closeOptimize}
+                      className="border-2 border-[#ffd5d6] hover:border-[#ff5a5f] text-[#1b2a4a] text-sm font-semibold px-5 py-2 rounded-full"
+                    >
+                      Fermer
+                    </button>
                   </div>
                 </div>
-              )}
-                  {versions.length <= 1 && (
-                    <div className="rounded-2xl border border-dashed border-gray-200 p-4 text-xs text-gray-400 flex items-start gap-2" data-testid="versions-hint">
-                      <History size={13} className="mt-0.5 shrink-0" /> Chaque réécriture est conservée ici : vous pourrez revenir à n'importe quelle version.
-                    </div>
-                  )}
+                <div className="min-w-0">
+                  <button
+                    type="button"
+                    onClick={() => setOptHistoryOpen((o) => !o)}
+                    className="lg:hidden w-full flex items-center justify-between text-xs font-semibold text-gray-500 py-1"
+                    data-testid="versions-toggle"
+                  >
+                    <span className="flex items-center gap-1.5"><History size={13} /> Historique des versions ({Math.max(versions.length, 1)})</span>
+                    <ChevronDown size={14} className={optHistoryOpen ? "rotate-180" : ""} />
+                  </button>
+                  <div className={`${optHistoryOpen ? "" : "hidden"} lg:block`} data-testid="versions-panel">
+                    <p className="hidden lg:flex text-xs font-semibold text-gray-500 mb-1.5 items-center gap-1.5">
+                      <History size={13} /> Historique des versions
+                    </p>
+                    {versions.length > 1 ? (
+                      <div className="flex gap-2 overflow-x-auto pb-1" data-testid="versions-list">
+                        {versions.map((v, i) => {
+                          const current = v.text === optimizeText.text;
+                          return (
+                            <div key={v.id} className={`shrink-0 rounded-xl border px-3 py-1.5 ${current ? "border-[#ffd5d6] bg-[#fff1f1]" : "border-gray-200 bg-white"}`}>
+                              <p className="text-xs font-medium whitespace-nowrap">V{i + 1} · {v.label}</p>
+                              <div className="flex items-center justify-between gap-4">
+                                <p className="text-[11px] text-gray-400 whitespace-nowrap">Note de forme {v.score}/100</p>
+                                {current ? (
+                                  <span className="text-[11px] font-semibold text-[#ff5a5f]">Affichée</span>
+                                ) : (
+                                  <button onClick={() => restoreVersion(v)} className="text-[11px] font-semibold text-[#ff5a5f] hover:underline">
+                                    Restaurer
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <p className="text-[11px] text-gray-400" data-testid="versions-hint">Chaque réécriture est conservée ici : vous pourrez revenir à n'importe quelle version.</p>
+                    )}
+                  </div>
                 </div>
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       )}
 
