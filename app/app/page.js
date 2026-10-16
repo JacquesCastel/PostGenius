@@ -263,8 +263,8 @@ function AuthScreen({ onAuth }) {
               Créez vos posts et <span className="text-[#ff5a5f]">campagnes LinkedIn</span> avec l'IA
             </h1>
             <p className="text-[#5a6b85] mt-4 leading-relaxed max-w-md">
-              LinkeePost rédige des posts à votre image, programme vos publications et suit vos
-              statistiques — en pilote automatique.
+              LinkeePost rédige des posts à partir de ce que vous savez, programme vos publications
+              et suit vos statistiques.
             </p>
 
             {/* Visuel illustratif */}

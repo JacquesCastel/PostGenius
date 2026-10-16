@@ -12,7 +12,7 @@ export const dynamic = "force-dynamic";
 export const metadata = {
   title: "Tarifs — LinkeePost",
   description:
-    "Trois offres simples pour piloter votre présence LinkedIn : Essentiel, Pro et Agence. 14 jours d'essai gratuit, sans carte bancaire.",
+    "Trois offres pour des posts LinkedIn écrits à partir de votre matière : Essentiel, Pro et Agence. 14 jours d'essai gratuit, sans carte bancaire.",
   alternates: { canonical: "/tarifs" },
 };
 
@@ -41,6 +41,9 @@ export default async function TarifsPage() {
             <h1 className="text-4xl md:text-5xl font-extrabold mt-2">Une offre pour chaque ambition</h1>
             <p className="text-[#5a6b85] mt-3 max-w-2xl mx-auto">
               14 jours d'essai gratuit sur tous les plans, sans carte bancaire. Sans engagement, résiliable à tout moment.
+            </p>
+            <p className="text-[#5a6b85] mt-2 max-w-2xl mx-auto text-sm">
+              Les offres se distinguent par le volume de posts et de sources que vous pouvez déposer, et par les outils autour : campagnes, veille, pages entreprise, équipe.
             </p>
           </div>
 

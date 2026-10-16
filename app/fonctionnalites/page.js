@@ -10,7 +10,7 @@ import SiteFooter from "@/components/SiteFooter";
 export const metadata = {
   title: "Fonctionnalités — LinkeePost",
   description:
-    "Profil de rédaction, posts en 9 langues, campagnes guidées par l'IA, veille, images et vidéos, programmation et statistiques : toutes les fonctions de LinkeePost.",
+    "Base de connaissances, voix et éléments de langage, mémoire éditoriale, campagnes guidées, veille, images et vidéos, programmation, statistiques : toutes les fonctions de LinkeePost.",
   alternates: { canonical: "/fonctionnalites" },
 };
 
@@ -75,8 +75,8 @@ export default function FonctionnalitesPage() {
             Tout ce qu'il faut pour piloter votre <span className="text-[#ff5a5f]">LinkedIn</span>
           </h1>
           <p className="text-lg text-[#5a6b85] mt-4 max-w-2xl mx-auto">
-            De votre contexte métier à la statistique finale, LinkeePost couvre toute la chaîne — vous ne
-            faites plus que valider.
+            De la matière que vous déposez aux retours réels de LinkedIn, LinkeePost couvre toute la chaîne :
+            vous relisez et vous validez.
           </p>
           <Link
             href="/app"
