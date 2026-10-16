@@ -12,7 +12,7 @@ import {
   Compass, Lightbulb, EyeOff, TrendingUp, TrendingDown, Plus, Globe, ChevronUp, Menu,
   AlignLeft, AlignCenter, AlignRight, Move, Server, Clapperboard, Link2
 } from "lucide-react";
-import { PLANS, PLAN_IDS, planLabel, planAllows, planOf, trialDaysLeft, accessState, changeKind, lostFeatures, gainedFeatures, planWith } from "@/lib/plans";
+import { yearlyPrice, ANNUAL_OFFER, PLANS, PLAN_IDS, planLabel, planAllows, planOf, trialDaysLeft, accessState, changeKind, lostFeatures, gainedFeatures, planWith } from "@/lib/plans";
 import { COMPARE, unlockedBy } from "@/lib/planFeatures";
 import { nextSteps, snoozeUntil } from "@/lib/nextSteps";
 import { explainPublishError } from "@/lib/publishError";
@@ -7514,7 +7514,7 @@ function BillingView({ user, showToast, focus = null }) {
             <p className="text-2xl font-extrabold mt-0.5">
               {planLabel(currentPlan)}
               <span className="text-base font-semibold text-gray-400 ml-2">
-                {active && user?.subscriptionInterval === "year" ? `${plan.price * 10} € HT/an` : `${plan.price} € HT/mois`}
+                {active && user?.subscriptionInterval === "year" ? `${yearlyPrice(plan.price)} € HT/an` : `${plan.price} € HT/mois`}
               </span>
             </p>
             {active ? (
@@ -7628,7 +7628,7 @@ function BillingView({ user, showToast, focus = null }) {
             onClick={() => setBillingInterval("year")}
             className={`px-5 py-2 rounded-full text-sm font-semibold flex items-center gap-1.5 ${billingInterval === "year" ? "bg-white shadow-sm text-[#1b2a4a]" : "text-gray-500"}`}
           >
-            Annuel <span className="text-[10px] font-bold text-[#ff5a5f] bg-[#fff1f1] px-1.5 py-0.5 rounded-full">2 mois offerts</span>
+            Annuel <span className="text-[10px] font-bold text-[#ff5a5f] bg-[#fff1f1] px-1.5 py-0.5 rounded-full">{ANNUAL_OFFER}</span>
           </button>
         </div>
       </div>
@@ -7638,7 +7638,7 @@ function BillingView({ user, showToast, focus = null }) {
         {PLAN_IDS.map((id) => {
           const p = PLANS[id];
           const monthly = p.price;
-          const yearly = p.price * 10;
+          const yearly = yearlyPrice(p.price);
           // Offre de l'abonné : la carte est neutralisée (aucun bouton), mise en avant et accompagnée d'un message
           const mine = id === currentPlan && active;
           const shownInterval = mine ? currentInterval : billingInterval; // sa carte montre son vrai tarif, quel que soit le sélecteur
@@ -7728,7 +7728,7 @@ function BillingView({ user, showToast, focus = null }) {
                       className="mt-2 w-full text-xs text-[#0a66c2] hover:underline"
                       data-testid="plan-mine-switch"
                     >
-                      {otherInterval === "year" ? `Passer en facturation annuelle : ${yearly} € HT/an (2 mois offerts)` : `Repasser en facturation mensuelle : ${monthly} € HT/mois`}
+                      {otherInterval === "year" ? `Passer en facturation annuelle : ${yearly} € HT/an (${ANNUAL_OFFER})` : `Repasser en facturation mensuelle : ${monthly} € HT/mois`}
                     </button>
                   )}
                 </>
@@ -7795,7 +7795,7 @@ function BillingView({ user, showToast, focus = null }) {
 
       {confirm && (() => {
         const target = PLANS[confirm.id];
-        const targetPrice = billingInterval === "year" ? target.price * 10 : target.price;
+        const targetPrice = billingInterval === "year" ? yearlyPrice(target.price) : target.price;
         const unit = billingInterval === "year" ? "an" : "mois";
         const lost = confirm.kind === "downgrade" ? lostFeatures(currentPlan, confirm.id) : [];
         return (

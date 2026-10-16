@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
+import { yearlyPrice, ANNUAL_OFFER } from "@/lib/plans";
 
 // Cartes d'offres avec bascule mensuel / annuel (page tarifs publique).
 // plans : [{ id, name, price (nombre, mensuel HT), desc, highlight }]
@@ -24,7 +25,7 @@ export default function PricingCards({ plans }) {
           >
             Annuel
             <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${period === "year" ? "bg-white/25 text-white" : "bg-[#fff1f1] text-[#ff5a5f]"}`}>
-              2 mois offerts
+              {ANNUAL_OFFER}
             </span>
           </button>
         </div>
@@ -34,7 +35,7 @@ export default function PricingCards({ plans }) {
       <div className="grid md:grid-cols-3 gap-6 mt-10 items-start">
         {plans.map((card) => {
           const monthly = Number(card.price);
-          const yearly = monthly * 10;
+          const yearly = yearlyPrice(monthly);
           const price = period === "year" ? yearly : monthly;
           return (
             <div
