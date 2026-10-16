@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireAgency } from "@/lib/agency";
+import { notifyAgency, clientLabel } from "@/lib/agencyNotify";
 
 // Affectation des clients aux collaborateurs — réservé au propriétaire de l'agence.
 // GET : { restrict, members: [{ id, name, email, role }], access: { [clientId]: [memberId] } }
@@ -41,10 +42,17 @@ export async function PUT(req) {
     // Seuls les collaborateurs de l'agence (hors propriétaire, qui voit tout) peuvent être affectés
     const valid = await prisma.agencyMember.findMany({ where: { agencyId, userId: { in: body.memberIds.map(String) }, role: { not: "owner" } }, select: { userId: true } });
     const ids = valid.map((m) => m.userId);
+    const before = new Set((await prisma.clientAccess.findMany({ where: { agencyId, clientId: client.id }, select: { memberId: true } })).map((a) => a.memberId));
     await prisma.$transaction([
       prisma.clientAccess.deleteMany({ where: { agencyId, clientId: client.id, memberId: { notIn: ids } } }),
       ...ids.map((memberId) => prisma.clientAccess.upsert({ where: { clientId_memberId: { clientId: client.id, memberId } }, create: { agencyId, clientId: client.id, memberId }, update: {} })),
     ]);
+    // Les équipiers nouvellement affectés sont prévenus (cloche)
+    const added = ids.filter((id) => !before.has(id));
+    if (added.length) {
+      const c = await prisma.user.findUnique({ where: { id: client.id }, select: { name: true, companyName: true } });
+      await notifyAgency({ agencyId, clientId: client.id, userIds: added, kind: "assigned", view: "clients", title: `Le client ${clientLabel(c)} vous est affecté`, body: "Il apparaît maintenant dans « Mes clients »." });
+    }
     return NextResponse.json({ ok: true, memberIds: ids });
   }
   return NextResponse.json({ error: "Requête invalide." }, { status: 400 });

@@ -5,7 +5,7 @@ import { decryptToken } from "@/lib/crypto";
 import { withDetail } from "@/lib/linkedinError";
 import { sendComment } from "@/lib/linkedinSocial";
 import { logInteraction } from "@/lib/interactions";
-import { isClientAccount, CLIENT_PROFILE_BLOCKED } from "@/lib/clientAccount";
+import { personalProfileBlocked, CLIENT_PROFILE_BLOCKED } from "@/lib/clientAccount";
 
 // Commentaires d'un post publié — Comments API LinkedIn (socialActions/comments).
 // - Page entreprise (target = urn:li:organization:ID) : Community Management API,
@@ -43,7 +43,7 @@ async function draftAndToken(userId, draftId) {
     return { draft, token, actor: draft.target, personal: false };
   }
 
-  if (await isClientAccount(userId)) return { error: CLIENT_PROFILE_BLOCKED, status: 403 };
+  if (await personalProfileBlocked(userId)) return { error: CLIENT_PROFILE_BLOCKED, status: 403 };
   const token = decryptToken(acc?.personToken);
   if (!token || !acc?.personSub) return { error: "Compte LinkedIn non connecté.", status: 401 };
   if (acc.personExpiresAt && acc.personExpiresAt < new Date()) {

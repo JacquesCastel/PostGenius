@@ -37,6 +37,16 @@ export async function PATCH(req, { params }) {
     data.clientFeedback = null;
     data.clientFeedbackAt = null;
   }
+  // Reprogrammation depuis le planning : une nouvelle date (le post reste dans son statut ; un post en erreur redevient programmé)
+  if (body.scheduledAt !== undefined) {
+    const when = new Date(body.scheduledAt);
+    if (Number.isNaN(when.getTime())) return NextResponse.json({ error: "Date invalide" }, { status: 400 });
+    data.scheduledAt = when;
+    if (draft.status === "erreur") {
+      data.status = "programmé";
+      data.publishError = null;
+    }
+  }
   if (!Object.keys(data).length) return NextResponse.json({ error: "Rien à modifier" }, { status: 400 });
 
   const updated = await prisma.draft.update({ where: { id }, data, select: { id: true, status: true, text: true } });

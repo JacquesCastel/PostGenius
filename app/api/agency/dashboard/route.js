@@ -33,6 +33,8 @@ export async function GET(req) {
         headline: true, businessDescription: true, targetAudience: true,
         themes: true, styleNotes: true, tone: true,
         linkedin: { select: { personName: true, orgName: true } },
+        accessAsClient: { select: { memberId: true } },
+        personalProfile: true,
         drafts: {
           select: {
             id: true, status: true, type: true,
@@ -45,7 +47,7 @@ export async function GET(req) {
     });
 
     const result = clients.map((client) => {
-      const { drafts, onboardedAt, ...data } = client;
+      const { drafts, onboardedAt, accessAsClient, ...data } = client;
 
       const pending   = drafts.filter((d) => d.status === "brouillon");
       const scheduled = drafts.filter((d) => d.status === "programmé");
@@ -59,6 +61,7 @@ export async function GET(req) {
       return {
         ...data,
         onboarded: Boolean(onboardedAt), // false : configuration guidée à terminer
+        assignees: accessAsClient.map((a) => a.memberId), // équipiers affectés à ce client
         completion: computeCompletion(client),
         pendingCount:   pending.length,
         scheduledCount: scheduled.length,
@@ -80,7 +83,16 @@ export async function GET(req) {
       };
     });
 
-    return NextResponse.json({ clients: result });
+    // Équipe (pour afficher les noms des équipiers affectés) et réglage de cloisonnement
+    const [members, ag] = await Promise.all([
+      prisma.agencyMember.findMany({ where: { agencyId: auth.agencyId }, select: { role: true, user: { select: { id: true, name: true, email: true } } } }),
+      prisma.agency.findUnique({ where: { id: auth.agencyId }, select: { restrictClients: true } }),
+    ]);
+    return NextResponse.json({
+      clients: result,
+      members: members.map((m) => ({ id: m.user.id, name: m.user.name || m.user.email, role: m.role })),
+      restrict: Boolean(ag?.restrictClients),
+    });
   } catch (e) {
     console.error("GET /api/agency/dashboard:", e.message);
     return NextResponse.json({ error: e.message }, { status: 500 });

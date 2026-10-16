@@ -6,7 +6,7 @@ import { withDetail } from "@/lib/linkedinError";
 import { sendComment, sendReaction } from "@/lib/linkedinSocial";
 import { logInteraction } from "@/lib/interactions";
 import { rateLimit } from "@/lib/ratelimit";
-import { isClientAccount, CLIENT_PROFILE_BLOCKED } from "@/lib/clientAccount";
+import { personalProfileBlocked, CLIENT_PROFILE_BLOCKED } from "@/lib/clientAccount";
 import { parsePostUrn, REACTION_TYPES } from "@/lib/linkedinPost";
 
 // Réagir ou commenter sur N'IMPORTE QUEL post LinkedIn (le vôtre ou celui d'un autre),
@@ -39,7 +39,7 @@ export async function POST(req) {
     return NextResponse.json({ error: "Type de réaction inconnu." }, { status: 400 });
   }
 
-  if (await isClientAccount(userId)) return NextResponse.json({ error: CLIENT_PROFILE_BLOCKED }, { status: 403 });
+  if (await personalProfileBlocked(userId)) return NextResponse.json({ error: CLIENT_PROFILE_BLOCKED }, { status: 403 });
   const acc = await prisma.linkedInAccount.findUnique({ where: { userId } });
   const token = decryptToken(acc?.personToken);
   if (!token || !acc?.personSub) return NextResponse.json({ error: "Compte LinkedIn non connecté." }, { status: 401 });

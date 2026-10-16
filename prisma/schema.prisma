@@ -132,6 +132,9 @@ model User {
   // Si agencyId est renseigné, ce compte est un client géré par cette agence (une entreprise, voir Agency).
   // Le client n'a pas de mot de passe utilisable et n'accède jamais à l'outil.
   agencyId String?
+  // Client d'agence qui a aussi un PROFIL PERSONNEL à gérer (une personne du client, en plus de sa page entreprise). Désactivé par défaut :
+  // sans cela, un client n'agit que par sa page, le profil connecté étant celui de la personne de l'agence qui a branché la page.
+  personalProfile Boolean @default(false)
   agency   Agency? @relation("AgencyClients", fields: [agencyId], references: [id], onDelete: SetNull)
   // Si le compte est un utilisateur de l'agence (propriétaire ou membre)
   agencyMembership AgencyMember?
@@ -140,6 +143,7 @@ model User {
   // Affectations (voir ClientAccess) : ce compte comme client affecté à des collaborateurs, ou comme collaborateur affecté à des clients
   accessAsClient ClientAccess[] @relation("ClientAccessClient")
   accessAsMember ClientAccess[] @relation("ClientAccessMember")
+  agencyNotifications AgencyNotification[] @relation("NotificationRecipient")
   // Lien de partage du rapport mensuel (agence) : voir ReportLink
   reportLink ReportLink?
   // Limites propres à ce compte (JSON { postsPerMonth, imagesPerMonth, knowledgeSources } ; nombre, ou -1 = illimité ; clé absente = limite de l'offre).
@@ -179,8 +183,30 @@ model Agency {
   clients User[]         @relation("AgencyClients")
   invites AgencyInvite[]
   // Cloisonnement : si vrai, un collaborateur (non propriétaire) ne voit que les clients qui lui sont affectés (ClientAccess)
-  restrictClients Boolean @default(false)
+  // Par défaut (nouvelles agences) : cloisonné, chacun ne voit que les clients qui lui sont affectés ; les agences existantes gardent leur réglage
+  restrictClients Boolean @default(true)
   accesses        ClientAccess[]
+  notifications   AgencyNotification[]
+}
+
+// Notification d'équipe (cloche de l'app) : un événement utile pour un membre de l'agence (post à valider, décision du client,
+// erreur de publication, affectation, nouveau membre). Une ligne par destinataire ; `readAt` renseigné une fois lue.
+model AgencyNotification {
+  id        String    @id @default(cuid())
+  agencyId  String
+  agency    Agency    @relation(fields: [agencyId], references: [id], onDelete: Cascade)
+  userId    String // destinataire
+  user      User      @relation("NotificationRecipient", fields: [userId], references: [id], onDelete: Cascade)
+  kind      String // tovalidate | client_decision | publish_error | assigned | member_joined
+  title     String
+  body      String?
+  clientId  String? // client concerné (pour filtrer et ouvrir son espace)
+  view      String? // écran à ouvrir (queue, clients, team…)
+  createdAt DateTime  @default(now())
+  readAt    DateTime?
+
+  @@index([userId, readAt, createdAt])
+  @@index([agencyId, kind, clientId, createdAt])
 }
 
 // Affectation d'un client d'agence à un collaborateur (un client peut avoir 1 à n collaborateurs). Le propriétaire de l'agence voit toujours tout.
