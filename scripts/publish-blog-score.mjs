@@ -1,4 +1,4 @@
-// Publie (ou met à jour) l'article « Contrôle de forme » sur le blog (upsert par slug, adresse inchangée).
+// Met à jour l'article « Contrôle de forme » du blog (ou le crée s'il n'existe pas), sans changer son adresse ni sa date.
 // Lancer depuis ~/linkedin :  node --env-file=.env scripts/publish-blog-score.mjs
 // (sur le serveur, le .env pointe déjà vers la base de prod)
 import { PrismaClient } from "@prisma/client";
@@ -62,13 +62,26 @@ Pour le détail du barème, consultez la [page dédiée au contrôle de forme](/
 
 *Envie de voir comment tout s'enchaîne, de la matière que vous déposez jusqu'à la publication ? Jetez un œil à [notre fonctionnement étape par étape](/comment-ca-marche).*`;
 
-const article = await prisma.article.upsert({
-  where: { slug: SLUG },
-  update: { title: TITLE, excerpt: EXCERPT, content: CONTENT }, // la date de publication d'origine est conservée
-  create: { slug: SLUG, title: TITLE, excerpt: EXCERPT, content: CONTENT, published: true, publishedAt: new Date() },
+// L'article d'origine a une adresse tirée de son ancien titre (« le-score-d-engagement-… ») : on le met à jour sur place
+// pour garder son adresse et sa date. Si une copie a été créée sous « score-engagement-linkedin », elle est supprimée.
+const found = await prisma.article.findMany({
+  where: { OR: [{ slug: SLUG }, { slug: { startsWith: "le-score-d-engagement" } }] },
+  orderBy: { publishedAt: "asc" },
 });
+const keep = found.find((x) => x.slug !== SLUG) ?? found.find((x) => x.slug === SLUG);
 
-console.log("\n✅ Article publié :");
+let article;
+if (keep) {
+  article = await prisma.article.update({ where: { id: keep.id }, data: { title: TITLE, excerpt: EXCERPT, content: CONTENT, published: true } }); // date de publication conservée
+  for (const dup of found.filter((x) => x.id !== keep.id && x.slug === SLUG)) {
+    await prisma.article.delete({ where: { id: dup.id } });
+    console.log(`- copie supprimée : /blog/${dup.slug}`);
+  }
+} else {
+  article = await prisma.article.create({ data: { slug: SLUG, title: TITLE, excerpt: EXCERPT, content: CONTENT, published: true, publishedAt: new Date() } });
+}
+
+console.log("\n✅ Article à jour :");
 console.log("   /blog/" + article.slug);
 console.log("   publié :", article.published, "\n");
 
