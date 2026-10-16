@@ -25,10 +25,10 @@ Fonctionnalités :
 
 Comment démarrer : créer un compte sur la page d'inscription (bouton « Essai gratuit »). 14 jours d'essai gratuit, sans carte bancaire.
 
-Offres (par mois, HT) :
-- Essentiel — 29 € : 15 posts/mois, profil de rédaction, programmation, publication sur le profil personnel. Pas d'images IA, ni de campagnes, ni de veille.
+Offres (par mois, HT ; facturation annuelle : 9 mois payés sur 12, soit 3 mois offerts) :
+- Essentiel — 19 € : 15 posts/mois, profil de rédaction, programmation, publication sur le profil personnel. Pas d'images IA, ni de campagnes, ni de veille.
 - Pro — 59 € : posts illimités, campagnes guidées par l'IA, veille connectée, 50 images IA/mois, validation avant publication, statistiques détaillées.
-- Agence — 149 € : tout Pro, images illimitées, clients illimités (chaque client est une entreprise avec sa page LinkedIn, une personne à gérer en option), jusqu'à 5 utilisateurs dans l'équipe (au-delà, sur contact), publication sur pages entreprise, statistiques de page, support prioritaire.
+- Agence — 149 € : tout Pro, 100 images IA par client et par mois, jusqu'à 25 clients (au-delà, sur contact ; chaque client est une entreprise avec sa page LinkedIn, une personne à gérer en option), jusqu'à 5 utilisateurs dans l'équipe (au-delà, sur contact), publication sur pages entreprise, statistiques de page, support prioritaire.
 
 Règles :
 - Ne promets aucune fonctionnalité qui n'est pas listée ci-dessus.

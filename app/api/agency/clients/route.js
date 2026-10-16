@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { requireAgency, clientScope } from "@/lib/agency";
+import { requireAgency, clientScope, MAX_AGENCY_CLIENTS } from "@/lib/agency";
+import { notifySeatsLimit, CONTACT_EMAIL } from "@/lib/agencyTeam";
 import bcrypt from "bcryptjs";
 
 
@@ -35,6 +36,11 @@ export async function POST(req) {
   const auth = await requireAgency(req);
   if (auth.error) return NextResponse.json({ error: auth.error }, { status: auth.status });
   if (auth.role !== "owner") return NextResponse.json({ error: "Seul le propriétaire de l'agence peut créer un client." }, { status: 403 });
+  // Plafond de l'offre : au-delà, sur contact (les clients existants ne sont jamais touchés) ; l'équipe est prévenue une fois
+  if ((await prisma.user.count({ where: { agencyId: auth.agencyId } })) >= MAX_AGENCY_CLIENTS) {
+    await notifySeatsLimit({ agencyId: auth.agencyId, ownerId: auth.userId, kind: "clients", limit: MAX_AGENCY_CLIENTS });
+    return NextResponse.json({ error: `Votre agence gère déjà ${MAX_AGENCY_CLIENTS} clients, le maximum de l'offre. Au-delà, écrivez-nous à ${CONTACT_EMAIL}.`, code: "clients_limit" }, { status: 403 });
+  }
 
   try {
     const {
