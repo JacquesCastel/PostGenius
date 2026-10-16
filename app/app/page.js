@@ -11639,7 +11639,7 @@ function TeamPanel({ showToast }) {
           ) : (
             <p className="text-xs text-gray-400">Seul le propriétaire de l&apos;agence invite ou retire des collaborateurs.</p>
           )}
-          <p className="text-[11px] text-gray-400">Chaque collaborateur a son propre identifiant et accède à tous les clients de l&apos;agence. Sans abonnement à prévoir : l&apos;offre Agence couvre jusqu&apos;à {data.max} utilisateurs.</p>
+          <p className="text-[11px] text-gray-400" data-testid="team-access-note">Chaque collaborateur a son propre identifiant et {data.restrict ? "ne voit que les clients qui lui sont affectés (voir « Affectation des clients » ci-dessous)" : "accède à tous les clients de l'agence"}. Sans abonnement à prévoir : l&apos;offre Agence couvre jusqu&apos;à {data.max} utilisateurs.</p>
         </div>
       )}
     </section>
@@ -11691,6 +11691,14 @@ function ClientAssignments({ clients, showToast }) {
           {data.restrict ? "Cloisonnement actif" : "Cloisonner les clients"}
         </button>
       </div>
+      {data.restrict && staff.length > 0 && clients.some((c) => !(data.access[c.id] ?? []).length) && (
+        <p className="text-xs text-amber-800 bg-amber-50 border-b border-amber-100 px-4 py-2.5" data-testid="unassigned-warning">
+          {(() => {
+            const names = clients.filter((c) => !(data.access[c.id] ?? []).length).map((c) => c.companyName || c.name);
+            return `${names.length === 1 ? "1 client n'est affecté à personne" : `${names.length} clients ne sont affectés à personne`} : seul vous ${names.length === 1 ? "le" : "les"} voyez (${names.slice(0, 3).join(", ")}${names.length > 3 ? "…" : ""}). Cochez un collaborateur pour ${names.length === 1 ? "le" : "les"} lui confier.`;
+          })()}
+        </p>
+      )}
       {staff.length === 0 ? (
         <p className="text-sm text-gray-400 px-4 py-4">Invitez d&apos;abord un collaborateur (bloc « Équipe de l&apos;agence » ci-dessus) pour pouvoir lui affecter des clients.</p>
       ) : clients.length === 0 ? (

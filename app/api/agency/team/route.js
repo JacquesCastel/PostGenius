@@ -11,10 +11,11 @@ export async function GET(req) {
   const [members, invites, agency] = await Promise.all([
     prisma.agencyMember.findMany({ where: { agencyId: auth.agencyId }, orderBy: { createdAt: "asc" }, select: { userId: true, role: true, createdAt: true, user: { select: { name: true, email: true } } } }),
     prisma.agencyInvite.findMany({ where: { agencyId: auth.agencyId, acceptedAt: null, revokedAt: null }, orderBy: { createdAt: "desc" }, take: 50 }),
-    prisma.agency.findUnique({ where: { id: auth.agencyId }, select: { name: true } }),
+    prisma.agency.findUnique({ where: { id: auth.agencyId }, select: { name: true, restrictClients: true } }),
   ]);
   return NextResponse.json({
     agency: agency?.name ?? "",
+    restrict: Boolean(agency?.restrictClients), // cloisonnement : chaque collaborateur ne voit que les clients qui lui sont affectés
     me: { userId: auth.userId, role: auth.role },
     max: MAX_AGENCY_MEMBERS,
     contactEmail: CONTACT_EMAIL,
