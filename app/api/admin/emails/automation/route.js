@@ -43,11 +43,13 @@ export async function GET(req) {
   ]);
 
   // Commentaires de page : clients d'agence dont la page est connectée, et notifications envoyées sur 30 jours
-  const [commentPages, commentRows] = await Promise.all([
-    prisma.linkedInAccount.count({ where: { orgToken: { not: null }, user: { agencyId: { not: null }, disabled: false } } }),
+  const [commentPages, commentRows, ownCommentRows] = await Promise.all([
+    prisma.linkedInAccount.count({ where: { orgToken: { not: null }, user: { disabled: false } } }),
     prisma.agencyNotification.findMany({ where: { kind: "page_comment", createdAt: { gte: since } }, select: { createdAt: true }, take: 20000 }),
+    prisma.lifecycleEmail.findMany({ where: { key: { startsWith: "page_comment:" }, sentAt: { gte: since } }, select: { sentAt: true }, take: 20000 }), // pages personnelles
   ]);
-  const commentNotifs = { n: commentRows.length, last: commentRows.reduce((m, r) => (!m || r.createdAt > m ? r.createdAt : m), null) };
+  const commentTimes = [...commentRows.map((r) => r.createdAt), ...ownCommentRows.map((r) => r.sentAt)];
+  const commentNotifs = { n: commentTimes.length, last: commentTimes.reduce((m, t) => (!m || t > m ? t : m), null) };
 
   const run = (k) => lastRuns[k] ?? null;
   const jobs = [
