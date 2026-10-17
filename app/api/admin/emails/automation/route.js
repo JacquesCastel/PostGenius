@@ -42,6 +42,13 @@ export async function GET(req) {
     prisma.approvalLink.count({ where: { lastReportKey: { not: null } } }),
   ]);
 
+  // Commentaires de page : clients d'agence dont la page est connectée, et notifications envoyées sur 30 jours
+  const [commentPages, commentRows] = await Promise.all([
+    prisma.linkedInAccount.count({ where: { orgToken: { not: null }, user: { agencyId: { not: null }, disabled: false } } }),
+    prisma.agencyNotification.findMany({ where: { kind: "page_comment", createdAt: { gte: since } }, select: { createdAt: true }, take: 20000 }),
+  ]);
+  const commentNotifs = { n: commentRows.length, last: commentRows.reduce((m, r) => (!m || r.createdAt > m ? r.createdAt : m), null) };
+
   const run = (k) => lastRuns[k] ?? null;
   const jobs = [
     { id: "welcome", label: "Bienvenue", when: "À l'inscription", sent: sent.welcome?.n ?? 0, last: sent.welcome?.last ?? null, eligible: null, run: null },
@@ -52,6 +59,7 @@ export async function GET(req) {
     { id: "quota", label: "Alerte de quota", when: "À 80 % puis à 100 % d'une limite", sent: sent.quota?.n ?? 0, last: sent.quota?.last ?? null, eligible: null, lastRun: run("quota"), run: "quota" },
     { id: "digest", label: "Récapitulatif de la semaine", when: "Chaque lundi à partir de 8 h (heure du serveur), s'il y a de l'activité", sent: sent.digest?.n ?? 0, last: sent.digest?.last ?? null, eligible: digest, lastRun: run("digest"), run: "digest" },
     { id: "reminders", label: "Relance de validation (clients des agences)", when: "Tous les 3 jours, 3 relances au plus, pour les clients où l'agence l'a activée", sent: remindedLinks, last: null, eligible: reminders, lastRun: run("reminders"), run: "reminders" },
+    { id: "comments", label: "Commentaires de page (clients des agences)", when: "Toutes les 10 minutes : nouveaux commentaires et mentions sur la page LinkedIn d'un client, cloche et e-mail de l'équipe", sent: commentNotifs.n, last: commentNotifs.last, eligible: commentPages, lastRun: run("comments"), run: "comments" },
     { id: "reports", label: "Rapport du mois (clients des agences)", when: "Du 1er au 3 du mois, pour les clients où l'agence l'a activé", sent: reportedLinks, last: null, eligible: reports, lastRun: run("reports"), run: "reports" },
   ];
   return NextResponse.json({

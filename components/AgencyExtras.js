@@ -16,7 +16,7 @@ const ago = (iso) => {
 };
 
 // ── Cloche : notifications de l'équipe (post à valider, décision du client, erreur, affectation, nouveau membre) ──
-export function NotificationBell({ onOpenView }) {
+export function NotificationBell({ onOpenView, onOpenClient }) {
   const [data, setData] = useState({ items: [], unread: 0 });
   const [open, setOpen] = useState(false);
   const box = useRef(null);
@@ -45,7 +45,9 @@ export function NotificationBell({ onOpenView }) {
       setData((d) => ({ unread: Math.max(0, d.unread - 1), items: d.items.map((i) => (i.id === n.id ? { ...i, readAt: new Date().toISOString() } : i)) }));
     }
     setOpen(false);
-    if (n.view) onOpenView?.(n.view);
+    // Commentaire sur la page d'un client : on ouvre directement « Interagir » dans l'espace de ce client
+    if (n.view === "engage" && n.clientId && onOpenClient) onOpenClient(n.clientId, "engage");
+    else if (n.view) onOpenView?.(n.view);
   };
 
   return (
