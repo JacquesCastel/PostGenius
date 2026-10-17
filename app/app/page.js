@@ -585,7 +585,7 @@ function EngageView({ linkedin, showToast, onConnect, embedded = false, onSent, 
   useEffect(() => {
     if (initialPost || initialComment) onPostUsed?.();
     if (!replyTo) return;
-    fetch(`/api/linkedin/engage?comment=${encodeURIComponent(replyTo.urn)}`).then(readJson).then((d) => setReplyTo((r) => (r ? { ...r, text: d.text || "" } : r))).catch(() => setReplyTo((r) => (r ? { ...r, text: "" } : r)));
+    fetch(`/api/linkedin/engage?comment=${encodeURIComponent(replyTo.urn)}`).then(readJson).then((d) => setReplyTo((r) => (r ? { ...r, text: d.text || "", status: d.status } : r))).catch(() => setReplyTo((r) => (r ? { ...r, text: "" } : r)));
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(null); // "comment" | type de réaction en cours
@@ -685,7 +685,7 @@ function EngageView({ linkedin, showToast, onConnect, embedded = false, onSent, 
                 <span>Vous répondez à</span>
                 <button type="button" onClick={() => setReplyTo(null)} className="text-gray-400 hover:text-gray-600 underline">commenter le post à la place</button>
               </p>
-              {replyTo.text === null ? <span className="text-gray-400">Chargement…</span> : replyTo.text ? <span className="whitespace-pre-line">« {replyTo.text} »</span> : <span className="text-gray-400">Texte indisponible (LinkedIn ne l&apos;a pas renvoyé) — ouvrez le post pour le lire.</span>}
+              {replyTo.text === null ? <span className="text-gray-400">Chargement…</span> : replyTo.text ? <span className="whitespace-pre-line">« {replyTo.text} »</span> : <span className="text-gray-400">Texte indisponible (LinkedIn ne l&apos;a pas renvoyé{replyTo.status ? ` : code ${replyTo.status}` : ""}) — ouvrez le post pour le lire.</span>}
             </div>
           )}
           {linkedin.orgConnected && linkedin.connected && (

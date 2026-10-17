@@ -27,11 +27,14 @@ export async function GET(req) {
   const commentUrn = new URL(req.url).searchParams.get("comment") ?? "";
   const acc = await prisma.linkedInAccount.findUnique({ where: { userId } });
   const tokens = [acc?.orgToken, acc?.personToken].map((t) => decryptToken(t)).filter(Boolean);
+  let status = null;
   for (const token of tokens) {
     const c = await getCommentText({ token, commentUrn });
     if (c?.text) return NextResponse.json({ text: c.text.slice(0, 600), at: c.at });
+    status = c?.status ?? status;
   }
-  return NextResponse.json({ text: null });
+  if (status) console.warn(`[linkedin] texte du commentaire illisible (LinkedIn ${status})`);
+  return NextResponse.json({ text: null, status });
 }
 
 export async function POST(req) {
