@@ -7,7 +7,7 @@ import { sendComment, sendReaction, getCommentText } from "@/lib/linkedinSocial"
 import { logInteraction } from "@/lib/interactions";
 import { rateLimit } from "@/lib/ratelimit";
 import { personalProfileBlocked, CLIENT_PROFILE_BLOCKED } from "@/lib/clientAccount";
-import { parsePostUrn, REACTION_TYPES } from "@/lib/linkedinPost";
+import { parsePostUrn, REACTION_TYPES, normalizeCommentUrn } from "@/lib/linkedinPost";
 
 // Réagir ou commenter sur N'IMPORTE QUEL post LinkedIn (le vôtre ou celui d'un autre),
 // au nom du profil personnel connecté. Écriture seule (w_member_social) : l'outil ne
@@ -24,7 +24,7 @@ const LIMITS = { comment: 15, react: 40 };
 export async function GET(req) {
   const userId = await getUserId(req);
   if (!userId) return NextResponse.json({ error: "Non connecté." }, { status: 401 });
-  const commentUrn = new URL(req.url).searchParams.get("comment") ?? "";
+  const commentUrn = normalizeCommentUrn(new URL(req.url).searchParams.get("comment")) ?? "";
   const acc = await prisma.linkedInAccount.findUnique({ where: { userId } });
   const tokens = [acc?.orgToken, acc?.personToken].map((t) => decryptToken(t)).filter(Boolean);
   let status = null;
@@ -56,7 +56,8 @@ export async function POST(req) {
     return NextResponse.json({ error: "Type de réaction inconnu." }, { status: 400 });
   }
 
-  if (parentCommentUrn && !/^urn:li:comment:\(urn:li:(activity|share|ugcPost):\d+,\d+\)$/.test(String(parentCommentUrn))) {
+  const parentUrn = parentCommentUrn ? normalizeCommentUrn(parentCommentUrn) : null;
+  if (parentCommentUrn && !parentUrn) {
     return NextResponse.json({ error: "Commentaire à relier inconnu." }, { status: 400 });
   }
   const acc = await prisma.linkedInAccount.findUnique({ where: { userId } });
@@ -94,7 +95,7 @@ export async function POST(req) {
   try {
     const { res, via, unsupported } =
       action === "comment"
-        ? await sendComment({ token, actor, urn, text: text.trim(), parentCommentUrn: parentCommentUrn || undefined })
+        ? await sendComment({ token, actor, urn, text: text.trim(), parentCommentUrn: parentUrn || undefined })
         : await sendReaction({ token, actor, urn, reactionType });
     if (via === "v2" && res.ok) console.log(`[linkedin] ${action} envoyé par l'ancienne API v2 (l'API versionnée exige la Community Management API)`);
 
