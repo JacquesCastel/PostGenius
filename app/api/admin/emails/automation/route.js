@@ -59,7 +59,7 @@ export async function GET(req) {
     { id: "quota", label: "Alerte de quota", when: "À 80 % puis à 100 % d'une limite", sent: sent.quota?.n ?? 0, last: sent.quota?.last ?? null, eligible: null, lastRun: run("quota"), run: "quota" },
     { id: "digest", label: "Récapitulatif de la semaine", when: "Chaque lundi à partir de 8 h (heure du serveur), s'il y a de l'activité", sent: sent.digest?.n ?? 0, last: sent.digest?.last ?? null, eligible: digest, lastRun: run("digest"), run: "digest" },
     { id: "reminders", label: "Relance de validation (clients des agences)", when: "Tous les 3 jours, 3 relances au plus, pour les clients où l'agence l'a activée", sent: remindedLinks, last: null, eligible: reminders, lastRun: run("reminders"), run: "reminders" },
-    { id: "comments", label: "Commentaires de page (clients des agences)", when: "Toutes les 10 minutes : nouveaux commentaires et mentions sur la page LinkedIn d'un client, cloche et e-mail de l'équipe", sent: commentNotifs.n, last: commentNotifs.last, eligible: commentPages, lastRun: run("comments"), run: "comments" },
+    { id: "comments", label: "Commentaires de page (clients d'agence et pages personnelles)", when: "Toutes les 10 minutes : nouveaux commentaires et mentions sur une page LinkedIn connectée. Client d'agence : cloche et e-mail de l'équipe ; page personnelle : notification et e-mail", sent: commentNotifs.n, last: commentNotifs.last, eligible: commentPages, lastRun: run("comments"), run: "comments" },
     { id: "reports", label: "Rapport du mois (clients des agences)", when: "Du 1er au 3 du mois, pour les clients où l'agence l'a activé", sent: reportedLinks, last: null, eligible: reports, lastRun: run("reports"), run: "reports" },
   ];
   return NextResponse.json({
