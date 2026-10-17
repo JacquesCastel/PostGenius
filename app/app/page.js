@@ -576,10 +576,17 @@ function ScheduleModal({ draft, linkedin, orgs, profile, onClose, onScheduled, s
 // pas lire le post (permission d'écriture seule) : on l'ouvre sur LinkedIn pour le lire.
 // Chaque action est envoyée immédiatement, sur demande ; plafonds horaires côté serveur.
 // ----------------------------------------------------------------
-function EngageView({ linkedin, showToast, onConnect, embedded = false, onSent, initialPost = "", onPostUsed }) {
+function EngageView({ linkedin, showToast, onConnect, embedded = false, onSent, initialPost = "", initialComment = "", onPostUsed }) {
   const Wrap = embedded ? "div" : "main";
   const [postInput, setPostInput] = useState(initialPost || ""); // lien reçu dans la notification : post prérempli
-  useEffect(() => { if (initialPost) onPostUsed?.(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  // Commentaire reçu (notification) : on le montre et la réponse part dessous, au nom de la page quand elle est connectée
+  const [replyTo, setReplyTo] = useState(/^urn:li:comment:/.test(initialComment) ? { urn: initialComment, text: null } : null);
+  const [asPage, setAsPage] = useState(Boolean(initialComment) && Boolean(linkedin.orgConnected));
+  useEffect(() => {
+    if (initialPost || initialComment) onPostUsed?.();
+    if (!replyTo) return;
+    fetch(`/api/linkedin/engage?comment=${encodeURIComponent(replyTo.urn)}`).then(readJson).then((d) => setReplyTo((r) => (r ? { ...r, text: d.text || "" } : r))).catch(() => setReplyTo((r) => (r ? { ...r, text: "" } : r)));
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(null); // "comment" | type de réaction en cours
   const [done, setDone] = useState([]); // actions réussies pendant cette session
@@ -594,13 +601,13 @@ function EngageView({ linkedin, showToast, onConnect, embedded = false, onSent, 
       const res = await fetch("/api/linkedin/engage", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ post: postInput.trim(), action, ...extra }),
+        body: JSON.stringify({ post: postInput.trim(), action, ...extra, ...(action === "comment" && replyTo ? { parentCommentUrn: replyTo.urn } : {}), ...(action === "comment" && asPage ? { asPage: true } : {}) }),
       });
       const data = await readJson(res);
       if (!res.ok) throw new Error(data.error || "Erreur");
       setDone((d) => [{ id: Date.now(), label, urn: data.urn, at: new Date() }, ...d].slice(0, 10));
-      if (action === "comment") setText("");
-      showToast(action === "comment" ? "Commentaire publié sur LinkedIn ✓" : `${label} envoyé ✓`);
+      if (action === "comment") { setText(""); setReplyTo(null); }
+      showToast(action === "comment" ? (replyTo ? "Réponse publiée sous le commentaire ✓" : "Commentaire publié sur LinkedIn ✓") : `${label} envoyé ✓`);
       onSent?.();
     } catch (e) {
       showToast(e.message);
@@ -609,7 +616,7 @@ function EngageView({ linkedin, showToast, onConnect, embedded = false, onSent, 
     }
   };
 
-  if (!linkedin.connected) {
+  if (!linkedin.connected && !(replyTo && linkedin.orgConnected)) {
     return (
       <Wrap className={embedded ? "" : "max-w-2xl mx-auto p-6"}>
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center space-y-3">
@@ -671,7 +678,22 @@ function EngageView({ linkedin, showToast, onConnect, embedded = false, onSent, 
         </div>
 
         <div>
-          <p className="text-xs font-medium text-gray-500 mb-2">Commentaire</p>
+          <p className="text-xs font-medium text-gray-500 mb-2">{replyTo ? "Réponse au commentaire" : "Commentaire"}</p>
+          {replyTo && (
+            <div className="mb-2 rounded-lg border-l-4 border-[#ff5a5f] bg-gray-50 px-3 py-2 text-sm text-gray-700" data-testid="reply-to">
+              <p className="text-[11px] font-medium text-gray-400 mb-0.5 flex items-center justify-between">
+                <span>Vous répondez à</span>
+                <button type="button" onClick={() => setReplyTo(null)} className="text-gray-400 hover:text-gray-600 underline">commenter le post à la place</button>
+              </p>
+              {replyTo.text === null ? <span className="text-gray-400">Chargement…</span> : replyTo.text ? <span className="whitespace-pre-line">« {replyTo.text} »</span> : <span className="text-gray-400">Texte indisponible (LinkedIn ne l&apos;a pas renvoyé) — ouvrez le post pour le lire.</span>}
+            </div>
+          )}
+          {linkedin.orgConnected && linkedin.connected && (
+            <div className="flex gap-4 mb-2 text-xs text-gray-600">
+              <label className="flex items-center gap-1.5"><input type="radio" checked={asPage} onChange={() => setAsPage(true)} /> Au nom de la page</label>
+              <label className="flex items-center gap-1.5"><input type="radio" checked={!asPage} onChange={() => setAsPage(false)} /> À mon nom</label>
+            </div>
+          )}
           <textarea
             value={text}
             onChange={(e) => setText(e.target.value)}
@@ -15363,6 +15385,7 @@ export default function Home() {
   // Lien reçu par e-mail : /app?client=ID&view=engage → ouvre ce client, puis nettoie l'adresse
   // Le paramètre est mémorisé dès le premier affichage : l'adresse est nettoyée plus bas, avant même que l'utilisateur soit identifié
   const [engagePost, setEngagePost] = useState(() => { if (typeof window === "undefined") return ""; const p = new URLSearchParams(window.location.search).get("post") || ""; return /^https:\/\/(www\.)?linkedin\.com\//.test(p) ? p : ""; }); // post à préremplir dans « Interagir »
+  const [engageComment, setEngageComment] = useState(() => { if (typeof window === "undefined") return ""; const c = new URLSearchParams(window.location.search).get("comment") || ""; return /^urn:li:comment:/.test(c) ? c : ""; }); // commentaire auquel répondre
   const clientLink = useRef(typeof window === "undefined" ? null : (() => { const q = new URLSearchParams(window.location.search); return q.get("client") ? { cid: q.get("client"), view: q.get("view") || "dashboard" } : null; })());
   useEffect(() => {
     const link = clientLink.current;
@@ -17698,7 +17721,7 @@ export default function Home() {
             <p className="text-xs text-gray-400">{agencyHome ? `Agence · ${user.name || ""}` : clientMode ? `Client : ${impersonating.companyName || impersonating.name}` : `Bonjour ${user.name || ""} 👋`}</p>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
-          {agencyHome && !user.isSuperAdmin && <NotificationBell onOpenView={setView} onOpenClient={(cid, v, post) => { if (post) setEngagePost(post); if (cid) openClientSpace(cid, v); else setView(v); }} />}
+          {agencyHome && !user.isSuperAdmin && <NotificationBell onOpenView={setView} onOpenClient={(cid, v, post, comment) => { if (post) setEngagePost(post); if (comment) setEngageComment(comment); if (cid) openClientSpace(cid, v); else setView(v); }} />}
           {contexts.length > 0 && !user.isSuperAdmin && ["dashboard", "create", "campaigns", "brand-kit", "datalake"].includes(view) && (
             <label className="flex items-center gap-1.5 text-xs text-gray-500" data-testid="global-context">
               Entreprise
@@ -19115,7 +19138,7 @@ export default function Home() {
           }
         />
       ) : view === "engage" ? (
-        <EngageView linkedin={linkedin} showToast={showToast} onConnect={() => setView("connections")} initialPost={engagePost} onPostUsed={() => setEngagePost("")} />
+        <EngageView linkedin={linkedin} showToast={showToast} onConnect={() => setView("connections")} initialPost={engagePost} initialComment={engageComment} onPostUsed={() => { setEngagePost(""); setEngageComment(""); }} />
       ) : view === "stats" ? (
         <StatsView linkedin={linkedin} orgs={orgs} profile={profile} drafts={drafts} showToast={showToast} onConnect={() => setView("connections")} />
       ) : view === "copilot" ? (

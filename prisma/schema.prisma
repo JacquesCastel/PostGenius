@@ -203,6 +203,7 @@ model AgencyNotification {
   clientId  String? // client concerné (pour filtrer et ouvrir son espace)
   view      String? // écran à ouvrir (queue, clients, team…)
   postUrl   String? // post LinkedIn concerné (commentaires de page) : prérempli dans « Interagir »
+  commentUrn String? // dernier commentaire reçu : « Interagir » propose d'y répondre dessous
   createdAt DateTime  @default(now())
   readAt    DateTime?
 
