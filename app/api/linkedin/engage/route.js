@@ -101,7 +101,10 @@ export async function POST(req) {
 
     if (!res.ok) {
       const raw = await res.text();
-      console.error(`LinkedIn ${action} (${via}):`, res.status, raw);
+      // Limite connue (réaction autre que « J'aime » sans la Community Management API sur l'app du profil) : l'écran l'explique déjà,
+      // ce n'est pas une panne — pas de « error » dans le journal, que la vérification de santé compte comme incident
+      if (unsupported) console.warn(`[linkedin] ${action} refusé (${via}) : ${res.status} permission partenaire manquante pour cette réaction`);
+      else console.error(`LinkedIn ${action} (${via}):`, res.status, raw);
       if (unsupported) {
         return NextResponse.json(
           { error: withDetail("Avec cette application LinkedIn, seule la réaction « J'aime » est disponible (les autres réactions exigent la Community Management API).", raw) },
