@@ -576,9 +576,10 @@ function ScheduleModal({ draft, linkedin, orgs, profile, onClose, onScheduled, s
 // pas lire le post (permission d'écriture seule) : on l'ouvre sur LinkedIn pour le lire.
 // Chaque action est envoyée immédiatement, sur demande ; plafonds horaires côté serveur.
 // ----------------------------------------------------------------
-function EngageView({ linkedin, showToast, onConnect, embedded = false, onSent }) {
+function EngageView({ linkedin, showToast, onConnect, embedded = false, onSent, initialPost = "", onPostUsed }) {
   const Wrap = embedded ? "div" : "main";
-  const [postInput, setPostInput] = useState("");
+  const [postInput, setPostInput] = useState(initialPost || ""); // lien reçu dans la notification : post prérempli
+  useEffect(() => { if (initialPost) onPostUsed?.(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(null); // "comment" | type de réaction en cours
   const [done, setDone] = useState([]); // actions réussies pendant cette session
@@ -15361,6 +15362,7 @@ export default function Home() {
   };
   // Lien reçu par e-mail : /app?client=ID&view=engage → ouvre ce client, puis nettoie l'adresse
   // Le paramètre est mémorisé dès le premier affichage : l'adresse est nettoyée plus bas, avant même que l'utilisateur soit identifié
+  const [engagePost, setEngagePost] = useState(() => { if (typeof window === "undefined") return ""; const p = new URLSearchParams(window.location.search).get("post") || ""; return /^https:\/\/(www\.)?linkedin\.com\//.test(p) ? p : ""; }); // post à préremplir dans « Interagir »
   const clientLink = useRef(typeof window === "undefined" ? null : (() => { const q = new URLSearchParams(window.location.search); return q.get("client") ? { cid: q.get("client"), view: q.get("view") || "dashboard" } : null; })());
   useEffect(() => {
     const link = clientLink.current;
@@ -17696,7 +17698,7 @@ export default function Home() {
             <p className="text-xs text-gray-400">{agencyHome ? `Agence · ${user.name || ""}` : clientMode ? `Client : ${impersonating.companyName || impersonating.name}` : `Bonjour ${user.name || ""} 👋`}</p>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
-          {agencyHome && !user.isSuperAdmin && <NotificationBell onOpenView={setView} onOpenClient={openClientSpace} />}
+          {agencyHome && !user.isSuperAdmin && <NotificationBell onOpenView={setView} onOpenClient={(cid, v, post) => { if (post) setEngagePost(post); if (cid) openClientSpace(cid, v); else setView(v); }} />}
           {contexts.length > 0 && !user.isSuperAdmin && ["dashboard", "create", "campaigns", "brand-kit", "datalake"].includes(view) && (
             <label className="flex items-center gap-1.5 text-xs text-gray-500" data-testid="global-context">
               Entreprise
@@ -19113,7 +19115,7 @@ export default function Home() {
           }
         />
       ) : view === "engage" ? (
-        <EngageView linkedin={linkedin} showToast={showToast} onConnect={() => setView("connections")} />
+        <EngageView linkedin={linkedin} showToast={showToast} onConnect={() => setView("connections")} initialPost={engagePost} onPostUsed={() => setEngagePost("")} />
       ) : view === "stats" ? (
         <StatsView linkedin={linkedin} orgs={orgs} profile={profile} drafts={drafts} showToast={showToast} onConnect={() => setView("connections")} />
       ) : view === "copilot" ? (
