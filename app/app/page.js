@@ -4290,7 +4290,7 @@ function AdminAutomationCard({ showToast }) {
   useEffect(() => { load(); }, []);
   if (!d) return null;
   const fmt = (v) => (v ? new Date(v).toLocaleString("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "—");
-  const summary = (r) => (!r ? "pas encore passé depuis le redémarrage" : r.result?.error ? `erreur : ${r.result.error}` : r.result?.skipped ? `passé ${fmt(r.at)} (rien à faire : ${r.result.skipped === true ? "hors horaire" : r.result.skipped})` : `passé ${fmt(r.at)} · ${r.result?.sent ?? 0} envoyé(s)`);
+  const summary = (r) => (!r ? "pas encore passé depuis le redémarrage" : r.result?.error ? `erreur : ${r.result.error}` : r.result?.skipped ? `passé ${fmt(r.at)} (rien à faire : ${r.result.skipped === true ? "hors horaire" : r.result.skipped})` : `passé ${fmt(r.at)} · ${r.result?.sent ?? 0} envoyé(s)${r.result?.note ? " · " + r.result.note : ""}`);
   const launch = async (j) => {
     if (!window.confirm(`Lancer « ${j.label} » maintenant ?\n\nDe vrais e-mails partent aux comptes concernés. Chaque message n'est envoyé qu'une fois : un envoi déjà fait n'est jamais répété.`)) return;
     setBusy(j.run);
@@ -15352,6 +15352,24 @@ export default function Home() {
     if (!res.ok) { showToast("Erreur lors du changement de client"); return; }
     window.location.href = `/app?view=${DEEP_LINK_VIEWS.includes(view) && view !== "clients" ? view : "dashboard"}`;
   };
+  // Ouvre l'espace d'un client de l'agence sur un écran donné (cloche, lien d'un e-mail) ; l'espace se recharge en entier
+  const openClientSpace = async (clientId, targetView = "dashboard") => {
+    const res = await fetch("/api/agency/impersonate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ clientId }) });
+    if (!res.ok) { showToast("Ce client n'est pas accessible avec votre compte (il ne vous est peut-être pas affecté)."); return false; }
+    window.location.href = `/app?view=${DEEP_LINK_VIEWS.includes(targetView) ? targetView : "dashboard"}`;
+    return true;
+  };
+  // Lien reçu par e-mail : /app?client=ID&view=engage → ouvre ce client, puis nettoie l'adresse
+  // Le paramètre est mémorisé dès le premier affichage : l'adresse est nettoyée plus bas, avant même que l'utilisateur soit identifié
+  const clientLink = useRef(typeof window === "undefined" ? null : (() => { const q = new URLSearchParams(window.location.search); return q.get("client") ? { cid: q.get("client"), view: q.get("view") || "dashboard" } : null; })());
+  useEffect(() => {
+    const link = clientLink.current;
+    if (!link || !user || !(agencyHome || clientMode)) return;
+    clientLink.current = null;
+    // Déjà dans l'espace de ce client : rien à rouvrir
+    if (impersonating?.id === link.cid) { if (DEEP_LINK_VIEWS.includes(link.view)) setView(link.view); return; }
+    openClientSpace(link.cid, link.view);
+  }, [user, agencyHome, clientMode, impersonating?.id]);
   const [upgrade, setUpgrade] = useState(null); // { feature, requires } quand on clique une fonctionnalité verrouillée
   const [billingFocus, setBillingFocus] = useState(null); // { plan, feature } : offre à mettre en évidence sur la page Abonnement
   useEffect(() => {
@@ -17678,7 +17696,7 @@ export default function Home() {
             <p className="text-xs text-gray-400">{agencyHome ? `Agence · ${user.name || ""}` : clientMode ? `Client : ${impersonating.companyName || impersonating.name}` : `Bonjour ${user.name || ""} 👋`}</p>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
-          {agencyHome && !user.isSuperAdmin && <NotificationBell onOpenView={setView} />}
+          {agencyHome && !user.isSuperAdmin && <NotificationBell onOpenView={setView} onOpenClient={openClientSpace} />}
           {contexts.length > 0 && !user.isSuperAdmin && ["dashboard", "create", "campaigns", "brand-kit", "datalake"].includes(view) && (
             <label className="flex items-center gap-1.5 text-xs text-gray-500" data-testid="global-context">
               Entreprise
