@@ -3,7 +3,7 @@ import { prisma } from "@/lib/db";
 import { getEffectiveUserId as getUserId } from "@/lib/session";
 import { decryptToken } from "@/lib/crypto";
 import { withDetail } from "@/lib/linkedinError";
-import { sendComment, sendReaction } from "@/lib/linkedinSocial";
+import { sendComment, sendReaction, getCommentText } from "@/lib/linkedinSocial";
 import { logInteraction } from "@/lib/interactions";
 import { rateLimit } from "@/lib/ratelimit";
 import { personalProfileBlocked, CLIENT_PROFILE_BLOCKED } from "@/lib/clientAccount";
@@ -20,11 +20,25 @@ import { parsePostUrn, REACTION_TYPES } from "@/lib/linkedinPost";
 const HOUR = 3600_000;
 const LIMITS = { comment: 15, react: 40 };
 
+// GET ?comment=urn:li:comment:(…) : texte d'un commentaire reçu (notification), lu avec la page connectée, sinon avec le profil
+export async function GET(req) {
+  const userId = await getUserId(req);
+  if (!userId) return NextResponse.json({ error: "Non connecté." }, { status: 401 });
+  const commentUrn = new URL(req.url).searchParams.get("comment") ?? "";
+  const acc = await prisma.linkedInAccount.findUnique({ where: { userId } });
+  const tokens = [acc?.orgToken, acc?.personToken].map((t) => decryptToken(t)).filter(Boolean);
+  for (const token of tokens) {
+    const c = await getCommentText({ token, commentUrn });
+    if (c?.text) return NextResponse.json({ text: c.text.slice(0, 600), at: c.at });
+  }
+  return NextResponse.json({ text: null });
+}
+
 export async function POST(req) {
   const userId = await getUserId(req);
   if (!userId) return NextResponse.json({ error: "Non connecté." }, { status: 401 });
 
-  const { post, action, text, reactionType } = await req.json().catch(() => ({}));
+  const { post, action, text, reactionType, parentCommentUrn, asPage } = await req.json().catch(() => ({}));
   if (action !== "comment" && action !== "react") {
     return NextResponse.json({ error: "Action inconnue." }, { status: 400 });
   }
@@ -39,14 +53,28 @@ export async function POST(req) {
     return NextResponse.json({ error: "Type de réaction inconnu." }, { status: 400 });
   }
 
-  if (await personalProfileBlocked(userId)) return NextResponse.json({ error: CLIENT_PROFILE_BLOCKED }, { status: 403 });
-  const acc = await prisma.linkedInAccount.findUnique({ where: { userId } });
-  const token = decryptToken(acc?.personToken);
-  if (!token || !acc?.personSub) return NextResponse.json({ error: "Compte LinkedIn non connecté." }, { status: 401 });
-  if (acc.personExpiresAt && acc.personExpiresAt < new Date()) {
-    return NextResponse.json({ error: "Session LinkedIn expirée — reconnectez votre compte (menu « Connexions »)." }, { status: 401 });
+  if (parentCommentUrn && !/^urn:li:comment:\(urn:li:(activity|share|ugcPost):\d+,\d+\)$/.test(String(parentCommentUrn))) {
+    return NextResponse.json({ error: "Commentaire à relier inconnu." }, { status: 400 });
   }
-  const actor = `urn:li:person:${acc.personSub}`;
+  const acc = await prisma.linkedInAccount.findUnique({ where: { userId } });
+  let token, actor;
+  if (asPage && action === "comment") {
+    // Réponse au nom de la page entreprise connectée (le commentaire a été fait sur le post de la page)
+    token = decryptToken(acc?.orgToken);
+    actor = acc?.orgUrn;
+    if (!token || !/^urn:li:organization:\d+$/.test(String(actor))) return NextResponse.json({ error: "Page entreprise non connectée." }, { status: 401 });
+    if (acc.orgExpiresAt && acc.orgExpiresAt < new Date()) {
+      return NextResponse.json({ error: "Session de la page entreprise expirée — reconnectez-la (menu « Connexions »)." }, { status: 401 });
+    }
+  } else {
+    if (await personalProfileBlocked(userId)) return NextResponse.json({ error: CLIENT_PROFILE_BLOCKED }, { status: 403 });
+    token = decryptToken(acc?.personToken);
+    if (!token || !acc?.personSub) return NextResponse.json({ error: "Compte LinkedIn non connecté." }, { status: 401 });
+    if (acc.personExpiresAt && acc.personExpiresAt < new Date()) {
+      return NextResponse.json({ error: "Session LinkedIn expirée — reconnectez votre compte (menu « Connexions »)." }, { status: 401 });
+    }
+    actor = `urn:li:person:${acc.personSub}`;
+  }
 
   if (!rateLimit(`engage:${action}:${userId}`, { limit: LIMITS[action], windowMs: HOUR })) {
     return NextResponse.json(
@@ -63,7 +91,7 @@ export async function POST(req) {
   try {
     const { res, via, unsupported } =
       action === "comment"
-        ? await sendComment({ token, actor, urn, text: text.trim() })
+        ? await sendComment({ token, actor, urn, text: text.trim(), parentCommentUrn: parentCommentUrn || undefined })
         : await sendReaction({ token, actor, urn, reactionType });
     if (via === "v2" && res.ok) console.log(`[linkedin] ${action} envoyé par l'ancienne API v2 (l'API versionnée exige la Community Management API)`);
 

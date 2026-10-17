@@ -46,8 +46,8 @@ export function NotificationBell({ onOpenView, onOpenClient }) {
     }
     setOpen(false);
     // Commentaire sur la page d'un client : on ouvre directement « Interagir » dans l'espace de ce client
-    if (n.view === "engage" && n.clientId && onOpenClient) onOpenClient(n.clientId, "engage", n.postUrl);
-    else if (n.view === "engage" && n.postUrl && onOpenClient) onOpenClient(null, "engage", n.postUrl);
+    if (n.view === "engage" && n.clientId && onOpenClient) onOpenClient(n.clientId, "engage", n.postUrl, n.commentUrn);
+    else if (n.view === "engage" && n.postUrl && onOpenClient) onOpenClient(null, "engage", n.postUrl, n.commentUrn);
     else if (n.view) onOpenView?.(n.view);
   };
 

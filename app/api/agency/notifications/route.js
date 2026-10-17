@@ -10,7 +10,7 @@ export async function GET(req) {
   const [items, unread] = await Promise.all([
     prisma.agencyNotification.findMany({
       where, orderBy: { createdAt: "desc" }, take: 30,
-      select: { id: true, kind: true, title: true, body: true, clientId: true, view: true, postUrl: true, createdAt: true, readAt: true },
+      select: { id: true, kind: true, title: true, body: true, clientId: true, view: true, postUrl: true, commentUrn: true, createdAt: true, readAt: true },
     }),
     prisma.agencyNotification.count({ where: { ...where, readAt: null } }),
   ]);
