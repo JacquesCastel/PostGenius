@@ -15217,6 +15217,145 @@ function CarouselImagesBlock({ slides, onImages, initial = null }) {
   );
 }
 
+// Carrousel de photos choisies par l'utilisateur : chaque photo devient une page d'un PDF publié comme document LinkedIn
+// (même mécanisme que les slides créées par l'IA : Draft.documentSlides). Les photos sont mises au même format dans le navigateur,
+// puis enregistrées par /api/image/upload ; le PDF n'est assemblé qu'à la publication.
+const PHOTO_FORMATS = { portrait: { w: 1080, h: 1350, label: "Portrait 4:5" }, square: { w: 1080, h: 1080, label: "Carré 1:1" } };
+const MAX_PHOTO_SLIDES = 20;
+async function photoToSlideDataUrl(file, { w, h }, fit) {
+  let src;
+  try {
+    src = await createImageBitmap(file);
+  } catch {
+    src = await new Promise((resolve, reject) => {
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.onload = () => { URL.revokeObjectURL(url); resolve(img); };
+      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("Photo illisible")); };
+      img.src = url;
+    });
+  }
+  const sw = src.width || src.naturalWidth, sh = src.height || src.naturalHeight;
+  const canvas = document.createElement("canvas");
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext("2d");
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, w, h);
+  const scale = fit === "fill" ? Math.max(w / sw, h / sh) : Math.min(w / sw, h / sh);
+  const dw = sw * scale, dh = sh * scale;
+  ctx.drawImage(src, (w - dw) / 2, (h - dh) / 2, dw, dh);
+  return canvas.toDataURL("image/png");
+}
+
+function PhotoCarouselBlock({ initial = null, onImages, hasOtherMedia = false }) {
+  const start = (() => { try { const a = typeof initial === "string" ? JSON.parse(initial) : initial; return Array.isArray(a) ? a : []; } catch { return []; } })();
+  const [images, setImages] = useState(start);
+  const [format, setFormat] = useState("portrait");
+  const [fit, setFit] = useState("fill"); // fill : recadrer pour remplir la page ; fit : photo entière, bandes blanches
+  const [progress, setProgress] = useState(null); // { done, total }
+  const [error, setError] = useState(null);
+  const inputRef = useRef(null);
+
+  const commit = (next) => { setImages(next); onImages?.(next.length ? next : null); };
+  const addFiles = async (fileList) => {
+    const files = [...fileList].filter((f) => f.type.startsWith("image/")).slice(0, MAX_PHOTO_SLIDES - images.length);
+    if (!files.length) { setError(fileList.length ? `Photos acceptées : images, ${MAX_PHOTO_SLIDES} au plus.` : null); return; }
+    setError(null);
+    const next = [...images];
+    setProgress({ done: 0, total: files.length });
+    for (let i = 0; i < files.length; i++) {
+      try {
+        const dataUrl = await photoToSlideDataUrl(files[i], PHOTO_FORMATS[format], fit);
+        const res = await fetch("/api/image/upload", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ image: dataUrl }) });
+        const d = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(d.error || "Envoi impossible");
+        next.push(d.url);
+        setImages([...next]);
+      } catch (e) {
+        setError(`${files[i].name} : ${e.message}`);
+        break;
+      }
+      setProgress({ done: i + 1, total: files.length });
+    }
+    setProgress(null);
+    commit(next);
+    if (inputRef.current) inputRef.current.value = "";
+  };
+  const move = (i, d) => { const next = [...images]; const j = i + d; if (j < 0 || j >= next.length) return; [next[i], next[j]] = [next[j], next[i]]; commit(next); };
+  const remove = (i) => commit(images.filter((_, k) => k !== i));
+  const downloadPdf = async () => {
+    try {
+      const res = await fetch("/api/image/carousel-pdf", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ urls: images }) });
+      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || "Erreur");
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(await res.blob());
+      a.download = "carrousel.pdf";
+      a.click();
+      URL.revokeObjectURL(a.href);
+    } catch (e) {
+      setError(e.message);
+    }
+  };
+  const busy = Boolean(progress);
+
+  return (
+    <div className="border-t border-gray-100 mt-4 pt-4" data-testid="photo-carousel-block">
+      <p className="text-sm font-semibold text-[#1b2a4a]">Carrousel de mes photos</p>
+      <p className="text-xs text-gray-500 mt-0.5 mb-3">
+        Choisissez vos photos : elles sont mises au même format et publiées sur LinkedIn en carrousel (document PDF) avec le texte du post.
+        {hasOtherMedia && images.length > 0 ? " Le carrousel remplace l'image ou la vidéo du post." : ""}
+      </p>
+      <div className="flex flex-wrap items-center gap-3 mb-3 text-xs text-gray-600">
+        <label className="flex items-center gap-1.5">Format
+          <select value={format} onChange={(e) => setFormat(e.target.value)} disabled={busy} className="border border-gray-200 rounded-lg px-2 py-1 text-xs" data-testid="photo-format">
+            {Object.entries(PHOTO_FORMATS).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+          </select>
+        </label>
+        <label className="flex items-center gap-1.5">Cadrage
+          <select value={fit} onChange={(e) => setFit(e.target.value)} disabled={busy} className="border border-gray-200 rounded-lg px-2 py-1 text-xs" data-testid="photo-fit">
+            <option value="fill">Remplir la page (recadrer)</option>
+            <option value="fit">Photo entière (bandes blanches)</option>
+          </select>
+        </label>
+        <span className="text-gray-400">S&apos;applique aux photos ajoutées ensuite.</span>
+      </div>
+      {images.length > 0 && (
+        <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 mb-3" data-testid="photo-slides">
+          {images.map((url, i) => (
+            <div key={url} className="relative rounded-lg overflow-hidden border border-gray-100 aspect-square bg-gray-50" data-testid="photo-slide">
+              <img src={url} alt={`Photo ${i + 1}`} className="w-full h-full object-contain" />
+              <span className="absolute top-1 left-1 bg-black/60 text-white text-[10px] px-1.5 rounded">{i + 1}</span>
+              <div className="absolute bottom-1 inset-x-1 flex items-center justify-between gap-1">
+                <span className="flex gap-1">
+                  <button type="button" onClick={() => move(i, -1)} disabled={i === 0 || busy} aria-label="Avancer cette photo" className="bg-white/90 hover:bg-white disabled:opacity-40 rounded px-1.5 text-xs">←</button>
+                  <button type="button" onClick={() => move(i, 1)} disabled={i === images.length - 1 || busy} aria-label="Reculer cette photo" className="bg-white/90 hover:bg-white disabled:opacity-40 rounded px-1.5 text-xs">→</button>
+                </span>
+                <button type="button" onClick={() => remove(i)} disabled={busy} aria-label="Retirer cette photo" className="bg-white/90 hover:bg-white text-red-500 rounded px-1.5 text-xs" data-testid="photo-remove">✕</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+      <input ref={inputRef} type="file" accept="image/*" multiple className="hidden" onChange={(e) => addFiles(e.target.files)} data-testid="photo-input" />
+      <div className="flex flex-wrap items-center gap-3">
+        <button type="button" onClick={() => inputRef.current?.click()} disabled={busy || images.length >= MAX_PHOTO_SLIDES} className="bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white text-sm font-semibold px-4 py-2 rounded-xl flex items-center gap-2" data-testid="photo-add">
+          {busy ? <RefreshCw size={14} className="animate-spin" /> : <Layers size={14} />}
+          {busy ? `Envoi ${progress.done}/${progress.total}…` : images.length ? "Ajouter des photos" : "Choisir mes photos"}
+        </button>
+        {images.length > 0 && (
+          <>
+            <button type="button" onClick={downloadPdf} className="text-xs text-gray-500 underline hover:text-[#ff5a5f]" data-testid="photo-pdf-download">Télécharger le PDF</button>
+            <button type="button" onClick={() => commit([])} disabled={busy} className="text-xs text-gray-400 hover:text-red-500">Tout retirer</button>
+            <span className="text-xs text-gray-400">{images.length} photo{images.length > 1 ? "s" : ""} sur {MAX_PHOTO_SLIDES} au plus</span>
+          </>
+        )}
+      </div>
+      {error && <p className="text-xs text-red-500 mt-2">{error}</p>}
+    </div>
+  );
+}
+
 // ----------------------------------------------------------------
 // Application
 // ----------------------------------------------------------------
@@ -15429,6 +15568,7 @@ export default function Home() {
   const [optimizeText, setOptimizeText] = useState(null); // { text, type } → page Étape 2 plein écran
   const [optMentions, setOptMentions] = useState([]);
   const [optPoll, setOptPoll] = useState(null);
+  const [optCarouselMode, setOptCarouselMode] = useState("ia"); // carrousel d'un post à plan de slides : slides IA | mes photos
   const optAreaRef = useRef(null);
   const [rewriting, setRewriting] = useState(false);
   const [rewriteScope, setRewriteScope] = useState("all"); // all | hook | body | signature (= conclusion + appel à l'action)
@@ -17298,20 +17438,31 @@ export default function Home() {
                 </div>
                 {optimizeText.draftId && (() => {
                   const dr = drafts.find((x) => x.id === optimizeText.draftId);
-                  return dr?.type === "carrousel" && dr.extra?.slides?.length > 0 ? (
+                  if (!dr) return null;
+                  const setSlides = (urls) => {
+                    const json = urls?.length ? JSON.stringify(urls) : null;
+                    setDrafts((ds) => ds.map((x) => (x.id === dr.id ? { ...x, documentSlides: json } : x)));
+                    patchDraft(dr.id, { documentSlides: urls?.length ? urls : null }).catch(() => {});
+                  };
+                  const aiPlan = dr.type === "carrousel" && dr.extra?.slides?.length > 0;
+                  const photos = !aiPlan || optCarouselMode === "photos";
+                  return (
                     <div className="mt-2 rounded-xl border border-gray-200 p-3 bg-white">
-                      <CarouselImagesBlock
-                        key={dr.id}
-                        slides={dr.extra.slides}
-                        initial={dr.documentSlides}
-                        onImages={(urls) => {
-                          const json = urls?.length ? JSON.stringify(urls) : null;
-                          setDrafts((ds) => ds.map((x) => (x.id === dr.id ? { ...x, documentSlides: json } : x)));
-                          patchDraft(dr.id, { documentSlides: urls?.length ? urls : null }).catch(() => {});
-                        }}
-                      />
+                      {aiPlan && (
+                        <div className="flex gap-1 text-xs mb-1" role="tablist" data-testid="carousel-mode">
+                          {[["ia", "Slides créées par l'IA"], ["photos", "Mes photos"]].map(([k, label]) => (
+                            <button key={k} type="button" role="tab" aria-selected={optCarouselMode === k} onClick={() => { if (optCarouselMode !== k) { setOptCarouselMode(k); setSlides(null); } }}
+                              className={`px-3 py-1.5 rounded-lg border ${optCarouselMode === k ? "border-[#ff5a5f] bg-[#fff1f1] text-[#ff5a5f] font-medium" : "border-gray-200 text-gray-500 hover:border-gray-300"}`}>{label}</button>
+                          ))}
+                        </div>
+                      )}
+                      {photos ? (
+                        <PhotoCarouselBlock key={`${dr.id}-photos`} initial={dr.documentSlides} onImages={setSlides} hasOtherMedia={Boolean(postImage || postVideo || postYoutube)} />
+                      ) : (
+                        <CarouselImagesBlock key={`${dr.id}-ia`} slides={dr.extra.slides} initial={dr.documentSlides} onImages={setSlides} />
+                      )}
                     </div>
-                  ) : null;
+                  );
                 })()}
                 {optimizeText.draftId && (
                   <div className="mt-2">
