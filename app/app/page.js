@@ -50,6 +50,7 @@ import { scorePost } from "@/lib/score";
 import { markdownToHtml } from "@/lib/markdown";
 import { parsePostUrn, REACTIONS } from "@/lib/linkedinPost";
 import ShareView from "@/components/ShareView";
+import ShareHowTo from "@/components/ShareHowTo";
 import LeadsView from "@/components/LeadsView";
 import { postAnatomy } from "@/lib/linkedinRules";
 
@@ -9706,6 +9707,15 @@ function DashboardView({ drafts, canVeille = true, canEvents = false, canScore =
     { label: "À retravailler", color: "#ef4444", count: scores.filter((s) => s < 40).length },
   ];
 
+  const [shareHintHidden, setShareHintHidden] = useState(true); // masqué le temps de lire le choix mémorisé, pour ne pas clignoter
+  useEffect(() => {
+    try { setShareHintHidden(localStorage.getItem("lp_share_hint_hidden") === "1"); } catch { setShareHintHidden(false); }
+  }, []);
+  const hideShareHint = () => {
+    setShareHintHidden(true);
+    try { localStorage.setItem("lp_share_hint_hidden", "1"); } catch {}
+    showToast?.("Masqué. Retrouvez le mode d'emploi dans le menu « Partager un lien ».");
+  };
   return (
     <main className="max-w-5xl mx-auto p-6 space-y-6">
       {deleting && <CampaignDeleteDialog campaign={deleting} onClose={() => setDeleting(null)} onDone={campaignGone} showToast={showToast} />}
@@ -9717,19 +9727,26 @@ function DashboardView({ drafts, canVeille = true, canEvents = false, canScore =
         onAct={(st) => goNextStep(st, { onGoCreate, onGoProfileField, onGoView })}
       />
 
-      {/* Partager vers LinkeePost : mis en avant, c'est le geste le plus court pour nourrir la base ou réagir à un post */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-col sm:flex-row sm:items-center gap-3" data-testid="dash-share">
-        <div className="flex items-start gap-3 min-w-0">
-          <span className="p-2.5 rounded-xl bg-[#fff1f1] text-[#ff5a5f] shrink-0"><Share2 size={18} /></span>
-          <div className="min-w-0">
-            <p className="text-sm font-semibold">Un article ou un post à ne pas perdre ?</p>
-            <p className="text-xs text-gray-500 mt-0.5">Partagez-le vers LinkeePost : commentez-le, écrivez un post à partir de lui, ou gardez-le dans votre base de connaissances.</p>
+      {/* Partager vers LinkeePost : le geste le plus court pour nourrir la base ou réagir à un post. L'installation dépend de l'appareil :
+          la carte reste là, avec le mode d'emploi, jusqu'à ce que l'utilisateur la masque (mémorisé sur cet appareil). */}
+      {!shareHintHidden && (
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5" data-testid="dash-share">
+          <div className="flex items-start gap-3">
+            <span className="p-2.5 rounded-xl bg-[#fff1f1] text-[#ff5a5f] shrink-0"><Share2 size={18} /></span>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold">Envoyez un article ou un post vers LinkeePost en un geste</p>
+              <p className="text-xs text-gray-500 mt-0.5">Depuis n&apos;importe quelle page web ou post LinkedIn : commentez-le, écrivez un post à partir de lui, ou gardez-le dans votre base de connaissances. Installez le raccourci une fois, selon votre appareil :</p>
+            </div>
+          </div>
+          <div className="mt-4"><ShareHowTo testId="dash-share-bookmark" /></div>
+          <div className="flex flex-wrap items-center gap-3 mt-4">
+            <button onClick={() => onGoView?.("share")} className="inline-flex items-center justify-center gap-2 bg-[#ff5a5f] hover:bg-[#f63d44] text-white text-sm font-semibold px-4 py-2.5 rounded-xl shadow-sm" data-testid="dash-share-btn">
+              <Share2 size={15} /> Partager un lien
+            </button>
+            <button onClick={hideShareHint} className="text-xs text-gray-500 hover:text-gray-700 underline" data-testid="dash-share-hide">C&apos;est fait, masquer</button>
           </div>
         </div>
-        <button onClick={() => onGoView?.("share")} className="sm:ml-auto shrink-0 inline-flex items-center justify-center gap-2 bg-[#ff5a5f] hover:bg-[#f63d44] text-white text-sm font-semibold px-4 py-2.5 rounded-xl shadow-sm" data-testid="dash-share-btn">
-          <Share2 size={15} /> Partager un lien
-        </button>
-      </div>
+      )}
 
       {/* Synthèse : répartition des posts + calendrier des publications (2 colonnes) */}
       <div className="grid md:grid-cols-3 gap-4 items-stretch">
