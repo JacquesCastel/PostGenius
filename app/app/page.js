@@ -15413,7 +15413,7 @@ async function photoToSlideDataUrl(file, { w, h }, fit) {
   return canvas.toDataURL("image/png");
 }
 
-function PhotoCarouselBlock({ initial = null, onImages, hasOtherMedia = false }) {
+function PhotoCarouselBlock({ initial = null, onImages, hasOtherMedia = false, standalone = false }) {
   const start = (() => { try { const a = typeof initial === "string" ? JSON.parse(initial) : initial; return Array.isArray(a) ? a : []; } catch { return []; } })();
   const [images, setImages] = useState(start);
   const [format, setFormat] = useState("portrait");
@@ -15465,7 +15465,7 @@ function PhotoCarouselBlock({ initial = null, onImages, hasOtherMedia = false })
   const busy = Boolean(progress);
 
   return (
-    <div className="border-t border-gray-100 mt-4 pt-4" data-testid="photo-carousel-block">
+    <div className={standalone ? "" : "border-t border-gray-100 mt-4 pt-4"} data-testid="photo-carousel-block">
       <p className="text-sm font-semibold text-[#1b2a4a]">Carrousel de mes photos</p>
       <p className="text-xs text-gray-500 mt-0.5 mb-3">
         Choisissez vos photos : elles sont mises au même format et publiées sur LinkedIn en carrousel (document PDF) avec le texte du post.
@@ -15909,6 +15909,7 @@ export default function Home() {
   const [editingResult, setEditingResult] = useState(false);
   const [resultPoll, setResultPoll] = useState(null); // sondage du post en cours de création (enregistré avec le brouillon)
   const [resultSlides, setResultSlides] = useState(null); // images du carrousel à publier en PDF (null = pas de PDF)
+  const [resultCarouselMode, setResultCarouselMode] = useState("ia"); // post à plan de slides : slides IA | mes photos
   const [resultMentions, setResultMentions] = useState([]); // pages/personnes taguées dans le post en cours de création (enregistrées avec le brouillon)
   const resultAreaRef = useRef(null);
   const [resultDraftText, setResultDraftText] = useState("");
@@ -16478,7 +16479,7 @@ export default function Home() {
           pillarId: activeReco?.pillarId ?? null,
           mentions: resultMentions.filter((m) => r.text.includes(`@${m.name}`)),
           poll: resultPoll,
-          documentSlides: r.extra?.slides ? resultSlides : null,
+          documentSlides: resultSlides?.length ? resultSlides : null,
         }),
       });
       const data = await readJson(res);
@@ -16504,6 +16505,7 @@ export default function Home() {
     setResultMentions([]);
     setResultPoll(null);
     setResultSlides(null);
+    setResultCarouselMode("ia");
     setPostImage(null);
     setPostVideo(null);
     setPostYoutube(null);
@@ -18564,8 +18566,26 @@ export default function Home() {
                       ))}
                     </ul>
                     {form.type === "carrousel" && result.extra.slides?.length > 0 && (
-                      <CarouselImagesBlock key={result.text} slides={result.extra.slides} onImages={setResultSlides} />
+                      <>
+                        <div className="flex gap-1 text-xs mt-3" role="tablist" data-testid="carousel-mode">
+                          {[["ia", "Slides créées par l'IA"], ["photos", "Mes photos"]].map(([k, label]) => (
+                            <button key={k} type="button" role="tab" aria-selected={resultCarouselMode === k} onClick={() => { if (resultCarouselMode !== k) { setResultCarouselMode(k); setResultSlides(null); } }}
+                              className={`px-3 py-1.5 rounded-lg border ${resultCarouselMode === k ? "border-[#ff5a5f] bg-[#fff1f1] text-[#ff5a5f] font-medium" : "border-gray-200 text-gray-500 hover:border-gray-300"}`}>{label}</button>
+                          ))}
+                        </div>
+                        {resultCarouselMode === "ia" ? (
+                          <CarouselImagesBlock key={result.text} slides={result.extra.slides} onImages={setResultSlides} />
+                        ) : (
+                          <PhotoCarouselBlock initial={resultSlides} onImages={setResultSlides} hasOtherMedia={Boolean(postImage || postVideo || postYoutube)} />
+                        )}
+                      </>
                     )}
+                  </div>
+                )}
+                {/* Carrousel de ses propres photos : tout post sauf la vidéo ; pour un post à plan de slides IA, voir les onglets ci-dessus */}
+                {form.type !== "video" && !(form.type === "carrousel" && result.extra?.slides?.length > 0) && (
+                  <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5" data-testid="result-photo-carousel">
+                    <PhotoCarouselBlock standalone initial={resultSlides} onImages={setResultSlides} hasOtherMedia={Boolean(postImage || postVideo || postYoutube)} />
                   </div>
                 )}
 
