@@ -52,6 +52,8 @@ model User {
   createdAt DateTime         @default(now())
   role     String  @default("user") // user | admin
   disabled Boolean @default(false) // compte suspendu par un admin
+  leadIcp  String? // client idéal décrit pour qualifier les leads
+  leads    Lead[]  @relation("UserLeads")
 
   // --- Offre / abonnement ---
   plan          String    @default("pro") // essentiel | pro | agence
@@ -192,6 +194,33 @@ model Agency {
 
 // Notification d'équipe (cloche de l'app) : un événement utile pour un membre de l'agence (post à valider, décision du client,
 // erreur de publication, affectation, nouveau membre). Une ligne par destinataire ; `readAt` renseigné une fois lue.
+// Base de leads : personnes qui commentent la page entreprise (ou ajoutées à la main), qualifiées par l'IA face au client idéal décrit par l'utilisateur.
+// LinkedIn ne donne pas toujours le nom ni le poste : ces champs restent modifiables à la main.
+model Lead {
+  id          String    @id @default(cuid())
+  userId      String // propriétaire (le client, pour une agence)
+  user        User      @relation("UserLeads", fields: [userId], references: [id], onDelete: Cascade)
+  source      String    @default("page_comment") // page_comment | manual
+  actorUrn    String? // urn:li:person:… de la personne qui a commenté
+  name        String?
+  headline    String? // poste, tel que LinkedIn ou l'utilisateur le donne
+  company     String?
+  profileUrl  String?
+  commentText String?
+  commentUrn  String?
+  postUrl     String?
+  level       String? // excellent | bon | moyen | faible (null = pas encore qualifié)
+  reason      String?
+  scoredAt    DateTime?
+  status      String    @default("new") // new | tocontact | contacted | won | lost
+  note        String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([userId, commentUrn])
+  @@index([userId, status, createdAt])
+}
+
 model AgencyNotification {
   id        String    @id @default(cuid())
   agencyId  String
