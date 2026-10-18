@@ -80,6 +80,7 @@ model User {
   events    Event[]
   pushSubs  PushSubscription[]
   lifecycleEmails LifecycleEmail[]
+  datalakeBriefs  DatalakeBrief[]
   interactions    InteractionLog[]
   knowledge       KnowledgeSource[]
   stylePosts      StylePost[]
@@ -936,4 +937,19 @@ model EmailLog {
 
   @@index([createdAt])
   @@index([kind, createdAt])
+}
+
+// Synthèse de ce que le moteur a appris des sources d'une entreprise (nul = principale), mise en cache :
+// la « signature » des sources dit si elle est à actualiser.
+model DatalakeBrief {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  contextId String?
+  content   Json
+  stamp     String
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+
+  @@index([userId, contextId])
 }

@@ -6408,6 +6408,169 @@ function RemarkBox({ onApplyNow, onManage, showToast }) {
 // et le post indique les sources utilisées.
 // ----------------------------------------------------------------
 // Éléments de langage : l'IA propose, l'auteur valide. Validés, ils sont injectés dans chaque rédaction de l'entreprise.
+// Moteur du datalake : ce qu'il a appris de vos sources (synthèse), et un échange pour l'affiner. Rien n'est retenu sans votre accord :
+// chaque proposition du moteur (précision, mot à privilégier ou à éviter, formulation) se valide d'un clic.
+const ENGINE_KIND = { precision: "Précision", use: "Mot à privilégier", avoid: "À éviter", phrase: "Formulation type" };
+function EnginePanel({ contextId, sourceCount, showToast, onChanged }) {
+  const [state, setState] = useState(null); // { brief, updatedAt, stale, sourceCount } ; null = chargement
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState(null);
+  const [messages, setMessages] = useState([]); // { role: "user" | "assistant", text, remember?: [{ kind, text, status }] }
+  const [input, setInput] = useState("");
+  const [sending, setSending] = useState(false);
+  const endRef = useRef(null);
+  const qs = contextId ? `?contextId=${encodeURIComponent(contextId)}` : "";
+  const load = () => fetch(`/api/knowledge/engine${qs}`).then(readJson).then((d) => (d.error ? null : setState(d))).catch(() => {});
+  useEffect(() => { load(); }, [contextId, sourceCount]);
+  useEffect(() => { setMessages([]); }, [contextId]);
+  useEffect(() => { endRef.current?.scrollIntoView?.({ block: "nearest" }); }, [messages, sending]);
+
+  const generate = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/knowledge/engine/brief", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ contextId }) });
+      const d = await readJson(res);
+      if (!res.ok) throw new Error(d.error || "Erreur");
+      setState(d);
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+  const send = async (raw) => {
+    const message = (raw ?? input).trim();
+    if (!message || sending) return;
+    const history = messages.map((m) => ({ role: m.role, text: m.text }));
+    setMessages((ms) => [...ms, { role: "user", text: message }]);
+    setInput("");
+    setSending(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/knowledge/engine/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ contextId, message, history }) });
+      const d = await readJson(res);
+      if (!res.ok) throw new Error(d.error || "Erreur");
+      setMessages((ms) => [...ms, { role: "assistant", text: d.reply, remember: (d.remember ?? []).map((r) => ({ ...r, status: null })) }]);
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setSending(false);
+    }
+  };
+  const setStatus = (mi, ri, status) => setMessages((ms) => ms.map((m, i) => (i === mi ? { ...m, remember: m.remember.map((r, j) => (j === ri ? { ...r, status } : r)) } : m)));
+  const retain = async (mi, ri) => {
+    const r = messages[mi].remember[ri];
+    setStatus(mi, ri, "busy");
+    try {
+      const res = await fetch("/api/knowledge/engine/remember", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ contextId, kind: r.kind, text: r.text }) });
+      const d = await readJson(res);
+      if (!res.ok) throw new Error(d.error || "Erreur");
+      setStatus(mi, ri, "ok");
+      showToast(d.applied === "element" ? "Ajouté à vos éléments de langage ✓" : "Précision retenue : le moteur l'utilisera dans vos prochains posts ✓");
+      onChanged?.();
+    } catch (e) {
+      setStatus(mi, ri, null);
+      showToast(e.message);
+    }
+  };
+
+  const brief = state?.brief;
+  const label = "text-[11px] font-medium uppercase tracking-wide text-gray-400 mb-1.5";
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4" data-testid="engine-panel">
+      <div className="flex items-start justify-between gap-3 flex-wrap">
+        <div>
+          <h3 className="font-semibold text-sm flex items-center gap-2"><Sparkles size={15} className="text-[#ff5a5f]" /> Ce que le moteur a appris de vous</h3>
+          <p className="text-xs text-gray-400 mt-0.5">Une synthèse de vos sources, à vérifier. Corrigez-la ou précisez-la en échangeant avec le moteur, ci-dessous.</p>
+        </div>
+        <div className="flex items-center gap-2">
+          {state?.stale && <span className="text-[11px] px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200" data-testid="engine-stale">Vos sources ont changé</span>}
+          <button type="button" onClick={generate} disabled={busy || !state?.sourceCount} data-testid="engine-generate" className="text-xs font-medium bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white px-3 py-1.5 rounded-lg flex items-center gap-1.5">
+            {busy ? <RefreshCw size={12} className="animate-spin" /> : <RefreshCw size={12} />} {brief ? "Actualiser" : "Générer la synthèse"}
+          </button>
+        </div>
+      </div>
+
+      {brief ? (
+        <div className="space-y-3 text-sm text-gray-700" data-testid="engine-brief">
+          {brief.headline && <p className="font-medium text-[#1b2a4a]">{brief.headline}</p>}
+          {brief.business && <p>{brief.business}</p>}
+          {brief.positions?.length > 0 && (
+            <div><p className={label}>Ce que vous défendez</p><ul className="space-y-1">{brief.positions.map((p) => <li key={p} className="flex gap-2"><span className="text-[#ff5a5f]">•</span><span>{p}</span></li>)}</ul></div>
+          )}
+          {brief.voice && <div><p className={label}>Votre façon de vous exprimer</p><p>{brief.voice}</p></div>}
+          {brief.proofs?.length > 0 && (
+            <div><p className={label}>Chiffres et preuves retenus</p><ul className="space-y-1">{brief.proofs.map((p) => <li key={p} className="flex gap-2"><span className="text-gray-400">›</span><span>{p}</span></li>)}</ul></div>
+          )}
+          {brief.gaps?.length > 0 && (
+            <div><p className={label}>Ce que je ne sais pas encore</p><ul className="space-y-1">{brief.gaps.map((p) => <li key={p} className="flex gap-2"><span className="text-amber-500">?</span><span>{p}</span></li>)}</ul></div>
+          )}
+          {brief.questions?.length > 0 && (
+            <div>
+              <p className={label}>Pour m'aider à mieux vous comprendre</p>
+              <div className="flex flex-wrap gap-1.5">{brief.questions.map((q) => <button key={q} type="button" onClick={() => send(q)} disabled={sending} className="text-xs px-2.5 py-1 rounded-full border border-gray-200 hover:border-[#ff5a5f] hover:bg-[#fff1f1] text-left">{q}</button>)}</div>
+            </div>
+          )}
+        </div>
+      ) : state && (
+        <p className="text-xs text-gray-400">{state.sourceCount ? "Générez la synthèse pour voir ce que le moteur a compris de vos sources." : "Ajoutez une source : le moteur n'a encore rien lu."}</p>
+      )}
+
+      <div className="border-t border-gray-100 pt-4">
+        <p className="text-sm font-semibold mb-2">Échanger avec le moteur</p>
+        {messages.length > 0 && (
+          <div className="max-h-96 overflow-y-auto space-y-3 mb-3 pr-1" data-testid="engine-chat">
+            {messages.map((m, mi) => (
+              <div key={mi} className={m.role === "user" ? "flex justify-end" : ""}>
+                <div className={`max-w-[92%] rounded-2xl px-3.5 py-2.5 text-sm ${m.role === "user" ? "bg-[#1b2a4a] text-white" : "bg-gray-50 text-gray-800"}`}>
+                  <p className="whitespace-pre-line">{m.text}</p>
+                  {m.remember?.length > 0 && (
+                    <ul className="mt-2 space-y-1.5" data-testid="engine-remember">
+                      {m.remember.map((r, ri) => (
+                        <li key={ri} className="rounded-lg bg-white border border-gray-200 px-2.5 py-2 text-xs text-gray-700">
+                          <span className="text-[10px] uppercase tracking-wide bg-gray-100 text-gray-500 rounded px-1.5 py-0.5 mr-1.5">{ENGINE_KIND[r.kind] ?? r.kind}</span>{r.text}
+                          <span className="block mt-1.5">
+                            {r.status === "ok" ? <span className="text-green-600">Retenu ✓</span> : r.status === "ignored" ? <span className="text-gray-400">Ignoré</span> : (
+                              <>
+                                <button type="button" onClick={() => retain(mi, ri)} disabled={r.status === "busy"} className="font-medium text-[#ff5a5f] hover:underline mr-3" data-testid="engine-retain">Retenir</button>
+                                <button type="button" onClick={() => setStatus(mi, ri, "ignored")} className="text-gray-400 hover:text-gray-600">Ignorer</button>
+                              </>
+                            )}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </div>
+            ))}
+            {sending && <p className="text-xs text-gray-400 flex items-center gap-1.5"><RefreshCw size={12} className="animate-spin" /> Le moteur réfléchit…</p>}
+            <div ref={endRef} />
+          </div>
+        )}
+        <div className="flex gap-2">
+          <textarea
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
+            rows={2}
+            maxLength={800}
+            placeholder="Demandez ce qu'il sait (« que sais-tu de mon offre ? »), corrigez-le (« non, nous ne disons pas… ») ou complétez-le."
+            className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f] resize-none"
+            data-testid="engine-input"
+          />
+          <button type="button" onClick={() => send()} disabled={sending || !input.trim() || !state?.sourceCount} data-testid="engine-send" className="self-end bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white p-2.5 rounded-lg" aria-label="Envoyer">
+            <Send size={15} />
+          </button>
+        </div>
+        <p className="text-[11px] text-gray-400 mt-1.5">Ce que vous faites retenir est ajouté à vos éléments de langage ou à la note « Précisions de l&apos;auteur », utilisée pour tous vos prochains posts.</p>
+        {error && <p className="text-xs text-red-500 mt-2">{error}</p>}
+      </div>
+    </div>
+  );
+}
+
 function LanguagePanel({ contextId, contextName, sourceCount, showToast }) {
   const [data, setData] = useState({ elements: [], proposals: [] });
   const [busy, setBusy] = useState(false);
@@ -6544,6 +6707,7 @@ function KnowledgePanel({ showToast, onCount, activeContextId = null, hasContext
   const [kindFilter, setKindFilter] = useState("all");
   const [themeFilter, setThemeFilter] = useState(null);
   const [enriching, setEnriching] = useState(null); // { done, total } pendant la relecture des anciennes sources
+  const [engineKey, setEngineKey] = useState(0); // change quand le moteur retient quelque chose : recharge les éléments de langage
   const [tab, setTab] = useState("note"); // note | link
   const [title, setTitle] = useState("");
   const [text, setText] = useState("");
@@ -6772,6 +6936,7 @@ function KnowledgePanel({ showToast, onCount, activeContextId = null, hasContext
               )}
             </div>
           )}
+          {data && used > 0 && <EnginePanel contextId={activeContextId} sourceCount={inScope.length} showToast={showToast} onChanged={() => { load(); setEngineKey((k) => k + 1); }} />}
           {inScope.length > 0 && synth.themes.length + synth.vocabulary.length + synth.positions.length > 0 && (
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4" data-testid="datalake-synthesis">
               <h3 className="font-semibold text-sm">Ce que l&apos;outil a retenu</h3>
@@ -6810,7 +6975,7 @@ function KnowledgePanel({ showToast, onCount, activeContextId = null, hasContext
             </div>
           )}
           {data && <DatalakePosts contextId={activeContextId} onGoHistory={onGoHistory} />}
-          {data && used > 0 && <LanguagePanel contextId={activeContextId} contextName={hasContexts ? ctxList.find((c) => c.id === activeContextId)?.name ?? "entreprise principale" : ""} sourceCount={inScope.length} showToast={showToast} />}
+          {data && used > 0 && <LanguagePanel key={engineKey} contextId={activeContextId} contextName={hasContexts ? ctxList.find((c) => c.id === activeContextId)?.name ?? "entreprise principale" : ""} sourceCount={inScope.length} showToast={showToast} />}
           {data && used > 0 && (
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-2" data-testid="datalake-sources">
               {visible.length === 0 ? (
