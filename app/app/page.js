@@ -10900,6 +10900,7 @@ function OnboardingFirstPost({ fields, saving, showToast, onFinish, onBack, forC
 const ONBOARDING_STEPS = [
   { kind: "identity", stageId: "identity", short: "Vous", title: "Bienvenue ! Qui êtes-vous ?" },
   { kind: "company", stageId: "audience", short: "Entreprise", title: "Et votre entreprise ?" },
+  { kind: "lead", stageId: "leads", short: "Leads", title: "Qui voulez-vous atteindre ?" },
   { kind: "voice", stageId: "voice", short: "Votre voix", title: "Votre façon d'écrire" },
   { kind: "firstpost", stageId: null, short: "Premier post", title: "Votre premier post" }, // écran final : le copilote écrit sous les yeux du client
 ];
@@ -10907,6 +10908,7 @@ const ONBOARDING_STEPS = [
 // Agence : un client est d'abord une entreprise (sa page LinkedIn) ; la personne éventuelle vient en dernier.
 const ONBOARDING_CLIENT_STEPS = [
   { kind: "company", stageId: "audience", short: "Entreprise", title: "Son entreprise" },
+  { kind: "lead", stageId: "leads", short: "Leads", title: "Qui veut-il atteindre ?" },
   { kind: "voice", stageId: "voice", short: "Sa voix", title: "Sa façon d'écrire" },
   { kind: "page", stageId: null, short: "Page LinkedIn", title: "Sa page LinkedIn" },
   { kind: "firstpost", stageId: null, short: "Premier post", title: "Son premier post" },
@@ -10975,6 +10977,7 @@ function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast,
     companyName: profile?.companyName ?? "",
     businessDescription: profile?.businessDescription ?? "",
     targetAudience: profile?.targetAudience ?? "",
+    leadIcp: profile?.leadIcp ?? "",
     market: profile?.market ?? "",
     commGoals: profile?.commGoals ?? "",
     expertise: profile?.expertise ?? "",
@@ -11104,7 +11107,7 @@ function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast,
               </div>
             ))}
           </div>
-          <p className="text-xs text-gray-400 mt-1">{forClient ? "L'entreprise, sa voix, sa page LinkedIn, puis un premier post. Le reste se complète plus tard, au fil de l'usage." : "Trois questions, puis votre premier post : environ 5 minutes. Le reste se complète plus tard, au fil de l'usage."}</p>
+          <p className="text-xs text-gray-400 mt-1">{forClient ? "L'entreprise, sa cible, sa voix, sa page LinkedIn, puis un premier post. Le reste se complète plus tard, au fil de l'usage." : "Quatre questions, puis votre premier post : environ 5 minutes. Le reste se complète plus tard, au fil de l'usage."}</p>
         </div>
 
         {isFirstPost && <OnboardingFirstPost forClient={Boolean(forClient)} fields={fields} saving={saving} showToast={showToast} stepNo={step + 1} stepTotal={flow.length} target={pageUrn} onFinish={() => (forClient ? setStep(step + 1) : save(true))} onBack={() => setStep(step - 1)} />}
@@ -11234,10 +11237,6 @@ function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast,
                 />
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700 block mb-1.5">{me("Votre cible sur LinkedIn", "Sa cible sur LinkedIn")}</label>
-                <input type="text" value={fields.targetAudience} onChange={(e) => set("targetAudience", e.target.value)} placeholder="ex : dirigeants de PME industrielles 50-500 salariés, DAF, DSI" className={inputCls} />
-              </div>
-              <div>
                 <label className="text-sm font-medium text-gray-700 block mb-2">{me("Objectifs de votre communication", "Objectifs de sa communication")}</label>
                 <div className="flex flex-wrap gap-1.5">
                   {COMM_GOALS.map((g) => (
@@ -11258,6 +11257,30 @@ function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast,
                   placeholder="ex : marché dominé par les grands cabinets ; nous nous différencions par la proximité et le forfait"
                   className={inputCls}
                 />
+              </div>
+            </div>
+          )}
+
+          {kind === "lead" && (
+            <div className="space-y-4" data-testid="wizard-lead-step">
+              <div>
+                <label className="text-sm font-medium text-gray-700 block mb-1.5">{me("Votre cible sur LinkedIn", "Sa cible sur LinkedIn")}</label>
+                <input type="text" value={fields.targetAudience} onChange={(e) => set("targetAudience", e.target.value)} placeholder="ex : dirigeants de PME industrielles 50-500 salariés, DAF, DSI" className={inputCls} data-testid="wizard-target" />
+                <p className="text-[11px] text-gray-400 mt-1">{me("Elle oriente vos posts et sert de point de départ pour repérer vos leads.", "Elle oriente ses posts et sert de point de départ pour repérer ses leads.")}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700 block mb-1.5">
+                  {me("Qu'est-ce qu'un bon lead pour vous ?", "Qu'est-ce qu'un bon lead pour lui ?")} <span className="text-gray-400 font-normal">(facultatif)</span>
+                </label>
+                <textarea
+                  rows={3}
+                  value={fields.leadIcp}
+                  onChange={(e) => set("leadIcp", e.target.value)}
+                  placeholder={"ex : DRH ou dirigeant d'une PME de 20 à 200 salariés, qui parle de recrutement ou de marque employeur, ou qui pose une question sur notre offre"}
+                  className={inputCls}
+                  data-testid="wizard-leadicp"
+                />
+                <p className="text-[11px] text-gray-400 mt-1">Fonction, taille d&apos;entreprise, secteur, signaux d&apos;intérêt. Quand quelqu&apos;un commente votre page, l&apos;IA compare la personne à cette description et la note (excellent, bon, moyen, faible) dans votre base de leads. Aucun message n&apos;est envoyé.</p>
               </div>
             </div>
           )}
@@ -13985,11 +14008,21 @@ const PROFILE_STAGES = [
     items: [
       { label: "Le nom de l'entreprise ou de la marque", done: (f) => hasText(f.companyName) },
       { label: "Son activité", done: (f) => hasText(f.businessDescription) },
-      { label: "Sa cible sur LinkedIn", done: (f) => hasText(f.targetAudience) },
       { label: "Son positionnement", done: (f) => hasText(f.market) },
       { label: "Ses objectifs de communication", done: (f) => hasText(f.commGoals) },
       { label: "Sa ligne éditoriale", bonus: true, done: (f) => hasText(f.editorialLine) },
       { label: "La voix de sa page entreprise", bonus: true, done: (f) => hasText(f.brandVoice) },
+    ],
+  },
+  {
+    id: "leads",
+    title: "Vos leads",
+    time: "1 min",
+    icon: Users,
+    why: "Dites à qui vous voulez parler et ce qu'est un bon lead pour vous : vos posts visent la bonne cible, et les personnes qui commentent votre page sont comparées à cette description pour être notées dans votre base de leads.",
+    items: [
+      { label: "Sa cible sur LinkedIn", done: (f) => hasText(f.targetAudience) },
+      { label: "Ce qu'est un bon lead", bonus: true, done: (f) => hasText(f.leadIcp) },
     ],
   },
   {
@@ -14032,7 +14065,8 @@ const PROFILE_STAGES = [
 // Champ du profil → étape qui le contient (liens « Compléter » venus d'autres écrans)
 const PROFILE_FIELD_STAGE = {
   name: "identity", headline: "identity", expertise: "identity",
-  companyName: "audience", website: "audience", brandVoice: "audience", editorialLine: "audience", businessDescription: "audience", targetAudience: "audience", market: "audience", commGoals: "audience",
+  companyName: "audience", website: "audience", brandVoice: "audience", editorialLine: "audience", businessDescription: "audience", market: "audience", commGoals: "audience",
+  targetAudience: "leads", leadIcp: "leads",
   themes: "voice", styleNotes: "voice", remarks: "voice",
   knowledge: "sources", editorialNote: "sources",
   publishDays: "rhythm",
@@ -14788,6 +14822,7 @@ function ProfileView({ contexts = [], onContextsChanged, profile, onSaved, showT
     editorialLine: profile?.editorialLine ?? "",
     businessDescription: profile?.businessDescription ?? "",
     targetAudience: profile?.targetAudience ?? "",
+    leadIcp: profile?.leadIcp ?? "",
     market: profile?.market ?? "",
     commGoals: profile?.commGoals ?? "",
     expertise: profile?.expertise ?? "",
@@ -15041,10 +15076,7 @@ function ProfileView({ contexts = [], onContextsChanged, profile, onSaved, showT
                   <ProfileField id="field-businessDescription" label="Activité — que faites-vous, pour qui, avec quelle valeur ajoutée ?" why="C'est la matière première des exemples et des cas types : ce que vous vendez, et ce que cela change pour vos clients." example="Cabinet de conseil en transformation digitale pour PME industrielles">
                     <textarea rows={3} value={fields.businessDescription} onChange={(e) => set("businessDescription", e.target.value)} placeholder="ex : cabinet de conseil en transformation digitale pour PME industrielles" className={input} />
                   </ProfileField>
-                  <div className="grid sm:grid-cols-2 gap-4">
-                    <ProfileField id="field-targetAudience" label="Cible sur LinkedIn" why="Un post écrit pour « tout le monde » ne touche personne. Précisez la fonction et le secteur de ceux que vous voulez atteindre." example="DRH et directeurs de la communication d'ETI industrielles">
-                      <input type="text" value={fields.targetAudience} onChange={(e) => set("targetAudience", e.target.value)} placeholder="ex : dirigeants de PME, DAF, DSI" className={input} />
-                    </ProfileField>
+                  <div>
                     <ProfileField id="field-market" label="Marché & positionnement" why="Ce qui vous distingue de vos concurrents : le copilote s'en sert pour vos prises de position." example="Différenciation par la proximité et le sur-mesure">
                       <input type="text" value={fields.market} onChange={(e) => set("market", e.target.value)} placeholder="ex : différenciation par la proximité" className={input} />
                     </ProfileField>
@@ -15065,6 +15097,18 @@ function ProfileView({ contexts = [], onContextsChanged, profile, onSaved, showT
                     <textarea rows={2} value={fields.brandVoice} onChange={(e) => set("brandVoice", e.target.value)} placeholder="ex : nous tutoyons, phrases courtes, jamais de jargon" className={input} data-testid="field-brandVoice-input" />
                   </ProfileField>
                   <ContextsManager contexts={contexts} onChanged={onContextsChanged} showToast={showToast} />
+                </div>
+              )}
+
+              {/* Leads : la cible et ce qui fait un bon lead (la note des leads de la page s'appuie dessus) */}
+              {stage.id === "leads" && (
+                <div className="space-y-4">
+                  <ProfileField id="field-targetAudience" label="Cible sur LinkedIn" why="Un post écrit pour « tout le monde » ne touche personne. Précisez la fonction et le secteur de ceux que vous voulez atteindre." example="DRH et directeurs de la communication d'ETI industrielles">
+                    <input type="text" value={fields.targetAudience} onChange={(e) => set("targetAudience", e.target.value)} placeholder="ex : dirigeants de PME, DAF, DSI" className={input} />
+                  </ProfileField>
+                  <ProfileField id="field-leadIcp" label="Ce qu'est un bon lead" hint="(facultatif)" why="Quand quelqu'un commente votre page, l'IA compare la personne à cette description et la note dans votre base de leads : fonction, taille d'entreprise, secteur, signaux d'intérêt." example="DRH ou dirigeant de PME de 20 à 200 salariés qui parle de recrutement, ou qui pose une question sur l'offre">
+                    <textarea rows={3} value={fields.leadIcp} onChange={(e) => set("leadIcp", e.target.value)} maxLength={800} placeholder="ex : DRH de PME qui cherchent à développer leur marque employeur" className={input} />
+                  </ProfileField>
                 </div>
               )}
 

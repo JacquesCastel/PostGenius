@@ -21,6 +21,7 @@ const STRING_FIELDS = [
   "publishDays",
   "publishTime",
   "editorialNote",
+  "leadIcp",
 ];
 const INT_FIELDS = { defaultMaxChars: [300, 3000], postsPerWeek: [1, 7], autoPublishThreshold: [50, 100] };
 const BOOL_FIELDS = ["requireValidation", "autoGenerate"];
@@ -51,7 +52,7 @@ export async function PUT(req) {
       const v = body[key]?.toString().trim() || null;
       // Réinjectée à chaque génération de recommandations (voir buildPrompt
       // dans lib/editorial/recommendations.js) : on borne sa taille.
-      data[key] = key === "editorialNote" && v ? v.slice(0, 500) : v;
+      data[key] = key === "editorialNote" && v ? v.slice(0, 500) : key === "leadIcp" && v ? v.slice(0, 800) : v;
     }
   }
   for (const [key, [min, max]] of Object.entries(INT_FIELDS)) {
