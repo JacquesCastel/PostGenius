@@ -61,6 +61,7 @@ function LeadCard({ lead, onChange, onDelete }) {
 export default function LeadsView({ showToast }) {
   const [data, setData] = useState(null);
   const [icp, setIcp] = useState("");
+  const [target, setTarget] = useState(""); // cible du profil, ajoutée aux critères de la note
   const [icpSaved, setIcpSaved] = useState(true);
   const [busy, setBusy] = useState(null); // "icp" | "score"
   const [filter, setFilter] = useState({ status: "", level: "" });
@@ -70,7 +71,7 @@ export default function LeadsView({ showToast }) {
 
   const load = async () => {
     const d = await fetch("/api/leads").then(json);
-    if (d.leads) { setData(d); setIcp(d.icp ?? ""); }
+    if (d.leads) { setData(d); setIcp(d.icp ?? ""); setTarget(d.target ?? ""); }
     else setError(d.error || "Chargement impossible");
   };
   useEffect(() => { load().catch(() => setError("Chargement impossible")); }, []);
@@ -79,7 +80,7 @@ export default function LeadsView({ showToast }) {
     setBusy("icp");
     const res = await fetch("/api/leads/icp", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ icp }) });
     setBusy(null);
-    if (res.ok) { setIcpSaved(true); showToast("Client idéal enregistré ✓"); } else showToast((await json(res)).error || "Enregistrement impossible");
+    if (res.ok) { setIcpSaved(true); showToast("Critères enregistrés ✓"); } else showToast((await json(res)).error || "Enregistrement impossible");
   };
   const score = async () => {
     if (busy) return;
@@ -133,11 +134,12 @@ export default function LeadsView({ showToast }) {
       <div className={card}>
         <p className="text-sm font-semibold flex items-center gap-2"><Users size={15} className="text-[#ff5a5f]" /> Base de leads</p>
         <p className="text-xs text-gray-400 mt-1">Les personnes qui commentent votre page entreprise sont ajoutées ici automatiquement, avec leur commentaire. L&apos;IA les note selon votre client idéal. LinkeePost n&apos;envoie aucun message : le contact reste entre vos mains.</p>
-        <label className="block text-xs font-medium text-gray-500 mt-4 mb-1">Votre client idéal</label>
+        <label className="block text-xs font-medium text-gray-500 mt-4 mb-1">Ce qu'est un bon lead pour vous</label>
         <textarea value={icp} onChange={(e) => { setIcp(e.target.value); setIcpSaved(false); }} rows={3} maxLength={800} placeholder="Ex. : dirigeants de PME de 20 à 200 salariés en France, qui veulent développer leur marque employeur" className={field} data-testid="leads-icp" />
+        {target && <p className="text-[11px] text-gray-400 mt-1" data-testid="leads-target">Votre cible sur LinkedIn est aussi prise en compte : « {target} ». Elle se modifie dans le Profil, étape « Vos leads ».</p>}
         <div className="flex flex-wrap gap-2 mt-3">
           <button type="button" onClick={saveIcp} disabled={busy || icpSaved} className="text-sm font-medium px-4 py-2 rounded-lg border border-gray-200 disabled:opacity-40" data-testid="leads-icp-save">Enregistrer</button>
-          <button type="button" onClick={score} disabled={busy || !icp.trim() || !leads.length} className="text-sm font-medium px-4 py-2 rounded-lg bg-[#ff5a5f] text-white flex items-center gap-2 disabled:opacity-40" data-testid="leads-score"><Sparkles size={14} /> {busy === "score" ? "Qualification…" : unscored ? `Qualifier avec l'IA (${unscored})` : "Tout est qualifié"}</button>
+          <button type="button" onClick={score} disabled={busy || !(icp.trim() || target.trim()) || !leads.length} className="text-sm font-medium px-4 py-2 rounded-lg bg-[#ff5a5f] text-white flex items-center gap-2 disabled:opacity-40" data-testid="leads-score"><Sparkles size={14} /> {busy === "score" ? "Qualification…" : unscored ? `Qualifier avec l'IA (${unscored})` : "Tout est qualifié"}</button>
           <button type="button" onClick={() => setAdding((v) => !v)} className="text-sm font-medium px-4 py-2 rounded-lg border border-gray-200 flex items-center gap-2" data-testid="leads-add"><Plus size={14} /> Ajouter une personne</button>
           {leads.length > 0 && <button type="button" onClick={download} className="text-sm font-medium px-4 py-2 rounded-lg border border-gray-200 flex items-center gap-2" data-testid="leads-csv"><Download size={14} /> Exporter</button>}
         </div>

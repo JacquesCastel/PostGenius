@@ -12,10 +12,10 @@ export async function GET(req) {
   if (!userId) return NextResponse.json({ error: "Non connecté." }, { status: 401 });
   const [leads, user, acc] = await Promise.all([
     prisma.lead.findMany({ where: { userId }, orderBy: { createdAt: "desc" }, take: MAX_LEADS }),
-    prisma.user.findUnique({ where: { id: userId }, select: { leadIcp: true } }),
+    prisma.user.findUnique({ where: { id: userId }, select: { leadIcp: true, targetAudience: true } }),
     prisma.linkedInAccount.findUnique({ where: { userId }, select: { orgToken: true } }),
   ]);
-  return NextResponse.json({ leads, icp: user?.leadIcp ?? "", pageConnected: Boolean(acc?.orgToken) });
+  return NextResponse.json({ leads, icp: user?.leadIcp ?? "", target: user?.targetAudience ?? "", pageConnected: Boolean(acc?.orgToken) });
 }
 
 // Ajout à la main d'une personne
