@@ -86,7 +86,7 @@ const STEPS = [
   {
     icon: BarChart3,
     title: "Suivez les retours réels",
-    text: "Commentaires, réactions et impressions de vos pages entreprise : ce sont les retours de LinkedIn, pas des estimations. Commentez et répondez à votre réseau depuis l'écran Interagir, avec des suggestions écrites dans votre voix. Avec l'offre Agence : modules Événements et validation par vos clients.",
+    text: "Commentaires, réactions et impressions de vos pages entreprise : ce sont les retours de LinkedIn, pas des estimations. Commentez et répondez à votre réseau depuis l'écran Interagir, avec des suggestions écrites dans votre voix : avec l'offre Agence, quand quelqu'un commente la page entreprise, vous êtes prévenu et les auteurs rejoignent une base de leads notée par l'IA selon votre client idéal. Avec l'offre Agence : modules Événements et validation par vos clients.",
     visual: (
       <div className="flex items-end gap-1.5 h-16 max-w-[10rem]">
         {[40, 60, 50, 80, 95].map((h, i) => (

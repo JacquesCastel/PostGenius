@@ -2,7 +2,7 @@ import Link from "next/link";
 import {
   Sparkles, Megaphone, Eye, Clock, BarChart3, Image as ImageIcon, Check, ChevronRight,
   ShieldCheck, CalendarDays, Layers, UserRound, Send, ThumbsUp, MessageSquare, Share2, Rss, ArrowRight, MapPin, Bell,
-  MessageCircle, Video, Languages, Smile, Mic, Heart,
+  MessageCircle, Video, Languages, Smile, Mic, Heart, BookOpen, Users, Database,
 } from "lucide-react";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
@@ -10,7 +10,7 @@ import SiteFooter from "@/components/SiteFooter";
 export const metadata = {
   title: "Fonctionnalités — LinkeePost",
   description:
-    "Base de connaissances, voix et éléments de langage, mémoire éditoriale, campagnes guidées, veille, images et vidéos, programmation, statistiques : toutes les fonctions de LinkeePost.",
+    "Base de connaissances, voix et éléments de langage, partage de liens, mémoire éditoriale, campagnes guidées, base de leads, veille, images et vidéos, programmation, statistiques : toutes les fonctions de LinkeePost.",
   alternates: { canonical: "/fonctionnalites" },
 };
 
@@ -134,9 +134,41 @@ export default function FonctionnalitesPage() {
           </Card>
         </Feature>
 
-        {/* Copilote éditorial */}
+        {/* Base de connaissances (datalake) */}
         <Feature
           reverse
+          tag="Votre matière"
+          title="Une base de connaissances que le moteur sait résumer"
+          text="Déposez documents, liens et notes : LinkeePost en retient les faits, les cas et les positions, et vos posts sont conçus pour les reprendre sans rien inventer. Le moteur résume ce qu'il a appris de vous ; vous échangez avec lui pour corriger ou préciser, et rien n'est retenu sans votre clic. Un article ou un post vu en ligne s'envoie d'un geste depuis le menu Partager du téléphone (Android) ou un favori du navigateur."
+          points={[
+            "Résumé de ce que le moteur a appris : positions, voix, preuves, zones d'ombre",
+            "Échange avec le moteur pour affiner : ce qu'il propose de retenir attend votre accord",
+            "Chaque chiffre repris doit se retrouver dans une source, citée dans le post",
+            "Partager vers LinkeePost : commenter, écrire un post ou garder un lien dans la base",
+          ]}
+        >
+          <Card>
+            <p className="text-xs font-semibold flex items-center gap-1.5 mb-3">
+              <Database size={15} className="text-[#ff5a5f]" /> Ce que le moteur a appris
+            </p>
+            <div className="rounded-xl border border-gray-100 p-3 mb-3">
+              <p className="text-sm font-semibold">Une idée par post, pas de promesse sans preuve.</p>
+              <p className="text-xs text-gray-400 mt-1">Appuyé sur 12 sources · à actualiser</p>
+            </div>
+            <div className="space-y-1.5">
+              <div className="text-xs bg-[#0a66c2] text-white rounded-lg px-2.5 py-1.5 ml-auto w-fit max-w-[85%]">
+                Nous ne parlons jamais de « leader »
+              </div>
+              <div className="text-xs bg-gray-50 border border-gray-100 rounded-lg px-2.5 py-1.5 w-fit max-w-[85%]">
+                Je peux le retenir comme mot à éviter : l&apos;ajouter ?
+              </div>
+            </div>
+            <p className="text-xs text-[#5a6b85] mt-3 flex items-center gap-1.5"><BookOpen size={13} className="text-[#ff5a5f]" /> Retenu seulement après votre clic</p>
+          </Card>
+        </Feature>
+
+        {/* Copilote éditorial */}
+        <Feature
           tag="Copilote éditorial"
           title="Un agent avec qui échanger pour savoir quoi publier"
           text="Chaque jour, le copilote propose des sujets de post argumentés — construits à partir de votre profil, de vos piliers éditoriaux et de votre historique récent, pour ne jamais répéter un angle déjà traité. Pas convaincu par une proposition ? Discutez-en avec lui : il précise, ajuste, et retient vos choix pour la suite."
@@ -171,11 +203,13 @@ export default function FonctionnalitesPage() {
 
         {/* 2. Génération IA */}
         <Feature
+          reverse
           tag="Génération"
           title="Des posts prêts à publier en un clic"
           text="Un thème, un ton, une humeur, et l'IA rédige : accroche forte, corps aéré, question finale, hashtags. Post simple, carrousel ou vidéo — vous retouchez, demandez des variantes ou faites réécrire, dans la langue de votre audience."
           points={[
             "Posts simples, carrousels (publiés en document PDF sur LinkedIn) et scripts vidéo",
+            "Carrousel de vos propres photos : ajoutez, ordonnez, retirez, au format portrait ou carré",
             "Sondages LinkedIn : une question, 2 à 4 réponses, la durée de votre choix",
             "Bibliothèque de contenus : accroches, conclusions et posts qui ont marché, réutilisables en un clic",
             "Mentions de pages et de personnes dès la création du post",
@@ -208,7 +242,6 @@ export default function FonctionnalitesPage() {
 
         {/* Contrôle de forme (offre Pro) */}
         <Feature
-          reverse
           tag="Contrôle de forme · offre Pro"
           title="Un contrôle de forme, et la réécriture en un clic"
           text="Chaque post reçoit une note de forme sur 100, calculée par une grille de règles fixes : accroche, longueur, aération, appel à l'action. L'IA propose en plus des conseils de fond. Ce n'est pas une prévision de résultats : c'est un indicateur de qualité de forme. Réécrivez l'accroche, le corps ou la signature, et l'historique conserve chaque version. Inclus à partir de l'offre Pro."
@@ -253,6 +286,7 @@ export default function FonctionnalitesPage() {
 
         {/* 3. Campagnes */}
         <Feature
+          reverse
           tag="Campagnes"
           title="Des campagnes guidées par l'IA"
           text="Choisissez un thème, l'IA vous pose quelques questions de cadrage, valide un post d'exemple avec vous, puis génère et planifie une série cohérente qui progresse vers votre message clé."
@@ -286,7 +320,6 @@ export default function FonctionnalitesPage() {
 
         {/* 4. Veille connectée */}
         <Feature
-          reverse
           tag="Veille"
           title="Une veille connectée à votre secteur"
           text="Branchez vos sources (sites, flux RSS) : LinkeePost surveille l'actualité de votre domaine et vous propose des inspirations. Un article pertinent devient un post — ou une campagne entière."
@@ -314,6 +347,7 @@ export default function FonctionnalitesPage() {
 
         {/* 5. Images IA */}
         <Feature
+          reverse
           tag="Visuels"
           title="Des images générées par IA"
           text="Pour chaque post, une illustration cohérente avec le contenu, créée par IA et publiée avec le texte. Prompt automatique à partir du post, ou personnalisé selon vos envies."
@@ -335,7 +369,6 @@ export default function FonctionnalitesPage() {
 
         {/* Vidéo : kit de tournage, téléprompteur, import */}
         <Feature
-          reverse
           tag="Vidéo"
           title="Filmez avec un kit de tournage, publiez en un clic"
           text="Pour chaque post vidéo, LinkeePost prépare un plan de tournage plan par plan : ce que vous dites, ce qu'on voit à l'image, le texte à incruster, et des conseils adaptés au sujet. Lisez votre script face caméra grâce au téléprompteur, puis importez votre vidéo : elle est publiée directement sur LinkedIn avec votre texte."
@@ -363,11 +396,14 @@ export default function FonctionnalitesPage() {
 
         {/* Interactions */}
         <Feature
+          reverse
           tag="Interactions"
           title="Commentez et réagissez sans quitter LinkeePost"
           text="Une présence LinkedIn, ce n'est pas que publier. Depuis l'écran Interagir, commentez et réagissez à n'importe quel post LinkedIn, et gardez un journal de vos interactions. Les compteurs de commentaires et de réactions de vos posts publiés rejoignent vos statistiques."
           points={[
             "Commenter et réagir à n'importe quel post LinkedIn par son lien",
+            "Offre Agence : alerte (cloche, e-mail, notification) quand quelqu'un commente la page entreprise, avec son commentaire",
+            "Offre Agence : réponse directement sous le commentaire, au nom de la page, avec une suggestion dans votre voix",
             "Journal de vos commentaires et réactions",
             "Compteurs d'interactions de vos posts dans les statistiques",
           ]}
@@ -380,6 +416,35 @@ export default function FonctionnalitesPage() {
               <div className="rounded-xl bg-gray-50 border border-gray-100 p-3 text-xs text-[#5a6b85]">Merci pour ce retour d&apos;expérience, très parlant !</div>
               <div className="text-xs text-gray-400">Envoyé via LinkeePost · journalisé</div>
             </div>
+          </Card>
+        </Feature>
+
+        {/* Leads */}
+        <Feature
+          tag="Leads · alimentation automatique : offre Agence"
+          title="Les personnes qui commentent votre page deviennent des leads"
+          text="Chaque commentaire lu sur votre page entreprise ajoute son auteur à votre base de leads, avec son commentaire et le lien du post. Décrivez votre client idéal : l'IA note chaque lead (excellent, bon, moyen, faible) et explique pourquoi. Vous suivez ensuite chaque contact. LinkeePost ne contacte personne à votre place, et ne lit que ce que l'API officielle de LinkedIn fournit."
+          points={[
+            "Alimentation automatique à partir des commentaires de la page entreprise (offre Agence) ; ajout à la main sur toutes les offres",
+            "Notation par l'IA selon votre client idéal, avec la raison",
+            "Statut (nouveau, à contacter, contacté, gagné, perdu), notes, ajout à la main",
+            "Filtres et export CSV ; nom et poste à compléter quand LinkedIn ne les donne pas",
+          ]}
+        >
+          <Card>
+            <div className="flex items-center justify-between mb-3">
+              <p className="font-bold text-sm flex items-center gap-1.5"><Users size={15} className="text-[#ff5a5f]" /> Base de leads</p>
+              <span className="text-xs text-gray-400">2 sur 2</span>
+            </div>
+            {[
+              { n: "Claire Martin", d: "DRH · Acme", l: "Excellent", c: "bg-green-100 text-green-800" },
+              { n: "Personne LinkedIn", d: "« Bravo ! »", l: "Faible", c: "bg-gray-100 text-gray-500" },
+            ].map((x) => (
+              <div key={x.n} className="flex items-center justify-between text-xs border-b border-gray-50 py-2">
+                <span><span className="font-semibold">{x.n}</span> <span className="text-gray-400">{x.d}</span></span>
+                <span className={`px-2 py-0.5 rounded-full font-medium ${x.c}`}>{x.l}</span>
+              </div>
+            ))}
           </Card>
         </Feature>
 
@@ -436,6 +501,7 @@ export default function FonctionnalitesPage() {
 
         {/* Validation par le client (offre Agence) */}
         <Feature
+          reverse
           tag="Validation client · offre Agence"
           title="Vos clients valident sans créer de compte"
           text="Chaque client reçoit un lien privé : il relit ses posts, les valide d'un clic ou demande une modification. Un post validé est programmé à sa date ; une demande de modification arrive dans votre file « À traiter »."
@@ -458,7 +524,6 @@ export default function FonctionnalitesPage() {
 
         {/* Événements (offre Agence) */}
         <Feature
-          reverse
           tag="Événements · offre Agence"
           title="Ne ratez plus aucun salon"
           text="Ajoutez vos salons et forums : LinkeePost génère et programme des posts de présence autour des dates (« Nous serons au salon X du A au B, venez nous rencontrer ! »), à partir du lien et de l'image de l'événement. Vous pouvez aussi créer l'événement lui-même sur LinkedIn, au nom de votre page. Le jour J, une notification vous rappelle de poster — et de prendre une photo sur place avec votre téléphone."
