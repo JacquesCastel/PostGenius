@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { Share2, ThumbsUp, PenLine, Database, Check, RefreshCw } from "lucide-react";
+import ShareHowTo from "@/components/ShareHowTo";
 import { cleanShare, shareKind, MIN_NOTE_CHARS, MIN_SOURCE_CHARS } from "@/lib/shareLink";
 
 // Partager vers LinkeePost : un lien reçu du menu Partager du téléphone ou d'un favori du navigateur. L'outil ne peut pas lire un
@@ -17,20 +18,12 @@ export default function ShareView({ payload, activeContextId = null, showToast, 
   const [busy, setBusy] = useState(null); // "base" | "post"
   const [added, setAdded] = useState(false);
   const [error, setError] = useState(null);
-  const bookmarkRef = useRef(null);
   const kind = shareKind(url.trim());
   const textLen = text.trim().length;
   const host = (() => { try { return new URL(url).hostname.replace(/^www\./, ""); } catch { return ""; } })();
   const pasteNeeded = kind !== "web"; // post LinkedIn ou lien non lisible : le texte vient de l'utilisateur
   const canKeep = kind === "web" || textLen >= MIN_NOTE_CHARS;
   const canWrite = kind === "web" || textLen >= MIN_SOURCE_CHARS;
-
-  // Favori du navigateur : posé par le DOM (React refuse les adresses « javascript: » dans un lien)
-  useEffect(() => {
-    const origin = window.location.origin;
-    const code = `javascript:(function(){var s=String(window.getSelection?window.getSelection():'').slice(0,4000);window.open('${origin}/app/share?url='+encodeURIComponent(location.href)+'&title='+encodeURIComponent(document.title)+(s?'&text='+encodeURIComponent(s):''),'_blank')})();`;
-    bookmarkRef.current?.setAttribute("href", code);
-  }, []);
 
   const fail = async (res, fallback) => {
     const d = await json(res);
@@ -139,11 +132,7 @@ export default function ShareView({ payload, activeContextId = null, showToast, 
 
       <div className={card} data-testid="share-howto">
         <p className="text-sm font-semibold mb-2">Partager plus vite</p>
-        <ul className="text-xs text-gray-600 space-y-2">
-          <li><strong>Sur ordinateur :</strong> glissez ce bouton dans votre barre de favoris — <a ref={bookmarkRef} onClick={(e) => e.preventDefault()} className="inline-block bg-[#fff1f1] border border-[#ff5a5f] text-[#ff5a5f] font-medium rounded px-2 py-0.5 cursor-grab" data-testid="share-bookmark">Partager vers LinkeePost</a> — puis cliquez dessus depuis n&apos;importe quelle page. Si du texte est sélectionné, il est repris.</li>
-          <li><strong>Sur Android :</strong> installez LinkeePost sur l&apos;écran d&apos;accueil (menu du navigateur, « Installer l&apos;application »). « LinkeePost » apparaît ensuite dans le menu Partager.</li>
-          <li><strong>Sur iPhone :</strong> le menu Partager ne peut pas encore y mener : copiez l&apos;adresse du post et collez-la ci-dessus.</li>
-        </ul>
+        <ShareHowTo />
       </div>
       <button type="button" onClick={onDone} className="text-xs text-gray-400 hover:text-gray-600 underline">Fermer</button>
     </main>
