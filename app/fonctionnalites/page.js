@@ -22,6 +22,7 @@ const PIPELINE = [
   { icon: CalendarDays, label: "Programmation" },
   { icon: Send, label: "Publication" },
   { icon: ThumbsUp, label: "Interactions" },
+  { icon: Users, label: "Leads" },
   { icon: BarChart3, label: "Statistiques" },
 ];
 
@@ -421,12 +422,13 @@ export default function FonctionnalitesPage() {
 
         {/* Leads */}
         <Feature
-          tag="Leads · alimentation automatique : offre Agence"
-          title="Les personnes qui commentent votre page deviennent des leads"
-          text="Chaque commentaire lu sur votre page entreprise ajoute son auteur à votre base de leads, avec son commentaire et le lien du post. Décrivez votre client idéal : l'IA note chaque lead (excellent, bon, moyen, faible) et explique pourquoi. Vous suivez ensuite chaque contact. LinkeePost ne contacte personne à votre place, et ne lit que ce que l'API officielle de LinkedIn fournit."
+          tag="Leads et matching · alimentation automatique : offre Agence"
+          title="Vos commentateurs deviennent des leads, comparés à votre client idéal"
+          text="Chaque commentaire lu sur votre page entreprise ajoute son auteur à votre base de leads, avec son commentaire et le lien du post. Dès la création du compte, une étape « Leads » vous demande votre cible et ce qu'est un bon lead pour vous : c'est la base du matching. L'IA compare chaque personne à cette description (son commentaire et, quand LinkedIn les donne, son poste et son entreprise), la note (excellent, bon, moyen, faible) et explique pourquoi. Vous suivez ensuite chaque contact. LinkeePost ne contacte personne à votre place, et ne lit que ce que l'API officielle de LinkedIn fournit."
           points={[
             "Alimentation automatique à partir des commentaires de la page entreprise (offre Agence) ; ajout à la main sur toutes les offres",
-            "Notation par l'IA selon votre client idéal, avec la raison",
+            "Étape Leads à la création du compte et dans le Profil : cible, fonction, taille d'entreprise, secteur, signaux d'intérêt",
+            "Matching par l'IA entre la personne et cette description, avec la raison de la note ; un besoin exprimé ou une question sur l'offre compte comme un signal fort",
             "Statut (nouveau, à contacter, contacté, gagné, perdu), notes, ajout à la main",
             "Filtres et export CSV ; nom et poste à compléter quand LinkedIn ne les donne pas",
           ]}
@@ -437,7 +439,7 @@ export default function FonctionnalitesPage() {
               <span className="text-xs text-gray-400">2 sur 2</span>
             </div>
             {[
-              { n: "Claire Martin", d: "DRH · Acme", l: "Excellent", c: "bg-green-100 text-green-800" },
+              { n: "Claire Martin", d: "DRH · Acme · « On peut échanger ? »", l: "Excellent", c: "bg-green-100 text-green-800" },
               { n: "Personne LinkedIn", d: "« Bravo ! »", l: "Faible", c: "bg-gray-100 text-gray-500" },
             ].map((x) => (
               <div key={x.n} className="flex items-center justify-between text-xs border-b border-gray-50 py-2">
