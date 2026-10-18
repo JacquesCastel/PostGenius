@@ -50,6 +50,7 @@ import { scorePost } from "@/lib/score";
 import { markdownToHtml } from "@/lib/markdown";
 import { parsePostUrn, REACTIONS } from "@/lib/linkedinPost";
 import ShareView from "@/components/ShareView";
+import LeadsView from "@/components/LeadsView";
 import { postAnatomy } from "@/lib/linkedinRules";
 
 // Format compact des tokens : 12 500 → "12,5k", 3 200 000 → "3,2M"
@@ -11568,7 +11569,7 @@ const FEATURE_LABELS = {
   orgStats: "Les statistiques de page",
 };
 
-const DEEP_LINK_VIEWS = ["dashboard", "create", "history", "campaigns", "connections", "profile", "stats", "copilot", "events", "engage", "brand-kit", "billing", "clients", "queue", "followup", "team", "planning", "messages", "datalake", "share"];
+const DEEP_LINK_VIEWS = ["dashboard", "create", "history", "campaigns", "connections", "profile", "stats", "copilot", "events", "engage", "brand-kit", "billing", "clients", "queue", "followup", "team", "planning", "messages", "datalake", "share", "leads"];
 
 function ClientTableRow({ client, team = [], restrict = false, onManage, onViewDrafts, onDelete, deleting, onShowReport, onApproval, onQuota }) {
   const [open, setOpen] = useState(false);
@@ -17365,6 +17366,7 @@ export default function Home() {
         { id: "events", label: "Événements", icon: MapPin, requires: "events", featureLabel: "Le module Événements", group: "Créer" },
         { id: "history", label: "Posts", icon: History, badge: drafts.length || null, group: "Piloter" },
         { id: "engage", label: "Interagir", icon: ThumbsUp, group: "Piloter" },
+        { id: "leads", label: "Leads", icon: Users, group: "Piloter" },
         { id: "stats", label: "Statistiques", icon: BarChart3, group: "Piloter" },
         { id: "copilot", label: "Copilote IA", icon: Compass, group: "Piloter" },
         { id: "profile", label: "Profil du client", icon: UserRound, group: "Client" },
@@ -17379,6 +17381,7 @@ export default function Home() {
         { id: "events", label: "Événements", icon: MapPin, requires: "events", featureLabel: "Le module Événements", group: "Créer" },
         { id: "history", label: "Mes posts", icon: History, badge: drafts.length || null, group: "Piloter" },
         { id: "engage", label: "Interagir", icon: ThumbsUp, group: "Piloter" },
+        { id: "leads", label: "Leads", icon: Users, group: "Piloter" },
         { id: "stats", label: "Statistiques", icon: BarChart3, group: "Piloter" },
         { id: "copilot", label: "Copilote IA", icon: Compass, group: "Piloter" },
         ...(user.plan === "agence"
@@ -19499,6 +19502,8 @@ export default function Home() {
               .catch(() => {})
           }
         />
+      ) : view === "leads" ? (
+        <LeadsView key={activeContextId ?? "main"} showToast={showToast} />
       ) : view === "share" ? (
         <ShareView
           payload={sharePayload}
