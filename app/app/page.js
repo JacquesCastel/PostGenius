@@ -9717,6 +9717,20 @@ function DashboardView({ drafts, canVeille = true, canEvents = false, canScore =
         onAct={(st) => goNextStep(st, { onGoCreate, onGoProfileField, onGoView })}
       />
 
+      {/* Partager vers LinkeePost : mis en avant, c'est le geste le plus court pour nourrir la base ou réagir à un post */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-col sm:flex-row sm:items-center gap-3" data-testid="dash-share">
+        <div className="flex items-start gap-3 min-w-0">
+          <span className="p-2.5 rounded-xl bg-[#fff1f1] text-[#ff5a5f] shrink-0"><Share2 size={18} /></span>
+          <div className="min-w-0">
+            <p className="text-sm font-semibold">Un article ou un post à ne pas perdre ?</p>
+            <p className="text-xs text-gray-500 mt-0.5">Partagez-le vers LinkeePost : commentez-le, écrivez un post à partir de lui, ou gardez-le dans votre base de connaissances.</p>
+          </div>
+        </div>
+        <button onClick={() => onGoView?.("share")} className="sm:ml-auto shrink-0 inline-flex items-center justify-center gap-2 bg-[#ff5a5f] hover:bg-[#f63d44] text-white text-sm font-semibold px-4 py-2.5 rounded-xl shadow-sm" data-testid="dash-share-btn">
+          <Share2 size={15} /> Partager un lien
+        </button>
+      </div>
+
       {/* Synthèse : répartition des posts + calendrier des publications (2 colonnes) */}
       <div className="grid md:grid-cols-3 gap-4 items-stretch">
         <div className="flex flex-col gap-4">
