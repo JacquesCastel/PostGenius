@@ -2,7 +2,7 @@ import Link from "next/link";
 import {
   Sparkles, Megaphone, Eye, Clock, BarChart3, Image as ImageIcon,
   Check, ChevronRight, ShieldCheck, CalendarDays, Layers, PlayCircle, ArrowUp, MapPin, UserRound,
-  Gauge, PenLine, MessageCircle, Video, Languages, ThumbsUp, BookOpen, Mic, History,
+  Gauge, PenLine, MessageCircle, Video, Languages, ThumbsUp, BookOpen, Mic, History, Users,
 } from "lucide-react";
 import { getLanding } from "@/lib/landing";
 import SiteHeader from "@/components/SiteHeader";
@@ -20,13 +20,14 @@ export const metadata = {
 };
 
 const FEATURES = [
-  { icon: BookOpen, title: "Base de connaissances", text: "Déposez documents, liens et notes : LinkeePost en retient les faits et les cas, et vos posts sont conçus pour les reprendre fidèlement, sans en inventer. Chaque post indique les sources qu'il a utilisées." },
+  { icon: BookOpen, title: "Base de connaissances", text: "Déposez documents, liens et notes : LinkeePost en retient les faits et les cas, et vos posts sont conçus pour les reprendre fidèlement, sans en inventer. Chaque post indique les sources qu'il a utilisées. Le moteur résume ce qu'il a appris et vous pouvez échanger avec lui pour l'affiner ; un lien ou un texte se partage depuis le téléphone ou le navigateur." },
   { icon: Mic, title: "Votre voix", text: "Consignes de style, mots à privilégier, mots à bannir, formulations types, anciens posts comme exemples : le ton et le rythme restent les vôtres, et vos consignes priment sur les règles génériques." },
   { icon: History, title: "Mémoire éditoriale", text: "LinkeePost sait ce que vous avez déjà publié ou programmé : il assure la continuité sans se répéter, ni reprendre la même accroche." },
   { icon: Megaphone, title: "Campagnes guidées", text: "Un thème, un brief cadré avec l'IA, un post d'exemple à valider — puis une série de posts qui progressent vers votre message clé, planifiée sur vos créneaux." },
   { icon: MessageCircle, title: "Copilote éditorial", text: "Un agent avec qui échanger pour savoir quoi publier : il s'appuie sur votre base de connaissances, propose des idées argumentées et apprend de vos choix (Générer / Ignorer)." },
   { icon: Check, title: "Validation avant publication", text: "Chaque post attend votre accord. Offre Agence : le client relit et valide depuis un lien privé, sans compte, et reçoit un rapport mensuel à vos couleurs." },
-  { icon: Layers, title: "Carrousels, vidéo, images", text: "Au-delà du texte : carrousels en PDF, sondages, kit de tournage et téléprompteur pour la vidéo, illustrations générées par IA. Offres Pro et Agence." },
+  { icon: Layers, title: "Carrousels, vidéo, images", text: "Au-delà du texte : carrousels en PDF (ou de vos propres photos), sondages, kit de tournage et téléprompteur pour la vidéo, illustrations générées par IA. Offres Pro et Agence." },
+  { icon: Users, title: "Leads de votre page", text: "Offre Agence : les personnes qui commentent la page entreprise arrivent dans une base de leads, avec leur commentaire (ajout à la main sur toutes les offres). L'IA les note selon le client idéal que vous décrivez ; vous suivez chaque contact (statut, note, export). LinkeePost n'écrit à personne à votre place." },
   { icon: BarChart3, title: "Statistiques et suivi", text: "Progression des campagnes, posts publiés et à venir, commentaires, réactions et impressions de vos pages : les retours réels de LinkedIn, pas des estimations." },
 ];
 
