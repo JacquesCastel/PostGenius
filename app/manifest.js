@@ -9,6 +9,8 @@ export default function manifest() {
     display: "standalone",
     background_color: "#fff1f1",
     theme_color: "#ff5a5f",
+    // Menu Partager du téléphone (Android, application installée) : le lien partagé ouvre l'écran « Partager vers LinkeePost »
+    share_target: { action: "/app/share", method: "GET", params: { title: "title", text: "text", url: "url" } },
     icons: [
       { src: "/icon.svg", sizes: "any", type: "image/svg+xml", purpose: "any" },
     ],

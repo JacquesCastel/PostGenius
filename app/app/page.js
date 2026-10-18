@@ -49,6 +49,7 @@ import ImageEditor, { canvasToSafePng } from "@/components/ImageEditor";
 import { scorePost } from "@/lib/score";
 import { markdownToHtml } from "@/lib/markdown";
 import { parsePostUrn, REACTIONS } from "@/lib/linkedinPost";
+import ShareView from "@/components/ShareView";
 import { postAnatomy } from "@/lib/linkedinRules";
 
 // Format compact des tokens : 12 500 → "12,5k", 3 200 000 → "3,2M"
@@ -1121,7 +1122,7 @@ function SourceReader({ mode, source, onRead, onClear }) {
     return (
       <div className="rounded-xl bg-[#f4f8fd] border border-[#d6e6f7] p-3 flex items-start justify-between gap-2" data-testid="campaign-source">
         <div className="min-w-0">
-          <p className="text-xs font-semibold text-[#0a66c2] flex items-center gap-1.5"><Check size={13} /> {source.kind === "file" ? "Document lu" : "Article lu"}</p>
+          <p className="text-xs font-semibold text-[#0a66c2] flex items-center gap-1.5"><Check size={13} /> {source.kind === "file" ? "Document lu" : source.kind === "text" ? "Texte partagé" : "Article lu"}</p>
           <p className="text-sm font-medium truncate mt-0.5">{source.title || source.origin}</p>
           <p className="text-[11px] text-gray-500">
             {source.origin}
@@ -11567,7 +11568,7 @@ const FEATURE_LABELS = {
   orgStats: "Les statistiques de page",
 };
 
-const DEEP_LINK_VIEWS = ["dashboard", "create", "history", "campaigns", "connections", "profile", "stats", "copilot", "events", "engage", "brand-kit", "billing", "clients", "queue", "followup", "team", "planning", "messages", "datalake"];
+const DEEP_LINK_VIEWS = ["dashboard", "create", "history", "campaigns", "connections", "profile", "stats", "copilot", "events", "engage", "brand-kit", "billing", "clients", "queue", "followup", "team", "planning", "messages", "datalake", "share"];
 
 function ClientTableRow({ client, team = [], restrict = false, onManage, onViewDrafts, onDelete, deleting, onShowReport, onApproval, onQuota }) {
   const [open, setOpen] = useState(false);
@@ -15689,6 +15690,31 @@ export default function Home() {
   // Lien reçu par e-mail : /app?client=ID&view=engage → ouvre ce client, puis nettoie l'adresse
   // Le paramètre est mémorisé dès le premier affichage : l'adresse est nettoyée plus bas, avant même que l'utilisateur soit identifié
   const [engagePost, setEngagePost] = useState(() => { if (typeof window === "undefined") return ""; const p = new URLSearchParams(window.location.search).get("post") || ""; return /^https:\/\/(www\.)?linkedin\.com\//.test(p) ? p : ""; }); // post à préremplir dans « Interagir »
+  // Lien reçu par « Partager vers LinkeePost » (menu Partager, favori) : retenu dès le premier affichage, car l'adresse est nettoyée plus bas
+  const [sharePayload, setSharePayload] = useState(() => {
+    if (typeof window === "undefined") return null;
+    const q = new URLSearchParams(window.location.search);
+    try {
+      if (q.get("view") === "share") {
+        const p = { url: q.get("url") || "", text: q.get("text") || "", title: q.get("title") || "" };
+        sessionStorage.setItem("lp_share", JSON.stringify({ ...p, t: Date.now() })); // survit à une connexion en cours de route
+        return p;
+      }
+      const s = JSON.parse(sessionStorage.getItem("lp_share") || "null");
+      return s && Date.now() - s.t < 30 * 60_000 ? { url: s.url, text: s.text, title: s.title } : null;
+    } catch {
+      return null;
+    }
+  });
+  const shareOpened = useRef(false);
+  const closeShare = (nextView) => {
+    try { sessionStorage.removeItem("lp_share"); } catch {}
+    setSharePayload(null);
+    if (nextView) setView(nextView);
+  };
+  useEffect(() => {
+    if (user && sharePayload && !shareOpened.current) { shareOpened.current = true; setView("share"); }
+  }, [user, sharePayload]);
   const [engageComment, setEngageComment] = useState(() => { if (typeof window === "undefined") return ""; const c = new URLSearchParams(window.location.search).get("comment") || ""; return /^urn:li:comment:/.test(c) ? c : ""; }); // commentaire auquel répondre
   const clientLink = useRef(typeof window === "undefined" ? null : (() => { const q = new URLSearchParams(window.location.search); return q.get("client") ? { cid: q.get("client"), view: q.get("view") || "dashboard" } : null; })());
   useEffect(() => {
@@ -18871,7 +18897,7 @@ export default function Home() {
               {source && (
                 <div className="mb-3 rounded-xl bg-[#f4f8fd] border border-[#d6e6f7] p-3 flex items-start justify-between gap-2">
                   <div className="min-w-0">
-                    <p className="text-xs font-semibold text-[#0a66c2] flex items-center gap-1.5"><Check size={13} /> {source.kind === "file" ? "Document lu" : "Article lu"}</p>
+                    <p className="text-xs font-semibold text-[#0a66c2] flex items-center gap-1.5"><Check size={13} /> {source.kind === "file" ? "Document lu" : source.kind === "text" ? "Texte partagé" : "Article lu"}</p>
                     <p className="text-sm font-medium truncate mt-0.5">{source.title || source.origin}</p>
                     <p className="text-[11px] text-gray-500">
                       {source.origin}
@@ -19472,6 +19498,16 @@ export default function Home() {
               .then((d) => setDrafts(d.drafts ?? []))
               .catch(() => {})
           }
+        />
+      ) : view === "share" ? (
+        <ShareView
+          payload={sharePayload}
+          activeContextId={activeContextId}
+          showToast={showToast}
+          onEngage={(u) => { setEngagePost(u); setEngageComment(""); closeShare("engage"); }}
+          onWrite={(data) => { setSource(data); setSourceMode("link"); setGenMode("single"); closeShare("create"); showToast("Matière chargée ✓"); }}
+          onGoDatalake={() => closeShare("datalake")}
+          onDone={() => closeShare("dashboard")}
         />
       ) : view === "engage" ? (
         <EngageView linkedin={linkedin} showToast={showToast} onConnect={() => setView("connections")} initialPost={engagePost} initialComment={engageComment} onPostUsed={() => { setEngagePost(""); setEngageComment(""); }} />
