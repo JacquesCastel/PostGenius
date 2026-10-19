@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useMemo } from "react";
 import { Users, Sparkles, Plus, Trash2, Pencil, ExternalLink, Download, Check } from "lucide-react";
-import { LEVELS, LEVEL_LABEL, STATUSES } from "@/lib/leadsText";
+import { LEVELS, LEVEL_LABEL, STATUSES, isLinkedInLead, retention } from "@/lib/leadsText";
 
 // Base de leads : les personnes qui commentent la page entreprise arrivent ici toutes seules ; on peut aussi en ajouter à la main.
 // L'IA les note face au client idéal décrit ci-dessous. Aucun message n'est envoyé : la prise de contact reste manuelle.
@@ -24,6 +24,8 @@ function LeadCard({ lead, onChange, onDelete }) {
   const [f, setF] = useState({ name: lead.name ?? "", headline: lead.headline ?? "", company: lead.company ?? "", profileUrl: lead.profileUrl ?? "" });
   const [note, setNote] = useState(lead.note ?? "");
   const patch = (body) => onChange(lead.id, body);
+  const fromLinkedIn = isLinkedInLead(lead);
+  const left = fromLinkedIn ? retention(lead.createdAt) : null;
   return (
     <div className={card} data-testid="lead-card">
       <div className="flex items-start justify-between gap-3">
@@ -33,6 +35,11 @@ function LeadCard({ lead, onChange, onDelete }) {
         </div>
         {lead.level ? <span className={`text-xs font-medium px-2 py-1 rounded-full shrink-0 ${LEVEL_STYLE[lead.level]}`} data-testid="lead-level">{LEVEL_LABEL[lead.level]}</span> : <span className="text-xs text-gray-400 shrink-0" data-testid="lead-unscored">Pas encore noté</span>}
       </div>
+      {fromLinkedIn && (
+        <p className="text-[11px] text-amber-700 bg-amber-50 rounded-lg px-2 py-1 mt-2 inline-block" data-testid="lead-retention">
+          Données LinkedIn : profil et note effacés dans {left.profileHours} h, commentaire effacé dans {left.commentHours} h.
+        </p>
+      )}
       {lead.reason && <p className="text-xs text-gray-600 mt-2">{lead.reason}</p>}
       {lead.commentText && <p className="text-sm text-gray-700 mt-3 border-l-2 border-gray-200 pl-3 whitespace-pre-wrap break-words">« {lead.commentText} »</p>}
       <div className="flex flex-wrap items-center gap-3 mt-3 text-xs">
@@ -41,10 +48,10 @@ function LeadCard({ lead, onChange, onDelete }) {
         </select>
         {lead.postUrl && <a href={lead.postUrl} target="_blank" rel="noopener noreferrer" className="text-[#0a66c2] flex items-center gap-1"><ExternalLink size={12} /> Voir le post</a>}
         {lead.profileUrl && <a href={lead.profileUrl} target="_blank" rel="noopener noreferrer" className="text-[#0a66c2] flex items-center gap-1"><ExternalLink size={12} /> Profil</a>}
-        <button type="button" onClick={() => setEdit((v) => !v)} className="text-gray-500 flex items-center gap-1" data-testid="lead-edit"><Pencil size={12} /> {edit ? "Fermer" : "Modifier"}</button>
+        {!fromLinkedIn && <button type="button" onClick={() => setEdit((v) => !v)} className="text-gray-500 flex items-center gap-1" data-testid="lead-edit"><Pencil size={12} /> {edit ? "Fermer" : "Modifier"}</button>}
         <button type="button" onClick={() => onDelete(lead.id)} className="text-gray-400 hover:text-red-500 flex items-center gap-1 ml-auto" data-testid="lead-delete"><Trash2 size={12} /> Supprimer</button>
       </div>
-      {edit && (
+      {edit && !fromLinkedIn && (
         <div className="mt-3 space-y-2">
           <p className="text-xs text-gray-400">LinkedIn ne donne pas toujours le nom ni le poste. Complétez-les ici : le lead sera renoté avec ces informations.</p>
           {[["name", "Nom"], ["headline", "Poste"], ["company", "Entreprise"], ["profileUrl", "Adresse du profil LinkedIn"]].map(([k, label]) => (
@@ -119,7 +126,7 @@ export default function LeadsView({ showToast }) {
     setAdding(false);
   };
   const download = () => {
-    const url = URL.createObjectURL(new Blob(["﻿" + csv(data.leads)], { type: "text/csv;charset=utf-8" }));
+    const url = URL.createObjectURL(new Blob(["﻿" + csv(data.leads.filter((l) => !isLinkedInLead(l)))], { type: "text/csv;charset=utf-8" }));
     const a = document.createElement("a");
     a.href = url; a.download = "leads.csv"; a.click();
     URL.revokeObjectURL(url);
@@ -131,6 +138,10 @@ export default function LeadsView({ showToast }) {
 
   return (
     <main className="max-w-3xl mx-auto p-6 space-y-4" data-testid="leads-view">
+      <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-xs text-amber-900" data-testid="leads-retention-notice">
+        <p className="font-semibold mb-1">Données reçues de LinkedIn : conservation limitée</p>
+        <p>Les règles de LinkedIn n&apos;autorisent à garder le profil d&apos;un commentateur que <strong>24 heures</strong> et son commentaire que <strong>48 heures</strong>. Passé ce délai, LinkeePost les efface automatiquement, avec la note de l&apos;IA, et ne permet pas de les exporter. Les leads que vous saisissez vous-même sont conservés tant que vous le souhaitez.</p>
+      </div>
       <div className={card}>
         <p className="text-sm font-semibold flex items-center gap-2"><Users size={15} className="text-[#ff5a5f]" /> Base de leads</p>
         <p className="text-xs text-gray-400 mt-1">Les personnes qui commentent votre page entreprise sont ajoutées ici automatiquement, avec leur commentaire. L&apos;IA les note selon votre client idéal. LinkeePost n&apos;envoie aucun message : le contact reste entre vos mains.</p>
@@ -141,7 +152,7 @@ export default function LeadsView({ showToast }) {
           <button type="button" onClick={saveIcp} disabled={busy || icpSaved} className="text-sm font-medium px-4 py-2 rounded-lg border border-gray-200 disabled:opacity-40" data-testid="leads-icp-save">Enregistrer</button>
           <button type="button" onClick={score} disabled={busy || !(icp.trim() || target.trim()) || !leads.length} className="text-sm font-medium px-4 py-2 rounded-lg bg-[#ff5a5f] text-white flex items-center gap-2 disabled:opacity-40" data-testid="leads-score"><Sparkles size={14} /> {busy === "score" ? "Qualification…" : unscored ? `Qualifier avec l'IA (${unscored})` : "Tout est qualifié"}</button>
           <button type="button" onClick={() => setAdding((v) => !v)} className="text-sm font-medium px-4 py-2 rounded-lg border border-gray-200 flex items-center gap-2" data-testid="leads-add"><Plus size={14} /> Ajouter une personne</button>
-          {leads.length > 0 && <button type="button" onClick={download} className="text-sm font-medium px-4 py-2 rounded-lg border border-gray-200 flex items-center gap-2" data-testid="leads-csv"><Download size={14} /> Exporter</button>}
+          {leads.some((l) => !isLinkedInLead(l)) && <button type="button" onClick={download} className="text-sm font-medium px-4 py-2 rounded-lg border border-gray-200 flex items-center gap-2" data-testid="leads-csv"><Download size={14} /> Exporter mes leads saisis</button>}
         </div>
         {error && <p className="text-xs text-red-600 mt-2" data-testid="leads-error">{error}</p>}
       </div>

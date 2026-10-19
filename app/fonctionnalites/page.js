@@ -424,13 +424,13 @@ export default function FonctionnalitesPage() {
         <Feature
           tag="Leads et matching · alimentation automatique : offres Pro et Agence"
           title="Vos commentateurs deviennent des leads, comparés à votre client idéal"
-          text="Chaque commentaire lu sur votre page entreprise ajoute son auteur à votre base de leads, avec son commentaire et le lien du post. Dès la création du compte, une étape « Leads » vous demande votre cible et ce qu'est un bon lead pour vous : c'est la base du matching. L'IA compare chaque personne à cette description (son commentaire, et son nom et son poste repris de LinkedIn), la note (excellent, bon, moyen, faible) et explique pourquoi. Vous suivez ensuite chaque contact. LinkeePost ne contacte personne à votre place, et ne lit que ce que l'API officielle de LinkedIn fournit."
+          text="Chaque commentaire lu sur votre page entreprise ajoute son auteur à votre base de leads, avec son commentaire et le lien du post. Dès la création du compte, une étape « Leads » vous demande votre cible et ce qu'est un bon lead pour vous : c'est la base du matching. L'IA compare chaque personne à cette description (son commentaire, et son nom et son poste repris de LinkedIn), la note (excellent, bon, moyen, faible) et explique pourquoi. Vous suivez ensuite chaque contact. Conformément aux règles de LinkedIn, les données reçues d'un commentateur sont effacées automatiquement (profil après 24 h, commentaire après 48 h). LinkeePost ne contacte personne à votre place, et ne lit que ce que l'API officielle de LinkedIn fournit."
           points={[
             "Alimentation automatique à partir des commentaires de la page entreprise (offres Pro et Agence) ; ajout à la main sur toutes les offres",
             "Étape Leads à la création du compte et dans le Profil : cible, fonction, taille d'entreprise, secteur, signaux d'intérêt",
             "Matching par l'IA entre la personne et cette description, avec la raison de la note ; un besoin exprimé ou une question sur l'offre compte comme un signal fort",
             "Statut (nouveau, à contacter, contacté, gagné, perdu), notes, ajout à la main",
-            "Nom et poste repris de LinkedIn, à compléter à la main s'ils manquent ; filtres et export CSV",
+            "Données LinkedIn effacées automatiquement (profil après 24 h, commentaire après 48 h) ; leads saisis à la main conservés, avec filtres et export CSV",
           ]}
         >
           <Card>
