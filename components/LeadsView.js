@@ -171,7 +171,7 @@ export default function LeadsView({ showToast }) {
 
       {data && !leads.length && (
         <div className={`${card} text-sm text-gray-500`} data-testid="leads-empty">
-          Aucun lead pour l&apos;instant. {data.pageConnected ? "Dès qu'une personne commente votre page, elle apparaît ici (lecture toutes les 10 minutes)." : "Connectez votre page entreprise (écran Connexions) pour récupérer automatiquement les commentaires, ou ajoutez une personne à la main."}
+          Aucun lead pour l&apos;instant. {data.pageConnected ? "Dès qu'une personne commente votre page, elle apparaît ici (lecture toutes les 30 minutes environ)." : "Connectez votre page entreprise (écran Connexions) pour récupérer automatiquement les commentaires, ou ajoutez une personne à la main."}
         </div>
       )}
       {shown.map((l) => <LeadCard key={l.id} lead={l} onChange={change} onDelete={remove} />)}

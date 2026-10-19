@@ -403,8 +403,8 @@ export default function FonctionnalitesPage() {
           text="Une présence LinkedIn, ce n'est pas que publier. Depuis l'écran Interagir, commentez et réagissez à n'importe quel post LinkedIn, et gardez un journal de vos interactions. Les compteurs de commentaires et de réactions de vos posts publiés rejoignent vos statistiques."
           points={[
             "Commenter et réagir à n'importe quel post LinkedIn par son lien",
-            "Offre Agence : alerte (cloche, e-mail, notification) quand quelqu'un commente la page entreprise, avec son commentaire",
-            "Offre Agence : réponse directement sous le commentaire, au nom de la page, avec une suggestion dans votre voix",
+            "Offres Pro et Agence : alerte (cloche, e-mail, notification) quand quelqu'un commente la page entreprise, avec son commentaire",
+            "Offres Pro et Agence : réponse directement sous le commentaire, au nom de la page, avec une suggestion dans votre voix",
             "Journal de vos commentaires et réactions",
             "Compteurs d'interactions de vos posts dans les statistiques",
           ]}
@@ -422,11 +422,11 @@ export default function FonctionnalitesPage() {
 
         {/* Leads */}
         <Feature
-          tag="Leads et matching · alimentation automatique : offre Agence"
+          tag="Leads et matching · alimentation automatique : offres Pro et Agence"
           title="Vos commentateurs deviennent des leads, comparés à votre client idéal"
           text="Chaque commentaire lu sur votre page entreprise ajoute son auteur à votre base de leads, avec son commentaire et le lien du post. Dès la création du compte, une étape « Leads » vous demande votre cible et ce qu'est un bon lead pour vous : c'est la base du matching. L'IA compare chaque personne à cette description (son commentaire, et son nom et son poste repris de LinkedIn), la note (excellent, bon, moyen, faible) et explique pourquoi. Vous suivez ensuite chaque contact. LinkeePost ne contacte personne à votre place, et ne lit que ce que l'API officielle de LinkedIn fournit."
           points={[
-            "Alimentation automatique à partir des commentaires de la page entreprise (offre Agence) ; ajout à la main sur toutes les offres",
+            "Alimentation automatique à partir des commentaires de la page entreprise (offres Pro et Agence) ; ajout à la main sur toutes les offres",
             "Étape Leads à la création du compte et dans le Profil : cible, fonction, taille d'entreprise, secteur, signaux d'intérêt",
             "Matching par l'IA entre la personne et cette description, avec la raison de la note ; un besoin exprimé ou une question sur l'offre compte comme un signal fort",
             "Statut (nouveau, à contacter, contacté, gagné, perdu), notes, ajout à la main",
