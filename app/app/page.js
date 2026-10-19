@@ -14552,7 +14552,7 @@ function ConnectionsView({ linkedin, onDisconnect, instagram, onDisconnectInstag
                   ) : canOrgPublish ? (
                     <p className="text-xs text-gray-400">Connectez votre page entreprise LinkedIn pour publier en son nom.</p>
                   ) : (
-                    <p className="text-xs text-gray-400">Disponible à partir du plan <strong>Agence</strong>.</p>
+                    <p className="text-xs text-gray-400">Disponible à partir du plan <strong>Pro</strong>.</p>
                   )}
                 </div>
               </div>
@@ -14566,7 +14566,7 @@ function ConnectionsView({ linkedin, onDisconnect, instagram, onDisconnectInstag
                 </a>
               ) : (
                 <a href="/tarifs" className="text-xs bg-gray-100 hover:bg-gray-200 text-gray-600 px-3 py-1.5 rounded-xl shrink-0 flex items-center gap-1">
-                  <Lock size={11} /> Agence
+                  <Lock size={11} /> Pro
                 </a>
               )}
             </div>
