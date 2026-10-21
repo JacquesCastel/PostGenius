@@ -52,7 +52,7 @@ import { parsePostUrn, REACTIONS } from "@/lib/linkedinPost";
 import ShareView from "@/components/ShareView";
 import ShareHowTo from "@/components/ShareHowTo";
 import LeadsView from "@/components/LeadsView";
-import VoiceRecorder, { canRecord as canRecordVoice } from "@/components/VoiceRecorder";
+import VoiceRecorder, { canRecord as canRecordVoice, CleanButton } from "@/components/VoiceRecorder";
 import { postAnatomy } from "@/lib/linkedinRules";
 
 // Format compact des tokens : 12 500 → "12,5k", 3 200 000 → "3,2M"
@@ -6718,6 +6718,9 @@ function KnowledgePanel({ showToast, onCount, activeContextId = null, hasContext
   const [url, setUrl] = useState("");
   const [file, setFile] = useState(null);
   const [fileKey, setFileKey] = useState(0); // change après chaque ajout : vide le champ de fichier
+  const [voiceOk, setVoiceOk] = useState(false);
+  const [voiceHas, setVoiceHas] = useState(false); // une dictée est en cours de relecture
+  useEffect(() => { setVoiceOk(canRecordVoice()); }, []);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
   const [expanded, setExpanded] = useState(null);
@@ -6794,6 +6797,7 @@ function KnowledgePanel({ showToast, onCount, activeContextId = null, hasContext
       showToast("Source ajoutée et analysée ✓");
       setTitle("");
       setText("");
+      setVoiceHas(false);
       setUrl("");
       setFile(null);
       setFileKey((k) => k + 1);
@@ -6855,6 +6859,7 @@ function KnowledgePanel({ showToast, onCount, activeContextId = null, hasContext
                 <button type="button" onClick={() => setTab("note")} className={chip(tab === "note")}>Coller un texte</button>
                 <button type="button" onClick={() => setTab("link")} className={chip(tab === "link")}>Un lien</button>
                 <button type="button" onClick={() => setTab("file")} className={chip(tab === "file")}>PDF ou Word</button>
+                {voiceOk && <button type="button" onClick={() => setTab("voice")} data-testid="datalake-tab-voice" className={chip(tab === "voice")}>Dicter</button>}
               </div>
               {ctxList.length > 0 && (
                 <label className="flex items-center gap-2 text-xs text-gray-600 flex-wrap" data-testid="source-scope">
@@ -6874,7 +6879,21 @@ function KnowledgePanel({ showToast, onCount, activeContextId = null, hasContext
                 placeholder="Titre (facultatif : l'IA en propose un)"
                 className="w-full border border-gray-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
               />
-              {tab === "note" ? (
+              {tab === "voice" ? (
+                voiceHas ? (
+                  <div className="space-y-2" data-testid="datalake-voice-review">
+                    <p className="text-xs text-gray-500">Votre dictée, <strong>à relire</strong> : corrigez ce qui a été mal compris avant de l&apos;ajouter.</p>
+                    <textarea rows={7} value={text} maxLength={12000} onChange={(e) => setText(e.target.value)} data-testid="datalake-voice-text" className="w-full border border-gray-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]" />
+                    <p className="text-[11px] text-gray-400">{text.trim().length} caractères{text.trim().length < 80 ? " : 80 au moins pour une note." : "."}</p>
+                    <div className="flex flex-wrap gap-2 items-center">
+                      <CleanButton text={text} onText={setText} testid="datalake-voice-clean" />
+                      <button type="button" onClick={() => { setText(""); setVoiceHas(false); }} data-testid="datalake-voice-redo" className="text-sm text-gray-500 underline">Réenregistrer</button>
+                    </div>
+                  </div>
+                ) : (
+                  <VoiceRecorder onText={(t) => { setText(t); setVoiceHas(true); }} />
+                )
+              ) : tab === "note" ? (
                 <textarea
                   rows={6}
                   value={text}
@@ -6911,7 +6930,7 @@ function KnowledgePanel({ showToast, onCount, activeContextId = null, hasContext
               <button
                 type="button"
                 onClick={add}
-                disabled={busy || (tab === "note" ? text.trim().length < 20 : tab === "link" ? !url.trim() : !file)}
+                disabled={busy || (tab === "voice" ? !voiceHas || text.trim().length < 80 : tab === "note" ? text.trim().length < 20 : tab === "link" ? !url.trim() : !file)}
                 className="bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white text-sm font-medium px-4 py-2 rounded-lg"
               >
                 {busy ? (tab === "file" ? "Lecture et analyse…" : "Analyse en cours…") : "Ajouter et analyser"}
@@ -18988,6 +19007,7 @@ export default function Home() {
                     <div className="flex flex-wrap gap-2">
                       <button type="button" disabled={voiceText.trim().length < 200} onClick={() => { const t = voiceText.trim(); setSource({ kind: "text", title: "Dictée vocale", origin: "dictée vocale", text: t.slice(0, 12000), chars: t.length, truncated: t.length > 12000 }); }} className="bg-[#0a66c2] hover:bg-[#004182] disabled:bg-gray-300 text-white text-sm font-medium px-4 py-2 rounded-lg" data-testid="voice-use-source">Utiliser comme matière du post</button>
                       <button type="button" onClick={() => { setForm((f) => ({ ...f, theme: ((f.theme.trim() ? f.theme.trim() + "\n" : "") + voiceText.trim()).slice(0, 1500) })); setSourceMode("idea"); setVoiceText(""); }} className="border border-gray-300 hover:border-[#ff5a5f] text-gray-700 text-sm font-medium px-4 py-2 rounded-lg" data-testid="voice-use-idea">Mettre dans mon idée</button>
+                      <CleanButton text={voiceText} onText={setVoiceText} />
                       <button type="button" onClick={() => setVoiceText("")} className="text-sm text-gray-500 underline" data-testid="voice-redo">Réenregistrer</button>
                     </div>
                   </div>
