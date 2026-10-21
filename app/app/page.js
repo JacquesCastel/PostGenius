@@ -6721,7 +6721,7 @@ function KnowledgePanel({ showToast, onCount, activeContextId = null, hasContext
   const [fileKey, setFileKey] = useState(0); // change après chaque ajout : vide le champ de fichier
   const [voiceOk, setVoiceOk] = useState(false);
   const [voiceHas, setVoiceHas] = useState(false); // une dictée est en cours de relecture
-  useEffect(() => { setVoiceOk(canRecordVoice()); }, []);
+  useEffect(() => { if (canRecordVoice()) { setVoiceOk(true); setTab("voice"); } }, []); // la dictée est proposée en premier, quand l'appareil le permet
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
   const [expanded, setExpanded] = useState(null);
@@ -6857,10 +6857,14 @@ function KnowledgePanel({ showToast, onCount, activeContextId = null, hasContext
           ) : (adding || (data && used === 0)) && (
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-2" data-testid="datalake-form">
               <div className="flex gap-1.5">
+                {voiceOk && (
+                  <button type="button" onClick={() => setTab("voice")} data-testid="datalake-tab-voice" className={`text-xs font-semibold px-3.5 py-1.5 rounded-full border inline-flex items-center gap-1.5 ${tab === "voice" ? "bg-[#0a66c2] text-white border-[#0a66c2]" : "bg-[#e8f1fb] text-[#0a66c2] border-[#b9d4f1] hover:bg-[#d6e6f7]"}`}>
+                    <Mic size={13} /> Dicter à la voix
+                  </button>
+                )}
                 <button type="button" onClick={() => setTab("note")} className={chip(tab === "note")}>Coller un texte</button>
                 <button type="button" onClick={() => setTab("link")} className={chip(tab === "link")}>Un lien</button>
                 <button type="button" onClick={() => setTab("file")} className={chip(tab === "file")}>PDF ou Word</button>
-                {voiceOk && <button type="button" onClick={() => setTab("voice")} data-testid="datalake-tab-voice" className={chip(tab === "voice")}>Dicter</button>}
               </div>
               {ctxList.length > 0 && (
                 <label className="flex items-center gap-2 text-xs text-gray-600 flex-wrap" data-testid="source-scope">
