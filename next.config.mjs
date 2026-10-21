@@ -33,7 +33,7 @@ const nextConfig = {
           { key: "X-Frame-Options", value: "DENY" },
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-          { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
+          { key: "Permissions-Policy", value: "camera=(), microphone=(self), geolocation=()" }, // micro : dictée vocale de l'application (le site ne l'utilise qu'après un clic de l'utilisateur)
           // HTTPS imposé aux navigateurs pendant 1 an (le site n'est servi qu'en HTTPS ; pas de sous-domaines ni de « preload » : réversible)
           { key: "Strict-Transport-Security", value: "max-age=31536000" },
         ],
