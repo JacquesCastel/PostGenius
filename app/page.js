@@ -7,6 +7,7 @@ import {
 import { getLanding } from "@/lib/landing";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
+import BrandMotion from "@/components/BrandMotion";
 
 // Page vitrine publique — postgenius.network
 // Rendu à la requête : le contenu (offres, hero, FAQ) est éditable depuis l'admin.
@@ -167,6 +168,13 @@ export default async function Landing() {
               </div>
             </div>
           </div>
+        </section>
+
+        {/* LinkeePost en 30 secondes : motion design (dictée, post, programmation, entonnoir commentaires → leads) */}
+        <section className="max-w-5xl mx-auto px-6 pb-12" aria-labelledby="motion-title">
+          <p className="text-center text-sm font-semibold text-[#ff5a5f]">En 30 secondes</p>
+          <h2 id="motion-title" className="text-2xl md:text-3xl font-extrabold text-center mt-1 mb-6">De votre idée au premier contact qualifié</h2>
+          <BrandMotion className="rounded-3xl shadow-2xl shadow-rose-200/50 border border-white" />
         </section>
 
         {/* Bandeau de réassurance */}
