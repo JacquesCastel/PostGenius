@@ -53,6 +53,7 @@ import ShareView from "@/components/ShareView";
 import ShareHowTo from "@/components/ShareHowTo";
 import LeadsView from "@/components/LeadsView";
 import VoiceRecorder, { canRecord as canRecordVoice, CleanButton } from "@/components/VoiceRecorder";
+import VoiceInterview from "@/components/VoiceInterview";
 import { postAnatomy } from "@/lib/linkedinRules";
 
 // Format compact des tokens : 12 500 → "12,5k", 3 200 000 → "3,2M"
@@ -16044,6 +16045,7 @@ export default function Home() {
   const [sourceMode, setSourceMode] = useState("idea"); // idea | link | file | voice
   const [voiceText, setVoiceText] = useState(""); // texte dicté, en cours de relecture
   const [voiceOk, setVoiceOk] = useState(false); // l'appareil sait enregistrer la voix
+  const [voiceMode, setVoiceMode] = useState("free"); // free | interview
   useEffect(() => { setVoiceOk(canRecordVoice()); }, []);
   const [sourceUrl, setSourceUrl] = useState("");
   const [sourceFile, setSourceFile] = useState(null);
@@ -18998,7 +19000,18 @@ export default function Home() {
 
               {genMode === "single" && sourceMode === "voice" && !source && (
                 voiceText === "" ? (
-                  <VoiceRecorder language={normalizeLanguage(form.language ?? profile?.postLanguage)} onText={(t) => setVoiceText(t)} />
+                  <div>
+                    <div className="flex gap-1.5 mb-2">
+                      {[["free", "Je dicte librement"], ["interview", "Interview guidée"]].map(([k, l]) => (
+                        <button key={k} type="button" onClick={() => setVoiceMode(k)} data-testid={`voice-mode-${k}`} className={`text-xs px-3 py-1.5 rounded-full border ${voiceMode === k ? "bg-[#ff5a5f] text-white border-[#ff5a5f]" : "border-gray-200 text-gray-600 hover:border-gray-300"}`}>{l}</button>
+                      ))}
+                    </div>
+                    {voiceMode === "interview" ? (
+                      <VoiceInterview topic={form.theme} language={normalizeLanguage(form.language ?? profile?.postLanguage)} onDone={(t) => setVoiceText(t)} onCancel={() => setVoiceMode("free")} />
+                    ) : (
+                      <VoiceRecorder language={normalizeLanguage(form.language ?? profile?.postLanguage)} onText={(t) => setVoiceText(t)} />
+                    )}
+                  </div>
                 ) : (
                   <div className="space-y-2 mb-3" data-testid="voice-review">
                     <p className="text-xs text-gray-500">Votre dictée, <strong>à relire</strong> : corrigez ce qui a été mal compris avant de continuer.</p>
