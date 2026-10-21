@@ -170,9 +170,9 @@ export default async function Landing() {
           </div>
         </section>
 
-        {/* LinkeePost en 30 secondes : motion design (dictée, post, programmation, entonnoir commentaires → leads) */}
+        {/* LinkeePost en 40 secondes : motion design (dictée, post, programmation, entonnoir commentaires → leads) */}
         <section className="max-w-5xl mx-auto px-6 pb-12" aria-labelledby="motion-title">
-          <p className="text-center text-sm font-semibold text-[#ff5a5f]">En 30 secondes</p>
+          <p className="text-center text-sm font-semibold text-[#ff5a5f]">En 40 secondes</p>
           <h2 id="motion-title" className="text-2xl md:text-3xl font-extrabold text-center mt-1 mb-6">De votre idée au premier contact qualifié</h2>
           <BrandMotion className="rounded-3xl shadow-2xl shadow-rose-200/50 border border-white" />
         </section>

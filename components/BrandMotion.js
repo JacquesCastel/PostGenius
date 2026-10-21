@@ -1,13 +1,19 @@
 "use client";
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Mic, FileText, Link2, Check, BookOpen, Pause, Play, MessageCircle, ShieldCheck, Sparkles, ChevronRight } from "lucide-react";
+import { Mic, FileText, Link2, Check, BookOpen, Pause, Play, Volume2, VolumeX, ShieldCheck, Sparkles, ChevronRight } from "lucide-react";
 import LpMark from "./LpMark";
 
-// Motion design de 30 secondes pour la page d'accueil : dictée → post → programmation → funnel (commentaires → leads).
+// Motion design de 39 secondes pour la page d'accueil : dictée → post → programmation → funnel (commentaires → leads).
 // Toute l'animation est une fonction pure du temps t (secondes) : lecture, pause, boucle, et rendu image par image (/motion?record=1).
 // Charte : corail #ff5a5f, marine #1b2a4a, gris bleuté #5a6b85, bleu LinkedIn #0a66c2, fond rosé/pêche/ciel, cartes blanches arrondies.
 
-export const DURATION = 30;
+// Montage : chaque scène garde son rythme d'origine, mais s'immobilise 1 s avant la transition (pour laisser lire),
+// et l'écran final reste 3 s. Les scènes se chevauchent toujours de 0,3 s pour le fondu.
+const HOLD = 1;
+const FINAL_HOLD = 3;
+const SCENE_SPANS = [[0, 4.1], [3.8, 9.6], [9.3, 14.6], [14.3, 18.7], [18.4, 25.3], [25.0, 28.0], [27.7, 30]]; // début, fin d'origine (accroche, voix, post, calendrier, entonnoir, confiance, appel)
+const TL = SCENE_SPANS.map(([f, e], i) => ({ from: f + i * HOLD, len: e - f, to: e + i * HOLD + (i < SCENE_SPANS.length - 1 ? HOLD : FINAL_HOLD) }));
+export const DURATION = TL[TL.length - 1].to; // 39 s
 const W = 1920;
 const H = 1080;
 const C = { coral: "#ff5a5f", coralDark: "#f63d44", navy: "#1b2a4a", muted: "#5a6b85", rose: "#fff1f1", blue: "#0a66c2", sky: "#e8f1fb", green: "#16a34a", amber: "#f59e0b" };
@@ -21,11 +27,13 @@ const back = (x) => { const c1 = 1.70158; const c3 = c1 + 1; return 1 + c3 * Mat
 const typed = (s, p) => s.slice(0, Math.floor(s.length * clamp01(p)));
 
 // Une scène vit entre `from` et `to` ; fondu de 0,45 s en entrée et en sortie (sauf la première, sans entrée).
-function Scene({ t, from, to, first = false, children }) {
+function Scene({ t, span, first = false, freeze = true, children }) {
+  const { from, to, len } = span;
   if (t < from || t > to) return null;
   const fin = first ? 1 : seg(t, from, 0.45);
   const fout = 1 - seg(t, to - 0.45, 0.45);
-  return <div style={{ position: "absolute", inset: 0, opacity: Math.min(fin, fout) }}>{children(t - from)}</div>;
+  const lt = t - from;
+  return <div style={{ position: "absolute", inset: 0, opacity: Math.min(fin, fout) }}>{children(freeze ? Math.min(lt, len) : lt)}</div>; // au-delà de sa durée, la scène reste figée
 }
 
 const Step = ({ lt, n }) => {
@@ -355,20 +363,20 @@ export function Stage({ t }) {
       <div style={{ position: "absolute", left: 300, bottom: -360, width: 760, height: 760, borderRadius: "50%", background: "rgba(254,215,170,.45)", filter: "blur(110px)" }} />
 
       {/* Logo permanent (hors accroche et appel final, qui ont le leur) */}
-      {t > 3.8 && t < 27.6 && (
-        <div style={{ position: "absolute", left: 120, top: 70, display: "flex", alignItems: "center", gap: 18, opacity: seg(t, 3.8, 0.4) * (1 - seg(t, 27.1, 0.4)) }}>
+      {t > TL[1].from && t < TL[6].from && (
+        <div style={{ position: "absolute", left: 120, top: 70, display: "flex", alignItems: "center", gap: 18, opacity: seg(t, TL[1].from, 0.4) * (1 - seg(t, TL[6].from - 0.6, 0.4)) }}>
           <div style={{ width: 62, height: 62, borderRadius: 18, background: C.coral, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center" }}><LpMark size={40} /></div>
           <span style={{ fontSize: 40, fontWeight: 800, color: C.navy }}>LinkeePost</span>
         </div>
       )}
 
-      <Scene t={t} from={0} to={4.1} first>{(lt) => <SceneHook lt={lt} />}</Scene>
-      <Scene t={t} from={3.8} to={9.6}>{(lt) => <SceneVoice lt={lt} />}</Scene>
-      <Scene t={t} from={9.3} to={14.6}>{(lt) => <ScenePost lt={lt} />}</Scene>
-      <Scene t={t} from={14.3} to={18.7}>{(lt) => <SceneCalendar lt={lt} />}</Scene>
-      <Scene t={t} from={18.4} to={25.3}>{(lt) => <SceneFunnel lt={lt} />}</Scene>
-      <Scene t={t} from={25.0} to={28.0}>{(lt) => <SceneTrust lt={lt} />}</Scene>
-      <Scene t={t} from={27.7} to={DURATION}>{(lt) => <SceneCta lt={lt} />}</Scene>
+      <Scene t={t} span={TL[0]} first>{(lt) => <SceneHook lt={lt} />}</Scene>
+      <Scene t={t} span={TL[1]}>{(lt) => <SceneVoice lt={lt} />}</Scene>
+      <Scene t={t} span={TL[2]}>{(lt) => <ScenePost lt={lt} />}</Scene>
+      <Scene t={t} span={TL[3]}>{(lt) => <SceneCalendar lt={lt} />}</Scene>
+      <Scene t={t} span={TL[4]}>{(lt) => <SceneFunnel lt={lt} />}</Scene>
+      <Scene t={t} span={TL[5]}>{(lt) => <SceneTrust lt={lt} />}</Scene>
+      <Scene t={t} span={TL[6]} freeze={false}>{(lt) => <SceneCta lt={lt} />}</Scene>
 
       {/* Progression */}
       <div style={{ position: "absolute", left: 0, bottom: 0, width: W, height: 8, background: "rgba(255,90,95,.12)" }}>
@@ -378,7 +386,8 @@ export function Stage({ t }) {
   );
 }
 
-const POSTER_T = 21.5; // image fixe (entonnoir) : avant le chargement, sans JavaScript et si l'utilisateur préfère moins d'animations
+const SOUND_URL = "/motion/linkeepost-bande-son.mp3"; // bande son originale (musique et effets), 30 s, calée sur la même horloge
+const POSTER_T = TL[4].from + 3.1; // image fixe (entonnoir) : avant le chargement, sans JavaScript et si l'utilisateur préfère moins d'animations
 
 export default function BrandMotion({ record = false, className = "" }) {
   const wrap = useRef(null);
@@ -388,6 +397,8 @@ export default function BrandMotion({ record = false, className = "" }) {
   const [visible, setVisible] = useState(false);
   const [reduced, setReduced] = useState(true);
   const clock = useRef({ last: 0, t: 0, raf: 0 });
+  const audio = useRef(null);
+  const [sound, setSound] = useState(false); // coupé par défaut : le navigateur n'autorise le son qu'après un clic
 
   // Échelle : la scène fait 1920×1080 et s'adapte à la largeur disponible
   useEffect(() => {
@@ -434,6 +445,8 @@ export default function BrandMotion({ record = false, className = "" }) {
     c.last = now;
     c.t = (c.t + dt) % DURATION;
     setT(c.t);
+    const a = audio.current;
+    if (a && !a.paused && Math.abs(a.currentTime - c.t) > 0.3) { try { a.currentTime = c.t; } catch {} } // recale le son sur l'image (boucle, onglet ralenti)
     c.raf = requestAnimationFrame(tick);
   }, []);
   useEffect(() => {
@@ -445,6 +458,18 @@ export default function BrandMotion({ record = false, className = "" }) {
     return () => cancelAnimationFrame(c.raf);
   }, [playing, record, tick]);
 
+  // Le son suit la lecture : actif seulement si l'utilisateur l'a demandé et que l'animation tourne
+  useEffect(() => {
+    const a = audio.current;
+    if (!sound || !playing) { a?.pause(); return; }
+    const el = a ?? new Audio(SOUND_URL);
+    audio.current = el;
+    el.loop = true;
+    try { el.currentTime = clock.current.t; } catch {}
+    el.play().catch(() => setSound(false));
+  }, [sound, playing]);
+  useEffect(() => () => { audio.current?.pause(); audio.current = null; }, []);
+
   const toggle = () => { if (reduced) { setReduced(false); setPlaying(true); } else setPlaying((p) => !p); };
 
   return (
@@ -453,7 +478,7 @@ export default function BrandMotion({ record = false, className = "" }) {
       className={`relative w-full overflow-hidden ${className}`}
       style={{ aspectRatio: "16 / 9", background: "linear-gradient(180deg, #fff1f2, #fff7ed 45%, #f0f9ff)" }}
       role="group"
-      aria-label="Animation de 30 secondes : vous dictez ou déposez vos sources, LinkeePost rédige un post dans votre voix, le programme et le publie, puis transforme les commentaires en leads notés par rapport à votre cible."
+      aria-label="Animation d'environ 40 secondes : vous dictez ou déposez vos sources, LinkeePost rédige un post dans votre voix, le programme et le publie, puis transforme les commentaires en leads notés par rapport à votre cible."
       data-testid="brand-motion"
     >
       <div style={{ position: "absolute", left: 0, top: 0, width: W, height: H, transform: `scale(${scale})`, transformOrigin: "top left", visibility: scale ? "visible" : "hidden" }} aria-hidden="true">
@@ -468,6 +493,19 @@ export default function BrandMotion({ record = false, className = "" }) {
           data-testid="motion-toggle"
         >
           {playing ? <Pause size={18} /> : <Play size={18} />}
+        </button>
+      )}
+      {!record && (
+        <button
+          type="button"
+          onClick={() => { if (reduced) { setReduced(false); setPlaying(true); } setSound((v) => !v); }}
+          aria-label={sound ? "Couper le son" : "Activer le son"}
+          aria-pressed={sound}
+          className="absolute right-16 bottom-4 sm:right-20 sm:bottom-6 h-10 rounded-full bg-white/90 hover:bg-white text-[#1b2a4a] shadow-lg flex items-center justify-center gap-1.5 px-3 text-xs font-semibold"
+          data-testid="motion-sound"
+        >
+          {sound ? <Volume2 size={18} /> : <VolumeX size={18} />}
+          <span className="hidden sm:inline">{sound ? "Son activé" : "Activer le son"}</span>
         </button>
       )}
       <p className="sr-only">
