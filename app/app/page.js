@@ -8300,6 +8300,9 @@ function EditorialChat({ profile, onProfileSaved, onRegenerate, showToast, selec
   const [busyId, setBusyId] = useState(null);
   const inputRef = useRef(null);
   const threadRef = useRef(null);
+  const [voiceOk, setVoiceOk] = useState(false);
+  const [dictating, setDictating] = useState(false); // l'enregistreur est ouvert sous le champ
+  useEffect(() => { setVoiceOk(canRecordVoice()); }, []);
 
   const reload = () =>
     fetch("/api/editorial/chat")
@@ -8523,7 +8526,18 @@ function EditorialChat({ profile, onProfileSaved, onRegenerate, showToast, selec
         >
           {sending ? <RefreshCw size={13} className="animate-spin" /> : <Send size={13} />}
         </button>
+        {voiceOk && (
+          <button type="button" onClick={() => setDictating((d) => !d)} aria-label="Dicter ma demande" title="Dicter ma demande" data-testid="chat-dictate" className={`px-3 py-2 rounded-lg shrink-0 border ${dictating ? "bg-[#fff1f1] border-[#ff5a5f] text-[#ff5a5f]" : "border-gray-200 text-gray-500 hover:text-[#ff5a5f] hover:border-[#ff5a5f]"}`}>
+            <Mic size={13} />
+          </button>
+        )}
       </div>
+      {dictating && (
+        <div className="mt-2" data-testid="chat-voice">
+          <VoiceRecorder onText={(t) => { setInput(t.slice(0, 500)); setDictating(false); setTimeout(() => inputRef.current?.focus(), 0); }} />
+          <p className="text-[11px] text-gray-400 mt-1">Votre demande apparaît dans le champ : relisez-la, puis envoyez.</p>
+        </div>
+      )}
 
       <div className="flex flex-wrap gap-1.5 mt-2">
         {quick.map(([label, text]) => (
@@ -8855,7 +8869,9 @@ function RecoCarousel({ recos, onGenerate, onIgnore, actingId, showFilters = tru
 
 // Tableau de bord : « Que publier aujourd'hui ? » = le prompt d'échange avec le copilote, puis le
 // slider de propositions. Filtres, réglages et suivi restent dans l'espace Copilote IA.
-function RecoToday({ onGenerate, onGoCopilot, showToast, profile, onProfileSaved }) {
+function RecoToday({ onGenerate, onGoCopilot, onGoVoice, showToast, profile, onProfileSaved }) {
+  const [voiceOk, setVoiceOk] = useState(false);
+  useEffect(() => { setVoiceOk(canRecordVoice()); }, []);
   const { recos, loading, refreshing, error, actingId, load, respond, updateReco, highlightId } = useRecommendations(showToast);
   const sel = useRecoSelection(recos);
   return (
@@ -8872,6 +8888,11 @@ function RecoToday({ onGenerate, onGoCopilot, showToast, profile, onProfileSaved
           >
             <RefreshCw size={12} className={refreshing ? "animate-spin" : ""} /> Voir d'autres propositions
           </button>
+          {voiceOk && onGoVoice && (
+            <button onClick={() => onGoVoice("free")} data-testid="today-dictate" className="text-xs text-[#ff5a5f] hover:underline flex items-center gap-1">
+              <Mic size={12} /> Dicter une idée
+            </button>
+          )}
           <button onClick={onGoCopilot} className="text-xs text-[#0a66c2] hover:underline flex items-center gap-1">
             Filtres et réglages <ChevronRight size={13} />
           </button>
@@ -9555,7 +9576,7 @@ function CopilotView({ profile, onProfileSaved, showToast, onGoDashboard, onGene
           <h2 className="font-semibold text-lg flex items-center gap-2">
             <Compass size={18} className="text-[#ff5a5f]" /> Copilote IA
           </h2>
-          <p className="text-sm text-gray-500">Que publier, pourquoi, et comment affiner avec lui.</p>
+          <p className="text-sm text-gray-500">Que publier, pourquoi, et comment affiner avec lui, à l&apos;écrit ou à la voix.</p>
         </div>
         <div className="flex gap-1 bg-gray-100 p-1 rounded-xl">
           {tabBtn("work", "Propositions")}
@@ -9613,7 +9634,7 @@ function DashSection({ id, title, icon: Icon, hint, forceOpen = false, children 
   );
 }
 
-function DashboardView({ drafts, canVeille = true, canEvents = false, canScore = true, canCampaigns = true, postsLimit = null, onGoCreate, onGoHistory, onGoEvents, onGoProfile, onGoProfileField, onGoView, onGoCopilot, onApprove, onReschedule, profile, linkedin, orgs, onPlanned, onProfileSaved, showToast, onInspire, onGenerateFromReco }) {
+function DashboardView({ drafts, canVeille = true, canEvents = false, canScore = true, canCampaigns = true, postsLimit = null, onGoCreate, onGoHistory, onGoEvents, onGoProfile, onGoProfileField, onGoView, onGoCopilot, onApprove, onReschedule, profile, linkedin, orgs, onPlanned, onProfileSaved, showToast, onInspire, onGenerateFromReco, onGoVoice }) {
   const ns = useNextSteps(profile);
   const [periodDays, setPeriodDays] = useState(7);
   const [planTarget, setPlanTarget] = useState("person");
@@ -9728,6 +9749,17 @@ function DashboardView({ drafts, canVeille = true, canEvents = false, canScore =
     { label: "À retravailler", color: "#ef4444", count: scores.filter((s) => s < 40).length },
   ];
 
+  const [voiceOk, setVoiceOk] = useState(false);
+  const [voiceHintHidden, setVoiceHintHidden] = useState(true);
+  useEffect(() => {
+    setVoiceOk(canRecordVoice());
+    try { setVoiceHintHidden(localStorage.getItem("lp_voice_hint_hidden") === "1"); } catch { setVoiceHintHidden(false); }
+  }, []);
+  const hideVoiceHint = () => {
+    setVoiceHintHidden(true);
+    try { localStorage.setItem("lp_voice_hint_hidden", "1"); } catch {}
+    showToast?.("Masqué. La dictée reste dans « Créer un post » (onglet « Je dicte »).");
+  };
   const [shareHintHidden, setShareHintHidden] = useState(true); // masqué le temps de lire le choix mémorisé, pour ne pas clignoter
   useEffect(() => {
     try { setShareHintHidden(localStorage.getItem("lp_share_hint_hidden") === "1"); } catch { setShareHintHidden(false); }
@@ -9747,6 +9779,24 @@ function DashboardView({ drafts, canVeille = true, canEvents = false, canScore =
         onSnooze={ns.snooze}
         onAct={(st) => goNextStep(st, { onGoCreate, onGoProfileField, onGoView })}
       />
+
+      {/* Dictée vocale : parler plutôt qu'écrire. La carte se masque (mémorisé sur cet appareil) et n'apparaît que si l'appareil sait enregistrer. */}
+      {voiceOk && !voiceHintHidden && onGoVoice && (
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5" data-testid="dash-voice">
+          <div className="flex items-start gap-3">
+            <span className="p-2.5 rounded-xl bg-[#fff1f1] text-[#ff5a5f] shrink-0"><Mic size={18} /></span>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold">Pas le temps d&apos;écrire ? Parlez, LinkeePost rédige</p>
+              <p className="text-xs text-gray-500 mt-0.5">Dictez une idée en 30 secondes, ou laissez le copilote vous interviewer avec trois questions. Vous relisez le texte, puis il devient un post ou une note de votre base. L&apos;enregistrement n&apos;est pas conservé.</p>
+            </div>
+          </div>
+          <div className="flex flex-wrap items-center gap-3 mt-4">
+            <button onClick={() => onGoVoice("free")} className="inline-flex items-center justify-center gap-2 bg-[#ff5a5f] hover:bg-[#f63d44] text-white text-sm font-semibold px-4 py-2.5 rounded-xl shadow-sm" data-testid="dash-voice-free"><Mic size={15} /> Dicter une idée</button>
+            <button onClick={() => onGoVoice("interview")} className="inline-flex items-center justify-center gap-2 border border-gray-300 hover:border-[#ff5a5f] text-gray-700 text-sm font-semibold px-4 py-2.5 rounded-xl" data-testid="dash-voice-interview">Interview guidée</button>
+            <button onClick={hideVoiceHint} className="text-xs text-gray-500 hover:text-gray-700 underline" data-testid="dash-voice-hide">Masquer</button>
+          </div>
+        </div>
+      )}
 
       {/* Partager vers LinkeePost : le geste le plus court pour nourrir la base ou réagir à un post. L'installation dépend de l'appareil :
           la carte reste là, avec le mode d'emploi, jusqu'à ce que l'utilisateur la masque (mémorisé sur cet appareil). */}
@@ -9897,7 +9947,7 @@ function DashboardView({ drafts, canVeille = true, canEvents = false, canScore =
       )}
 
       {/* Copilote éditorial */}
-      <RecoToday onGenerate={onGenerateFromReco} onGoCopilot={onGoCopilot} showToast={showToast} profile={profile} onProfileSaved={onProfileSaved} />
+      <RecoToday onGenerate={onGenerateFromReco} onGoCopilot={onGoCopilot} onGoVoice={onGoVoice} showToast={showToast} profile={profile} onProfileSaved={onProfileSaved} />
 
       {wizardInit && (
         <CampaignWizard
@@ -18377,6 +18427,7 @@ export default function Home() {
           onGoProfile={() => setView("profile")}
           onGoProfileField={goToProfileField}
           onGoView={setView}
+          onGoVoice={(mode) => { setGenMode("single"); setSourceMode("voice"); setSource(null); setVoiceText(""); setVoiceMode(mode === "interview" ? "interview" : "free"); setView("create"); }}
           onGoCopilot={() => setView("copilot")}
           onApprove={async (d) => {
             try {
