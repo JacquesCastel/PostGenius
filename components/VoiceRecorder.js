@@ -10,6 +10,41 @@ export const MIN_SECONDS = 5;
 const NOTICE_KEY = "lp_voice_notice";
 const MIMES = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4", "audio/ogg;codecs=opus"]; // WebM : Chrome, Android ; MP4 : Safari, iPhone
 
+// Nettoyage facultatif d'un texte dicté (hésitations, ponctuation) : { text, changed, refused? }
+export async function cleanVoiceText(text) {
+  const res = await fetch("/api/transcribe/clean", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text }) });
+  const d = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(d.error || "Nettoyage impossible.");
+  return d;
+}
+
+export function CleanButton({ text, onText, testid = "voice-clean" }) {
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState("");
+  const run = async () => {
+    setBusy(true);
+    setMsg("");
+    try {
+      const d = await cleanVoiceText(text);
+      if (d.refused) setMsg("Nettoyage non appliqué : le texte d'origine est conservé.");
+      else if (!d.changed) setMsg("Rien à nettoyer.");
+      else { onText(d.text); setMsg("Texte nettoyé : relisez-le."); }
+    } catch (e) {
+      setMsg(e.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <span className="inline-flex items-center gap-2">
+      <button type="button" onClick={run} disabled={busy || text.trim().length < 20} data-testid={testid} className="border border-gray-300 hover:border-[#ff5a5f] disabled:opacity-50 text-gray-700 text-sm font-medium px-4 py-2 rounded-lg">
+        {busy ? "Nettoyage…" : "Nettoyer le texte"}
+      </button>
+      {msg && <span className="text-[11px] text-gray-500" data-testid={testid + "-msg"}>{msg}</span>}
+    </span>
+  );
+}
+
 export function canRecord() {
   return typeof window !== "undefined" && Boolean(navigator.mediaDevices?.getUserMedia) && typeof window.MediaRecorder !== "undefined";
 }
@@ -23,7 +58,7 @@ function micError(e) {
   return "Impossible d'ouvrir le micro. Écrivez votre texte au clavier.";
 }
 
-export default function VoiceRecorder({ language = "fr", onText }) {
+export default function VoiceRecorder({ language = "", onText }) {
   const [phase, setPhase] = useState("idle"); // idle | recording | sending
   const [elapsed, setElapsed] = useState(0);
   const [level, setLevel] = useState(0);
@@ -102,7 +137,7 @@ export default function VoiceRecorder({ language = "fr", onText }) {
       const body = new FormData();
       body.append("file", new Blob(s.chunks, { type: mime.split(";")[0] }), "dictee");
       body.append("seconds", String(Math.round(seconds)));
-      body.append("language", language);
+      if (language) body.append("language", language);
       const res = await fetch("/api/transcribe", { method: "POST", body });
       const d = await readJson(res);
       if (!res.ok) throw new Error(d.error || "Transcription impossible.");

@@ -3,6 +3,7 @@ import { getEffectiveUserId as getUserId } from "@/lib/session";
 import { checkAccess, checkVoiceQuota, limitBody } from "@/lib/gating";
 import { rateLimit } from "@/lib/ratelimit";
 import { logUsage } from "@/lib/usage";
+import { prisma } from "@/lib/db";
 import { MAX_AUDIO_BYTES, MIN_AUDIO_BYTES, MAX_SECONDS, audioExtension, billedSeconds, transcribe } from "@/lib/voice";
 
 export const maxDuration = 60;
@@ -46,7 +47,10 @@ export async function POST(req) {
   const buffer = Buffer.from(await file.arrayBuffer());
   const seconds = billedSeconds(form.get("seconds"), buffer.length);
   try {
-    const text = await transcribe({ buffer, mime: file.type, language: form.get("language") });
+    // Langue : celle demandée, sinon la langue de rédaction du profil
+    const asked = form.get("language");
+    const language = asked || (await prisma.user.findUnique({ where: { id: userId }, select: { postLanguage: true } }))?.postLanguage;
+    const text = await transcribe({ buffer, mime: file.type, language });
     logUsage(userId, { kind: "transcription", context: "dictée vocale", seconds });
     if (!text) return NextResponse.json({ error: "Aucune parole reconnue. Rapprochez-vous du micro et réessayez." }, { status: 422 });
     return NextResponse.json({ text, seconds });
