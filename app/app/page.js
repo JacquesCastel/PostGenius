@@ -9,7 +9,7 @@ import {
   BarChart3, Eye, MousePointerClick, ThumbsUp, MessageSquare, Share2, Undo2, Layers as LayersIcon,
   Megaphone, ChevronDown, Image as ImageIcon, ShieldCheck, Lock, ArrowUpCircle, MapPin, Bell, Camera,
   CreditCard, Gauge, Users, Smartphone, Database, Monitor, Minus,
-  Upload, Wand2, SlidersHorizontal, Type, Crop, Download, Pencil, GripHorizontal,
+  Mic, Upload, Wand2, SlidersHorizontal, Type, Crop, Download, Pencil, GripHorizontal,
   Compass, Lightbulb, EyeOff, TrendingUp, TrendingDown, Plus, Globe, ChevronUp, Menu,
   AlignLeft, AlignCenter, AlignRight, Move, Server, Clapperboard, Link2
 } from "lucide-react";
@@ -52,6 +52,7 @@ import { parsePostUrn, REACTIONS } from "@/lib/linkedinPost";
 import ShareView from "@/components/ShareView";
 import ShareHowTo from "@/components/ShareHowTo";
 import LeadsView from "@/components/LeadsView";
+import VoiceRecorder, { canRecord as canRecordVoice } from "@/components/VoiceRecorder";
 import { postAnatomy } from "@/lib/linkedinRules";
 
 // Format compact des tokens : 12 500 → "12,5k", 3 200 000 → "3,2M"
@@ -1124,7 +1125,7 @@ function SourceReader({ mode, source, onRead, onClear }) {
     return (
       <div className="rounded-xl bg-[#f4f8fd] border border-[#d6e6f7] p-3 flex items-start justify-between gap-2" data-testid="campaign-source">
         <div className="min-w-0">
-          <p className="text-xs font-semibold text-[#0a66c2] flex items-center gap-1.5"><Check size={13} /> {source.kind === "file" ? "Document lu" : source.kind === "text" ? "Texte partagé" : "Article lu"}</p>
+          <p className="text-xs font-semibold text-[#0a66c2] flex items-center gap-1.5"><Check size={13} /> {source.kind === "file" ? "Document lu" : source.origin === "dictée vocale" ? "Dictée relue" : source.kind === "text" ? "Texte partagé" : "Article lu"}</p>
           <p className="text-sm font-medium truncate mt-0.5">{source.title || source.origin}</p>
           <p className="text-[11px] text-gray-500">
             {source.origin}
@@ -16021,7 +16022,10 @@ export default function Home() {
   const [seriesCount, setSeriesCount] = useState(5);
   const [wantVariants, setWantVariants] = useState(false);
   // Post libre : matière d'un article (lien) ou d'un document, lue à la demande
-  const [sourceMode, setSourceMode] = useState("idea"); // idea | link | file
+  const [sourceMode, setSourceMode] = useState("idea"); // idea | link | file | voice
+  const [voiceText, setVoiceText] = useState(""); // texte dicté, en cours de relecture
+  const [voiceOk, setVoiceOk] = useState(false); // l'appareil sait enregistrer la voix
+  useEffect(() => { setVoiceOk(canRecordVoice()); }, []);
   const [sourceUrl, setSourceUrl] = useState("");
   const [sourceFile, setSourceFile] = useState(null);
   const [sourceFileKey, setSourceFileKey] = useState(0); // change pour vider le champ de fichier
@@ -18911,9 +18915,10 @@ export default function Home() {
                 {genMode === "series" ? "Thématique de la série" : "Sur quoi s'appuie votre post ?"}
               </label>
               {genMode === "single" && (
-                <div className="grid grid-cols-3 gap-1 bg-gray-100 p-1 rounded-lg mb-3" role="tablist">
+                <div className={`grid ${voiceOk ? "grid-cols-4" : "grid-cols-3"} gap-1 bg-gray-100 p-1 rounded-lg mb-3`} role="tablist">
                   {[
                     ["idea", "Mon idée", PenLine],
+                    ...(voiceOk ? [["voice", "Je dicte", Mic]] : []),
                     ["link", "Un article", ExternalLink],
                     ["file", "Un document", FileText],
                   ].map(([id, text, Icon]) => (
@@ -18972,12 +18977,29 @@ export default function Home() {
                 </div>
               )}
 
+              {genMode === "single" && sourceMode === "voice" && !source && (
+                voiceText === "" ? (
+                  <VoiceRecorder language={normalizeLanguage(form.language ?? profile?.postLanguage)} onText={(t) => setVoiceText(t)} />
+                ) : (
+                  <div className="space-y-2 mb-3" data-testid="voice-review">
+                    <p className="text-xs text-gray-500">Votre dictée, <strong>à relire</strong> : corrigez ce qui a été mal compris avant de continuer.</p>
+                    <textarea value={voiceText} onChange={(e) => setVoiceText(e.target.value)} rows={7} maxLength={12000} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]" data-testid="voice-text" />
+                    <p className="text-[11px] text-gray-400">{voiceText.trim().length} caractères{voiceText.trim().length < 200 ? " : 200 au moins pour servir de matière au post ; en dessous, utilisez-la comme idée." : "."}</p>
+                    <div className="flex flex-wrap gap-2">
+                      <button type="button" disabled={voiceText.trim().length < 200} onClick={() => { const t = voiceText.trim(); setSource({ kind: "text", title: "Dictée vocale", origin: "dictée vocale", text: t.slice(0, 12000), chars: t.length, truncated: t.length > 12000 }); }} className="bg-[#0a66c2] hover:bg-[#004182] disabled:bg-gray-300 text-white text-sm font-medium px-4 py-2 rounded-lg" data-testid="voice-use-source">Utiliser comme matière du post</button>
+                      <button type="button" onClick={() => { setForm((f) => ({ ...f, theme: ((f.theme.trim() ? f.theme.trim() + "\n" : "") + voiceText.trim()).slice(0, 1500) })); setSourceMode("idea"); setVoiceText(""); }} className="border border-gray-300 hover:border-[#ff5a5f] text-gray-700 text-sm font-medium px-4 py-2 rounded-lg" data-testid="voice-use-idea">Mettre dans mon idée</button>
+                      <button type="button" onClick={() => setVoiceText("")} className="text-sm text-gray-500 underline" data-testid="voice-redo">Réenregistrer</button>
+                    </div>
+                  </div>
+                )
+              )}
+
               {sourceError && <p className="text-xs text-red-600 mb-3">{sourceError}</p>}
 
               {source && (
                 <div className="mb-3 rounded-xl bg-[#f4f8fd] border border-[#d6e6f7] p-3 flex items-start justify-between gap-2">
                   <div className="min-w-0">
-                    <p className="text-xs font-semibold text-[#0a66c2] flex items-center gap-1.5"><Check size={13} /> {source.kind === "file" ? "Document lu" : source.kind === "text" ? "Texte partagé" : "Article lu"}</p>
+                    <p className="text-xs font-semibold text-[#0a66c2] flex items-center gap-1.5"><Check size={13} /> {source.kind === "file" ? "Document lu" : source.origin === "dictée vocale" ? "Dictée relue" : source.kind === "text" ? "Texte partagé" : "Article lu"}</p>
                     <p className="text-sm font-medium truncate mt-0.5">{source.title || source.origin}</p>
                     <p className="text-[11px] text-gray-500">
                       {source.origin}
