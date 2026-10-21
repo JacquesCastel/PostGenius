@@ -146,6 +146,7 @@ export default function FonctionnalitesPage() {
             "Échange avec le moteur pour affiner : ce qu'il propose de retenir attend votre accord",
             "Chaque chiffre repris doit se retrouver dans une source, citée dans le post",
             "Partager vers LinkeePost : commenter, écrire un post ou garder un lien dans la base",
+            "Dictée vocale : parlez au lieu d'écrire, relisez le texte, gardez-le comme note ou faites-en un post",
           ]}
         >
           <Card>

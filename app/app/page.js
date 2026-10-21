@@ -12066,7 +12066,7 @@ function ClientAssignments({ clients, showToast }) {
 }
 
 // Consommation du mois par rapport aux limites du compte : une barre par ressource, orange dès 80 %, rouge à 100 %.
-const QUOTA_ROWS = [["postsPerMonth", "Posts ce mois-ci"], ["imagesPerMonth", "Images IA ce mois-ci"], ["knowledgeSources", "Sources de connaissances"]];
+const QUOTA_ROWS = [["postsPerMonth", "Posts ce mois-ci"], ["imagesPerMonth", "Images IA ce mois-ci"], ["knowledgeSources", "Sources de connaissances"], ["voiceMinutesPerMonth", "Dictée vocale (min) ce mois-ci"]];
 function UsageMeter({ limits, usage, compact = false }) {
   return (
     <div className={compact ? "space-y-2" : "space-y-3"} data-testid="usage-meter">
@@ -12095,7 +12095,7 @@ function UsageMeter({ limits, usage, compact = false }) {
 // Quotas d'un client d'agence (propriétaire) : limites propres au client, par-dessus celles de l'offre. Champ vide = pas de limite propre.
 function ClientQuotaDialog({ client, showToast, onClose }) {
   const [data, setData] = useState(null);
-  const [form, setForm] = useState({ postsPerMonth: "", imagesPerMonth: "", knowledgeSources: "" });
+  const [form, setForm] = useState({ postsPerMonth: "", imagesPerMonth: "", knowledgeSources: "", voiceMinutesPerMonth: "" });
   const [busy, setBusy] = useState(false);
   const url = `/api/agency/clients/${client.id}/quota`;
   const fill = (d) => { setData(d); setForm(Object.fromEntries(QUOTA_ROWS.map(([k]) => [k, d.overrides?.[k] === undefined ? "" : d.overrides[k] < 0 ? "-1" : String(d.overrides[k])]))); };
