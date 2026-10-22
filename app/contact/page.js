@@ -2,6 +2,7 @@ import { Mail, Clock, MessagesSquare } from "lucide-react";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 import ContactForm from "./ContactForm";
+import { CONTACT_EMAIL } from "@/lib/contact";
 
 export const metadata = {
   title: "Contact — LinkeePost",
@@ -56,8 +57,8 @@ export default function ContactPage() {
 
             <p className="mt-8 inline-flex items-center gap-2 text-sm text-[#5a6b85]">
               <Mail size={15} className="text-[#ff5a5f]" /> ou directement :{" "}
-              <a href="mailto:contact@postgenius.network" className="font-semibold text-[#ff5a5f] hover:underline">
-                contact@postgenius.network
+              <a href={`mailto:${CONTACT_EMAIL}`} className="font-semibold text-[#ff5a5f] hover:underline">
+                {CONTACT_EMAIL}
               </a>
             </p>
           </div>
