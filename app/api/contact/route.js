@@ -34,7 +34,7 @@ export async function POST(req) {
       to: CONTACT_EMAIL,
       replyTo: data.email,
       subject: `[Contact] ${one(data.subject) || `Message de ${one(data.name)}`}`.slice(0, 200),
-      text: `De : ${one(data.name)} <${data.email}>\n${data.subject ? `Objet : ${one(data.subject)}\n` : ""}\n${data.message}\n\n---\nMessage reçu via le formulaire de contact de LinkeePost. Répondez à ce message pour écrire à ${one(data.name)}.`,
+      text: `Nom : ${one(data.name)}\nE-mail : ${data.email}\n${data.subject ? `Objet : ${one(data.subject)}\n` : ""}\nMessage :\n${data.message}\n\n---\nReçu via le formulaire de contact de LinkeePost. Répondre à ce message écrit à ${data.email}.`,
     });
   } catch (e) {
     console.error("[contact] envoi à la boîte de contact échoué :", e.message);
