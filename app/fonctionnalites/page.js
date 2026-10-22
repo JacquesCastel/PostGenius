@@ -10,11 +10,12 @@ import SiteFooter from "@/components/SiteFooter";
 export const metadata = {
   title: "Fonctionnalités — LinkeePost",
   description:
-    "Base de connaissances, voix et éléments de langage, partage de liens, mémoire éditoriale, campagnes guidées, base de leads, veille, images et vidéos, programmation, statistiques : toutes les fonctions de LinkeePost.",
+    "Dictée vocale, base de connaissances, voix et éléments de langage, partage de liens, mémoire éditoriale, campagnes guidées, base de leads, veille, images et vidéos, programmation, statistiques : toutes les fonctions de LinkeePost.",
   alternates: { canonical: "/fonctionnalites" },
 };
 
 const PIPELINE = [
+  { icon: Mic, label: "Dictée" },
   { icon: UserRound, label: "Profil" },
   { icon: MessageCircle, label: "Copilote" },
   { icon: Megaphone, label: "Campagne" },
@@ -169,6 +170,52 @@ export default function FonctionnalitesPage() {
           </Card>
         </Feature>
 
+        {/* Dictée vocale */}
+        <Feature
+          tag="Dictée vocale · toutes les offres"
+          title="Parlez plutôt qu'écrire : LinkeePost met en forme"
+          text="Vous parlez mieux que vous n'écrivez ? Dictez une idée, un retour de rendez-vous ou une conviction, depuis le téléphone, la tablette ou l'ordinateur. Le texte est transcrit, vous le relisez et le corrigez, puis il devient la matière d'un post, une note de votre base de connaissances ou une demande au copilote. L'enregistrement n'est pas conservé : seul le texte que vous gardez l'est."
+          points={[
+            "Dicter une idée ou une matière dans « Créer un post », en 30 secondes ou en quelques minutes",
+            "Interview guidée : trois questions adaptées à votre métier, une réponse à la voix pour chacune, réunies en un texte à relire",
+            "Dicter une note directement dans la base de connaissances : elle compte comme une source et sert aux prochains posts",
+            "Dicter une demande au copilote (« plus concret, pour mes clients DRH ») sans rien taper",
+            "Nettoyage facultatif : hésitations et ponctuation corrigées, sans que rien soit ajouté ni reformulé",
+            "Dans votre langue de rédaction, parmi les 9 proposées, et toujours relu avant d'être utilisé",
+            "Le micro ne s'active qu'après votre accord, à chaque enregistrement ; transcription par OpenAI, voix non conservée",
+            "Minutes incluses chaque mois : 10 en Essentiel, 60 en Pro, 60 par client en Agence",
+          ]}
+        >
+          <Card>
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-sm font-bold">Votre datalake éditorial</p>
+              <span className="text-[11px] text-gray-400">18/30 sources</span>
+            </div>
+            <div className="flex gap-1.5 flex-wrap mb-4">
+              <span className="text-[11px] font-semibold bg-[#0a66c2] text-white rounded-full px-3 py-1.5 inline-flex items-center gap-1.5"><Mic size={12} /> Dicter à la voix</span>
+              <span className="text-[11px] font-medium border border-gray-200 text-gray-500 rounded-full px-3 py-1.5">Coller un texte</span>
+              <span className="text-[11px] font-medium border border-gray-200 text-gray-500 rounded-full px-3 py-1.5">Un lien</span>
+            </div>
+            <div className="flex items-center gap-3 mb-3">
+              <span className="w-12 h-12 rounded-full bg-[#ff5a5f] text-white flex items-center justify-center shrink-0 shadow-lg shadow-rose-200"><Mic size={20} /></span>
+              <div className="flex items-center gap-[3px] h-10 flex-1" aria-hidden="true">
+                {[30, 55, 80, 45, 90, 60, 35, 70, 95, 50, 75, 40, 85, 55, 30, 65, 80, 45, 60, 35].map((h, i) => (
+                  <span key={i} className="w-1 rounded-full bg-[#ff5a5f]" style={{ height: `${h}%` }} />
+                ))}
+              </div>
+              <span className="text-xs font-bold text-[#ff5a5f] tabular-nums">0:24</span>
+            </div>
+            <div className="rounded-xl bg-gray-50 border border-gray-100 p-3 text-xs text-gray-700 leading-relaxed">
+              Chez nous, le lundi matin, chaque manager ouvre la semaine par un rituel de dix minutes.
+            </div>
+            <div className="flex gap-1.5 flex-wrap mt-3">
+              <span className="text-[11px] font-semibold bg-green-50 text-green-600 rounded-full px-2.5 py-1 inline-flex items-center gap-1"><Check size={12} /> Relu et ajouté à la base</span>
+              <span className="text-[11px] font-semibold bg-[#e8f1fb] text-[#0a66c2] rounded-full px-2.5 py-1">Nettoyer le texte</span>
+            </div>
+            <p className="text-xs text-[#5a6b85] mt-3 flex items-center gap-1.5"><ShieldCheck size={13} className="text-[#ff5a5f]" /> L&apos;enregistrement n&apos;est pas conservé</p>
+          </Card>
+        </Feature>
+
         {/* Copilote éditorial */}
         <Feature
           tag="Copilote éditorial"
@@ -179,6 +226,7 @@ export default function FonctionnalitesPage() {
             "Piliers éditoriaux et mots-clés classables par importance",
             "Apprend de vos choix (Générer / Ignorer) pour s'affiner avec le temps",
             "Veille des bonnes pratiques LinkedIn pour éclairer ses suggestions",
+            "Échangez à l'écrit ou à la voix : dictez votre demande au copilote, relisez-la, puis envoyez",
           ]}
         >
           <Card>
