@@ -53,7 +53,7 @@ import ShareView from "@/components/ShareView";
 import ShareHowTo from "@/components/ShareHowTo";
 import LeadsView from "@/components/LeadsView";
 import VoiceRecorder, { canRecord as canRecordVoice, CleanButton } from "@/components/VoiceRecorder";
-import VoiceInterview from "@/components/VoiceInterview";
+import InterviewScreen from "@/components/InterviewScreen";
 import { postAnatomy } from "@/lib/linkedinRules";
 
 // Format compact des tokens : 12 500 → "12,5k", 3 200 000 → "3,2M"
@@ -11698,7 +11698,7 @@ const FEATURE_LABELS = {
   orgStats: "Les statistiques de page",
 };
 
-const DEEP_LINK_VIEWS = ["dashboard", "create", "history", "campaigns", "connections", "profile", "stats", "copilot", "events", "engage", "brand-kit", "billing", "clients", "queue", "followup", "team", "planning", "messages", "datalake", "share", "leads"];
+const DEEP_LINK_VIEWS = ["dashboard", "create", "history", "campaigns", "connections", "profile", "stats", "copilot", "events", "engage", "brand-kit", "billing", "clients", "queue", "followup", "team", "planning", "messages", "datalake", "share", "leads", "interview"];
 
 function ClientTableRow({ client, team = [], restrict = false, onManage, onViewDrafts, onDelete, deleting, onShowReport, onApproval, onQuota }) {
   const [open, setOpen] = useState(false);
@@ -17578,6 +17578,7 @@ export default function Home() {
     engage: "Interagir sur LinkedIn",
     campaigns: "Campagnes",
     datalake: "Datalake éditorial",
+    interview: "Interview guidée",
     events: "Événements",
     stats: "Statistiques",
     billing: "Abonnement",
@@ -18431,7 +18432,7 @@ export default function Home() {
           onGoProfile={() => setView("profile")}
           onGoProfileField={goToProfileField}
           onGoView={setView}
-          onGoVoice={(mode) => { setGenMode("single"); setSourceMode("voice"); setSource(null); setVoiceText(""); setVoiceMode(mode === "interview" ? "interview" : "free"); setView("create"); }}
+          onGoVoice={(mode) => { if (mode === "interview") { setView("interview"); return; } setGenMode("single"); setSourceMode("voice"); setSource(null); setVoiceText(""); setVoiceMode("free"); setView("create"); }}
           onGoCopilot={() => setView("copilot")}
           onApprove={async (d) => {
             try {
@@ -19058,14 +19059,10 @@ export default function Home() {
                   <div>
                     <div className="flex gap-1.5 mb-2">
                       {[["free", "Je dicte librement"], ["interview", "Interview guidée"]].map(([k, l]) => (
-                        <button key={k} type="button" onClick={() => setVoiceMode(k)} data-testid={`voice-mode-${k}`} className={`text-xs px-3 py-1.5 rounded-full border ${voiceMode === k ? "bg-[#ff5a5f] text-white border-[#ff5a5f]" : "border-gray-200 text-gray-600 hover:border-gray-300"}`}>{l}</button>
+                        <button key={k} type="button" onClick={() => (k === "interview" ? setView("interview") : setVoiceMode(k))} data-testid={`voice-mode-${k}`} className={`text-xs px-3 py-1.5 rounded-full border ${voiceMode === k ? "bg-[#ff5a5f] text-white border-[#ff5a5f]" : "border-gray-200 text-gray-600 hover:border-gray-300"}`}>{l}</button>
                       ))}
                     </div>
-                    {voiceMode === "interview" ? (
-                      <VoiceInterview topic={form.theme} language={normalizeLanguage(form.language ?? profile?.postLanguage)} onDone={(t) => setVoiceText(t)} onCancel={() => setVoiceMode("free")} />
-                    ) : (
-                      <VoiceRecorder language={normalizeLanguage(form.language ?? profile?.postLanguage)} onText={(t) => setVoiceText(t)} />
-                    )}
+                    <VoiceRecorder language={normalizeLanguage(form.language ?? profile?.postLanguage)} onText={(t) => setVoiceText(t)} />
                   </div>
                 ) : (
                   <div className="space-y-2 mb-3" data-testid="voice-review">
@@ -19691,6 +19688,15 @@ export default function Home() {
         />
       ) : view === "leads" ? (
         <LeadsView key={activeContextId ?? "main"} showToast={showToast} />
+      ) : view === "interview" ? (
+        <main className="max-w-5xl mx-auto p-6">
+          <InterviewScreen
+            language={normalizeLanguage(form.language ?? profile?.postLanguage)}
+            initialTopic={form.theme}
+            onDone={(t) => { setGenMode("single"); setSourceMode("voice"); setSource(null); setVoiceMode("free"); setVoiceText(t); setView("create"); }}
+            onFree={() => { setGenMode("single"); setSourceMode("voice"); setSource(null); setVoiceText(""); setVoiceMode("free"); setView("create"); }}
+          />
+        </main>
       ) : view === "share" ? (
         <ShareView
           payload={sharePayload}
