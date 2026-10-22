@@ -1,9 +1,9 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import VoiceRecorder from "./VoiceRecorder";
 
 // Interview guidée : trois questions, une réponse dictée (ou écrite) pour chacune ; renvoie les réponses réunies, à relire.
-export default function VoiceInterview({ topic = "", language = "", onDone, onCancel }) {
+export default function VoiceInterview({ topic = "", language = "", autoStart = false, onDone, onCancel }) {
   const [questions, setQuestions] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -25,6 +25,8 @@ export default function VoiceInterview({ topic = "", language = "", onDone, onCa
       setLoading(false);
     }
   };
+
+  useEffect(() => { if (autoStart) start(); }, []); // depuis l'écran dédié, le clic sur « Commencer » a déjà eu lieu
 
   if (!questions) {
     return (
