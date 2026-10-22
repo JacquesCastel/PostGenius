@@ -234,7 +234,7 @@ export async function POST(req) {
   const remarks = userId ? await getRemarks(userId) : [];
   // Base de connaissances : sources les plus proches du sujet (jamais bloquant)
   const topic = [theme, source?.title, params.inspiration?.title, params.refine?.text?.slice(0, 400)].filter(Boolean).join(" ");
-  const knowledge = await knowledgeFor(userId, topic, ctx?.id ?? null);
+  const knowledge = await knowledgeFor(userId, topic, ctx?.id ?? null, { sourceIds: Array.isArray(params.sourceIds) ? params.sourceIds : null });
   // Éléments de langage validés pour cette entreprise : transmis avec les connaissances, dans le même bloc de prompt
   knowledge.block += languageBlock(await elementsFor(userId, ctx?.id ?? null));
   // Mémoire éditoriale : ce que l'auteur a déjà dit (continuité, pas de répétition) ; sans objet pour la retouche d'un post existant

@@ -54,6 +54,8 @@ import ShareHowTo from "@/components/ShareHowTo";
 import LeadsView from "@/components/LeadsView";
 import VoiceRecorder, { canRecord as canRecordVoice, CleanButton } from "@/components/VoiceRecorder";
 import InterviewScreen from "@/components/InterviewScreen";
+import LinkedInPreview from "@/components/LinkedInPreview";
+import EngineBrief from "@/components/EngineBrief";
 import { postAnatomy } from "@/lib/linkedinRules";
 
 // Format compact des tokens : 12 500 → "12,5k", 3 200 000 → "3,2M"
@@ -1284,6 +1286,8 @@ function CampaignWizard({ profile, linkedin, orgs, onClose, onLaunched, onProfil
   // Point de départ choisi à l'étape 1 : un thème libre, un article, un document ou la veille
   const { contexts: ents, activeContextId } = useContext(EntreprisesCtx);
   const [wizCtx, setWizCtx] = useState(draft ? d0.wizCtx ?? null : initial?.contextId ?? activeContextId ?? null); // entreprise de la campagne
+  const [wizSources, setWizSources] = useState(null); // sources choisies pour le post d'exemple (null = automatique)
+  useEffect(() => { setWizSources(null); }, [wizCtx]);
   const [startMode, setStartMode] = useState(d0.startMode ?? (initial?.context ? "veille" : "theme"));
   const [source, setSource] = useState(null);
   const [qi, setQi] = useState(d0.qi ?? 0); // question de cadrage affichée
@@ -1394,6 +1398,7 @@ function CampaignWizard({ profile, linkedin, orgs, onClose, onLaunched, onProfil
           mood,
           context: buildContext(),
           contextId: wizCtx || undefined,
+          sourceIds: wizSources ?? undefined,
           ...(withFeedback ? { feedback: fb, previous: sample, history: sampleThread.filter((m) => m.role === "user").map((m) => m.text) } : {}),
         }),
       });
@@ -1659,7 +1664,7 @@ function CampaignWizard({ profile, linkedin, orgs, onClose, onLaunched, onProfil
               </div>
             </details>
 
-            <GenerationContextCard theme={theme} sourceTitle={source?.title ?? ""} />
+            <GenerationContextCard theme={theme} sourceTitle={source?.title ?? ""} contextId={wizCtx || null} sourceIds={wizSources} onSourceIds={setWizSources} />
 
             <div className="flex justify-end pt-1">
               <button
@@ -6438,10 +6443,27 @@ function EnginePanel({ contextId, sourceCount, showToast, onChanged }) {
       const d = await readJson(res);
       if (!res.ok) throw new Error(d.error || "Erreur");
       setState(d);
+      showToast(d.first ? "Synthèse créée : vérifiez-la, modifiez ou supprimez ce qui ne vous convient pas ✓" : d.added > 0 ? `${d.added} ajout${d.added > 1 ? "s" : ""} proposé${d.added > 1 ? "s" : ""} : à valider, modifier ou supprimer ✓` : "Rien de nouveau : votre synthèse est à jour ✓");
     } catch (e) {
       setError(e.message);
     } finally {
       setBusy(false);
+    }
+  };
+  // Valider, modifier, supprimer ou refuser un élément de la synthèse
+  const [opBusy, setOpBusy] = useState(false);
+  const [laterKey, setLaterKey] = useState(null); // la fenêtre « Vos sources ont changé » a été reportée pour cet état des sources
+  const briefOp = async (op) => {
+    setOpBusy(true);
+    try {
+      const res = await fetch("/api/knowledge/engine/brief", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ contextId, ...op }) });
+      const d = await readJson(res);
+      if (!res.ok) throw new Error(d.error || "Erreur");
+      setState(d);
+    } catch (e) {
+      showToast(e.message);
+    } finally {
+      setOpBusy(false);
     }
   };
   const send = async (raw) => {
@@ -6481,16 +6503,36 @@ function EnginePanel({ contextId, sourceCount, showToast, onChanged }) {
   };
 
   const brief = state?.brief;
-  const label = "text-[11px] font-medium uppercase tracking-wide text-gray-400 mb-1.5";
+  const staleKey = `${state?.sourceCount}:${state?.updatedAt}`;
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4" data-testid="engine-panel">
+    <div id="datalake-engine" className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4 scroll-mt-24" data-testid="engine-panel">
+      {state?.stale && laterKey !== staleKey && (
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="engine-stale-title" data-testid="engine-stale-popin">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 space-y-4">
+            <div className="flex items-start gap-3">
+              <span className="p-2.5 rounded-xl bg-amber-50 text-amber-600 shrink-0"><RefreshCw size={20} /></span>
+              <div>
+                <h3 id="engine-stale-title" className="font-bold text-base">Vos sources ont changé</h3>
+                <p className="text-sm text-gray-600 mt-1 leading-relaxed">Vous avez ajouté ou modifié des sources depuis la dernière synthèse. Actualisez pour que le moteur en retienne les nouveautés.</p>
+                <p className="text-xs text-gray-500 mt-2 leading-relaxed">Votre synthèse actuelle est conservée : les ajouts vous sont proposés, à valider, modifier ou supprimer.</p>
+              </div>
+            </div>
+            <div className="flex items-center justify-end gap-3">
+              <button type="button" onClick={() => setLaterKey(staleKey)} disabled={busy} className="text-sm text-gray-500 hover:text-gray-700 px-3 py-2" data-testid="engine-stale-later">Plus tard</button>
+              <button type="button" onClick={generate} disabled={busy} className="bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white text-sm font-semibold px-4 py-2 rounded-xl flex items-center gap-2" data-testid="engine-stale-refresh">
+                <RefreshCw size={14} className={busy ? "animate-spin" : ""} /> {busy ? "Actualisation…" : "Actualiser"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
           <h3 className="font-semibold text-sm flex items-center gap-2"><Sparkles size={15} className="text-[#ff5a5f]" /> Ce que le moteur a appris de vous</h3>
           <p className="text-xs text-gray-400 mt-0.5">Une synthèse de vos sources, à vérifier. Corrigez-la ou précisez-la en échangeant avec le moteur, ci-dessous.</p>
         </div>
         <div className="flex items-center gap-2">
-          {state?.stale && <span className="text-[11px] px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200" data-testid="engine-stale">Vos sources ont changé</span>}
+          {state?.stale && <button type="button" onClick={() => setLaterKey(null)} className="text-[11px] px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 font-medium" data-testid="engine-stale">Vos sources ont changé</button>}
           <button type="button" onClick={generate} disabled={busy || !state?.sourceCount} data-testid="engine-generate" className="text-xs font-medium bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white px-3 py-1.5 rounded-lg flex items-center gap-1.5">
             {busy ? <RefreshCw size={12} className="animate-spin" /> : <RefreshCw size={12} />} {brief ? "Actualiser" : "Générer la synthèse"}
           </button>
@@ -6498,26 +6540,7 @@ function EnginePanel({ contextId, sourceCount, showToast, onChanged }) {
       </div>
 
       {brief ? (
-        <div className="space-y-3 text-sm text-gray-700" data-testid="engine-brief">
-          {brief.headline && <p className="font-medium text-[#1b2a4a]">{brief.headline}</p>}
-          {brief.business && <p>{brief.business}</p>}
-          {brief.positions?.length > 0 && (
-            <div><p className={label}>Ce que vous défendez</p><ul className="space-y-1">{brief.positions.map((p) => <li key={p} className="flex gap-2"><span className="text-[#ff5a5f]">•</span><span>{p}</span></li>)}</ul></div>
-          )}
-          {brief.voice && <div><p className={label}>Votre façon de vous exprimer</p><p>{brief.voice}</p></div>}
-          {brief.proofs?.length > 0 && (
-            <div><p className={label}>Chiffres et preuves retenus</p><ul className="space-y-1">{brief.proofs.map((p) => <li key={p} className="flex gap-2"><span className="text-gray-400">›</span><span>{p}</span></li>)}</ul></div>
-          )}
-          {brief.gaps?.length > 0 && (
-            <div><p className={label}>Ce que je ne sais pas encore</p><ul className="space-y-1">{brief.gaps.map((p) => <li key={p} className="flex gap-2"><span className="text-amber-500">?</span><span>{p}</span></li>)}</ul></div>
-          )}
-          {brief.questions?.length > 0 && (
-            <div>
-              <p className={label}>Pour m'aider à mieux vous comprendre</p>
-              <div className="flex flex-wrap gap-1.5">{brief.questions.map((q) => <button key={q} type="button" onClick={() => send(q)} disabled={sending} className="text-xs px-2.5 py-1 rounded-full border border-gray-200 hover:border-[#ff5a5f] hover:bg-[#fff1f1] text-left">{q}</button>)}</div>
-            </div>
-          )}
-        </div>
+        <EngineBrief brief={brief} onOp={briefOp} onAsk={send} asking={sending} busy={opBusy || busy} />
       ) : state && (
         <p className="text-xs text-gray-400">{state.sourceCount ? "Générez la synthèse pour voir ce que le moteur a compris de vos sources." : "Ajoutez une source : le moteur n'a encore rien lu."}</p>
       )}
@@ -6614,7 +6637,7 @@ function LanguagePanel({ contextId, contextName, sourceCount, showToast }) {
   const LABEL = { phrase: "Formulation type", use: "Mot à privilégier", avoid: "À éviter", line: "Ligne éditoriale", pillar: "Pilier" };
   const groups = [["use", "À privilégier"], ["avoid", "À éviter"], ["phrase", "Formulations types"]];
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4" data-testid="language-panel">
+    <div id="datalake-language" className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4 scroll-mt-24" data-testid="language-panel">
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div className="min-w-0">
           <h3 className="font-semibold text-sm">Éléments de langage{contextName ? ` · ${contextName}` : ""}</h3>
@@ -6673,6 +6696,48 @@ function LanguagePanel({ contextId, contextName, sourceCount, showToast }) {
   );
 }
 
+// Navigation du datalake : pour passer d'un bloc à l'autre sans faire défiler ; le bloc affiché est mis en évidence.
+const DATALAKE_BLOCKS = [
+  ["datalake-engine", "Ce que le moteur a appris"],
+  ["datalake-synthesis", "Thèmes retenus"],
+  ["datalake-posts", "Vos posts"],
+  ["datalake-language", "Éléments de langage"],
+  ["datalake-sources", "Sources"],
+];
+function DatalakeNav({ onAdd }) {
+  const [active, setActive] = useState(null);
+  const [present, setPresent] = useState(DATALAKE_BLOCKS);
+  // Les blocs apparaissent au fil des chargements : on relit ceux qui existent quelques fois, puis on garde le résultat
+  useEffect(() => {
+    const read = () => setPresent((prev) => {
+      const next = DATALAKE_BLOCKS.filter(([id]) => document.getElementById(id));
+      return next.map(([id]) => id).join() === prev.map(([id]) => id).join() ? prev : next;
+    });
+    const timers = [200, 800, 2000, 4000].map((ms) => setTimeout(read, ms));
+    return () => timers.forEach(clearTimeout);
+  }, []);
+  useEffect(() => {
+    if (typeof IntersectionObserver === "undefined") return;
+    const seen = new Map();
+    const io = new IntersectionObserver((entries) => {
+      for (const e of entries) seen.set(e.target.id, e.isIntersecting ? e.boundingClientRect.top : null);
+      const visible = [...seen.entries()].filter(([, top]) => top !== null).sort((a, b) => a[1] - b[1]);
+      if (visible.length) setActive(visible[0][0]);
+    }, { rootMargin: "-90px 0px -55% 0px" });
+    for (const [id] of present) { const el = document.getElementById(id); if (el) io.observe(el); }
+    return () => io.disconnect();
+  }, [present.length]);
+  const go = (id) => { setActive(id); document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" }); };
+  return (
+    <nav aria-label="Blocs du datalake" className="sticky top-2 z-30 bg-white/90 backdrop-blur rounded-2xl border border-gray-100 shadow-sm px-3 py-2 flex items-center gap-1.5 overflow-x-auto" data-testid="datalake-nav">
+      <button type="button" onClick={onAdd} className="shrink-0 text-xs font-semibold px-3 py-1.5 rounded-full bg-[#0a66c2] text-white" data-testid="datalake-nav-add">+ Ajouter</button>
+      {present.map(([id, label]) => (
+        <button key={id} type="button" onClick={() => go(id)} aria-current={active === id ? "true" : undefined} data-testid={`datalake-nav-${id}`} className={`shrink-0 text-xs px-3 py-1.5 rounded-full border whitespace-nowrap ${active === id ? "bg-[#ff5a5f] text-white border-[#ff5a5f]" : "border-gray-200 text-gray-600 hover:border-gray-300"}`}>{label}</button>
+      ))}
+    </nav>
+  );
+}
+
 // Posts de l'auteur dans le datalake : publiés depuis l'application (pour l'entreprise active) et importés. Lus en direct.
 function DatalakePosts({ contextId, onGoHistory }) {
   const [d, setD] = useState(null);
@@ -6682,7 +6747,7 @@ function DatalakePosts({ contextId, onGoHistory }) {
   if (!d) return null;
   const total = d.published + (d.planned ?? 0) + d.imported;
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-2" data-testid="datalake-posts">
+    <div id="datalake-posts" className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-2 scroll-mt-24" data-testid="datalake-posts">
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div className="min-w-0">
           <h3 className="font-semibold text-sm">Vos posts <span className="text-gray-400 font-normal">({total})</span></h3>
@@ -6845,6 +6910,7 @@ function KnowledgePanel({ showToast, onCount, activeContextId = null, hasContext
             </div>
           </div>
           {data?.error && <p className="text-xs text-red-600">{data.error}</p>}
+          {data && used > 0 && <DatalakeNav onAdd={() => { setAdding(true); setTimeout(() => document.getElementById("datalake-add")?.scrollIntoView({ behavior: "smooth", block: "start" }), 50); }} />}
           {full ? (
             <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-2.5" data-testid="knowledge-full">
               Limite de votre offre atteinte ({data.limit} sources). Supprimez une source pour en ajouter, ou passez à une offre supérieure.
@@ -6855,7 +6921,7 @@ function KnowledgePanel({ showToast, onCount, activeContextId = null, hasContext
               )}
             </p>
           ) : (adding || (data && used === 0)) && (
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-2" data-testid="datalake-form">
+            <div id="datalake-add" className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-2 scroll-mt-24" data-testid="datalake-form">
               <div className="flex gap-1.5">
                 {voiceOk && (
                   <button type="button" onClick={() => setTab("voice")} data-testid="datalake-tab-voice" className={`text-xs font-semibold px-3.5 py-1.5 rounded-full border inline-flex items-center gap-1.5 ${tab === "voice" ? "bg-[#0a66c2] text-white border-[#0a66c2]" : "bg-[#e8f1fb] text-[#0a66c2] border-[#b9d4f1] hover:bg-[#d6e6f7]"}`}>
@@ -6966,7 +7032,7 @@ function KnowledgePanel({ showToast, onCount, activeContextId = null, hasContext
           )}
           {data && used > 0 && <EnginePanel contextId={activeContextId} sourceCount={inScope.length} showToast={showToast} onChanged={() => { load(); setEngineKey((k) => k + 1); }} />}
           {inScope.length > 0 && synth.themes.length + synth.vocabulary.length + synth.positions.length > 0 && (
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4" data-testid="datalake-synthesis">
+            <div id="datalake-synthesis" className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4 scroll-mt-24" data-testid="datalake-synthesis">
               <h3 className="font-semibold text-sm">Ce que l&apos;outil a retenu</h3>
               {allThemes.length > 0 && (
                 <div>
@@ -7005,7 +7071,7 @@ function KnowledgePanel({ showToast, onCount, activeContextId = null, hasContext
           {data && <DatalakePosts contextId={activeContextId} onGoHistory={onGoHistory} />}
           {data && used > 0 && <LanguagePanel key={engineKey} contextId={activeContextId} contextName={hasContexts ? ctxList.find((c) => c.id === activeContextId)?.name ?? "entreprise principale" : ""} sourceCount={inScope.length} showToast={showToast} />}
           {data && used > 0 && (
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-2" data-testid="datalake-sources">
+            <div id="datalake-sources" className="bg-white rounded-2xl border border-gray-100 shadow-sm p-2 scroll-mt-24" data-testid="datalake-sources">
               {visible.length === 0 ? (
                 <p className="text-xs text-gray-400 p-4">Aucune source ne correspond à ces filtres{hasContexts && !allCompanies ? " pour cette entreprise" : ""}.</p>
               ) : (
@@ -15730,7 +15796,7 @@ function PostContextBlock({ profile, value, onChange, alwaysOpen = false }) {
   );
 }
 
-function GenerationContextCard({ theme, sourceTitle, onGoProfile, postContext, contextId }) {
+function GenerationContextCard({ theme, sourceTitle, onGoProfile, postContext, contextId, sourceIds = null, onSourceIds = null }) {
   const [ctx, setCtx] = useState(null);
   const [open, setOpen] = useState(false);
   useEffect(() => {
@@ -15744,10 +15810,15 @@ function GenerationContextCard({ theme, sourceTitle, onGoProfile, postContext, c
   }, [theme, sourceTitle, contextId]);
   if (!ctx) return null;
   const plural = (n, one, many) => `${n} ${n > 1 ? many : one}`;
+  // Sources de CE texte : choix automatique (les plus proches du sujet) ou choix de l'auteur
+  const suggestedIds = new Set(ctx.sources.map((s) => s.id));
+  const usedIds = sourceIds ?? [...suggestedIds];
+  const toggleSource = (id) => onSourceIds?.(usedIds.includes(id) ? usedIds.filter((x) => x !== id) : [...usedIds, id].slice(0, 8));
+  const nSources = sourceIds ? sourceIds.filter((id) => (ctx.allSources ?? []).some((s) => s.id === id)).length : ctx.sources.length;
   const parts = [
     postContext && (postContext.audience || postContext.goal || postContext.angle) ? "le contexte de ce post" : null,
     ctx.profile.filled.length ? "votre profil" : null,
-    ctx.sources.length ? plural(ctx.sources.length, "source", "sources") : null,
+    nSources ? plural(nSources, sourceIds ? "source choisie" : "source", sourceIds ? "sources choisies" : "sources") : null,
     ctx.remarks.length ? plural(ctx.remarks.length, "remarque", "remarques") : null,
     ctx.language ? plural(ctx.language, "élément de langage", "éléments de langage") : null,
     ctx.posts.length ? plural(ctx.posts.length, "de vos posts proches", "de vos posts proches") : null,
@@ -15773,7 +15844,25 @@ function GenerationContextCard({ theme, sourceTitle, onGoProfile, postContext, c
             <Row label="Ce post">{[postContext.audience && `public : ${postContext.audience}`, postContext.goal && `objectif : ${postContext.goal.split(",").join(" + ")}`, postContext.angle && `angle : ${postContext.angle}`].filter(Boolean).join(" · ")}</Row>
           )}
           <Row label="Profil">{ctx.profile.filled.length ? ctx.profile.filled.join(", ") : "vide"}{ctx.profile.missing.length > 0 && <span className="text-gray-400"> — manque : {ctx.profile.missing.join(", ")}</span>}</Row>
-          <Row label="Sources">{ctx.sources.length ? ctx.sources.map((s) => s.title).join(" · ") : ctx.totals.sources ? `aucune ne touche à ce sujet (${ctx.totals.sources} en base)` : "aucune dans votre base de connaissances"}</Row>
+          {onSourceIds && (ctx.allSources?.length ?? 0) > 0 ? (
+            <div className="text-xs text-gray-600" data-testid="gen-sources">
+              <p className="font-medium text-gray-700 mb-1">Sources pour ce texte&nbsp;: <span className="font-normal text-gray-500">{sourceIds ? "votre choix" : "choix automatique, les plus proches du sujet"}</span></p>
+              <ul className="space-y-1 max-h-48 overflow-y-auto pr-1">
+                {ctx.allSources.map((s) => (
+                  <li key={s.id}>
+                    <label className="flex items-start gap-2 cursor-pointer">
+                      <input type="checkbox" checked={usedIds.includes(s.id)} onChange={() => toggleSource(s.id)} className="mt-0.5" data-testid="gen-source" />
+                      <span className="min-w-0"><span className="text-gray-800">{s.title}</span>{suggestedIds.has(s.id) && <span className="ml-1.5 text-[10px] bg-[#e8f1fb] text-[#0a66c2] rounded px-1.5 py-0.5">proche du sujet</span>}{s.pinned && <span className="ml-1.5 text-[10px] bg-gray-100 text-gray-500 rounded px-1.5 py-0.5">toujours utilisée</span>}</span>
+                    </label>
+                  </li>
+                ))}
+              </ul>
+              {sourceIds && <button type="button" onClick={() => onSourceIds(null)} className="mt-1.5 text-[#0a66c2] hover:underline" data-testid="gen-sources-auto">Revenir au choix automatique</button>}
+              {!sourceIds && <p className="text-gray-400 mt-1">Cochez ou décochez pour choisir vous-même (8 au plus).</p>}
+            </div>
+          ) : (
+            <Row label="Sources">{ctx.sources.length ? ctx.sources.map((s) => s.title).join(" · ") : ctx.totals.sources ? `aucune ne touche à ce sujet (${ctx.totals.sources} en base)` : "aucune dans votre base de connaissances"}</Row>
+          )}
           <Row label="Remarques">{ctx.remarks.length ? ctx.remarks.join(" · ") : "aucune pour l’instant"}</Row>
           {ctx.language > 0 && <Row label="Éléments de langage">{ctx.language} validé{ctx.language > 1 ? "s" : ""} pour cette entreprise</Row>}
           <Row label="Posts proches">{ctx.posts.length ? <span className="block">{ctx.posts.map((p, i) => <span key={i} className="block truncate">« {p} »</span>)}</span> : "aucun exemple de votre voix"}</Row>
@@ -16100,6 +16189,7 @@ export default function Home() {
   const [voiceText, setVoiceText] = useState(""); // texte dicté, en cours de relecture
   const [voiceOk, setVoiceOk] = useState(false); // l'appareil sait enregistrer la voix
   const [voiceMode, setVoiceMode] = useState("free"); // free | interview
+  const [chosenSources, setChosenSources] = useState(null); // null = sources choisies automatiquement ; sinon identifiants choisis par l'auteur
   useEffect(() => { setVoiceOk(canRecordVoice()); }, []);
   const [sourceUrl, setSourceUrl] = useState("");
   const [sourceFile, setSourceFile] = useState(null);
@@ -16187,6 +16277,7 @@ export default function Home() {
   // Plusieurs entreprises : l'entreprise principale est celle du profil, les autres viennent de /api/contexts
   const [contexts, setContexts] = useState([]);
   const [activeContextId, setActiveContextId] = useState(null); // null = entreprise principale
+  useEffect(() => { setChosenSources(null); }, [activeContextId]);
   const loadContexts = () => fetch("/api/contexts").then(readJson).then((d) => setContexts(d.contexts ?? [])).catch(() => {});
   useEffect(() => {
     if (user) loadContexts();
@@ -16455,6 +16546,7 @@ export default function Home() {
         publishAs: voiceFor(tgt),
         postContext: postCtx,
         contextId: activeContextId || undefined,
+        sourceIds: chosenSources ?? undefined,
       });
       const call = async (tgt) => {
         const r = await fetch("/api/generate", { method: "POST", headers: { "Content-Type": "application/json" }, body: body(tgt) });
@@ -18689,7 +18781,13 @@ export default function Home() {
                     </div>
                   ) : (
                     <>
-                      <pre dir="auto" className="whitespace-pre-wrap text-sm font-sans leading-relaxed">{result.text}</pre>
+                      <LinkedInPreview
+                        text={optimizeText ? optimizeText.text : result.text}
+                        name={isOrgUrn(target) ? (orgs.find((o) => o.urn === target)?.name || profile?.companyName || "Votre page") : (linkedin.name || user?.name || "Vous")}
+                        headline={isOrgUrn(target) ? "" : (profile?.headline ?? "")}
+                        isPage={isOrgUrn(target)}
+                        imageUrl={postImage?.url ?? null}
+                      />
                       {result.sources?.length > 0 && (
                         <p className="text-[11px] text-gray-400 mt-3 border-t border-gray-100 pt-2">
                           Sources utilisées : {result.sources.map((x) => x.title).join(" · ")}
@@ -19307,7 +19405,7 @@ export default function Home() {
                   </div>
                 ))}
               </div>
-              {genMode === "single" && <GenerationContextCard theme={form.theme} sourceTitle={activeSource?.title ?? ""} onGoProfile={() => setView("profile")} postContext={postCtxSpecific} contextId={activeContextId} />}
+              {genMode === "single" && <GenerationContextCard theme={form.theme} sourceTitle={activeSource?.title ?? ""} onGoProfile={() => setView("profile")} postContext={postCtxSpecific} contextId={activeContextId} sourceIds={chosenSources} onSourceIds={setChosenSources} />}
 
             </div>
 
