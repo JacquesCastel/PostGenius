@@ -9,7 +9,7 @@ const GREETING = {
     "Bonjour 👋 Je suis l'assistant LinkeePost. Posez-moi vos questions sur le fonctionnement, les fonctionnalités ou les offres — je vous explique tout !",
 };
 
-const SUGGESTIONS = ["Comment ça marche ?", "Quelle offre choisir ?", "Qu'est-ce qu'une campagne ?"];
+const SUGGESTIONS = ["Comment ça marche ?", "Quelle offre choisir ?", "Peut-on dicter ses posts ?", "Qu'est-ce qu'une campagne ?"];
 
 export default function ChatWidget() {
   const [open, setOpen] = useState(false);
