@@ -116,12 +116,12 @@ export default function ShareView({ payload, activeContextId = null, showToast, 
             </button>
           </div>
           <div className="flex items-start justify-between gap-3 flex-wrap">
-            <p className="text-sm text-gray-700 max-w-md"><strong>Ajouter à ma base de connaissances.</strong> {kind === "web" ? "La page est lue et analysée : faits, thèmes, vocabulaire." : "Le texte collé est analysé et gardé comme source."} Elle compte dans le quota de sources de votre offre.</p>
+            <p className="text-sm text-gray-700 max-w-md"><strong>Ajouter à mon datalake éditorial.</strong> {kind === "web" ? "La page est lue et analysée : faits, thèmes, vocabulaire." : "Le texte collé est analysé et gardé comme source."} Elle compte dans le quota de sources de votre offre.</p>
             {added ? (
               <button type="button" onClick={onGoDatalake} className={`${btn} border border-green-300 text-green-700`} data-testid="share-added"><Check size={14} /> Ajouté : voir la base</button>
             ) : (
               <button type="button" onClick={keep} disabled={!canKeep || busy !== null} className={`${btn} border border-gray-300 hover:border-[#ff5a5f] text-gray-700`} data-testid="share-keep">
-                {busy === "base" ? <RefreshCw size={14} className="animate-spin" /> : <Database size={14} />} Ajouter à ma base
+                {busy === "base" ? <RefreshCw size={14} className="animate-spin" /> : <Database size={14} />} Ajouter à mon datalake éditorial
               </button>
             )}
           </div>

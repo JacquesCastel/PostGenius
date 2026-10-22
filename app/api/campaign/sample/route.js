@@ -12,7 +12,7 @@ export async function POST(req) {
   const userId = await getUserId(req);
   if (!userId) return NextResponse.json({ error: "Non connecté." }, { status: 401 });
 
-  const { theme, objective, context, feedback, previous, mood, history, contextId } = await req.json();
+  const { theme, objective, context, feedback, previous, mood, history, contextId, sourceIds } = await req.json();
   if (!theme?.trim()) return NextResponse.json({ error: "Thème requis." }, { status: 400 });
 
   let user;
@@ -34,7 +34,7 @@ export async function POST(req) {
   try {
     // Ajustement : l'IA répond en une phrase et peut proposer des « À retenir » (préférences durables, jamais appliquées seules)
     const chat = feedback && previous ? { history: cleanHistory(history) } : null;
-    const { text, reply, remember } = await generateText(user, theme, campaignContext, null, mood, chat, null, contextId || null);
+    const { text, reply, remember } = await generateText(user, theme, campaignContext, null, mood, chat, null, contextId || null, Array.isArray(sourceIds) ? sourceIds : null);
     return NextResponse.json({ text, ...(chat ? { reply, remember } : {}) });
   } catch (e) {
     console.error("Erreur sample campagne:", e);
