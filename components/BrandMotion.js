@@ -64,7 +64,7 @@ function Headline({ lt, lines, sub, size = 92 }) {
 }
 
 // Carte blanche de droite : arrive en glissant
-function Card({ lt, children, top = 150, height = 780 }) {
+function Card({ lt, children, top = 120, height = 850 }) {
   const p = back(seg(lt, 0.1, 0.8));
   return (
     <div style={{ position: "absolute", left: 1000, top, width: 800, height, background: "#fff", borderRadius: 56, boxShadow: "0 50px 100px -30px rgba(255,90,95,.35)", border: "2px solid #fff", padding: 48, opacity: clamp01(p * 1.4), transform: `translateX(${(1 - p) * 140}px) scale(${0.96 + 0.04 * p})`, overflow: "hidden" }}>
@@ -98,7 +98,7 @@ function SceneVoice({ lt }) {
   const rec = lt > 0.6 && lt < 3.0;
   const timer = Math.round(24 * easeInOut(seg(lt, 0.6, 2.4)));
   const text = "Chez nous, le lundi matin, chaque manager ouvre la semaine par un rituel de dix minutes.";
-  const docs = [["Guide management.pdf", FileText], ["Offre 2026.docx", FileText], ["article-rh.fr", Link2]];
+  const docs = [["Guide RH.pdf", FileText], ["Offre 2026.docx", FileText], ["article-rh.fr", Link2]];
   const count = 14 + docs.filter((_, i) => lt > 3.6 + 0.4 * i + 0.4).length + (lt > 3.3 ? 1 : 0);
   return (
     <>
@@ -112,44 +112,44 @@ function SceneVoice({ lt }) {
           <div style={{ fontSize: 38, fontWeight: 800, color: C.navy }}>Votre datalake éditorial</div>
           <div style={{ fontSize: 26, color: "#9aa5b8" }}>{count}/30 sources</div>
         </div>
-        <div style={{ display: "flex", gap: 14, marginTop: 28, flexWrap: "wrap" }}>
-          <Chip bg={C.blue} color="#fff" style={{ fontWeight: 700 }}><Mic size={26} /> Dicter à la voix</Chip>
-          <Chip bg="#fff" color={C.muted} border="#e5e9f0">Coller un texte</Chip>
-          <Chip bg="#fff" color={C.muted} border="#e5e9f0">Un lien</Chip>
+        <div style={{ display: "flex", gap: 10, marginTop: 24, flexWrap: "nowrap" }}>
+          <Chip bg={C.blue} color="#fff" style={{ fontWeight: 700, fontSize: 23, padding: "10px 20px", gap: 8 }}><Mic size={22} /> Dicter à la voix</Chip>
+          <Chip bg="#fff" color={C.muted} border="#e5e9f0" style={{ fontSize: 23, padding: "10px 20px" }}>Coller un texte</Chip>
+          <Chip bg="#fff" color={C.muted} border="#e5e9f0" style={{ fontSize: 23, padding: "10px 20px" }}>Un lien</Chip>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 32, marginTop: 44 }}>
-          <div style={{ position: "relative", width: 132, height: 132, flexShrink: 0 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 28, marginTop: 28 }}>
+          <div style={{ position: "relative", width: 112, height: 112, flexShrink: 0 }}>
             {rec && [0, 1].map((k) => {
               const p = ((lt * 0.9 + k * 0.5) % 1);
               return <div key={k} style={{ position: "absolute", inset: 0, borderRadius: "50%", border: `4px solid ${C.blue}`, opacity: (1 - p) * 0.5, transform: `scale(${1 + p * 0.7})` }} />;
             })}
             <div style={{ position: "absolute", inset: 0, borderRadius: "50%", background: rec ? C.coral : C.blue, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 18px 40px -10px rgba(10,102,194,.5)" }}>
-              <Mic size={58} />
+              <Mic size={50} />
             </div>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 7, height: 130, flex: 1 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 7, height: 100, flex: 1 }}>
             {Array.from({ length: 24 }).map((_, i) => {
               const amp = rec ? 0.25 + 0.75 * Math.pow(Math.abs(Math.sin(lt * 6.5 + i * 0.7)), 1.3) * (0.5 + 0.5 * Math.sin(i * 0.4 + lt * 2.2) ** 2) : 0.12;
-              return <div key={i} style={{ width: 11, height: 12 + 110 * amp, borderRadius: 8, background: rec ? C.coral : "#d9dfe9" }} />;
+              return <div key={i} style={{ width: 11, height: 12 + 84 * amp, borderRadius: 8, background: rec ? C.coral : "#d9dfe9" }} />;
             })}
           </div>
           <div style={{ fontSize: 34, fontWeight: 700, color: rec ? C.coral : "#9aa5b8", fontVariantNumeric: "tabular-nums", width: 90, textAlign: "right" }}>0:{String(timer).padStart(2, "0")}</div>
         </div>
-        <div style={{ marginTop: 36, minHeight: 150, background: "#f7f9fc", borderRadius: 28, padding: "26px 30px", fontSize: 32, lineHeight: 1.4, color: C.navy }}>
+        <div style={{ marginTop: 24, minHeight: 124, background: "#f7f9fc", borderRadius: 28, padding: "22px 28px", fontSize: 30, lineHeight: 1.38, color: C.navy }}>
           {typed(text, seg(lt, 1.2, 1.8))}
           {lt > 1.2 && lt < 3.1 && <span style={{ opacity: Math.floor(lt * 3) % 2 ? 0 : 1, color: C.coral }}>▍</span>}
         </div>
-        <div style={{ marginTop: 22, height: 54 }}>
+        <div style={{ marginTop: 14, height: 52 }}>
           {lt > 3.2 && (
             <Chip bg="#e8f7ee" color={C.green} style={{ opacity: easeOut(seg(lt, 3.2, 0.4)), transform: `translateY(${(1 - easeOut(seg(lt, 3.2, 0.4))) * 16}px)` }}><Check size={26} /> Relu et ajouté à la base</Chip>
           )}
         </div>
-        <div style={{ display: "flex", gap: 14, marginTop: 14, flexWrap: "wrap" }}>
+        <div style={{ display: "flex", gap: 10, marginTop: 20, flexWrap: "wrap" }}>
           {docs.map(([label, Icon], i) => {
             const p = back(seg(lt, 3.6 + 0.4 * i, 0.5));
             return (
-              <div key={label} style={{ display: "inline-flex", alignItems: "center", gap: 10, background: C.sky, color: C.blue, fontSize: 24, fontWeight: 600, padding: "10px 20px", borderRadius: 18, opacity: clamp01(p), transform: `translateY(${(1 - p) * 40}px)` }}>
-                <Icon size={24} /> {label}
+              <div key={label} style={{ display: "inline-flex", alignItems: "center", gap: 10, background: C.sky, color: C.blue, fontSize: 20, fontWeight: 600, padding: "8px 14px", borderRadius: 16, whiteSpace: "nowrap", opacity: clamp01(p), transform: `translateY(${(1 - p) * 40}px)` }}>
+                <Icon size={20} /> {label}
               </div>
             );
           })}
@@ -182,16 +182,16 @@ function ScenePost({ lt }) {
           </div>
           <Chip bg={C.rose} color={C.coral} style={{ marginLeft: "auto", fontSize: 24 }}><Sparkles size={22} /> Votre voix</Chip>
         </div>
-        <div style={{ marginTop: 40, fontSize: 36, lineHeight: 1.45, color: C.navy, minHeight: 330 }}>
+        <div style={{ marginTop: 28, fontSize: 34, lineHeight: 1.42, color: C.navy, minHeight: 255 }}>
           {lines.map((l, i) => {
             const s = typed(l.t, seg(lt, l.a, l.d));
             return s ? <p key={i} style={{ margin: "0 0 18px", fontWeight: l.bold ? 800 : 400 }}>{s}{lt - l.a < l.d && <span style={{ color: C.coral }}>▍</span>}</p> : null;
           })}
         </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 14, alignItems: "flex-start" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 12, alignItems: "flex-start" }}>
           {chips.map(([Icon, label, bg, color, at]) => {
             const p = easeOut(seg(lt, at, 0.4));
-            return <Chip key={label} bg={bg} color={color} style={{ opacity: p, transform: `translateX(${(1 - p) * -40}px)` }}><Icon size={26} /> {label}</Chip>;
+            return <Chip key={label} bg={bg} color={color} style={{ fontSize: 25, padding: "10px 22px", opacity: p, transform: `translateX(${(1 - p) * -40}px)` }}><Icon size={26} /> {label}</Chip>;
           })}
         </div>
       </Card>
