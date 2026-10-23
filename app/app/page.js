@@ -6769,7 +6769,7 @@ function DatalakePosts({ contextId, onGoHistory }) {
 }
 
 // Datalake éditorial : toutes les sources de l'auteur et ce que l'outil en a retenu (thèmes, vocabulaire, positions, faits).
-function KnowledgePanel({ showToast, onCount, activeContextId = null, hasContexts = false, onGoHistory }) {
+function KnowledgePanel({ showToast, onCount, activeContextId = null, hasContexts = false, onGoHistory, profile = null, onChooseContext = null }) {
   const [data, setData] = useState(null); // { sources, limit, plan } ; null = chargement
   const open = true;
   const [adding, setAdding] = useState(false);
@@ -6792,19 +6792,24 @@ function KnowledgePanel({ showToast, onCount, activeContextId = null, hasContext
   const [expanded, setExpanded] = useState(null);
   // Plusieurs entreprises : chaque source appartient à une entreprise (« main » = principale) ou est partagée
   const [ctxList, setCtxList] = useState([]);
-  const [scope, setScope] = useState("main"); // main | id d'une thématique | shared | moment:<id d'un temps fort>
+  // Où sert une source (maquette 9) : une ou plusieurs thématiques sans doublon, toutes, ou un temps fort
+  const homeKey = "main";
+  const [targets, setTargets] = useState([activeContextId ?? homeKey]);
+  const [sharedAll, setSharedAll] = useState(false);
+  const [momentSel, setMomentSel] = useState("");
+  const [editScopeId, setEditScopeId] = useState(null);
   const [momentList, setMomentList] = useState([]);
   useEffect(() => {
     fetch("/api/contexts").then(readJson).then((d) => setCtxList(d.contexts ?? [])).catch(() => {});
     fetch("/api/moments").then(readJson).then((d) => setMomentList((d.moments ?? []).filter((m) => m.state === "active" || m.state === "upcoming"))).catch(() => {});
   }, []);
-  const scopeBody = (v) => (v === "shared" ? { shared: true } : v === "main" ? { contextId: null, shared: false, momentId: null } : v.startsWith("moment:") ? { momentId: v.slice(7) } : { contextId: v, shared: false, momentId: null });
-  const scopeValue = (src) => (src.momentId ? `moment:${src.momentId}` : src.shared ? "shared" : src.contextId ?? "main");
-  const scopeOptions = () => (
-    <>
-      {momentList.length > 0 && momentList.map((m) => (<option key={m.id} value={`moment:${m.id}`}>📅 Temps fort : {m.name}</option>))}
-    </>
-  );
+  const homeName = profile?.companyName || "Mon activité";
+  const themeTabs = [{ id: homeKey, name: homeName }, ...ctxList.map((c) => ({ id: c.id, name: c.name }))];
+  const themeName = (key) => themeTabs.find((t) => t.id === key)?.name ?? "Thématique";
+  const toggleTarget = (key) => setTargets((t) => (t.includes(key) ? (t.length > 1 ? t.filter((x) => x !== key) : t) : [...t, key]));
+  const targetBody = () => (momentSel ? { momentId: momentSel } : sharedAll ? { shared: true } : { contextIds: targets });
+  const sourceKeys = (src) => [src.contextId ?? homeKey, ...(src.links ?? [])];
+  const scopeTag = (src) => (src.momentId ? null : src.shared ? "Partagée : toutes les thématiques" : (src.links ?? []).length ? `Partagée avec ${(src.links ?? []).map(themeName).join(", ")}` : "Ici seulement");
 
   const load = () =>
     fetch("/api/knowledge")
@@ -6821,7 +6826,7 @@ function KnowledgePanel({ showToast, onCount, activeContextId = null, hasContext
   const used = data?.sources?.length ?? 0;
   const full = data && used >= data.limit;
   // Sources visibles : celles de l'entreprise active + les partagées (sauf « toutes les entreprises »)
-  const inScope = (data?.sources ?? []).filter((x) => !hasContexts || allCompanies || x.shared || (x.contextId ?? null) === (activeContextId ?? null));
+  const inScope = (data?.sources ?? []).filter((x) => !hasContexts || allCompanies || x.shared || (x.contextId ?? null) === (activeContextId ?? null) || (x.links ?? []).includes(activeContextId ?? homeKey));
   const visible = inScope.filter((x) => (kindFilter === "all" || x.kind === kindFilter) && (!themeFilter || (x.insights?.themes ?? []).some((t) => t.toLowerCase() === themeFilter)));
   const synth = aggregateInsights(visible);
   const allThemes = aggregateInsights(inScope).themes;
@@ -6855,15 +6860,16 @@ function KnowledgePanel({ showToast, onCount, activeContextId = null, hasContext
         const fd = new FormData();
         fd.append("file", file);
         if (title.trim()) fd.append("title", title.trim());
-        if (scope === "shared") fd.append("shared", "true");
-        else if (scope.startsWith("moment:")) fd.append("momentId", scope.slice(7));
-        else if (scope !== "main") fd.append("contextId", scope);
+        const tb = targetBody();
+        if (tb.shared) fd.append("shared", "true");
+        else if (tb.momentId) fd.append("momentId", tb.momentId);
+        else fd.append("contextIds", tb.contextIds.join(","));
         res = await fetch("/api/knowledge/upload", { method: "POST", body: fd });
       } else {
         res = await fetch("/api/knowledge", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ...(tab === "link" ? { kind: "link", url, title } : { kind: "note", text, title }), ...scopeBody(scope) }),
+          body: JSON.stringify({ ...(tab === "link" ? { kind: "link", url, title } : { kind: "note", text, title }), ...targetBody() }),
         });
       }
       const d = await readJson(res);
@@ -6918,6 +6924,28 @@ function KnowledgePanel({ showToast, onCount, activeContextId = null, hasContext
             </div>
           </div>
           {data?.error && <p className="text-xs text-red-600">{data.error}</p>}
+          {hasContexts && data && (
+            <div className="flex gap-1.5 flex-wrap border-b border-gray-200" role="tablist" aria-label="Thématique" data-testid="datalake-tabs">
+              {themeTabs.map((t) => {
+                const n = (data.sources ?? []).filter((x) => !x.momentId && !x.shared && sourceKeys(x).includes(t.id)).length;
+                const on = !allCompanies && (activeContextId ?? homeKey) === t.id;
+                return (
+                  <button key={t.id} type="button" role="tab" aria-selected={on} data-testid="datalake-tab" data-tab={t.id} onClick={() => { setAllCompanies(false); if (!on) onChooseContext?.(t.id === homeKey ? null : t.id); }} className={`text-sm font-semibold px-4 py-2 rounded-t-xl border border-b-0 ${on ? "bg-white text-[#a3242a] border-gray-200" : "bg-gray-100 text-gray-600 border-transparent hover:bg-gray-200"}`}>{t.name} · {n}</button>
+                );
+              })}
+              <button type="button" role="tab" aria-selected={allCompanies} data-testid="datalake-tab-all" onClick={() => setAllCompanies(true)} className={`text-sm px-4 py-2 ${allCompanies ? "font-semibold text-[#a3242a]" : "text-gray-500 hover:text-gray-800"}`}>Toutes les sources</button>
+            </div>
+          )}
+          {hasContexts && (
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4" data-testid="datalake-common">
+              <p className="text-[11px] font-bold uppercase tracking-wider text-gray-500 mb-1.5">Commun à toutes vos thématiques</p>
+              <p className="text-xs text-gray-600 leading-relaxed">
+                Qui vous êtes : <strong>{profile?.name || "—"}</strong>{profile?.headline ? `, ${profile.headline}` : ""}.{profile?.expertise ? ` ${profile.expertise}.` : ""}
+                {profile?.styleNotes ? <> Votre manière d&apos;écrire : « {profile.styleNotes.slice(0, 140)}{profile.styleNotes.length > 140 ? "…" : ""} ».</> : null}
+                {" "}Ils s&apos;appliquent partout ; le reste (sources, voix, cible) est propre à chaque thématique.
+              </p>
+            </div>
+          )}
           {data && used > 0 && <DatalakeNav onAdd={() => { setAdding(true); setTimeout(() => document.getElementById("datalake-add")?.scrollIntoView({ behavior: "smooth", block: "start" }), 50); }} />}
           {full ? (
             <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-2.5" data-testid="knowledge-full">
@@ -6941,15 +6969,27 @@ function KnowledgePanel({ showToast, onCount, activeContextId = null, hasContext
                 <button type="button" onClick={() => setTab("file")} className={chip(tab === "file")}>PDF ou Word</button>
               </div>
               {(ctxList.length > 0 || momentList.length > 0) && (
-                <label className="flex items-center gap-2 text-xs text-gray-600 flex-wrap" data-testid="source-scope">
-                  Pour quelle thématique ?
-                  <select value={scope} onChange={(e) => setScope(e.target.value)} className="border border-gray-200 rounded-lg px-2 py-1 text-xs bg-white">
-                    <option value="main">Mon activité</option>
-                    {ctxList.map((c) => (<option key={c.id} value={c.id}>{c.name}</option>))}
-                    <option value="shared">Toutes mes thématiques (partagée)</option>
-                    {scopeOptions()}
-                  </select>
-                </label>
+                <div className="rounded-xl border border-gray-200 bg-gray-50 p-3 space-y-2" data-testid="source-scope">
+                  <p className="text-xs font-semibold text-gray-700">Pour quelles thématiques ?</p>
+                  <div className="flex flex-col gap-1.5">
+                    {themeTabs.map((t) => (
+                      <label key={t.id} className={`flex items-center gap-2 text-xs rounded-lg border px-3 py-2 ${targets.includes(t.id) && !sharedAll && !momentSel ? "border-[#ff5a5f] bg-[#fff8f8]" : "border-gray-200 bg-white"}`}>
+                        <input type="checkbox" checked={targets.includes(t.id) && !sharedAll && !momentSel} disabled={sharedAll || Boolean(momentSel)} onChange={() => toggleTarget(t.id)} data-testid="source-target" data-target={t.id} />
+                        <span className="font-semibold text-gray-800">{t.name}</span>
+                      </label>
+                    ))}
+                    <label className="flex items-center gap-2 text-xs text-gray-600"><input type="checkbox" checked={sharedAll} disabled={Boolean(momentSel)} onChange={(e) => setSharedAll(e.target.checked)} data-testid="source-shared-all" /> Toutes mes thématiques (partagée, y compris les futures)</label>
+                    {momentList.length > 0 && (
+                      <label className="flex items-center gap-2 text-xs text-gray-600 flex-wrap">📅 Ou pour un temps fort seulement :
+                        <select value={momentSel} onChange={(e) => setMomentSel(e.target.value)} className="border border-gray-200 rounded-lg px-2 py-1 text-xs bg-white" data-testid="source-moment-select">
+                          <option value="">Aucun</option>
+                          {momentList.map((m) => (<option key={m.id} value={m.id}>{m.name}</option>))}
+                        </select>
+                      </label>
+                    )}
+                  </div>
+                  <p className="text-[11px] text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1.5">Une seule copie est conservée : elle sert dans toutes les thématiques cochées. Vous pourrez la retirer d&apos;une thématique plus tard sans la perdre.</p>
+                </div>
               )}
               <input
                 type="text"
@@ -7032,11 +7072,6 @@ function KnowledgePanel({ showToast, onCount, activeContextId = null, hasContext
               {[["all", "Tout"], ["note", "Textes"], ["link", "Liens"], ["file", "Fichiers"], ["posts", "Posts"]].map(([k, l]) => (
                 <button key={k} type="button" onClick={() => setKindFilter(k)} data-testid={`datalake-kind-${k}`} className={chip(kindFilter === k)}>{l}</button>
               ))}
-              {hasContexts && (
-                <label className="flex items-center gap-1.5 text-gray-500 ml-auto" data-testid="datalake-all-companies">
-                  <input type="checkbox" checked={allCompanies} onChange={(e) => setAllCompanies(e.target.checked)} /> Toutes mes thématiques
-                </label>
-              )}
             </div>
           )}
           {data && used > 0 && <EnginePanel contextId={activeContextId} sourceCount={inScope.length} showToast={showToast} onChanged={() => { load(); setEngineKey((k) => k + 1); }} />}
@@ -7105,13 +7140,8 @@ function KnowledgePanel({ showToast, onCount, activeContextId = null, hasContext
                       </div>
                       <div className="flex items-center gap-2 shrink-0 text-xs flex-wrap">
                         {s.momentId && <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-50 text-amber-700" data-testid="source-moment">📅 {momentList.find((m) => m.id === s.momentId)?.name ?? "Temps fort"}</span>}
-                        {(ctxList.length > 0 || momentList.length > 0) && (
-                          <select value={scopeValue(s)} onChange={(e) => patch(s.id, scopeBody(e.target.value))} title="Thématique à laquelle cette source appartient" aria-label={`Thématique de la source ${s.title}`} className="border border-gray-200 rounded px-1 py-0.5 text-[11px] bg-white max-w-[130px]">
-                            <option value="main">Principale</option>
-                            {ctxList.map((c) => (<option key={c.id} value={c.id}>{c.name}</option>))}
-                            <option value="shared">Partagée</option>
-                            {scopeOptions()}
-                          </select>
+                        {hasContexts && scopeTag(s) && (
+                          <button type="button" onClick={() => setEditScopeId(editScopeId === s.id ? null : s.id)} data-testid="source-scope-tag" title="Choisir les thématiques où cette source sert" className={`text-[10px] px-2 py-0.5 rounded-full border ${(s.links ?? []).length || s.shared ? "bg-sky-50 text-sky-800 border-sky-100" : "bg-gray-50 text-gray-500 border-gray-200"}`}>{scopeTag(s)} ▾</button>
                         )}
                         <label className="flex items-center gap-1 text-gray-500" title="Cette source est toujours transmise à l'IA, quel que soit le sujet">
                           <input type="checkbox" checked={s.pinned} onChange={(e) => patch(s.id, { pinned: e.target.checked })} /> Toujours
@@ -7122,6 +7152,25 @@ function KnowledgePanel({ showToast, onCount, activeContextId = null, hasContext
                         <button type="button" onClick={() => remove(s)} className="text-gray-400 hover:text-red-600">Supprimer</button>
                       </div>
                     </div>
+                    {editScopeId === s.id && !s.momentId && (
+                      <div className="mt-2 rounded-xl border border-gray-200 bg-gray-50 p-3 space-y-1.5" data-testid="source-scope-editor">
+                        <p className="text-xs font-semibold text-gray-700">Cette source sert dans :</p>
+                        {themeTabs.map((t) => {
+                          const keys = sourceKeys(s);
+                          const on = s.shared || keys.includes(t.id);
+                          return (
+                            <label key={t.id} className="flex items-center gap-2 text-xs text-gray-700">
+                              <input type="checkbox" checked={on} disabled={s.shared} data-testid="source-edit-target" data-target={t.id} onChange={() => {
+                                const next = on ? keys.filter((k) => k !== t.id) : [...keys, t.id];
+                                if (next.length) patch(s.id, { contextIds: next });
+                              }} />
+                              {t.name}{keys[0] === t.id ? <span className="text-gray-400"> · thématique d&apos;origine</span> : null}
+                            </label>
+                          );
+                        })}
+                        <label className="flex items-center gap-2 text-xs text-gray-700"><input type="checkbox" checked={s.shared} data-testid="source-edit-shared" onChange={(e) => patch(s.id, e.target.checked ? { shared: true } : { contextIds: [activeContextId ?? homeKey] })} /> Toutes mes thématiques (partagée)</label>
+                      </div>
+                    )}
                     {expanded === s.id && (
                       <div className="mt-2 text-xs text-gray-600 space-y-2">
                         {s.summary && <p>{s.summary}</p>}
@@ -20472,7 +20521,7 @@ export default function Home() {
         <BillingView user={user} showToast={showToast} focus={billingFocus} />
       ) : view === "datalake" ? (
         <main className="max-w-5xl mx-auto p-6">
-          <KnowledgePanel key={activeContextId ?? "main"} showToast={showToast} activeContextId={activeContextId} hasContexts={contexts.length > 0} onGoHistory={() => setView("history")} />
+          <KnowledgePanel key={activeContextId ?? "main"} showToast={showToast} activeContextId={activeContextId} hasContexts={contexts.length > 0} onGoHistory={() => setView("history")} profile={profile} onChooseContext={chooseContext} />
         </main>
       ) : view === "brand-kit" ? (
         <BrandKitView showToast={showToast} />

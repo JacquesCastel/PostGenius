@@ -890,8 +890,22 @@ model KnowledgeSource {
   moment    Moment?  @relation(fields: [momentId], references: [id], onDelete: SetNull)
   charCount Int      @default(0)
   createdAt DateTime @default(now())
+  // Autres thématiques où la source sert, sans doublon (la thématique d'origine reste contextId)
+  links     KnowledgeSourceLink[]
 
   @@index([userId])
+}
+
+// Une source peut servir dans plusieurs thématiques sans être dupliquée : une ligne par thématique supplémentaire.
+// contextKey : identifiant d'une thématique, ou « main » pour celle du profil.
+model KnowledgeSourceLink {
+  id         String          @id @default(cuid())
+  sourceId   String
+  source     KnowledgeSource @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  contextKey String
+
+  @@unique([sourceId, contextKey])
+  @@index([contextKey])
 }
 
 // Éléments de langage validés par l'auteur : mots à privilégier, mots à éviter, formulations types.

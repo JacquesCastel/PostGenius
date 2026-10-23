@@ -4,7 +4,7 @@ import { getEffectiveUserId as getUserId } from "@/lib/session";
 import { createKnowledgeSource, guardKnowledgeAdd, fetchPageText, KnowledgeError } from "@/lib/knowledge";
 import { cleanText, sourceView } from "@/lib/knowledgeText";
 import { knowledgeLimit, planOf, upgradeTarget } from "@/lib/plans";
-import { resolveSourceScope } from "@/lib/contexts";
+import { resolveSourceTargets } from "@/lib/contexts";
 import { resolveMomentScope } from "@/lib/moments";
 
 // Base de connaissances du client : liste (GET) et ajout d'une note ou d'un lien (POST).
@@ -19,7 +19,7 @@ export async function GET(req) {
     prisma.knowledgeSource.findMany({
       where: { userId },
       orderBy: { createdAt: "desc" },
-      select: { id: true, kind: true, title: true, origin: true, summary: true, facts: true, insights: true, pinned: true, charCount: true, createdAt: true, contextId: true, shared: true, momentId: true },
+      select: { id: true, kind: true, title: true, origin: true, summary: true, facts: true, insights: true, pinned: true, charCount: true, createdAt: true, contextId: true, shared: true, momentId: true, links: { select: { contextKey: true } } },
     }),
     prisma.user.findUnique({ where: { id: userId }, select: { plan: true } }),
   ]);
@@ -34,7 +34,7 @@ export async function POST(req) {
   let kind, title, origin = null, text;
   try {
     const quota = await guardKnowledgeAdd(userId);
-    const scope = await resolveMomentScope(userId, body, await resolveSourceScope(userId, body));
+    const scope = await resolveMomentScope(userId, body, await resolveSourceTargets(userId, body));
     if (body.kind === "link") {
       const url = String(body.url ?? "").trim();
       if (!/^https?:\/\//i.test(url)) return NextResponse.json({ error: "Collez l'adresse complète d'une page (https://…)." }, { status: 400 });

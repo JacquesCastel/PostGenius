@@ -22,6 +22,7 @@ export async function DELETE(req, { params }) {
   if (!userId) return NextResponse.json({ error: "Non connecté." }, { status: 401 });
   const { id } = await params;
   const { count } = await prisma.context.deleteMany({ where: { id, userId } });
+  if (count) await prisma.knowledgeSourceLink.deleteMany({ where: { contextKey: id, source: { userId } } });
   if (count === 0) return NextResponse.json({ error: "Thématique introuvable." }, { status: 404 });
   return NextResponse.json({ ok: true });
 }
