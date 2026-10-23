@@ -11057,7 +11057,7 @@ function OnboardingFirstPost({ fields, saving, showToast, onFinish, onBack, forC
 // ----------------------------------------------------------------
 const ONBOARDING_STEPS = [
   { kind: "identity", stageId: "identity", short: "Vous", title: "Bienvenue ! Qui êtes-vous ?" },
-  { kind: "company", stageId: "audience", short: "Entreprise", title: "Et votre entreprise ?" },
+  { kind: "company", stageId: "audience", short: "Vos sites", title: "Vos sites internet et votre entreprise" },
   { kind: "lead", stageId: "leads", short: "Leads", title: "Qui voulez-vous atteindre ?" },
   { kind: "voice", stageId: "voice", short: "Votre voix", title: "Votre façon d'écrire" },
   { kind: "firstpost", stageId: null, short: "Premier post", title: "Votre premier post" }, // écran final : le copilote écrit sous les yeux du client
@@ -11160,6 +11160,50 @@ function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast,
   // Analyse du site internet : pré-remplit l'étape « entreprise » (et le reste du profil). Les champs déjà remplis à la main sont gardés.
   const [analyzing, setAnalyzing] = useState(false);
   const [analyzed, setAnalyzed] = useState(false);
+  const [review, setReview] = useState(null); // lecture du site de la première entreprise, à confirmer
+  const [extras, setExtras] = useState([]); // autres entreprises : { key, url, busy, review, created, error }
+  const patchExtra = (key, patch) => setExtras((xs) => xs.map((x) => (x.key === key ? { ...x, ...patch } : x)));
+  const confirmReview = () => {
+    const f = review;
+    setFields((prev) => ({
+      ...prev,
+      companyName: f.name?.trim() || prev.companyName,
+      businessDescription: f.businessDescription?.trim() || prev.businessDescription,
+      targetAudience: f.targetAudience?.trim() || prev.targetAudience,
+      market: f.market?.trim() || prev.market,
+      themes: f.themes?.trim() || prev.themes,
+      commGoals: f.commGoals?.trim() || prev.commGoals,
+      expertise: hasText(prev.expertise) ? prev.expertise : f.expertise?.trim() || prev.expertise,
+    }));
+    setReview(null);
+    showToast("Entreprise pré-remplie depuis le site ✓ Vérifiez et complétez.");
+  };
+  const analyzeExtra = async (x) => {
+    if (!hasText(x.url)) return;
+    patchExtra(x.key, { busy: true, error: null });
+    try {
+      const res = await fetch("/api/profile/analyze", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url: x.url }) });
+      const d = await readJson(res);
+      if (!res.ok) throw new Error(d.error || "Analyse impossible");
+      const f = d.fields || {};
+      patchExtra(x.key, { busy: false, review: { name: f.companyName || "", businessDescription: f.businessDescription || "", targetAudience: f.targetAudience || "", market: f.market || "", themes: f.themes || "", commGoals: f.commGoals || "" } });
+    } catch (e) {
+      patchExtra(x.key, { busy: false, error: e.message });
+    }
+  };
+  const createExtra = async (x) => {
+    const f = x.review;
+    if (!hasText(f?.name)) { patchExtra(x.key, { error: "Donnez un nom à cette entreprise." }); return; }
+    patchExtra(x.key, { busy: true, error: null });
+    try {
+      const res = await fetch("/api/contexts", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ kind: "activity", website: x.url, ...f }) });
+      const d = await readJson(res);
+      if (!res.ok) throw new Error(d.error || "Erreur");
+      patchExtra(x.key, { busy: false, review: null, created: d.context?.name || f.name });
+    } catch (e) {
+      patchExtra(x.key, { busy: false, error: e.message });
+    }
+  };
   const analyzeSite = async ({ auto = false } = {}) => {
     if (!hasText(fields.website)) { if (!auto) showToast("Indiquez d'abord l'adresse du site."); return; }
     setAnalyzing(true);
@@ -11168,6 +11212,12 @@ function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast,
       const d = await readJson(res);
       if (!res.ok) throw new Error(d.error || "Analyse impossible");
       const f = d.fields || {};
+      if (!forClient) {
+        // Une personne relit et confirme ce que le copilote a compris avant que ses champs ne soient remplis
+        setReview({ name: f.companyName || "", businessDescription: f.businessDescription || "", targetAudience: f.targetAudience || "", market: f.market || "", themes: hasText(fields.themes) ? fields.themes : f.themes || "", commGoals: f.commGoals || "", expertise: f.expertise || "" }); // les sujets déjà donnés à l'étape 1 sont conservés
+        setAnalyzed(true);
+        return;
+      }
       const keep = (cur, next) => (auto && hasText(cur) ? cur : next?.trim() || cur);
       setFields((prev) => ({
         ...prev,
@@ -11363,22 +11413,71 @@ function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast,
                   ))}
                 </div>
               </div>
+              {!forClient && (
+                <div data-testid="wizard-first-topic">
+                  <label className="text-sm font-medium text-gray-700 block mb-1.5">De quoi parlerez-vous en premier sur LinkedIn ?</label>
+                  <input type="text" value={fields.themes} onChange={(e) => set("themes", e.target.value)} placeholder="ex : mon métier de recruteuse, la vie d'une indépendante, le running" className={inputCls} data-testid="wizard-themes" />
+                  <p className="text-[11px] text-gray-400 mt-1">Quelques mots, séparés par des virgules. Vous pourrez ajouter d&apos;autres thématiques ensuite.</p>
+                </div>
+              )}
             </div>
           )}
 
           {kind === "company" && (
             <div className="space-y-3">
+              {forClient ? (
               <div className="bg-[#fff1f1] rounded-xl p-3" data-testid="wizard-site">
-                <label className="text-sm font-medium text-gray-700 block mb-1.5">{me("Gagnez du temps : votre site internet", "Gagnez du temps : son site internet")}</label>
-                <div className="flex flex-wrap gap-2">
-                  <input type="text" value={fields.website} onChange={(e) => set("website", e.target.value)} placeholder="https://site.fr" className={`flex-1 min-w-0 ${inputCls}`} data-testid="wizard-website" />
-                  <button type="button" onClick={() => analyzeSite()} disabled={analyzing || !hasText(fields.website)} data-testid="wizard-analyze" className="shrink-0 bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white text-sm font-medium px-4 py-2 rounded-lg flex items-center gap-1.5">
-                    {analyzing ? <RefreshCw size={14} className="animate-spin" /> : <Sparkles size={14} />}
-                    {analyzing ? "Analyse…" : analyzed ? "Analyser à nouveau" : "Analyser"}
-                  </button>
+                  <label className="text-sm font-medium text-gray-700 block mb-1.5">{me("Gagnez du temps : votre site internet", "Gagnez du temps : son site internet")}</label>
+                  <div className="flex flex-wrap gap-2">
+                    <input type="text" value={fields.website} onChange={(e) => set("website", e.target.value)} placeholder="https://site.fr" className={`flex-1 min-w-0 ${inputCls}`} data-testid="wizard-website" />
+                    <button type="button" onClick={() => analyzeSite()} disabled={analyzing || !hasText(fields.website)} data-testid="wizard-analyze" className="shrink-0 bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white text-sm font-medium px-4 py-2 rounded-lg flex items-center gap-1.5">
+                      {analyzing ? <RefreshCw size={14} className="animate-spin" /> : <Sparkles size={14} />}
+                      {analyzing ? "Analyse…" : analyzed ? "Analyser à nouveau" : "Analyser"}
+                    </button>
+                  </div>
+                  <p className="text-[11px] text-gray-500 mt-1.5">Le copilote lit le site et pré-remplit l&apos;activité, la cible, le marché et les thèmes. Vous vérifiez, vous corrigez.</p>
                 </div>
-                <p className="text-[11px] text-gray-500 mt-1.5">Le copilote lit le site et pré-remplit l&apos;activité, la cible, le marché et les thèmes. Vous vérifiez, vous corrigez.</p>
+              ) : (
+              <div className="bg-[#fff1f1] rounded-xl p-3 space-y-3" data-testid="wizard-sites">
+                <div data-testid="wizard-site">
+                  <label className="text-sm font-medium text-gray-700 block mb-1.5">Gagnez du temps : le site internet de votre entreprise</label>
+                  <div className="flex flex-wrap gap-2">
+                    <input type="text" value={fields.website} onChange={(e) => set("website", e.target.value)} placeholder="https://site.fr" className={`flex-1 min-w-0 ${inputCls}`} data-testid="wizard-website" />
+                    <button type="button" onClick={() => analyzeSite()} disabled={analyzing || !hasText(fields.website)} data-testid="wizard-analyze" className="shrink-0 bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white text-sm font-medium px-4 py-2 rounded-lg flex items-center gap-1.5">
+                      {analyzing ? <RefreshCw size={14} className="animate-spin" /> : <Sparkles size={14} />}
+                      {analyzing ? "Analyse…" : analyzed ? "Analyser à nouveau" : "Analyser"}
+                    </button>
+                  </div>
+                  <p className="text-[11px] text-gray-500 mt-1.5">Le copilote lit le site et propose l&apos;activité, la cible, le marché et les thèmes. Vous confirmez ou vous corrigez : rien n&apos;est rempli avant.</p>
+                  {review && <SiteReviewPanel testPrefix="wizard" fields={review} onChange={(k, v) => setReview((r) => ({ ...r, [k]: v }))} onConfirm={confirmReview} onReject={() => setReview(null)} />}
+                </div>
+                {extras.map((x) => (
+                  <div key={x.key} className="border-t border-[#f8d0d0] pt-3" data-testid="wizard-extra">
+                    {x.created ? (
+                      <p className="text-sm text-green-700" data-testid="wizard-extra-created">✓ Thématique « {x.created} » créée. Vous la compléterez depuis « Profil ».</p>
+                    ) : (
+                      <>
+                        <label className="text-sm font-medium text-gray-700 block mb-1.5">Une autre entreprise dont vous parlez : son site internet</label>
+                        <div className="flex flex-wrap gap-2">
+                          <input type="text" value={x.url} onChange={(e) => patchExtra(x.key, { url: e.target.value })} placeholder="https://autre-site.fr" className={`flex-1 min-w-0 ${inputCls}`} data-testid="wizard-extra-url" />
+                          <button type="button" onClick={() => analyzeExtra(x)} disabled={x.busy || !hasText(x.url)} data-testid="wizard-extra-analyze" className="shrink-0 bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white text-sm font-medium px-4 py-2 rounded-lg flex items-center gap-1.5">
+                            {x.busy ? <RefreshCw size={14} className="animate-spin" /> : <Sparkles size={14} />}
+                            {x.busy ? "Analyse…" : x.review ? "Analyser à nouveau" : "Analyser"}
+                          </button>
+                          <button type="button" onClick={() => setExtras((xs) => xs.filter((y) => y.key !== x.key))} className="text-xs text-gray-400 hover:text-gray-600 px-2">Retirer</button>
+                        </div>
+                        {x.error && <p className="text-xs text-red-600 mt-1">{x.error}</p>}
+                        {x.review && <SiteReviewPanel testPrefix="wizard-extra" busy={x.busy} confirmLabel="Oui, créer cette thématique" fields={x.review} onChange={(k, v) => patchExtra(x.key, { review: { ...x.review, [k]: v } })} onConfirm={() => createExtra(x)} onReject={() => patchExtra(x.key, { review: null })} />}
+                      </>
+                    )}
+                  </div>
+                ))}
+                {extras.length < 9 && (
+                  <button type="button" onClick={() => setExtras((xs) => [...xs, { key: Math.random().toString(36).slice(2), url: "", busy: false, review: null, created: null, error: null }])} data-testid="wizard-add-site" className="text-sm font-medium text-[#ff5a5f] hover:underline">+ Ajouter une autre entreprise</button>
+                )}
+                <p className="text-[11px] text-gray-500">Vous travaillez pour plusieurs entreprises avec un seul compte LinkedIn ? Ajoutez un site par entreprise : chacune devient une thématique, avec son datalake et sa cible. Pas de site ? Remplissez simplement les champs ci-dessous.</p>
               </div>
+              )}
               <div>
                 <label className="text-sm font-medium text-gray-700 block mb-1.5">{me("Nom de votre entreprise ou de votre marque", "Nom de son entreprise ou de sa marque")}</label>
                 <input type="text" value={fields.companyName} onChange={(e) => set("companyName", e.target.value)} placeholder="ex : Acme Conseil" className={inputCls} data-testid="wizard-company" />
@@ -14860,6 +14959,25 @@ const CONTEXT_ANALYSIS_ROWS = [
   ["market", "Positionnement"],
   ["themes", "Thèmes"],
 ];
+function SiteReviewPanel({ fields, onChange, onConfirm, onReject, confirmLabel = "Oui, utiliser ces informations", testPrefix = "context", busy = false }) {
+  const inputCls = "w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]";
+  return (
+    <div className="mt-3 bg-white rounded-lg border border-gray-200 p-3 space-y-2" data-testid={`${testPrefix}-analysis`}>
+      <p className="text-xs font-semibold text-gray-700">Ce que le copilote a compris du site</p>
+      {CONTEXT_ANALYSIS_ROWS.map(([k, lab]) => (
+        <div key={k} className="grid grid-cols-[110px_1fr] gap-2 items-start">
+          <span className="text-xs text-gray-500 pt-1.5">{lab}</span>
+          <input type="text" value={fields[k] ?? ""} onChange={(e) => onChange(k, e.target.value)} className={inputCls} data-testid={`${testPrefix}-analysis-${k}`} aria-label={lab} />
+        </div>
+      ))}
+      <p className="text-xs text-gray-500">Corrigez directement une ligne si besoin. Est-ce bien l&apos;entreprise dont vous voulez parler ?</p>
+      <div className="flex flex-wrap gap-2">
+        <button type="button" onClick={onConfirm} disabled={busy} data-testid={`${testPrefix}-analysis-confirm`} className="bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white text-sm font-medium px-4 py-2 rounded-lg">{confirmLabel}</button>
+        <button type="button" onClick={onReject} data-testid={`${testPrefix}-analysis-reject`} className="border border-gray-300 text-gray-600 text-sm px-4 py-2 rounded-lg hover:bg-gray-50">Non, ce n&apos;est pas le bon site</button>
+      </div>
+    </div>
+  );
+}
 function ContextsManager({ contexts, onChanged, showToast }) {
   const [editing, setEditing] = useState(null); // { id?, ...champs }
   const [choosing, setChoosing] = useState(false); // choix « Une entreprise » / « Un sujet personnel »
@@ -14975,22 +15093,7 @@ function ContextsManager({ contexts, onChanged, showToast }) {
                 </button>
               </div>
               <p className="text-[11px] text-gray-500 mt-1.5">Le copilote lit le site et propose l&apos;activité, la cible, le positionnement et les thèmes. Rien n&apos;est enregistré avant votre confirmation.</p>
-              {analysis && (
-                <div className="mt-3 bg-white rounded-lg border border-gray-200 p-3 space-y-2" data-testid="context-analysis">
-                  <p className="text-xs font-semibold text-gray-700">Ce que le copilote a compris du site</p>
-                  {CONTEXT_ANALYSIS_ROWS.map(([k, lab]) => (
-                    <div key={k} className="grid grid-cols-[110px_1fr] gap-2 items-start">
-                      <span className="text-xs text-gray-500 pt-1.5">{lab}</span>
-                      <input type="text" value={analysis.fields[k]} onChange={(e) => correctRow(k, e.target.value)} className={inputCls} data-testid={`context-analysis-${k}`} aria-label={lab} />
-                    </div>
-                  ))}
-                  <p className="text-xs text-gray-500">Corrigez directement une ligne si besoin. Est-ce bien l&apos;entreprise dont vous voulez parler ?</p>
-                  <div className="flex flex-wrap gap-2">
-                    <button type="button" onClick={confirmAnalysis} data-testid="context-analysis-confirm" className="bg-[#ff5a5f] hover:bg-[#f63d44] text-white text-sm font-medium px-4 py-2 rounded-lg">Oui, utiliser ces informations</button>
-                    <button type="button" onClick={() => setAnalysis(null)} data-testid="context-analysis-reject" className="border border-gray-300 text-gray-600 text-sm px-4 py-2 rounded-lg hover:bg-gray-50">Non, ce n&apos;est pas le bon site</button>
-                  </div>
-                </div>
-              )}
+              {analysis && <SiteReviewPanel fields={analysis.fields} onChange={correctRow} onConfirm={confirmAnalysis} onReject={() => setAnalysis(null)} />}
             </div>
           )}
           <div className="grid sm:grid-cols-2 gap-3">
@@ -17662,6 +17765,7 @@ export default function Home() {
         showToast={showToast}
         onDone={(p) => {
           setProfile(p);
+          loadContexts();
           fetch("/api/drafts")
             .then((r) => r.json())
             .then((d) => setDrafts(d.drafts ?? []))
