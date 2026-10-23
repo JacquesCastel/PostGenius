@@ -222,7 +222,7 @@ export async function POST(req) {
   let ctx = null;
   if (userId && params.contextId) {
     ctx = await getContextFor(userId, params.contextId);
-    if (!ctx) return NextResponse.json({ error: "Entreprise introuvable." }, { status: 400 });
+    if (!ctx) return NextResponse.json({ error: "Thématique introuvable." }, { status: 400 });
     profile = overlayProfile(profile, ctx);
   }
   // Où le post sera publié (facultatif) : "person" ou "org" + nom de la page

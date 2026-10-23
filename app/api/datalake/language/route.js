@@ -9,7 +9,7 @@ async function scope(userId, raw) {
   const id = raw && raw !== "main" ? String(raw) : null;
   if (!id) return null;
   const ctx = await getContextFor(userId, id);
-  if (!ctx) throw new KnowledgeError("Entreprise introuvable.", 404);
+  if (!ctx) throw new KnowledgeError("Thématique introuvable.", 404);
   return ctx.id;
 }
 const fail = (e) => NextResponse.json({ error: e.message, ...(e.code ? { code: e.code } : {}) }, { status: e instanceof KnowledgeError ? e.status : 500 });

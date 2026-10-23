@@ -14,7 +14,7 @@ export async function GET(req) {
   let contextId = null;
   if (rawCtx && rawCtx !== "main") {
     const ctx = await getContextFor(userId, rawCtx);
-    if (!ctx) return NextResponse.json({ error: "Entreprise introuvable." }, { status: 404 });
+    if (!ctx) return NextResponse.json({ error: "Thématique introuvable." }, { status: 404 });
     contextId = ctx.id;
   }
   try {

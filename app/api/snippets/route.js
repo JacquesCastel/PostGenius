@@ -7,7 +7,7 @@ import { cleanSnippet, MAX_SNIPPETS } from "@/lib/snippets";
 async function scope(userId, raw) {
   if (!raw || raw === "main") return { contextId: null };
   const ctx = await getContextFor(userId, String(raw));
-  return ctx ? { contextId: ctx.id } : { error: "Entreprise introuvable." };
+  return ctx ? { contextId: ctx.id } : { error: "Thématique introuvable." };
 }
 
 // GET /api/snippets?contextId= — bibliothèque de l'entreprise (les plus utilisées d'abord)

@@ -13,7 +13,7 @@ export async function GET(req) {
 
   // Flux de l'entreprise demandée (?contextId=…), sinon de l'entreprise principale
   const contextId = new URL(req.url).searchParams.get("contextId") || null;
-  if (contextId && !(await getContextFor(userId, contextId))) return NextResponse.json({ error: "Entreprise introuvable." }, { status: 400 });
+  if (contextId && !(await getContextFor(userId, contextId))) return NextResponse.json({ error: "Thématique introuvable." }, { status: 400 });
   const sources = await prisma.contentSource.findMany({
     where: { userId, contextId },
     orderBy: { createdAt: "asc" },
@@ -31,7 +31,7 @@ export async function POST(req) {
 
   const { url, title, contextId = null } = await req.json();
   if (!url?.trim()) return NextResponse.json({ error: "URL requise." }, { status: 400 });
-  if (contextId && !(await getContextFor(userId, contextId))) return NextResponse.json({ error: "Entreprise introuvable." }, { status: 400 });
+  if (contextId && !(await getContextFor(userId, contextId))) return NextResponse.json({ error: "Thématique introuvable." }, { status: 400 });
 
   try {
     const { feedUrl } = await resolveSource(url.trim());

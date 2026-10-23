@@ -17,7 +17,7 @@ export async function POST(req) {
 
   const formData = await req.formData();
   const contextId = String(formData.get("contextId") ?? "") || null;
-  if (contextId && !(await getContextFor(userId, contextId))) return NextResponse.json({ error: "Entreprise introuvable." }, { status: 400 });
+  if (contextId && !(await getContextFor(userId, contextId))) return NextResponse.json({ error: "Thématique introuvable." }, { status: 400 });
   const file = formData.get("file");
   if (!file || typeof file === "string") {
     return NextResponse.json({ error: "Fichier manquant" }, { status: 400 });

@@ -821,6 +821,8 @@ model Context {
   brandVoice          String?
   themes              String? // thématiques, séparées par des virgules
   editorialLine       String? // angle et registre éditorial propres à cette entreprise
+  // Thématique : « activity » (entreprise, cible, leads possibles) ou « personal » (sujet personnel : ni entreprise, ni cible commerciale)
+  kind                String   @default("activity")
   createdAt           DateTime @default(now())
 
   sources   KnowledgeSource[]

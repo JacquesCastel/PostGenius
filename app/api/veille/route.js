@@ -18,7 +18,7 @@ export async function GET(req) {
   const force = searchParams.get("refresh") === "1";
 
   const contextId = searchParams.get("contextId") || null;
-  if (contextId && !(await getContextFor(userId, contextId))) return NextResponse.json({ error: "Entreprise introuvable." }, { status: 400 });
+  if (contextId && !(await getContextFor(userId, contextId))) return NextResponse.json({ error: "Thématique introuvable." }, { status: 400 });
   const sources = await prisma.contentSource.findMany({ where: { userId, contextId } });
   if (!sources.length) return NextResponse.json({ items: [] });
 
