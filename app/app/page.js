@@ -167,6 +167,9 @@ function AuthScreen({ onAuth }) {
   const [error, setError] = useState(null);
   const [info, setInfo] = useState(null);
   const [loading, setLoading] = useState(false);
+  // Inscription en trois questions (maquette 1) : qui vous êtes, de quoi vous parlerez, qui vous voulez toucher ; puis e-mail et mot de passe
+  const [regStep, setRegStep] = useState("questions"); // questions | account
+  const [answers, setAnswers] = useState({ name: "", fonction: "", topic: "", audience: "" });
   const [plan, setPlan] = useState(null); // offre choisie depuis la landing (?plan=)
   const [invite, setInvite] = useState(null); // invitation de test (?invite=) : { token, email, planName, accessDays } ou { invalid: true }
 
@@ -233,10 +236,18 @@ function AuthScreen({ onAuth }) {
       const res = await fetch(`/api/auth/${mode === "login" ? "login" : "register"}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(mode === "register" ? { ...fields, plan, ...(invite?.token ? (invite.team ? { team: invite.token } : { invite: invite.token }) : {}) } : fields),
+        body: JSON.stringify(mode === "register" ? { ...fields, name: (useQuestions ? answers.name : fields.name).trim(), plan, ...(invite?.token ? (invite.team ? { team: invite.token } : { invite: invite.token }) : {}) } : fields),
       });
       const data = await readJson(res);
       if (!res.ok) throw new Error(data.error || "Erreur");
+      // Les réponses aux trois questions alimentent le profil : l'assistant de première connexion n'a pas à les redemander
+      if (mode === "register" && useQuestions && (answers.fonction.trim() || answers.topic.trim() || answers.audience.trim())) {
+        await fetch("/api/profile", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...(answers.fonction.trim() ? { headline: answers.fonction.trim(), expertise: answers.fonction.trim() } : {}), ...(answers.topic.trim() ? { themes: answers.topic.trim() } : {}), ...(answers.audience.trim() ? { targetAudience: answers.audience.trim() } : {}) }),
+        }).catch(() => {});
+      }
       onAuth(data.user);
     } catch (err) {
       setError(err.message);
@@ -246,6 +257,77 @@ function AuthScreen({ onAuth }) {
   };
 
   const planInfo = plan ? PLANS[plan] : null;
+  // Les invitations d'équipe (agence) n'ont besoin que d'un e-mail et d'un mot de passe
+  const useQuestions = mode === "register" && !invite?.team;
+  if (useQuestions && regStep === "questions") {
+    const inputCls = "w-full border border-gray-300 rounded-xl px-3.5 py-3 text-[15px] focus:outline-none focus:ring-2 focus:ring-[#ff5a5f] bg-white";
+    const lbl = "block text-[13px] font-semibold text-gray-700 mb-1.5";
+    const ex = "text-xs text-gray-500 mt-1.5 leading-snug";
+    const ready = answers.name.trim() && answers.fonction.trim();
+    const steps = [
+      ["Trois questions", "Qui vous êtes, de quoi vous parlez, qui vous voulez toucher."],
+      ["Vos sites internet", "Un ou plusieurs sites : le copilote les lit, vous confirmez ou corrigez."],
+      ["Voix et analyse", "Cible, anciens posts, documents : le même parcours que pour chaque thématique."],
+      ["Où publier", "Votre profil LinkedIn et, si vous le souhaitez, la page de votre entreprise."],
+      ["Votre premier post", "À partir d'une idée à vous, tapée ou dictée. Vous relisez avant toute publication."],
+    ];
+    return (
+      <div className="min-h-screen flex flex-col bg-gradient-to-b from-rose-50 via-orange-50/40 to-sky-50 text-[#1b2a4a]">
+        <SiteHeader />
+        <main className="flex-1">
+          <div className="w-full max-w-6xl mx-auto grid lg:grid-cols-[1.1fr_1fr] gap-10 lg:gap-16 px-6 py-10 items-start" data-testid="register-questions">
+            <form onSubmit={(e) => { e.preventDefault(); if (ready) setRegStep("account"); }} className="max-w-xl">
+              <p className="text-[13px] font-bold text-[#b3282f] tracking-wide uppercase">14 jours gratuits · sans carte bancaire{planInfo ? ` · offre ${planLabel(plan)}` : ""}</p>
+              <h1 className="text-3xl md:text-4xl font-extrabold leading-tight mt-2">Trois questions pour commencer.</h1>
+              <p className="text-[15px] text-[#5a6b85] mt-2 mb-5 leading-relaxed">Le reste (vos sites, votre voix, vos anciens posts), nous le déduisons ensuite, puis vous vérifiez.</p>
+              <div className="space-y-4">
+                <div>
+                  <label className={lbl} htmlFor="reg-name">1. Qui êtes-vous ?</label>
+                  <div className="grid sm:grid-cols-2 gap-3">
+                    <input id="reg-name" className={inputCls} placeholder="Prénom et nom" value={answers.name} onChange={(e) => setAnswers((a) => ({ ...a, name: e.target.value }))} data-testid="reg-name" />
+                    <input className={inputCls} aria-label="Votre fonction" placeholder="Votre fonction" value={answers.fonction} onChange={(e) => setAnswers((a) => ({ ...a, fonction: e.target.value }))} data-testid="reg-fonction" />
+                  </div>
+                  <p className={ex}>Ex. : Camille Durand, consultante en recrutement</p>
+                </div>
+                <div>
+                  <label className={lbl} htmlFor="reg-topic">2. De quoi parlerez-vous en premier sur LinkedIn ?</label>
+                  <input id="reg-topic" className={inputCls} placeholder="Votre première thématique, en quelques mots" value={answers.topic} onChange={(e) => setAnswers((a) => ({ ...a, topic: e.target.value }))} data-testid="reg-topic" />
+                  <p className={ex}>Ex. : mon métier de recruteuse · la vie d&apos;une indépendante · le running</p>
+                  <p className={ex}>Vous travaillez pour plusieurs entreprises ? Vous les ajouterez, avec leurs sites internet, à l&apos;écran suivant.</p>
+                </div>
+                <div>
+                  <label className={lbl} htmlFor="reg-audience">3. Qui voulez-vous toucher ?</label>
+                  <input id="reg-audience" className={inputCls} placeholder="Votre audience" value={answers.audience} onChange={(e) => setAnswers((a) => ({ ...a, audience: e.target.value }))} data-testid="reg-audience" />
+                  <p className={ex}>Ex. : dirigeants de PME industrielles · mon réseau · des candidats.</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-4 mt-6 flex-wrap">
+                <button type="submit" disabled={!ready} data-testid="reg-continue" className="bg-[#d63b42] hover:bg-[#b3282f] disabled:bg-gray-300 text-white font-bold text-base px-7 py-3 rounded-2xl">Continuer</button>
+                <span className="text-[13px] text-[#5a6b85]">E-mail et mot de passe : à l&apos;étape suivante</span>
+              </div>
+              <p className="text-sm text-[#5a6b85] mt-5">Déjà un compte ? <button type="button" onClick={() => { setMode("login"); setError(null); }} className="text-[#b3282f] font-semibold hover:underline" data-testid="reg-to-login">Se connecter</button></p>
+            </form>
+            <div className="space-y-4 max-w-lg">
+              <div className="bg-white border border-gray-100 rounded-3xl p-5 space-y-3.5 shadow-sm">
+                <p className="text-xs font-bold uppercase tracking-wider text-gray-500">Ce qui vous attend, en 10 minutes</p>
+                {steps.map(([t, d], i) => (
+                  <div key={t} className="flex gap-3.5 items-start">
+                    <span className={`w-[30px] h-[30px] rounded-full text-sm font-extrabold flex items-center justify-center shrink-0 ${i === 0 ? "bg-[#d63b42] text-white" : "bg-gray-200 text-gray-600"}`}>{i + 1}</span>
+                    <div><p className="text-[15px] font-extrabold">{t}</p><p className="text-[13px] text-gray-500 leading-snug mt-0.5">{d}</p></div>
+                  </div>
+                ))}
+              </div>
+              <div className="bg-amber-50 border border-amber-200 rounded-3xl p-5">
+                <p className="text-xs font-bold uppercase tracking-wider text-amber-800 mb-1.5">Ici, on écrit comme on vit</p>
+                <p className="text-sm text-gray-700 leading-relaxed">Un jour vous célébrez un contrat signé, le lendemain vous râlez parce qu&apos;une facture n&apos;est toujours pas réglée. LinkeePost écrit avec vous dans les deux cas : vous choisissez le sujet, l&apos;humeur du jour, et vous gardez la main.</p>
+              </div>
+            </div>
+          </div>
+        </main>
+        <SiteFooter />
+      </div>
+    );
+  }
   const planBullets = planInfo
     ? [
         planInfo.postsPerMonth == null ? "Posts illimités" : `${planInfo.postsPerMonth} posts par mois`,
@@ -365,8 +447,13 @@ function AuthScreen({ onAuth }) {
               </p>
             )}
 
+          {useQuestions && (
+            <p className="text-sm text-gray-600 mb-3" data-testid="reg-recap">
+              <strong>{answers.name}</strong>, {answers.fonction}. <button type="button" onClick={() => setRegStep("questions")} className="text-[#b3282f] font-semibold hover:underline" data-testid="reg-back">Modifier mes réponses</button>
+            </p>
+          )}
           <form onSubmit={submit} className="space-y-3">
-            {mode === "register" && (
+            {mode === "register" && !useQuestions && (
               <input
                 type="text"
                 placeholder="Votre nom"
@@ -11118,8 +11205,9 @@ function OnboardingFirstPost({ fields, saving, showToast, onFinish, onBack, forC
 const ONBOARDING_STEPS = [
   { kind: "identity", stageId: "identity", short: "Vous", title: "Bienvenue ! Qui êtes-vous ?" },
   { kind: "company", stageId: "audience", short: "Vos sites", title: "Vos sites internet et votre entreprise" },
-  { kind: "lead", stageId: "leads", short: "Leads", title: "Qui voulez-vous atteindre ?" },
+  { kind: "lead", stageId: "leads", short: "Cible et leads", title: "Qui voulez-vous atteindre ?" },
   { kind: "voice", stageId: "voice", short: "Votre voix", title: "Votre façon d'écrire" },
+  { kind: "where", stageId: null, short: "Où publier", title: "Où voulez-vous publier ?" }, // maquette 2 : profil, page entreprise facultative
   { kind: "firstpost", stageId: null, short: "Premier post", title: "Votre premier post" }, // écran final : le copilote écrit sous les yeux du client
 ];
 
@@ -11167,19 +11255,74 @@ function ClientPageStep({ onBack, onNext, onPage }) {
   );
 }
 
+// Où publier (maquette 2) : le profil est toujours inclus ; la page de l'entreprise est facultative, on choisit à chaque post
+function PublishWhereStep({ onBack, onNext, planAllowsOrg = true }) {
+  const [state, setState] = useState(null); // null = chargement | { connected, name, orgConnected, pages }
+  useEffect(() => {
+    fetch("/api/linkedin/me").then(readJson).then(async (me) => {
+      let pages = [];
+      if (me.orgConnected) pages = (await fetch("/api/linkedin/organizations").then(readJson).catch(() => ({}))).organizations ?? [];
+      setState({ connected: Boolean(me.connected), name: me.name ?? "", orgConnected: Boolean(me.orgConnected), pages });
+    }).catch(() => setState({ connected: false, name: "", orgConnected: false, pages: [] }));
+  }, []);
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 sm:p-6 space-y-4" data-testid="wizard-where-step">
+      <div>
+        <p className="text-xs font-medium text-[#ff5a5f] mb-1">Où publier</p>
+        <h2 className="font-semibold text-lg">Où voulez-vous publier ?</h2>
+        <p className="text-sm text-gray-500">Vous pourrez changer à chaque post. Ici, on connecte simplement ce que vous utilisez.</p>
+      </div>
+      {!state ? <p className="text-sm text-gray-400">Vérification…</p> : (
+        <div className="grid gap-3">
+          <div className={`rounded-2xl p-4 border-2 ${state.connected ? "border-[#0a66c2]" : "border-gray-200"}`} data-testid="wizard-where-profile">
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 rounded-full bg-gradient-to-br from-orange-400 to-[#ff5a5f] text-white flex items-center justify-center font-bold">{(state.name || "Moi").slice(0, 1)}</div>
+              <div className="min-w-0"><p className="font-extrabold">Mon profil LinkedIn</p>{state.name && <p className="text-xs text-gray-500">{state.name}</p>}</div>
+              {state.connected && <span className="ml-auto text-xs font-bold bg-green-100 text-green-800 px-2.5 py-1 rounded-full">Connecté</span>}
+            </div>
+            <p className="text-sm text-gray-700 mt-2 leading-relaxed">C&apos;est <strong>vous</strong> qui parlez : convictions, retours d&apos;expérience, victoires, coups de gueule. Quelle que soit la thématique.</p>
+            {state.connected ? <p className="text-xs text-gray-500 mt-1.5">Toujours inclus.</p> : <a href="/api/linkedin/auth" data-testid="wizard-where-connect-profile" className="inline-flex items-center gap-1.5 mt-2.5 bg-[#0a66c2] hover:bg-[#004182] text-white text-sm font-medium px-4 py-2 rounded-lg"><Linkedin size={14} /> Connecter mon profil</a>}
+          </div>
+          <div className="rounded-2xl p-4 border border-gray-200" data-testid="wizard-where-page">
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 rounded-lg bg-[#0a66c2] text-white flex items-center justify-center font-extrabold">in</div>
+              <div><p className="font-extrabold">La page de mon entreprise</p><p className="text-xs text-gray-500">Facultatif · 1 page incluse en offre Pro</p></div>
+              {state.orgConnected && <span className="ml-auto text-xs font-bold bg-green-100 text-green-800 px-2.5 py-1 rounded-full">Connectée</span>}
+            </div>
+            <p className="text-sm text-gray-700 mt-2 leading-relaxed">C&apos;est <strong>la marque</strong> qui parle : actualités, cas clients validés. Les commentaires de la page alimentent aussi votre base de leads.</p>
+            {state.orgConnected
+              ? <p className="text-xs text-green-700 mt-1.5 font-medium">{state.pages.length ? state.pages.map((x) => x.name).join(", ") : "Page connectée"}</p>
+              : planAllowsOrg
+              ? <div className="flex items-center gap-3 mt-2.5"><a href="/api/linkedin/auth-org" data-testid="wizard-where-connect-page" className="inline-flex items-center gap-1.5 bg-[#0a66c2] hover:bg-[#004182] text-white text-sm font-medium px-4 py-2 rounded-lg">Connecter ma page</a><button type="button" onClick={onNext} className="text-sm text-gray-600 hover:text-gray-900">Plus tard</button></div>
+              : <p className="text-xs text-gray-500 mt-1.5">La publication sur une page entreprise est incluse à partir de l&apos;offre Pro.</p>}
+          </div>
+        </div>
+      )}
+      <div className="rounded-2xl bg-gray-50 border border-gray-100 p-4" data-testid="wizard-where-recap">
+        <p className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-1.5">Ce que vous choisirez à chaque post</p>
+        <p className="text-sm text-gray-800 leading-relaxed"><strong>De quoi parler</strong> (une thématique : votre métier, la vie d&apos;entrepreneur, le sport…), <strong>dans quelle humeur</strong> (fier, agacé, inspiré…) et <strong>où publier</strong> (votre profil, la page, ou les deux).</p>
+      </div>
+      <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+        <button type="button" onClick={onBack} className="text-sm text-gray-500 hover:text-gray-700">← Retour</button>
+        <div className="flex items-center gap-3"><span className="hidden sm:block text-xs text-gray-400">Aucune publication sans votre validation.</span><button type="button" onClick={onNext} data-testid="wizard-where-next" className="bg-[#ff5a5f] hover:bg-[#f63d44] text-white text-sm font-medium px-5 py-2 rounded-lg flex items-center gap-1.5">Continuer <ChevronRight size={15} /></button></div>
+      </div>
+    </div>
+  );
+}
+
 function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast, forClient = null, onExit }) {
   // Agence : on configure le compte d'un client. Mêmes étapes, formulées à la troisième personne.
   const me = (self, client) => (forClient ? client : self);
   // Si LinkedIn vient d'être connecté (retour OAuth d'un ancien parcours), on reprend à la dernière étape
   const flow = forClient ? ONBOARDING_CLIENT_STEPS : ONBOARDING_STEPS;
-  const stepKey = forClient ? `lp-wizard-step-${forClient.id}` : null;
-  // Client d'agence : la connexion de la page passe par LinkedIn et revient ici, on reprend là où on en était
+  const stepKey = forClient ? `lp-wizard-step-${forClient.id}` : "lp-wizard-step-self";
+  // La connexion de LinkedIn (profil ou page) passe par LinkedIn et revient ici : on reprend là où on en était
   const [step, setStepRaw] = useState(() => {
-    if (forClient) {
-      try { const v = Number(sessionStorage.getItem(stepKey)); if (Number.isInteger(v) && v >= 0 && v < flow.length) return v; } catch {}
-      return 0;
-    }
-    return linkedinConnected ? ONBOARDING_STEPS.length - 1 : 0;
+    try { const v = Number(sessionStorage.getItem(stepKey)); if (sessionStorage.getItem(stepKey) !== null && Number.isInteger(v) && v >= 0 && v < flow.length) return v; } catch {}
+    if (forClient) return 0;
+    if (linkedinConnected) return Math.max(0, flow.findIndex((x) => x.kind === "where"));
+    // Nom et fonction déjà donnés à l'inscription : on commence aux sites
+    return hasText(profile?.name) && hasText(profile?.expertise) ? 1 : 0;
   });
   const setStep = (v) => {
     setStepRaw(v);
@@ -11380,6 +11523,8 @@ function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast,
 
         {isFirstPost && <OnboardingFirstPost forClient={Boolean(forClient)} fields={fields} saving={saving} showToast={showToast} stepNo={step + 1} stepTotal={flow.length} target={pageUrn} onFinish={() => (forClient ? setStep(step + 1) : save(true))} onBack={() => setStep(step - 1)} />}
 
+        {kind === "where" && <PublishWhereStep planAllowsOrg={user?.plan !== "essentiel"} onBack={() => setStep(step - 1)} onNext={() => setStep(step + 1)} />}
+
         {kind === "page" && <ClientPageStep onBack={() => setStep(step - 1)} onNext={() => setStep(step + 1)} onPage={setPageUrn} />}
 
         {kind === "person" && (
@@ -11422,7 +11567,7 @@ function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast,
           </div>
         )}
 
-        {!isFirstPost && kind !== "page" && kind !== "person" && (
+        {!isFirstPost && kind !== "page" && kind !== "person" && kind !== "where" && (
         <>
         <ProfileCompanion
           key={stage.id}
