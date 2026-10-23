@@ -19,6 +19,11 @@ cd /opt/postgenius
 echo "==> 1/5  git pull"
 git pull
 
+# Image de base Node : on la retire à chaque déploiement pour recevoir les correctifs de sécurité
+# (le build ci-dessous et l'image finale partent de cette image locale). Non bloquant si le réseau échoue.
+docker pull node:22-slim || echo "    ⚠ docker pull node:22-slim a échoué : l'image locale existante sera utilisée"
+echo "    Node dans l'image : $(docker run --rm node:22-slim node -v 2>/dev/null || echo inconnu)"
+
 # ── Dossiers de données persistantes (montés dans /app/data) ────────────────
 # Doivent exister avec des droits d'écriture pour le conteneur AVANT le premier
 # upload : le conteneur ne peut pas créer un nouveau sous-dossier sous ./data
