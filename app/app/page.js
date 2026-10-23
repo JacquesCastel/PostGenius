@@ -17147,10 +17147,21 @@ export default function Home() {
     .filter(Boolean)
     .join(" · ");
 
-  // Création pas à pas : « Pour qui ? » n'apparaît que s'il y a un choix (page entreprise connectée)
+  // Thématique suggérée pour le sujet (maquette 7) : celle dont le nom, l'activité ou les thèmes recoupent le mieux le sujet saisi
+  const themeOptions = [
+    { id: null, name: profile?.companyName || "Mon activité", kind: "activity", target: profile?.targetAudience, voice: profile?.editorialLine || profile?.brandVoice, text: [profile?.companyName, profile?.businessDescription, profile?.themes].join(" ") },
+    ...contexts.map((c) => ({ id: c.id, name: c.name, kind: c.kind, target: c.targetAudience, voice: c.editorialLine || c.brandVoice, text: [c.name, c.businessDescription, c.themes].join(" ") })),
+  ];
+  const plain = (t) => String(t ?? "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  const topicWords = plain(`${form.theme} ${activeSource?.title ?? ""}`).split(/[^a-z0-9]+/).filter((w) => w.length > 3);
+  const themeScores = themeOptions.map((o) => { const t = plain(o.text); return topicWords.filter((w) => t.includes(w)).length; });
+  const bestScore = Math.max(0, ...themeScores);
+  const suggestedThemeIdx = bestScore > 0 && themeScores.filter((x) => x === bestScore).length === 1 ? themeScores.indexOf(bestScore) : -1;
+
+  // Création pas à pas (maquette 7) : le sujet et l'humeur d'abord, puis la thématique et la destination
   const createSteps = [
-    ...((linkedin.connected && linkedin.orgConnected && orgs.length > 0) || contexts.length > 0 ? [{ id: "who", label: "Pour qui ?", short: "Pour qui" }] : []),
     { id: "topic", label: "De quoi parler ?", short: "Sujet" },
+    ...((linkedin.connected && linkedin.orgConnected && orgs.length > 0) || contexts.length > 0 ? [{ id: "who", label: "Pour quelle thématique, et où publier ?", short: "Thématique" }] : []),
     ...(genMode === "single" ? [
       { id: "ctx", label: "Pour qui, et pour quoi ?", short: "Public" },
       { id: "shape", label: "Quelle forme ?", short: "Forme" },
@@ -19811,18 +19822,17 @@ export default function Home() {
             <div className={stepCls("who")}>
             {contexts.length > 0 && (
               <div data-testid="context-picker">
-                <label className="text-sm font-medium text-gray-700 block mb-2">Pour quelle thématique ?</label>
-                <div className="flex flex-wrap gap-1.5">
-                  {[{ id: null, label: profile?.companyName || "Mon activité" }, ...contexts.map((c) => ({ id: c.id, label: c.name }))].map((o) => (
-                    <button
-                      key={o.id ?? "main"}
-                      type="button"
-                      onClick={() => chooseContext(o.id)}
-                      className={`text-xs px-3 py-1.5 rounded-full border ${activeContextId === o.id ? "bg-[#ff5a5f] text-white border-[#ff5a5f]" : "border-gray-200 text-gray-600 hover:border-gray-300"}`}
-                    >
-                      {o.label}
-                    </button>
-                  ))}
+                <label className="text-sm font-medium text-gray-700 block mb-2">Sous quelle thématique ?</label>
+                <div className="grid gap-2">
+                  {themeOptions.map((o, i) => {
+                    const on = (activeContextId ?? null) === o.id;
+                    return (
+                      <button key={o.id ?? "main"} type="button" onClick={() => chooseContext(o.id)} data-testid="theme-option" aria-pressed={on} className={`text-left rounded-xl border px-3.5 py-2.5 ${on ? "border-2 border-[#d63b42] bg-[#fff8f8]" : "border-gray-200 hover:border-gray-300 bg-white"}`}>
+                        <span className="block text-sm font-bold text-gray-800">{o.name}</span>
+                        <span className="block text-xs text-gray-500 leading-snug">{[o.kind === "personal" ? "Sujet personnel" : "Activité", o.voice ? `voix : ${String(o.voice).slice(0, 50)}` : null, o.target ? `${o.kind === "personal" ? "audience" : "cible"} : ${String(o.target).slice(0, 50)}` : null].filter(Boolean).join(" · ")}{i === suggestedThemeIdx ? " · " : ""}{i === suggestedThemeIdx && <strong className="text-[#a3242a]" data-testid="theme-suggested">suggérée pour ce sujet</strong>}</span>
+                      </button>
+                    );
+                  })}
                 </div>
                 <p className="text-[11px] text-gray-400 mt-1.5">
                   Le contexte de cette thématique (activité, cible, ligne éditoriale, voix) et ses sources seront utilisés. Votre voix reste la vôtre.
@@ -19848,24 +19858,27 @@ export default function Home() {
             {linkedin.connected && linkedin.orgConnected && orgs.length > 0 && (
               <div data-testid="publish-as">
                 <label className="text-sm font-medium text-gray-700 block mb-2">Où publier ?</label>
-                <div className="flex flex-wrap gap-1.5">
+                <div className="grid gap-2">
                   {[
-                    ...(linkedin.clientSpace ? [] : [{ v: "person", label: `Sur mon profil${linkedin.name ? ` (${linkedin.name})` : ""}` }]),
-                    ...orgs.map((o) => ({ v: o.urn, label: `Sur la page ${o.name}` })),
-                    ...(genMode === "single" && !wantVariants && !linkedin.clientSpace ? orgs.map((o) => ({ v: `both:${o.urn}`, label: `Les deux versions : profil + page ${o.name}` })) : []),
+                    ...(linkedin.clientSpace ? [] : [{ v: "person", label: "Sur mon profil", sub: `${linkedin.name ? `${linkedin.name} · ` : ""}votre voix, à la première personne` }]),
+                    ...orgs.map((o) => ({ v: o.urn, label: `Sur la page ${o.name}`, sub: "La voix de l'entreprise, avec l'aperçu adapté" })),
+                    ...(genMode === "single" && !wantVariants && !linkedin.clientSpace ? orgs.map((o) => ({ v: `both:${o.urn}`, label: `Les deux versions : profil + page ${o.name}`, sub: "Un texte pour chaque destination, relus séparément" })) : []),
                   ].map((o) => {
                     const current = pairActive ? `both:${pairWith}` : target;
                     return (
                       <button
                         key={o.v}
                         type="button"
+                        data-testid="destination-option"
+                        aria-pressed={current === o.v}
                         onClick={() => {
                           if (o.v.startsWith("both:")) { setPairWith(o.v.slice(5)); setTarget("person"); }
                           else { setPairWith(null); setTarget(o.v); }
                         }}
-                        className={`text-xs px-3 py-1.5 rounded-full border ${current === o.v ? "bg-[#ff5a5f] text-white border-[#ff5a5f]" : "border-gray-200 text-gray-600 hover:border-gray-300"}`}
+                        className={`text-left rounded-xl border px-3.5 py-2.5 ${current === o.v ? "border-2 border-[#d63b42] bg-[#fff8f8]" : "border-gray-200 hover:border-gray-300 bg-white"}`}
                       >
-                        {o.label}
+                        <span className="block text-sm font-bold text-gray-800">{o.label}</span>
+                        <span className="block text-xs text-gray-500 leading-snug">{o.sub}</span>
                       </button>
                     );
                   })}
