@@ -69,7 +69,7 @@ export async function POST(req) {
   const userId = await getUserId(req);
   if (!userId) return NextResponse.json({ error: "Non connecté." }, { status: 401 });
 
-  const { type, theme, expertise, tone, maxChars, text, generatedText, extra, inspirationUrl, imageUrl, imagePrompt, videoUrl, youtubeUrl, pillarId, target, contextId, mentions, poll, documentSlides } =
+  const { type, theme, expertise, tone, maxChars, text, generatedText, extra, inspirationUrl, imageUrl, imagePrompt, videoUrl, youtubeUrl, pillarId, target, contextId, momentId, mentions, poll, documentSlides } =
     await req.json();
   if (!text?.trim()) return NextResponse.json({ error: "Texte requis." }, { status: 400 });
 
@@ -95,6 +95,15 @@ export async function POST(req) {
     const own = await prisma.context.findFirst({ where: { id: String(contextId), userId }, select: { id: true } });
     if (!own) return NextResponse.json({ error: "Thématique introuvable." }, { status: 400 });
     draftContextId = own.id;
+  }
+
+  // Temps fort auquel le post est rattaché (facultatif) : il doit appartenir à la même thématique
+  let draftMomentId = null;
+  if (momentId) {
+    const m = await prisma.moment.findFirst({ where: { id: String(momentId), userId }, select: { id: true, contextId: true } });
+    if (!m) return NextResponse.json({ error: "Temps fort introuvable." }, { status: 400 });
+    if ((m.contextId ?? null) !== draftContextId) return NextResponse.json({ error: "Ce temps fort appartient à une autre thématique." }, { status: 400 });
+    draftMomentId = m.id;
   }
 
   const access = await checkAccess(userId);
@@ -123,6 +132,7 @@ export async function POST(req) {
       pillarId: pillarId || null,
       ...(target ? { target } : {}),
       contextId: draftContextId,
+      momentId: draftMomentId,
       poll: (() => { const c = cleanPoll(poll); return c ? JSON.stringify(c) : null; })(),
       documentSlides: (() => { const c = cleanSlides(documentSlides); return c.length ? JSON.stringify(c) : null; })(),
       // Pages et personnes taguées dès la création (voir MentionTool)

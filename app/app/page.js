@@ -6792,12 +6792,19 @@ function KnowledgePanel({ showToast, onCount, activeContextId = null, hasContext
   const [expanded, setExpanded] = useState(null);
   // Plusieurs entreprises : chaque source appartient à une entreprise (« main » = principale) ou est partagée
   const [ctxList, setCtxList] = useState([]);
-  const [scope, setScope] = useState("main"); // main | id d'une entreprise | shared
+  const [scope, setScope] = useState("main"); // main | id d'une thématique | shared | moment:<id d'un temps fort>
+  const [momentList, setMomentList] = useState([]);
   useEffect(() => {
     fetch("/api/contexts").then(readJson).then((d) => setCtxList(d.contexts ?? [])).catch(() => {});
+    fetch("/api/moments").then(readJson).then((d) => setMomentList((d.moments ?? []).filter((m) => m.state === "active" || m.state === "upcoming"))).catch(() => {});
   }, []);
-  const scopeBody = (v) => (v === "shared" ? { shared: true } : v === "main" ? { contextId: null, shared: false } : { contextId: v, shared: false });
-  const scopeValue = (src) => (src.shared ? "shared" : src.contextId ?? "main");
+  const scopeBody = (v) => (v === "shared" ? { shared: true } : v === "main" ? { contextId: null, shared: false, momentId: null } : v.startsWith("moment:") ? { momentId: v.slice(7) } : { contextId: v, shared: false, momentId: null });
+  const scopeValue = (src) => (src.momentId ? `moment:${src.momentId}` : src.shared ? "shared" : src.contextId ?? "main");
+  const scopeOptions = () => (
+    <>
+      {momentList.length > 0 && momentList.map((m) => (<option key={m.id} value={`moment:${m.id}`}>📅 Temps fort : {m.name}</option>))}
+    </>
+  );
 
   const load = () =>
     fetch("/api/knowledge")
@@ -6849,6 +6856,7 @@ function KnowledgePanel({ showToast, onCount, activeContextId = null, hasContext
         fd.append("file", file);
         if (title.trim()) fd.append("title", title.trim());
         if (scope === "shared") fd.append("shared", "true");
+        else if (scope.startsWith("moment:")) fd.append("momentId", scope.slice(7));
         else if (scope !== "main") fd.append("contextId", scope);
         res = await fetch("/api/knowledge/upload", { method: "POST", body: fd });
       } else {
@@ -6932,13 +6940,14 @@ function KnowledgePanel({ showToast, onCount, activeContextId = null, hasContext
                 <button type="button" onClick={() => setTab("link")} className={chip(tab === "link")}>Un lien</button>
                 <button type="button" onClick={() => setTab("file")} className={chip(tab === "file")}>PDF ou Word</button>
               </div>
-              {ctxList.length > 0 && (
+              {(ctxList.length > 0 || momentList.length > 0) && (
                 <label className="flex items-center gap-2 text-xs text-gray-600 flex-wrap" data-testid="source-scope">
                   Pour quelle thématique ?
                   <select value={scope} onChange={(e) => setScope(e.target.value)} className="border border-gray-200 rounded-lg px-2 py-1 text-xs bg-white">
                     <option value="main">Mon activité</option>
                     {ctxList.map((c) => (<option key={c.id} value={c.id}>{c.name}</option>))}
                     <option value="shared">Toutes mes thématiques (partagée)</option>
+                    {scopeOptions()}
                   </select>
                 </label>
               )}
@@ -7095,11 +7104,13 @@ function KnowledgePanel({ showToast, onCount, activeContextId = null, hasContext
                         )}
                       </div>
                       <div className="flex items-center gap-2 shrink-0 text-xs flex-wrap">
-                        {ctxList.length > 0 && (
+                        {s.momentId && <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-50 text-amber-700" data-testid="source-moment">📅 {momentList.find((m) => m.id === s.momentId)?.name ?? "Temps fort"}</span>}
+                        {(ctxList.length > 0 || momentList.length > 0) && (
                           <select value={scopeValue(s)} onChange={(e) => patch(s.id, scopeBody(e.target.value))} title="Thématique à laquelle cette source appartient" aria-label={`Thématique de la source ${s.title}`} className="border border-gray-200 rounded px-1 py-0.5 text-[11px] bg-white max-w-[130px]">
                             <option value="main">Principale</option>
                             {ctxList.map((c) => (<option key={c.id} value={c.id}>{c.name}</option>))}
                             <option value="shared">Partagée</option>
+                            {scopeOptions()}
                           </select>
                         )}
                         <label className="flex items-center gap-1 text-gray-500" title="Cette source est toujours transmise à l'IA, quel que soit le sujet">
@@ -14978,7 +14989,7 @@ function SiteReviewPanel({ fields, onChange, onConfirm, onReject, confirmLabel =
     </div>
   );
 }
-function ContextsManager({ contexts, onChanged, showToast }) {
+function ContextsManager({ contexts, onChanged, moments = [], onMomentsChanged, profileName = "Mon activité", showToast }) {
   const [editing, setEditing] = useState(null); // { id?, ...champs }
   const [choosing, setChoosing] = useState(false); // choix « Une entreprise » / « Un sujet personnel »
   const [busy, setBusy] = useState(false);
@@ -14986,6 +14997,41 @@ function ContextsManager({ contexts, onChanged, showToast }) {
   const [analyzing, setAnalyzing] = useState(false);
   const [analysis, setAnalysis] = useState(null); // { fields } : lecture du site, à confirmer ou refuser
   const [copyFrom, setCopyFrom] = useState("");
+  // Temps forts : un moment précis rattaché à une thématique (hérite de sa voix, de sa cible et de son datalake)
+  const [addingMoment, setAddingMoment] = useState(false);
+  const [mDraft, setMDraft] = useState({ contextId: "main", name: "", brief: "", startsAt: "", endsAt: "" });
+  const [mBusy, setMBusy] = useState(false);
+  const [mError, setMError] = useState(null);
+  const parentName = (m) => (m.contextId ? contexts.find((c) => c.id === m.contextId)?.name ?? "Thématique" : profileName);
+  const MOMENT_STATE = { active: ["En cours", "bg-green-50 text-green-700"], upcoming: ["À venir", "bg-sky-50 text-sky-700"], ended: ["Terminé", "bg-gray-100 text-gray-500"], archived: ["Archivé", "bg-gray-100 text-gray-400"] };
+  const fmtDay = (d) => (d ? new Date(d).toLocaleDateString("fr-FR", { day: "numeric", month: "short" }) : "");
+  const createMoment = async () => {
+    if (mBusy) return;
+    setMBusy(true);
+    setMError(null);
+    try {
+      const res = await fetch("/api/moments", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...mDraft, startsAt: mDraft.startsAt || null, endsAt: mDraft.endsAt || null }) });
+      const d = await readJson(res);
+      if (!res.ok) throw new Error(d.error || "Erreur");
+      showToast("Temps fort créé ✓");
+      setAddingMoment(false);
+      setMDraft({ contextId: "main", name: "", brief: "", startsAt: "", endsAt: "" });
+      onMomentsChanged?.();
+    } catch (e) {
+      setMError(e.message);
+    } finally {
+      setMBusy(false);
+    }
+  };
+  const patchMoment = async (m, body) => {
+    const res = await fetch(`/api/moments/${m.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    if (res.ok) onMomentsChanged?.(); else showToast((await readJson(res)).error || "Modification impossible");
+  };
+  const removeMoment = async (m) => {
+    if (!window.confirm(`Supprimer le temps fort « ${m.name} » ? Ses sources rejoignent le datalake de la thématique ; vos posts sont conservés.`)) return;
+    const res = await fetch(`/api/moments/${m.id}`, { method: "DELETE" });
+    if (res.ok) { showToast("Temps fort supprimé"); onMomentsChanged?.(); } else showToast("Erreur de suppression");
+  };
   const inputCls = "w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]";
   const labelCls = "text-xs font-medium text-gray-600 block mb-1";
   const set = (k, v) => setEditing((e) => ({ ...e, [k]: v }));
@@ -15189,11 +15235,72 @@ function ContextsManager({ contexts, onChanged, showToast }) {
       ) : (
         <button type="button" onClick={() => { setError(null); setChoosing(true); }} data-testid="context-add" className="mt-3 text-sm font-medium text-[#ff5a5f] hover:underline">+ Ajouter une thématique</button>
       )}
+      <div className="mt-4 pt-4 border-t border-dashed border-gray-200" data-testid="moments-manager">
+        <p className="text-sm font-medium text-gray-700">📅 Les temps forts</p>
+        <p className="text-xs text-gray-500 mt-1 leading-relaxed">Un moment précis, rattaché à l&apos;une de vos thématiques : « Lancement de mon livre », « Salon de mars ». Il reprend sa voix, sa cible et son datalake, y ajoute son brief et ses propres sources, puis s&apos;archive.</p>
+        {moments.length > 0 && (
+          <ul className="mt-3 divide-y divide-gray-100 border border-gray-100 rounded-lg">
+            {moments.map((m) => (
+              <li key={m.id} className={`p-3 flex items-start justify-between gap-3 ${m.state === "archived" ? "opacity-60" : ""}`} data-testid="moment-row">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-gray-800 truncate">
+                    <span className={`text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded mr-2 ${MOMENT_STATE[m.state]?.[1] ?? ""}`} data-testid="moment-state">{MOMENT_STATE[m.state]?.[0] ?? m.state}</span>
+                    {m.name}
+                  </p>
+                  <p className="text-xs text-gray-400 truncate">{parentName(m)}{(m.startsAt || m.endsAt) ? ` · ${[fmtDay(m.startsAt), fmtDay(m.endsAt)].filter(Boolean).join(" → ")}` : ""} · {m.sources} source{m.sources > 1 ? "s" : ""} · {m.posts} post{m.posts > 1 ? "s" : ""}</p>
+                </div>
+                <div className="flex items-center gap-3 text-xs shrink-0">
+                  <button type="button" onClick={() => patchMoment(m, { archived: m.state !== "archived" })} data-testid="moment-archive" className="text-[#ff5a5f] hover:underline">{m.state === "archived" ? "Réactiver" : "Archiver"}</button>
+                  <button type="button" onClick={() => removeMoment(m)} className="text-gray-400 hover:text-red-600">Supprimer</button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+        {addingMoment ? (
+          <div className="mt-3 space-y-3 bg-amber-50/60 border border-amber-100 rounded-xl p-3.5" data-testid="moment-form">
+            <div className="grid sm:grid-cols-2 gap-3">
+              <div>
+                <label className={labelCls}>Rattaché à la thématique *</label>
+                <select value={mDraft.contextId} onChange={(e) => setMDraft({ ...mDraft, contextId: e.target.value })} className={`${inputCls} bg-white`} data-testid="moment-context">
+                  <option value="main">{profileName}</option>
+                  {contexts.map((c) => (<option key={c.id} value={c.id}>{c.name}</option>))}
+                </select>
+              </div>
+              <div>
+                <label className={labelCls}>Nom du temps fort *</label>
+                <input type="text" value={mDraft.name} onChange={(e) => setMDraft({ ...mDraft, name: e.target.value })} placeholder="ex : Lancement de mon livre" className={inputCls} data-testid="moment-name" />
+              </div>
+            </div>
+            <div>
+              <label className={labelCls}>Ce que vous voulez dire pendant ce temps fort <span className="font-normal text-gray-400">(facultatif)</span></label>
+              <textarea rows={2} value={mDraft.brief} onChange={(e) => setMDraft({ ...mDraft, brief: e.target.value })} placeholder="ex : annoncer la sortie, raconter l'écriture, remercier les premiers lecteurs" className={inputCls} data-testid="moment-brief" />
+            </div>
+            <div className="grid sm:grid-cols-2 gap-3">
+              <div>
+                <label className={labelCls}>Début <span className="font-normal text-gray-400">(facultatif)</span></label>
+                <input type="date" value={mDraft.startsAt} onChange={(e) => setMDraft({ ...mDraft, startsAt: e.target.value })} className={inputCls} data-testid="moment-start" />
+              </div>
+              <div>
+                <label className={labelCls}>Fin <span className="font-normal text-gray-400">(facultatif : il se termine alors tout seul)</span></label>
+                <input type="date" value={mDraft.endsAt} onChange={(e) => setMDraft({ ...mDraft, endsAt: e.target.value })} className={inputCls} data-testid="moment-end" />
+              </div>
+            </div>
+            {mError && <p className="text-xs text-red-600" data-testid="moment-error">{mError}</p>}
+            <div className="flex items-center gap-2">
+              <button type="button" onClick={createMoment} disabled={mBusy || !mDraft.name.trim()} data-testid="moment-save" className="bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white text-sm font-medium px-4 py-2 rounded-lg">{mBusy ? "Création…" : "Créer le temps fort"}</button>
+              <button type="button" onClick={() => { setAddingMoment(false); setMError(null); }} className="text-sm text-gray-500 px-3 py-2">Annuler</button>
+            </div>
+          </div>
+        ) : (
+          <button type="button" onClick={() => { setMError(null); setAddingMoment(true); }} data-testid="moment-add" className="mt-3 text-sm font-medium text-[#ff5a5f] hover:underline">+ Ajouter un temps fort</button>
+        )}
+      </div>
     </div>
   );
 }
 
-function ProfileView({ contexts = [], onContextsChanged, profile, onSaved, showToast, linkedin, onDisconnect, instagram, onDisconnectInstagram, canOrgPublish = true, focusField, onFocusHandled, onGoConnections, onGoDatalake }) {
+function ProfileView({ contexts = [], onContextsChanged, moments = [], onMomentsChanged, profile, onSaved, showToast, linkedin, onDisconnect, instagram, onDisconnectInstagram, canOrgPublish = true, focusField, onFocusHandled, onGoConnections, onGoDatalake }) {
   const [fields, setFields] = useState({
     name: profile?.name ?? "",
     headline: profile?.headline ?? "",
@@ -15477,7 +15584,7 @@ function ProfileView({ contexts = [], onContextsChanged, profile, onSaved, showT
                   <ProfileField id="field-brandVoice" label="Voix de la marque sur sa page entreprise" hint="(facultatif)" why="Votre voix personnelle s'écrit en « je ». Une page entreprise parle autrement : « nous », un vocabulaire maison, des choses qu'on évite. Ces consignes ne servent que pour les posts publiés sur la page." example="Nous tutoyons, phrases courtes, pas d'anglicismes, jamais de promesse chiffrée">
                     <textarea rows={2} value={fields.brandVoice} onChange={(e) => set("brandVoice", e.target.value)} placeholder="ex : nous tutoyons, phrases courtes, jamais de jargon" className={input} data-testid="field-brandVoice-input" />
                   </ProfileField>
-                  <ContextsManager contexts={contexts} onChanged={onContextsChanged} showToast={showToast} />
+                  <ContextsManager contexts={contexts} onChanged={(...a) => { onContextsChanged?.(...a); onMomentsChanged?.(); }} moments={moments} onMomentsChanged={onMomentsChanged} profileName={fields.companyName || "Mon activité"} showToast={showToast} />
                 </div>
               )}
 
@@ -16019,18 +16126,18 @@ function PostContextBlock({ profile, value, onChange, alwaysOpen = false }) {
   );
 }
 
-function GenerationContextCard({ theme, sourceTitle, onGoProfile, postContext, contextId, sourceIds = null, onSourceIds = null }) {
+function GenerationContextCard({ theme, sourceTitle, onGoProfile, postContext, contextId, momentId = null, sourceIds = null, onSourceIds = null }) {
   const [ctx, setCtx] = useState(null);
   const [open, setOpen] = useState(false);
   useEffect(() => {
     const t = setTimeout(async () => {
       try {
-        const res = await fetch("/api/generate/context", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ theme, sourceTitle, contextId }) });
+        const res = await fetch("/api/generate/context", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ theme, sourceTitle, contextId, momentId }) });
         if (res.ok) setCtx(await res.json());
       } catch {}
     }, 500);
     return () => clearTimeout(t);
-  }, [theme, sourceTitle, contextId]);
+  }, [theme, sourceTitle, contextId, momentId]);
   if (!ctx) return null;
   const plural = (n, one, many) => `${n} ${n > 1 ? many : one}`;
   // Sources de CE texte : choix automatique (les plus proches du sujet) ou choix de l'auteur
@@ -16497,13 +16604,18 @@ export default function Home() {
   const [pair, setPair] = useState(null); // [{ target, result, history }] une fois générées
   const [pairTab, setPairTab] = useState(0);
   const [profile, setProfile] = useState(null);
-  // Plusieurs entreprises : l'mon activité est celle du profil, les autres viennent de /api/contexts
+  // Plusieurs thématiques : « Mon activité » est celle du profil, les autres viennent de /api/contexts
   const [contexts, setContexts] = useState([]);
   const [activeContextId, setActiveContextId] = useState(null); // null = mon activité
-  useEffect(() => { setChosenSources(null); }, [activeContextId]);
+  // Temps forts : moments précis rattachés à une thématique (le post peut s'inscrire dans l'un d'eux)
+  const [moments, setMoments] = useState([]);
+  const [activeMomentId, setActiveMomentId] = useState(null);
+  useEffect(() => { setChosenSources(null); }, [activeContextId, activeMomentId]);
+  useEffect(() => { setActiveMomentId(null); }, [activeContextId]);
   const loadContexts = () => fetch("/api/contexts").then(readJson).then((d) => setContexts(d.contexts ?? [])).catch(() => {});
+  const loadMoments = () => fetch("/api/moments").then(readJson).then((d) => setMoments(d.moments ?? [])).catch(() => {});
   useEffect(() => {
-    if (user) loadContexts();
+    if (user) { loadContexts(); loadMoments(); }
   }, [user?.email]);
   useEffect(() => {
     // dernière entreprise utilisée, si elle existe encore
@@ -16769,6 +16881,7 @@ export default function Home() {
         publishAs: voiceFor(tgt),
         postContext: postCtx,
         contextId: activeContextId || undefined,
+        momentId: activeMomentId || undefined,
         sourceIds: chosenSources ?? undefined,
       });
       const call = async (tgt) => {
@@ -16887,7 +17000,7 @@ export default function Home() {
       const res = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, publishAs: voiceFor(target), postContext: postCtx, contextId: activeContextId || undefined, ...(moodOverride !== undefined ? { mood: moodOverride } : {}), refine: { text: result.text, instruction, history: thread.filter((m) => m.role === "user").map((m) => m.text) } }),
+        body: JSON.stringify({ ...form, publishAs: voiceFor(target), postContext: postCtx, contextId: activeContextId || undefined, momentId: activeMomentId || undefined, ...(moodOverride !== undefined ? { mood: moodOverride } : {}), refine: { text: result.text, instruction, history: thread.filter((m) => m.role === "user").map((m) => m.text) } }),
       });
       const data = await readJson(res);
       if (!res.ok) throw new Error(data.error || "Erreur inconnue");
@@ -16962,6 +17075,7 @@ export default function Home() {
           ...form,
           target: override?.target ?? target,
           contextId: activeContextId || undefined,
+          momentId: activeMomentId || undefined,
           text: r.text,
           // Version d'origine de l'IA (la plus ancienne de l'historique) : sert à repérer
           // ce que l'utilisateur modifie d'habitude.
@@ -19230,6 +19344,21 @@ export default function Home() {
                 </p>
               </div>
             )}
+            {(() => {
+              const avail = moments.filter((m) => (m.contextId ?? null) === (activeContextId ?? null) && (m.state === "active" || m.state === "upcoming"));
+              if (!avail.length) return null;
+              return (
+                <div data-testid="moment-picker">
+                  <label className="text-sm font-medium text-gray-700 block mb-2">📅 Un temps fort en cours ?</label>
+                  <div className="flex flex-wrap gap-1.5">
+                    {[{ id: null, name: "Aucun" }, ...avail].map((m) => (
+                      <button key={m.id ?? "none"} type="button" onClick={() => setActiveMomentId(m.id)} data-testid="moment-chip" className={`text-xs px-3 py-1.5 rounded-full border ${activeMomentId === m.id ? "bg-amber-500 text-white border-amber-500" : "border-gray-200 text-gray-600 hover:border-gray-300"}`}>{m.name}</button>
+                    ))}
+                  </div>
+                  <p className="text-[11px] text-gray-400 mt-1.5">Le post s&apos;inscrit dans ce moment : son brief et ses sources s&apos;ajoutent à la thématique.</p>
+                </div>
+              );
+            })()}
             {/* Où publier : la voix du post en dépend (profil « je », page « nous ») */}
             {linkedin.connected && linkedin.orgConnected && orgs.length > 0 && (
               <div data-testid="publish-as">
@@ -19629,7 +19758,7 @@ export default function Home() {
                   </div>
                 ))}
               </div>
-              {genMode === "single" && <GenerationContextCard theme={form.theme} sourceTitle={activeSource?.title ?? ""} onGoProfile={() => setView("profile")} postContext={postCtxSpecific} contextId={activeContextId} sourceIds={chosenSources} onSourceIds={setChosenSources} />}
+              {genMode === "single" && <GenerationContextCard theme={form.theme} sourceTitle={activeSource?.title ?? ""} onGoProfile={() => setView("profile")} postContext={postCtxSpecific} contextId={activeContextId} momentId={activeMomentId} sourceIds={chosenSources} onSourceIds={setChosenSources} />}
 
             </div>
 
@@ -20048,6 +20177,8 @@ export default function Home() {
           key={profile?.email ?? "profile"}
           contexts={contexts}
           onContextsChanged={loadContexts}
+          moments={moments}
+          onMomentsChanged={loadMoments}
           onGoConnections={() => setView("connections")}
           onGoDatalake={() => setView("datalake")}
           profile={profile}

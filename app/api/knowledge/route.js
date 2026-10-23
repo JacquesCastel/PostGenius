@@ -5,6 +5,7 @@ import { createKnowledgeSource, guardKnowledgeAdd, fetchPageText, KnowledgeError
 import { cleanText, sourceView } from "@/lib/knowledgeText";
 import { knowledgeLimit, planOf, upgradeTarget } from "@/lib/plans";
 import { resolveSourceScope } from "@/lib/contexts";
+import { resolveMomentScope } from "@/lib/moments";
 
 // Base de connaissances du client : liste (GET) et ajout d'une note ou d'un lien (POST).
 // Chaque ajout est analysé par l'IA (titre, résumé, faits vérifiés dans la source).
@@ -18,7 +19,7 @@ export async function GET(req) {
     prisma.knowledgeSource.findMany({
       where: { userId },
       orderBy: { createdAt: "desc" },
-      select: { id: true, kind: true, title: true, origin: true, summary: true, facts: true, insights: true, pinned: true, charCount: true, createdAt: true, contextId: true, shared: true },
+      select: { id: true, kind: true, title: true, origin: true, summary: true, facts: true, insights: true, pinned: true, charCount: true, createdAt: true, contextId: true, shared: true, momentId: true },
     }),
     prisma.user.findUnique({ where: { id: userId }, select: { plan: true } }),
   ]);
@@ -33,7 +34,7 @@ export async function POST(req) {
   let kind, title, origin = null, text;
   try {
     const quota = await guardKnowledgeAdd(userId);
-    const scope = await resolveSourceScope(userId, body);
+    const scope = await resolveMomentScope(userId, body, await resolveSourceScope(userId, body));
     if (body.kind === "link") {
       const url = String(body.url ?? "").trim();
       if (!/^https?:\/\//i.test(url)) return NextResponse.json({ error: "Collez l'adresse complète d'une page (https://…)." }, { status: 400 });
