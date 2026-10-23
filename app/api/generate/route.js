@@ -18,6 +18,7 @@ import { REFINE_CHAT_JSON, REFINE_CHAT_INSTRUCTION, historyBlock, cleanRefineCha
 import { publishVoiceBlock } from "@/lib/publishVoice";
 import { cleanPostContext, postContextBlock } from "@/lib/postContext";
 import { getContextFor } from "@/lib/contexts";
+import { getMomentFor, momentBlock } from "@/lib/moments";
 import { overlayProfile } from "@/lib/contextOverlay";
 import { writingRulesPrompt, WHY_INSTRUCTION, WHY_JSON_FORMAT, cleanWhy } from "@/lib/linkedinRules";
 
@@ -220,6 +221,14 @@ export async function POST(req) {
 
   // Entreprise choisie (facultatif ; nul = entreprise principale) : ses champs remplacent ceux de l'entreprise du profil
   let ctx = null;
+  // Temps fort (facultatif) : il impose sa thématique, ajoute ses sources et son brief
+  let moment = null;
+  if (userId && params.momentId) {
+    moment = await getMomentFor(userId, params.momentId);
+    if (!moment) return NextResponse.json({ error: "Temps fort introuvable." }, { status: 400 });
+    if (params.contextId && params.contextId !== (moment.contextId ?? "main")) return NextResponse.json({ error: "Ce temps fort appartient à une autre thématique." }, { status: 400 });
+    params.contextId = moment.contextId;
+  }
   if (userId && params.contextId) {
     ctx = await getContextFor(userId, params.contextId);
     if (!ctx) return NextResponse.json({ error: "Thématique introuvable." }, { status: 400 });
@@ -234,7 +243,8 @@ export async function POST(req) {
   const remarks = userId ? await getRemarks(userId) : [];
   // Base de connaissances : sources les plus proches du sujet (jamais bloquant)
   const topic = [theme, source?.title, params.inspiration?.title, params.refine?.text?.slice(0, 400)].filter(Boolean).join(" ");
-  const knowledge = await knowledgeFor(userId, topic, ctx?.id ?? null, { sourceIds: Array.isArray(params.sourceIds) ? params.sourceIds : null });
+  const knowledge = await knowledgeFor(userId, topic, ctx?.id ?? null, { sourceIds: Array.isArray(params.sourceIds) ? params.sourceIds : null, momentId: moment?.id ?? null });
+  knowledge.block += momentBlock(moment);
   // Éléments de langage validés pour cette entreprise : transmis avec les connaissances, dans le même bloc de prompt
   knowledge.block += languageBlock(await elementsFor(userId, ctx?.id ?? null));
   // Mémoire éditoriale : ce que l'auteur a déjà dit (continuité, pas de répétition) ; sans objet pour la retouche d'un post existant

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getEffectiveUserId as getUserId } from "@/lib/session";
 import { suggestSources } from "@/lib/knowledge";
 import { getContextFor } from "@/lib/contexts";
+import { getMomentFor } from "@/lib/moments";
 
 // Sources du datalake les plus proches d'un sujet : l'auteur peut les garder ou en choisir d'autres pour ce texte.
 // GET ?topic=…&contextId=… → { suggested: [id], sources: [{ id, title, kind, summary, pinned }] }
@@ -18,7 +19,9 @@ export async function GET(req) {
     contextId = ctx.id;
   }
   try {
-    return NextResponse.json(await suggestSources(userId, topic, contextId));
+    const rawMoment = url.searchParams.get("momentId");
+    const moment = rawMoment ? await getMomentFor(userId, rawMoment) : null;
+    return NextResponse.json(await suggestSources(userId, topic, moment ? moment.contextId : contextId, moment?.id ?? null));
   } catch (e) {
     return NextResponse.json({ error: "Sélection impossible." }, { status: 500 });
   }

@@ -54,6 +54,7 @@ model User {
   disabled Boolean @default(false) // compte suspendu par un admin
   leadIcp  String? // client idéal décrit pour qualifier les leads
   leads    Lead[]  @relation("UserLeads")
+  moments  Moment[]
 
   // --- Offre / abonnement ---
   plan          String    @default("pro") // essentiel | pro | agence
@@ -550,6 +551,8 @@ model Draft {
   // Entreprise pour laquelle le post a été écrit (nul = entreprise principale)
   contextId String?
   context   Context? @relation(fields: [contextId], references: [id], onDelete: SetNull)
+  momentId  String? // temps fort auquel le post est rattaché
+  moment    Moment?  @relation(fields: [momentId], references: [id], onDelete: SetNull)
 
   // Pages LinkedIn mentionnées dans le texte (« @Nom » → @[Nom](urn)) : JSON [{ name, urn }]
   mentions String?
@@ -837,8 +840,30 @@ model Context {
   brandKits BrandKit[]
   feeds     ContentSource[]
   leads     Lead[]
+  moments   Moment[]
 
   @@index([userId])
+}
+
+// Temps fort : un moment précis (lancement d'un livre, salon…) rattaché à une thématique. Il en hérite la voix, la cible et le datalake,
+// y ajoute son brief et ses propres sources, puis s'archive. Distinct de « Event » (salons avec rappels et événement LinkedIn).
+model Moment {
+  id         String    @id @default(cuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  contextId  String? // thématique parente (nul = celle du profil)
+  context    Context?  @relation(fields: [contextId], references: [id], onDelete: Cascade)
+  name       String
+  brief      String? // ce que l'auteur veut dire pendant ce temps fort
+  startsAt   DateTime?
+  endsAt     DateTime?
+  archivedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  sources KnowledgeSource[]
+  drafts  Draft[]
+
+  @@index([userId, archivedAt])
 }
 
 model KnowledgeSource {
@@ -858,6 +883,9 @@ model KnowledgeSource {
   contextId String?
   context   Context? @relation(fields: [contextId], references: [id], onDelete: Cascade)
   shared    Boolean  @default(false)
+  // Temps fort auquel la source appartient (nul = datalake de la thématique) : elle ne sert qu'aux posts de ce temps fort
+  momentId  String?
+  moment    Moment?  @relation(fields: [momentId], references: [id], onDelete: SetNull)
   charCount Int      @default(0)
   createdAt DateTime @default(now())
 

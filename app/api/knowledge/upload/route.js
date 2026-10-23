@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getEffectiveUserId as getUserId } from "@/lib/session";
 import { createKnowledgeSource, guardKnowledgeAdd, KnowledgeError } from "@/lib/knowledge";
 import { resolveSourceScope } from "@/lib/contexts";
+import { resolveMomentScope } from "@/lib/moments";
 import { extractDocumentText, DocError, MAX_FILE_BYTES } from "@/lib/docExtract";
 
 // Ajout d'un document PDF ou Word (.docx) à la base de connaissances : multipart (champ « file », titre facultatif).
@@ -29,7 +30,8 @@ export async function POST(req) {
     }
     if (file.size > MAX_FILE_BYTES) return NextResponse.json({ error: "Fichier trop volumineux (8 Mo au maximum)." }, { status: 413 });
 
-    const scope = await resolveSourceScope(userId, { contextId: form.get("contextId"), shared: form.get("shared") });
+    const rawScope = { contextId: form.get("contextId"), shared: form.get("shared"), momentId: form.get("momentId") };
+    const scope = await resolveMomentScope(userId, rawScope, await resolveSourceScope(userId, rawScope));
     const { kind, text } = await extractDocumentText(Buffer.from(await file.arrayBuffer()));
     const name = String(file.name ?? "document").replace(/[\u0000-\u001F\\/]/g, "").slice(0, 120) || "document";
     const title = String(form.get("title") ?? "").trim().slice(0, 120) || name.replace(/\.(pdf|docx)$/i, "");

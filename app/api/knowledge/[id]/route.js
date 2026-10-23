@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { getEffectiveUserId as getUserId } from "@/lib/session";
 import { MAX_PINNED } from "@/lib/knowledgeText";
 import { resolveSourceScope } from "@/lib/contexts";
+import { resolveMomentScope } from "@/lib/moments";
 
 // Renommer, épingler (« toujours utiliser ») ou supprimer une source de la base de connaissances.
 
@@ -26,9 +27,10 @@ export async function PATCH(req, { params }) {
   }
   if (body.contextId !== undefined || body.shared !== undefined) {
     try {
-      const scope = await resolveSourceScope(userId, body);
+      const scope = await resolveMomentScope(userId, body, await resolveSourceScope(userId, body));
       data.contextId = scope.shared ? null : scope.contextId;
       data.shared = scope.shared;
+      data.momentId = scope.momentId; // déplacer une source hors de son temps fort la remet dans la thématique
     } catch (e) {
       return NextResponse.json({ error: e.message }, { status: 400 });
     }
