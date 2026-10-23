@@ -43,7 +43,7 @@ import LpMark from "@/components/LpMark";
 import MonthlyReportBody from "@/components/MonthlyReportBody";
 import ShootingKit from "@/components/ShootingKit";
 import { LANGUAGES, normalizeLanguage } from "@/lib/languages";
-import { MOODS } from "@/lib/moods";
+import { MOODS, NEWS_STARTERS } from "@/lib/moods";
 import { parseYouTubeId, youtubeWatchUrl, youtubeEmbedUrl, youtubeThumbUrl } from "@/lib/youtube";
 import ImageEditor, { canvasToSafePng } from "@/components/ImageEditor";
 import { scorePost } from "@/lib/score";
@@ -19362,12 +19362,12 @@ export default function Home() {
             {/* Où publier : la voix du post en dépend (profil « je », page « nous ») */}
             {linkedin.connected && linkedin.orgConnected && orgs.length > 0 && (
               <div data-testid="publish-as">
-                <label className="text-sm font-medium text-gray-700 block mb-2">Publier en tant que</label>
+                <label className="text-sm font-medium text-gray-700 block mb-2">Où publier ?</label>
                 <div className="flex flex-wrap gap-1.5">
                   {[
-                    ...(linkedin.clientSpace ? [] : [{ v: "person", label: `Profil personnel${linkedin.name ? ` (${linkedin.name})` : ""}` }]),
-                    ...orgs.map((o) => ({ v: o.urn, label: `Page : ${o.name}` })),
-                    ...(genMode === "single" && !wantVariants && !linkedin.clientSpace ? orgs.map((o) => ({ v: `both:${o.urn}`, label: `Profil + page ${o.name}` })) : []),
+                    ...(linkedin.clientSpace ? [] : [{ v: "person", label: `Sur mon profil${linkedin.name ? ` (${linkedin.name})` : ""}` }]),
+                    ...orgs.map((o) => ({ v: o.urn, label: `Sur la page ${o.name}` })),
+                    ...(genMode === "single" && !wantVariants && !linkedin.clientSpace ? orgs.map((o) => ({ v: `both:${o.urn}`, label: `Les deux versions : profil + page ${o.name}` })) : []),
                   ].map((o) => {
                     const current = pairActive ? `both:${pairWith}` : target;
                     return (
@@ -19555,6 +19555,16 @@ export default function Home() {
                   {genMode === "single" && source && (
                     <p className="text-xs text-gray-500 mb-1.5">Votre angle <span className="text-gray-400">(modifiable : ce que vous voulez en retenir ou en dire)</span></p>
                   )}
+                  {genMode === "single" && !source && sourceMode === "idea" && (
+                    <div className="flex flex-wrap items-center gap-1.5 mb-2" data-testid="news-starters">
+                      <span className="text-xs text-gray-500">Actualité du moment :</span>
+                      {NEWS_STARTERS.map((n) => (
+                        <button key={n.code} type="button" data-testid="news-starter" onClick={() => setForm((f) => ({ ...f, theme: n.theme, mood: n.mood }))} className="text-xs px-2.5 py-1 rounded-full border border-gray-200 text-gray-600 hover:border-[#ff5a5f] hover:text-[#f63d44]">
+                          {n.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                   <textarea
                     rows={genMode === "single" && source ? 2 : 3}
                     value={form.theme}
@@ -19600,6 +19610,30 @@ export default function Home() {
                   </button>
                 </div>
               )}
+            </div>
+
+            <div data-testid="mood-block">
+              <label className="text-sm font-medium text-gray-700 block mb-2">
+                Dans quelle humeur ? <span className="text-gray-400 font-normal">(facultatif : le même sujet donne un autre post selon l&apos;humeur)</span>
+              </label>
+              <div className="flex flex-wrap gap-1.5">
+                {MOODS.map((m) => (
+                  <button
+                    key={m.code}
+                    type="button"
+                    title={m.hint}
+                    data-testid="mood-chip"
+                    onClick={() => set("mood", form.mood === m.code ? null : m.code)}
+                    className={`text-xs px-3 py-1.5 rounded-full border ${form.mood === m.code ? "bg-amber-500 text-white border-amber-500" : "border-gray-200 text-gray-600 hover:border-gray-300"}`}
+                  >
+                    {m.emoji} {m.label}
+                  </button>
+                ))}
+              </div>
+              {form.mood && MOODS.find((m) => m.code === form.mood)?.example && (
+                <p className="text-xs text-gray-500 mt-2 italic" data-testid="mood-example">Ex. : « {MOODS.find((m) => m.code === form.mood).example} »</p>
+              )}
+              <p className="text-[11px] text-gray-400 mt-2">La vie n&apos;est pas linéaire : un jour on célèbre un contrat signé, le lendemain on râle parce qu&apos;une facture n&apos;est toujours pas réglée. L&apos;humeur se choisit à chaque post, la thématique reste la même.</p>
             </div>
 
             </div>
@@ -19671,27 +19705,6 @@ export default function Home() {
                           }`}
                         >
                           {l.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="text-sm font-medium text-gray-700 block mb-2">
-                      Humeur <span className="text-gray-400 font-normal">(optionnel — oriente l&apos;approche éditoriale)</span>
-                    </label>
-                    <div className="flex flex-wrap gap-1.5">
-                      {MOODS.map((m) => (
-                        <button
-                          key={m.code}
-                          type="button"
-                          title={m.hint}
-                          onClick={() => set("mood", form.mood === m.code ? null : m.code)}
-                          className={`text-xs px-3 py-1.5 rounded-full border ${
-                            form.mood === m.code ? "bg-[#ff5a5f] text-white border-[#ff5a5f]" : "border-gray-200 text-gray-600 hover:border-gray-300"
-                          }`}
-                        >
-                          {m.emoji} {m.label}
                         </button>
                       ))}
                     </div>
