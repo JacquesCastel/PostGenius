@@ -11,7 +11,7 @@ export async function GET(req) {
 
   // Charte de l'entreprise demandée (?contextId=…), sinon de l'entreprise principale
   const contextId = new URL(req.url).searchParams.get("contextId") || null;
-  if (contextId && !(await getContextFor(userId, contextId))) return NextResponse.json({ error: "Entreprise introuvable." }, { status: 400 });
+  if (contextId && !(await getContextFor(userId, contextId))) return NextResponse.json({ error: "Thématique introuvable." }, { status: 400 });
   const kit = await findKit(userId, contextId);
   // Retourne le kit existant ou les valeurs par défaut si pas encore créé
   return NextResponse.json({
@@ -33,7 +33,7 @@ export async function POST(req) {
   if (!userId) return NextResponse.json({ error: "Non connecté" }, { status: 401 });
 
   const { primaryColor, secondaryColor, accentColor, logoUrl, backgroundUrl, fontFamily, bgStyle, tagline, contextId = null } = await req.json();
-  if (contextId && !(await getContextFor(userId, contextId))) return NextResponse.json({ error: "Entreprise introuvable." }, { status: 400 });
+  if (contextId && !(await getContextFor(userId, contextId))) return NextResponse.json({ error: "Thématique introuvable." }, { status: 400 });
 
   const kit = await saveKit(userId, contextId, {
     ...(primaryColor   !== undefined && { primaryColor }),

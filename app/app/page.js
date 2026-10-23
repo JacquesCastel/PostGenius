@@ -1285,7 +1285,7 @@ function CampaignWizard({ profile, linkedin, orgs, onClose, onLaunched, onProfil
   const [veille, setVeille] = useState(null);
   // Point de départ choisi à l'étape 1 : un thème libre, un article, un document ou la veille
   const { contexts: ents, activeContextId } = useContext(EntreprisesCtx);
-  const [wizCtx, setWizCtx] = useState(draft ? d0.wizCtx ?? null : initial?.contextId ?? activeContextId ?? null); // entreprise de la campagne
+  const [wizCtx, setWizCtx] = useState(draft ? d0.wizCtx ?? null : initial?.contextId ?? activeContextId ?? null); // thématique de la campagne
   const [wizSources, setWizSources] = useState(null); // sources choisies pour le post d'exemple (null = automatique)
   useEffect(() => { setWizSources(null); }, [wizCtx]);
   const [startMode, setStartMode] = useState(d0.startMode ?? (initial?.context ? "veille" : "theme"));
@@ -1544,9 +1544,9 @@ function CampaignWizard({ profile, linkedin, orgs, onClose, onLaunched, onProfil
             )}
             {ents.length > 0 && (
               <div data-testid="wizard-context">
-                <label className="text-sm font-medium text-gray-700 block mb-2">Pour quelle entreprise ?</label>
+                <label className="text-sm font-medium text-gray-700 block mb-2">Pour quelle thématique ?</label>
                 <div className="flex flex-wrap gap-1.5">
-                  {[{ id: null, label: profile?.companyName || "Entreprise principale" }, ...ents.map((c) => ({ id: c.id, label: c.name }))].map((o) => (
+                  {[{ id: null, label: profile?.companyName || "Mon activité" }, ...ents.map((c) => ({ id: c.id, label: c.name }))].map((o) => (
                     <button key={o.id ?? "main"} type="button" onClick={() => setWizCtx(o.id)} className={`text-xs px-3 py-1.5 rounded-full border ${wizCtx === o.id ? "bg-[#ff5a5f] text-white border-[#ff5a5f]" : "border-gray-200 text-gray-600 hover:border-gray-300"}`}>{o.label}</button>
                   ))}
                 </div>
@@ -2461,9 +2461,9 @@ function BriefImport({ showToast, onClose, onCreated, draft = null }) {
         <div className="grid sm:grid-cols-2 gap-3">
           <label className="text-xs text-gray-600">Nom<input type="text" value={brief.name} onChange={(e) => set("name", e.target.value)} className={`${input} mt-1`} data-testid="brief-name" /></label>
           {ents.length > 0 && (
-            <label className="text-xs text-gray-600">Entreprise
+            <label className="text-xs text-gray-600">Thématique
               <select value={ctxId} onChange={(e) => setCtxId(e.target.value)} className={`${input} mt-1 bg-white`} data-testid="brief-company">
-                <option value="">Entreprise principale</option>
+                <option value="">Mon activité</option>
                 {ents.map((c) => (<option key={c.id} value={c.id}>{c.name}</option>))}
               </select>
             </label>
@@ -6934,11 +6934,11 @@ function KnowledgePanel({ showToast, onCount, activeContextId = null, hasContext
               </div>
               {ctxList.length > 0 && (
                 <label className="flex items-center gap-2 text-xs text-gray-600 flex-wrap" data-testid="source-scope">
-                  Pour quelle entreprise ?
+                  Pour quelle thématique ?
                   <select value={scope} onChange={(e) => setScope(e.target.value)} className="border border-gray-200 rounded-lg px-2 py-1 text-xs bg-white">
-                    <option value="main">Entreprise principale</option>
+                    <option value="main">Mon activité</option>
                     {ctxList.map((c) => (<option key={c.id} value={c.id}>{c.name}</option>))}
-                    <option value="shared">Toutes mes entreprises (partagée)</option>
+                    <option value="shared">Toutes mes thématiques (partagée)</option>
                   </select>
                 </label>
               )}
@@ -7025,7 +7025,7 @@ function KnowledgePanel({ showToast, onCount, activeContextId = null, hasContext
               ))}
               {hasContexts && (
                 <label className="flex items-center gap-1.5 text-gray-500 ml-auto" data-testid="datalake-all-companies">
-                  <input type="checkbox" checked={allCompanies} onChange={(e) => setAllCompanies(e.target.checked)} /> Toutes mes entreprises
+                  <input type="checkbox" checked={allCompanies} onChange={(e) => setAllCompanies(e.target.checked)} /> Toutes mes thématiques
                 </label>
               )}
             </div>
@@ -7069,11 +7069,11 @@ function KnowledgePanel({ showToast, onCount, activeContextId = null, hasContext
             </div>
           )}
           {data && <DatalakePosts contextId={activeContextId} onGoHistory={onGoHistory} />}
-          {data && used > 0 && <LanguagePanel key={engineKey} contextId={activeContextId} contextName={hasContexts ? ctxList.find((c) => c.id === activeContextId)?.name ?? "entreprise principale" : ""} sourceCount={inScope.length} showToast={showToast} />}
+          {data && used > 0 && <LanguagePanel key={engineKey} contextId={activeContextId} contextName={hasContexts ? ctxList.find((c) => c.id === activeContextId)?.name ?? "mon activité" : ""} sourceCount={inScope.length} showToast={showToast} />}
           {data && used > 0 && (
             <div id="datalake-sources" className="bg-white rounded-2xl border border-gray-100 shadow-sm p-2 scroll-mt-24" data-testid="datalake-sources">
               {visible.length === 0 ? (
-                <p className="text-xs text-gray-400 p-4">Aucune source ne correspond à ces filtres{hasContexts && !allCompanies ? " pour cette entreprise" : ""}.</p>
+                <p className="text-xs text-gray-400 p-4">Aucune source ne correspond à ces filtres{hasContexts && !allCompanies ? " pour cette thématique" : ""}.</p>
               ) : (
               <ul className="divide-y divide-gray-100">
                 {visible.map((s) => (
@@ -7096,7 +7096,7 @@ function KnowledgePanel({ showToast, onCount, activeContextId = null, hasContext
                       </div>
                       <div className="flex items-center gap-2 shrink-0 text-xs flex-wrap">
                         {ctxList.length > 0 && (
-                          <select value={scopeValue(s)} onChange={(e) => patch(s.id, scopeBody(e.target.value))} title="Entreprise à laquelle cette source appartient" aria-label={`Entreprise de la source ${s.title}`} className="border border-gray-200 rounded px-1 py-0.5 text-[11px] bg-white max-w-[130px]">
+                          <select value={scopeValue(s)} onChange={(e) => patch(s.id, scopeBody(e.target.value))} title="Thématique à laquelle cette source appartient" aria-label={`Thématique de la source ${s.title}`} className="border border-gray-200 rounded px-1 py-0.5 text-[11px] bg-white max-w-[130px]">
                             <option value="main">Principale</option>
                             {ctxList.map((c) => (<option key={c.id} value={c.id}>{c.name}</option>))}
                             <option value="shared">Partagée</option>
@@ -13830,8 +13830,8 @@ function BrandKitView({ showToast }) {
       <>
       {ents.length > 0 && (
         <p className="text-xs text-gray-500 mb-4" data-testid="kit-company">
-          Charte graphique de : <span className="font-semibold text-gray-700">{activeContext?.name || "l'entreprise principale"}</span>
-          <span className="text-gray-400"> · changez d&apos;entreprise avec le sélecteur en haut de page. Les modèles de slides restent communs.</span>
+          Charte graphique de : <span className="font-semibold text-gray-700">{activeContext?.name || "l'mon activité"}</span>
+          <span className="text-gray-400"> · changez de thématique avec le sélecteur en haut de page. Les modèles de slides restent communs.</span>
         </p>
       )}
       <div className="grid lg:grid-cols-2 gap-6 items-start">
@@ -14849,17 +14849,69 @@ function ConnectionsView({ linkedin, onDisconnect, instagram, onDisconnectInstag
   );
 }
 
-// Plusieurs entreprises : une personne qui travaille pour plusieurs entreprises avec un seul compte LinkedIn choisit,
-// à chaque post, le contexte voulu. Sa voix reste la sienne ; l'entreprise principale est celle du profil ci-dessus.
-const EMPTY_CONTEXT = { name: "", role: "", website: "", businessDescription: "", targetAudience: "", market: "", commGoals: "", brandVoice: "", themes: "", editorialLine: "" };
+// Mes thématiques : une personne qui parle de plusieurs sujets (plusieurs entreprises, un sujet personnel) avec un seul
+// compte LinkedIn choisit, à chaque post, la thématique voulue. Chacune a sa cible, son datalake et sa voix ; aucune n'est « principale ».
+// La thématique de départ est celle du profil ci-dessus ; celles-ci s'y ajoutent, sur un pied d'égalité.
+const EMPTY_CONTEXT = { kind: "activity", name: "", role: "", website: "", businessDescription: "", targetAudience: "", market: "", commGoals: "", brandVoice: "", themes: "", editorialLine: "" };
+const CONTEXT_ANALYSIS_ROWS = [
+  ["name", "Entreprise"],
+  ["businessDescription", "Activité"],
+  ["targetAudience", "Cible"],
+  ["market", "Positionnement"],
+  ["themes", "Thèmes"],
+];
 function ContextsManager({ contexts, onChanged, showToast }) {
   const [editing, setEditing] = useState(null); // { id?, ...champs }
+  const [choosing, setChoosing] = useState(false); // choix « Une entreprise » / « Un sujet personnel »
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [analysis, setAnalysis] = useState(null); // { fields } : lecture du site, à confirmer ou refuser
+  const [copyFrom, setCopyFrom] = useState("");
   const inputCls = "w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]";
   const labelCls = "text-xs font-medium text-gray-600 block mb-1";
   const set = (k, v) => setEditing((e) => ({ ...e, [k]: v }));
   const goals = (editing?.commGoals ?? "").split(",").filter(Boolean);
+  const personal = editing?.kind === "personal";
+  const kindLabel = (c) => (c.kind === "personal" ? "Personnelle" : "Entreprise");
+  const startNew = (kind) => { setError(null); setAnalysis(null); setCopyFrom(""); setChoosing(false); setEditing({ ...EMPTY_CONTEXT, kind }); };
+  const analyzeSite = async () => {
+    if (!editing?.website?.trim()) { setError("Indiquez d'abord l'adresse du site."); return; }
+    setError(null);
+    setAnalyzing(true);
+    try {
+      const res = await fetch("/api/profile/analyze", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url: editing.website }) });
+      const d = await readJson(res);
+      if (!res.ok) throw new Error(d.error || "Analyse impossible");
+      const f = d.fields || {};
+      setAnalysis({ fields: { name: f.companyName || "", businessDescription: f.businessDescription || "", targetAudience: f.targetAudience || "", market: f.market || "", themes: f.themes || "", commGoals: f.commGoals || "" }, ok: {} });
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setAnalyzing(false);
+    }
+  };
+  // Confirmer : la lecture du site pré-remplit les champs encore vides ; les lignes corrigées à la main sont gardées telles quelles
+  const confirmAnalysis = () => {
+    const f = analysis.fields;
+    setEditing((e) => ({
+      ...e,
+      name: e.name.trim() || f.name,
+      businessDescription: e.businessDescription.trim() || f.businessDescription,
+      targetAudience: e.targetAudience.trim() || f.targetAudience,
+      market: e.market.trim() || f.market,
+      themes: e.themes.trim() || f.themes,
+      commGoals: e.commGoals.trim() || f.commGoals,
+    }));
+    setAnalysis(null);
+    showToast("Thématique pré-remplie depuis le site ✓ Vérifiez et complétez.");
+  };
+  const correctRow = (k, v) => setAnalysis((a) => ({ ...a, fields: { ...a.fields, [k]: v } }));
+  const copyTone = (id) => {
+    setCopyFrom(id);
+    const src = contexts.find((c) => c.id === id);
+    if (src) setEditing((e) => ({ ...e, brandVoice: src.brandVoice ?? "", editorialLine: src.editorialLine ?? "" }));
+  };
   const save = async () => {
     if (busy) return;
     setBusy(true);
@@ -14869,8 +14921,9 @@ function ContextsManager({ contexts, onChanged, showToast }) {
       const res = await fetch(id ? `/api/contexts/${id}` : "/api/contexts", { method: id ? "PATCH" : "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(fields) });
       const d = await readJson(res);
       if (!res.ok) throw new Error(d.error || "Erreur");
-      showToast(id ? "Entreprise enregistrée ✓" : "Entreprise ajoutée ✓");
+      showToast(id ? "Thématique enregistrée ✓" : "Thématique ajoutée ✓");
       setEditing(null);
+      setAnalysis(null);
       onChanged?.();
     } catch (e) {
       setError(e.message);
@@ -14879,26 +14932,29 @@ function ContextsManager({ contexts, onChanged, showToast }) {
     }
   };
   const remove = async (c) => {
-    if (!window.confirm(`Supprimer l'entreprise « ${c.name} » ? Les sources de sa base de connaissances seront supprimées ; vos posts sont conservés.`)) return;
+    if (!window.confirm(`Supprimer la thématique « ${c.name} » ? Les sources de son datalake seront supprimées ; vos posts sont conservés.`)) return;
     const res = await fetch(`/api/contexts/${c.id}`, { method: "DELETE" });
-    if (res.ok) { showToast("Entreprise supprimée"); onChanged?.(); } else showToast("Erreur de suppression");
+    if (res.ok) { showToast("Thématique supprimée"); onChanged?.(); } else showToast("Erreur de suppression");
   };
   return (
     <div className="border border-dashed border-gray-300 rounded-xl p-4" data-testid="contexts-manager">
-      <p className="text-sm font-medium text-gray-700">Travaillez-vous pour plusieurs entreprises ?</p>
+      <p className="text-sm font-medium text-gray-700">Parlez-vous d&apos;autres sujets ou d&apos;autres entreprises ?</p>
       <p className="text-xs text-gray-500 mt-1 leading-relaxed">
-        Avec un seul compte LinkedIn, vous choisissez à chaque post l&apos;entreprise concernée. Chacune a son activité, sa cible, sa ligne éditoriale, sa voix de marque et ses sources ; votre voix, elle, reste la vôtre. L&apos;entreprise ci-dessus est votre entreprise principale.
+        Avec un seul compte LinkedIn, vous choisissez à chaque post la thématique concernée : une autre entreprise, ou un sujet personnel (la vie d&apos;indépendant, le running…). Chacune a sa cible, son datalake et sa voix, sans se mélanger aux autres. Aucune n&apos;est « principale » : celle du profil ci-dessus est simplement la première.
       </p>
       {contexts.length > 0 && (
         <ul className="mt-3 divide-y divide-gray-100 border border-gray-100 rounded-lg">
           {contexts.map((c) => (
             <li key={c.id} className="p-3 flex items-start justify-between gap-3" data-testid="context-row">
               <div className="min-w-0">
-                <p className="text-sm font-medium text-gray-800 truncate">{c.name}{c.role && <span className="text-gray-400 font-normal"> · {c.role}</span>}</p>
-                <p className="text-xs text-gray-400 truncate">{c.businessDescription || "Activité à décrire"}</p>
+                <p className="text-sm font-medium text-gray-800 truncate">
+                  <span className={`text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded mr-2 ${c.kind === "personal" ? "bg-rose-50 text-rose-700" : "bg-sky-50 text-sky-700"}`} data-testid="context-kind">{kindLabel(c)}</span>
+                  {c.name}{c.role && c.kind !== "personal" && <span className="text-gray-400 font-normal"> · {c.role}</span>}
+                </p>
+                <p className="text-xs text-gray-400 truncate">{c.businessDescription || (c.kind === "personal" ? "Sujet à décrire" : "Activité à décrire")}</p>
               </div>
               <div className="flex items-center gap-3 text-xs shrink-0">
-                <button type="button" onClick={() => { setError(null); setEditing({ ...EMPTY_CONTEXT, ...Object.fromEntries(Object.entries(c).map(([k, v]) => [k, v ?? ""])) }); }} className="text-[#ff5a5f] hover:underline">Modifier</button>
+                <button type="button" onClick={() => { setError(null); setAnalysis(null); setChoosing(false); setEditing({ ...EMPTY_CONTEXT, ...Object.fromEntries(Object.entries(c).map(([k, v]) => [k, v ?? ""])) }); }} className="text-[#ff5a5f] hover:underline">Modifier</button>
                 <button type="button" onClick={() => remove(c)} className="text-gray-400 hover:text-red-600">Supprimer</button>
               </div>
             </li>
@@ -14907,64 +14963,121 @@ function ContextsManager({ contexts, onChanged, showToast }) {
       )}
       {editing ? (
         <div className="mt-3 space-y-3 bg-gray-50 rounded-xl p-3.5" data-testid="context-form">
+          <p className="text-sm font-semibold text-gray-800">{editing.id ? "Modifier la thématique" : personal ? "Nouveau sujet personnel" : "Nouvelle entreprise"}</p>
+          {!personal && (
+            <div className="bg-[#fff1f1] rounded-xl p-3" data-testid="context-site">
+              <label className={labelCls}>Gagnez du temps : le site internet de cette entreprise</label>
+              <div className="flex flex-wrap gap-2">
+                <input type="text" value={editing.website} onChange={(e) => set("website", e.target.value)} placeholder="https://" className={`flex-1 min-w-0 ${inputCls}`} data-testid="context-website" />
+                <button type="button" onClick={analyzeSite} disabled={analyzing || !editing.website.trim()} data-testid="context-analyze" className="shrink-0 bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white text-sm font-medium px-4 py-2 rounded-lg flex items-center gap-1.5">
+                  {analyzing ? <RefreshCw size={14} className="animate-spin" /> : <Sparkles size={14} />}
+                  {analyzing ? "Analyse…" : analysis ? "Analyser à nouveau" : "Analyser"}
+                </button>
+              </div>
+              <p className="text-[11px] text-gray-500 mt-1.5">Le copilote lit le site et propose l&apos;activité, la cible, le positionnement et les thèmes. Rien n&apos;est enregistré avant votre confirmation.</p>
+              {analysis && (
+                <div className="mt-3 bg-white rounded-lg border border-gray-200 p-3 space-y-2" data-testid="context-analysis">
+                  <p className="text-xs font-semibold text-gray-700">Ce que le copilote a compris du site</p>
+                  {CONTEXT_ANALYSIS_ROWS.map(([k, lab]) => (
+                    <div key={k} className="grid grid-cols-[110px_1fr] gap-2 items-start">
+                      <span className="text-xs text-gray-500 pt-1.5">{lab}</span>
+                      <input type="text" value={analysis.fields[k]} onChange={(e) => correctRow(k, e.target.value)} className={inputCls} data-testid={`context-analysis-${k}`} aria-label={lab} />
+                    </div>
+                  ))}
+                  <p className="text-xs text-gray-500">Corrigez directement une ligne si besoin. Est-ce bien l&apos;entreprise dont vous voulez parler ?</p>
+                  <div className="flex flex-wrap gap-2">
+                    <button type="button" onClick={confirmAnalysis} data-testid="context-analysis-confirm" className="bg-[#ff5a5f] hover:bg-[#f63d44] text-white text-sm font-medium px-4 py-2 rounded-lg">Oui, utiliser ces informations</button>
+                    <button type="button" onClick={() => setAnalysis(null)} data-testid="context-analysis-reject" className="border border-gray-300 text-gray-600 text-sm px-4 py-2 rounded-lg hover:bg-gray-50">Non, ce n&apos;est pas le bon site</button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
           <div className="grid sm:grid-cols-2 gap-3">
             <div>
-              <label className={labelCls}>Nom de l&apos;entreprise *</label>
-              <input type="text" value={editing.name} onChange={(e) => set("name", e.target.value)} placeholder="ex : Acme Industrie" className={inputCls} data-testid="context-name" />
+              <label className={labelCls}>{personal ? "Nom de la thématique *" : "Nom de l'entreprise *"}</label>
+              <input type="text" value={editing.name} onChange={(e) => set("name", e.target.value)} placeholder={personal ? "ex : La vie d'indépendante, Le running" : "ex : Acme Industrie"} className={inputCls} data-testid="context-name" />
             </div>
             <div>
-              <label className={labelCls}>Votre rôle dans cette entreprise</label>
-              <input type="text" value={editing.role} onChange={(e) => set("role", e.target.value)} placeholder="ex : Directrice financière" className={inputCls} />
+              <label className={labelCls}>{personal ? "Les sujets qui reviennent" : "Votre rôle dans cette entreprise"} {personal && <span className="font-normal text-gray-400">(séparés par des virgules)</span>}</label>
+              {personal
+                ? <input type="text" value={editing.themes} onChange={(e) => set("themes", e.target.value)} placeholder="ex : clients, trésorerie, équilibre vie pro / vie perso" className={inputCls} />
+                : <input type="text" value={editing.role} onChange={(e) => set("role", e.target.value)} placeholder="ex : Directrice financière" className={inputCls} />}
             </div>
           </div>
           <div>
-            <label className={labelCls}>Activité : que fait-elle, pour qui, avec quelle valeur ajoutée ?</label>
-            <textarea rows={2} value={editing.businessDescription} onChange={(e) => set("businessDescription", e.target.value)} className={inputCls} />
+            <label className={labelCls}>{personal ? "Que voulez-vous partager ?" : "Activité : que fait-elle, pour qui, avec quelle valeur ajoutée ?"}</label>
+            <textarea rows={2} value={editing.businessDescription} onChange={(e) => set("businessDescription", e.target.value)} placeholder={personal ? "ex : mes victoires, mais aussi mes galères : un client qui paie en retard, un doute avant un gros rendez-vous" : ""} className={inputCls} data-testid="context-description" />
           </div>
-          <div className="grid sm:grid-cols-2 gap-3">
+          <div className={personal ? "" : "grid sm:grid-cols-2 gap-3"}>
             <div>
-              <label className={labelCls}>Cible sur LinkedIn</label>
-              <input type="text" value={editing.targetAudience} onChange={(e) => set("targetAudience", e.target.value)} placeholder="ex : DAF d'ETI industrielles" className={inputCls} />
+              <label className={labelCls}>{personal ? "Votre audience" : "Cible sur LinkedIn"}</label>
+              <input type="text" value={editing.targetAudience} onChange={(e) => set("targetAudience", e.target.value)} placeholder={personal ? "ex : mon réseau, d'autres indépendants" : "ex : DAF d'ETI industrielles"} className={inputCls} />
             </div>
-            <div>
-              <label className={labelCls}>Positionnement</label>
-              <input type="text" value={editing.market} onChange={(e) => set("market", e.target.value)} className={inputCls} />
-            </div>
+            {!personal && (
+              <div>
+                <label className={labelCls}>Positionnement</label>
+                <input type="text" value={editing.market} onChange={(e) => set("market", e.target.value)} className={inputCls} />
+              </div>
+            )}
           </div>
+          {!personal && (
+            <div>
+              <label className={labelCls}>Objectifs de communication</label>
+              <div className="flex flex-wrap gap-1.5">
+                {COMM_GOALS.map((g) => (
+                  <button type="button" key={g} onClick={() => set("commGoals", (goals.includes(g) ? goals.filter((x) => x !== g) : [...goals, g]).join(","))} className={`text-xs px-3 py-1.5 rounded-full border ${goals.includes(g) ? "bg-[#ff5a5f] text-white border-[#ff5a5f]" : "border-gray-200 text-gray-600 hover:border-gray-300"}`}>{g}</button>
+                ))}
+              </div>
+            </div>
+          )}
           <div>
-            <label className={labelCls}>Objectifs de communication</label>
-            <div className="flex flex-wrap gap-1.5">
-              {COMM_GOALS.map((g) => (
-                <button type="button" key={g} onClick={() => set("commGoals", (goals.includes(g) ? goals.filter((x) => x !== g) : [...goals, g]).join(","))} className={`text-xs px-3 py-1.5 rounded-full border ${goals.includes(g) ? "bg-[#ff5a5f] text-white border-[#ff5a5f]" : "border-gray-200 text-gray-600 hover:border-gray-300"}`}>{g}</button>
-              ))}
+            <label className={labelCls}>{personal ? "Votre ton" : "Ligne éditoriale"} <span className="font-normal text-gray-400">{personal ? "(franc, drôle, sobre… sujets à privilégier ou éviter)" : "(angle, registre, sujets à privilégier ou éviter)"}</span></label>
+            <textarea rows={2} value={editing.editorialLine} onChange={(e) => set("editorialLine", e.target.value)} placeholder={personal ? "ex : franc et direct, avec une pointe d'humour, jamais de leçon de morale" : "ex : pédagogique, cas clients, jamais de polémique"} className={inputCls} />
+          </div>
+          {!personal && (
+            <div className="grid sm:grid-cols-2 gap-3">
+              <div>
+                <label className={labelCls}>Thèmes <span className="font-normal text-gray-400">(séparés par des virgules)</span></label>
+                <input type="text" value={editing.themes} onChange={(e) => set("themes", e.target.value)} className={inputCls} />
+              </div>
+              <div>
+                <label className={labelCls}>Voix de la marque <span className="font-normal text-gray-400">(pour les posts publiés sur sa page)</span></label>
+                <input type="text" value={editing.brandVoice} onChange={(e) => set("brandVoice", e.target.value)} className={inputCls} />
+              </div>
             </div>
-          </div>
-          <div>
-            <label className={labelCls}>Ligne éditoriale <span className="font-normal text-gray-400">(angle, registre, sujets à privilégier ou éviter)</span></label>
-            <textarea rows={2} value={editing.editorialLine} onChange={(e) => set("editorialLine", e.target.value)} placeholder="ex : pédagogique, cas clients, jamais de polémique" className={inputCls} />
-          </div>
-          <div className="grid sm:grid-cols-2 gap-3">
-            <div>
-              <label className={labelCls}>Thématiques <span className="font-normal text-gray-400">(séparées par des virgules)</span></label>
-              <input type="text" value={editing.themes} onChange={(e) => set("themes", e.target.value)} className={inputCls} />
+          )}
+          {!editing.id && contexts.length > 0 && (
+            <div className="flex flex-wrap items-center gap-2 text-xs text-gray-600" data-testid="context-copy-tone">
+              <span>Reprendre le ton d&apos;une thématique existante :</span>
+              <select value={copyFrom} onChange={(e) => copyTone(e.target.value)} className="border border-gray-200 rounded-lg px-2 py-1.5 bg-white">
+                <option value="">Non</option>
+                {contexts.map((c) => (<option key={c.id} value={c.id}>{c.name}</option>))}
+              </select>
             </div>
-            <div>
-              <label className={labelCls}>Voix de la marque <span className="font-normal text-gray-400">(pour les posts publiés sur sa page)</span></label>
-              <input type="text" value={editing.brandVoice} onChange={(e) => set("brandVoice", e.target.value)} className={inputCls} />
-            </div>
-          </div>
-          <div>
-            <label className={labelCls}>Site internet <span className="font-normal text-gray-400">(facultatif)</span></label>
-            <input type="text" value={editing.website} onChange={(e) => set("website", e.target.value)} placeholder="https://" className={inputCls} />
-          </div>
-          {error && <p className="text-xs text-red-600">{error}</p>}
+          )}
+          {error && <p className="text-xs text-red-600" data-testid="context-error">{error}</p>}
           <div className="flex items-center gap-2">
-            <button type="button" onClick={save} disabled={busy || !editing.name.trim()} data-testid="context-save" className="bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white text-sm font-medium px-4 py-2 rounded-lg">{busy ? "Enregistrement…" : editing.id ? "Enregistrer" : "Ajouter l'entreprise"}</button>
-            <button type="button" onClick={() => setEditing(null)} className="text-sm text-gray-500 px-3 py-2">Annuler</button>
+            <button type="button" onClick={save} disabled={busy || !editing.name.trim()} data-testid="context-save" className="bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white text-sm font-medium px-4 py-2 rounded-lg">{busy ? "Enregistrement…" : editing.id ? "Enregistrer" : "Ajouter la thématique"}</button>
+            <button type="button" onClick={() => { setEditing(null); setAnalysis(null); }} className="text-sm text-gray-500 px-3 py-2">Annuler</button>
           </div>
         </div>
+      ) : choosing ? (
+        <div className="mt-3 grid sm:grid-cols-2 gap-3" data-testid="context-kind-chooser">
+          <button type="button" onClick={() => startNew("activity")} data-testid="context-kind-activity" className="text-left border border-gray-200 hover:border-[#ff5a5f] rounded-xl p-4 bg-white">
+            <p className="text-sm font-semibold text-gray-800">🏢 Une entreprise</p>
+            <p className="text-xs text-gray-600 mt-1 leading-relaxed">Une société dont vous parlez sur LinkedIn. Vous donnez son site, le copilote le lit, vous confirmez.</p>
+            <p className="text-xs text-gray-400 mt-1 italic">Ex. : Atelier RH, mon cabinet, une société que je dirige aussi.</p>
+          </button>
+          <button type="button" onClick={() => startNew("personal")} data-testid="context-kind-personal" className="text-left border border-gray-200 hover:border-[#ff5a5f] rounded-xl p-4 bg-white">
+            <p className="text-sm font-semibold text-gray-800">🙂 Un sujet personnel</p>
+            <p className="text-xs text-gray-600 mt-1 leading-relaxed">Ce qui vous touche en dehors du commercial : vos galères, vos victoires, vos passions. Pas de site, pas de leads.</p>
+            <p className="text-xs text-gray-400 mt-1 italic">Ex. : la vie d&apos;indépendante, le running, mes lectures.</p>
+          </button>
+          <button type="button" onClick={() => setChoosing(false)} className="text-sm text-gray-500 text-left px-1">Annuler</button>
+        </div>
       ) : (
-        <button type="button" onClick={() => { setError(null); setEditing({ ...EMPTY_CONTEXT }); }} data-testid="context-add" className="mt-3 text-sm font-medium text-[#ff5a5f] hover:underline">+ Ajouter une entreprise</button>
+        <button type="button" onClick={() => { setError(null); setChoosing(true); }} data-testid="context-add" className="mt-3 text-sm font-medium text-[#ff5a5f] hover:underline">+ Ajouter une thématique</button>
       )}
     </div>
   );
@@ -15248,7 +15361,7 @@ function ProfileView({ contexts = [], onContextsChanged, profile, onSaved, showT
                       ))}
                     </div>
                   </ProfileField>
-                  <ProfileField id="field-editorialLine" label="Ligne éditoriale" hint="(facultatif)" why="Votre angle et votre registre pour cette entreprise : pédagogique ou prise de position, cas clients ou actualité du secteur, sujets à éviter. Le copilote s'en sert pour choisir comment aborder chaque thème." example="Pédagogique, cas clients, jamais de polémique">
+                  <ProfileField id="field-editorialLine" label="Ligne éditoriale" hint="(facultatif)" why="Votre angle et votre registre pour cette thématique : pédagogique ou prise de position, cas clients ou actualité du secteur, sujets à éviter. Le copilote s'en sert pour choisir comment aborder chaque thème." example="Pédagogique, cas clients, jamais de polémique">
                     <textarea rows={2} value={fields.editorialLine} onChange={(e) => set("editorialLine", e.target.value)} placeholder="ex : pédagogique, cas clients, jamais de polémique" className={input} />
                   </ProfileField>
                   <ProfileField id="field-brandVoice" label="Voix de la marque sur sa page entreprise" hint="(facultatif)" why="Votre voix personnelle s'écrit en « je ». Une page entreprise parle autrement : « nous », un vocabulaire maison, des choses qu'on évite. Ces consignes ne servent que pour les posts publiés sur la page." example="Nous tutoyons, phrases courtes, pas d'anglicismes, jamais de promesse chiffrée">
@@ -15864,7 +15977,7 @@ function GenerationContextCard({ theme, sourceTitle, onGoProfile, postContext, c
             <Row label="Sources">{ctx.sources.length ? ctx.sources.map((s) => s.title).join(" · ") : ctx.totals.sources ? `aucune ne touche à ce sujet (${ctx.totals.sources} en base)` : "aucune dans votre base de connaissances"}</Row>
           )}
           <Row label="Remarques">{ctx.remarks.length ? ctx.remarks.join(" · ") : "aucune pour l’instant"}</Row>
-          {ctx.language > 0 && <Row label="Éléments de langage">{ctx.language} validé{ctx.language > 1 ? "s" : ""} pour cette entreprise</Row>}
+          {ctx.language > 0 && <Row label="Éléments de langage">{ctx.language} validé{ctx.language > 1 ? "s" : ""} pour cette thématique</Row>}
           <Row label="Posts proches">{ctx.posts.length ? <span className="block">{ctx.posts.map((p, i) => <span key={i} className="block truncate">« {p} »</span>)}</span> : "aucun exemple de votre voix"}</Row>
           {onGoProfile && <button type="button" onClick={onGoProfile} className="text-xs text-[#ff5a5f] hover:underline pt-1">Compléter mon profil et mes sources</button>}
         </div>
@@ -16274,9 +16387,9 @@ export default function Home() {
   const [pair, setPair] = useState(null); // [{ target, result, history }] une fois générées
   const [pairTab, setPairTab] = useState(0);
   const [profile, setProfile] = useState(null);
-  // Plusieurs entreprises : l'entreprise principale est celle du profil, les autres viennent de /api/contexts
+  // Plusieurs entreprises : l'mon activité est celle du profil, les autres viennent de /api/contexts
   const [contexts, setContexts] = useState([]);
-  const [activeContextId, setActiveContextId] = useState(null); // null = entreprise principale
+  const [activeContextId, setActiveContextId] = useState(null); // null = mon activité
   useEffect(() => { setChosenSources(null); }, [activeContextId]);
   const loadContexts = () => fetch("/api/contexts").then(readJson).then((d) => setContexts(d.contexts ?? [])).catch(() => {});
   useEffect(() => {
@@ -18320,9 +18433,9 @@ export default function Home() {
           {agencyHome && !user.isSuperAdmin && <NotificationBell onOpenView={setView} onOpenClient={(cid, v, post, comment) => { if (post) setEngagePost(post); if (comment) setEngageComment(comment); if (cid) openClientSpace(cid, v); else setView(v); }} />}
           {contexts.length > 0 && !user.isSuperAdmin && ["dashboard", "create", "campaigns", "brand-kit", "datalake"].includes(view) && (
             <label className="flex items-center gap-1.5 text-xs text-gray-500" data-testid="global-context">
-              Entreprise
-              <select value={activeContextId ?? ""} onChange={(e) => chooseContext(e.target.value || null)} aria-label="Entreprise active" className="border border-gray-200 rounded-lg px-2 py-1.5 text-xs bg-white text-gray-700 max-w-[11rem]">
-                <option value="">{profile?.companyName || "Entreprise principale"}</option>
+              Thématique
+              <select value={activeContextId ?? ""} onChange={(e) => chooseContext(e.target.value || null)} aria-label="Thématique active" className="border border-gray-200 rounded-lg px-2 py-1.5 text-xs bg-white text-gray-700 max-w-[11rem]">
+                <option value="">{profile?.companyName || "Mon activité"}</option>
                 {contexts.map((c) => (<option key={c.id} value={c.id}>{c.name}</option>))}
               </select>
             </label>
@@ -18988,9 +19101,9 @@ export default function Home() {
             <div className={stepCls("who")}>
             {contexts.length > 0 && (
               <div data-testid="context-picker">
-                <label className="text-sm font-medium text-gray-700 block mb-2">Pour quelle entreprise ?</label>
+                <label className="text-sm font-medium text-gray-700 block mb-2">Pour quelle thématique ?</label>
                 <div className="flex flex-wrap gap-1.5">
-                  {[{ id: null, label: profile?.companyName || "Entreprise principale" }, ...contexts.map((c) => ({ id: c.id, label: c.name }))].map((o) => (
+                  {[{ id: null, label: profile?.companyName || "Mon activité" }, ...contexts.map((c) => ({ id: c.id, label: c.name }))].map((o) => (
                     <button
                       key={o.id ?? "main"}
                       type="button"
@@ -19002,7 +19115,7 @@ export default function Home() {
                   ))}
                 </div>
                 <p className="text-[11px] text-gray-400 mt-1.5">
-                  Le contexte de cette entreprise (activité, cible, ligne éditoriale, voix de la marque) et ses sources seront utilisés. Votre voix reste la vôtre.
+                  Le contexte de cette thématique (activité, cible, ligne éditoriale, voix) et ses sources seront utilisés. Votre voix reste la vôtre.
                 </p>
               </div>
             )}
@@ -19388,7 +19501,7 @@ export default function Home() {
               <div className="rounded-xl border border-gray-200 divide-y divide-gray-100">
                 {[
                   ["topic", "Sujet", genMode === "series" ? `Série de ${seriesCount} posts · ${form.theme.trim().slice(0, 90) || "à préciser"}` : (activeSource?.title || form.theme.trim().slice(0, 110) || "à préciser")],
-                  ...(contexts.length > 0 ? [["who", "Entreprise", activeContext?.name || profile?.companyName || "Entreprise principale"]] : []),
+                  ...(contexts.length > 0 ? [["who", "Entreprise", activeContext?.name || profile?.companyName || "Mon activité"]] : []),
                   ...(linkedin.connected && linkedin.orgConnected && orgs.length > 0 ? [["who", "Publier en tant que", pairActive ? `Profil + page ${orgs.find((o) => o.urn === pairWith)?.name ?? ""} (deux versions)` : isOrgUrn(target) ? `Page : ${orgs.find((o) => o.urn === target)?.name ?? "entreprise"}` : "Profil personnel"]] : []),
                   ...(genMode === "single" ? [
                     ["ctx", "Public et objectif", Object.keys(postCtxSpecific).length ? [postCtxSpecific.audience && `public : ${postCtxSpecific.audience}`, postCtxSpecific.goal && `objectif : ${postCtxSpecific.goal.split(",").join(" + ")}`, postCtxSpecific.angle && `angle : ${postCtxSpecific.angle}`].filter(Boolean).join(" · ") : "Repris de votre profil"],
@@ -19941,12 +20054,12 @@ export default function Home() {
                 <select
                   value={postCompany}
                   onChange={(e) => setPostCompany(e.target.value)}
-                  aria-label="Filtrer par entreprise"
+                  aria-label="Filtrer par thématique"
                   data-testid="posts-company-filter"
                   className="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#ff5a5f] max-w-full"
                 >
-                  <option value="all">Toutes les entreprises</option>
-                  <option value="main">{profile?.companyName || "Entreprise principale"}</option>
+                  <option value="all">Toutes les thématiques</option>
+                  <option value="main">{profile?.companyName || "Mon activité"}</option>
                   {contexts.map((c) => (<option key={c.id} value={c.id}>{c.name}</option>))}
                 </select>
               )}
@@ -20212,7 +20325,7 @@ export default function Home() {
                                   );
                                 })()}
                                 {contexts.length > 0 && (
-                                  <button type="button" onClick={() => setPostCompany(p.contextId || "main")} title="Voir seulement cette entreprise" className="bg-sky-50 text-sky-700 px-1.5 py-0.5 rounded-full max-w-[9rem] truncate hover:bg-sky-100" data-testid="post-company-badge">
+                                  <button type="button" onClick={() => setPostCompany(p.contextId || "main")} title="Voir seulement cette thématique" className="bg-sky-50 text-sky-700 px-1.5 py-0.5 rounded-full max-w-[9rem] truncate hover:bg-sky-100" data-testid="post-company-badge">
                                     {p.contextId ? contexts.find((c) => c.id === p.contextId)?.name ?? "Entreprise" : profile?.companyName || "Principale"}
                                   </button>
                                 )}

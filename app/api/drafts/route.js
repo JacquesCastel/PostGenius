@@ -93,7 +93,7 @@ export async function POST(req) {
   let draftContextId = null;
   if (contextId) {
     const own = await prisma.context.findFirst({ where: { id: String(contextId), userId }, select: { id: true } });
-    if (!own) return NextResponse.json({ error: "Entreprise introuvable." }, { status: 400 });
+    if (!own) return NextResponse.json({ error: "Thématique introuvable." }, { status: 400 });
     draftContextId = own.id;
   }
 

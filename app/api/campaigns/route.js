@@ -82,7 +82,7 @@ export async function POST(req) {
   let ownContextId = null;
   if (contextId) {
     const own = await getContextFor(userId, contextId);
-    if (!own) return NextResponse.json({ error: "Entreprise introuvable." }, { status: 400 });
+    if (!own) return NextResponse.json({ error: "Thématique introuvable." }, { status: 400 });
     ownContextId = own.id;
   }
 

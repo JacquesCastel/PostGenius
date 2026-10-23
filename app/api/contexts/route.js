@@ -17,9 +17,9 @@ export async function POST(req) {
   if (!userId) return NextResponse.json({ error: "Non connecté." }, { status: 401 });
   const body = await req.json().catch(() => ({}));
   const data = cleanContextInput(body);
-  if (!data.name) return NextResponse.json({ error: "Le nom de l'entreprise est requis." }, { status: 400 });
+  if (!data.name) return NextResponse.json({ error: "Le nom de la thématique est requis." }, { status: 400 });
   if ((await prisma.context.count({ where: { userId } })) >= MAX_CONTEXTS) {
-    return NextResponse.json({ error: `Vous pouvez gérer ${MAX_CONTEXTS} entreprises supplémentaires au plus.` }, { status: 400 });
+    return NextResponse.json({ error: `Vous pouvez gérer ${MAX_CONTEXTS} thématiques supplémentaires au plus.` }, { status: 400 });
   }
   const context = await prisma.context.create({ data: { userId, ...data } });
   return NextResponse.json({ context });
