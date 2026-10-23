@@ -11,7 +11,7 @@ import {
   CreditCard, Gauge, Users, Smartphone, Database, Monitor, Minus,
   Mic, Upload, Wand2, SlidersHorizontal, Type, Crop, Download, Pencil, GripHorizontal,
   Compass, Lightbulb, EyeOff, TrendingUp, TrendingDown, Plus, Globe, ChevronUp, Menu,
-  AlignLeft, AlignCenter, AlignRight, Move, Server, Clapperboard, Link2
+  AlignLeft, AlignCenter, AlignRight, Move, Server, Clapperboard, Link2, Tags
 } from "lucide-react";
 import { yearlyPrice, ANNUAL_OFFER, PLANS, PLAN_IDS, planLabel, planAllows, planOf, trialDaysLeft, accessState, changeKind, lostFeatures, gainedFeatures, planWith } from "@/lib/plans";
 import { COMPARE, unlockedBy } from "@/lib/planFeatures";
@@ -11874,7 +11874,7 @@ const FEATURE_LABELS = {
   orgStats: "Les statistiques de page",
 };
 
-const DEEP_LINK_VIEWS = ["dashboard", "create", "history", "campaigns", "connections", "profile", "stats", "copilot", "events", "engage", "brand-kit", "billing", "clients", "queue", "followup", "team", "planning", "messages", "datalake", "share", "leads", "interview"];
+const DEEP_LINK_VIEWS = ["dashboard", "create", "history", "campaigns", "connections", "profile", "themes", "stats", "copilot", "events", "engage", "brand-kit", "billing", "clients", "queue", "followup", "team", "planning", "messages", "datalake", "share", "leads", "interview"];
 
 function ClientTableRow({ client, team = [], restrict = false, onManage, onViewDrafts, onDelete, deleting, onShowReport, onApproval, onQuota }) {
   const [open, setOpen] = useState(false);
@@ -14962,7 +14962,6 @@ function ConnectionsView({ linkedin, onDisconnect, instagram, onDisconnectInstag
 // Mes thématiques : une personne qui parle de plusieurs sujets (plusieurs entreprises, un sujet personnel) avec un seul
 // compte LinkedIn choisit, à chaque post, la thématique voulue. Chacune a sa cible, son datalake et sa voix ; aucune n'est « principale ».
 // La thématique de départ est celle du profil ci-dessus ; celles-ci s'y ajoutent, sur un pied d'égalité.
-const EMPTY_CONTEXT = { kind: "activity", name: "", role: "", website: "", businessDescription: "", targetAudience: "", market: "", commGoals: "", brandVoice: "", themes: "", editorialLine: "", leadIcp: "" };
 const CONTEXT_ANALYSIS_ROWS = [
   ["name", "Entreprise"],
   ["businessDescription", "Activité"],
@@ -14989,318 +14988,601 @@ function SiteReviewPanel({ fields, onChange, onConfirm, onReject, confirmLabel =
     </div>
   );
 }
-function ContextsManager({ contexts, onChanged, moments = [], onMomentsChanged, profileName = "Mon activité", showToast }) {
-  const [editing, setEditing] = useState(null); // { id?, ...champs }
-  const [choosing, setChoosing] = useState(false); // choix « Une entreprise » / « Un sujet personnel »
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState(null);
-  const [analyzing, setAnalyzing] = useState(false);
-  const [analysis, setAnalysis] = useState(null); // { fields } : lecture du site, à confirmer ou refuser
-  const [copyFrom, setCopyFrom] = useState("");
-  // Temps forts : un moment précis rattaché à une thématique (hérite de sa voix, de sa cible et de son datalake)
-  const [addingMoment, setAddingMoment] = useState(false);
-  const [mDraft, setMDraft] = useState({ contextId: "main", name: "", brief: "", startsAt: "", endsAt: "" });
-  const [mBusy, setMBusy] = useState(false);
-  const [mError, setMError] = useState(null);
-  const parentName = (m) => (m.contextId ? contexts.find((c) => c.id === m.contextId)?.name ?? "Thématique" : profileName);
-  const MOMENT_STATE = { active: ["En cours", "bg-green-50 text-green-700"], upcoming: ["À venir", "bg-sky-50 text-sky-700"], ended: ["Terminé", "bg-gray-100 text-gray-500"], archived: ["Archivé", "bg-gray-100 text-gray-400"] };
-  const fmtDay = (d) => (d ? new Date(d).toLocaleDateString("fr-FR", { day: "numeric", month: "short" }) : "");
-  const createMoment = async () => {
-    if (mBusy) return;
-    setMBusy(true);
-    setMError(null);
-    try {
-      const res = await fetch("/api/moments", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...mDraft, startsAt: mDraft.startsAt || null, endsAt: mDraft.endsAt || null }) });
-      const d = await readJson(res);
-      if (!res.ok) throw new Error(d.error || "Erreur");
-      showToast("Temps fort créé ✓");
-      setAddingMoment(false);
-      setMDraft({ contextId: "main", name: "", brief: "", startsAt: "", endsAt: "" });
-      onMomentsChanged?.();
-    } catch (e) {
-      setMError(e.message);
-    } finally {
-      setMBusy(false);
-    }
-  };
+// ----------------------------------------------------------------
+// Mes thématiques (maquettes 3, 4, 5, 5b et 6). Une thématique est un sujet dont on parle régulièrement : sa voix, sa cible, son datalake.
+// Toutes sont sur un pied d'égalité, celle du profil comprise ; à chaque post on choisit laquelle et dans quelle humeur.
+// ----------------------------------------------------------------
+const THEME_GENRES = [
+  ["fierte", "Je célèbre une victoire"],
+  ["coup-de-gueule", "Je râle (avec méthode)"],
+  ["doute", "Je partage un doute"],
+  ["inspire", "Je raconte ce que j'ai appris"],
+  ["humour", "Je fais sourire"],
+];
+const EMPTY_THEME = { name: "", role: "", website: "", businessDescription: "", targetAudience: "", leadIcp: "", market: "", commGoals: "", themes: "", brandVoice: "", editorialLine: "", postGenres: "" };
+const THEME_STEPS = {
+  activity: [["type", "Type"], ["about", "Votre activité"], ["target", "Cible et leads"], ["voice", "Votre voix"], ["data", "Datalake et analyse"]],
+  personal: [["type", "Type"], ["about", "De quoi parler"], ["target", "Votre audience"], ["voice", "Votre voix"], ["data", "Datalake"]],
+};
+const MOMENT_STATE = { active: ["En cours", "bg-green-50 text-green-700"], upcoming: ["À venir", "bg-sky-50 text-sky-700"], ended: ["Terminé", "bg-gray-100 text-gray-500"], archived: ["Archivé", "bg-gray-100 text-gray-400"] };
+const fmtDay = (d) => (d ? new Date(d).toLocaleDateString("fr-FR", { day: "numeric", month: "short" }) : "");
+const since = (d) => {
+  if (!d) return null;
+  const days = Math.floor((Date.now() - new Date(d).getTime()) / 86400000);
+  return days <= 0 ? "aujourd'hui" : days === 1 ? "hier" : days < 30 ? `il y a ${days} jours` : `il y a ${Math.floor(days / 30)} mois`;
+};
+
+function ThemesView({ profile, linkedin, orgs = [], moments = [], onContextsChanged, onMomentsChanged, showToast, onOpenDatalake, onOpenLeads }) {
+  const [data, setData] = useState(null);
+  const [mode, setMode] = useState("list"); // list | chooser | wizard
+  const [wiz, setWiz] = useState(null); // { kind, themeId?, copyFrom? }
+  const load = () => fetch("/api/themes").then(readJson).then((d) => (d.themes ? setData(d) : setData({ themes: [], error: d.error }))).catch(() => setData({ themes: [], error: "Chargement impossible." }));
+  useEffect(() => { load(); }, []);
+  const refresh = () => { load(); onContextsChanged?.(); onMomentsChanged?.(); };
+  const themes = data?.themes ?? [];
+  const kindTag = (t) => (t.kind === "personal" ? ["Personnelle", "bg-rose-50 text-rose-700"] : ["Activité", "bg-sky-50 text-sky-700"]);
+
+  if (mode === "wizard" && wiz) {
+    return <ThemeWizard key={`${wiz.kind}-${wiz.themeId ?? "new"}`} wiz={wiz} theme={themes.find((t) => t.id === wiz.themeId) ?? null} themes={themes} profile={profile} showToast={showToast} onClose={() => { setMode("list"); setWiz(null); refresh(); }} onChanged={refresh} />;
+  }
+  const start = (kind, extra = {}) => { setWiz({ kind, ...extra }); setMode("wizard"); };
   const patchMoment = async (m, body) => {
     const res = await fetch(`/api/moments/${m.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
-    if (res.ok) onMomentsChanged?.(); else showToast((await readJson(res)).error || "Modification impossible");
+    if (res.ok) refresh(); else showToast((await readJson(res)).error || "Modification impossible");
   };
   const removeMoment = async (m) => {
     if (!window.confirm(`Supprimer le temps fort « ${m.name} » ? Ses sources rejoignent le datalake de la thématique ; vos posts sont conservés.`)) return;
     const res = await fetch(`/api/moments/${m.id}`, { method: "DELETE" });
-    if (res.ok) { showToast("Temps fort supprimé"); onMomentsChanged?.(); } else showToast("Erreur de suppression");
+    if (res.ok) { showToast("Temps fort supprimé"); refresh(); } else showToast("Erreur de suppression");
   };
-  const inputCls = "w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]";
-  const labelCls = "text-xs font-medium text-gray-600 block mb-1";
-  const set = (k, v) => setEditing((e) => ({ ...e, [k]: v }));
-  const goals = (editing?.commGoals ?? "").split(",").filter(Boolean);
-  const personal = editing?.kind === "personal";
-  const kindLabel = (c) => (c.kind === "personal" ? "Personnelle" : "Entreprise");
-  const startNew = (kind) => { setError(null); setAnalysis(null); setCopyFrom(""); setChoosing(false); setEditing({ ...EMPTY_CONTEXT, kind }); };
-  const analyzeSite = async () => {
-    if (!editing?.website?.trim()) { setError("Indiquez d'abord l'adresse du site."); return; }
-    setError(null);
-    setAnalyzing(true);
-    try {
-      const res = await fetch("/api/profile/analyze", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url: editing.website }) });
-      const d = await readJson(res);
-      if (!res.ok) throw new Error(d.error || "Analyse impossible");
-      const f = d.fields || {};
-      setAnalysis({ fields: { name: f.companyName || "", businessDescription: f.businessDescription || "", targetAudience: f.targetAudience || "", market: f.market || "", themes: f.themes || "", commGoals: f.commGoals || "" }, ok: {} });
-    } catch (e) {
-      setError(e.message);
-    } finally {
-      setAnalyzing(false);
-    }
+  const removeTheme = async (t) => {
+    if (!window.confirm(`Supprimer la thématique « ${t.name} » ? Les sources de son datalake seront supprimées ; vos posts sont conservés.`)) return;
+    const res = await fetch(`/api/contexts/${t.id}`, { method: "DELETE" });
+    if (res.ok) { showToast("Thématique supprimée"); refresh(); } else showToast("Erreur de suppression");
   };
-  // Confirmer : la lecture du site pré-remplit les champs encore vides ; les lignes corrigées à la main sont gardées telles quelles
-  const confirmAnalysis = () => {
-    const f = analysis.fields;
-    setEditing((e) => ({
-      ...e,
-      name: e.name.trim() || f.name,
-      businessDescription: e.businessDescription.trim() || f.businessDescription,
-      targetAudience: e.targetAudience.trim() || f.targetAudience,
-      market: e.market.trim() || f.market,
-      themes: e.themes.trim() || f.themes,
-      commGoals: e.commGoals.trim() || f.commGoals,
-    }));
-    setAnalysis(null);
-    showToast("Thématique pré-remplie depuis le site ✓ Vérifiez et complétez.");
-  };
-  const correctRow = (k, v) => setAnalysis((a) => ({ ...a, fields: { ...a.fields, [k]: v } }));
-  const copyTone = (id) => {
-    setCopyFrom(id);
-    const src = contexts.find((c) => c.id === id);
-    if (src) setEditing((e) => ({ ...e, brandVoice: src.brandVoice ?? "", editorialLine: src.editorialLine ?? "" }));
-  };
-  const save = async () => {
+  const orgNames = orgs.map((o) => o.name).filter(Boolean);
+  const full = themes.length - 1 >= (data?.max ?? 10);
+
+  return (
+    <main className="max-w-6xl mx-auto p-4 sm:p-6 space-y-5" data-testid="themes-view">
+      <div className="flex items-start gap-4 flex-wrap">
+        <div className="flex-1 min-w-[260px]">
+          <h1 className="text-2xl font-extrabold">Mes thématiques</h1>
+          <p className="text-sm text-gray-500 mt-1.5 leading-relaxed max-w-2xl">Une thématique, c&apos;est un sujet dont vous parlez régulièrement, avec sa voix, sa cible et son datalake. Elles sont toutes sur un pied d&apos;égalité. À chaque post, vous choisissez laquelle et dans quelle humeur.</p>
+        </div>
+        {!full && <button type="button" onClick={() => setMode("chooser")} data-testid="themes-add" className="bg-[#d63b42] hover:bg-[#b3282f] text-white font-bold text-sm px-5 py-3 rounded-xl">Ajouter une thématique</button>}
+      </div>
+
+      <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 sm:p-5 flex gap-5 flex-wrap items-center" data-testid="themes-editorial">
+        <div className="flex-1 min-w-[260px]">
+          <p className="text-xs font-bold uppercase tracking-wider text-amber-800 mb-1">La vie n&apos;est pas linéaire, vos posts non plus</p>
+          <p className="text-sm leading-relaxed text-gray-700">Un jour vous célébrez un contrat signé, le lendemain vous râlez parce qu&apos;une facture n&apos;est toujours pas réglée. Les deux sont de la matière à publier. Ce qui change, c&apos;est l&apos;humeur, pas la thématique.</p>
+        </div>
+        <div className="flex flex-col gap-1.5 min-w-[260px]">
+          <div className="text-[13px] bg-white border border-amber-200 rounded-lg px-3 py-1.5"><strong>Fierté</strong> · « Le contrat est signé, merci à l&apos;équipe. »</div>
+          <div className="text-[13px] bg-white border border-amber-200 rounded-lg px-3 py-1.5"><strong>Coup de gueule</strong> · « 45 jours de retard sur une facture, ça suffit. »</div>
+        </div>
+      </div>
+
+      {data?.error && <p className="text-xs text-red-600">{data.error}</p>}
+      {!data && <p className="text-sm text-gray-400">Chargement…</p>}
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4" data-testid="themes-grid">
+        {themes.map((t) => {
+          const [kindLabel, kindCls] = kindTag(t);
+          return (
+            <div key={t.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex flex-col gap-2.5" data-testid="theme-card" data-theme-id={t.id}>
+              <div className="flex items-center justify-between gap-2">
+                <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full ${kindCls}`} data-testid="theme-kind">{kindLabel}</span>
+                <span className="text-xs text-gray-400">{t.lastPostAt ? `Dernier post : ${since(t.lastPostAt)}` : "Aucun post pour l'instant"}</span>
+              </div>
+              <h2 className="text-lg font-extrabold leading-tight" data-testid="theme-name">{t.name}</h2>
+              {t.target && <p className="text-[13px] text-gray-500 leading-snug">{t.kind === "personal" ? "Audience" : "Cible"} : {t.target}</p>}
+              {t.description && <p className="text-[13px] italic text-gray-600 leading-snug">« {t.description} »</p>}
+              <div className="flex flex-wrap gap-1.5">
+                {t.sources === 0
+                  ? <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-amber-50 text-amber-800">Datalake vide</span>
+                  : <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-gray-100 text-gray-600">{t.sources} source{t.sources > 1 ? "s" : ""}</span>}
+                {t.posts > 0 && <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-gray-100 text-gray-600">{t.posts} post{t.posts > 1 ? "s" : ""}</span>}
+                {t.moods.map((m) => (<span key={m} className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-amber-50 text-amber-800">{MOODS.find((x) => x.code === m)?.label ?? m}</span>))}
+              </div>
+              {t.moments.map((m) => (
+                <div key={m.id} className="text-xs font-bold text-amber-800 bg-amber-50/70 border border-amber-200 rounded-lg px-2.5 py-1.5" data-testid="theme-moment">📅 Temps fort : {m.name}{m.endsAt ? ` · jusqu'au ${fmtDay(m.endsAt)}` : ""}</div>
+              ))}
+              <div className="flex flex-wrap gap-x-4 gap-y-1 mt-auto pt-1 text-[13px] font-semibold text-[#0a66c2]">
+                <button type="button" onClick={() => start(t.kind, { themeId: t.id })} data-testid="theme-edit" className="hover:underline">Modifier</button>
+                <button type="button" onClick={() => onOpenDatalake?.(t.id === "main" ? null : t.id)} data-testid="theme-datalake" className="hover:underline">{t.sources === 0 ? "Ajouter des sources" : "Datalake"}</button>
+                {t.kind !== "personal" && <button type="button" onClick={() => onOpenLeads?.(t.id === "main" ? null : t.id)} className="hover:underline">Cible des leads</button>}
+                {t.id !== "main" && <button type="button" onClick={() => removeTheme(t)} className="text-gray-400 hover:text-red-600 font-normal ml-auto">Supprimer</button>}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="grid md:grid-cols-2 gap-4">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex gap-3.5 items-start" data-testid="themes-destinations">
+          <div className="w-9 h-9 rounded-lg bg-[#0a66c2] text-white flex items-center justify-center font-extrabold shrink-0">in</div>
+          <div>
+            <p className="text-[15px] font-extrabold">Où partent vos posts</p>
+            <p className="text-[13px] text-gray-600 mt-1 leading-relaxed">
+              {linkedin?.connected ? <>Votre profil{linkedin.name ? <> <strong>{linkedin.name}</strong></> : null} : connecté.</> : "Votre profil LinkedIn n'est pas encore connecté."}{" "}
+              {orgNames.length ? <>Page{orgNames.length > 1 ? "s" : ""} <strong>{orgNames.join(", ")}</strong> : connectée{orgNames.length > 1 ? "s" : ""}.</> : "Aucune page entreprise connectée."}{" "}
+              La page n&apos;est liée à aucune thématique : vous la choisissez au moment de publier.
+            </p>
+          </div>
+        </div>
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5" data-testid="moments-manager">
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-[15px] font-extrabold">📅 Les temps forts</p>
+            <button type="button" onClick={() => setMode("chooser")} data-testid="moment-add" className="text-[13px] font-semibold text-[#d63b42] hover:underline">+ Ajouter un temps fort</button>
+          </div>
+          <p className="text-[13px] text-gray-600 mt-1 leading-relaxed">Un moment précis, rattaché à une thématique : « Lancement de mon livre », « Salon de mars ». Il hérite de sa voix et de son datalake, puis s&apos;archive.</p>
+          {moments.length > 0 && (
+            <ul className="mt-3 divide-y divide-gray-100 border border-gray-100 rounded-lg">
+              {moments.map((m) => (
+                <li key={m.id} className={`p-2.5 flex items-start justify-between gap-3 ${m.state === "archived" ? "opacity-60" : ""}`} data-testid="moment-row">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-gray-800 truncate">
+                      <span className={`text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded mr-2 ${MOMENT_STATE[m.state]?.[1] ?? ""}`} data-testid="moment-state">{MOMENT_STATE[m.state]?.[0] ?? m.state}</span>
+                      {m.name}
+                    </p>
+                    <p className="text-xs text-gray-400 truncate">{themes.find((t) => t.id === (m.contextId ?? "main"))?.name ?? "Thématique"}{(m.startsAt || m.endsAt) ? ` · ${[fmtDay(m.startsAt), fmtDay(m.endsAt)].filter(Boolean).join(" → ")}` : ""} · {m.sources} source{m.sources > 1 ? "s" : ""} · {m.posts} post{m.posts > 1 ? "s" : ""}</p>
+                  </div>
+                  <div className="flex items-center gap-3 text-xs shrink-0">
+                    <button type="button" onClick={() => patchMoment(m, { archived: m.state !== "archived" })} data-testid="moment-archive" className="text-[#d63b42] hover:underline">{m.state === "archived" ? "Réactiver" : "Archiver"}</button>
+                    <button type="button" onClick={() => removeMoment(m)} className="text-gray-400 hover:text-red-600">Supprimer</button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
+
+      {mode === "chooser" && <ThemeChooser themes={themes} full={full} showToast={showToast} onClose={() => setMode("list")} onStart={(kind, extra) => start(kind, extra)} onMomentCreated={() => { setMode("list"); refresh(); }} />}
+    </main>
+  );
+}
+
+// Fenêtre « Que voulez-vous ajouter ? » (maquette 4)
+function ThemeChooser({ themes, full, showToast, onClose, onStart, onMomentCreated }) {
+  const [copyOn, setCopyOn] = useState(false);
+  const [copyFrom, setCopyFrom] = useState(themes[0]?.id ?? "main");
+  const [m, setM] = useState({ contextId: themes[0]?.id ?? "main", name: "", brief: "", startsAt: "", endsAt: "" });
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState(null);
+  const inputCls = "border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]";
+  const copy = copyOn ? { copyFrom } : {};
+  const createMoment = async () => {
     if (busy) return;
     setBusy(true);
     setError(null);
     try {
-      const { id, ...fields } = editing;
-      const res = await fetch(id ? `/api/contexts/${id}` : "/api/contexts", { method: id ? "PATCH" : "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(fields) });
+      const res = await fetch("/api/moments", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...m, startsAt: m.startsAt || null, endsAt: m.endsAt || null }) });
       const d = await readJson(res);
       if (!res.ok) throw new Error(d.error || "Erreur");
-      showToast(id ? "Thématique enregistrée ✓" : "Thématique ajoutée ✓");
-      setEditing(null);
-      setAnalysis(null);
-      onChanged?.();
+      showToast("Temps fort créé ✓");
+      onMomentCreated();
     } catch (e) {
       setError(e.message);
     } finally {
       setBusy(false);
     }
   };
-  const remove = async (c) => {
-    if (!window.confirm(`Supprimer la thématique « ${c.name} » ? Les sources de son datalake seront supprimées ; vos posts sont conservés.`)) return;
-    const res = await fetch(`/api/contexts/${c.id}`, { method: "DELETE" });
-    if (res.ok) { showToast("Thématique supprimée"); onChanged?.(); } else showToast("Erreur de suppression");
-  };
   return (
-    <div className="border border-dashed border-gray-300 rounded-xl p-4" data-testid="contexts-manager">
-      <p className="text-sm font-medium text-gray-700">Parlez-vous d&apos;autres sujets ou d&apos;autres entreprises ?</p>
-      <p className="text-xs text-gray-500 mt-1 leading-relaxed">
-        Avec un seul compte LinkedIn, vous choisissez à chaque post la thématique concernée : une autre entreprise, ou un sujet personnel (la vie d&apos;indépendant, le running…). Chacune a sa cible, son datalake et sa voix, sans se mélanger aux autres. Aucune n&apos;est « principale » : celle du profil ci-dessus est simplement la première.
-      </p>
-      {contexts.length > 0 && (
-        <ul className="mt-3 divide-y divide-gray-100 border border-gray-100 rounded-lg">
-          {contexts.map((c) => (
-            <li key={c.id} className="p-3 flex items-start justify-between gap-3" data-testid="context-row">
-              <div className="min-w-0">
-                <p className="text-sm font-medium text-gray-800 truncate">
-                  <span className={`text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded mr-2 ${c.kind === "personal" ? "bg-rose-50 text-rose-700" : "bg-sky-50 text-sky-700"}`} data-testid="context-kind">{kindLabel(c)}</span>
-                  {c.name}{c.role && c.kind !== "personal" && <span className="text-gray-400 font-normal"> · {c.role}</span>}
-                </p>
-                <p className="text-xs text-gray-400 truncate">{c.businessDescription || (c.kind === "personal" ? "Sujet à décrire" : "Activité à décrire")}</p>
-              </div>
-              <div className="flex items-center gap-3 text-xs shrink-0">
-                <button type="button" onClick={() => { setError(null); setAnalysis(null); setChoosing(false); setEditing({ ...EMPTY_CONTEXT, ...Object.fromEntries(Object.entries(c).map(([k, v]) => [k, v ?? ""])) }); }} className="text-[#ff5a5f] hover:underline">Modifier</button>
-                <button type="button" onClick={() => remove(c)} className="text-gray-400 hover:text-red-600">Supprimer</button>
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
-      {editing ? (
-        <div className="mt-3 space-y-3 bg-gray-50 rounded-xl p-3.5" data-testid="context-form">
-          <p className="text-sm font-semibold text-gray-800">{editing.id ? "Modifier la thématique" : personal ? "Nouveau sujet personnel" : "Nouvelle entreprise"}</p>
-          {!personal && (
-            <div className="bg-[#fff1f1] rounded-xl p-3" data-testid="context-site">
-              <label className={labelCls}>Gagnez du temps : le site internet de cette entreprise</label>
-              <div className="flex flex-wrap gap-2">
-                <input type="text" value={editing.website} onChange={(e) => set("website", e.target.value)} placeholder="https://" className={`flex-1 min-w-0 ${inputCls}`} data-testid="context-website" />
-                <button type="button" onClick={analyzeSite} disabled={analyzing || !editing.website.trim()} data-testid="context-analyze" className="shrink-0 bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white text-sm font-medium px-4 py-2 rounded-lg flex items-center gap-1.5">
-                  {analyzing ? <RefreshCw size={14} className="animate-spin" /> : <Sparkles size={14} />}
-                  {analyzing ? "Analyse…" : analysis ? "Analyser à nouveau" : "Analyser"}
-                </button>
-              </div>
-              <p className="text-[11px] text-gray-500 mt-1.5">Le copilote lit le site et propose l&apos;activité, la cible, le positionnement et les thèmes. Rien n&apos;est enregistré avant votre confirmation.</p>
-              {analysis && <SiteReviewPanel fields={analysis.fields} onChange={correctRow} onConfirm={confirmAnalysis} onReject={() => setAnalysis(null)} />}
-            </div>
-          )}
-          <div className="grid sm:grid-cols-2 gap-3">
-            <div>
-              <label className={labelCls}>{personal ? "Nom de la thématique *" : "Nom de l'entreprise *"}</label>
-              <input type="text" value={editing.name} onChange={(e) => set("name", e.target.value)} placeholder={personal ? "ex : La vie d'indépendante, Le running" : "ex : Acme Industrie"} className={inputCls} data-testid="context-name" />
-            </div>
-            <div>
-              <label className={labelCls}>{personal ? "Les sujets qui reviennent" : "Votre rôle dans cette entreprise"} {personal && <span className="font-normal text-gray-400">(séparés par des virgules)</span>}</label>
-              {personal
-                ? <input type="text" value={editing.themes} onChange={(e) => set("themes", e.target.value)} placeholder="ex : clients, trésorerie, équilibre vie pro / vie perso" className={inputCls} />
-                : <input type="text" value={editing.role} onChange={(e) => set("role", e.target.value)} placeholder="ex : Directrice financière" className={inputCls} />}
-            </div>
+    <div className="fixed inset-0 z-50 bg-[#1b2a4a]/45 flex items-start sm:items-center justify-center p-4 overflow-y-auto" data-testid="theme-chooser" role="dialog" aria-modal="true" aria-label="Nouvelle thématique">
+      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl p-6 sm:p-8 space-y-5">
+        <div className="flex items-start gap-4">
+          <div className="flex-1">
+            <p className="text-xs font-bold uppercase tracking-wider text-[#b3282f]">Nouvelle thématique</p>
+            <h2 className="text-2xl font-extrabold mt-1.5">Que voulez-vous ajouter ?</h2>
+            <p className="text-sm text-gray-500 mt-1.5 leading-relaxed">Choisissez une porte d&apos;entrée. Chaque thématique aura sa voix, sa cible et son datalake, sans se mélanger aux autres.</p>
           </div>
-          <div>
-            <label className={labelCls}>{personal ? "Que voulez-vous partager ?" : "Activité : que fait-elle, pour qui, avec quelle valeur ajoutée ?"}</label>
-            <textarea rows={2} value={editing.businessDescription} onChange={(e) => set("businessDescription", e.target.value)} placeholder={personal ? "ex : mes victoires, mais aussi mes galères : un client qui paie en retard, un doute avant un gros rendez-vous" : ""} className={inputCls} data-testid="context-description" />
-          </div>
-          <div className={personal ? "" : "grid sm:grid-cols-2 gap-3"}>
-            <div>
-              <label className={labelCls}>{personal ? "Votre audience" : "Cible sur LinkedIn"}</label>
-              <input type="text" value={editing.targetAudience} onChange={(e) => set("targetAudience", e.target.value)} placeholder={personal ? "ex : mon réseau, d'autres indépendants" : "ex : DAF d'ETI industrielles"} className={inputCls} />
-            </div>
-            {!personal && (
-              <div>
-                <label className={labelCls}>Positionnement</label>
-                <input type="text" value={editing.market} onChange={(e) => set("market", e.target.value)} className={inputCls} />
-              </div>
-            )}
-          </div>
-          {!personal && (
-            <div>
-              <label className={labelCls}>Qu&apos;est-ce qu&apos;un bon lead pour cette entreprise ? <span className="font-normal text-gray-400">(facultatif)</span></label>
-              <textarea rows={2} value={editing.leadIcp} onChange={(e) => set("leadIcp", e.target.value)} placeholder="ex : DRH ou dirigeant d'une PME de 20 à 200 salariés, qui parle de marque employeur ou pose une question sur l'offre" className={inputCls} data-testid="context-leadicp" />
-              <p className="text-[11px] text-gray-400 mt-1">Quand quelqu&apos;un commente un post publié pour cette entreprise, l&apos;IA le compare à cette description et à la cible ci-dessus. Aucun message n&apos;est envoyé.</p>
-            </div>
-          )}
-          {!personal && (
-            <div>
-              <label className={labelCls}>Objectifs de communication</label>
-              <div className="flex flex-wrap gap-1.5">
-                {COMM_GOALS.map((g) => (
-                  <button type="button" key={g} onClick={() => set("commGoals", (goals.includes(g) ? goals.filter((x) => x !== g) : [...goals, g]).join(","))} className={`text-xs px-3 py-1.5 rounded-full border ${goals.includes(g) ? "bg-[#ff5a5f] text-white border-[#ff5a5f]" : "border-gray-200 text-gray-600 hover:border-gray-300"}`}>{g}</button>
-                ))}
-              </div>
-            </div>
-          )}
-          <div>
-            <label className={labelCls}>{personal ? "Votre ton" : "Ligne éditoriale"} <span className="font-normal text-gray-400">{personal ? "(franc, drôle, sobre… sujets à privilégier ou éviter)" : "(angle, registre, sujets à privilégier ou éviter)"}</span></label>
-            <textarea rows={2} value={editing.editorialLine} onChange={(e) => set("editorialLine", e.target.value)} placeholder={personal ? "ex : franc et direct, avec une pointe d'humour, jamais de leçon de morale" : "ex : pédagogique, cas clients, jamais de polémique"} className={inputCls} />
-          </div>
-          {!personal && (
-            <div className="grid sm:grid-cols-2 gap-3">
-              <div>
-                <label className={labelCls}>Thèmes <span className="font-normal text-gray-400">(séparés par des virgules)</span></label>
-                <input type="text" value={editing.themes} onChange={(e) => set("themes", e.target.value)} className={inputCls} />
-              </div>
-              <div>
-                <label className={labelCls}>Voix de la marque <span className="font-normal text-gray-400">(pour les posts publiés sur sa page)</span></label>
-                <input type="text" value={editing.brandVoice} onChange={(e) => set("brandVoice", e.target.value)} className={inputCls} />
-              </div>
-            </div>
-          )}
-          {!editing.id && contexts.length > 0 && (
-            <div className="flex flex-wrap items-center gap-2 text-xs text-gray-600" data-testid="context-copy-tone">
-              <span>Reprendre le ton d&apos;une thématique existante :</span>
-              <select value={copyFrom} onChange={(e) => copyTone(e.target.value)} className="border border-gray-200 rounded-lg px-2 py-1.5 bg-white">
-                <option value="">Non</option>
-                {contexts.map((c) => (<option key={c.id} value={c.id}>{c.name}</option>))}
-              </select>
-            </div>
-          )}
-          {error && <p className="text-xs text-red-600" data-testid="context-error">{error}</p>}
-          <div className="flex items-center gap-2">
-            <button type="button" onClick={save} disabled={busy || !editing.name.trim()} data-testid="context-save" className="bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white text-sm font-medium px-4 py-2 rounded-lg">{busy ? "Enregistrement…" : editing.id ? "Enregistrer" : "Ajouter la thématique"}</button>
-            <button type="button" onClick={() => { setEditing(null); setAnalysis(null); }} className="text-sm text-gray-500 px-3 py-2">Annuler</button>
-          </div>
+          <button type="button" onClick={onClose} aria-label="Fermer" className="text-2xl text-gray-400 hover:text-gray-700 leading-none">×</button>
         </div>
-      ) : choosing ? (
-        <div className="mt-3 grid sm:grid-cols-2 gap-3" data-testid="context-kind-chooser">
-          <button type="button" onClick={() => startNew("activity")} data-testid="context-kind-activity" className="text-left border border-gray-200 hover:border-[#ff5a5f] rounded-xl p-4 bg-white">
-            <p className="text-sm font-semibold text-gray-800">🏢 Une entreprise</p>
-            <p className="text-xs text-gray-600 mt-1 leading-relaxed">Une société dont vous parlez sur LinkedIn. Vous donnez son site, le copilote le lit, vous confirmez.</p>
-            <p className="text-xs text-gray-400 mt-1 italic">Ex. : Atelier RH, mon cabinet, une société que je dirige aussi.</p>
-          </button>
-          <button type="button" onClick={() => startNew("personal")} data-testid="context-kind-personal" className="text-left border border-gray-200 hover:border-[#ff5a5f] rounded-xl p-4 bg-white">
-            <p className="text-sm font-semibold text-gray-800">🙂 Un sujet personnel</p>
-            <p className="text-xs text-gray-600 mt-1 leading-relaxed">Ce qui vous touche en dehors du commercial : vos galères, vos victoires, vos passions. Pas de site, pas de leads.</p>
-            <p className="text-xs text-gray-400 mt-1 italic">Ex. : la vie d&apos;indépendante, le running, mes lectures.</p>
-          </button>
-          <button type="button" onClick={() => setChoosing(false)} className="text-sm text-gray-500 text-left px-1">Annuler</button>
-        </div>
-      ) : (
-        <button type="button" onClick={() => { setError(null); setChoosing(true); }} data-testid="context-add" className="mt-3 text-sm font-medium text-[#ff5a5f] hover:underline">+ Ajouter une thématique</button>
-      )}
-      <div className="mt-4 pt-4 border-t border-dashed border-gray-200" data-testid="moments-manager">
-        <p className="text-sm font-medium text-gray-700">📅 Les temps forts</p>
-        <p className="text-xs text-gray-500 mt-1 leading-relaxed">Un moment précis, rattaché à l&apos;une de vos thématiques : « Lancement de mon livre », « Salon de mars ». Il reprend sa voix, sa cible et son datalake, y ajoute son brief et ses propres sources, puis s&apos;archive.</p>
-        {moments.length > 0 && (
-          <ul className="mt-3 divide-y divide-gray-100 border border-gray-100 rounded-lg">
-            {moments.map((m) => (
-              <li key={m.id} className={`p-3 flex items-start justify-between gap-3 ${m.state === "archived" ? "opacity-60" : ""}`} data-testid="moment-row">
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-gray-800 truncate">
-                    <span className={`text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded mr-2 ${MOMENT_STATE[m.state]?.[1] ?? ""}`} data-testid="moment-state">{MOMENT_STATE[m.state]?.[0] ?? m.state}</span>
-                    {m.name}
-                  </p>
-                  <p className="text-xs text-gray-400 truncate">{parentName(m)}{(m.startsAt || m.endsAt) ? ` · ${[fmtDay(m.startsAt), fmtDay(m.endsAt)].filter(Boolean).join(" → ")}` : ""} · {m.sources} source{m.sources > 1 ? "s" : ""} · {m.posts} post{m.posts > 1 ? "s" : ""}</p>
-                </div>
-                <div className="flex items-center gap-3 text-xs shrink-0">
-                  <button type="button" onClick={() => patchMoment(m, { archived: m.state !== "archived" })} data-testid="moment-archive" className="text-[#ff5a5f] hover:underline">{m.state === "archived" ? "Réactiver" : "Archiver"}</button>
-                  <button type="button" onClick={() => removeMoment(m)} className="text-gray-400 hover:text-red-600">Supprimer</button>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-        {addingMoment ? (
-          <div className="mt-3 space-y-3 bg-amber-50/60 border border-amber-100 rounded-xl p-3.5" data-testid="moment-form">
-            <div className="grid sm:grid-cols-2 gap-3">
-              <div>
-                <label className={labelCls}>Rattaché à la thématique *</label>
-                <select value={mDraft.contextId} onChange={(e) => setMDraft({ ...mDraft, contextId: e.target.value })} className={`${inputCls} bg-white`} data-testid="moment-context">
-                  <option value="main">{profileName}</option>
-                  {contexts.map((c) => (<option key={c.id} value={c.id}>{c.name}</option>))}
-                </select>
-              </div>
-              <div>
-                <label className={labelCls}>Nom du temps fort *</label>
-                <input type="text" value={mDraft.name} onChange={(e) => setMDraft({ ...mDraft, name: e.target.value })} placeholder="ex : Lancement de mon livre" className={inputCls} data-testid="moment-name" />
-              </div>
-            </div>
-            <div>
-              <label className={labelCls}>Ce que vous voulez dire pendant ce temps fort <span className="font-normal text-gray-400">(facultatif)</span></label>
-              <textarea rows={2} value={mDraft.brief} onChange={(e) => setMDraft({ ...mDraft, brief: e.target.value })} placeholder="ex : annoncer la sortie, raconter l'écriture, remercier les premiers lecteurs" className={inputCls} data-testid="moment-brief" />
-            </div>
-            <div className="grid sm:grid-cols-2 gap-3">
-              <div>
-                <label className={labelCls}>Début <span className="font-normal text-gray-400">(facultatif)</span></label>
-                <input type="date" value={mDraft.startsAt} onChange={(e) => setMDraft({ ...mDraft, startsAt: e.target.value })} className={inputCls} data-testid="moment-start" />
-              </div>
-              <div>
-                <label className={labelCls}>Fin <span className="font-normal text-gray-400">(facultatif : il se termine alors tout seul)</span></label>
-                <input type="date" value={mDraft.endsAt} onChange={(e) => setMDraft({ ...mDraft, endsAt: e.target.value })} className={inputCls} data-testid="moment-end" />
-              </div>
-            </div>
-            {mError && <p className="text-xs text-red-600" data-testid="moment-error">{mError}</p>}
-            <div className="flex items-center gap-2">
-              <button type="button" onClick={createMoment} disabled={mBusy || !mDraft.name.trim()} data-testid="moment-save" className="bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white text-sm font-medium px-4 py-2 rounded-lg">{mBusy ? "Création…" : "Créer le temps fort"}</button>
-              <button type="button" onClick={() => { setAddingMoment(false); setMError(null); }} className="text-sm text-gray-500 px-3 py-2">Annuler</button>
-            </div>
-          </div>
+        {full ? (
+          <p className="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-xl p-3">Vous avez atteint la limite de thématiques : supprimez-en une pour en ajouter.</p>
         ) : (
-          <button type="button" onClick={() => { setMError(null); setAddingMoment(true); }} data-testid="moment-add" className="mt-3 text-sm font-medium text-[#ff5a5f] hover:underline">+ Ajouter un temps fort</button>
+          <div className="grid sm:grid-cols-2 gap-4">
+            <div className="border border-gray-200 rounded-2xl p-5 flex flex-col gap-2.5">
+              <div className="w-11 h-11 rounded-xl bg-sky-50 flex items-center justify-center text-2xl">🏢</div>
+              <h3 className="text-xl font-extrabold">Une entreprise</h3>
+              <p className="text-sm text-gray-700 leading-relaxed">Une société dont vous parlez sur LinkedIn. Vous donnez son site internet, le copilote le lit, vous confirmez.</p>
+              <p className="text-[13px] text-gray-500 italic">Ex. : Atelier RH, mon cabinet, une société que je dirige aussi.</p>
+              <p className="text-[13px] text-gray-500">On vous demande : le site, la cible, le « bon lead », vos posts.</p>
+              <button type="button" onClick={() => onStart("activity", copy)} data-testid="context-kind-activity" className="mt-auto self-start bg-[#d63b42] hover:bg-[#b3282f] text-white font-bold text-sm px-5 py-2.5 rounded-xl">Saisir le site internet</button>
+            </div>
+            <div className="border border-gray-200 rounded-2xl p-5 flex flex-col gap-2.5">
+              <div className="w-11 h-11 rounded-xl bg-rose-50 flex items-center justify-center text-2xl">🙂</div>
+              <h3 className="text-xl font-extrabold">Un sujet personnel</h3>
+              <p className="text-sm text-gray-700 leading-relaxed">Ce qui vous touche en dehors du commercial : vos galères, vos victoires, vos passions. Pas de site, pas de leads.</p>
+              <p className="text-[13px] text-gray-500 italic">Ex. : la vie d&apos;indépendante, le running, mes lectures.</p>
+              <p className="text-[13px] text-gray-500">On vous demande : de quoi parler, votre audience, votre ton.</p>
+              <button type="button" onClick={() => onStart("personal", copy)} data-testid="context-kind-personal" className="mt-auto self-start bg-[#d63b42] hover:bg-[#b3282f] text-white font-bold text-sm px-5 py-2.5 rounded-xl">Décrire ce sujet</button>
+            </div>
+          </div>
         )}
+        <div className="border border-amber-300 rounded-2xl p-4 bg-amber-50/60 space-y-3" data-testid="moment-form">
+          <div className="flex gap-3.5 items-start">
+            <div className="w-11 h-11 rounded-xl bg-amber-100 flex items-center justify-center text-2xl shrink-0">📅</div>
+            <div className="flex-1">
+              <p className="text-base font-extrabold">Ou un temps fort, rattaché à l&apos;une de vos thématiques</p>
+              <p className="text-[13px] text-gray-700 mt-1 leading-relaxed">Un sujet passager qui appartient à une entreprise ou à un sujet personnel : il reprend sa voix, sa cible et son datalake, et y ajoute ses propres sources. Vous l&apos;archivez ensuite. <em>Ex. : le lancement de mon livre (La vie d&apos;indépendante), mon salon de mars (Mon métier).</em></p>
+            </div>
+          </div>
+          <div className="grid sm:grid-cols-4 gap-2.5">
+            <select value={m.contextId} onChange={(e) => setM({ ...m, contextId: e.target.value })} className={inputCls} aria-label="Thématique" data-testid="moment-context">
+              {themes.map((t) => (<option key={t.id} value={t.id}>{t.name}</option>))}
+            </select>
+            <input type="text" value={m.name} onChange={(e) => setM({ ...m, name: e.target.value })} placeholder="Nom du temps fort" className={`${inputCls} sm:col-span-3`} data-testid="moment-name" />
+            <input type="text" value={m.brief} onChange={(e) => setM({ ...m, brief: e.target.value })} placeholder="Ce que vous voulez dire (facultatif)" className={`${inputCls} sm:col-span-2`} data-testid="moment-brief" />
+            <input type="date" value={m.startsAt} onChange={(e) => setM({ ...m, startsAt: e.target.value })} className={inputCls} aria-label="Début" data-testid="moment-start" />
+            <input type="date" value={m.endsAt} onChange={(e) => setM({ ...m, endsAt: e.target.value })} className={inputCls} aria-label="Fin" data-testid="moment-end" />
+          </div>
+          {error && <p className="text-xs text-red-600" data-testid="moment-error">{error}</p>}
+          <button type="button" onClick={createMoment} disabled={busy || !m.name.trim()} data-testid="moment-save" className="bg-[#d63b42] hover:bg-[#b3282f] disabled:bg-gray-300 text-white font-bold text-sm px-5 py-2.5 rounded-xl">{busy ? "Création…" : "Créer le temps fort"}</button>
+        </div>
+        {themes.length > 0 && (
+          <div className="border border-dashed border-gray-300 rounded-xl p-3.5 flex items-center gap-3 flex-wrap bg-gray-50" data-testid="context-copy-tone">
+            <input type="checkbox" id="theme-copy" checked={copyOn} onChange={(e) => setCopyOn(e.target.checked)} className="w-[18px] h-[18px]" />
+            <label htmlFor="theme-copy" className="text-sm text-gray-700 leading-snug flex-1 min-w-[220px]"><strong>Reprendre le ton d&apos;une thématique existante</strong> (voix et éléments de langage, sans les sources). Pratique si vous écrivez de la même façon partout.</label>
+            <select value={copyFrom} onChange={(e) => setCopyFrom(e.target.value)} disabled={!copyOn} className="border border-gray-300 rounded-lg px-3 py-2 text-sm font-semibold bg-white disabled:opacity-50" aria-label="Thématique à imiter">
+              {themes.map((t) => (<option key={t.id} value={t.id}>{t.name}</option>))}
+            </select>
+          </div>
+        )}
+        <div className="flex items-center gap-4 flex-wrap">
+          <button type="button" onClick={onClose} className="text-sm text-gray-600 hover:text-gray-900">Annuler</button>
+          <span className="ml-auto text-[13px] text-gray-500">Jusqu&apos;à 10 thématiques · aucune n&apos;est « principale »</span>
+        </div>
       </div>
     </div>
   );
 }
 
-function ProfileView({ contexts = [], onContextsChanged, moments = [], onMomentsChanged, profile, onSaved, showToast, linkedin, onDisconnect, instagram, onDisconnectInstagram, canOrgPublish = true, focusField, onFocusHandled, onGoConnections, onGoDatalake }) {
+// Assistant en étapes (maquettes 5, 5b et 6) : mêmes étapes pour la première et pour la dixième thématique
+function ThemeWizard({ wiz, theme, themes, profile, showToast, onClose, onChanged }) {
+  const kind = wiz.kind === "personal" ? "personal" : "activity";
+  const personal = kind === "personal";
+  const steps = THEME_STEPS[kind];
+  const isMain = wiz.themeId === "main";
+  const editing = Boolean(wiz.themeId);
+  const [idx, setIdx] = useState(1); // 0 = le type, déjà choisi
+  const [id, setId] = useState(wiz.themeId && !isMain ? wiz.themeId : null);
+  const [f, setF] = useState(() => {
+    const base = { ...EMPTY_THEME };
+    if (isMain) {
+      Object.assign(base, { name: profile?.companyName ?? "", role: "", website: profile?.website ?? "", businessDescription: profile?.businessDescription ?? "", targetAudience: profile?.targetAudience ?? "", leadIcp: profile?.leadIcp ?? "", market: profile?.market ?? "", commGoals: profile?.commGoals ?? "", themes: profile?.themes ?? "", brandVoice: profile?.brandVoice ?? "", editorialLine: profile?.editorialLine ?? "" });
+    } else if (theme) {
+      Object.assign(base, { name: theme.name, role: theme.role ?? "", website: theme.website ?? "", businessDescription: theme.fullDescription ?? "", targetAudience: theme.target ?? "", leadIcp: theme.leadIcp ?? "", postGenres: theme.genres ?? "" });
+    }
+    return base;
+  });
+  const [loaded, setLoaded] = useState(!editing || isMain);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState(null);
+  const [saved, setSaved] = useState(false);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [analysis, setAnalysis] = useState(null);
+  const [analyzed, setAnalyzed] = useState(false);
+  const [sources, setSources] = useState([]);
+  const [src, setSrc] = useState({ open: false, tab: "link", url: "", text: "", title: "" });
+  const [srcBusy, setSrcBusy] = useState(false);
+  const inputCls = "w-full border border-gray-300 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]";
+  const lbl = "block text-[13px] font-semibold text-gray-700 mb-1.5";
+  const exCls = "text-xs text-gray-500 mt-1 leading-snug";
+  const set = (k, v) => setF((x) => ({ ...x, [k]: v }));
+  const goals = (f.commGoals ?? "").split(",").filter(Boolean);
+  const genres = (f.postGenres ?? "").split(",").filter(Boolean);
+
+  // Modification d'une thématique existante : on relit tous ses champs
+  useEffect(() => {
+    if (!editing || isMain) return;
+    fetch("/api/contexts").then(readJson).then((d) => {
+      const c = (d.contexts ?? []).find((x) => x.id === wiz.themeId);
+      if (c) setF({ ...EMPTY_THEME, ...Object.fromEntries(Object.entries(c).filter(([k]) => k in EMPTY_THEME).map(([k, v]) => [k, v ?? ""])) });
+      setLoaded(true);
+    }).catch(() => setLoaded(true));
+  }, []);
+  // Reprise du ton d'une thématique existante (maquette 4)
+  useEffect(() => {
+    if (editing || !wiz.copyFrom) return;
+    if (wiz.copyFrom === "main") setF((x) => ({ ...x, brandVoice: profile?.brandVoice ?? "", editorialLine: profile?.editorialLine ?? "" }));
+    else fetch("/api/contexts").then(readJson).then((d) => {
+      const c = (d.contexts ?? []).find((x) => x.id === wiz.copyFrom);
+      if (c) setF((x) => ({ ...x, brandVoice: c.brandVoice ?? "", editorialLine: c.editorialLine ?? "" }));
+    }).catch(() => {});
+  }, []);
+  const ctxIdForData = isMain ? null : id;
+  const loadSources = () => fetch("/api/knowledge").then(readJson).then((d) => setSources((d.sources ?? []).filter((s) => !s.shared && !s.momentId && (s.contextId ?? null) === ctxIdForData))).catch(() => {});
+  useEffect(() => { if (steps[idx][0] === "data" && (id || isMain)) loadSources(); }, [idx, id]);
+
+  const save = async () => {
+    if (isMain) {
+      const res = await fetch("/api/profile", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ companyName: f.name, website: f.website, businessDescription: f.businessDescription, targetAudience: f.targetAudience, leadIcp: f.leadIcp, market: f.market, commGoals: f.commGoals, themes: f.themes, brandVoice: f.brandVoice, editorialLine: f.editorialLine }) });
+      const d = await readJson(res);
+      if (!res.ok) throw new Error(d.error || "Erreur");
+      return;
+    }
+    const body = { kind, ...f };
+    const res = await fetch(id ? `/api/contexts/${id}` : "/api/contexts", { method: id ? "PATCH" : "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    const d = await readJson(res);
+    if (!res.ok) throw new Error(d.error || "Erreur");
+    if (!id && d.context?.id) setId(d.context.id);
+  };
+  const canContinue = (() => {
+    const step = steps[idx][0];
+    if (step === "about") return f.name.trim() && (personal || f.businessDescription.trim());
+    return true;
+  })();
+  const next = async () => {
+    if (busy) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await save();
+      setSaved(true);
+      onChanged?.();
+      if (idx < steps.length - 1) setIdx(idx + 1);
+      else { showToast(editing ? "Thématique enregistrée ✓" : "Thématique créée ✓"); onClose(); }
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+  const analyzeSite = async () => {
+    if (!f.website.trim()) { setError("Indiquez d'abord l'adresse du site."); return; }
+    setError(null);
+    setAnalyzing(true);
+    try {
+      const res = await fetch("/api/profile/analyze", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url: f.website }) });
+      const d = await readJson(res);
+      if (!res.ok) throw new Error(d.error || "Analyse impossible");
+      const a = d.fields || {};
+      setAnalysis({ name: a.companyName || "", businessDescription: a.businessDescription || "", targetAudience: a.targetAudience || "", market: a.market || "", themes: a.themes || "", commGoals: a.commGoals || "" });
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setAnalyzing(false);
+    }
+  };
+  const confirmAnalysis = () => {
+    setF((x) => ({ ...x, name: analysis.name?.trim() || x.name, businessDescription: analysis.businessDescription?.trim() || x.businessDescription, targetAudience: analysis.targetAudience?.trim() || x.targetAudience, market: analysis.market?.trim() || x.market, themes: analysis.themes?.trim() || x.themes, commGoals: analysis.commGoals?.trim() || x.commGoals }));
+    setAnalysis(null);
+    setAnalyzed(true);
+    showToast("Thématique pré-remplie depuis le site ✓ Vérifiez et complétez.");
+  };
+  const addSource = async () => {
+    setSrcBusy(true);
+    setError(null);
+    try {
+      const body = src.tab === "link" ? { kind: "link", url: src.url, title: src.title } : { kind: "note", text: src.text, title: src.title };
+      const res = await fetch("/api/knowledge", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...body, contextId: ctxIdForData ?? undefined }) });
+      const d = await readJson(res);
+      if (!res.ok) throw new Error(d.error || "Ajout impossible");
+      setSrc({ open: false, tab: "link", url: "", text: "", title: "" });
+      loadSources();
+      showToast("Source ajoutée ✓");
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setSrcBusy(false);
+    }
+  };
+
+  const step = steps[idx][0];
+  const stepper = (
+    <div className="bg-white border border-gray-100 rounded-2xl p-3.5 flex flex-col gap-0.5 md:w-56 shrink-0 self-start" data-testid="theme-stepper">
+      {steps.map(([sid, label], i) => {
+        const done = i < idx;
+        const on = i === idx;
+        return (
+          <button key={sid} type="button" disabled={i > idx || i === 0} onClick={() => setIdx(i)} data-testid={`theme-step-${sid}`} className={`flex items-center gap-2.5 text-sm px-2.5 py-2 rounded-lg text-left ${on ? "bg-red-50 text-[#a3242a] font-bold" : "text-gray-500"}`}>
+            <span className={`w-[22px] h-[22px] rounded-full text-xs font-bold flex items-center justify-center ${on ? "bg-[#d63b42] text-white" : done ? "bg-green-600 text-white" : "bg-gray-200 text-gray-600"}`}>{done ? "✓" : i + 1}</span>
+            {label}
+          </button>
+        );
+      })}
+      <p className="mx-2.5 mt-2.5 mb-1 text-xs text-gray-500 leading-snug">{personal ? "Mêmes cinq étapes, questions adaptées : ni entreprise, ni cible commerciale." : "Rien n'est perdu par rapport au parcours actuel : site, cible, bon lead, anciens posts, analyse."}</p>
+    </div>
+  );
+  const card = "bg-white border border-gray-100 rounded-2xl p-5";
+  const sideTitle = "text-xs font-bold uppercase tracking-wider text-gray-500 mb-2";
+
+  return (
+    <main className="max-w-6xl mx-auto p-4 sm:p-6 space-y-4" data-testid="theme-wizard">
+      <div className="flex items-center gap-3 text-sm flex-wrap">
+        <button type="button" onClick={onClose} data-testid="theme-wizard-back" className="text-gray-500 hover:text-gray-800">Mes thématiques ›</button>
+        <span className="font-bold">{editing ? (f.name || theme?.name || "Thématique") : personal ? "Nouvelle thématique personnelle" : "Nouvelle thématique d'activité"}</span>
+        <span className="ml-auto text-gray-500 text-[13px]" data-testid="theme-saved">{saved ? "Brouillon enregistré ✓" : "Brouillon enregistré automatiquement"}</span>
+      </div>
+      <div className="flex flex-col md:flex-row gap-5 items-start">
+        {stepper}
+        <div className="flex-1 min-w-0 w-full">
+          {!loaded ? <p className="text-sm text-gray-400">Chargement…</p> : (
+          <div className={`${card} space-y-4`} data-testid={`theme-panel-${step}`}>
+            {step === "about" && !personal && (
+              <>
+                <div>
+                  <h1 className="text-2xl font-extrabold">Votre activité</h1>
+                  <p className="text-sm text-gray-500 mt-1">Donnez le site : le copilote lit tout et pré-remplit le reste.</p>
+                </div>
+                <div className="bg-red-50 rounded-xl p-3.5" data-testid="context-site">
+                  <label className={lbl}>Gagnez du temps : le site internet de cette entreprise</label>
+                  <div className="flex gap-2.5 flex-wrap">
+                    <input type="text" value={f.website} onChange={(e) => set("website", e.target.value)} placeholder="https://" className={`flex-1 min-w-0 ${inputCls}`} data-testid="context-website" />
+                    <button type="button" onClick={analyzeSite} disabled={analyzing || !f.website.trim()} data-testid="context-analyze" className="shrink-0 bg-[#d63b42] hover:bg-[#b3282f] disabled:bg-gray-300 text-white text-sm font-bold px-4 py-2.5 rounded-xl flex items-center gap-1.5">
+                      {analyzing ? <RefreshCw size={14} className="animate-spin" /> : <Sparkles size={14} />}{analyzing ? "Analyse…" : analyzed ? "Analyser à nouveau" : "Analyser"}
+                    </button>
+                  </div>
+                  {analyzed && !analysis && <p className="text-xs text-green-700 font-semibold mt-1.5">✓ Site analysé : activité, cible, marché, thèmes et objectifs pré-remplis ci-dessous. Vérifiez et corrigez.</p>}
+                  {!analyzed && !analysis && <p className="text-[11px] text-gray-500 mt-1.5">Le copilote propose l&apos;activité, la cible, le positionnement et les thèmes. Rien n&apos;est rempli avant votre confirmation.</p>}
+                  {analysis && <SiteReviewPanel fields={analysis} onChange={(k, v) => setAnalysis((a) => ({ ...a, [k]: v }))} onConfirm={confirmAnalysis} onReject={() => setAnalysis(null)} />}
+                </div>
+                <div className="grid sm:grid-cols-2 gap-3.5">
+                  <div><label className={lbl}>Nom de la thématique, de l&apos;entreprise ou de la marque *</label><input type="text" value={f.name} onChange={(e) => set("name", e.target.value)} className={inputCls} data-testid="context-name" /><p className={exCls}>Ex. : Mon métier · Mon cabinet · Atelier RH</p></div>
+                  {!isMain && <div><label className={lbl}>Votre rôle</label><input type="text" value={f.role} onChange={(e) => set("role", e.target.value)} placeholder="Votre fonction" className={inputCls} /><p className={exCls}>Ex. : Fondatrice · Associé · Consultante</p></div>}
+                </div>
+                <div><label className={lbl}>Que faites-vous, pour qui, avec quelle valeur ajoutée ? *</label><textarea rows={2} value={f.businessDescription} onChange={(e) => set("businessDescription", e.target.value)} className={inputCls} data-testid="context-description" /></div>
+                <div className="grid sm:grid-cols-2 gap-3.5">
+                  <div>
+                    <label className={lbl}>Objectifs de communication</label>
+                    <div className="flex flex-wrap gap-1.5">
+                      {COMM_GOALS.map((g) => (
+                        <button type="button" key={g} onClick={() => set("commGoals", (goals.includes(g) ? goals.filter((x) => x !== g) : [...goals, g]).join(","))} className={`text-xs px-3 py-1.5 rounded-full border ${goals.includes(g) ? "bg-red-50 text-[#a3242a] border-red-200 font-semibold" : "border-gray-200 text-gray-600 hover:border-gray-300"}`}>{g}</button>
+                      ))}
+                    </div>
+                  </div>
+                  <div><label className={lbl}>Positionnement (facultatif)</label><input type="text" value={f.market} onChange={(e) => set("market", e.target.value)} className={inputCls} /></div>
+                </div>
+                <div><label className={lbl}>Les thèmes dont vous parlez</label><input type="text" value={f.themes} onChange={(e) => set("themes", e.target.value)} placeholder="recrutement, marque employeur, onboarding" className={inputCls} /></div>
+                <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-[13px] text-amber-900 leading-relaxed"><strong>Et les jours sans victoire ?</strong> Cette thématique accueille aussi vos coups de gueule et vos doutes : l&apos;humeur se choisit à chaque post.</div>
+              </>
+            )}
+            {step === "about" && personal && (
+              <>
+                <div>
+                  <h1 className="text-2xl font-extrabold">De quoi avez-vous envie de parler ?</h1>
+                  <p className="text-sm text-gray-500 mt-1">Une thématique personnelle accueille ce qui vous touche, dans les bons comme dans les mauvais jours.</p>
+                </div>
+                <div className="grid sm:grid-cols-2 gap-3.5">
+                  <div><label className={lbl}>Nom de la thématique *</label><input type="text" value={f.name} onChange={(e) => set("name", e.target.value)} placeholder="La vie d'indépendante" className={inputCls} data-testid="context-name" /><p className={exCls}>Ex. : La vie d&apos;indépendante · Le running · Mes lectures · Mon engagement associatif</p></div>
+                  <div><label className={lbl}>Les sujets qui reviennent</label><input type="text" value={f.themes} onChange={(e) => set("themes", e.target.value)} placeholder="Séparés par des virgules" className={inputCls} /><p className={exCls}>Ex. : clients, trésorerie, équilibre vie pro / vie perso</p></div>
+                </div>
+                <div><label className={lbl}>Que voulez-vous partager ?</label><textarea rows={3} value={f.businessDescription} onChange={(e) => set("businessDescription", e.target.value)} placeholder="Ce que vous voulez raconter, sans filtre commercial" className={inputCls} data-testid="context-description" /><p className={exCls}>Ex. : mes victoires, mais aussi mes galères : un client qui paie en retard, un doute avant un gros rendez-vous.</p></div>
+                <div>
+                  <span className={lbl}>Le genre de posts qui vous ressemble</span>
+                  <div className="flex flex-wrap gap-2" data-testid="theme-genres">
+                    {THEME_GENRES.map(([code, label]) => (
+                      <button type="button" key={code} onClick={() => set("postGenres", (genres.includes(code) ? genres.filter((x) => x !== code) : [...genres, code]).join(","))} data-testid="theme-genre" className={`text-[13px] font-semibold px-3 py-1.5 rounded-full border ${genres.includes(code) ? "bg-red-50 text-[#a3242a] border-red-200" : "border-gray-300 text-gray-700"}`}>{label}</button>
+                    ))}
+                  </div>
+                  <p className={exCls}>Cela guide les premières propositions du copilote. Vous choisirez l&apos;humeur à chaque post.</p>
+                </div>
+                <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-[13px] text-amber-900 leading-relaxed">Pas de cible commerciale ni de leads pour une thématique personnelle. Vous pourrez les activer plus tard.</div>
+              </>
+            )}
+            {step === "target" && (
+              <>
+                <div>
+                  <h1 className="text-2xl font-extrabold">{personal ? "Votre audience" : "Cible et leads"}</h1>
+                  <p className="text-sm text-gray-500 mt-1">{personal ? "À qui parlez-vous quand vous parlez de ce sujet ? Une phrase suffit." : "À qui parlez-vous, et qu'est-ce qu'un bon lead ? Les commentaires de vos posts sont notés par rapport à lui."}</p>
+                </div>
+                <div>
+                  <label className={lbl}>{personal ? "Votre audience" : "Cible sur LinkedIn"}</label>
+                  <input type="text" value={f.targetAudience} onChange={(e) => set("targetAudience", e.target.value)} placeholder={personal ? "mon réseau, d'autres indépendants" : "DRH et dirigeants de PME de 50 à 500 salariés"} className={inputCls} data-testid="context-target" />
+                  <p className={exCls}>{personal ? "Ex. : votre réseau, d'autres indépendants, d'anciens collègues." : "Ex. : DRH et dirigeants de PME industrielles de 50 à 500 salariés. Elle oriente vos posts."}</p>
+                </div>
+                {!personal && (
+                  <div>
+                    <label className={lbl}>Qu&apos;est-ce qu&apos;un bon lead pour cette entreprise ? <span className="font-normal text-gray-400">(facultatif)</span></label>
+                    <textarea rows={3} value={f.leadIcp} onChange={(e) => set("leadIcp", e.target.value)} placeholder="DRH ou dirigeant d'une PME de 20 à 200 salariés, qui parle de marque employeur ou pose une question sur l'offre" className={inputCls} data-testid="context-leadicp" />
+                    <p className={exCls}>Fonction, taille d&apos;entreprise, secteur, signaux d&apos;intérêt. Quand quelqu&apos;un commente un post publié pour cette entreprise, l&apos;IA le compare à cette description et à la cible, et le note. Aucun message n&apos;est envoyé.</p>
+                  </div>
+                )}
+              </>
+            )}
+            {step === "voice" && (
+              <>
+                <div>
+                  <h1 className="text-2xl font-extrabold">Votre voix</h1>
+                  <p className="text-sm text-gray-500 mt-1">Comment cette thématique doit sonner. Le plus efficace : faire lire vos anciens posts à l&apos;IA.</p>
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-gray-700 mb-1.5">Vos anciens posts LinkedIn</p>
+                  <p className="text-xs text-gray-500 mb-2">Ils servent d&apos;exemples de ton et de tournures pour toutes vos thématiques.</p>
+                  <ImportPostsPanel importedAt={profile?.styleImportedAt} currentLanguage={profile?.postLanguage} showToast={showToast} onApplied={() => {}} />
+                </div>
+                <div>
+                  <label className={lbl}>{personal ? "Votre ton" : "Ligne éditoriale"} <span className="font-normal text-gray-400">{personal ? "(franc, drôle, sobre… sujets à privilégier ou éviter)" : "(angle, registre, sujets à privilégier ou éviter)"}</span></label>
+                  <textarea rows={2} value={f.editorialLine} onChange={(e) => set("editorialLine", e.target.value)} placeholder={personal ? "franc et direct, avec une pointe d'humour, jamais de leçon de morale" : "pédagogique, cas clients, jamais de polémique"} className={inputCls} data-testid="context-voice-editorial" />
+                </div>
+                {!personal && (
+                  <div>
+                    <label className={lbl}>Voix de la marque <span className="font-normal text-gray-400">(pour les posts publiés sur sa page)</span></label>
+                    <textarea rows={2} value={f.brandVoice} onChange={(e) => set("brandVoice", e.target.value)} placeholder="nous tutoyons, phrases courtes, jamais de jargon" className={inputCls} data-testid="context-brandvoice" />
+                  </div>
+                )}
+              </>
+            )}
+            {step === "data" && (
+              <>
+                <div>
+                  <h1 className="text-2xl font-extrabold">{personal ? "Nourrissez le datalake" : "Nourrissez le datalake, puis lancez l'analyse"}</h1>
+                  <p className="text-sm text-gray-500 mt-1">Le copilote lit tout ce que vous lui donnez et en tire ce qu&apos;il a compris de vous. Rien n&apos;est figé : vous validez, modifiez ou supprimez.</p>
+                </div>
+                <div>
+                  <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Ce que l&apos;analyse va lire</span>
+                  <ul className="mt-2 divide-y divide-gray-100" data-testid="theme-data-rows">
+                    {!personal && (
+                      <li className="flex items-center gap-3 py-2.5 text-sm"><span className="text-lg">🌐</span><div className="flex-1"><b>Site internet</b>{f.website ? ` · ${f.website.replace(/^https?:\/\//, "")}` : ""}<div className="text-xs text-gray-500">{f.website ? "Déjà lu à l'étape « Votre activité »" : "Aucun site renseigné"}</div></div>{f.website && <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-green-100 text-green-800">Prêt</span>}</li>
+                    )}
+                    <li className="flex items-center gap-3 py-2.5 text-sm"><span className="text-lg">💼</span><div className="flex-1"><b>Anciens posts LinkedIn</b><div className="text-xs text-gray-500">Importés à l&apos;étape « Votre voix »</div></div></li>
+                    <li className="flex items-center gap-3 py-2.5 text-sm"><span className="text-lg">📄</span><div className="flex-1"><b>Documents et liens</b> · plaquette, offre, articles<div className="text-xs text-gray-500" data-testid="theme-sources-count">{sources.length} ajouté{sources.length > 1 ? "s" : ""}</div></div><button type="button" onClick={() => setSrc((s) => ({ ...s, open: !s.open }))} data-testid="theme-source-toggle" className="font-bold text-[13px] text-[#a3242a]">{src.open ? "Fermer" : "Ajouter"}</button></li>
+                    <li className="flex items-center gap-3 py-2.5 text-sm"><span className="text-lg">🎙</span><div className="flex-1"><b>Dictée ou interview guidée</b><div className="text-xs text-gray-500">Racontez ce sujet à voix haute : le datalake propose « Dicter à la voix »</div></div></li>
+                  </ul>
+                  {src.open && (
+                    <div className="mt-2 rounded-xl border border-gray-200 bg-gray-50 p-3 space-y-2" data-testid="theme-source-form">
+                      <div className="flex gap-1.5">
+                        {[["link", "Un lien"], ["note", "Coller un texte"]].map(([k, l]) => (<button key={k} type="button" onClick={() => setSrc({ ...src, tab: k })} className={`text-xs px-3 py-1.5 rounded-full border ${src.tab === k ? "bg-red-50 text-[#a3242a] border-red-200 font-semibold" : "border-gray-200 text-gray-600"}`}>{l}</button>))}
+                      </div>
+                      <input type="text" value={src.title} onChange={(e) => setSrc({ ...src, title: e.target.value })} placeholder="Titre (facultatif : l'IA en propose un)" className={inputCls} />
+                      {src.tab === "link"
+                        ? <input type="url" value={src.url} onChange={(e) => setSrc({ ...src, url: e.target.value })} placeholder="https://…" className={inputCls} data-testid="theme-source-url" />
+                        : <textarea rows={4} value={src.text} onChange={(e) => setSrc({ ...src, text: e.target.value })} placeholder="Collez un texte (80 caractères au moins)" className={inputCls} data-testid="theme-source-text" />}
+                      <button type="button" onClick={addSource} disabled={srcBusy || (src.tab === "link" ? !src.url.trim() : src.text.trim().length < 80)} data-testid="theme-source-add" className="bg-[#d63b42] hover:bg-[#b3282f] disabled:bg-gray-300 text-white text-sm font-bold px-4 py-2 rounded-xl">{srcBusy ? "Lecture…" : "Ajouter au datalake"}</button>
+                    </div>
+                  )}
+                  {sources.length > 0 && <ul className="mt-2 text-xs text-gray-600 space-y-0.5" data-testid="theme-sources-list">{sources.slice(0, 6).map((s) => (<li key={s.id}>• {s.title}</li>))}</ul>}
+                </div>
+              </>
+            )}
+            {error && <p className="text-xs text-red-600" data-testid="theme-error">{error}</p>}
+            <div className="flex items-center gap-4 flex-wrap pt-1">
+              <button type="button" onClick={next} disabled={busy || !canContinue} data-testid="theme-next" className="bg-[#d63b42] hover:bg-[#b3282f] disabled:bg-gray-300 text-white font-bold text-[15px] px-6 py-3 rounded-xl flex items-center gap-2">
+                {busy && <RefreshCw size={14} className="animate-spin" />}
+                {idx < steps.length - 1 ? `Continuer : ${steps[idx + 1][1].toLowerCase()}` : editing ? "Enregistrer" : "Terminer"}
+              </button>
+              {idx > 1 && <button type="button" onClick={() => setIdx(idx - 1)} data-testid="theme-prev" className="text-sm text-gray-600 hover:text-gray-900">Retour</button>}
+              <span className="ml-auto text-[13px] text-gray-500">Étape {idx + 1} sur {steps.length}</span>
+            </div>
+          </div>
+          )}
+        </div>
+        <div className="w-full md:w-72 shrink-0 space-y-3.5 self-start">
+          {step === "about" && !personal && (
+            <>
+              <div className={card}><p className={sideTitle}>Ce que le copilote comprend</p><p className="text-[13px] text-gray-700 leading-relaxed">{f.name && f.businessDescription ? `« ${f.name} : ${f.businessDescription.slice(0, 160)}${f.businessDescription.length > 160 ? "…" : ""} »` : "Il se complète en direct à mesure que vous écrivez."}</p></div>
+              <div className={card}><p className={sideTitle}>Étape 3 : cible et leads</p><p className="text-[13px] text-gray-700 leading-relaxed">La cible (pré-remplie par l&apos;analyse du site) et « Qu&apos;est-ce qu&apos;un bon lead ? ». Les commentaires de vos posts sont notés par rapport à lui.<br /><br /><em>Ex. : DRH et dirigeants de PME de 50 à 500 salariés.</em></p></div>
+            </>
+          )}
+          {step === "about" && personal && (
+            <>
+              <div className={card}>
+                <p className={sideTitle}>Exemples de posts possibles</p>
+                <p className="text-[13px] text-gray-700 leading-relaxed mb-2"><strong>Fierté</strong> : « Mon plus gros client vient de renouveler. Merci pour la confiance. »</p>
+                <p className="text-[13px] text-gray-700 leading-relaxed mb-2"><strong>Frustration</strong> : « Facture de mars, toujours pas payée. Ce que j&apos;ai changé dans mes conditions. »</p>
+                <p className="text-[13px] text-gray-700 leading-relaxed"><strong>Doute</strong> : « Faut-il accepter ce gros contrat qui me prendrait tout mon temps ? »</p>
+              </div>
+              <div className={card}><p className={sideTitle}>Étape 3 : votre audience</p><p className="text-[13px] text-gray-700 leading-relaxed">Votre réseau, d&apos;autres indépendants, d&apos;anciens collègues ? Une phrase suffit.</p></div>
+            </>
+          )}
+          {step === "target" && <div className={card}><p className={sideTitle}>À quoi ça sert</p><p className="text-[13px] text-gray-700 leading-relaxed">{personal ? "Le copilote adapte le ton et les exemples à ceux qui vous lisent." : "La cible oriente vos posts ; le « bon lead » sert à noter les personnes qui commentent."}</p></div>}
+          {step === "voice" && <div className={card}><p className={sideTitle}>À savoir</p><p className="text-[13px] text-gray-700 leading-relaxed">Vos anciens posts valent pour toutes vos thématiques. La ligne éditoriale{!personal ? " et la voix de la marque" : ""} sont propres à celle-ci.</p></div>}
+          {step === "data" && (id || isMain) && (
+            <div className={card} data-testid="theme-engine">
+              <p className={sideTitle}>Résultat : ce que le moteur a appris de vous</p>
+              <EnginePanel contextId={ctxIdForData} sourceCount={sources.length} showToast={showToast} onChanged={() => {}} />
+            </div>
+          )}
+        </div>
+      </div>
+    </main>
+  );
+}
+
+function ProfileView({ contexts = [], onContextsChanged, moments = [], onMomentsChanged, onGoThemes, profile, onSaved, showToast, linkedin, onDisconnect, instagram, onDisconnectInstagram, canOrgPublish = true, focusField, onFocusHandled, onGoConnections, onGoDatalake }) {
   const [fields, setFields] = useState({
     name: profile?.name ?? "",
     headline: profile?.headline ?? "",
@@ -15584,7 +15866,13 @@ function ProfileView({ contexts = [], onContextsChanged, moments = [], onMoments
                   <ProfileField id="field-brandVoice" label="Voix de la marque sur sa page entreprise" hint="(facultatif)" why="Votre voix personnelle s'écrit en « je ». Une page entreprise parle autrement : « nous », un vocabulaire maison, des choses qu'on évite. Ces consignes ne servent que pour les posts publiés sur la page." example="Nous tutoyons, phrases courtes, pas d'anglicismes, jamais de promesse chiffrée">
                     <textarea rows={2} value={fields.brandVoice} onChange={(e) => set("brandVoice", e.target.value)} placeholder="ex : nous tutoyons, phrases courtes, jamais de jargon" className={input} data-testid="field-brandVoice-input" />
                   </ProfileField>
-                  <ContextsManager contexts={contexts} onChanged={(...a) => { onContextsChanged?.(...a); onMomentsChanged?.(); }} moments={moments} onMomentsChanged={onMomentsChanged} profileName={fields.companyName || "Mon activité"} showToast={showToast} />
+                  <div className="border border-dashed border-gray-300 rounded-xl p-4 flex items-center gap-3 flex-wrap" data-testid="profile-themes-link">
+                    <div className="flex-1 min-w-[220px]">
+                      <p className="text-sm font-medium text-gray-700">Parlez-vous d&apos;autres sujets ou d&apos;autres entreprises ?</p>
+                      <p className="text-xs text-gray-500 mt-1 leading-relaxed">Chaque thématique a sa voix, sa cible et son datalake. Elles se gèrent dans « Mes thématiques » : celle-ci n&apos;est que la première, aucune n&apos;est principale.</p>
+                    </div>
+                    <button type="button" onClick={() => onGoThemes?.()} data-testid="profile-open-themes" className="text-sm font-semibold text-[#ff5a5f] hover:underline">Ouvrir Mes thématiques →</button>
+                  </div>
                 </div>
               )}
 
@@ -17076,6 +17364,7 @@ export default function Home() {
           target: override?.target ?? target,
           contextId: activeContextId || undefined,
           momentId: activeMomentId || undefined,
+          mood: form.mood || undefined,
           text: r.text,
           // Version d'origine de l'IA (la plus ancienne de l'historique) : sert à repérer
           // ce que l'utilisateur modifie d'habitude.
@@ -17974,6 +18263,7 @@ export default function Home() {
           ? [{ id: "clients", label: "Mes clients", icon: Users, group: "Agence" }]
           : []),
         { id: "profile", label: "Profil", icon: UserRound, group: "Mon compte" },
+        { id: "themes", label: "Mes thématiques", icon: Tags, group: "Mon compte" },
         { id: "connections", label: "Connexions", icon: Linkedin, group: "Mon compte" },
         { id: "brand-kit", label: "Charte graphique", icon: ImageIcon, group: "Mon compte" },
         { id: "billing", label: "Abonnement", icon: CreditCard, group: "Mon compte" },
@@ -18013,6 +18303,7 @@ export default function Home() {
     stats: "Statistiques",
     billing: "Abonnement",
     profile: "Mon profil",
+    themes: "Mes thématiques",
     "connections": "Connexions",
     "brand-kit": "Charte graphique",
     clients: agencyCollab ? "Mes clients" : "Clients",
@@ -20151,7 +20442,7 @@ export default function Home() {
           }
         />
       ) : view === "leads" ? (
-        <LeadsView key={activeContextId ?? "main"} showToast={showToast} />
+        <LeadsView key={activeContextId ?? "main"} showToast={showToast} initialScope={activeContextId ?? "main"} />
       ) : view === "interview" ? (
         <main className="max-w-5xl mx-auto p-6">
           <InterviewScreen
@@ -20185,6 +20476,18 @@ export default function Home() {
         </main>
       ) : view === "brand-kit" ? (
         <BrandKitView showToast={showToast} />
+      ) : view === "themes" ? (
+        <ThemesView
+          profile={profile}
+          linkedin={linkedin}
+          orgs={orgs}
+          moments={moments}
+          onContextsChanged={loadContexts}
+          onMomentsChanged={loadMoments}
+          showToast={showToast}
+          onOpenDatalake={(id) => { chooseContext(id); setView("datalake"); }}
+          onOpenLeads={(id) => { chooseContext(id); setView("leads"); }}
+        />
       ) : view === "profile" ? (
         <ProfileView
           key={profile?.email ?? "profile"}
@@ -20192,6 +20495,7 @@ export default function Home() {
           onContextsChanged={loadContexts}
           moments={moments}
           onMomentsChanged={loadMoments}
+          onGoThemes={() => setView("themes")}
           onGoConnections={() => setView("connections")}
           onGoDatalake={() => setView("datalake")}
           profile={profile}

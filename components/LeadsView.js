@@ -70,7 +70,7 @@ function LeadCard({ lead, onChange, onDelete, scopes = [], scope = "main" }) {
   );
 }
 
-export default function LeadsView({ showToast }) {
+export default function LeadsView({ showToast, initialScope = "main" }) {
   const [data, setData] = useState(null);
   const [icp, setIcp] = useState("");
   const [target, setTarget] = useState(""); // cible du profil, ajoutée aux critères de la note
@@ -80,7 +80,7 @@ export default function LeadsView({ showToast }) {
   const [adding, setAdding] = useState(false);
   const [draft, setDraft] = useState({ name: "", headline: "", company: "", commentText: "" });
   const [error, setError] = useState(null);
-  const [scope, setScope] = useState("main"); // thématique dont on voit les leads, la cible et le « bon lead »
+  const [scope, setScope] = useState(initialScope); // thématique dont on voit les leads, la cible et le « bon lead »
 
   const load = async (s = scope) => {
     const d = await fetch(`/api/leads?contextId=${encodeURIComponent(s)}`).then(json);
