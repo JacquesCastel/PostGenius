@@ -214,6 +214,9 @@ model Lead {
   scoredAt    DateTime?
   status      String    @default("new") // new | tocontact | contacted | won | lost
   note        String?
+  // Thématique dont le lead est issu (nul = la thématique du profil) : sa cible et son « bon lead » servent à la note
+  contextId   String?
+  context     Context?  @relation(fields: [contextId], references: [id], onDelete: SetNull)
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
@@ -823,6 +826,7 @@ model Context {
   editorialLine       String? // angle et registre éditorial propres à cette entreprise
   // Thématique : « activity » (entreprise, cible, leads possibles) ou « personal » (sujet personnel : ni entreprise, ni cible commerciale)
   kind                String   @default("activity")
+  leadIcp             String? // ce qu'est un bon lead pour cette thématique (nul = on utilise celui du profil)
   createdAt           DateTime @default(now())
 
   sources   KnowledgeSource[]
@@ -832,6 +836,7 @@ model Context {
   campaigns Campaign[]
   brandKits BrandKit[]
   feeds     ContentSource[]
+  leads     Lead[]
 
   @@index([userId])
 }

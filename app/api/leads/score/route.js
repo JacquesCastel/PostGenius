@@ -17,7 +17,8 @@ export async function POST(req) {
   const body = await req.json().catch(() => ({}));
   const ids = Array.isArray(body.ids) ? body.ids.filter((x) => typeof x === "string").slice(0, 15) : undefined;
   try {
-    return NextResponse.json(await scoreLeads(userId, { ids }));
+    const contextId = typeof body.contextId === "string" && body.contextId !== "main" ? body.contextId : null;
+    return NextResponse.json(await scoreLeads(userId, { ids, contextId }));
   } catch (e) {
     return NextResponse.json({ error: e.message || "Qualification impossible." }, { status: e.status || 502 });
   }

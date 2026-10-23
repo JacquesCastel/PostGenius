@@ -19,7 +19,7 @@ function csv(leads) {
   return [head, ...rows].map((r) => r.map(q).join(";")).join("\n");
 }
 
-function LeadCard({ lead, onChange, onDelete }) {
+function LeadCard({ lead, onChange, onDelete, scopes = [], scope = "main" }) {
   const [edit, setEdit] = useState(false);
   const [f, setF] = useState({ name: lead.name ?? "", headline: lead.headline ?? "", company: lead.company ?? "", profileUrl: lead.profileUrl ?? "" });
   const [note, setNote] = useState(lead.note ?? "");
@@ -48,6 +48,11 @@ function LeadCard({ lead, onChange, onDelete }) {
         </select>
         {lead.postUrl && <a href={lead.postUrl} target="_blank" rel="noopener noreferrer" className="text-[#0a66c2] flex items-center gap-1"><ExternalLink size={12} /> Voir le post</a>}
         {lead.profileUrl && <a href={lead.profileUrl} target="_blank" rel="noopener noreferrer" className="text-[#0a66c2] flex items-center gap-1"><ExternalLink size={12} /> Profil</a>}
+        {scopes.length > 1 && (
+          <select value={scope} onChange={(e) => patch({ contextId: e.target.value })} className="border border-gray-200 rounded-lg px-2 py-1" data-testid="lead-scope" aria-label="Thématique du lead" title="Thématique : sa cible et son « bon lead » servent à la note">
+            {scopes.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+          </select>
+        )}
         {!fromLinkedIn && <button type="button" onClick={() => setEdit((v) => !v)} className="text-gray-500 flex items-center gap-1" data-testid="lead-edit"><Pencil size={12} /> {edit ? "Fermer" : "Modifier"}</button>}
         <button type="button" onClick={() => onDelete(lead.id)} className="text-gray-400 hover:text-red-500 flex items-center gap-1 ml-auto" data-testid="lead-delete"><Trash2 size={12} /> Supprimer</button>
       </div>
@@ -75,17 +80,20 @@ export default function LeadsView({ showToast }) {
   const [adding, setAdding] = useState(false);
   const [draft, setDraft] = useState({ name: "", headline: "", company: "", commentText: "" });
   const [error, setError] = useState(null);
+  const [scope, setScope] = useState("main"); // thématique dont on voit les leads, la cible et le « bon lead »
 
-  const load = async () => {
-    const d = await fetch("/api/leads").then(json);
-    if (d.leads) { setData(d); setIcp(d.icp ?? ""); setTarget(d.target ?? ""); }
+  const load = async (s = scope) => {
+    const d = await fetch(`/api/leads?contextId=${encodeURIComponent(s)}`).then(json);
+    if (d.leads) { setData(d); setIcp(d.icp ?? ""); setTarget(d.target ?? ""); setIcpSaved(true); }
     else setError(d.error || "Chargement impossible");
   };
-  useEffect(() => { load().catch(() => setError("Chargement impossible")); }, []);
+  useEffect(() => { load(scope).catch(() => setError("Chargement impossible")); }, [scope]);
+  const scopes = data?.scopes ?? [];
+  const scopeName = scopes.find((s) => s.id === scope)?.name ?? "";
 
   const saveIcp = async () => {
     setBusy("icp");
-    const res = await fetch("/api/leads/icp", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ icp }) });
+    const res = await fetch("/api/leads/icp", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ icp, contextId: scope }) });
     setBusy(null);
     if (res.ok) { setIcpSaved(true); showToast("Critères enregistrés ✓"); } else showToast((await json(res)).error || "Enregistrement impossible");
   };
@@ -95,7 +103,7 @@ export default function LeadsView({ showToast }) {
     setBusy("score");
     setError(null);
     try {
-      const res = await fetch("/api/leads/score", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
+      const res = await fetch("/api/leads/score", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ contextId: scope }) });
       const d = await json(res);
       if (!res.ok) throw new Error(d.error || "Qualification impossible");
       showToast(d.scored ? `${d.scored} lead${d.scored > 1 ? "s" : ""} qualifié${d.scored > 1 ? "s" : ""}${d.left ? ` · ${d.left} restant${d.left > 1 ? "s" : ""}, relancez` : " ✓"}` : "Rien à qualifier");
@@ -110,6 +118,8 @@ export default function LeadsView({ showToast }) {
     const res = await fetch(`/api/leads/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
     const d = await json(res);
     if (!res.ok) return showToast(d.error || "Modification impossible");
+    // Un lead déplacé vers une autre thématique quitte la liste affichée
+    if ("contextId" in body) { showToast("Lead déplacé : il sera noté avec les critères de sa nouvelle thématique ✓"); return load(); }
     setData((x) => ({ ...x, leads: x.leads.map((l) => (l.id === id ? d.lead : l)) }));
   };
   const remove = async (id) => {
@@ -118,7 +128,7 @@ export default function LeadsView({ showToast }) {
     if (res.ok) setData((x) => ({ ...x, leads: x.leads.filter((l) => l.id !== id) }));
   };
   const add = async () => {
-    const res = await fetch("/api/leads", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(draft) });
+    const res = await fetch("/api/leads", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...draft, contextId: scope }) });
     const d = await json(res);
     if (!res.ok) return showToast(d.error || "Ajout impossible");
     setData((x) => ({ ...x, leads: [d.lead, ...x.leads] }));
@@ -145,9 +155,16 @@ export default function LeadsView({ showToast }) {
       <div className={card}>
         <p className="text-sm font-semibold flex items-center gap-2"><Users size={15} className="text-[#ff5a5f]" /> Base de leads</p>
         <p className="text-xs text-gray-400 mt-1">Les personnes qui commentent votre page entreprise sont ajoutées ici automatiquement, avec leur commentaire. L&apos;IA les note selon votre client idéal. LinkeePost n&apos;envoie aucun message : le contact reste entre vos mains.</p>
-        <label className="block text-xs font-medium text-gray-500 mt-4 mb-1">Ce qu'est un bon lead pour vous</label>
+        {scopes.length > 1 && (
+          <div className="flex flex-wrap gap-1.5 mt-4" data-testid="leads-scopes" role="tablist" aria-label="Thématique">
+            {scopes.map((s) => (
+              <button key={s.id} type="button" role="tab" aria-selected={scope === s.id} onClick={() => setScope(s.id)} data-testid="leads-scope" className={`text-xs px-3 py-1.5 rounded-full border ${scope === s.id ? "bg-[#ff5a5f] text-white border-[#ff5a5f]" : "border-gray-200 text-gray-600 hover:border-gray-300"}`}>{s.name} · {s.count}</button>
+            ))}
+          </div>
+        )}
+        <label className="block text-xs font-medium text-gray-500 mt-4 mb-1">{scopes.length > 1 ? `Ce qu'est un bon lead pour « ${scopeName} »` : "Ce qu'est un bon lead pour vous"}</label>
         <textarea value={icp} onChange={(e) => { setIcp(e.target.value); setIcpSaved(false); }} rows={3} maxLength={800} placeholder="Ex. : dirigeants de PME de 20 à 200 salariés en France, qui veulent développer leur marque employeur" className={field} data-testid="leads-icp" />
-        {target && <p className="text-[11px] text-gray-400 mt-1" data-testid="leads-target">Votre cible sur LinkedIn est aussi prise en compte : « {target} ». Elle se modifie dans le Profil, étape « Vos leads ».</p>}
+        {target && <p className="text-[11px] text-gray-400 mt-1" data-testid="leads-target">{scopes.length > 1 ? "La cible de cette thématique" : "Votre cible sur LinkedIn"} est aussi prise en compte : « {target} ». Elle se modifie dans le Profil, étape « Vos leads » (ou dans « Mes thématiques »).</p>}
         <div className="flex flex-wrap gap-2 mt-3">
           <button type="button" onClick={saveIcp} disabled={busy || icpSaved} className="text-sm font-medium px-4 py-2 rounded-lg border border-gray-200 disabled:opacity-40" data-testid="leads-icp-save">Enregistrer</button>
           <button type="button" onClick={score} disabled={busy || !(icp.trim() || target.trim()) || !leads.length} className="text-sm font-medium px-4 py-2 rounded-lg bg-[#ff5a5f] text-white flex items-center gap-2 disabled:opacity-40" data-testid="leads-score"><Sparkles size={14} /> {busy === "score" ? "Qualification…" : unscored ? `Qualifier avec l'IA (${unscored})` : "Tout est qualifié"}</button>
@@ -185,7 +202,7 @@ export default function LeadsView({ showToast }) {
           Aucun lead pour l&apos;instant. {data.pageConnected ? "Dès qu'une personne commente votre page, elle apparaît ici (lecture toutes les 30 minutes environ)." : "Connectez votre page entreprise (écran Connexions) pour récupérer automatiquement les commentaires, ou ajoutez une personne à la main."}
         </div>
       )}
-      {shown.map((l) => <LeadCard key={l.id} lead={l} onChange={change} onDelete={remove} />)}
+      {shown.map((l) => <LeadCard key={l.id} lead={l} onChange={change} onDelete={remove} scopes={scopes} scope={scope} />)}
     </main>
   );
 }

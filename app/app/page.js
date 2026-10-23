@@ -14951,7 +14951,7 @@ function ConnectionsView({ linkedin, onDisconnect, instagram, onDisconnectInstag
 // Mes thématiques : une personne qui parle de plusieurs sujets (plusieurs entreprises, un sujet personnel) avec un seul
 // compte LinkedIn choisit, à chaque post, la thématique voulue. Chacune a sa cible, son datalake et sa voix ; aucune n'est « principale ».
 // La thématique de départ est celle du profil ci-dessus ; celles-ci s'y ajoutent, sur un pied d'égalité.
-const EMPTY_CONTEXT = { kind: "activity", name: "", role: "", website: "", businessDescription: "", targetAudience: "", market: "", commGoals: "", brandVoice: "", themes: "", editorialLine: "" };
+const EMPTY_CONTEXT = { kind: "activity", name: "", role: "", website: "", businessDescription: "", targetAudience: "", market: "", commGoals: "", brandVoice: "", themes: "", editorialLine: "", leadIcp: "" };
 const CONTEXT_ANALYSIS_ROWS = [
   ["name", "Entreprise"],
   ["businessDescription", "Activité"],
@@ -15124,6 +15124,13 @@ function ContextsManager({ contexts, onChanged, showToast }) {
               </div>
             )}
           </div>
+          {!personal && (
+            <div>
+              <label className={labelCls}>Qu&apos;est-ce qu&apos;un bon lead pour cette entreprise ? <span className="font-normal text-gray-400">(facultatif)</span></label>
+              <textarea rows={2} value={editing.leadIcp} onChange={(e) => set("leadIcp", e.target.value)} placeholder="ex : DRH ou dirigeant d'une PME de 20 à 200 salariés, qui parle de marque employeur ou pose une question sur l'offre" className={inputCls} data-testid="context-leadicp" />
+              <p className="text-[11px] text-gray-400 mt-1">Quand quelqu&apos;un commente un post publié pour cette entreprise, l&apos;IA le compare à cette description et à la cible ci-dessus. Aucun message n&apos;est envoyé.</p>
+            </div>
+          )}
           {!personal && (
             <div>
               <label className={labelCls}>Objectifs de communication</label>
