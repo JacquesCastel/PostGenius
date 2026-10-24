@@ -17380,7 +17380,12 @@ export default function Home() {
   const hasTopic = Boolean(form.theme.trim() || activeSource);
   const canEnter = (id) => createSteps.findIndex((x) => x.id === id) <= createSteps.findIndex((x) => x.id === "topic") || hasTopic;
   const goCreateStep = (id) => { if (canEnter(id)) setCreateStep(id); };
-  const stepCls = (id) => (curStep.id === id ? "space-y-5" : "hidden");
+  const isTopic = curStep.id === "topic";
+  const stepCls = (id) => (curStep.id === id ? (id === "topic" ? "space-y-4" : "space-y-5") : "hidden");
+  // Page « Créer un post » (maquette 7) : un bloc par choix
+  const blockCls = "bg-white border border-slate-200 rounded-2xl p-5 shadow-sm";
+  const blockLb = "text-xs font-bold tracking-wide uppercase text-slate-500 mb-2.5 block";
+  const pillCls = (on, tone = "pink") => `text-sm font-semibold px-3 py-1.5 rounded-full border ${on ? (tone === "amber" ? "bg-[#fff4d6] border-[#f0c560] text-[#7a4b00]" : "bg-[#ffe3e4] border-[#f3a3a6] text-[#a3242a]") : "bg-white border-slate-300 text-slate-700 hover:border-slate-400"}`;
 
   // Lit l'article (adresse) ou le document (fichier) choisi : le texte sert ensuite à écrire le post
   const readSource = async () => {
@@ -20009,16 +20014,17 @@ export default function Home() {
           </div>
         </main>
       ) : view === "create" ? (
-        <main className="max-w-6xl mx-auto p-6 grid md:grid-cols-2 gap-6">
-          <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-5 h-fit">
+        <main className={`max-w-6xl mx-auto p-6 grid gap-6 ${isTopic ? "md:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]" : "md:grid-cols-2"}`}>
+          {isTopic && (
+            <p className="md:col-span-2 text-sm text-slate-500 leading-relaxed -mb-2" data-testid="create-intro">
+              {contexts.length > 0 || (linkedin.connected && linkedin.orgConnected && orgs.length > 0)
+                ? `${contexts.length > 0 && linkedin.connected && linkedin.orgConnected && orgs.length > 0 ? "Quatre" : "Trois"} choix, dans l'ordre où vous y pensez : de quoi parler, dans quelle humeur${contexts.length > 0 ? ", sous quelle thématique" : ""}${linkedin.connected && linkedin.orgConnected && orgs.length > 0 ? ", et où publier" : ""}.`
+                : "Deux choix, dans l'ordre où vous y pensez : de quoi parler, et dans quelle humeur."}
+            </p>
+          )}
+          <section className={isTopic ? "space-y-4 h-fit" : "bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-5 h-fit"}>
             {/* Parcours pas à pas : une question à la fois */}
-            {curStep.id === "topic" ? (
-              <p className="text-sm text-gray-500 leading-relaxed" data-testid="create-intro">
-                {contexts.length > 0 || (linkedin.connected && linkedin.orgConnected && orgs.length > 0)
-                  ? `${contexts.length > 0 && linkedin.connected && linkedin.orgConnected && orgs.length > 0 ? "Quatre" : "Trois"} choix, dans l'ordre où vous y pensez : de quoi parler, dans quelle humeur${contexts.length > 0 ? ", sous quelle thématique" : ""}${linkedin.connected && linkedin.orgConnected && orgs.length > 0 ? ", et où publier" : ""}.`
-                  : "Deux choix, dans l'ordre où vous y pensez : de quoi parler, et dans quelle humeur."}
-              </p>
-            ) : (
+            {isTopic ? null : (
             <div data-testid="create-stepper">
               <p className="text-xs font-medium text-[#ff5a5f] mb-2">Réglages avancés · étape {curIdx} sur {createSteps.length - 1}</p>
               <div className="flex gap-1.5">
@@ -20034,27 +20040,8 @@ export default function Home() {
             )}
 
             <div className={stepCls("topic")}>
-            <p className="text-sm font-semibold text-gray-800">1. De quoi voulez-vous parler aujourd&apos;hui ?</p>
-            {/* Mode : post unique ou série graduée */}
-            <div className="grid grid-cols-2 gap-1 bg-gray-100 p-1 rounded-lg">
-              <button
-                onClick={() => setGenMode("single")}
-                className={`py-2 rounded-md text-sm font-medium flex items-center justify-center gap-1.5 ${
-                  genMode === "single" ? "bg-white shadow-sm" : "text-gray-500"
-                }`}
-              >
-                <FileText size={14} /> Post unique
-              </button>
-              <button
-                onClick={() => setGenMode("series")}
-                className={`py-2 rounded-md text-sm font-medium flex items-center justify-center gap-1.5 ${
-                  genMode === "series" ? "bg-white shadow-sm" : "text-gray-500"
-                }`}
-              >
-                <LayersIcon size={14} /> Série avec reveal
-              </button>
-            </div>
-
+            <div className={blockCls} data-testid="create-block-topic">
+            <p className={blockLb}>1. De quoi voulez-vous parler aujourd&apos;hui ?</p>
             {genMode === "series" && (
               <div>
                 <label className="text-sm font-medium text-gray-700 block mb-2">
@@ -20076,35 +20063,7 @@ export default function Home() {
 
             {/* 1 · Sur quoi s'appuie le post : une idée, un article (lien) ou un document */}
             <div>
-              <label className="text-sm font-medium text-gray-700 block mb-2">
-                {genMode === "series" ? "Thématique de la série" : "Sur quoi s'appuie votre post ?"}
-              </label>
-              {genMode === "single" && (
-                <div className={`grid ${voiceOk ? "grid-cols-4" : "grid-cols-3"} gap-1 bg-gray-100 p-1 rounded-lg mb-3`} role="tablist">
-                  {[
-                    ["idea", "Mon idée", PenLine],
-                    ...(voiceOk ? [["voice", "Je dicte", Mic]] : []),
-                    ["link", "Un article", ExternalLink],
-                    ["file", "Un document", FileText],
-                  ].map(([id, text, Icon]) => (
-                    <button
-                      key={id}
-                      type="button"
-                      role="tab"
-                      aria-selected={sourceMode === id}
-                      onClick={() => {
-                        setSourceMode(id);
-                        setSource(null);
-                        setSourceError(null);
-                      }}
-                      className={`py-2 rounded-md text-xs font-medium flex items-center justify-center gap-1.5 ${sourceMode === id ? "bg-white shadow-sm" : "text-gray-500"}`}
-                    >
-                      <Icon size={13} /> {text}
-                    </button>
-                  ))}
-                </div>
-              )}
-
+              {genMode === "series" && <label className="text-sm font-medium text-gray-700 block mb-2">Thématique de la série</label>}
               {genMode === "single" && sourceMode === "link" && !source && (
                 <div className="space-y-2 mb-3">
                   <div className="flex gap-2">
@@ -20192,16 +20151,6 @@ export default function Home() {
                   {genMode === "single" && source && (
                     <p className="text-xs text-gray-500 mb-1.5">Votre angle <span className="text-gray-400">(modifiable : ce que vous voulez en retenir ou en dire)</span></p>
                   )}
-                  {genMode === "single" && !source && sourceMode === "idea" && (
-                    <div className="flex flex-wrap items-center gap-1.5 mb-2" data-testid="news-starters">
-                      <span className="text-xs text-gray-500">Actualité du moment :</span>
-                      {NEWS_STARTERS.map((n) => (
-                        <button key={n.code} type="button" data-testid="news-starter" onClick={() => setForm((f) => ({ ...f, theme: n.theme, mood: n.mood }))} className="text-xs px-2.5 py-1 rounded-full border border-gray-200 text-gray-600 hover:border-[#ff5a5f] hover:text-[#f63d44]">
-                          {n.label}
-                        </button>
-                      ))}
-                    </div>
-                  )}
                   <textarea
                     rows={genMode === "single" && source ? 2 : 3}
                     value={form.theme}
@@ -20212,11 +20161,24 @@ export default function Home() {
                         ? "ex : ce que cela change pour les PME"
                         : "ex : La prospection sur LinkedIn — ou une consigne libre : « explique pourquoi les managers ne relaient pas le message »"
                     }
-                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
+                    className="w-full border border-slate-300 rounded-xl px-3.5 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
                   />
+                  {genMode === "single" && !source && sourceMode === "idea" && (
+                    <div className="flex flex-wrap items-center gap-2 mt-3" data-testid="news-starters">
+                      <span className="text-xs text-slate-500">Actualité du moment :</span>
+                      {NEWS_STARTERS.map((n) => (
+                        <button key={n.code} type="button" data-testid="news-starter" onClick={() => setForm((f) => ({ ...f, theme: n.theme, mood: n.mood }))} className={pillCls(form.theme === n.theme)}>
+                          {n.label}
+                        </button>
+                      ))}
+                      {voiceOk && (
+                        <button type="button" data-testid="news-dictate" onClick={() => { setSourceMode("voice"); setSource(null); setSourceError(null); }} className="text-sm font-semibold px-3 py-1.5 rounded-full border border-[#d63b42] text-[#a3242a] bg-white hover:bg-[#fff8f8] inline-flex items-center gap-1.5"><Mic size={13} /> Dicter</button>
+                      )}
+                    </div>
+                  )}
                 </>
               )}
-              {ctxProfile?.themes && !source && (sourceMode === "idea" || genMode === "series") && (
+              {ctxProfile?.themes && !source && genMode === "series" && (
                 <div className="flex flex-wrap gap-1.5 mt-2">
                   {ctxProfile.themes
                     .split(",")
@@ -20247,13 +20209,19 @@ export default function Home() {
                   </button>
                 </div>
               )}
+              <div className="flex flex-wrap items-center gap-1.5 mt-4 pt-3 border-t border-slate-100" data-testid="create-modes">
+                <span className="text-xs text-slate-500 mr-1">Partir de :</span>
+                {[["idea", "Mon idée"], ["link", "Un article"], ["file", "Un document"]].map(([id, text]) => (
+                  <button key={id} type="button" aria-pressed={genMode === "single" && sourceMode === id} onClick={() => { setGenMode("single"); setSourceMode(id); setSource(null); setSourceError(null); }} className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${genMode === "single" && sourceMode === id ? "bg-slate-100 border-slate-400 text-slate-800" : "border-slate-200 text-slate-500 hover:border-slate-400"}`}>{text}</button>
+                ))}
+                <button type="button" aria-pressed={genMode === "series"} data-testid="mode-series" onClick={() => setGenMode(genMode === "series" ? "single" : "series")} className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${genMode === "series" ? "bg-slate-100 border-slate-400 text-slate-800" : "border-slate-200 text-slate-500 hover:border-slate-400"}`}>Série avec reveal</button>
+              </div>
+            </div>
             </div>
 
-            <div data-testid="mood-block">
-              <label className="text-sm font-medium text-gray-700 block mb-2">
-                2. Dans quelle humeur ? <span className="text-gray-400 font-normal">(facultatif : le même sujet donne un autre post selon l&apos;humeur)</span>
-              </label>
-              <div className="flex flex-wrap gap-1.5">
+            <div data-testid="mood-block" className={blockCls}>
+              <p className={blockLb}>2. Dans quelle humeur ?</p>
+              <div className="flex flex-wrap gap-2">
                 {MOOD_CHOICES.map((m) => (
                   <button
                     key={m.code}
@@ -20261,22 +20229,22 @@ export default function Home() {
                     title={m.hint}
                     data-testid="mood-chip"
                     onClick={() => set("mood", form.mood === m.code ? null : m.code)}
-                    className={`text-xs px-3 py-1.5 rounded-full border ${form.mood === m.code ? "bg-amber-500 text-white border-amber-500" : "border-gray-200 text-gray-600 hover:border-gray-300"}`}
+                    className={pillCls(form.mood === m.code, "amber")}
                   >
                     {m.label}
                   </button>
                 ))}
               </div>
-              {form.mood && MOODS.find((m) => m.code === form.mood)?.example && (
-                <p className="text-xs text-gray-500 mt-2 italic" data-testid="mood-example">Ex. : « {MOODS.find((m) => m.code === form.mood).example} »</p>
-              )}
-              <p className="text-[11px] text-gray-400 mt-2">La vie n&apos;est pas linéaire : un jour on célèbre un contrat signé, le lendemain on râle parce qu&apos;une facture n&apos;est toujours pas réglée. L&apos;humeur se choisit à chaque post, la thématique reste la même.</p>
+              <p className="text-sm text-slate-600 leading-relaxed mt-3" data-testid="mood-example">
+                Le même sujet donne un autre post selon l&apos;humeur. <em>Fierté</em> : « {MOODS.find((m) => m.code === "fierte").example} » <em>Coup de gueule</em> : « {MOODS.find((m) => m.code === "coup-de-gueule").example} »
+              </p>
             </div>
 
-            <div className="space-y-5" data-testid="create-who">
+            <div className={`grid gap-4 items-start ${contexts.length > 0 && linkedin.connected && linkedin.orgConnected && orgs.length > 0 ? "md:grid-cols-2" : ""}`} data-testid="create-who">
+            <div className="space-y-4 empty:hidden">
             {contexts.length > 0 && (
-              <div data-testid="context-picker">
-                <label className="text-sm font-medium text-gray-700 block mb-2">3. Sous quelle thématique ?</label>
+              <div data-testid="context-picker" className={blockCls}>
+                <label className={blockLb}>3. Sous quelle thématique ?</label>
                 <div className="grid gap-2">
                   {themeOptions.map((o, i) => {
                     const on = (activeContextId ?? null) === o.id;
@@ -20297,8 +20265,8 @@ export default function Home() {
               const avail = moments.filter((m) => (m.contextId ?? null) === (activeContextId ?? null) && (m.state === "active" || m.state === "upcoming"));
               if (!avail.length) return null;
               return (
-                <div data-testid="moment-picker">
-                  <label className="text-sm font-medium text-gray-700 block mb-2">📅 Un temps fort en cours ?</label>
+                <div data-testid="moment-picker" className={blockCls}>
+                  <label className={blockLb}>Un temps fort en cours ?</label>
                   <div className="flex flex-wrap gap-1.5">
                     {[{ id: null, name: "Aucun" }, ...avail].map((m) => (
                       <button key={m.id ?? "none"} type="button" onClick={() => setActiveMomentId(m.id)} data-testid="moment-chip" className={`text-xs px-3 py-1.5 rounded-full border ${activeMomentId === m.id ? "bg-amber-500 text-white border-amber-500" : "border-gray-200 text-gray-600 hover:border-gray-300"}`}>{m.name}</button>
@@ -20308,10 +20276,11 @@ export default function Home() {
                 </div>
               );
             })()}
+            </div>
             {/* Où publier : la voix du post en dépend (profil « je », page « nous ») */}
             {linkedin.connected && linkedin.orgConnected && orgs.length > 0 && (
-              <div data-testid="publish-as">
-                <label className="text-sm font-medium text-gray-700 block mb-2">{contexts.length > 0 ? 4 : 3}. Où publier ?</label>
+              <div data-testid="publish-as" className={blockCls}>
+                <label className={blockLb}>{contexts.length > 0 ? 4 : 3}. Où publier ?</label>
                 <div className="grid gap-2">
                   {[
                     ...(linkedin.clientSpace ? [] : [{ v: "person", label: "Sur mon profil", sub: `${linkedin.name ? `${linkedin.name} · ` : ""}votre voix, à la première personne` }]),
@@ -20584,13 +20553,13 @@ export default function Home() {
                   return (
                     <>
                       <p className="text-[11px] font-bold uppercase tracking-wider text-gray-500" data-testid="create-preview-label">Aperçu · {where}{mood ? ` · ${mood.label.toLowerCase()}` : ""}</p>
-                      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5" data-testid="create-preview">
+                      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5" data-testid="create-preview">
                         <div className="flex items-center gap-3">
-                          <div className="w-11 h-11 rounded-full bg-[#ffe3e4] text-[#a3242a] flex items-center justify-center font-extrabold text-sm shrink-0">{initials}</div>
+                          <div className="w-11 h-11 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center font-extrabold text-sm shrink-0">{initials}</div>
                           <div className="min-w-0"><p className="text-sm font-bold text-gray-900 truncate">{author}</p><p className="text-xs text-gray-500 truncate">{sub ? `${sub} · ` : ""}maintenant</p></div>
                         </div>
-                        <p className="text-sm text-gray-800 leading-relaxed mt-3 whitespace-pre-line" data-testid="create-preview-text">
-                          {mood?.example ? `« ${mood.example} »` : "Choisissez une humeur pour voir un exemple de ton."}
+                        <p className="text-sm text-gray-800 leading-relaxed mt-4 whitespace-pre-line" data-testid="create-preview-text">
+                          {mood?.sample ?? "Choisissez une humeur pour voir un exemple de ton."}
                         </p>
                         <p className="text-[11px] text-gray-400 mt-3">Exemple de ton, pas votre futur post : il sera écrit à partir de votre sujet et de votre datalake.</p>
                       </div>
