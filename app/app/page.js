@@ -15918,7 +15918,7 @@ function ProfilePage({ user, plan, onGoView, ...props }) {
           </div>
         </div>
         <div className="w-full sm:w-80" data-testid="profile-strength">
-          <div className="flex justify-between gap-2 text-sm font-bold whitespace-nowrap"><span>Profil complété à {strength.percent} %</span>{missing.length > 0 && <button type="button" onClick={() => edit(missing[0].stage)} data-testid="profile-missing" className={link}>Voir ce qui manque</button>}</div>
+          <div className="flex flex-wrap justify-between gap-x-3 gap-y-1 text-sm font-bold"><span>Profil complété à {strength.percent} %</span>{missing.length > 0 && <button type="button" onClick={() => edit(missing[0].stage)} data-testid="profile-missing" className={link}>Voir ce qui manque</button>}</div>
           <div className="h-2 rounded-full bg-gray-200 mt-2"><div className="h-2 rounded-full bg-green-700" style={{ width: `${strength.percent}%` }} /></div>
           <p className="text-xs text-gray-500 mt-1.5 leading-snug">{strength.label}. Plus il est complet, plus les posts vous ressemblent.{missing.length > 0 ? ` Il manque : ${missing.slice(0, 2).map((m) => m.label.toLowerCase()).join(", ")}${missing.length > 2 ? "…" : ""}.` : ""}</p>
         </div>
@@ -20490,7 +20490,7 @@ export default function Home() {
 
             </div>
 
-            <div className="sticky bottom-2 z-10 -mx-1 px-1 pt-2 bg-gradient-to-t from-white via-white to-transparent md:static md:bg-none md:p-0 md:m-0 space-y-2">
+            <div className={isTopic ? "pt-1 space-y-2" : "sticky bottom-2 z-10 -mx-1 px-1 pt-2 bg-gradient-to-t from-white via-white to-transparent md:static md:bg-none md:p-0 md:m-0 space-y-2"}>
               {curStep.id === "topic" ? (
                 <div className="space-y-2">
                   <button

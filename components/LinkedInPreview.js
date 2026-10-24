@@ -53,9 +53,9 @@ export default function LinkedInPreview({ text = "", name = "Vous", headline = "
             // eslint-disable-next-line @next/next/no-img-element
             <img src={imageUrl} alt="" className="w-full max-h-[360px] object-cover" data-testid="li-image" />
           )}
-          <div className="flex items-center justify-around border-t border-[#e0dfdc] mx-3 mt-2 py-1 text-[#00000099] text-xs font-semibold">
+          <div className="flex flex-wrap items-center justify-around border-t border-[#e0dfdc] mx-3 mt-2 py-1 text-[#00000099] text-xs font-semibold">
             {[[ThumbsUp, "J'aime"], [MessageSquare, "Commenter"], [Repeat2, "Republier"], [Send, "Envoyer"]].map(([Icon, label]) => (
-              <span key={label} className="flex items-center gap-1 py-2 px-0.5 text-[11px] sm:text-xs"><Icon size={16} />{label}</span>
+              <span key={label} className="flex items-center gap-1 py-2 px-0.5 text-[11px] sm:text-xs"><Icon size={16} className="shrink-0" />{label}</span>
             ))}
           </div>
         </article>

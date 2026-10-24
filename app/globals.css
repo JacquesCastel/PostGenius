@@ -3,3 +3,11 @@
 html {
   scroll-behavior: smooth;
 }
+
+/* Mobile : les enfants d'une grille peuvent rétrécir (sans cela, un contenu large, comme l'aperçu d'un post,
+   élargit la colonne unique au-delà de l'écran et toute la page déborde à droite). */
+@media (max-width: 767px) {
+  .grid > * {
+    min-width: 0;
+  }
+}
