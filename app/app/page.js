@@ -6913,7 +6913,55 @@ function timeAgoFr(d) {
   return `il y a ${Math.round(days / 30)} mois`;
 }
 
-function KnowledgePanel({ showToast, onCount, activeContextId = null, hasContexts = false, onGoHistory, profile = null, onChooseContext = null }) {
+// Idées de posts pour la thématique ouverte (maquette 8) : 3 sujets tirés de ses sources, à la demande
+function IdeasCard({ contextId, sourceCount, onWrite, showToast }) {
+  const key = `lp-ideas-${contextId ?? "main"}`;
+  const [ideas, setIdeas] = useState([]);
+  const [busy, setBusy] = useState(false);
+  useEffect(() => {
+    try { const v = JSON.parse(localStorage.getItem(key) ?? "[]"); if (Array.isArray(v)) setIdeas(v.slice(0, 6)); } catch {}
+  }, [key]);
+  const ask = async (more) => {
+    if (busy) return;
+    setBusy(true);
+    try {
+      const res = await fetch("/api/knowledge/ideas", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ contextId: contextId ?? "main", avoid: more ? ideas.map((i) => i.title) : [] }) });
+      const d = await readJson(res);
+      if (!res.ok) throw new Error(d.error || "Erreur");
+      const next = more ? [...ideas, ...d.ideas].slice(0, 6) : d.ideas;
+      setIdeas(next);
+      try { localStorage.setItem(key, JSON.stringify(next)); } catch {}
+    } catch (e) {
+      showToast(e.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <div className="bg-white rounded-2xl border border-[#e8ecf2] px-[18px] py-4" data-testid="ideas-card">
+      <span className="block text-xs font-bold tracking-wider uppercase text-[#5a6b85] mb-2">Idées pour cette thématique</span>
+      {ideas.length === 0 ? (
+        <p className="text-[13px] leading-relaxed text-[#33415c] mb-3">{sourceCount === 0 ? "Ajoutez d'abord une source à cette thématique : les idées s'appuient sur ce que vous avez déposé." : "Le moteur peut proposer trois sujets de posts tirés de vos sources pour cette thématique. Rien n'est inventé : chaque idée s'appuie sur ce que vous avez déposé."}</p>
+      ) : (
+        <ul className="space-y-3 mb-3" data-testid="ideas-list">
+          {ideas.map((i) => (
+            <li key={i.title} data-testid="idea">
+              <p className="text-[13px] leading-relaxed text-[#1b2a4a] italic">« {i.title} »</p>
+              {i.why && <p className="text-xs text-[#5a6b85] leading-snug mt-0.5">{i.why}</p>}
+              {onWrite && <button type="button" onClick={() => onWrite(i.title)} data-testid="idea-write" className="text-xs font-bold text-[#a3242a] hover:underline mt-1">Écrire ce post →</button>}
+            </li>
+          ))}
+        </ul>
+      )}
+      <button type="button" onClick={() => ask(ideas.length > 0)} disabled={busy || sourceCount === 0 || (ideas.length >= 6)} data-testid="ideas-ask" className="text-sm font-bold px-3.5 py-2 rounded-xl border border-[#f3a3a6] text-[#a3242a] hover:bg-[#fff8f8] disabled:text-gray-400 disabled:border-gray-200 disabled:hover:bg-white">
+        {busy ? "Recherche d'idées…" : ideas.length === 0 ? "✨ Proposer des idées" : ideas.length >= 6 ? "Assez d'idées pour l'instant" : "Proposer d'autres idées"}
+      </button>
+      {ideas.length > 0 && <button type="button" onClick={() => { setIdeas([]); try { localStorage.removeItem(key); } catch {} }} className="ml-3 text-xs text-gray-400 hover:text-gray-700">Effacer</button>}
+    </div>
+  );
+}
+
+function KnowledgePanel({ showToast, onCount, activeContextId = null, hasContexts = false, onGoHistory, profile = null, onChooseContext = null, onWriteIdea = null }) {
   const [data, setData] = useState(null); // { sources, limit, plan } ; null = chargement
   const open = true;
   const [adding, setAdding] = useState(false);
@@ -7379,6 +7427,7 @@ function KnowledgePanel({ showToast, onCount, activeContextId = null, hasContext
               </p>
             </div>
           )}
+          {data && used > 0 && !allCompanies && <IdeasCard key={activeContextId ?? "main"} contextId={activeContextId} sourceCount={inScope.length} onWrite={onWriteIdea} showToast={showToast} />}
             </div>
           </div>
         </div>
@@ -17595,7 +17644,7 @@ export default function Home() {
   const [createStep, setCreateStep] = useState(null);
   const prevViewRef = useRef(view);
   useEffect(() => {
-    if (view === "create" && prevViewRef.current !== "create") setCreateStep(form.theme.trim() || (genMode === "single" && sourceMode !== "idea" && source) ? (genMode === "single" ? "ctx" : "settings") : null);
+    if (view === "create" && prevViewRef.current !== "create") setCreateStep(null); // la page principale montre le sujet déjà posé
     prevViewRef.current = view;
   }, [view]);
   useEffect(() => {
@@ -21175,7 +21224,7 @@ export default function Home() {
         <BillingView user={user} showToast={showToast} focus={billingFocus} />
       ) : view === "datalake" ? (
         <main className="max-w-5xl mx-auto p-6">
-          <KnowledgePanel key={activeContextId ?? "main"} showToast={showToast} activeContextId={activeContextId} hasContexts={contexts.length > 0} onGoHistory={() => setView("history")} profile={profile} onChooseContext={chooseContext} />
+          <KnowledgePanel key={activeContextId ?? "main"} showToast={showToast} activeContextId={activeContextId} hasContexts={contexts.length > 0} onGoHistory={() => setView("history")} profile={profile} onChooseContext={chooseContext} onWriteIdea={(title) => { setForm((f) => ({ ...f, theme: title })); setGenMode("single"); setSourceMode("idea"); setSource(null); setView("create"); }} />
         </main>
       ) : view === "brand-kit" ? (
         <BrandKitView showToast={showToast} />
