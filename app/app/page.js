@@ -6900,6 +6900,18 @@ function DatalakePosts({ contextId, onGoHistory }) {
 }
 
 // Datalake éditorial : toutes les sources de l'auteur et ce que l'outil en a retenu (thèmes, vocabulaire, positions, faits).
+// « il y a 3 jours » : date relative d'une source (maquette 8)
+function timeAgoFr(d) {
+  const t = new Date(d).getTime();
+  if (!Number.isFinite(t)) return "";
+  const days = Math.floor((Date.now() - t) / 86400000);
+  if (days < 1) return "aujourd'hui";
+  if (days === 1) return "hier";
+  if (days < 14) return `il y a ${days} jours`;
+  if (days < 60) return `il y a ${Math.round(days / 7)} semaines`;
+  return `il y a ${Math.round(days / 30)} mois`;
+}
+
 function KnowledgePanel({ showToast, onCount, activeContextId = null, hasContexts = false, onGoHistory, profile = null, onChooseContext = null }) {
   const [data, setData] = useState(null); // { sources, limit, plan } ; null = chargement
   const open = true;
@@ -7057,23 +7069,21 @@ function KnowledgePanel({ showToast, onCount, activeContextId = null, hasContext
     <div id="field-knowledge" data-testid="datalake" className="space-y-4">
       {open && (
         <div className="space-y-4">
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-2">
-            <div className="flex items-start justify-between gap-3 flex-wrap">
-              <div className="min-w-0">
-                <h2 className="font-semibold text-base">Votre datalake éditorial</h2>
-                <p className="text-xs text-gray-500 leading-relaxed mt-1 max-w-2xl">
-                  Documents, articles, liens, notes : tout ce que vous déposez ici est lu par l&apos;IA, qui en retient les thèmes, votre vocabulaire, vos positions et vos faits précis. C&apos;est la mémoire dans laquelle le copilote puise pour écrire juste, <strong>sans rien inventer au-delà</strong>. Vos sources ne sont partagées avec personne et se suppriment à tout moment.
-                </p>
-              </div>
-              <div className="text-right shrink-0">
-                <p className="text-xs text-gray-400" data-testid="datalake-count">{data ? `${used}/${data.limit} sources` : ""}</p>
-                {!full && <button type="button" onClick={() => setAdding((a) => !a)} data-testid="datalake-add-toggle" className="mt-1 bg-[#ff5a5f] hover:bg-[#f63d44] text-white text-sm font-medium px-3.5 py-1.5 rounded-lg">{adding ? "Fermer" : "Ajouter une source"}</button>}
-              </div>
+          <div className="flex items-start gap-4 flex-wrap">
+            <div className="flex-1 min-w-[16rem]">
+              <p className="text-sm text-[#5a6b85] leading-relaxed max-w-[700px]">{hasContexts ? "Chaque thématique a son propre datalake : vos notes sur un sujet ne se mélangent pas avec un autre. Le copilote ne pioche que dans la thématique choisie." : "Documents, articles, liens, notes : tout ce que vous déposez ici est lu par l'IA, qui en retient les thèmes, votre vocabulaire, vos positions et vos faits précis. Le copilote puise dedans pour écrire juste, sans rien inventer au-delà."} <span className="text-gray-400">Vos sources ne sont partagées avec personne et se suppriment à tout moment.</span></p>
+              <p className="text-xs text-gray-400 mt-1" data-testid="datalake-count">{data ? `${used}/${data.limit} sources` : ""}</p>
             </div>
+            {!full && (
+              <>
+                {voiceOk && <button type="button" onClick={() => { setTab("voice"); setAdding(true); }} data-testid="datalake-dictate" className="bg-white text-[#a3242a] border border-[#f3a3a6] hover:bg-[#fff8f8] text-sm font-bold px-4 py-2.5 rounded-xl">🎙 Dicter</button>}
+                <button type="button" onClick={() => setAdding((a) => !a)} data-testid="datalake-add-toggle" className="bg-[#d63b42] hover:bg-[#c2343a] text-white text-sm font-bold px-[18px] py-[11px] rounded-xl">{adding ? "Fermer" : "Ajouter une source"}</button>
+              </>
+            )}
           </div>
           {data?.error && <p className="text-xs text-red-600">{data.error}</p>}
           {hasContexts && data && (
-            <div className="flex gap-1.5 flex-wrap border-b border-gray-200" role="tablist" aria-label="Thématique" data-testid="datalake-tabs">
+            <div className="flex gap-1.5 flex-wrap items-end border-b border-[#e8ecf2]" role="tablist" aria-label="Thématique" data-testid="datalake-tabs">
               {themeTabs.map((t) => {
                 const n = (data.sources ?? []).filter((x) => !x.momentId && !x.shared && sourceKeys(x).includes(t.id)).length;
                 const on = !allCompanies && (activeContextId ?? homeKey) === t.id;
@@ -7082,19 +7092,13 @@ function KnowledgePanel({ showToast, onCount, activeContextId = null, hasContext
                 );
               })}
               <button type="button" role="tab" aria-selected={allCompanies} data-testid="datalake-tab-all" onClick={() => setAllCompanies(true)} className={`text-sm px-4 py-2 ${allCompanies ? "font-semibold text-[#a3242a]" : "text-gray-500 hover:text-gray-800"}`}>Toutes les sources</button>
+            <span className="hidden lg:flex ml-auto items-center gap-1.5 text-[13px] text-[#5a6b85] pb-2" data-testid="datalake-goto">Aller à :
+                <a href="#datalake-sources" className="font-semibold text-[#a3242a] hover:underline">Sources</a> ·
+                <a href="#datalake-engine" className="hover:text-gray-900 hover:underline">Ce que le moteur a appris</a> ·
+                <a href="#datalake-language" className="hover:text-gray-900 hover:underline">Langage</a>
+              </span>
             </div>
           )}
-          {hasContexts && (
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4" data-testid="datalake-common">
-              <p className="text-[11px] font-bold uppercase tracking-wider text-gray-500 mb-1.5">Commun à toutes vos thématiques</p>
-              <p className="text-xs text-gray-600 leading-relaxed">
-                Qui vous êtes : <strong>{profile?.name || "—"}</strong>{profile?.headline ? `, ${profile.headline}` : ""}.{profile?.expertise ? ` ${profile.expertise}.` : ""}
-                {profile?.styleNotes ? <> Votre manière d&apos;écrire : « {profile.styleNotes.slice(0, 140)}{profile.styleNotes.length > 140 ? "…" : ""} ».</> : null}
-                {" "}Ils s&apos;appliquent partout ; le reste (sources, voix, cible) est propre à chaque thématique.
-              </p>
-            </div>
-          )}
-          {data && used > 0 && <DatalakeNav onAdd={() => { setAdding(true); setTimeout(() => document.getElementById("datalake-add")?.scrollIntoView({ behavior: "smooth", block: "start" }), 50); }} />}
           {full ? (
             <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-2.5" data-testid="knowledge-full">
               Limite de votre offre atteinte ({data.limit} sources). Supprimez une source pour en ajouter, ou passez à une offre supérieure.
@@ -7211,6 +7215,8 @@ function KnowledgePanel({ showToast, onCount, activeContextId = null, hasContext
               </div>
             </div>
           )}
+          <div className="grid lg:grid-cols-[minmax(0,1fr)_400px] gap-5 items-start" data-testid="datalake-layout">
+            <div className="space-y-4 min-w-0">
           {unread.length > 0 && (
             <div className="rounded-xl border border-[#ffd6d8] bg-[#fff6f6] p-3.5 flex items-center justify-between gap-3 flex-wrap" data-testid="datalake-unread">
               <p className="text-xs text-gray-700">
@@ -7221,90 +7227,53 @@ function KnowledgePanel({ showToast, onCount, activeContextId = null, hasContext
               </button>
             </div>
           )}
-          {data && used > 0 && (
-            <div className="flex items-center gap-2 flex-wrap text-xs">
-              {[["all", "Tout"], ["note", "Textes"], ["link", "Liens"], ["file", "Fichiers"], ["posts", "Posts"]].map(([k, l]) => (
-                <button key={k} type="button" onClick={() => setKindFilter(k)} data-testid={`datalake-kind-${k}`} className={chip(kindFilter === k)}>{l}</button>
-              ))}
+          {data && used === 0 && !data.error && (
+            <div className="bg-white rounded-2xl border border-[#e8ecf2] px-[18px] py-6 text-center" data-testid="datalake-empty">
+              <p className="text-sm text-[#33415c] mb-3">Aucune source pour l&apos;instant. Déposez un lien, un texte, un fichier ou dictez : le copilote en tirera vos thèmes, votre vocabulaire et vos faits.</p>
+              {!full && <button type="button" onClick={() => setAdding(true)} data-testid="datalake-empty-add" className="bg-[#d63b42] hover:bg-[#c2343a] text-white text-sm font-bold px-[18px] py-[11px] rounded-xl">Ajouter une source</button>}
             </div>
           )}
-          {data && used > 0 && <EnginePanel contextId={activeContextId} sourceCount={inScope.length} showToast={showToast} onChanged={() => { load(); setEngineKey((k) => k + 1); }} />}
-          {inScope.length > 0 && synth.themes.length + synth.vocabulary.length + synth.positions.length > 0 && (
-            <div id="datalake-synthesis" className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4 scroll-mt-24" data-testid="datalake-synthesis">
-              <h3 className="font-semibold text-sm">Ce que l&apos;outil a retenu</h3>
-              {allThemes.length > 0 && (
-                <div>
-                  <p className="text-[11px] font-medium uppercase tracking-wide text-gray-400 mb-1.5">Thèmes récurrents</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {allThemes.map((t) => {
-                      const on = themeFilter === t.text.toLowerCase();
-                      return (
-                        <button key={t.text} type="button" onClick={() => setThemeFilter(on ? null : t.text.toLowerCase())} data-testid="datalake-theme" className={chip(on)} title={t.sources.join(" · ")}>
-                          {t.text} <span className={on ? "opacity-80" : "text-gray-400"}>×{t.count}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                  {themeFilter && <p className="text-[11px] text-gray-400 mt-1.5">Sources filtrées sur « {themeFilter} » · <button type="button" onClick={() => setThemeFilter(null)} className="underline">tout afficher</button></p>}
-                </div>
-              )}
-              {synth.vocabulary.length > 0 && (
-                <div>
-                  <p className="text-[11px] font-medium uppercase tracking-wide text-gray-400 mb-1.5">Votre vocabulaire</p>
-                  <div className="flex flex-wrap gap-1.5" data-testid="datalake-vocab">
-                    {synth.vocabulary.map((v) => (<span key={v.text} className="text-xs px-2.5 py-1 rounded-full bg-gray-100 text-gray-700">{v.text}</span>))}
-                  </div>
-                </div>
-              )}
-              {synth.positions.length > 0 && (
-                <div>
-                  <p className="text-[11px] font-medium uppercase tracking-wide text-gray-400 mb-1.5">Vos positions</p>
-                  <ul className="space-y-1.5 text-sm text-gray-700" data-testid="datalake-positions">
-                    {synth.positions.map((v) => (<li key={v.text} className="flex gap-2"><span className="text-[#ff5a5f]">•</span><span>{v.text}</span></li>))}
-                  </ul>
-                </div>
-              )}
-            </div>
-          )}
-          {data && <DatalakePosts contextId={activeContextId} onGoHistory={onGoHistory} />}
-          {data && used > 0 && <LanguagePanel key={engineKey} contextId={activeContextId} contextName={hasContexts ? ctxList.find((c) => c.id === activeContextId)?.name ?? "mon activité" : ""} sourceCount={inScope.length} showToast={showToast} />}
           {data && used > 0 && (
-            <div id="datalake-sources" className="bg-white rounded-2xl border border-gray-100 shadow-sm p-2 scroll-mt-24" data-testid="datalake-sources">
+            <div id="datalake-sources" className="bg-white rounded-2xl border border-[#e8ecf2] px-[18px] py-4 scroll-mt-24" data-testid="datalake-sources">
+              <span className="block text-xs font-bold tracking-wider uppercase text-[#5a6b85] mb-2">{hasContexts && !allCompanies ? `Sources de « ${themeName(activeContextId ?? homeKey)} »` : "Toutes les sources"}</span>
+              <div className="flex items-center gap-2 flex-wrap text-xs mb-1">
+                {[["all", "Tout"], ["note", "Textes"], ["link", "Liens"], ["file", "Fichiers"], ["posts", "Posts"]].map(([k, l]) => (
+                  <button key={k} type="button" onClick={() => setKindFilter(k)} data-testid={`datalake-kind-${k}`} className={chip(kindFilter === k)}>{l}</button>
+                ))}
+              </div>
               {visible.length === 0 ? (
-                <p className="text-xs text-gray-400 p-4">Aucune source ne correspond à ces filtres{hasContexts && !allCompanies ? " pour cette thématique" : ""}.</p>
+                <p className="text-xs text-gray-400 py-3">Aucune source ne correspond à ces filtres{hasContexts && !allCompanies ? " pour cette thématique" : ""}.</p>
               ) : (
-              <ul className="divide-y divide-gray-100">
+              <ul className="divide-y divide-[#eef1f6]">
                 {visible.map((s) => (
-                  <li key={s.id} className="p-3" data-testid="datalake-source">
-                    <div className="flex items-start justify-between gap-2 flex-wrap">
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium text-gray-800 truncate">
-                          <span className="text-[10px] uppercase tracking-wide bg-gray-100 text-gray-500 rounded px-1.5 py-0.5 mr-1.5">{KIND[s.kind] ?? s.kind}</span>
-                          {s.title}
-                        </p>
-                        <p className="text-[11px] text-gray-400">
-                          {Math.round(s.charCount / 100) / 10} k caractères · {s.facts.length} fait{s.facts.length > 1 ? "s" : ""} retenu{s.facts.length > 1 ? "s" : ""}
+                  <li key={s.id} className="py-3" data-testid="datalake-source">
+                    <div className="flex items-center gap-3">
+                      <span className="text-lg shrink-0" aria-hidden="true">{s.kind === "link" ? "🔗" : s.kind === "file" ? "📄" : s.kind === "posts" ? "💬" : /dict/i.test(s.title ?? "") ? "🎙" : "📝"}</span>
+                      <div className="flex-1 min-w-0">
+                        <b className="text-sm text-[#1b2a4a] block truncate">{s.title}</b>
+                        <div className="text-xs text-[#5a6b85]">
+                          {s.createdAt ? `${timeAgoFr(s.createdAt)} · ` : ""}{KIND[s.kind] ?? s.kind} · {Math.round(s.charCount / 100) / 10} k caractères · {s.facts.length} fait{s.facts.length > 1 ? "s" : ""} retenu{s.facts.length > 1 ? "s" : ""}
                           {s.origin && s.kind === "link" ? ` · ${s.origin.replace(/^https?:\/\//, "").slice(0, 40)}` : s.origin && s.kind === "file" ? ` · ${s.origin.slice(0, 50)}` : ""}
-                        </p>
+                        </div>
                         {s.insights?.themes?.length > 0 && (
                           <div className="flex flex-wrap gap-1 mt-1.5">
                             {s.insights.themes.map((t) => (<span key={t} className="text-[10px] px-2 py-0.5 rounded-full bg-[#fff1f1] text-[#f63d44]">{t}</span>))}
                           </div>
                         )}
                       </div>
-                      <div className="flex items-center gap-2 shrink-0 text-xs flex-wrap">
-                        {s.momentId && <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-50 text-amber-700" data-testid="source-moment">📅 {momentList.find((m) => m.id === s.momentId)?.name ?? "Temps fort"}</span>}
+                      <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
+                        {s.momentId && <span className="text-[11px] font-bold px-2 py-[3px] rounded-full bg-amber-50 text-amber-700" data-testid="source-moment">📅 {momentList.find((m) => m.id === s.momentId)?.name ?? "Temps fort"}</span>}
                         {hasContexts && scopeTag(s) && (
-                          <button type="button" onClick={() => setEditScopeId(editScopeId === s.id ? null : s.id)} data-testid="source-scope-tag" title="Choisir les thématiques où cette source sert" className={`text-[10px] px-2 py-0.5 rounded-full border ${(s.links ?? []).length || s.shared ? "bg-sky-50 text-sky-800 border-sky-100" : "bg-gray-50 text-gray-500 border-gray-200"}`}>{scopeTag(s)} ▾</button>
+                          <button type="button" onClick={() => setEditScopeId(editScopeId === s.id ? null : s.id)} data-testid="source-scope-tag" title="Choisir les thématiques où cette source sert" className={`text-[11px] font-bold px-2 py-[3px] rounded-full ${(s.shared || (s.links ?? []).length) ? "bg-[#e8f1fb] text-[#084a8d]" : "bg-[#f1f5f9] text-[#33415c]"}`}>{scopeTag(s)}</button>
                         )}
-                        <label className="flex items-center gap-1 text-gray-500" title="Cette source est toujours transmise à l'IA, quel que soit le sujet">
-                          <input type="checkbox" checked={s.pinned} onChange={(e) => patch(s.id, { pinned: e.target.checked })} /> Toujours
-                        </label>
-                        <button type="button" onClick={() => setExpanded(expanded === s.id ? null : s.id)} className="text-[#ff5a5f] hover:underline">
-                          {expanded === s.id ? "Masquer" : "Voir"}
-                        </button>
-                        <button type="button" onClick={() => remove(s)} className="text-gray-400 hover:text-red-600">Supprimer</button>
                       </div>
+                    </div>
+                    <div className="flex items-center gap-3 text-xs mt-1.5 pl-9 text-gray-500">
+                      <label className="flex items-center gap-1" title="Cette source est toujours transmise à l'IA, quel que soit le sujet">
+                        <input type="checkbox" checked={s.pinned} onChange={(e) => patch(s.id, { pinned: e.target.checked })} /> Toujours
+                      </label>
+                      <button type="button" onClick={() => setExpanded(expanded === s.id ? null : s.id)} className="text-[#0a66c2] hover:underline">{expanded === s.id ? "Masquer" : "Voir"}</button>
+                      <button type="button" onClick={() => remove(s)} className="text-gray-400 hover:text-red-600">Supprimer</button>
                     </div>
                     {editScopeId === s.id && !s.momentId && (
                       <div className="mt-2 rounded-xl border border-gray-200 bg-gray-50 p-3 space-y-1.5" data-testid="source-scope-editor">
@@ -7351,6 +7320,66 @@ function KnowledgePanel({ showToast, onCount, activeContextId = null, hasContext
               )}
             </div>
           )}
+          {hasContexts && data && used > 0 && (
+            <div className="rounded-[18px] border border-[#fde1c0] bg-[#fff7ed] px-[18px] py-4" data-testid="datalake-multi-note">
+              <p className="text-xs font-bold tracking-wider uppercase text-[#7a4b00] mb-1">Une source, plusieurs thématiques</p>
+              <p className="text-[13px] leading-relaxed text-[#33415c]">Une source peut servir dans plusieurs thématiques sans être dupliquée. Si vous la modifiez, elle change partout. Vous pouvez aussi la retirer d&apos;une seule thématique.</p>
+            </div>
+          )}
+          {data && <DatalakePosts contextId={activeContextId} onGoHistory={onGoHistory} />}
+          {data && used > 0 && <LanguagePanel key={engineKey} contextId={activeContextId} contextName={hasContexts ? ctxList.find((c) => c.id === activeContextId)?.name ?? "mon activité" : ""} sourceCount={inScope.length} showToast={showToast} />}
+          {inScope.length > 0 && synth.themes.length + synth.vocabulary.length + synth.positions.length > 0 && (
+            <div id="datalake-synthesis" className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4 scroll-mt-24" data-testid="datalake-synthesis">
+              <h3 className="font-semibold text-sm">Ce que l&apos;outil a retenu</h3>
+              {allThemes.length > 0 && (
+                <div>
+                  <p className="text-[11px] font-medium uppercase tracking-wide text-gray-400 mb-1.5">Thèmes récurrents</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {allThemes.map((t) => {
+                      const on = themeFilter === t.text.toLowerCase();
+                      return (
+                        <button key={t.text} type="button" onClick={() => setThemeFilter(on ? null : t.text.toLowerCase())} data-testid="datalake-theme" className={chip(on)} title={t.sources.join(" · ")}>
+                          {t.text} <span className={on ? "opacity-80" : "text-gray-400"}>×{t.count}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {themeFilter && <p className="text-[11px] text-gray-400 mt-1.5">Sources filtrées sur « {themeFilter} » · <button type="button" onClick={() => setThemeFilter(null)} className="underline">tout afficher</button></p>}
+                </div>
+              )}
+              {synth.vocabulary.length > 0 && (
+                <div>
+                  <p className="text-[11px] font-medium uppercase tracking-wide text-gray-400 mb-1.5">Votre vocabulaire</p>
+                  <div className="flex flex-wrap gap-1.5" data-testid="datalake-vocab">
+                    {synth.vocabulary.map((v) => (<span key={v.text} className="text-xs px-2.5 py-1 rounded-full bg-gray-100 text-gray-700">{v.text}</span>))}
+                  </div>
+                </div>
+              )}
+              {synth.positions.length > 0 && (
+                <div>
+                  <p className="text-[11px] font-medium uppercase tracking-wide text-gray-400 mb-1.5">Vos positions</p>
+                  <ul className="space-y-1.5 text-sm text-gray-700" data-testid="datalake-positions">
+                    {synth.positions.map((v) => (<li key={v.text} className="flex gap-2"><span className="text-[#ff5a5f]">•</span><span>{v.text}</span></li>))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
+            </div>
+            <div className="space-y-4 min-w-0">
+          {data && used > 0 && <EnginePanel contextId={activeContextId} sourceCount={inScope.length} showToast={showToast} onChanged={() => { load(); setEngineKey((k) => k + 1); }} />}
+          {hasContexts && (
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4" data-testid="datalake-common">
+              <p className="text-[11px] font-bold uppercase tracking-wider text-gray-500 mb-1.5">Commun à toutes vos thématiques</p>
+              <p className="text-xs text-gray-600 leading-relaxed">
+                Qui vous êtes : <strong>{profile?.name || "—"}</strong>{profile?.headline ? `, ${profile.headline}` : ""}.{profile?.expertise ? ` ${profile.expertise}.` : ""}
+                {profile?.styleNotes ? <> Votre manière d&apos;écrire : « {profile.styleNotes.slice(0, 140)}{profile.styleNotes.length > 140 ? "…" : ""} ».</> : null}
+                {" "}Ils s&apos;appliquent partout ; le reste (sources, voix, cible) est propre à chaque thématique.
+              </p>
+            </div>
+          )}
+            </div>
+          </div>
         </div>
       )}
     </div>
