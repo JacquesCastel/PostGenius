@@ -15661,8 +15661,8 @@ function ThemeChooser({ themes, full, showToast, onClose, onStart, onMomentCreat
     }
   };
   return (
-    <div className="fixed inset-0 z-50 bg-[#1b2a4a]/45 flex items-start sm:items-center justify-center p-4 overflow-y-auto" data-testid="theme-chooser" role="dialog" aria-modal="true" aria-label="Nouvelle thématique">
-      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl p-6 sm:p-8 space-y-5">
+    <div className="fixed inset-0 z-50 bg-[#1b2a4a]/45 flex justify-center p-3 sm:p-6 overflow-y-auto" data-testid="theme-chooser" role="dialog" aria-modal="true" aria-label="Nouvelle thématique" onClick={onClose}>
+      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl p-5 sm:p-8 space-y-4 sm:space-y-5 my-auto" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-start gap-4">
           <div className="flex-1">
             <p className="text-xs font-bold uppercase tracking-wider text-[#b3282f]">Nouvelle thématique</p>
@@ -15693,25 +15693,27 @@ function ThemeChooser({ themes, full, showToast, onClose, onStart, onMomentCreat
             </div>
           </div>
         )}
-        <div className="border border-amber-300 rounded-2xl p-4 bg-amber-50/60 space-y-3" data-testid="moment-form">
-          <div className="flex gap-3.5 items-start">
+        <div className="border border-amber-300 rounded-2xl p-4 bg-amber-50/60 flex flex-col lg:flex-row gap-4 lg:gap-5 lg:items-start" data-testid="moment-form">
+          <div className="flex gap-3.5 items-start lg:flex-1">
             <div className="w-11 h-11 rounded-xl bg-amber-100 flex items-center justify-center text-2xl shrink-0">📅</div>
             <div className="flex-1">
               <p className="text-base font-extrabold">Ou un temps fort, rattaché à l&apos;une de vos thématiques</p>
               <p className="text-[13px] text-gray-700 mt-1 leading-relaxed">Un sujet passager qui appartient à une entreprise ou à un sujet personnel : il reprend sa voix, sa cible et son datalake, et y ajoute ses propres sources. Vous l&apos;archivez ensuite. <em>Ex. : le lancement de mon livre (La vie d&apos;indépendante), mon salon de mars (Mon métier).</em></p>
             </div>
           </div>
-          <div className="grid sm:grid-cols-4 gap-2.5">
-            <select value={m.contextId} onChange={(e) => setM({ ...m, contextId: e.target.value })} className={inputCls} aria-label="Thématique" data-testid="moment-context">
+          <div className="lg:w-[340px] shrink-0 space-y-2">
+            <select value={m.contextId} onChange={(e) => setM({ ...m, contextId: e.target.value })} className={`${inputCls} w-full`} aria-label="Thématique" data-testid="moment-context">
               {themes.map((t) => (<option key={t.id} value={t.id}>{t.name}</option>))}
             </select>
-            <input type="text" value={m.name} onChange={(e) => setM({ ...m, name: e.target.value })} placeholder="Nom du temps fort" className={`${inputCls} sm:col-span-3`} data-testid="moment-name" />
-            <input type="text" value={m.brief} onChange={(e) => setM({ ...m, brief: e.target.value })} placeholder="Ce que vous voulez dire (facultatif)" className={`${inputCls} sm:col-span-2`} data-testid="moment-brief" />
-            <input type="date" value={m.startsAt} onChange={(e) => setM({ ...m, startsAt: e.target.value })} className={inputCls} aria-label="Début" data-testid="moment-start" />
-            <input type="date" value={m.endsAt} onChange={(e) => setM({ ...m, endsAt: e.target.value })} className={inputCls} aria-label="Fin" data-testid="moment-end" />
+            <input type="text" value={m.name} onChange={(e) => setM({ ...m, name: e.target.value })} placeholder="Nom du temps fort" className={`${inputCls} w-full`} data-testid="moment-name" />
+            <input type="text" value={m.brief} onChange={(e) => setM({ ...m, brief: e.target.value })} placeholder="Ce que vous voulez dire (facultatif)" className={`${inputCls} w-full`} data-testid="moment-brief" />
+            <div className="grid grid-cols-2 gap-2">
+              <input type="date" value={m.startsAt} onChange={(e) => setM({ ...m, startsAt: e.target.value })} className={inputCls} aria-label="Début" data-testid="moment-start" />
+              <input type="date" value={m.endsAt} onChange={(e) => setM({ ...m, endsAt: e.target.value })} className={inputCls} aria-label="Fin" data-testid="moment-end" />
+            </div>
+            {error && <p className="text-xs text-red-600" data-testid="moment-error">{error}</p>}
+            <button type="button" onClick={createMoment} disabled={busy || !m.name.trim()} data-testid="moment-save" className="w-full lg:w-auto lg:float-right bg-[#d63b42] hover:bg-[#b3282f] disabled:bg-gray-300 text-white font-bold text-sm px-5 py-2.5 rounded-xl">{busy ? "Création…" : "Créer le temps fort"}</button>
           </div>
-          {error && <p className="text-xs text-red-600" data-testid="moment-error">{error}</p>}
-          <button type="button" onClick={createMoment} disabled={busy || !m.name.trim()} data-testid="moment-save" className="bg-[#d63b42] hover:bg-[#b3282f] disabled:bg-gray-300 text-white font-bold text-sm px-5 py-2.5 rounded-xl">{busy ? "Création…" : "Créer le temps fort"}</button>
         </div>
         {themes.length > 0 && (
           <div className="border border-dashed border-gray-300 rounded-xl p-3.5 flex items-center gap-3 flex-wrap bg-gray-50" data-testid="context-copy-tone">
