@@ -17,7 +17,7 @@ export async function GET(req) {
   const userId = await getUserId(req);
   if (!userId) return NextResponse.json({ error: "Non connecté." }, { status: 401 });
   const [user, contexts, sourceRows, draftRows, moodRows, lastRows, moments] = await Promise.all([
-    prisma.user.findUnique({ where: { id: userId }, select: { companyName: true, businessDescription: true, targetAudience: true, leadIcp: true, headline: true, website: true } }),
+    prisma.user.findUnique({ where: { id: userId }, select: { companyName: true, businessDescription: true, targetAudience: true, leadIcp: true, headline: true, website: true, editorialLine: true, brandVoice: true } }),
     prisma.context.findMany({ where: { userId }, orderBy: { createdAt: "asc" } }),
     prisma.knowledgeSource.groupBy({ by: ["contextId"], where: { userId, shared: false, momentId: null }, _count: { _all: true } }),
     prisma.draft.groupBy({ by: ["contextId"], where: { userId }, _count: { _all: true } }),
@@ -40,9 +40,9 @@ export async function GET(req) {
   const momentsOf = (id) => moments.filter((m) => (m.contextId ?? null) === id).map((m) => ({ id: m.id, name: m.name, startsAt: m.startsAt, endsAt: m.endsAt, state: momentState(m) })).filter((m) => m.state === "active" || m.state === "upcoming");
   const home = {
     id: "main", kind: "activity", name: user?.companyName || "Mon activité", role: user?.headline ?? "", website: user?.website ?? "", description: excerpt(user?.businessDescription),
-    target: user?.targetAudience ?? "", leadIcp: user?.leadIcp ?? "", genres: "",
+    target: user?.targetAudience ?? "", leadIcp: user?.leadIcp ?? "", genres: "", hasVoice: Boolean((user?.editorialLine ?? "").trim() || (user?.brandVoice ?? "").trim()),
   };
-  const themes = [home, ...contexts.map((c) => ({ id: c.id, kind: c.kind ?? "activity", name: c.name, role: c.role ?? "", website: c.website ?? "", description: excerpt(c.businessDescription), target: c.targetAudience ?? "", leadIcp: c.leadIcp ?? "", genres: c.postGenres ?? "" }))].map((t) => {
+  const themes = [home, ...contexts.map((c) => ({ id: c.id, kind: c.kind ?? "activity", name: c.name, role: c.role ?? "", website: c.website ?? "", description: excerpt(c.businessDescription), target: c.targetAudience ?? "", leadIcp: c.leadIcp ?? "", genres: c.postGenres ?? "", hasVoice: Boolean((c.editorialLine ?? "").trim() || (c.brandVoice ?? "").trim()) }))].map((t) => {
     const k = t.id;
     const ctxId = k === "main" ? null : k;
     return { ...t, sources: sources[k] ?? 0, posts: posts[k] ?? 0, lastPostAt: last[k] ?? null, moods: topMoods(k, t.genres), moments: momentsOf(ctxId) };

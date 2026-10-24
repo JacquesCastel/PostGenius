@@ -15852,6 +15852,137 @@ function ThemeWizard({ wiz, theme, themes, profile, showToast, onClose, onChange
   );
 }
 
+// Mon profil (maquette 11) : une page à part entière, avec des cartes. Les formulaires détaillés restent accessibles par « Modifier ».
+const PROFILE_STAGE_FIELD = { identity: "name", audience: "companyName", leads: "targetAudience", voice: "styleNotes", sources: "knowledge", rhythm: "publishDays" };
+const DAY_NAMES = { 1: "lundi", 2: "mardi", 3: "mercredi", 4: "jeudi", 5: "vendredi", 6: "samedi", 7: "dimanche", lun: "lundi", mar: "mardi", mer: "mercredi", jeu: "jeudi", ven: "vendredi", sam: "samedi", dim: "dimanche" };
+const THEME_COMPLETENESS = [
+  { label: "une description", done: (t) => Boolean(t.description) },
+  { label: "une cible", done: (t) => Boolean(t.target) },
+  { label: "une voix", done: (t) => Boolean(t.hasVoice) },
+  { label: "des sources", done: (t) => t.sources > 0 },
+];
+function ProfilePage({ user, plan, onGoView, ...props }) {
+  const { profile, linkedin, instagram, focusField } = props;
+  const [editing, setEditing] = useState(Boolean(focusField)); // formulaires détaillés
+  const [stageField, setStageField] = useState(focusField ?? null);
+  const [counts, setCounts] = useState({ knowledge: 0, remarks: 0 });
+  const [themes, setThemes] = useState(null);
+  useEffect(() => {
+    fetch("/api/knowledge").then(readJson).then((d) => setCounts((c) => ({ ...c, knowledge: d.sources?.length ?? 0 }))).catch(() => {});
+    fetch("/api/remarks").then(readJson).then((d) => setCounts((c) => ({ ...c, remarks: d.remarks?.length ?? 0 }))).catch(() => {});
+    fetch("/api/themes").then(readJson).then((d) => setThemes(d.themes ?? [])).catch(() => setThemes([]));
+  }, [editing]);
+  const edit = (stage) => { setStageField(stage ? PROFILE_STAGE_FIELD[stage] : null); setEditing(true); window.scrollTo?.({ top: 0 }); };
+  if (editing) {
+    return (
+      <div>
+        <div className="max-w-5xl mx-auto px-6 pt-5">
+          <button type="button" onClick={() => { setEditing(false); setStageField(null); props.onFocusHandled?.(); }} data-testid="profile-back" className="text-sm text-gray-500 hover:text-gray-800">‹ Mon profil</button>
+        </div>
+        <ProfileView {...props} focusField={stageField} onGoThemes={() => onGoView("themes")} />
+      </div>
+    );
+  }
+  const f = profile ?? {};
+  const ctx = { knowledgeCount: counts.knowledge, remarksCount: counts.remarks, styleImportedAt: f.styleImportedAt, linkedin };
+  const strength = profileStrength(f, ctx);
+  const missing = PROFILE_STAGES.flatMap((st) => st.items.filter((i) => !i.bonus && !i.done(f, ctx)).map((i) => ({ stage: st.id, label: i.label })));
+  const initials = String(f.name || user?.name || "?").split(/\s+/).map((w) => w[0]).slice(0, 2).join("").toUpperCase();
+  const days = String(f.publishDays ?? "").split(",").map((d) => DAY_NAMES[d.trim().toLowerCase()]).filter(Boolean).join(", ").replace(/^./, (c) => c.toUpperCase());
+  const goals = String(f.commGoals ?? "").split(",").map((g) => g.trim()).filter(Boolean);
+  const card = "bg-white border border-gray-100 rounded-2xl p-5";
+  const label = "text-xs font-bold tracking-wide uppercase text-gray-500 mb-2";
+  const link = "text-sm font-semibold text-[#0a66c2] hover:underline";
+  const tag = "inline-block text-[11px] font-bold px-2.5 py-1 rounded-full";
+  const Row = ({ k, v }) => (
+    <div className="flex justify-between gap-3 text-sm text-gray-700 py-1.5 border-t border-gray-100 first:border-t-0"><span>{k}</span><b className="font-semibold text-gray-900 text-right">{v || "—"}</b></div>
+  );
+  const themeStatus = (t) => {
+    const done = THEME_COMPLETENESS.filter((st) => st.done(t));
+    const pct = Math.round((done.length / THEME_COMPLETENESS.length) * 100);
+    return { pct, label: pct === 100 ? "Complète" : pct >= 50 ? "À affiner" : "À compléter", tone: pct === 100 ? "text-green-700" : "text-amber-700", bar: pct === 100 ? "bg-green-700" : "bg-amber-600", todo: THEME_COMPLETENESS.filter((st) => !st.done(t)) };
+  };
+  const connected = (ok) => `${tag} ${ok ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-600"}`;
+  return (
+    <main className="max-w-5xl mx-auto p-6 space-y-4" data-testid="profile-page">
+      <div className={`${card} flex flex-wrap items-center gap-5`} data-testid="profile-header">
+        <div className="w-16 h-16 rounded-full bg-[#ffe3e4] text-[#a3242a] flex items-center justify-center font-extrabold text-xl shrink-0">{initials}</div>
+        <div className="flex-1 min-w-[16rem]">
+          <h1 className="text-2xl font-extrabold">{f.name || user?.name || "Mon profil"}</h1>
+          <p className="text-sm text-gray-500 mt-0.5">{[f.headline, f.companyName].filter(Boolean).join(" · ") || "Complétez votre profil pour que les posts vous ressemblent"}</p>
+          <div className="flex gap-1.5 flex-wrap mt-2">
+            <span className={connected(linkedin?.memberConnected ?? linkedin?.connected)} data-testid="profile-tag-linkedin">{(linkedin?.memberConnected ?? linkedin?.connected) ? "Profil LinkedIn connecté" : "Profil LinkedIn non connecté"}</span>
+            <span className={connected(linkedin?.orgConnected)} data-testid="profile-tag-page">{linkedin?.orgConnected ? "Page entreprise connectée" : "Page entreprise non connectée"}</span>
+            <span className={`${tag} bg-gray-100 text-gray-700`}>Plan {plan?.name}</span>
+          </div>
+        </div>
+        <div className="w-full sm:w-80" data-testid="profile-strength">
+          <div className="flex justify-between gap-2 text-sm font-bold whitespace-nowrap"><span>Profil complété à {strength.percent} %</span>{missing.length > 0 && <button type="button" onClick={() => edit(missing[0].stage)} data-testid="profile-missing" className={link}>Voir ce qui manque</button>}</div>
+          <div className="h-2 rounded-full bg-gray-200 mt-2"><div className="h-2 rounded-full bg-green-700" style={{ width: `${strength.percent}%` }} /></div>
+          <p className="text-xs text-gray-500 mt-1.5 leading-snug">{strength.label}. Plus il est complet, plus les posts vous ressemblent.{missing.length > 0 ? ` Il manque : ${missing.slice(0, 2).map((m) => m.label.toLowerCase()).join(", ")}${missing.length > 2 ? "…" : ""}.` : ""}</p>
+        </div>
+      </div>
+      <div className="grid md:grid-cols-3 gap-4">
+        <div className={card} data-testid="profile-card-identity">
+          <p className={label}>Qui je suis</p>
+          <Row k="Fonction" v={f.headline} />
+          <Row k="Entreprise" v={f.companyName} />
+          <Row k="Langue des posts" v={LANGUAGES.find((l) => l.code === normalizeLanguage(f.postLanguage))?.label} />
+          <Row k="Jours de publication" v={days} />
+          <button type="button" onClick={() => edit("identity")} data-testid="profile-edit-identity" className={`${link} mt-2`}>Modifier mon identité</button>
+        </div>
+        <div className={card} data-testid="profile-card-voice">
+          <p className={label}>Ma voix, partout</p>
+          <p className="text-sm text-gray-700 leading-relaxed">{f.styleNotes?.trim() || `Ton ${String(f.tone || "professionnel").toLowerCase()}. Aucune consigne d'écriture pour l'instant.`}</p>
+          <p className="text-xs text-gray-500 mt-2 leading-snug">{f.styleImportedAt ? "Apprise à partir de vos anciens posts." : "Importez d'anciens posts pour que le copilote apprenne votre façon d'écrire."} Chaque thématique peut la nuancer.</p>
+          <button type="button" onClick={() => edit("voice")} data-testid="profile-edit-voice" className={`${link} mt-2`}>Ajuster ma voix</button>
+        </div>
+        <div className={card} data-testid="profile-card-goals">
+          <p className={label}>Mes objectifs</p>
+          {goals.length > 0 ? <div className="flex gap-1.5 flex-wrap">{goals.map((g) => (<span key={g} className={`${tag} bg-[#e8f1fb] text-[#084a8d]`}>{g}</span>))}</div> : <p className="text-sm text-gray-500">Aucun objectif choisi pour l&apos;instant.</p>}
+          <p className="text-xs text-gray-500 mt-2.5 leading-snug">Ils orientent l&apos;appel à l&apos;action de chaque post. Un post peut en choisir un autre au moment de l&apos;écrire.</p>
+          <button type="button" onClick={() => edit("audience")} data-testid="profile-edit-goals" className={`${link} mt-2`}>Modifier mes objectifs</button>
+        </div>
+      </div>
+      <div className="flex items-baseline justify-between pt-1">
+        <h2 className="text-lg font-extrabold">Mes thématiques</h2>
+        <button type="button" onClick={() => onGoView("themes")} data-testid="profile-open-themes" className={link}>Gérer et ajouter une thématique</button>
+      </div>
+      <div className="grid md:grid-cols-3 gap-4" data-testid="profile-themes">
+        {(themes ?? []).map((t) => {
+          const st = themeStatus(t);
+          return (
+            <div key={t.id} className={`${card} flex flex-col gap-1.5`} data-testid="profile-theme" data-theme-id={t.id}>
+              <div className="flex justify-between items-center">
+                <span className={`${tag} ${t.kind === "personal" ? "bg-[#fdeceb] text-[#a3242a]" : "bg-[#e8f1fb] text-[#084a8d]"}`}>{t.kind === "personal" ? "Personnelle" : "Activité"}</span>
+                <span className={`text-xs font-bold ${st.tone}`} data-testid="profile-theme-status">{st.label}</span>
+              </div>
+              <div className="text-base font-extrabold">{t.name}</div>
+              <div className="text-xs text-gray-500 leading-relaxed">
+                {t.sources || t.posts ? `${t.sources} source${t.sources > 1 ? "s" : ""}, ${t.posts} post${t.posts > 1 ? "s" : ""}` : "Aucune source, aucun post"}
+                {t.moments?.[0] ? `. Temps fort : ${t.moments[0].name}` : ""}
+                {st.todo.length > 0 ? `. Il manque ${st.todo.map((x) => x.label).join(", ")}` : ""}
+              </div>
+              <div className="h-1.5 rounded-full bg-gray-200"><div className={`h-1.5 rounded-full ${st.bar}`} style={{ width: `${st.pct}%` }} /></div>
+              <button type="button" onClick={() => onGoView("themes")} data-testid="profile-theme-open" className={`${link} text-left`}>{st.pct === 100 ? "Ouvrir" : "Compléter avec l'assistant"}</button>
+            </div>
+          );
+        })}
+      </div>
+      <div className="grid md:grid-cols-2 gap-4">
+        <div className={`${card} flex items-center justify-between gap-3`}>
+          <div><p className={`${label} !mb-1`}>Connexions</p><p className="text-sm text-gray-700">{[(linkedin?.memberConnected ?? linkedin?.connected) ? "Profil LinkedIn connecté" : "Profil LinkedIn non connecté", linkedin?.orgConnected ? "page connectée" : "page non connectée", instagram?.connected ? "Instagram connecté" : "Instagram non connecté"].join(", ")}.</p></div>
+          <button type="button" onClick={() => onGoView("connections")} data-testid="profile-go-connections" className={link}>Gérer</button>
+        </div>
+        <div className={`${card} flex items-center justify-between gap-3`}>
+          <div><p className={`${label} !mb-1`}>Abonnement</p><p className="text-sm text-gray-700">{plan?.name}{plan?.postsPerMonth != null ? ` · ${plan.postsPerMonth} posts par mois` : " · posts illimités"}</p></div>
+          <button type="button" onClick={() => onGoView("billing")} data-testid="profile-go-billing" className={link}>Gérer</button>
+        </div>
+      </div>
+    </main>
+  );
+}
+
 function ProfileView({ contexts = [], onContextsChanged, moments = [], onMomentsChanged, onGoThemes, profile, onSaved, showToast, linkedin, onDisconnect, instagram, onDisconnectInstagram, canOrgPublish = true, focusField, onFocusHandled, onGoConnections, onGoDatalake }) {
   const [fields, setFields] = useState({
     name: profile?.name ?? "",
@@ -18543,7 +18674,7 @@ export default function Home() {
         ...(user.plan === "agence"
           ? [{ id: "clients", label: "Mes clients", icon: Users, group: "Agence" }]
           : []),
-        { id: "profile", label: "Profil", icon: UserRound, group: "Mon compte" },
+        { id: "profile", label: "Mon profil", icon: UserRound, group: "Mon compte" },
         { id: "themes", label: "Mes thématiques", icon: Tags, group: "Mon compte" },
         { id: "connections", label: "Connexions", icon: Linkedin, group: "Mon compte" },
         { id: "brand-kit", label: "Charte graphique", icon: ImageIcon, group: "Mon compte" },
@@ -20792,8 +20923,11 @@ export default function Home() {
           onOpenLeads={(id) => { chooseContext(id); setView("leads"); }}
         />
       ) : view === "profile" ? (
-        <ProfileView
+        <ProfilePage
           key={profile?.email ?? "profile"}
+          user={user}
+          plan={plan}
+          onGoView={setView}
           contexts={contexts}
           onContextsChanged={loadContexts}
           moments={moments}
