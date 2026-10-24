@@ -11351,46 +11351,173 @@ function PublishWhereStep({ onBack, onNext, planAllowsOrg = true }) {
       setState({ connected: Boolean(me.connected), name: me.name ?? "", orgConnected: Boolean(me.orgConnected), pages });
     }).catch(() => setState({ connected: false, name: "", orgConnected: false, pages: [] }));
   }, []);
+  const chipTone = "text-[13px] font-semibold px-3 py-2 rounded-[10px]";
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 sm:p-6 space-y-4" data-testid="wizard-where-step">
-      <div>
-        <p className="text-xs font-medium text-[#ff5a5f] mb-1">Où publier</p>
-        <h2 className="font-semibold text-lg">Où voulez-vous publier ?</h2>
-        <p className="text-sm text-gray-500">Vous pourrez changer à chaque post. Ici, on connecte simplement ce que vous utilisez.</p>
+    <div className="space-y-5" data-testid="wizard-where-step">
+      <div className="max-w-3xl">
+        <h1 className="text-3xl sm:text-[34px] leading-tight font-extrabold text-[#1b2a4a]">Où voulez-vous publier ?</h1>
+        <p className="text-base text-[#5a6b85] leading-relaxed mt-2">Vous pourrez changer à chaque post. Ici, on connecte simplement ce que vous utilisez.</p>
       </div>
       {!state ? <p className="text-sm text-gray-400">Vérification…</p> : (
-        <div className="grid gap-3">
-          <div className={`rounded-2xl p-4 border-2 ${state.connected ? "border-[#0a66c2]" : "border-gray-200"}`} data-testid="wizard-where-profile">
+        <div className="grid md:grid-cols-2 gap-5 sm:gap-6">
+          <div className={`bg-white rounded-[20px] p-6 flex flex-col gap-3 ${state.connected ? "border-2 border-[#0a66c2]" : "border border-[#e8ecf2]"}`} data-testid="wizard-where-profile">
             <div className="flex items-center gap-3">
-              <div className="w-11 h-11 rounded-full bg-gradient-to-br from-orange-400 to-[#ff5a5f] text-white flex items-center justify-center font-bold">{(state.name || "Moi").slice(0, 1)}</div>
-              <div className="min-w-0"><p className="font-extrabold">Mon profil LinkedIn</p>{state.name && <p className="text-xs text-gray-500">{state.name}</p>}</div>
-              {state.connected && <span className="ml-auto text-xs font-bold bg-green-100 text-green-800 px-2.5 py-1 rounded-full">Connecté</span>}
+              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-orange-400 to-[#ff5a5f] text-white flex items-center justify-center font-bold text-lg shrink-0">{(state.name || "Moi").slice(0, 1)}</div>
+              <div className="min-w-0"><p className="text-lg font-extrabold">Mon profil LinkedIn</p>{state.name && <p className="text-[13px] text-[#5a6b85]">{state.name}</p>}</div>
+              {state.connected && <span className="ml-auto text-xs font-bold bg-[#e5f6ea] text-[#14602b] px-2.5 py-1.5 rounded-full">Connecté</span>}
             </div>
-            <p className="text-sm text-gray-700 mt-2 leading-relaxed">C&apos;est <strong>vous</strong> qui parlez : convictions, retours d&apos;expérience, victoires, coups de gueule. Quelle que soit la thématique.</p>
-            {state.connected ? <p className="text-xs text-gray-500 mt-1.5">Toujours inclus.</p> : <a href="/api/linkedin/auth" data-testid="wizard-where-connect-profile" className="inline-flex items-center gap-1.5 mt-2.5 bg-[#0a66c2] hover:bg-[#004182] text-white text-sm font-medium px-4 py-2 rounded-lg"><Linkedin size={14} /> Connecter mon profil</a>}
+            <p className="text-sm text-[#33415c] leading-relaxed">C&apos;est <strong>vous</strong> qui parlez : convictions, retours d&apos;expérience, victoires, coups de gueule. Quelle que soit la thématique.</p>
+            {state.connected ? <p className="text-[13px] text-[#5a6b85]">Toujours inclus.</p> : <a href="/api/linkedin/auth" data-testid="wizard-where-connect-profile" className="inline-flex items-center gap-1.5 self-start mt-auto bg-[#0a66c2] hover:bg-[#004182] text-white text-sm font-bold px-[18px] py-[11px] rounded-xl"><Linkedin size={14} /> Connecter mon profil</a>}
           </div>
-          <div className="rounded-2xl p-4 border border-gray-200" data-testid="wizard-where-page">
+          <div className="bg-white border border-[#e8ecf2] rounded-[20px] p-6 flex flex-col gap-3" data-testid="wizard-where-page">
             <div className="flex items-center gap-3">
-              <div className="w-11 h-11 rounded-lg bg-[#0a66c2] text-white flex items-center justify-center font-extrabold">in</div>
-              <div><p className="font-extrabold">La page de mon entreprise</p><p className="text-xs text-gray-500">Facultatif · 1 page incluse en offre Pro</p></div>
-              {state.orgConnected && <span className="ml-auto text-xs font-bold bg-green-100 text-green-800 px-2.5 py-1 rounded-full">Connectée</span>}
+              <div className="w-12 h-12 rounded-[10px] bg-[#0a66c2] text-white flex items-center justify-center font-extrabold text-base shrink-0">in</div>
+              <div className="min-w-0"><p className="text-lg font-extrabold">La page de mon entreprise</p><p className="text-[13px] text-[#5a6b85]">Facultatif · 1 page incluse en offre Pro</p></div>
+              {state.orgConnected && <span className="ml-auto text-xs font-bold bg-[#e5f6ea] text-[#14602b] px-2.5 py-1.5 rounded-full">Connectée</span>}
             </div>
-            <p className="text-sm text-gray-700 mt-2 leading-relaxed">C&apos;est <strong>la marque</strong> qui parle : actualités, cas clients validés. Les commentaires de la page alimentent aussi votre base de leads.</p>
+            <p className="text-sm text-[#33415c] leading-relaxed">C&apos;est <strong>la marque</strong> qui parle : actualités, cas clients validés. Les commentaires de la page alimentent aussi votre base de leads.</p>
             {state.orgConnected
-              ? <p className="text-xs text-green-700 mt-1.5 font-medium">{state.pages.length ? state.pages.map((x) => x.name).join(", ") : "Page connectée"}</p>
+              ? <p className="text-[13px] text-green-700 font-semibold mt-auto">{state.pages.length ? state.pages.map((x) => x.name).join(", ") : "Page connectée"}</p>
               : planAllowsOrg
-              ? <div className="flex items-center gap-3 mt-2.5"><a href="/api/linkedin/auth-org" data-testid="wizard-where-connect-page" className="inline-flex items-center gap-1.5 bg-[#0a66c2] hover:bg-[#004182] text-white text-sm font-medium px-4 py-2 rounded-lg">Connecter ma page</a><button type="button" onClick={onNext} className="text-sm text-gray-600 hover:text-gray-900">Plus tard</button></div>
-              : <p className="text-xs text-gray-500 mt-1.5">La publication sur une page entreprise est incluse à partir de l&apos;offre Pro.</p>}
+              ? <div className="flex items-center gap-3 mt-auto"><a href="/api/linkedin/auth-org" data-testid="wizard-where-connect-page" className="inline-flex items-center gap-1.5 bg-[#0a66c2] hover:bg-[#004182] text-white text-sm font-bold px-[18px] py-[11px] rounded-xl">Connecter ma page</a><button type="button" onClick={onNext} className="text-sm text-[#33415c] hover:text-gray-900">Plus tard</button></div>
+              : <p className="text-[13px] text-[#5a6b85] mt-auto">La publication sur une page entreprise est incluse à partir de l&apos;offre Pro.</p>}
           </div>
         </div>
       )}
-      <div className="rounded-2xl bg-gray-50 border border-gray-100 p-4" data-testid="wizard-where-recap">
-        <p className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-1.5">Ce que vous choisirez à chaque post</p>
-        <p className="text-sm text-gray-800 leading-relaxed"><strong>De quoi parler</strong> (une thématique : votre métier, la vie d&apos;entrepreneur, le sport…), <strong>dans quelle humeur</strong> (fier, agacé, inspiré…) et <strong>où publier</strong> (votre profil, la page, ou les deux).</p>
+      <div className="bg-white border border-[#e8ecf2] rounded-[20px] px-6 sm:px-[26px] py-5 flex flex-col lg:flex-row lg:items-center gap-4 lg:gap-7" data-testid="wizard-where-recap">
+        <div className="flex-1">
+          <p className="text-xs font-bold uppercase tracking-wider text-[#5a6b85] mb-1.5">Ce que vous choisirez à chaque post</p>
+          <p className="text-[15px] text-[#1b2a4a] leading-relaxed"><strong>De quoi parler</strong> (une thématique : votre métier, la vie d&apos;entrepreneur, le sport…), <strong>dans quelle humeur</strong> (fier, agacé, inspiré…) et <strong>où publier</strong> (votre profil, la page, ou les deux).</p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2.5 text-[13px] font-semibold">
+          <span className={`${chipTone} bg-[#ffe3e4] text-[#a3242a]`}>Thématique</span>
+          <span className="text-[#5a6b85]">+</span>
+          <span className={`${chipTone} bg-[#fff4d6] text-[#7a4b00]`}>Humeur</span>
+          <svg width="22" height="12" viewBox="0 0 22 12" fill="none" stroke="#5a6b85" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M1 6h19M15 1l5 5-5 5" /></svg>
+          <span className={`${chipTone} bg-[#e8f1fb] text-[#084a8d]`}>Profil</span>
+          <span className="text-[#5a6b85]">ou</span>
+          <span className={`${chipTone} bg-[#e8f1fb] text-[#084a8d]`}>Page</span>
+        </div>
       </div>
-      <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-        <button type="button" onClick={onBack} className="text-sm text-gray-500 hover:text-gray-700">← Retour</button>
-        <div className="flex items-center gap-3"><span className="hidden sm:block text-xs text-gray-400">Aucune publication sans votre validation.</span><button type="button" onClick={onNext} data-testid="wizard-where-next" className="bg-[#ff5a5f] hover:bg-[#f63d44] text-white text-sm font-medium px-5 py-2 rounded-lg flex items-center gap-1.5">Continuer <ChevronRight size={15} /></button></div>
+      <div className="flex flex-wrap items-center gap-x-[18px] gap-y-3 pt-2">
+        <button type="button" onClick={onNext} data-testid="wizard-where-next" className="bg-[#d63b42] hover:bg-[#c2343a] text-white text-base font-bold px-[26px] py-3.5 rounded-[14px]">Continuer</button>
+        <span className="text-[13px] text-[#5a6b85]">Aucune publication sans votre validation.</span>
+        <button type="button" onClick={onBack} className="text-sm text-[#33415c] hover:text-gray-900 ml-auto">Retour</button>
+      </div>
+    </div>
+  );
+}
+
+// Lecture d'un site, ligne par ligne (maquette 1b) : chaque ligne se confirme (« Juste ») ou se corrige
+function SiteRows({ fields, onChange, testPrefix }) {
+  const [editing, setEditing] = useState(null);
+  const [ok, setOk] = useState({});
+  const rows = [["name", "Entreprise"], ["businessDescription", "Activité"], ["targetAudience", "Cible"], ["themes", "Thèmes"]];
+  return (
+    <div>
+      {rows.map(([k, label]) => (
+        <div key={k} className="flex gap-2.5 items-start py-2 border-t border-[#eef1f6] first:border-t-0 text-[13px] leading-snug" data-testid={`${testPrefix}-row-${k}`}>
+          <b className="w-[88px] sm:w-[110px] shrink-0 text-[#5a6b85] font-semibold">{label}</b>
+          {editing === k
+            ? <input autoFocus type="text" value={fields[k] ?? ""} onChange={(e) => onChange(k, e.target.value)} onBlur={() => setEditing(null)} onKeyDown={(e) => e.key === "Enter" && setEditing(null)} data-testid={`${testPrefix}-edit-${k}`} className="flex-1 min-w-0 border border-[#cbd5e1] rounded-lg px-2.5 py-1.5 text-[13px] focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]" />
+            : <span className="flex-1 min-w-0 text-[#1b2a4a]">{fields[k]?.trim() || <span className="text-gray-400">À renseigner</span>}</span>}
+          <button type="button" onClick={() => setOk((o) => ({ ...o, [k]: true }))} data-testid={`${testPrefix}-juste-${k}`} className={`text-xs font-bold whitespace-nowrap ${ok[k] ? "text-[#16a34a]" : "text-gray-400 hover:text-[#16a34a]"}`}>✓ Juste</button>
+          <button type="button" onClick={() => { setEditing(k); setOk((o) => ({ ...o, [k]: false })); }} data-testid={`${testPrefix}-corriger-${k}`} className="text-xs font-bold whitespace-nowrap text-[#a3242a] hover:underline">✎ Corriger</button>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// Une lecture de site à confirmer (maquette 1b) : carte encadrée, une ligne par élément, puis la question
+const SITE_TAG = "text-[11px] font-bold px-2.5 py-0.5 rounded-full";
+const SITE_BTN = "text-sm font-bold px-4 py-2.5 rounded-xl";
+const siteHost = (u) => String(u ?? "").replace(/^https?:\/\//, "").replace(/\/.*$/, "");
+function SiteReviewCard({ url, review, onChange, onConfirm, onReject, onAgain, busy, prefix }) {
+  return (
+    <div className="bg-white rounded-[18px] border-2 border-[#d63b42] px-5 py-4" data-testid={`${prefix}-review`}>
+      <div className="flex items-center gap-2.5 mb-2 flex-wrap">
+        <span className="text-[15px] font-extrabold">{siteHost(url)}</span>
+        <span className={`${SITE_TAG} bg-[#e6f6ec] text-[#166534]`}>✓ Analysé</span>
+        <button type="button" onClick={onAgain} className="ml-auto text-[13px] font-bold text-[#a3242a] hover:underline">✨ Analyser à nouveau</button>
+      </div>
+      <SiteRows fields={review} onChange={onChange} testPrefix={prefix} />
+      <div className="mt-2.5 px-3.5 py-3 rounded-xl bg-[#fff7ed] border border-[#fde1c0]">
+        <p className="text-sm font-bold text-[#1b2a4a] mb-2">Est-ce bien l&apos;entreprise dont vous voulez parler ?</p>
+        <div className="flex gap-2.5 flex-wrap items-center">
+          <button type="button" onClick={onConfirm} disabled={busy} data-testid={`${prefix}-confirm`} className={`${SITE_BTN} bg-[#d63b42] hover:bg-[#c2343a] disabled:bg-gray-300 text-white`}>Oui, créer la thématique « {review.name?.trim() || "…"} »</button>
+          <button type="button" onClick={onReject} data-testid={`${prefix}-reject`} className={`${SITE_BTN} bg-white text-[#33415c] border border-[#cbd5e1] hover:bg-gray-50`}>Non, ce n&apos;est pas le bon site</button>
+          <span className="text-xs text-[#5a6b85]">Rien n&apos;est enregistré avant votre réponse.</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Étape « Vos sites internet » de l'inscription (maquette 1b) : un site par entreprise dont la personne parle sur son LinkedIn
+function OnboardingSitesStep({ main, extras, input, onInput, onAdd, adding, onMainChange, onMainConfirm, onMainReject, onMainAgain, onExtraChange, onExtraConfirm, onExtraReject, onExtraRemove, onExtraAgain, canNext, saving, onNext, onBack, onManual, stepNo, stepTotal, total }) {
+  const tag = SITE_TAG;
+  const card = "bg-white border border-[#e8ecf2] rounded-[18px]";
+  const btn = SITE_BTN;
+  const asHost = siteHost;
+  return (
+    <div className="flex flex-col lg:flex-row gap-6 lg:gap-7 items-start" data-testid="wizard-sites-step">
+      <div className="flex-1 min-w-0 w-full flex flex-col gap-3">
+        <div>
+          <h1 className="text-3xl leading-tight font-extrabold text-[#1b2a4a] mb-1">Vos sites internet</h1>
+          <p className="text-[15px] text-[#5a6b85] leading-relaxed">Un site par entreprise dont vous parlez sur votre LinkedIn. Le copilote les lit, vous confirmez ou corrigez avant que rien ne soit créé.</p>
+        </div>
+        {main.review && <SiteReviewCard url={main.url} review={main.review} onChange={onMainChange} onConfirm={onMainConfirm} onReject={onMainReject} onAgain={onMainAgain} prefix="wizard-main" />}
+        {main.busy && !main.review && <div className={`${card} px-5 py-3 flex items-center gap-3 text-sm text-[#5a6b85]`}><RefreshCw size={14} className="animate-spin" /> Lecture de {asHost(main.url)}…</div>}
+        {main.confirmed && !main.review && (
+          <div className={`${card} px-5 py-3 flex items-center gap-3 flex-wrap`} data-testid="wizard-main-confirmed">
+            <span className="text-[15px] font-extrabold">{asHost(main.url)}</span>
+            <span className={`${tag} bg-[#e6f6ec] text-[#166534]`}>✓ Confirmé</span>
+            <span className="text-[13px] text-[#5a6b85] flex-1 min-w-0">{[main.name, main.target && `cible : ${main.target}`].filter(Boolean).join(" · ")}</span>
+            <button type="button" onClick={onMainAgain} className="text-[13px] font-bold text-[#a3242a] hover:underline">Vérifier</button>
+          </div>
+        )}
+        {main.error && <p className="text-xs text-red-600">{main.error}</p>}
+        {extras.map((x) => (
+          x.review ? <SiteReviewCard key={x.key} url={x.url} review={x.review} busy={x.busy} onChange={(k, v) => onExtraChange(x.key, k, v)} onConfirm={() => onExtraConfirm(x)} onReject={() => onExtraReject(x.key)} onAgain={() => onExtraAgain(x)} prefix="wizard-extra" />
+          : (
+            <div key={x.key} className={`${card} px-5 py-3 flex items-center gap-3 flex-wrap`} data-testid="wizard-extra">
+              <span className="text-[15px] font-extrabold">{asHost(x.url)}</span>
+              {x.created ? <><span className={`${tag} bg-[#e6f6ec] text-[#166534]`} data-testid="wizard-extra-created">✓ Thématique « {x.created} » créée</span></>
+                : x.busy ? <span className="text-[13px] text-[#5a6b85] flex items-center gap-2"><RefreshCw size={13} className="animate-spin" /> Lecture…</span>
+                : <><span className={`${tag} bg-[#fff4d6] text-[#7a4b00]`}>À confirmer</span>{x.error && <span className="text-xs text-red-600 flex-1">{x.error}</span>}</>}
+              <span className="flex-1" />
+              {!x.busy && !x.created && x.error && <button type="button" onClick={() => onExtraAgain(x)} className="text-[13px] font-bold text-[#a3242a] hover:underline">Réessayer</button>}
+              {!x.busy && !x.created && <button type="button" onClick={() => onExtraRemove(x.key)} className="text-[13px] text-[#5a6b85] hover:text-gray-900">Retirer</button>}
+            </div>
+          )
+        ))}
+        {total < 10 && (
+          <div className="border border-dashed border-[#cbd5e1] rounded-[14px] px-3 py-2.5 bg-white/70 flex gap-2.5 items-center">
+            <input type="text" value={input} onChange={(e) => onInput(e.target.value)} onKeyDown={(e) => e.key === "Enter" && onAdd()} aria-label="Un site internet" placeholder={total === 0 ? "Votre site : https://" : "Un autre site : https://"} data-testid="wizard-website" className="flex-1 min-w-0 border border-[#cbd5e1] rounded-xl px-3.5 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]" />
+            <button type="button" onClick={onAdd} disabled={adding || !input.trim()} data-testid="wizard-analyze" className={`${btn} bg-[#d63b42] hover:bg-[#c2343a] disabled:bg-gray-300 text-white shrink-0`}>✨ Analyser</button>
+          </div>
+        )}
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-3 mt-2">
+          <button type="button" onClick={onNext} disabled={!canNext || saving} data-testid="wizard-sites-next" className="bg-[#d63b42] hover:bg-[#c2343a] disabled:bg-gray-300 text-white text-base font-bold px-[26px] py-3 rounded-[14px]">Continuer</button>
+          <button type="button" onClick={onBack} className="text-sm text-[#33415c] hover:text-gray-900">Retour</button>
+          <button type="button" onClick={onManual} data-testid="wizard-manual" className="text-sm font-semibold text-[#a3242a] hover:underline sm:ml-3">Je n&apos;ai pas de site, je saisis à la main</button>
+          <span className="sm:ml-auto text-[13px] text-[#5a6b85]">{total} site{total > 1 ? "s" : ""} sur 10 · étape {stepNo} sur {stepTotal}</span>
+        </div>
+      </div>
+      <div className="w-full lg:w-[380px] shrink-0 flex flex-col gap-3.5">
+        <div className={`${card} px-5 py-4`}>
+          <p className="text-xs font-bold tracking-wider uppercase text-[#5a6b85] mb-2">Ce qui se passe ensuite</p>
+          <p className="text-[13px] leading-relaxed text-[#33415c] mb-2"><strong>Un site confirmé devient une thématique d&apos;activité,</strong> avec son datalake, sa cible et sa voix. Pour chacune, vous passerez ensuite par les mêmes étapes : cible, voix, analyse.</p>
+          <p className="text-[13px] leading-relaxed text-[#33415c]"><strong>Vous publiez sur votre propre compte LinkedIn</strong> pour plusieurs entreprises ? Ajoutez un site par entreprise. Aucune n&apos;est « principale ».</p>
+        </div>
+        <div className={`${card} px-5 py-4`}>
+          <p className="text-xs font-bold tracking-wider uppercase text-[#5a6b85] mb-2">Vous gardez la main</p>
+          <p className="text-[13px] leading-relaxed text-[#33415c]">Chaque ligne se confirme ou se corrige. Un site qui n&apos;est pas le vôtre (un client, un ancien employeur) se refuse en un clic. Vous pourrez ajouter d&apos;autres sites plus tard, depuis « Mes thématiques ».</p>
+        </div>
+        <div className="bg-[#fff7ed] border border-[#fde1c0] rounded-[18px] px-5 py-4">
+          <p className="text-[13px] leading-relaxed text-[#7a4b00]"><strong>Pas de site ?</strong> Une thématique personnelle (le running, la vie d&apos;indépendante) n&apos;en a pas besoin : elle se construit avec vos mots, vos posts et vos dictées.</p>
+        </div>
       </div>
     </div>
   );
@@ -11450,6 +11577,9 @@ function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast,
   const [analyzing, setAnalyzing] = useState(false);
   const [analyzed, setAnalyzed] = useState(false);
   const [review, setReview] = useState(null); // lecture du site de la première entreprise, à confirmer
+  const [mainConfirmed, setMainConfirmed] = useState(Boolean(profile?.website?.trim() && profile?.businessDescription?.trim())); // maquette 1b : le premier site est confirmé
+  const [manualSite, setManualSite] = useState(false); // « Je n'ai pas de site, je saisis à la main »
+  const [siteInput, setSiteInput] = useState("");
   const [extras, setExtras] = useState([]); // autres entreprises : { key, url, busy, review, created, error }
   const patchExtra = (key, patch) => setExtras((xs) => xs.map((x) => (x.key === key ? { ...x, ...patch } : x)));
   const confirmReview = () => {
@@ -11465,6 +11595,7 @@ function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast,
       expertise: hasText(prev.expertise) ? prev.expertise : f.expertise?.trim() || prev.expertise,
     }));
     setReview(null);
+    setMainConfirmed(true);
     showToast("Entreprise pré-remplie depuis le site ✓ Vérifiez et complétez.");
   };
   const analyzeExtra = async (x) => {
@@ -11493,11 +11624,11 @@ function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast,
       patchExtra(x.key, { busy: false, error: e.message });
     }
   };
-  const analyzeSite = async ({ auto = false } = {}) => {
-    if (!hasText(fields.website)) { if (!auto) showToast("Indiquez d'abord l'adresse du site."); return; }
+  const analyzeSite = async ({ auto = false, url = fields.website } = {}) => {
+    if (!hasText(url)) { if (!auto) showToast("Indiquez d'abord l'adresse du site."); return; }
     setAnalyzing(true);
     try {
-      const res = await fetch("/api/profile/analyze", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url: fields.website }) });
+      const res = await fetch("/api/profile/analyze", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url }) });
       const d = await readJson(res);
       if (!res.ok) throw new Error(d.error || "Analyse impossible");
       const f = d.fields || {};
@@ -11535,6 +11666,25 @@ function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast,
     if (hasText(fields.website) && !hasText(fields.businessDescription)) analyzeSite({ auto: true });
   }, [step]);
 
+  // Maquette 1b : un champ pour ajouter un site ; le premier devient la thématique du profil, les suivants des thématiques supplémentaires
+  const selfFlow = !forClient;
+  const addSite = () => {
+    const url = siteInput.trim();
+    if (!url) return;
+    if (!mainConfirmed && !review && !analyzing) {
+      set("website", url);
+      analyzeSite({ url });
+    } else {
+      const x = { key: Math.random().toString(36).slice(2), url, busy: false, review: null, created: null, error: null };
+      setExtras((xs) => [...xs, x]);
+      analyzeExtra(x);
+    }
+    setSiteInput("");
+  };
+  const mainReject = () => { setReview(null); setAnalyzed(false); set("website", ""); };
+  const mainAgain = () => { setMainConfirmed(false); analyzeSite({ url: fields.website }); };
+  const sitesTotal = (mainConfirmed || review || analyzing ? 1 : 0) + extras.length;
+
   const last = flow.length - 1;
   const kind = flow[step].kind;
   const isFirstPost = kind === "firstpost";
@@ -11544,7 +11694,7 @@ function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast,
   const progress = stage ? stageProgress(stage, fields, ctx) : null;
   const missing = stage ? stage.items.filter((i) => !i.bonus && !i.done(fields, ctx)).map((i) => i.label.toLowerCase()) : [];
 
-  const canNext = kind === "identity" ? hasText(fields.name) && hasText(fields.expertise) : kind === "company" ? hasText(fields.businessDescription) && (!forClient || hasText(fields.companyName)) : true;
+  const canNext = kind === "identity" ? hasText(fields.name) && hasText(fields.expertise) : kind === "company" ? hasText(fields.businessDescription) && (!forClient || hasText(fields.companyName)) && (forClient || manualSite || mainConfirmed) : true;
 
   // Enregistre le profil ; à la fin, marque l'onboarding comme terminé. Une étape enregistrée n'est jamais perdue.
   const save = async (finish, extra = null) => {
@@ -11578,15 +11728,48 @@ function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast,
   const chip = (active) =>
     `text-xs px-3 py-1.5 rounded-full border ${active ? "bg-[#ff5a5f] text-white border-[#ff5a5f]" : "border-gray-200 text-gray-600 hover:border-gray-300"}`;
 
+  // Parcours de l'inscription (maquettes 1b et 2) : cinq pastilles, la cible et la voix se regroupent en « Voix et analyse »
+  const pills = [
+    { label: "Vous", kinds: ["identity"] },
+    { label: "Vos sites", kinds: ["company"] },
+    { label: "Voix et analyse", kinds: ["lead", "voice"] },
+    { label: "Où publier", kinds: ["where"] },
+    { label: "Premier post", kinds: ["firstpost"] },
+  ];
+  const pillIdx = Math.max(0, pills.findIndex((pl) => pl.kinds.includes(kind)));
+  const wideStep = selfFlow && ((kind === "company" && !manualSite) || kind === "where");
+
   return (
-    <div className="min-h-screen flex items-start sm:items-center justify-center p-4 sm:p-6">
-      <div className="w-full max-w-xl">
+    <div className={selfFlow ? "min-h-screen px-4 sm:px-8 lg:px-16 py-6 sm:py-8" : "min-h-screen flex items-start sm:items-center justify-center p-4 sm:p-6"} style={selfFlow ? { background: "linear-gradient(180deg,#fff1f2 0%,#fff7ed 45%,#f0f9ff 100%)" } : undefined}>
+      <div className={selfFlow ? `w-full mx-auto ${wideStep ? "max-w-6xl" : "max-w-xl"}` : "w-full max-w-xl"}>
         {forClient && (
           <div className="mb-4 bg-amber-50 border border-amber-200 text-amber-800 rounded-xl px-4 py-2.5 text-sm flex items-center justify-between gap-3 flex-wrap" data-testid="wizard-client-banner">
             <span className="flex items-center gap-2"><Users size={15} /> Vous configurez le compte de <span className="font-semibold">{forClient.companyName || forClient.name}</span></span>
             <button type="button" onClick={onExit} className="text-xs font-semibold underline hover:no-underline">← Mes clients</button>
           </div>
         )}
+        {selfFlow ? (
+          <div className={`flex flex-wrap items-center gap-x-3 gap-y-3 mb-5 ${wideStep ? "" : "justify-center"}`} data-testid="wizard-header">
+            <div className="w-[38px] h-[38px] rounded-[11px] bg-[#ff5a5f] text-white flex items-center justify-center shrink-0"><LpMark size={20} /></div>
+            <span className="text-xl font-extrabold">LinkeePost</span>
+            {kind === "where" ? (
+              <span className="ml-auto text-sm text-[#5a6b85]" data-testid="wizard-where-count">Étape {pillIdx + 1} sur {pills.length} · Connecter LinkedIn</span>
+            ) : (
+              <div className="w-full sm:w-auto sm:ml-10 flex flex-wrap gap-x-[18px] gap-y-2" data-testid="wizard-pills">
+                {pills.map((pl, i) => {
+                  const done = i < pillIdx, on = i === pillIdx;
+                  return (
+                    <div key={pl.label} className={`flex items-center gap-2 text-[13px] ${on ? "text-[#a3242a] font-bold" : "text-[#5a6b85]"}`} data-testid="wizard-pill" aria-current={on ? "step" : undefined}>
+                      <span className={`w-[22px] h-[22px] rounded-full text-xs font-bold flex items-center justify-center ${done ? "bg-[#16a34a] text-white" : on ? "bg-[#d63b42] text-white" : "bg-[#e2e8f0] text-[#33415c]"}`}>{done ? "✓" : i + 1}</span>
+                      {pl.label}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        ) : (
+        <>
         <div className="flex items-center justify-center gap-2 mb-5">
           <div className="bg-[#ff5a5f] text-white p-2.5 rounded-xl">
             <LpMark size={24} />
@@ -11607,7 +11790,38 @@ function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast,
           <p className="text-xs text-gray-400 mt-1">{forClient ? "L'entreprise, sa cible, sa voix, sa page LinkedIn, puis un premier post. Le reste se complète plus tard, au fil de l'usage." : "Quatre questions, puis votre premier post : environ 5 minutes. Le reste se complète plus tard, au fil de l'usage."}</p>
         </div>
 
+        </>
+        )}
+
         {isFirstPost && <OnboardingFirstPost forClient={Boolean(forClient)} fields={fields} saving={saving} showToast={showToast} stepNo={step + 1} stepTotal={flow.length} target={pageUrn} onFinish={() => (forClient ? setStep(step + 1) : save(true))} onBack={() => setStep(step - 1)} />}
+
+        {selfFlow && kind === "company" && !manualSite && (
+          <OnboardingSitesStep
+            main={{ url: fields.website, review, busy: analyzing, confirmed: mainConfirmed, name: fields.companyName, target: fields.targetAudience }}
+            extras={extras}
+            input={siteInput}
+            onInput={setSiteInput}
+            onAdd={addSite}
+            adding={analyzing}
+            onMainChange={(k, v) => setReview((r) => ({ ...r, [k]: v }))}
+            onMainConfirm={confirmReview}
+            onMainReject={mainReject}
+            onMainAgain={mainAgain}
+            onExtraChange={(key, k, v) => setExtras((xs) => xs.map((x) => (x.key === key ? { ...x, review: { ...x.review, [k]: v } } : x)))}
+            onExtraConfirm={createExtra}
+            onExtraReject={(key) => patchExtra(key, { review: null })}
+            onExtraRemove={(key) => setExtras((xs) => xs.filter((y) => y.key !== key))}
+            onExtraAgain={analyzeExtra}
+            canNext={canNext}
+            saving={saving}
+            onNext={advance}
+            onBack={() => setStep(step - 1)}
+            onManual={() => setManualSite(true)}
+            stepNo={pillIdx + 1}
+            stepTotal={pills.length}
+            total={sitesTotal}
+          />
+        )}
 
         {kind === "where" && <PublishWhereStep planAllowsOrg={user?.plan !== "essentiel"} onBack={() => setStep(step - 1)} onNext={() => setStep(step + 1)} />}
 
@@ -11653,7 +11867,7 @@ function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast,
           </div>
         )}
 
-        {!isFirstPost && kind !== "page" && kind !== "person" && kind !== "where" && (
+        {!isFirstPost && kind !== "page" && kind !== "person" && kind !== "where" && !(selfFlow && kind === "company" && !manualSite) && (
         <>
         <ProfileCompanion
           key={stage.id}
@@ -11729,45 +11943,7 @@ function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast,
                   <p className="text-[11px] text-gray-500 mt-1.5">Le copilote lit le site et pré-remplit l&apos;activité, la cible, le marché et les thèmes. Vous vérifiez, vous corrigez.</p>
                 </div>
               ) : (
-              <div className="bg-[#fff1f1] rounded-xl p-3 space-y-3" data-testid="wizard-sites">
-                <div data-testid="wizard-site">
-                  <label className="text-sm font-medium text-gray-700 block mb-1.5">Gagnez du temps : le site internet de votre entreprise</label>
-                  <div className="flex flex-wrap gap-2">
-                    <input type="text" value={fields.website} onChange={(e) => set("website", e.target.value)} placeholder="https://site.fr" className={`flex-1 min-w-0 ${inputCls}`} data-testid="wizard-website" />
-                    <button type="button" onClick={() => analyzeSite()} disabled={analyzing || !hasText(fields.website)} data-testid="wizard-analyze" className="shrink-0 bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white text-sm font-medium px-4 py-2 rounded-lg flex items-center gap-1.5">
-                      {analyzing ? <RefreshCw size={14} className="animate-spin" /> : <Sparkles size={14} />}
-                      {analyzing ? "Analyse…" : analyzed ? "Analyser à nouveau" : "Analyser"}
-                    </button>
-                  </div>
-                  <p className="text-[11px] text-gray-500 mt-1.5">Le copilote lit le site et propose l&apos;activité, la cible, le marché et les thèmes. Vous confirmez ou vous corrigez : rien n&apos;est rempli avant.</p>
-                  {review && <SiteReviewPanel testPrefix="wizard" fields={review} onChange={(k, v) => setReview((r) => ({ ...r, [k]: v }))} onConfirm={confirmReview} onReject={() => setReview(null)} />}
-                </div>
-                {extras.map((x) => (
-                  <div key={x.key} className="border-t border-[#f8d0d0] pt-3" data-testid="wizard-extra">
-                    {x.created ? (
-                      <p className="text-sm text-green-700" data-testid="wizard-extra-created">✓ Thématique « {x.created} » créée. Vous la compléterez depuis « Profil ».</p>
-                    ) : (
-                      <>
-                        <label className="text-sm font-medium text-gray-700 block mb-1.5">Une autre entreprise dont vous parlez : son site internet</label>
-                        <div className="flex flex-wrap gap-2">
-                          <input type="text" value={x.url} onChange={(e) => patchExtra(x.key, { url: e.target.value })} placeholder="https://autre-site.fr" className={`flex-1 min-w-0 ${inputCls}`} data-testid="wizard-extra-url" />
-                          <button type="button" onClick={() => analyzeExtra(x)} disabled={x.busy || !hasText(x.url)} data-testid="wizard-extra-analyze" className="shrink-0 bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white text-sm font-medium px-4 py-2 rounded-lg flex items-center gap-1.5">
-                            {x.busy ? <RefreshCw size={14} className="animate-spin" /> : <Sparkles size={14} />}
-                            {x.busy ? "Analyse…" : x.review ? "Analyser à nouveau" : "Analyser"}
-                          </button>
-                          <button type="button" onClick={() => setExtras((xs) => xs.filter((y) => y.key !== x.key))} className="text-xs text-gray-400 hover:text-gray-600 px-2">Retirer</button>
-                        </div>
-                        {x.error && <p className="text-xs text-red-600 mt-1">{x.error}</p>}
-                        {x.review && <SiteReviewPanel testPrefix="wizard-extra" busy={x.busy} confirmLabel="Oui, créer cette thématique" fields={x.review} onChange={(k, v) => patchExtra(x.key, { review: { ...x.review, [k]: v } })} onConfirm={() => createExtra(x)} onReject={() => patchExtra(x.key, { review: null })} />}
-                      </>
-                    )}
-                  </div>
-                ))}
-                {extras.length < 9 && (
-                  <button type="button" onClick={() => setExtras((xs) => [...xs, { key: Math.random().toString(36).slice(2), url: "", busy: false, review: null, created: null, error: null }])} data-testid="wizard-add-site" className="text-sm font-medium text-[#ff5a5f] hover:underline">+ Ajouter une autre entreprise</button>
-                )}
-                <p className="text-[11px] text-gray-500">Vous travaillez pour plusieurs entreprises avec un seul compte LinkedIn ? Ajoutez un site par entreprise : chacune devient une thématique, avec son datalake et sa cible. Pas de site ? Remplissez simplement les champs ci-dessous.</p>
-              </div>
+              <button type="button" onClick={() => setManualSite(false)} data-testid="wizard-back-to-sites" className="text-sm font-semibold text-[#a3242a] hover:underline">← Revenir à la lecture d&apos;un site</button>
               )}
               <div>
                 <label className="text-sm font-medium text-gray-700 block mb-1.5">{me("Nom de votre entreprise ou de votre marque", "Nom de son entreprise ou de sa marque")}</label>
