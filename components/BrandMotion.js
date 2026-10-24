@@ -89,7 +89,7 @@ function SceneHook({ lt }) {
         <LpMark size={96} />
       </div>
       <Headline lt={lt - 0.3} size={112} lines={[{ text: "Votre expertise. Vos mots." }, { text: "Vos posts LinkedIn.", accent: true }]} />
-      <div style={{ marginTop: 40, fontSize: 40, color: C.muted, opacity: easeOut(seg(lt, 2.0, 0.6)) }}>LinkeePost les rédige, les programme et en mesure l&apos;effet.</div>
+      <div style={{ marginTop: 40, fontSize: 40, color: C.muted, opacity: easeOut(seg(lt, 2.0, 0.6)) }}>Une thématique, une humeur : LinkeePost rédige, programme et mesure.</div>
     </div>
   );
 }
@@ -105,11 +105,11 @@ function SceneVoice({ lt }) {
       <Left>
         <Step lt={lt} n={1} />
         <div style={{ height: 36 }} />
-        <Headline lt={lt} lines={[{ text: "Vous parlez." }, { text: "Vous déposez.", accent: true }]} sub="Une idée dictée en 30 secondes, des documents, des liens : tout nourrit la base." />
+        <Headline lt={lt} lines={[{ text: "Vous parlez." }, { text: "Vous déposez.", accent: true }]} sub="Une idée dictée, des documents, des liens : une base par thématique." />
       </Left>
       <Card lt={lt}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-          <div style={{ fontSize: 38, fontWeight: 800, color: C.navy }}>Votre datalake éditorial</div>
+          <div style={{ fontSize: 34, fontWeight: 800, color: C.navy, display: "flex", alignItems: "center", gap: 14 }}>Base éditoriale <Chip bg={C.rose} color={C.coral} style={{ fontSize: 22, padding: "6px 16px" }}>Management</Chip></div>
           <div style={{ fontSize: 26, color: "#9aa5b8" }}>{count}/30 sources</div>
         </div>
         <div style={{ display: "flex", gap: 10, marginTop: 24, flexWrap: "nowrap" }}>
@@ -171,7 +171,7 @@ function ScenePost({ lt }) {
       <Left>
         <Step lt={lt} n={2} />
         <div style={{ height: 36 }} />
-        <Headline lt={lt} lines={[{ text: "Un post écrit" }, { text: "dans votre voix.", accent: true }]} sub="À partir de vos faits, avec les sources utilisées indiquées." />
+        <Headline lt={lt} lines={[{ text: "Un post écrit" }, { text: "dans votre voix.", accent: true }]} sub="Choisissez la thématique et l'humeur : le post garde votre voix et cite ses sources." />
       </Left>
       <Card lt={lt}>
         <div style={{ display: "flex", alignItems: "center", gap: 22 }}>
@@ -182,7 +182,11 @@ function ScenePost({ lt }) {
           </div>
           <Chip bg={C.rose} color={C.coral} style={{ marginLeft: "auto", fontSize: 24 }}><Sparkles size={22} /> Votre voix</Chip>
         </div>
-        <div style={{ marginTop: 28, fontSize: 34, lineHeight: 1.42, color: C.navy, minHeight: 255 }}>
+        <div style={{ display: "flex", gap: 12, marginTop: 22, opacity: easeOut(seg(lt, 0.3, 0.5)) }}>
+          <Chip bg={C.sky} color={C.blue} style={{ fontSize: 23, padding: "8px 20px" }}>Thématique · Management</Chip>
+          <Chip bg="#e8f7ee" color={C.green} style={{ fontSize: 23, padding: "8px 20px" }}>Humeur · Fierté</Chip>
+        </div>
+        <div style={{ marginTop: 28, fontSize: 34, lineHeight: 1.42, color: C.navy, minHeight: 235 }}>
           {lines.map((l, i) => {
             const s = typed(l.t, seg(lt, l.a, l.d));
             return s ? <p key={i} style={{ margin: "0 0 18px", fontWeight: l.bold ? 800 : 400 }}>{s}{lt - l.a < l.d && <span style={{ color: C.coral }}>▍</span>}</p> : null;
@@ -213,14 +217,22 @@ function SceneCalendar({ lt }) {
       <Left>
         <Step lt={lt} n={3} />
         <div style={{ height: 36 }} />
-        <Headline lt={lt} lines={[{ text: "Programmé." }, { text: "Publié.", accent: true }]} sub="Sur votre profil et sur votre page entreprise, par l'API officielle de LinkedIn." />
+        <Headline lt={lt} lines={[{ text: "Programmé." }, { text: "Publié.", accent: true }]} sub="Votre tableau de bord du jour : la semaine, et les idées du copilote." />
       </Left>
       <Card lt={lt}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <div style={{ fontSize: 38, fontWeight: 800, color: C.navy }}>Cette semaine</div>
+          <div style={{ fontSize: 38, fontWeight: 800, color: C.navy }}>Aujourd&apos;hui</div>
           <Chip bg={C.sky} color={C.blue} style={{ fontSize: 24 }}><span style={{ fontWeight: 800 }}>in</span> API officielle</Chip>
         </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 14, marginTop: 34 }}>
+        <div style={{ display: "flex", gap: 12, marginTop: 22, opacity: easeOut(seg(lt, 0.3, 0.5)) }}>
+          {[["Programmés", "5"], ["Publiés", "2"], ["Idées", "6"]].map(([k, v]) => (
+            <div key={k} style={{ flex: 1, background: "#f7f9fc", borderRadius: 22, padding: "10px 18px" }}>
+              <div style={{ fontSize: 34, fontWeight: 800, color: C.coral, lineHeight: 1.1 }}>{v}</div>
+              <div style={{ fontSize: 21, color: C.muted }}>{k}</div>
+            </div>
+          ))}
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 22 }}>
           {days.map((d, i) => {
             const [label, hour, org] = posts[i];
             const p = back(seg(lt, 0.7 + 0.35 * i, 0.55));
@@ -228,7 +240,7 @@ function SceneCalendar({ lt }) {
             return (
               <div key={d} style={{ display: "flex", alignItems: "center", gap: 18 }}>
                 <div style={{ width: 70, fontSize: 26, fontWeight: 700, color: "#9aa5b8" }}>{d}</div>
-                <div style={{ flex: 1, height: 104, borderRadius: 28, background: "#f7f9fc", position: "relative", overflow: "hidden" }}>
+                <div style={{ flex: 1, height: 92, borderRadius: 28, background: "#f7f9fc", position: "relative", overflow: "hidden" }}>
                   <div style={{ position: "absolute", inset: 8, background: org ? C.blue : C.coral, color: "#fff", borderRadius: 22, padding: "0 26px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, opacity: clamp01(p), transform: `translateX(${(1 - p) * 220}px)`, boxShadow: "0 14px 26px -12px rgba(27,42,74,.35)" }}>
                     <div>
                       <div style={{ fontSize: 28, fontWeight: 700, lineHeight: 1.15 }}>{label}</div>
@@ -478,7 +490,7 @@ export default function BrandMotion({ record = false, className = "" }) {
       className={`relative w-full overflow-hidden ${className}`}
       style={{ aspectRatio: "16 / 9", background: "linear-gradient(180deg, #fff1f2, #fff7ed 45%, #f0f9ff)" }}
       role="group"
-      aria-label="Animation d'environ 40 secondes : vous dictez ou déposez vos sources, LinkeePost rédige un post dans votre voix, le programme et le publie, puis transforme les commentaires en leads notés par rapport à votre cible."
+      aria-label="Animation d'environ 40 secondes : vous dictez ou déposez vos sources par thématique, vous choisissez une humeur, LinkeePost rédige un post dans votre voix, le programme et le publie depuis votre tableau de bord, puis transforme les commentaires en leads notés par rapport à votre cible."
       data-testid="brand-motion"
     >
       <div style={{ position: "absolute", left: 0, top: 0, width: W, height: H, transform: `scale(${scale})`, transformOrigin: "top left", visibility: scale ? "visible" : "hidden" }} aria-hidden="true">
@@ -509,7 +521,7 @@ export default function BrandMotion({ record = false, className = "" }) {
         </button>
       )}
       <p className="sr-only">
-        Étape 1 : vous parlez ou vous déposez vos documents et liens dans votre base. Étape 2 : LinkeePost rédige un post dans votre voix, avec les sources utilisées. Étape 3 : le post est programmé et publié sur votre profil et votre page entreprise. Étape 4 : les commentaires deviennent des contacts notés par l&apos;IA selon votre cible, et vous décidez qui contacter. 14 jours d&apos;essai gratuit, sans carte bancaire.
+        Étape 1 : vous parlez ou vous déposez vos documents et liens dans la base d'une thématique. Étape 2 : vous choisissez une humeur et LinkeePost rédige un post dans votre voix, avec les sources utilisées. Étape 3 : le post est programmé et publié depuis votre tableau de bord « Aujourd'hui », avec les idées du copilote. Étape 4 : les commentaires deviennent des contacts notés par l&apos;IA selon votre cible, et vous décidez qui contacter. 14 jours d&apos;essai gratuit, sans carte bancaire.
       </p>
     </div>
   );
