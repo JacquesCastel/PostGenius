@@ -7022,6 +7022,7 @@ function KnowledgePanel({ showToast, onCount, activeContextId = null, hasContext
       const d = await readJson(res);
       if (!res.ok) throw new Error(d.error || "Erreur");
       showToast("Source ajoutée et analysée ✓");
+      setAdding(false);
       setTitle("");
       setText("");
       setVoiceHas(false);
@@ -7103,106 +7104,111 @@ function KnowledgePanel({ showToast, onCount, activeContextId = null, hasContext
                 </button>
               )}
             </p>
-          ) : (adding || (data && used === 0)) && (
-            <div id="datalake-add" className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-2 scroll-mt-24" data-testid="datalake-form">
-              <div className="flex gap-1.5">
-                {voiceOk && (
-                  <button type="button" onClick={() => setTab("voice")} data-testid="datalake-tab-voice" className={`text-xs font-semibold px-3.5 py-1.5 rounded-full border inline-flex items-center gap-1.5 ${tab === "voice" ? "bg-[#0a66c2] text-white border-[#0a66c2]" : "bg-[#e8f1fb] text-[#0a66c2] border-[#b9d4f1] hover:bg-[#d6e6f7]"}`}>
-                    <Mic size={13} /> Dicter à la voix
-                  </button>
-                )}
-                <button type="button" onClick={() => setTab("note")} className={chip(tab === "note")}>Coller un texte</button>
-                <button type="button" onClick={() => setTab("link")} className={chip(tab === "link")}>Un lien</button>
-                <button type="button" onClick={() => setTab("file")} className={chip(tab === "file")}>PDF ou Word</button>
-              </div>
-              {(ctxList.length > 0 || momentList.length > 0) && (
-                <div className="rounded-xl border border-gray-200 bg-gray-50 p-3 space-y-2" data-testid="source-scope">
-                  <p className="text-xs font-semibold text-gray-700">Pour quelles thématiques ?</p>
-                  <div className="flex flex-col gap-1.5">
-                    {themeTabs.map((t) => (
-                      <label key={t.id} className={`flex items-center gap-2 text-xs rounded-lg border px-3 py-2 ${targets.includes(t.id) && !sharedAll && !momentSel ? "border-[#ff5a5f] bg-[#fff8f8]" : "border-gray-200 bg-white"}`}>
-                        <input type="checkbox" checked={targets.includes(t.id) && !sharedAll && !momentSel} disabled={sharedAll || Boolean(momentSel)} onChange={() => toggleTarget(t.id)} data-testid="source-target" data-target={t.id} />
-                        <span className="font-semibold text-gray-800">{t.name}</span>
-                        {proximityOf(t.id) && <span className={`ml-auto text-[11px] font-bold ${proximityOf(t.id) === "Très proche" ? "text-[#a3242a]" : "text-amber-700"}`} data-testid="source-proximity">{proximityOf(t.id)}</span>}
-                      </label>
-                    ))}
-                    <label className="flex items-center gap-2 text-xs text-gray-600"><input type="checkbox" checked={sharedAll} disabled={Boolean(momentSel)} onChange={(e) => setSharedAll(e.target.checked)} data-testid="source-shared-all" /> Toutes mes thématiques (partagée, y compris les futures)</label>
-                    {momentList.length > 0 && (
-                      <label className="flex items-center gap-2 text-xs text-gray-600 flex-wrap">📅 Ou pour un temps fort seulement :
-                        <select value={momentSel} onChange={(e) => setMomentSel(e.target.value)} className="border border-gray-200 rounded-lg px-2 py-1 text-xs bg-white" data-testid="source-moment-select">
-                          <option value="">Aucun</option>
-                          {momentList.map((m) => (<option key={m.id} value={m.id}>{m.name}</option>))}
-                        </select>
-                      </label>
-                    )}
+          ) : adding && (
+            <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center p-3 sm:p-6 overflow-y-auto" style={{ background: "rgba(27,42,74,.45)" }} onClick={() => setAdding(false)} data-testid="datalake-modal">
+              <div id="datalake-add" role="dialog" aria-modal="true" aria-label="Ajouter une source" className="bg-white rounded-3xl w-full max-w-[920px] my-auto px-5 sm:px-9 py-6 sm:py-[30px] flex flex-col gap-4 shadow-2xl" style={{ boxShadow: "0 30px 80px -20px rgba(27,42,74,.5)" }} onClick={(e) => e.stopPropagation()} data-testid="datalake-form">
+                <div className="flex items-start gap-4">
+                  <div className="flex-1">
+                    <h2 className="text-2xl font-extrabold text-[#1b2a4a] mb-1.5">Ajouter une source</h2>
+                    <p className="text-sm text-[#5a6b85] leading-relaxed">Collez un lien, un texte, ou dictez. Puis dites à quelles thématiques elle sert.</p>
                   </div>
-                  <p className="text-[11px] text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1.5">Une seule copie est conservée : elle sert dans toutes les thématiques cochées. Vous pourrez la retirer d&apos;une thématique plus tard sans la perdre.</p>
+                  <button type="button" onClick={() => setAdding(false)} aria-label="Fermer" data-testid="datalake-modal-close" className="text-2xl leading-none text-[#5a6b85] hover:text-gray-900">×</button>
                 </div>
-              )}
-              <input
-                type="text"
-                value={title}
-                maxLength={120}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="Titre (facultatif : l'IA en propose un)"
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
-              />
-              {tab === "voice" ? (
-                voiceHas ? (
-                  <div className="space-y-2" data-testid="datalake-voice-review">
-                    <p className="text-xs text-gray-500">Votre dictée, <strong>à relire</strong> : corrigez ce qui a été mal compris avant de l&apos;ajouter.</p>
-                    <textarea rows={7} value={text} maxLength={12000} onChange={(e) => setText(e.target.value)} data-testid="datalake-voice-text" className="w-full border border-gray-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]" />
-                    <p className="text-[11px] text-gray-400">{text.trim().length} caractères{text.trim().length < 80 ? " : 80 au moins pour une note." : "."}</p>
-                    <div className="flex flex-wrap gap-2 items-center">
-                      <CleanButton text={text} onText={setText} testid="datalake-voice-clean" />
-                      <button type="button" onClick={() => { setText(""); setVoiceHas(false); }} data-testid="datalake-voice-redo" className="text-sm text-gray-500 underline">Réenregistrer</button>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5" data-testid="datalake-types">
+                  {[["link", "🔗 Un lien", false], ["note", "📝 Un texte", false], ...(voiceOk ? [["voice", "🎙 Dicter", true]] : []), ["file", "📄 Un fichier", false]].map(([id, label, red]) => (
+                    <button key={id} type="button" onClick={() => setTab(id)} aria-pressed={tab === id} data-testid={id === "voice" ? "datalake-tab-voice" : `datalake-type-${id}`} className={`text-center rounded-xl py-2.5 text-sm font-semibold ${tab === id ? "border-2 border-[#d63b42] bg-[#fff8f8] text-[#a3242a] py-[9px]" : red ? "border border-[#f3a3a6] text-[#a3242a] bg-white hover:bg-[#fff8f8]" : "border border-[#cbd5e1] text-[#33415c] bg-white hover:border-gray-400"}`}>{label}</button>
+                  ))}
+                </div>
+                {tab === "voice" ? (
+                  voiceHas ? (
+                    <div className="space-y-2" data-testid="datalake-voice-review">
+                      <p className="text-sm text-gray-500">Votre dictée, <strong>à relire</strong> : corrigez ce qui a été mal compris avant de l&apos;ajouter.</p>
+                      <textarea rows={7} value={text} maxLength={12000} onChange={(e) => setText(e.target.value)} data-testid="datalake-voice-text" className="w-full border border-[#cbd5e1] rounded-xl px-3.5 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]" />
+                      <p className="text-xs text-gray-400">{text.trim().length} caractères{text.trim().length < 80 ? " : 80 au moins pour une note." : "."}</p>
+                      <div className="flex flex-wrap gap-2 items-center">
+                        <CleanButton text={text} onText={setText} testid="datalake-voice-clean" />
+                        <button type="button" onClick={() => { setText(""); setVoiceHas(false); }} data-testid="datalake-voice-redo" className="text-sm text-gray-500 underline">Réenregistrer</button>
+                      </div>
+                    </div>
+                  ) : (
+                    <VoiceRecorder onText={(t) => { setText(t); setVoiceHas(true); }} />
+                  )
+                ) : tab === "note" ? (
+                  <textarea rows={6} value={text} onChange={(e) => setText(e.target.value)} placeholder="Collez ici une présentation, une offre, une étude de cas, des notes…" className="w-full border border-[#cbd5e1] rounded-xl px-3.5 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]" />
+                ) : tab === "link" ? (
+                  <input type="url" value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://votre-site.fr/article" data-testid="datalake-url" className="w-full border border-[#cbd5e1] rounded-xl px-3.5 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]" />
+                ) : (
+                  <div className="border border-[#cbd5e1] rounded-xl px-3.5 py-3">
+                    <input
+                      key={fileKey}
+                      type="file"
+                      accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0] ?? null;
+                        if (f && f.size > 8 * 1024 * 1024) { setError("Fichier trop volumineux (8 Mo au maximum)."); setFile(null); return; }
+                        setError(null);
+                        setFile(f);
+                      }}
+                      className="text-sm"
+                    />
+                    <p className="text-xs text-gray-400 mt-1.5">PDF avec texte ou document Word (.docx), 8 Mo au maximum. Le fichier n&apos;est pas conservé : seuls son texte et son analyse le sont. Un PDF scanné (images) ne peut pas être lu : collez plutôt son texte.</p>
+                  </div>
+                )}
+                <input type="text" value={title} maxLength={120} onChange={(e) => setTitle(e.target.value)} placeholder="Titre (facultatif : l'IA en propose un)" className="w-full border border-[#e2e8f0] rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]" />
+                {(ctxList.length > 0 || momentList.length > 0) && (
+                  <div data-testid="source-scope">
+                    <span className="block text-xs font-bold tracking-wider uppercase text-[#5a6b85] mb-2">Pour quelles thématiques ?</span>
+                    <div className="flex flex-col gap-2">
+                      {themeTabs.map((t) => {
+                        const prox = proximityOf(t.id);
+                        const on = targets.includes(t.id) && !sharedAll && !momentSel;
+                        const decided = draftWords.size >= 4;
+                        return (
+                          <label key={t.id} className={`flex items-center gap-3 rounded-[14px] px-3.5 py-[11px] cursor-pointer ${on ? "border-2 border-[#d63b42] bg-[#fff8f8] !py-[10px] !px-[13px]" : "border border-[#cbd5e1] bg-white"} ${sharedAll || momentSel ? "opacity-60" : ""}`}>
+                            <input type="checkbox" className="sr-only" checked={on} disabled={sharedAll || Boolean(momentSel)} onChange={() => toggleTarget(t.id)} data-testid="source-target" data-target={t.id} />
+                            <span aria-hidden="true" className={`w-5 h-5 rounded-md border-2 flex items-center justify-center text-[13px] text-white shrink-0 ${on ? "bg-[#d63b42] border-[#d63b42]" : "bg-white border-[#94a3b8]"}`}>{on ? "✓" : ""}</span>
+                            <span className="flex-1 min-w-0">
+                              <b className="text-sm text-[#1b2a4a]">{t.name}</b>
+                              <span className="block text-xs text-[#5a6b85] leading-snug">{prox ? `Suggérée : le contenu rejoint les thèmes de cette thématique.` : decided ? "Aucun rapport avec le sujet." : ctxList.find((c) => c.id === t.id)?.kind === "personal" ? "Sujet personnel" : "Activité"}</span>
+                            </span>
+                            {prox && <span className={`text-xs font-bold ${prox === "Très proche" ? "text-[#a3242a]" : "text-[#7a4b00]"}`} data-testid="source-proximity">{prox}</span>}
+                          </label>
+                        );
+                      })}
+                    </div>
+                    <div className="mt-2.5 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-[#5a6b85]">
+                      <label className="flex items-center gap-2"><input type="checkbox" checked={sharedAll} disabled={Boolean(momentSel)} onChange={(e) => setSharedAll(e.target.checked)} data-testid="source-shared-all" /> Toutes mes thématiques (partagée, y compris les futures)</label>
+                      {momentList.length > 0 && (
+                        <label className="flex items-center gap-2 flex-wrap">📅 Ou pour un temps fort seulement :
+                          <select value={momentSel} onChange={(e) => setMomentSel(e.target.value)} className="border border-gray-200 rounded-lg px-2 py-1 text-xs bg-white" data-testid="source-moment-select">
+                            <option value="">Aucun</option>
+                            {momentList.map((m) => (<option key={m.id} value={m.id}>{m.name}</option>))}
+                          </select>
+                        </label>
+                      )}
                     </div>
                   </div>
-                ) : (
-                  <VoiceRecorder onText={(t) => { setText(t); setVoiceHas(true); }} />
-                )
-              ) : tab === "note" ? (
-                <textarea
-                  rows={6}
-                  value={text}
-                  onChange={(e) => setText(e.target.value)}
-                  placeholder="Collez ici une présentation, une offre, une étude de cas, des notes…"
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
-                />
-              ) : tab === "link" ? (
-                <input
-                  type="url"
-                  value={url}
-                  onChange={(e) => setUrl(e.target.value)}
-                  placeholder="https://votre-site.fr/article"
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
-                />
-              ) : (
-                <div>
-                  <input
-                    key={fileKey}
-                    type="file"
-                    accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                    onChange={(e) => {
-                      const f = e.target.files?.[0] ?? null;
-                      if (f && f.size > 8 * 1024 * 1024) { setError("Fichier trop volumineux (8 Mo au maximum)."); setFile(null); return; }
-                      setError(null);
-                      setFile(f);
-                    }}
-                    className="text-xs"
-                  />
-                  <p className="text-[11px] text-gray-400 mt-1">PDF avec texte ou document Word (.docx), 8 Mo au maximum. Le fichier n&apos;est pas conservé : seuls son texte et son analyse le sont. Un PDF scanné (images) ne peut pas être lu : collez son texte.</p>
+                )}
+                {(ctxList.length > 0 || momentList.length > 0) && (
+                  <div className="px-3.5 py-[11px] rounded-xl bg-[#fff7ed] border border-[#fde1c0] text-[13px] leading-relaxed text-[#7a4b00]">
+                    {momentSel ? "Cette source ne servira que dans ce temps fort." : `Une seule copie est conservée, elle sert dans ${sharedAll ? "toutes vos thématiques" : targets.length > 1 ? `les ${targets.length} thématiques cochées` : "la thématique cochée"}. Vous pourrez la retirer d'une thématique plus tard sans la perdre.`}
+                  </div>
+                )}
+                {error && <p className="text-sm text-red-600">{error}</p>}
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                  <button
+                    type="button"
+                    onClick={add}
+                    disabled={busy || (tab === "voice" ? !voiceHas || text.trim().length < 80 : tab === "note" ? text.trim().length < 20 : tab === "link" ? !url.trim() : !file)}
+                    data-testid="datalake-add-submit"
+                    className="bg-[#d63b42] hover:bg-[#c2343a] disabled:bg-gray-300 text-white text-[15px] font-bold px-[22px] py-3 rounded-xl"
+                  >
+                    {busy ? (tab === "file" ? "Lecture et analyse…" : "Analyse en cours…") : momentSel ? "Ajouter au temps fort" : sharedAll ? "Ajouter à toutes mes thématiques" : (ctxList.length > 0 && targets.length > 1) ? `Ajouter à ${targets.length} thématiques` : (ctxList.length > 0 ? "Ajouter à 1 thématique" : "Ajouter et analyser")}
+                  </button>
+                  <button type="button" onClick={() => setAdding(false)} className="text-sm text-[#33415c] hover:text-gray-900">Annuler</button>
+                  <span className="sm:ml-auto text-[13px] text-[#5a6b85]">Même logique pour une dictée, un partage de lien ou une note</span>
                 </div>
-              )}
-              {error && <p className="text-xs text-red-600">{error}</p>}
-              <button
-                type="button"
-                onClick={add}
-                disabled={busy || (tab === "voice" ? !voiceHas || text.trim().length < 80 : tab === "note" ? text.trim().length < 20 : tab === "link" ? !url.trim() : !file)}
-                className="bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white text-sm font-medium px-4 py-2 rounded-lg"
-              >
-                {busy ? (tab === "file" ? "Lecture et analyse…" : "Analyse en cours…") : "Ajouter et analyser"}
-              </button>
+              </div>
             </div>
           )}
           {unread.length > 0 && (
