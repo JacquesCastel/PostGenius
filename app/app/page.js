@@ -2422,7 +2422,7 @@ const DraftBadge = ({ status }) => (status === "idle" ? null : <span className="
 // puis crée la campagne. Rien n'est inventé : liens et exemples viennent du document, ce qui manque est signalé.
 // ----------------------------------------------------------------
 function BriefImport({ showToast, onClose, onCreated, draft = null }) {
-  const { contexts: ents, activeContextId } = useContext(EntreprisesCtx);
+  const { contexts: ents, activeContextId, moments: allMoments = [] } = useContext(EntreprisesCtx);
   const d0 = draft?.state ?? null;
   const [stage, setStage] = useState(d0?.brief ? "review" : "input"); // input | review
   const [tab, setTab] = useState("file"); // file | paste
@@ -2435,11 +2435,12 @@ function BriefImport({ showToast, onClose, onCreated, draft = null }) {
   const [forbiddenText, setForbiddenText] = useState(d0?.forbiddenText ?? "");
   const [ctxId, setCtxId] = useState(d0 ? d0.ctxId ?? "" : activeContextId ?? "");
   const [addUrls, setAddUrls] = useState(d0?.addUrls ?? []); // adresses à ajouter au datalake de l'entreprise
+  const [momentId, setMomentId] = useState(d0?.momentId ?? null); // temps fort de la campagne (facultatif)
   const [creating, setCreating] = useState(false);
   const chip = (on) => `text-xs px-3 py-1.5 rounded-full border ${on ? "bg-[#ff5a5f] text-white border-[#ff5a5f]" : "border-gray-200 text-gray-600 hover:border-gray-300"}`;
   const input = "w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]";
   // Brouillon : la relecture est enregistrée au fil de l'eau (l'analyse du brief n'est jamais à refaire)
-  const autosave = useDraftAutosave({ enabled: stage === "review" && Boolean(brief) && !creating, kind: "brief", getState: () => ({ brief, rulesText, forbiddenText, ctxId, addUrls }), name: brief?.name, theme: brief?.theme, contextId: ctxId, initialId: draft?.id ?? null, deps: [brief, rulesText, forbiddenText, ctxId, addUrls] });
+  const autosave = useDraftAutosave({ enabled: stage === "review" && Boolean(brief) && !creating, kind: "brief", getState: () => ({ brief, rulesText, forbiddenText, ctxId, addUrls, momentId }), name: brief?.name, theme: brief?.theme, contextId: ctxId, initialId: draft?.id ?? null, deps: [brief, rulesText, forbiddenText, ctxId, addUrls] });
   const set = (k, v) => setBrief((b) => ({ ...b, [k]: v }));
   const setAccount = (i, patch) => setBrief((b) => ({ ...b, accounts: b.accounts.map((a, j) => (j === i ? { ...a, ...patch } : a)) }));
 
@@ -2474,7 +2475,7 @@ function BriefImport({ showToast, onClose, onCreated, draft = null }) {
     try {
       const lines = (t) => t.split("\n").map((x) => x.trim()).filter(Boolean);
       const payload = { ...brief, rules: lines(rulesText), forbidden: lines(forbiddenText) };
-      const res = await fetch("/api/campaigns", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ brief: payload, contextId: ctxId || undefined, draftId: autosave.id || undefined }) });
+      const res = await fetch("/api/campaigns", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ brief: payload, contextId: ctxId || undefined, momentId: momentId || undefined, draftId: autosave.id || undefined }) });
       const d = await readJson(res);
       if (!res.ok) throw new Error(d.error || "Erreur");
       let added = 0;
@@ -2482,7 +2483,7 @@ function BriefImport({ showToast, onClose, onCreated, draft = null }) {
       for (const url of addUrls) {
         const src = brief.sources.find((x) => x.url === url);
         try {
-          const r = await fetch("/api/knowledge", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ kind: "link", url, title: src?.label, contextId: ctxId || undefined }) });
+          const r = await fetch("/api/knowledge", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ kind: "link", url, title: src?.label, contextId: ctxId || undefined, momentId: momentId || undefined }) });
           if (r.ok) added++;
           else failed++;
         } catch {
@@ -2567,13 +2568,28 @@ function BriefImport({ showToast, onClose, onCreated, draft = null }) {
           <label className="text-xs text-gray-600">Nom<input type="text" value={brief.name} onChange={(e) => set("name", e.target.value)} className={`${input} mt-1`} data-testid="brief-name" /></label>
           {ents.length > 0 && (
             <label className="text-xs text-gray-600">Thématique
-              <select value={ctxId} onChange={(e) => setCtxId(e.target.value)} className={`${input} mt-1 bg-white`} data-testid="brief-company">
+              <select value={ctxId} onChange={(e) => { setCtxId(e.target.value); setMomentId(null); }} className={`${input} mt-1 bg-white`} data-testid="brief-company">
                 <option value="">Mon activité</option>
                 {ents.map((c) => (<option key={c.id} value={c.id}>{c.name}</option>))}
               </select>
             </label>
           )}
         </div>
+        {(() => {
+          const avail = allMoments.filter((m) => (m.contextId ?? null) === (ctxId || null) && (m.state === "active" || m.state === "upcoming"));
+          if (!avail.length) return null;
+          return (
+            <div data-testid="brief-moment">
+              <p className="text-xs text-gray-600 mb-1.5">📅 Dans un temps fort ?</p>
+              <div className="flex flex-wrap gap-1.5">
+                {[{ id: null, name: "Aucun" }, ...avail].map((m) => (
+                  <button key={m.id ?? "none"} type="button" onClick={() => setMomentId(m.id)} data-testid="brief-moment-chip" className={`text-xs px-3 py-1.5 rounded-full border ${momentId === m.id ? "bg-amber-500 text-white border-amber-500" : "border-gray-200 text-gray-600 hover:border-gray-300"}`}>{m.name}</button>
+                ))}
+              </div>
+              <p className="text-[11px] text-gray-400 mt-1.5">Le brief et les sources du temps fort s&apos;ajoutent à ceux de ce brief, et les pages cochées plus bas rejoignent son datalake.</p>
+            </div>
+          );
+        })()}
         <label className="text-xs text-gray-600 block">Thème<textarea rows={2} value={brief.theme} onChange={(e) => set("theme", e.target.value)} className={`${input} mt-1`} data-testid="brief-theme" /></label>
         <label className="text-xs text-gray-600 block">Objectif<textarea rows={2} value={brief.objective} onChange={(e) => set("objective", e.target.value)} className={`${input} mt-1`} /></label>
         <label className="text-xs text-gray-600 block">Message à retenir<textarea rows={2} value={brief.message} onChange={(e) => set("message", e.target.value)} className={`${input} mt-1`} /></label>
