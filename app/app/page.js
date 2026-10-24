@@ -15867,6 +15867,7 @@ function ProfilePage({ user, plan, onGoView, ...props }) {
   const [stageField, setStageField] = useState(focusField ?? null);
   const [counts, setCounts] = useState({ knowledge: 0, remarks: 0 });
   const [themes, setThemes] = useState(null);
+  const [popin, setPopin] = useState(null); // « voice » | « goals » : texte complet d'une carte
   useEffect(() => {
     fetch("/api/knowledge").then(readJson).then((d) => setCounts((c) => ({ ...c, knowledge: d.sources?.length ?? 0 }))).catch(() => {});
     fetch("/api/remarks").then(readJson).then((d) => setCounts((c) => ({ ...c, remarks: d.remarks?.length ?? 0 }))).catch(() => {});
@@ -15923,25 +15924,39 @@ function ProfilePage({ user, plan, onGoView, ...props }) {
         </div>
       </div>
       <div className="grid md:grid-cols-3 gap-4">
-        <div className={card} data-testid="profile-card-identity">
+        <div className={`${card} flex flex-col`} data-testid="profile-card-identity">
           <p className={label}>Qui je suis</p>
           <Row k="Fonction" v={f.headline} />
           <Row k="Entreprise" v={f.companyName} />
           <Row k="Langue des posts" v={LANGUAGES.find((l) => l.code === normalizeLanguage(f.postLanguage))?.label} />
           <Row k="Jours de publication" v={days} />
-          <button type="button" onClick={() => edit("identity")} data-testid="profile-edit-identity" className={`${link} mt-2`}>Modifier mon identité</button>
+          <button type="button" onClick={() => edit("identity")} data-testid="profile-edit-identity" className={`${link} mt-auto pt-2 text-left`}>Modifier mon identité</button>
         </div>
-        <div className={card} data-testid="profile-card-voice">
+        <div className={`${card} flex flex-col`} data-testid="profile-card-voice">
           <p className={label}>Ma voix, partout</p>
-          <p className="text-sm text-gray-700 leading-relaxed">{f.styleNotes?.trim() || `Ton ${String(f.tone || "professionnel").toLowerCase()}. Aucune consigne d'écriture pour l'instant.`}</p>
+          {(() => {
+            const text = f.styleNotes?.trim() || `Ton ${String(f.tone || "professionnel").toLowerCase()}. Aucune consigne d'écriture pour l'instant.`;
+            const long = text.length > 220;
+            return (
+              <>
+                <p className="text-sm text-gray-700 leading-relaxed" style={{ display: "-webkit-box", WebkitLineClamp: 4, WebkitBoxOrient: "vertical", overflow: "hidden" }} data-testid="profile-voice-text">{text}</p>
+                {long && <button type="button" onClick={() => setPopin("voice")} data-testid="profile-voice-more" className={`${link} text-left mt-1`}>Voir tout</button>}
+              </>
+            );
+          })()}
           <p className="text-xs text-gray-500 mt-2 leading-snug">{f.styleImportedAt ? "Apprise à partir de vos anciens posts." : "Importez d'anciens posts pour que le copilote apprenne votre façon d'écrire."} Chaque thématique peut la nuancer.</p>
-          <button type="button" onClick={() => edit("voice")} data-testid="profile-edit-voice" className={`${link} mt-2`}>Ajuster ma voix</button>
+          <button type="button" onClick={() => edit("voice")} data-testid="profile-edit-voice" className={`${link} mt-auto pt-2 text-left`}>Ajuster ma voix</button>
         </div>
-        <div className={card} data-testid="profile-card-goals">
+        <div className={`${card} flex flex-col`} data-testid="profile-card-goals">
           <p className={label}>Mes objectifs</p>
-          {goals.length > 0 ? <div className="flex gap-1.5 flex-wrap">{goals.map((g) => (<span key={g} className={`${tag} bg-[#e8f1fb] text-[#084a8d]`}>{g}</span>))}</div> : <p className="text-sm text-gray-500">Aucun objectif choisi pour l&apos;instant.</p>}
+          {goals.length > 0 ? (
+            <div className="flex gap-1.5 flex-wrap">
+              {goals.slice(0, 3).map((g) => (<span key={g} className={`${tag} bg-[#e8f1fb] text-[#084a8d] max-w-full truncate`} title={g}>{g}</span>))}
+              {goals.length > 3 && <button type="button" onClick={() => setPopin("goals")} data-testid="profile-goals-more" className={`${tag} bg-gray-100 text-gray-700 hover:bg-gray-200`}>+ {goals.length - 3} autre{goals.length - 3 > 1 ? "s" : ""}</button>}
+            </div>
+          ) : <p className="text-sm text-gray-500">Aucun objectif choisi pour l&apos;instant.</p>}
           <p className="text-xs text-gray-500 mt-2.5 leading-snug">Ils orientent l&apos;appel à l&apos;action de chaque post. Un post peut en choisir un autre au moment de l&apos;écrire.</p>
-          <button type="button" onClick={() => edit("audience")} data-testid="profile-edit-goals" className={`${link} mt-2`}>Modifier mes objectifs</button>
+          <button type="button" onClick={() => edit("audience")} data-testid="profile-edit-goals" className={`${link} mt-auto pt-2 text-left`}>Modifier mes objectifs</button>
         </div>
       </div>
       <div className="flex items-baseline justify-between pt-1">
@@ -15979,6 +15994,25 @@ function ProfilePage({ user, plan, onGoView, ...props }) {
           <button type="button" onClick={() => onGoView("billing")} data-testid="profile-go-billing" className={link}>Gérer</button>
         </div>
       </div>
+      {popin && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={() => setPopin(null)} data-testid="profile-popin">
+          <div role="dialog" aria-modal="true" aria-label={popin === "voice" ? "Ma voix, partout" : "Mes objectifs"} className="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[85vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+              <h2 className="text-lg font-extrabold">{popin === "voice" ? "Ma voix, partout" : "Mes objectifs"}</h2>
+              <button type="button" onClick={() => setPopin(null)} aria-label="Fermer" data-testid="profile-popin-close" className="text-gray-400 hover:text-gray-700"><X size={18} /></button>
+            </div>
+            <div className="px-6 py-4 overflow-y-auto">
+              {popin === "voice"
+                ? <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-line" data-testid="profile-popin-text">{f.styleNotes?.trim()}</p>
+                : <div className="flex gap-1.5 flex-wrap" data-testid="profile-popin-text">{goals.map((g) => (<span key={g} className={`${tag} bg-[#e8f1fb] text-[#084a8d]`}>{g}</span>))}</div>}
+            </div>
+            <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-4">
+              <button type="button" onClick={() => setPopin(null)} className="text-sm text-gray-500 hover:text-gray-800">Fermer</button>
+              <button type="button" onClick={() => { setPopin(null); edit(popin === "voice" ? "voice" : "audience"); }} data-testid="profile-popin-edit" className="bg-[#d63b42] hover:bg-[#c2343a] text-white text-sm font-bold px-4 py-2 rounded-lg">{popin === "voice" ? "Ajuster ma voix" : "Modifier mes objectifs"}</button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
