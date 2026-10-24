@@ -10135,9 +10135,10 @@ function DashToday({ drafts, profile, ns, campaigns, canCampaigns, voiceOk, onGo
         </div>
       </div>
 
-      <div className="grid lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] gap-3.5 items-start">
-        <div className="min-w-0" data-testid="dash-ideas">{ideas}</div>
-        <div className="space-y-3.5 min-w-0">
+      <div className="min-w-0" data-testid="dash-ideas">{ideas}</div>
+
+      <div className="grid md:grid-cols-2 md:[&>*:only-child]:col-span-2 gap-3.5 items-start">
+        <div className="contents">
           {canCampaigns && (
             <div className={card} data-testid="dash-campaigns">
               <span className={lb}>Campagnes en cours</span>
