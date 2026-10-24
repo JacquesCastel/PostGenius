@@ -1371,8 +1371,10 @@ function CampaignWizard({ profile, linkedin, orgs, onClose, onLaunched, onProfil
   const [pickedLink, setPickedLink] = useState(d0.pickedLink ?? null);
   const [veille, setVeille] = useState(null);
   // Point de départ choisi à l'étape 1 : un thème libre, un article, un document ou la veille
-  const { contexts: ents, activeContextId } = useContext(EntreprisesCtx);
+  const { contexts: ents, activeContextId, moments: allMoments = [] } = useContext(EntreprisesCtx);
   const [wizCtx, setWizCtx] = useState(draft ? d0.wizCtx ?? null : initial?.contextId ?? activeContextId ?? null); // thématique de la campagne
+  const [wizMoment, setWizMoment] = useState(draft ? d0.wizMoment ?? null : null); // temps fort de la campagne (facultatif)
+  useEffect(() => { setWizMoment(null); }, [wizCtx]);
   const [wizSources, setWizSources] = useState(null); // sources choisies pour le post d'exemple (null = automatique)
   useEffect(() => { setWizSources(null); }, [wizCtx]);
   const [startMode, setStartMode] = useState(d0.startMode ?? (initial?.context ? "veille" : "theme"));
@@ -1485,6 +1487,7 @@ function CampaignWizard({ profile, linkedin, orgs, onClose, onLaunched, onProfil
           mood,
           context: buildContext(),
           contextId: wizCtx || undefined,
+          momentId: wizMoment || undefined,
           sourceIds: wizSources ?? undefined,
           ...(withFeedback ? { feedback: fb, previous: sample, history: sampleThread.filter((m) => m.role === "user").map((m) => m.text) } : {}),
         }),
@@ -1549,7 +1552,7 @@ function CampaignWizard({ profile, linkedin, orgs, onClose, onLaunched, onProfil
       const cRes = await fetch("/api/campaigns", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, theme, objective, mood, context: buildContext(), contextId: wizCtx || undefined, draftId: autosave.id || undefined }),
+        body: JSON.stringify({ name, theme, objective, mood, context: buildContext(), contextId: wizCtx || undefined, momentId: wizMoment || undefined, draftId: autosave.id || undefined }),
       });
       const cData = await readJson(cRes);
       if (!cRes.ok) throw new Error(cData.error);
@@ -1639,6 +1642,21 @@ function CampaignWizard({ profile, linkedin, orgs, onClose, onLaunched, onProfil
                 </div>
               </div>
             )}
+            {(() => {
+              const avail = allMoments.filter((m) => (m.contextId ?? null) === (wizCtx ?? null) && (m.state === "active" || m.state === "upcoming"));
+              if (!avail.length) return null;
+              return (
+                <div data-testid="wizard-moment">
+                  <label className="text-sm font-medium text-gray-700 block mb-2">📅 Dans un temps fort ?</label>
+                  <div className="flex flex-wrap gap-1.5">
+                    {[{ id: null, name: "Aucun" }, ...avail].map((m) => (
+                      <button key={m.id ?? "none"} type="button" onClick={() => setWizMoment(m.id)} data-testid="wizard-moment-chip" className={`text-xs px-3 py-1.5 rounded-full border ${wizMoment === m.id ? "bg-amber-500 text-white border-amber-500" : "border-gray-200 text-gray-600 hover:border-gray-300"}`}>{m.name}</button>
+                    ))}
+                  </div>
+                  <p className="text-[11px] text-gray-400 mt-1.5">Chaque post de la campagne s&apos;inscrit dans ce moment : son brief et ses sources s&apos;ajoutent à la thématique.</p>
+                </div>
+              );
+            })()}
             <div>
               <label className="text-sm font-medium text-gray-700 block mb-2">Sur quoi porte votre campagne ?</label>
               <div className={`grid gap-1 bg-gray-100 p-1 rounded-lg mb-3 ${veille?.length > 0 ? "grid-cols-4" : "grid-cols-3"}`} role="tablist">
@@ -12072,7 +12090,7 @@ function MonthlyReportModal({ client, onClose }) {
 // ── Ligne de tableau client (avec accordéon) ────────────────────────
 // Écrans accessibles par /app?view=… (notifications, bascule de client, retour au tableau de bord agence)
 // Entreprise sélectionnée (voir « Mes entreprises » dans le profil) : partagée par la création, les campagnes, la veille et la charte
-const EntreprisesCtx = createContext({ contexts: [], activeContextId: null, activeContext: null, chooseContext: () => {} });
+const EntreprisesCtx = createContext({ contexts: [], moments: [], activeContextId: null, activeContext: null, chooseContext: () => {} });
 
 // Refus d'offre renvoyés par l'API (code dans la réponse 403) : limites de quota et fonctions non incluses
 const LIMIT_CODES = ["posts_limit", "images_limit", "knowledge_limit", "feature_locked"];
@@ -18652,7 +18670,7 @@ export default function Home() {
   // overflow-x-clip et non -hidden : hidden ferait de la racine un conteneur de défilement et
   // casserait position: sticky (barre latérale, barres d'actions).
   return (
-    <EntreprisesCtx.Provider value={{ contexts, activeContextId, activeContext, chooseContext }}>
+    <EntreprisesCtx.Provider value={{ contexts, moments, activeContextId, activeContext, chooseContext }}>
     <div className="min-h-screen flex overflow-x-clip">
       {/* Tutoriel de première connexion */}
       {showTutorial && <TutorialOverlay canEvents={planAllows(user, "events")} onClose={closeTutorial} />}

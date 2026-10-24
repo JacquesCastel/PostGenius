@@ -86,6 +86,15 @@ export async function POST(req) {
     ownContextId = own.id;
   }
 
+  // Temps fort (facultatif) : il doit appartenir à la même thématique que la campagne
+  let ownMomentId = null;
+  if (body.momentId) {
+    const m = await prisma.moment.findFirst({ where: { id: String(body.momentId), userId }, select: { id: true, contextId: true } });
+    if (!m) return NextResponse.json({ error: "Temps fort introuvable." }, { status: 400 });
+    if ((m.contextId ?? null) !== ownContextId) return NextResponse.json({ error: "Ce temps fort appartient à une autre thématique." }, { status: 400 });
+    ownMomentId = m.id;
+  }
+
   const data = {
       userId,
       name: name?.trim() || theme.trim().slice(0, 60),
@@ -95,6 +104,7 @@ export async function POST(req) {
       brief: brief ? JSON.stringify(brief) : null,
       mood: normalizeMood(mood),
       contextId: ownContextId,
+      momentId: ownMomentId,
   };
   // Création reprise d'un brouillon : le brouillon devient la campagne (même identifiant), son état de travail est effacé
   let campaign;

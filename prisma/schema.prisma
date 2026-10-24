@@ -515,6 +515,9 @@ model Campaign {
   // Entreprise pour laquelle la campagne est menée (nul = entreprise principale)
   contextId String?
   company   Context? @relation(fields: [contextId], references: [id], onDelete: SetNull)
+  // Temps fort dans lequel s'inscrit la campagne (brief et sources du temps fort ajoutés à chaque rédaction)
+  momentId  String?
+  moment    Moment?  @relation(fields: [momentId], references: [id], onDelete: SetNull)
 }
 
 model Draft {
@@ -862,8 +865,9 @@ model Moment {
   archivedAt DateTime?
   createdAt  DateTime  @default(now())
 
-  sources KnowledgeSource[]
-  drafts  Draft[]
+  sources   KnowledgeSource[]
+  drafts    Draft[]
+  campaigns Campaign[]
 
   @@index([userId, archivedAt])
 }
