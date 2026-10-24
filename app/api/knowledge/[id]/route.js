@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getEffectiveUserId as getUserId } from "@/lib/session";
 import { MAX_PINNED } from "@/lib/knowledgeText";
-import { resolveSourceScope } from "@/lib/contexts";
+import { resolveSourceTargets } from "@/lib/contexts";
 import { resolveMomentScope } from "@/lib/moments";
 
 // Renommer, épingler (« toujours utiliser ») ou supprimer une source de la base de connaissances.
@@ -25,12 +25,14 @@ export async function PATCH(req, { params }) {
     }
     data.pinned = body.pinned;
   }
-  if (body.contextId !== undefined || body.shared !== undefined) {
+  let newLinks = null;
+  if (body.contextId !== undefined || body.shared !== undefined || body.contextIds !== undefined || typeof body.momentId === "string") {
     try {
-      const scope = await resolveMomentScope(userId, body, await resolveSourceScope(userId, body));
+      const scope = await resolveMomentScope(userId, body, await resolveSourceTargets(userId, body));
       data.contextId = scope.shared ? null : scope.contextId;
       data.shared = scope.shared;
       data.momentId = scope.momentId; // déplacer une source hors de son temps fort la remet dans la thématique
+      if (body.contextIds !== undefined || scope.shared || scope.momentId) newLinks = scope.shared || scope.momentId ? [] : scope.links;
     } catch (e) {
       return NextResponse.json({ error: e.message }, { status: 400 });
     }
@@ -38,6 +40,11 @@ export async function PATCH(req, { params }) {
   if (!Object.keys(data).length) return NextResponse.json({ error: "Rien à modifier." }, { status: 400 });
   const { count } = await prisma.knowledgeSource.updateMany({ where: { id, userId }, data });
   if (count === 0) return NextResponse.json({ error: "Source introuvable." }, { status: 404 });
+  // Thématiques supplémentaires : la liste envoyée remplace l'ancienne (la thématique d'origine n'en fait pas partie)
+  if (newLinks) {
+    await prisma.knowledgeSourceLink.deleteMany({ where: { sourceId: id } });
+    if (newLinks.length) await prisma.knowledgeSourceLink.createMany({ data: [...new Set(newLinks)].map((contextKey) => ({ sourceId: id, contextKey })), skipDuplicates: true });
+  }
   return NextResponse.json({ ok: true });
 }
 

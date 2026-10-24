@@ -553,6 +553,7 @@ model Draft {
   context   Context? @relation(fields: [contextId], references: [id], onDelete: SetNull)
   momentId  String? // temps fort auquel le post est rattaché
   moment    Moment?  @relation(fields: [momentId], references: [id], onDelete: SetNull)
+  mood      String? // humeur choisie pour ce post (lib/moods.js)
 
   // Pages LinkedIn mentionnées dans le texte (« @Nom » → @[Nom](urn)) : JSON [{ name, urn }]
   mentions String?
@@ -830,6 +831,7 @@ model Context {
   // Thématique : « activity » (entreprise, cible, leads possibles) ou « personal » (sujet personnel : ni entreprise, ni cible commerciale)
   kind                String   @default("activity")
   leadIcp             String? // ce qu'est un bon lead pour cette thématique (nul = on utilise celui du profil)
+  postGenres          String? // CSV de codes d'humeur (lib/moods.js) : le genre de posts qui ressemble à l'auteur pour cette thématique
   createdAt           DateTime @default(now())
 
   sources   KnowledgeSource[]
@@ -888,8 +890,22 @@ model KnowledgeSource {
   moment    Moment?  @relation(fields: [momentId], references: [id], onDelete: SetNull)
   charCount Int      @default(0)
   createdAt DateTime @default(now())
+  // Autres thématiques où la source sert, sans doublon (la thématique d'origine reste contextId)
+  links     KnowledgeSourceLink[]
 
   @@index([userId])
+}
+
+// Une source peut servir dans plusieurs thématiques sans être dupliquée : une ligne par thématique supplémentaire.
+// contextKey : identifiant d'une thématique, ou « main » pour celle du profil.
+model KnowledgeSourceLink {
+  id         String          @id @default(cuid())
+  sourceId   String
+  source     KnowledgeSource @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  contextKey String
+
+  @@unique([sourceId, contextKey])
+  @@index([contextKey])
 }
 
 // Éléments de langage validés par l'auteur : mots à privilégier, mots à éviter, formulations types.
