@@ -97,9 +97,9 @@ esac
 
 echo "==> 5/5  entretien disque + vérification"
 docker image prune -f >/dev/null 2>&1 || true
-# Le cache de construction s'accumule à chaque déploiement (11 Go constatés, disque à 83 %). Sans -a, prune ne retire que le cache « orphelin »
-# et laisse presque tout : -a retire tout le cache inutilisé de plus de 24 h (l'image ne fait que copier le build, la reconstruction est rapide)
-docker builder prune -af --filter "until=24h" >/dev/null 2>&1 || true
+# Le cache de construction ne sert à rien d'un déploiement à l'autre (l'image ne fait que copier le build) et s'accumulait :
+# 9 Go constatés après quelques déploiements, disque à 80 %. On le retire en entier ; `docker builder prune` ne touche jamais aux images ni aux données.
+docker builder prune -af >/dev/null 2>&1 || true
 echo "    disque : $(df -h / | awk 'NR==2{print $3" utilisés sur "$2" ("$5")"}')"
 echo -n "    titre servi en prod : "
 curl -skL https://postgenius.network | grep -o '<title>[^<]*' || true
