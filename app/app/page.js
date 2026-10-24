@@ -20370,11 +20370,31 @@ export default function Home() {
               </div>
             )}
             {!result && !seriesResult && !loading && !error && !nextStep && (
-              <div className="bg-white rounded-xl border border-dashed border-gray-300 p-12 text-center text-gray-400">
+              <div className="bg-white rounded-xl border border-dashed border-gray-300 p-8 sm:p-12 text-center text-gray-400" data-testid="create-recap-panel">
                 <Sparkles size={32} className="mx-auto mb-3" />
                 <p className="text-sm">
                   {genMode === "series" ? "Votre série de posts apparaîtra ici" : "Votre post généré apparaîtra ici"}
                 </p>
+                {genMode === "single" && (hasTopic || form.mood) && (() => {
+                  const themeName = themeOptions.find((o) => (o.id ?? null) === (activeContextId ?? null))?.name ?? "";
+                  const moment = moments.find((m) => m.id === activeMomentId);
+                  const mood = MOODS.find((m) => m.code === form.mood);
+                  const where = pairActive ? `Les deux versions : profil + page ${orgs.find((o) => o.urn === pairWith)?.name ?? ""}` : isOrgUrn(target) ? `Sur la page ${orgs.find((o) => o.urn === target)?.name ?? ""}` : "Sur votre profil";
+                  const rows = [
+                    form.theme.trim() && ["Sujet", form.theme.trim().slice(0, 110) + (form.theme.trim().length > 110 ? "…" : "")],
+                    themeName && ["Thématique", themeName + (moment ? ` · 📅 ${moment.name}` : "")],
+                    ["Humeur", mood ? `${mood.emoji} ${mood.label}` : "Aucune"],
+                    ["Où publier", where],
+                  ].filter(Boolean);
+                  return (
+                    <div className="mt-5 text-left border-t border-gray-100 pt-4 space-y-1.5" data-testid="create-recap-rows">
+                      <p className="text-[11px] font-bold uppercase tracking-wider text-gray-500 mb-1">Ce que le copilote va faire</p>
+                      {rows.map(([k, v]) => (<p key={k} className="text-xs text-gray-600"><span className="font-semibold text-gray-700">{k} : </span>{v}</p>))}
+                      {mood?.example && <p className="text-xs text-gray-500 italic mt-2">Dans cette humeur : « {mood.example} »</p>}
+                      {themeName && <p className="text-[11px] text-gray-400 mt-2">Il pioche dans le datalake de « {themeName} ».</p>}
+                    </div>
+                  );
+                })()}
               </div>
             )}
             {loading && (
