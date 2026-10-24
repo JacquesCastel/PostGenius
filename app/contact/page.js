@@ -55,7 +55,7 @@ export default function ContactPage() {
               ))}
             </ul>
 
-            <p className="mt-8 inline-flex items-center gap-2 text-sm text-[#5a6b85]">
+            <p className="mt-8 inline-flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-[#5a6b85]">
               <Mail size={15} className="text-[#ff5a5f]" /> ou directement :{" "}
               <a href={`mailto:${CONTACT_EMAIL}`} className="font-semibold text-[#ff5a5f] hover:underline">
                 {CONTACT_EMAIL}
