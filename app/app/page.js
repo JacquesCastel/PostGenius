@@ -6893,7 +6893,23 @@ function KnowledgePanel({ showToast, onCount, activeContextId = null, hasContext
   const homeName = profile?.companyName || "Mon activité";
   const themeTabs = [{ id: homeKey, name: homeName }, ...ctxList.map((c) => ({ id: c.id, name: c.name }))];
   const themeName = (key) => themeTabs.find((t) => t.id === key)?.name ?? "Thématique";
-  const toggleTarget = (key) => setTargets((t) => (t.includes(key) ? (t.length > 1 ? t.filter((x) => x !== key) : t) : [...t, key]));
+  const [targetsTouched, setTargetsTouched] = useState(false);
+  const toggleTarget = (key) => { setTargetsTouched(true); setTargets((t) => (t.includes(key) ? (t.length > 1 ? t.filter((x) => x !== key) : t) : [...t, key])); };
+  // Proximité du contenu saisi avec chaque thématique (maquette 9) : mots communs avec son nom, son activité et ses thèmes
+  const plainWords = (t) => String(t ?? "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").split(/[^a-z0-9]+/).filter((w) => w.length > 3);
+  const draftWords = new Set(plainWords(`${title} ${tab === "link" ? url : text}`.slice(0, 4000)));
+  const themeText = (id) => (id === homeKey ? [profile?.companyName, profile?.businessDescription, profile?.themes] : (() => { const c = ctxList.find((x) => x.id === id); return [c?.name, c?.businessDescription, c?.themes]; })()).join(" ");
+  const proximityOf = (id) => {
+    if (draftWords.size < 4) return null;
+    const hits = new Set(plainWords(themeText(id)).filter((w) => draftWords.has(w))).size;
+    return hits >= 4 ? "Très proche" : hits >= 2 ? "Proche" : null;
+  };
+  const proxKey = themeTabs.map((t) => `${t.id}:${proximityOf(t.id) ?? ""}`).join("|");
+  useEffect(() => {
+    if (targetsTouched) return;
+    const near = themeTabs.filter((t) => proximityOf(t.id)).map((t) => t.id);
+    setTargets(near.length ? near : [activeContextId ?? homeKey]);
+  }, [proxKey]);
   const targetBody = () => (momentSel ? { momentId: momentSel } : sharedAll ? { shared: true } : { contextIds: targets });
   const sourceKeys = (src) => [src.contextId ?? homeKey, ...(src.links ?? [])];
   const scopeTag = (src) => (src.momentId ? null : src.shared ? "Partagée : toutes les thématiques" : (src.links ?? []).length ? `Partagée avec ${(src.links ?? []).map(themeName).join(", ")}` : "Ici seulement");
@@ -7063,6 +7079,7 @@ function KnowledgePanel({ showToast, onCount, activeContextId = null, hasContext
                       <label key={t.id} className={`flex items-center gap-2 text-xs rounded-lg border px-3 py-2 ${targets.includes(t.id) && !sharedAll && !momentSel ? "border-[#ff5a5f] bg-[#fff8f8]" : "border-gray-200 bg-white"}`}>
                         <input type="checkbox" checked={targets.includes(t.id) && !sharedAll && !momentSel} disabled={sharedAll || Boolean(momentSel)} onChange={() => toggleTarget(t.id)} data-testid="source-target" data-target={t.id} />
                         <span className="font-semibold text-gray-800">{t.name}</span>
+                        {proximityOf(t.id) && <span className={`ml-auto text-[11px] font-bold ${proximityOf(t.id) === "Très proche" ? "text-[#a3242a]" : "text-amber-700"}`} data-testid="source-proximity">{proximityOf(t.id)}</span>}
                       </label>
                     ))}
                     <label className="flex items-center gap-2 text-xs text-gray-600"><input type="checkbox" checked={sharedAll} disabled={Boolean(momentSel)} onChange={(e) => setSharedAll(e.target.checked)} data-testid="source-shared-all" /> Toutes mes thématiques (partagée, y compris les futures)</label>
