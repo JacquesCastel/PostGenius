@@ -16,7 +16,7 @@ import { usedSources } from "@/lib/knowledgeText";
 import { cleanSource, sourceBlock } from "@/lib/generationSource";
 import { REFINE_CHAT_JSON, REFINE_CHAT_INSTRUCTION, historyBlock, cleanRefineChat } from "@/lib/refineChat";
 import { publishVoiceBlock } from "@/lib/publishVoice";
-import { cleanPostContext, postContextBlock } from "@/lib/postContext";
+import { cleanPostContext, postContextBlock, audienceLine } from "@/lib/postContext";
 import { getContextFor } from "@/lib/contexts";
 import { getMomentFor, momentBlock } from "@/lib/moments";
 import { overlayProfile } from "@/lib/contextOverlay";
@@ -67,7 +67,7 @@ Le 1er plan est une accroche qui retient dans les 3 premières secondes, le dern
   if (profile?.companyName) profileSpec += `\n- Entreprise / marque : ${profile.companyName}`;
   if (profile?.businessDescription)
     profileSpec += `\n- Activité et proposition de valeur : ${profile.businessDescription}`;
-  if (profile?.targetAudience) profileSpec += `\n- Audience cible sur LinkedIn : ${profile.targetAudience}`;
+  profileSpec += audienceLine(profile?.targetAudience, { override: Boolean(postContext?.audience) });
   if (profile?.market) profileSpec += `\n- Marché et positionnement : ${profile.market}`;
   if (profile?.commGoals)
     profileSpec += `\n- Objectifs de communication : ${profile.commGoals} (oriente le post vers ces objectifs)`;
