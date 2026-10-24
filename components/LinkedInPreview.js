@@ -13,9 +13,9 @@ function visibleText(text, limit) {
   return { shown: (at > limit * 0.6 ? cut.slice(0, at) : cut).trimEnd(), cut: true };
 }
 
-export default function LinkedInPreview({ text = "", name = "Vous", headline = "", isPage = false, imageUrl = null, className = "" }) {
+export default function LinkedInPreview({ text = "", name = "Vous", headline = "", isPage = false, imageUrl = null, className = "", startExpanded = false }) {
   const [device, setDevice] = useState("mobile");
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(startExpanded);
   const clean = String(text ?? "");
   const { shown, cut } = visibleText(clean, LIMIT[device]);
   const initial = (name.trim()[0] || "V").toUpperCase();
