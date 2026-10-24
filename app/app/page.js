@@ -9902,6 +9902,30 @@ function DashSection({ id, title, icon: Icon, hint, forceOpen = false, children 
   );
 }
 
+// Bannière affichée une seule fois aux clients déjà inscrits : leur datalake est désormais une thématique (maquette 10).
+// Rien n'est déplacé en base : l'entreprise du profil est déjà la première thématique.
+const THEMES_NEWS_BEFORE = "2026-10-24T00:00:00Z";
+function ThemesNewsBanner({ profile, onOpen }) {
+  const [hidden, setHidden] = useState(true);
+  const key = `lp-themes-news-${profile?.email ?? "me"}`;
+  const eligible = Boolean(profile?.onboardedAt) && new Date(profile.onboardedAt) < new Date(THEMES_NEWS_BEFORE);
+  useEffect(() => {
+    try { setHidden(localStorage.getItem(key) === "1"); } catch { setHidden(false); }
+  }, [key]);
+  if (!eligible || hidden) return null;
+  const close = () => { try { localStorage.setItem(key, "1"); } catch {} setHidden(true); };
+  return (
+    <div className="rounded-2xl border border-[#ffd5d6] bg-[#fff5f5] p-4 flex flex-wrap items-center gap-3" data-testid="themes-news-banner">
+      <div className="flex-1 min-w-[16rem]">
+        <p className="text-sm font-semibold text-gray-800">Votre datalake devient une thématique : « {profile?.companyName?.trim() || "Mon activité"} ». Rien n&apos;est perdu, tout est à sa place.</p>
+        <p className="text-xs text-gray-600 mt-1">Vous pouvez la renommer, et en ajouter d&apos;autres : une autre entreprise, une passion, un temps fort. Aucune source supprimée, et rien ne change tant que vous n&apos;ajoutez pas de thématique.</p>
+      </div>
+      <button type="button" onClick={() => { close(); onOpen(); }} data-testid="themes-news-open" className="bg-[#ff5a5f] hover:bg-[#f63d44] text-white text-sm font-medium px-4 py-2 rounded-lg">Voir mes thématiques</button>
+      <button type="button" onClick={close} data-testid="themes-news-later" className="text-sm text-gray-500 hover:text-gray-800">Plus tard</button>
+    </div>
+  );
+}
+
 function DashboardView({ drafts, canVeille = true, canEvents = false, canScore = true, canCampaigns = true, postsLimit = null, onGoCreate, onGoHistory, onGoEvents, onGoProfile, onGoProfileField, onGoView, onGoCopilot, onApprove, onReschedule, profile, linkedin, orgs, onPlanned, onProfileSaved, showToast, onInspire, onGenerateFromReco, onGoVoice }) {
   const ns = useNextSteps(profile);
   const [periodDays, setPeriodDays] = useState(7);
@@ -10040,6 +10064,7 @@ function DashboardView({ drafts, canVeille = true, canEvents = false, canScore =
   return (
     <main className="max-w-5xl mx-auto p-6 space-y-6">
       {deleting && <CampaignDeleteDialog campaign={deleting} onClose={() => setDeleting(null)} onDone={campaignGone} showToast={showToast} />}
+      <ThemesNewsBanner profile={profile} onOpen={() => onGoView?.("themes")} />
       {/* Prochaine étape recommandée : en tête, pour qu'un nouveau client la voie sans faire défiler */}
       <NextStepCard
         steps={ns.steps}
