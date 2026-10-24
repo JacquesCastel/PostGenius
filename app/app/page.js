@@ -6552,7 +6552,7 @@ function RemarkBox({ onApplyNow, onManage, showToast }) {
 // Moteur du datalake : ce qu'il a appris de vos sources (synthèse), et un échange pour l'affiner. Rien n'est retenu sans votre accord :
 // chaque proposition du moteur (précision, mot à privilégier ou à éviter, formulation) se valide d'un clic.
 const ENGINE_KIND = { precision: "Précision", use: "Mot à privilégier", avoid: "À éviter", phrase: "Formulation type" };
-function EnginePanel({ contextId, sourceCount, showToast, onChanged }) {
+function EnginePanel({ contextId, sourceCount, showToast, onChanged, runToken = 0 }) {
   const [state, setState] = useState(null); // { brief, updatedAt, stale, sourceCount } ; null = chargement
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
@@ -6581,6 +6581,7 @@ function EnginePanel({ contextId, sourceCount, showToast, onChanged }) {
       setBusy(false);
     }
   };
+  useEffect(() => { if (runToken > 0) generate(); }, [runToken]); // « Lancer l'analyse » de l'assistant
   // Valider, modifier, supprimer ou refuser un élément de la synthèse
   const [opBusy, setOpBusy] = useState(false);
   const [laterKey, setLaterKey] = useState(null); // la fenêtre « Vos sources ont changé » a été reportée pour cet état des sources
@@ -15761,6 +15762,9 @@ function ThemeWizard({ wiz, theme, themes, profile, showToast, onClose, onChange
   const [sources, setSources] = useState([]);
   const [src, setSrc] = useState({ open: false, tab: "link", url: "", text: "", title: "" });
   const [srcBusy, setSrcBusy] = useState(false);
+  const [runToken, setRunToken] = useState(0); // « Lancer l'analyse » (maquette 5b)
+  const [voiceCan, setVoiceCan] = useState(false);
+  useEffect(() => { setVoiceCan(canRecordVoice()); }, []);
   const inputCls = "w-full border border-gray-300 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]";
   const lbl = "block text-[13px] font-semibold text-gray-700 mb-1.5";
   const exCls = "text-xs text-gray-500 mt-1 leading-snug";
@@ -16011,17 +16015,19 @@ function ThemeWizard({ wiz, theme, themes, profile, showToast, onClose, onChange
                     {!personal && (
                       <li className="flex items-center gap-3 py-2.5 text-sm"><span className="text-lg">🌐</span><div className="flex-1"><b>Site internet</b>{f.website ? ` · ${f.website.replace(/^https?:\/\//, "")}` : ""}<div className="text-xs text-gray-500">{f.website ? "Déjà lu à l'étape « Votre activité »" : "Aucun site renseigné"}</div></div>{f.website && <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-green-100 text-green-800">Prêt</span>}</li>
                     )}
-                    <li className="flex items-center gap-3 py-2.5 text-sm"><span className="text-lg">💼</span><div className="flex-1"><b>Anciens posts LinkedIn</b><div className="text-xs text-gray-500">Importés à l&apos;étape « Votre voix »</div></div></li>
+                    <li className="flex items-center gap-3 py-2.5 text-sm"><span className="text-lg">💼</span><div className="flex-1"><b>Anciens posts LinkedIn</b><div className="text-xs text-gray-500">Importés à l&apos;étape « Votre voix »</div></div><button type="button" onClick={() => { const v = steps.findIndex((x) => x[0] === "voice"); if (v >= 0) setIdx(v); }} data-testid="theme-import-posts" className="font-bold text-[13px] text-[#a3242a]">Importer mes posts</button></li>
                     <li className="flex items-center gap-3 py-2.5 text-sm"><span className="text-lg">📄</span><div className="flex-1"><b>Documents et liens</b> · plaquette, offre, articles<div className="text-xs text-gray-500" data-testid="theme-sources-count">{sources.length} ajouté{sources.length > 1 ? "s" : ""}</div></div><button type="button" onClick={() => setSrc((s) => ({ ...s, open: !s.open }))} data-testid="theme-source-toggle" className="font-bold text-[13px] text-[#a3242a]">{src.open ? "Fermer" : "Ajouter"}</button></li>
-                    <li className="flex items-center gap-3 py-2.5 text-sm"><span className="text-lg">🎙</span><div className="flex-1"><b>Dictée ou interview guidée</b><div className="text-xs text-gray-500">Racontez ce sujet à voix haute : le datalake propose « Dicter à la voix »</div></div></li>
+                    <li className="flex items-center gap-3 py-2.5 text-sm"><span className="text-lg">🎙</span><div className="flex-1"><b>Dictée ou interview guidée</b><div className="text-xs text-gray-500">Racontez ce sujet à voix haute : le datalake propose « Dicter à la voix »</div></div>{voiceCan && <button type="button" onClick={() => setSrc((x) => ({ ...x, open: true, tab: "voice" }))} data-testid="theme-source-dictate" className="font-bold text-[13px] text-[#a3242a]">Dicter</button>}</li>
                   </ul>
                   {src.open && (
                     <div className="mt-2 rounded-xl border border-gray-200 bg-gray-50 p-3 space-y-2" data-testid="theme-source-form">
                       <div className="flex gap-1.5">
-                        {[["link", "Un lien"], ["note", "Coller un texte"]].map(([k, l]) => (<button key={k} type="button" onClick={() => setSrc({ ...src, tab: k })} className={`text-xs px-3 py-1.5 rounded-full border ${src.tab === k ? "bg-red-50 text-[#a3242a] border-red-200 font-semibold" : "border-gray-200 text-gray-600"}`}>{l}</button>))}
+                        {[["link", "Un lien"], ["note", "Coller un texte"], ...(voiceCan ? [["voice", "Dicter"]] : [])].map(([k, l]) => (<button key={k} type="button" onClick={() => setSrc({ ...src, tab: k })} className={`text-xs px-3 py-1.5 rounded-full border ${src.tab === k ? "bg-red-50 text-[#a3242a] border-red-200 font-semibold" : "border-gray-200 text-gray-600"}`}>{l}</button>))}
                       </div>
                       <input type="text" value={src.title} onChange={(e) => setSrc({ ...src, title: e.target.value })} placeholder="Titre (facultatif : l'IA en propose un)" className={inputCls} />
-                      {src.tab === "link"
+                      {src.tab === "voice"
+                        ? <VoiceRecorder onText={(t) => setSrc((x) => ({ ...x, tab: "note", text: t }))} />
+                        : src.tab === "link"
                         ? <input type="url" value={src.url} onChange={(e) => setSrc({ ...src, url: e.target.value })} placeholder="https://…" className={inputCls} data-testid="theme-source-url" />
                         : <textarea rows={4} value={src.text} onChange={(e) => setSrc({ ...src, text: e.target.value })} placeholder="Collez un texte (80 caractères au moins)" className={inputCls} data-testid="theme-source-text" />}
                       <button type="button" onClick={addSource} disabled={srcBusy || (src.tab === "link" ? !src.url.trim() : src.text.trim().length < 80)} data-testid="theme-source-add" className="bg-[#d63b42] hover:bg-[#b3282f] disabled:bg-gray-300 text-white text-sm font-bold px-4 py-2 rounded-xl">{srcBusy ? "Lecture…" : "Ajouter au datalake"}</button>
@@ -16033,9 +16039,12 @@ function ThemeWizard({ wiz, theme, themes, profile, showToast, onClose, onChange
             )}
             {error && <p className="text-xs text-red-600" data-testid="theme-error">{error}</p>}
             <div className="flex items-center gap-4 flex-wrap pt-1">
-              <button type="button" onClick={next} disabled={busy || !canContinue} data-testid="theme-next" className="bg-[#d63b42] hover:bg-[#b3282f] disabled:bg-gray-300 text-white font-bold text-[15px] px-6 py-3 rounded-xl flex items-center gap-2">
+              {step === "data" && sources.length > 0 && runToken === 0 && (id || isMain) && (
+                <button type="button" onClick={() => setRunToken((t) => t + 1)} data-testid="theme-analyze" className="bg-[#d63b42] hover:bg-[#b3282f] text-white font-bold text-[15px] px-6 py-3 rounded-xl flex items-center gap-2">✨ Lancer l&apos;analyse</button>
+              )}
+              <button type="button" onClick={next} disabled={busy || !canContinue} data-testid="theme-next" className={step === "data" && sources.length > 0 && runToken === 0 && (id || isMain) ? "text-sm font-semibold text-[#a3242a] hover:underline disabled:text-gray-400" : "bg-[#d63b42] hover:bg-[#b3282f] disabled:bg-gray-300 text-white font-bold text-[15px] px-6 py-3 rounded-xl flex items-center gap-2"}>
                 {busy && <RefreshCw size={14} className="animate-spin" />}
-                {idx < steps.length - 1 ? `Continuer : ${steps[idx + 1][1].toLowerCase()}` : editing ? "Enregistrer" : "Terminer"}
+                {idx < steps.length - 1 ? `Continuer : ${steps[idx + 1][1].toLowerCase()}` : step === "data" && sources.length > 0 && runToken === 0 && (id || isMain) ? "Terminer sans lancer l'analyse" : editing ? "Enregistrer" : "Terminer"}
               </button>
               {idx > 1 && <button type="button" onClick={() => setIdx(idx - 1)} data-testid="theme-prev" className="text-sm text-gray-600 hover:text-gray-900">Retour</button>}
               <span className="ml-auto text-[13px] text-gray-500">Étape {idx + 1} sur {steps.length}</span>
@@ -16066,7 +16075,7 @@ function ThemeWizard({ wiz, theme, themes, profile, showToast, onClose, onChange
           {step === "data" && (id || isMain) && (
             <div className={card} data-testid="theme-engine">
               <p className={sideTitle}>Résultat : ce que le moteur a appris de vous</p>
-              <EnginePanel contextId={ctxIdForData} sourceCount={sources.length} showToast={showToast} onChanged={() => {}} />
+              <EnginePanel contextId={ctxIdForData} sourceCount={sources.length} showToast={showToast} onChanged={() => {}} runToken={runToken} />
             </div>
           )}
         </div>
