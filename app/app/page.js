@@ -2126,7 +2126,7 @@ const scoreTone = (n) => (n >= 80 ? "bg-green-50 text-green-700" : n >= 60 ? "bg
 
 // Relecture en série des posts « à valider » : un post à la fois, en entier, avec Valider / Modifier / Passer.
 // La file est figée à l'ouverture (les posts validés restent visibles dans le décompte final).
-function ReviewPostsModal({ posts, linkedinConnected, onValidate, onSaveText, onClose }) {
+function ReviewPostsModal({ posts, linkedinConnected, onValidate, onSaveText, onClose, author = null }) {
   const [queue] = useState(() => posts.map((p) => p.id));
   const [snapshot] = useState(posts); // un post validé quitte « à valider » : on garde sa version d'origine pour « Précédent »
   const [idx, setIdx] = useState(0);
@@ -2213,7 +2213,17 @@ function ReviewPostsModal({ posts, linkedinConnected, onValidate, onSaveText, on
               {editing ? (
                 <textarea dir="auto" value={text} onChange={(e) => setText(e.target.value)} rows={12} autoFocus className="w-full border border-gray-300 rounded-lg p-3 text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]" />
               ) : (
-                <pre dir="auto" className="whitespace-pre-wrap text-sm font-sans leading-relaxed bg-gray-50 rounded-xl border border-gray-100 p-4" data-testid="review-text">{post.text}</pre>
+                <div data-testid="review-text">
+                  <LinkedInPreview
+                    key={post.id}
+                    startExpanded
+                    text={String(post.text ?? "").replace(/@\[([^\]]+)\]\([^)]*\)/g, "@$1")}
+                    name={(isOrgUrn(post.target) ? author?.orgs?.find((o) => o.urn === post.target)?.name : null) || author?.name || post.client?.name || "Vous"}
+                    headline={isOrgUrn(post.target) ? "" : (author?.headline ?? "")}
+                    isPage={isOrgUrn(post.target)}
+                    imageUrl={post.imageUrl ?? null}
+                  />
+                </div>
               )}
             </div>
             <div className="px-5 py-3 border-t border-gray-100 flex items-center justify-between gap-2 flex-wrap">
@@ -17299,6 +17309,7 @@ export default function Home() {
   const [drafts, setDrafts] = useState([]);
   const [copied, setCopied] = useState(false);
   const [editingId, setEditingId] = useState(null);
+  const [previewPost, setPreviewPost] = useState(null); // « Mes posts » : aperçu LinkedIn d'un post
   const [editText, setEditText] = useState("");
   const [toast, setToast] = useState(null);
   const [linkedinRaw, setLinkedin] = useState({ connected: false, name: "", orgConnected: false });
@@ -21284,6 +21295,15 @@ export default function Home() {
                                 </p>
                                 <div className="flex gap-0.5 shrink-0">
                                   <button
+                                    onClick={() => setPreviewPost(p)}
+                                    className="text-gray-300 hover:text-[#0a66c2] p-1"
+                                    title="Aperçu dans LinkedIn"
+                                    aria-label="Aperçu dans LinkedIn"
+                                    data-testid="post-preview-open"
+                                  >
+                                    <Eye size={13} />
+                                  </button>
+                                  <button
                                     onClick={() => handleCopy(p.text)}
                                     className="text-gray-300 hover:text-[#ff5a5f] p-1"
                                     title="Copier"
@@ -21341,9 +21361,12 @@ export default function Home() {
                                   </div>
                                 </div>
                               ) : (
+                                <>
                                 <pre dir="auto" className="whitespace-pre-wrap text-xs text-gray-600 font-sans leading-relaxed line-clamp-5">
                                   {p.text}
                                 </pre>
+                                <button type="button" onClick={() => setPreviewPost(p)} data-testid="post-preview-link" className="mt-1.5 text-[11px] font-semibold text-[#0a66c2] hover:underline inline-flex items-center gap-1"><Eye size={11} /> Aperçu LinkedIn</button>
+                                </>
                               )}
 
                               <div className="flex items-center gap-2 mt-2 text-[11px] text-gray-400 flex-wrap">
@@ -21570,8 +21593,34 @@ export default function Home() {
             </>
           )}
           {reviewOpen && (
-            <ReviewPostsModal posts={toReview} linkedinConnected={linkedin.connected} onValidate={validateOne} onSaveText={saveDraftText} onClose={() => setReviewOpen(false)} />
+            <ReviewPostsModal posts={toReview} linkedinConnected={linkedin.connected} onValidate={validateOne} onSaveText={saveDraftText} onClose={() => setReviewOpen(false)} author={{ name: linkedin.name || user?.name, headline: profile?.headline ?? "", orgs }} />
           )}
+          {previewPost && (() => {
+            const pageName = isOrgUrn(previewPost.target) ? orgs.find((o) => o.urn === previewPost.target)?.name || profile?.companyName || "Votre page" : null;
+            return (
+              <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={() => setPreviewPost(null)} data-testid="post-preview-modal">
+                <div role="dialog" aria-modal="true" aria-label="Aperçu dans LinkedIn" className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+                  <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100">
+                    <p className="text-sm font-bold">{previewPost.theme || "Post"}</p>
+                    <button type="button" onClick={() => setPreviewPost(null)} aria-label="Fermer" data-testid="post-preview-close" className="text-gray-400 hover:text-gray-700"><X size={18} /></button>
+                  </div>
+                  <div className="p-5 overflow-y-auto">
+                    <LinkedInPreview
+                      text={String(previewPost.text ?? "").replace(/@\[([^\]]+)\]\([^)]*\)/g, "@$1")}
+                      name={pageName || linkedin.name || user?.name || "Vous"}
+                      headline={pageName ? "" : (profile?.headline ?? "")}
+                      isPage={Boolean(pageName)}
+                      imageUrl={previewPost.imageUrl ?? null}
+                    />
+                  </div>
+                  <div className="px-5 py-3 border-t border-gray-100 flex justify-end gap-3">
+                    <button type="button" onClick={() => setPreviewPost(null)} className="text-sm text-gray-500 hover:text-gray-800">Fermer</button>
+                    <button type="button" onClick={() => { const q = previewPost; setPreviewPost(null); openOptimize(q.text, q.type, q.id, q.imageUrl, q.imagePrompt, q.videoUrl, q.youtubeUrl); }} data-testid="post-preview-edit" className="bg-[#d63b42] hover:bg-[#c2343a] text-white text-sm font-bold px-4 py-2 rounded-lg">Modifier</button>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
           {bulkOpen && (
             <BulkValidateDialog count={toReview.length} linkedinConnected={linkedin.connected} busy={bulkBusy} onConfirm={validateAll} onClose={() => setBulkOpen(false)} />
           )}
