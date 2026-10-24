@@ -9241,7 +9241,7 @@ function RecoToday({ onGenerate, onGoCopilot, onGoVoice, showToast, profile, onP
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <h2 className="font-semibold text-base flex items-center gap-2">
-          <Compass size={17} className="text-[#ff5a5f]" /> Que publier aujourd'hui ?
+          <Compass size={17} className="text-[#ff5a5f]" /> Idées du copilote
         </h2>
         <div className="flex items-center gap-4">
           <button
@@ -10021,6 +10021,154 @@ function ThemesNewsBanner({ profile, onOpen }) {
   );
 }
 
+// Tableau de bord « Aujourd'hui » (maquette 12) : ce que le copilote suggère, quatre chiffres, les sept prochains jours,
+// puis les idées (à gauche), les campagnes et « Pour bien démarrer » (à droite). Un filtre réduit tout à une thématique.
+const ISO_DAY = { lun: 1, mar: 2, mer: 3, jeu: 4, ven: 5, sam: 6, dim: 7 };
+const DAY_FULL = ["", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"];
+const isoDay = (d) => ((d.getDay() + 6) % 7) + 1;
+const sameDayStr = (a, b) => a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+function DashToday({ drafts, profile, ns, campaigns, canCampaigns, voiceOk, onGoCreate, onGoHistory, onGoView, onGoVoice, onOpenMonth, ideas, onGoProfileField }) {
+  const { contexts } = useContext(EntreprisesCtx);
+  const [filter, setFilter] = useState("all");
+  const [startHidden, setStartHidden] = useState(true);
+  useEffect(() => { try { setStartHidden(localStorage.getItem("lp_start_hidden") === "1"); } catch { setStartHidden(false); } }, []);
+  const themes = contexts.length > 0 ? [{ id: "main", name: profile?.companyName || "Mon activité" }, ...contexts.map((c) => ({ id: c.id, name: c.name }))] : [];
+  const mine = drafts.filter((d) => filter === "all" || (d.contextId ?? "main") === filter);
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const toValidate = mine.filter((d) => d.status === "à valider").sort((a, b) => new Date(a.scheduledAt) - new Date(b.scheduledAt));
+  const errors = mine.filter((d) => d.status === "erreur");
+  const horizon = new Date(now.getTime() + 7 * 86400000);
+  const scheduled = mine.filter((d) => d.status === "programmé" && d.scheduledAt).sort((a, b) => new Date(a.scheduledAt) - new Date(b.scheduledAt));
+  const scheduledWeek = scheduled.filter((d) => new Date(d.scheduledAt) <= horizon);
+  const publishedMonth = mine.filter((d) => d.status === "publié" && new Date(d.publishedAt ?? d.createdAt) >= monthStart);
+  const brouillons = mine.filter((d) => d.status === "brouillon");
+  const days = Array.from({ length: 7 }, (_, i) => new Date(now.getFullYear(), now.getMonth(), now.getDate() + i));
+  const eventsOf = (day) => mine.flatMap((d) => {
+    if ((d.status === "programmé" || d.status === "à valider") && d.scheduledAt && sameDayStr(new Date(d.scheduledAt), day)) return [{ d, kind: d.status === "à valider" ? "va" : "pr", at: new Date(d.scheduledAt) }];
+    if (d.status === "publié" && sameDayStr(new Date(d.publishedAt ?? d.createdAt), day)) return [{ d, kind: "pu", at: new Date(d.publishedAt ?? d.createdAt) }];
+    return [];
+  });
+  const publishDays = String(profile?.publishDays ?? "").split(",").map((x) => ISO_DAY[x.trim().toLowerCase()] ?? Number(x)).filter((n) => n >= 1 && n <= 7);
+  const emptyDay = days.find((day) => publishDays.includes(isoDay(day)) && eventsOf(day).length === 0);
+  const emptyName = emptyDay ? (sameDayStr(emptyDay, now) ? "aujourd'hui" : DAY_FULL[isoDay(emptyDay)]) : null;
+  const next = scheduled.find((d) => new Date(d.scheduledAt) > now) ?? scheduled[0];
+  const parts = [];
+  if (errors.length) parts.push(`${errors.length} publication${errors.length > 1 ? "s" : ""} en échec`);
+  if (toValidate.length) parts.push(toValidate.length === 1 ? "Un post attend votre accord" : `${toValidate.length} posts attendent votre accord`);
+  if (emptyName) parts.push(`${emptyName} est encore vide`);
+  const cap = (t) => t.charAt(0).toUpperCase() + t.slice(1);
+  const heroTitle = parts.length ? `${cap(parts[0])}${parts[1] ? `, et ${parts[1]}` : ""}.` : next ? `Tout est prêt : le prochain post part ${relativeTime(next.scheduledAt)}.` : "Rien n'est prévu : écrivons le prochain post.";
+  const heroText = toValidate.length
+    ? `« ${toValidate[0].theme || "Post"} » part ${fmtDateTime(toValidate[0].scheduledAt)} s'il est validé.${emptyName ? ` Vous publiez d'habitude le ${emptyName === "aujourd'hui" ? DAY_FULL[isoDay(now)] : emptyName} : une idée vous attend plus bas.` : ""}`
+    : emptyName ? `Vous publiez d'habitude le ${emptyName === "aujourd'hui" ? DAY_FULL[isoDay(now)] : emptyName} : une idée vous attend plus bas, ou dictez la vôtre.`
+    : next ? `Prochain : « ${next.theme || "Post"} », ${fmtDateTime(next.scheduledAt)}.` : "Dictez une idée ou laissez le copilote proposer un sujet.";
+  const primary = errors.length ? { label: "Voir l'échec", go: onGoHistory } : toValidate.length ? { label: toValidate.length > 1 ? "Relire et valider" : "Relire et valider le post", go: onGoHistory } : { label: "Créer un post", go: onGoCreate };
+  const second = emptyName && primary.go !== onGoCreate ? { label: `Écrire pour ${emptyName === "aujourd'hui" ? "aujourd'hui" : emptyName}`, go: onGoCreate } : voiceOk && onGoVoice ? { label: "Dicter une idée", go: () => onGoVoice("free") } : null;
+  const live = (campaigns ?? []).filter((c) => c.status === "active" && (filter === "all" || (c.contextId ?? "main") === filter)).slice(0, 2);
+  const startItems = [
+    ...(ns?.steps ?? []).slice(0, 3).map((st) => ({ key: st.id, label: st.title, go: () => goNextStep(st, { onGoCreate, onGoProfileField, onGoView }) })),
+    { key: "share", label: "Partager un lien vers LinkeePost", go: () => onGoView?.("share") },
+  ];
+  const card = "bg-white border border-[#e8ecf2] rounded-[18px] px-5 py-4";
+  const lb = "block text-xs font-bold tracking-wider uppercase text-[#5a6b85] mb-2";
+  const kpi = (label, n, color, sub) => (
+    <div className={card} data-testid="dash-kpi"><span className={lb}>{label}</span><div className="text-[34px] font-extrabold leading-none" style={{ color }}>{n}</div><div className="text-xs text-[#5a6b85] mt-1.5">{sub}</div></div>
+  );
+  return (
+    <div className="space-y-4" data-testid="dash-today">
+      <div className="flex items-center gap-4 flex-wrap">
+        <div className="flex-1 min-w-[14rem]">
+          <p className="text-lg font-extrabold" data-testid="dash-date">{cap(now.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" }))}</p>
+          <p className="text-sm text-[#5a6b85] mt-0.5">Voici ce qui compte aujourd&apos;hui.</p>
+        </div>
+        {themes.length > 0 && (
+          <div className="flex flex-wrap gap-1.5" data-testid="dash-filter" role="group" aria-label="Thématique">
+            {[{ id: "all", name: "Toutes" }, ...themes].map((t) => (
+              <button key={t.id} type="button" aria-pressed={filter === t.id} onClick={() => setFilter(t.id)} data-testid="dash-filter-pill" className={`text-[13px] font-semibold px-3 py-1.5 rounded-full border ${filter === t.id ? "bg-[#ffe3e4] border-[#f3a3a6] text-[#a3242a]" : "bg-white border-[#cbd5e1] text-[#33415c] hover:border-gray-400"}`}>{t.name}</button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="rounded-[20px] border border-[#fde1c0] px-6 py-5 flex flex-col md:flex-row gap-5 md:items-center" style={{ background: "linear-gradient(135deg,#fff1f2,#fff7ed)" }} data-testid="dash-hero">
+        <div className="flex-1 min-w-0">
+          <span className="block text-xs font-bold tracking-wider uppercase text-[#a3242a] mb-1.5">Le copilote vous suggère</span>
+          <p className="text-xl font-extrabold leading-snug mb-1" data-testid="dash-hero-title">{heroTitle}</p>
+          <p className="text-sm text-[#33415c] leading-relaxed">{heroText}</p>
+        </div>
+        <div className="flex flex-col gap-2 md:min-w-[230px]">
+          <button type="button" onClick={primary.go} data-testid="dash-hero-primary" className="bg-[#d63b42] hover:bg-[#c2343a] text-white text-sm font-bold px-4 py-2.5 rounded-xl text-center">{primary.label}</button>
+          {second && <button type="button" onClick={second.go} data-testid="dash-hero-second" className="bg-white text-[#a3242a] border border-[#f3a3a6] hover:bg-[#fff8f8] text-sm font-bold px-4 py-2.5 rounded-xl text-center">{second.label}</button>}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
+        {kpi("À valider", toValidate.length, "#6b21a8", "Ils ne partent pas sans vous")}
+        {kpi("Programmés cette semaine", scheduledWeek.length, "#7a4b00", next ? `Prochain : ${fmtDateTime(next.scheduledAt)}` : "Rien de programmé")}
+        {kpi("Publiés ce mois-ci", publishedMonth.length, "#166534", profile?.postsPerWeek ? `Rythme visé : ${profile.postsPerWeek} par semaine` : "Sur LinkedIn")}
+        {kpi("Brouillons", brouillons.length, "#084a8d", brouillons.length ? "À publier ou programmer" : "Aucun en attente")}
+      </div>
+
+      <div className="bg-white border border-[#e8ecf2] rounded-[18px] p-4" data-testid="dash-week">
+        <div className="flex items-baseline gap-3 mb-2.5 flex-wrap">
+          <span className="text-xs font-bold tracking-wider uppercase text-[#5a6b85]">Les 7 prochains jours</span>
+          <button type="button" onClick={onOpenMonth} data-testid="dash-open-month" className="ml-auto text-[13px] font-semibold text-[#0a66c2] hover:underline">Voir le mois</button>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
+          {days.map((day, i) => {
+            const evs = eventsOf(day).sort((a, b) => a.at - b.at);
+            const today = i === 0;
+            return (
+              <div key={i} data-testid="dash-day" className={`rounded-xl p-2 min-h-[110px] flex flex-col gap-1.5 min-w-0 ${today ? "border-2 border-[#d63b42] bg-[#fff8f8]" : "border border-[#eef1f6] bg-[#f8fafc]"}`}>
+                <span className={`text-[11px] font-bold uppercase tracking-wider ${today ? "text-[#a3242a]" : "text-[#5a6b85]"}`}>{today ? "Aujourd'hui" : cap(day.toLocaleDateString("fr-FR", { weekday: "short" }).replace(".", ""))} {day.getDate()}</span>
+                {evs.map(({ d, kind, at }) => (
+                  <div key={d.id} className={`text-[11px] font-semibold rounded-lg px-1.5 py-1 leading-snug ${kind === "va" ? "bg-[#f3e8ff] text-[#6b21a8]" : kind === "pu" ? "bg-[#e6f6ec] text-[#166534]" : "bg-[#fff4d6] text-[#7a4b00]"}`} title={d.theme}>
+                    <span className="block truncate">{d.theme || "Post"}</span>
+                    <span className="font-medium">{kind === "va" ? "À valider" : kind === "pu" ? "Publié" : "Programmé"} · {at.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }).replace(":", " h ")}</span>
+                  </div>
+                ))}
+                {evs.length === 0 && <button type="button" onClick={onGoCreate} className="text-[11px] text-slate-400 border border-dashed border-slate-300 rounded-lg px-1.5 py-1 hover:text-[#a3242a] hover:border-[#f3a3a6]">Rien de prévu</button>}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="grid lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] gap-3.5 items-start">
+        <div className="min-w-0" data-testid="dash-ideas">{ideas}</div>
+        <div className="space-y-3.5 min-w-0">
+          {canCampaigns && (
+            <div className={card} data-testid="dash-campaigns">
+              <span className={lb}>Campagnes en cours</span>
+              {live.length === 0 ? (
+                <p className="text-[13px] text-[#33415c]">Aucune campagne active. <button type="button" onClick={() => onGoView?.("campaigns")} className="font-semibold text-[#0a66c2] hover:underline">Créer une campagne</button></p>
+              ) : live.map((c) => (
+                <div key={c.id} className="mb-2.5 last:mb-0">
+                  <div className="flex items-center gap-2.5"><b className="text-sm flex-1 truncate">{c.name}</b><span className="text-[11px] font-bold px-2 py-[3px] rounded-full bg-[#f1f5f9] text-[#33415c] whitespace-nowrap">{c.published} sur {c.postCount} publiés</span></div>
+                  <div className="h-[7px] rounded-full bg-[#e8ecf2] my-2"><div className="h-[7px] rounded-full bg-[#ff5a5f]" style={{ width: `${c.postCount ? Math.round((c.published / c.postCount) * 100) : 0}%` }} /></div>
+                  <div className="text-xs text-[#5a6b85]">{c.nextScheduledAt ? `Prochain post : ${fmtDateTime(c.nextScheduledAt)} · ` : ""}<button type="button" onClick={() => onGoView?.("campaigns")} className="font-semibold text-[#0a66c2] hover:underline">Ouvrir</button></div>
+                </div>
+              ))}
+            </div>
+          )}
+          {!startHidden && startItems.length > 1 && (
+            <div className={card} data-testid="dash-start">
+              <span className={lb}>Pour bien démarrer</span>
+              <div className="text-[13px] leading-[1.9] text-[#33415c]">
+                {startItems.map((it) => (
+                  <div key={it.key}><b className="text-slate-400">○</b> <button type="button" onClick={it.go} className="font-semibold text-[#0a66c2] hover:underline text-left">{it.label}</button></div>
+                ))}
+              </div>
+              <button type="button" onClick={() => { setStartHidden(true); try { localStorage.setItem("lp_start_hidden", "1"); } catch {} }} data-testid="dash-start-hide" className="text-[11px] text-slate-400 hover:text-slate-700 mt-1.5 underline">Masquer ce bloc</button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function DashboardView({ drafts, canVeille = true, canEvents = false, canScore = true, canCampaigns = true, postsLimit = null, onGoCreate, onGoHistory, onGoEvents, onGoProfile, onGoProfileField, onGoView, onGoCopilot, onApprove, onReschedule, profile, linkedin, orgs, onPlanned, onProfileSaved, showToast, onInspire, onGenerateFromReco, onGoVoice }) {
   const ns = useNextSteps(profile);
   const [periodDays, setPeriodDays] = useState(7);
@@ -10028,6 +10176,7 @@ function DashboardView({ drafts, canVeille = true, canEvents = false, canScore =
   const [planningId, setPlanningId] = useState(null);
   const [campaigns, setCampaigns] = useState([]);
   const [wizardInit, setWizardInit] = useState(null); // {} = vierge, {theme,...} = pré-rempli
+  const [monthOpen, setMonthOpen] = useState(false); // « Voir le mois » ouvre le calendrier du mois
 
   const loadCampaigns = () =>
     fetch("/api/campaigns")
@@ -10160,53 +10309,41 @@ function DashboardView({ drafts, canVeille = true, canEvents = false, canScore =
     <main className="max-w-5xl mx-auto p-6 space-y-6">
       {deleting && <CampaignDeleteDialog campaign={deleting} onClose={() => setDeleting(null)} onDone={campaignGone} showToast={showToast} />}
       <ThemesNewsBanner profile={profile} onOpen={() => onGoView?.("themes")} />
-      {/* Prochaine étape recommandée : en tête, pour qu'un nouveau client la voie sans faire défiler */}
-      <NextStepCard
-        steps={ns.steps}
-        strength={ns.strength}
-        onSnooze={ns.snooze}
-        onAct={(st) => goNextStep(st, { onGoCreate, onGoProfileField, onGoView })}
+      <DashToday
+        drafts={drafts}
+        profile={profile}
+        ns={ns}
+        campaigns={campaigns}
+        canCampaigns={canCampaigns}
+        voiceOk={voiceOk}
+        onGoCreate={onGoCreate}
+        onGoHistory={onGoHistory}
+        onGoView={onGoView}
+        onGoVoice={onGoVoice}
+        onGoProfileField={onGoProfileField}
+        onOpenMonth={() => { setMonthOpen(true); setTimeout(() => document.getElementById("dash-month")?.scrollIntoView({ behavior: "smooth", block: "start" }), 80); }}
+        ideas={<RecoToday onGenerate={onGenerateFromReco} onGoCopilot={onGoCopilot} onGoVoice={onGoVoice} showToast={showToast} profile={profile} onProfileSaved={onProfileSaved} />}
       />
 
-      {/* Dictée vocale : parler plutôt qu'écrire. La carte se masque (mémorisé sur cet appareil) et n'apparaît que si l'appareil sait enregistrer. */}
-      {voiceOk && !voiceHintHidden && onGoVoice && (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5" data-testid="dash-voice">
-          <div className="flex items-start gap-3">
-            <span className="p-2.5 rounded-xl bg-[#fff1f1] text-[#ff5a5f] shrink-0"><Mic size={18} /></span>
-            <div className="min-w-0">
-              <p className="text-sm font-semibold">Pas le temps d&apos;écrire ? Parlez, LinkeePost rédige</p>
-              <p className="text-xs text-gray-500 mt-0.5">Dictez une idée en 30 secondes, ou laissez le copilote vous interviewer avec trois questions. Vous relisez le texte, puis il devient un post ou une note de votre base. L&apos;enregistrement n&apos;est pas conservé.</p>
-            </div>
-          </div>
-          <div className="flex flex-wrap items-center gap-3 mt-4">
-            <button onClick={() => onGoVoice("free")} className="inline-flex items-center justify-center gap-2 bg-[#ff5a5f] hover:bg-[#f63d44] text-white text-sm font-semibold px-4 py-2.5 rounded-xl shadow-sm" data-testid="dash-voice-free"><Mic size={15} /> Dicter une idée</button>
-            <button onClick={() => onGoVoice("interview")} className="inline-flex items-center justify-center gap-2 border border-gray-300 hover:border-[#ff5a5f] text-gray-700 text-sm font-semibold px-4 py-2.5 rounded-xl" data-testid="dash-voice-interview">Interview guidée</button>
-            <button onClick={hideVoiceHint} className="text-xs text-gray-500 hover:text-gray-700 underline" data-testid="dash-voice-hide">Masquer</button>
-          </div>
+      {errors.length > 0 && (
+        <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+          <p className="text-sm font-medium text-red-700 flex items-center gap-2 mb-2">
+            <AlertCircle size={16} /> {errors.length} publication{errors.length > 1 ? "s" : ""} en échec
+          </p>
+          {errors.slice(0, 3).map((d) => (
+            <p key={d.id} className="text-xs text-red-600 truncate">
+              « {d.theme} » — {d.publishError || "erreur inconnue"}
+            </p>
+          ))}
+          <button onClick={onGoHistory} className="text-xs text-red-700 underline mt-2">
+            Gérer dans Mes posts →
+          </button>
         </div>
       )}
 
-      {/* Partager vers LinkeePost : le geste le plus court pour nourrir la base ou réagir à un post. L'installation dépend de l'appareil :
-          la carte reste là, avec le mode d'emploi, jusqu'à ce que l'utilisateur la masque (mémorisé sur cet appareil). */}
-      {!shareHintHidden && (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5" data-testid="dash-share">
-          <div className="flex items-start gap-3">
-            <span className="p-2.5 rounded-xl bg-[#fff1f1] text-[#ff5a5f] shrink-0"><Share2 size={18} /></span>
-            <div className="min-w-0">
-              <p className="text-sm font-semibold">Envoyez un article ou un post vers LinkeePost en un geste</p>
-              <p className="text-xs text-gray-500 mt-0.5">Depuis n&apos;importe quelle page web ou post LinkedIn : commentez-le, écrivez un post à partir de lui, ou gardez-le dans votre base de connaissances. Installez le raccourci une fois, selon votre appareil :</p>
-            </div>
-          </div>
-          <div className="mt-4"><ShareHowTo testId="dash-share-bookmark" /></div>
-          <div className="flex flex-wrap items-center gap-3 mt-4">
-            <button onClick={() => onGoView?.("share")} className="inline-flex items-center justify-center gap-2 bg-[#ff5a5f] hover:bg-[#f63d44] text-white text-sm font-semibold px-4 py-2.5 rounded-xl shadow-sm" data-testid="dash-share-btn">
-              <Share2 size={15} /> Partager un lien
-            </button>
-            <button onClick={hideShareHint} className="text-xs text-gray-500 hover:text-gray-700 underline" data-testid="dash-share-hide">C&apos;est fait, masquer</button>
-          </div>
-        </div>
-      )}
-
+      <div id="dash-month" className="scroll-mt-24">
+      <DashSection id="month" title="Calendrier du mois et répartition" icon={CalendarDays} hint="Le mois en entier, à déplacer d'un glisser-déposer, et la répartition des posts" forceOpen={monthOpen}>
+      <div className="space-y-4">
       {/* Synthèse : répartition des posts + calendrier des publications (2 colonnes) */}
       <div className="grid md:grid-cols-3 gap-4 items-stretch">
         <div className="flex flex-col gap-4">
@@ -10318,24 +10455,9 @@ function DashboardView({ drafts, canVeille = true, canEvents = false, canScore =
         </div>
       )}
 
-      {errors.length > 0 && (
-        <div className="bg-red-50 border border-red-200 rounded-xl p-4">
-          <p className="text-sm font-medium text-red-700 flex items-center gap-2 mb-2">
-            <AlertCircle size={16} /> {errors.length} publication{errors.length > 1 ? "s" : ""} en échec
-          </p>
-          {errors.slice(0, 3).map((d) => (
-            <p key={d.id} className="text-xs text-red-600 truncate">
-              « {d.theme} » — {d.publishError || "erreur inconnue"}
-            </p>
-          ))}
-          <button onClick={onGoHistory} className="text-xs text-red-700 underline mt-2">
-            Gérer dans Mes posts →
-          </button>
-        </div>
-      )}
-
-      {/* Copilote éditorial */}
-      <RecoToday onGenerate={onGenerateFromReco} onGoCopilot={onGoCopilot} onGoVoice={onGoVoice} showToast={showToast} profile={profile} onProfileSaved={onProfileSaved} />
+      </div>
+      </DashSection>
+      </div>
 
       {wizardInit && (
         <CampaignWizard
