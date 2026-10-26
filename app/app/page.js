@@ -20451,6 +20451,23 @@ export default function Home() {
                     )}
                   </div>
                 )}
+                {/* Premier commentaire : posté par l'auteur juste après la publication (souvent le lien, pour garder le post sans lien sortant) */}
+                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5" data-testid="first-comment-block">
+                  <p className="text-sm font-semibold flex items-center gap-2">
+                    <MessageSquare size={15} className="text-[#ff5a5f]" /> Premier commentaire
+                    <span className="text-xs text-gray-400 font-normal">(optionnel — publié par vous juste après le post)</span>
+                  </p>
+                  <textarea
+                    value={resultFirstComment}
+                    onChange={(e) => setResultFirstComment(e.target.value.slice(0, 1250))}
+                    rows={3}
+                    placeholder="ex : Le lien vers l'article : https://… (LinkedIn pénalise les liens dans le post lui-même)"
+                    data-testid="first-comment-input"
+                    className="w-full mt-3 border border-gray-200 rounded-xl p-3 text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-[#ff5a5f] resize-y"
+                  />
+                  <p className="text-[11px] text-gray-400 mt-1">Posté depuis le même compte que le post (profil ou page), y compris pour un post programmé. {resultFirstComment.length}/1250</p>
+                </div>
+
                 {/* Image et médias : un seul bloc, ouvert, juste sous l'aperçu. Photo ou vidéo, ou carrousel de ses propres photos
                     (tout post sauf la vidéo ; pour un post à plan de slides IA, le carrousel se choisit dans l'encadré ci-dessus). */}
                 {(() => {
@@ -20486,23 +20503,6 @@ export default function Home() {
                     </div>
                   );
                 })()}
-
-                {/* Premier commentaire : posté par l'auteur juste après la publication (souvent le lien, pour garder le post sans lien sortant) */}
-                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5" data-testid="first-comment-block">
-                  <p className="text-sm font-semibold flex items-center gap-2">
-                    <MessageSquare size={15} className="text-[#ff5a5f]" /> Premier commentaire
-                    <span className="text-xs text-gray-400 font-normal">(optionnel — publié juste après le post)</span>
-                  </p>
-                  <textarea
-                    value={resultFirstComment}
-                    onChange={(e) => setResultFirstComment(e.target.value.slice(0, 1250))}
-                    rows={3}
-                    placeholder="ex : Le lien vers l'article : https://… (LinkedIn pénalise les liens dans le post lui-même)"
-                    data-testid="first-comment-input"
-                    className="w-full mt-3 border border-gray-200 rounded-xl p-3 text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-[#ff5a5f] resize-y"
-                  />
-                  <p className="text-[11px] text-gray-400 mt-1">Posté depuis le même compte que le post (profil ou page), y compris pour un post programmé. {resultFirstComment.length}/1250</p>
-                </div>
 
                 </>
               ) : (
