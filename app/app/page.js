@@ -10027,9 +10027,10 @@ const ISO_DAY = { lun: 1, mar: 2, mer: 3, jeu: 4, ven: 5, sam: 6, dim: 7 };
 const DAY_FULL = ["", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"];
 const isoDay = (d) => ((d.getDay() + 6) % 7) + 1;
 const sameDayStr = (a, b) => a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
-function DashToday({ drafts, profile, ns, campaigns, canCampaigns, voiceOk, onGoCreate, onGoHistory, onGoView, onGoVoice, onOpenMonth, ideas, onGoProfileField }) {
+function DashToday({ drafts, profile, ns, campaigns, canCampaigns, voiceOk, onGoCreate, onGoHistory, onGoView, onGoVoice, onOpenMonth, ideas, onGoProfileField, linkedin, orgs }) {
   const { contexts } = useContext(EntreprisesCtx);
   const [filter, setFilter] = useState("all");
+  const [openPost, setOpenPost] = useState(null); // « Les 7 prochains jours » : détail d'un post
   const [startHidden, setStartHidden] = useState(true);
   useEffect(() => { try { setStartHidden(localStorage.getItem("lp_start_hidden") === "1"); } catch { setStartHidden(false); } }, []);
   const themes = contexts.length > 0 ? [{ id: "main", name: profile?.companyName || "Mon activité" }, ...contexts.map((c) => ({ id: c.id, name: c.name }))] : [];
@@ -10123,10 +10124,10 @@ function DashToday({ drafts, profile, ns, campaigns, canCampaigns, voiceOk, onGo
               <div key={i} data-testid="dash-day" className={`rounded-xl p-2 min-h-[110px] flex flex-col gap-1.5 min-w-0 ${today ? "border-2 border-[#d63b42] bg-[#fff8f8]" : "border border-[#eef1f6] bg-[#f8fafc]"}`}>
                 <span className={`text-[11px] font-bold uppercase tracking-wider ${today ? "text-[#a3242a]" : "text-[#5a6b85]"}`}>{today ? "Aujourd'hui" : cap(day.toLocaleDateString("fr-FR", { weekday: "short" }).replace(".", ""))} {day.getDate()}</span>
                 {evs.map(({ d, kind, at }) => (
-                  <div key={d.id} className={`text-[11px] font-semibold rounded-lg px-1.5 py-1 leading-snug ${kind === "va" ? "bg-[#f3e8ff] text-[#6b21a8]" : kind === "pu" ? "bg-[#e6f6ec] text-[#166534]" : "bg-[#fff4d6] text-[#7a4b00]"}`} title={d.theme}>
+                  <button type="button" key={d.id} onClick={() => setOpenPost({ d, kind })} data-testid="dash-day-post" className={`text-left w-full text-[11px] font-semibold rounded-lg px-1.5 py-1 leading-snug hover:ring-2 hover:ring-[#f3a3a6] ${kind === "va" ? "bg-[#f3e8ff] text-[#6b21a8]" : kind === "pu" ? "bg-[#e6f6ec] text-[#166534]" : "bg-[#fff4d6] text-[#7a4b00]"}`} title={d.theme}>
                     <span className="block truncate">{d.theme || "Post"}</span>
                     <span className="font-medium">{kind === "va" ? "À valider" : kind === "pu" ? "Publié" : "Programmé"} · {at.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }).replace(":", " h ")}</span>
-                  </div>
+                  </button>
                 ))}
                 {evs.length === 0 && <button type="button" onClick={onGoCreate} className="text-[11px] text-slate-400 border border-dashed border-slate-300 rounded-lg px-1.5 py-1 hover:text-[#a3242a] hover:border-[#f3a3a6]">Rien de prévu</button>}
               </div>
@@ -10136,6 +10137,52 @@ function DashToday({ drafts, profile, ns, campaigns, canCampaigns, voiceOk, onGo
       </div>
 
       <div className="min-w-0" data-testid="dash-ideas">{ideas}</div>
+
+      {openPost && (() => {
+        const { d, kind } = openPost;
+        const org = isOrgUrn(d.target) ? (orgs ?? []).find((o) => o.urn === d.target) : null;
+        const pageName = isOrgUrn(d.target) ? org?.name || profile?.companyName || "Votre page" : null;
+        const camp = d.campaign?.name || (campaigns ?? []).find((c) => c.id === d.campaignId)?.name;
+        const theme = d.contextId ? contexts.find((c) => c.id === d.contextId)?.name : (contexts.length > 0 ? profile?.companyName || "Mon activité" : null);
+        const mood = d.mood ? MOODS.find((m) => m.code === d.mood)?.label : null;
+        const when = d.status === "publié" ? d.publishedAt ?? d.createdAt : d.scheduledAt;
+        const rows = [
+          ["Statut", kind === "va" ? "À valider" : kind === "pu" ? "Publié" : "Programmé"],
+          [d.status === "publié" ? "Publié le" : "Prévu le", when ? fmtDateTime(when) : null],
+          ["Destination", pageName ? `Page « ${pageName} »` : "Votre profil LinkedIn"],
+          ["Campagne", camp ?? (d.auto ? "Générée automatiquement" : null)],
+          ["Thématique", theme],
+          ["Humeur", mood],
+          ["Format", d.type === "carrousel" ? "Carrousel" : d.type === "video" ? "Vidéo" : null],
+        ].filter(([, v]) => v);
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={() => setOpenPost(null)} data-testid="dash-post-modal">
+            <div role="dialog" aria-modal="true" aria-label="Détail du post" className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100">
+                <p className="text-sm font-bold truncate">{d.theme || "Post"}</p>
+                <button type="button" onClick={() => setOpenPost(null)} aria-label="Fermer" data-testid="dash-post-close" className="text-gray-400 hover:text-gray-700"><X size={18} /></button>
+              </div>
+              <div className="p-5 overflow-y-auto space-y-4">
+                <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-sm" data-testid="dash-post-info">
+                  {rows.map(([k, v]) => (<div key={k} className="contents"><dt className="text-[#5a6b85]">{k}</dt><dd className="font-semibold text-[#1b2a4a]">{v}</dd></div>))}
+                </dl>
+                {d.status === "erreur" && d.publishError && <p className="text-xs text-red-700 bg-red-50 rounded-lg px-3 py-2">{d.publishError}</p>}
+                <LinkedInPreview
+                  text={String(d.text ?? "").replace(/@\[([^\]]+)\]\([^)]*\)/g, "@$1")}
+                  name={pageName || linkedin?.name || "Vous"}
+                  headline={pageName ? "" : (profile?.headline ?? "")}
+                  isPage={Boolean(pageName)}
+                  imageUrl={d.imageUrl ?? null}
+                />
+              </div>
+              <div className="px-5 py-3 border-t border-gray-100 flex justify-end gap-3 flex-wrap">
+                {d.campaignId && <button type="button" onClick={() => { setOpenPost(null); onGoView?.("campaigns"); }} className="text-sm font-semibold text-[#0a66c2] hover:underline">Voir la campagne</button>}
+                <button type="button" onClick={() => { setOpenPost(null); onGoHistory?.(); }} data-testid="dash-post-open" className="bg-[#d63b42] hover:bg-[#c2343a] text-white text-sm font-bold px-4 py-2 rounded-lg">Ouvrir dans Mes posts</button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       <div className="grid md:grid-cols-2 md:[&>*:only-child]:col-span-2 gap-3.5 items-start">
         <div className="contents">
@@ -10312,6 +10359,8 @@ function DashboardView({ drafts, canVeille = true, canEvents = false, canScore =
       <ThemesNewsBanner profile={profile} onOpen={() => onGoView?.("themes")} />
       <DashToday
         drafts={drafts}
+        linkedin={linkedin}
+        orgs={orgs}
         profile={profile}
         ns={ns}
         campaigns={campaigns}
