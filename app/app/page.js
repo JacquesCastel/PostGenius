@@ -19362,13 +19362,18 @@ export default function Home() {
       {/* Étape 2 — page plein écran d'optimisation */}
       {optimizeText && (
         <div className="fixed inset-0 z-50 bg-slate-50 overflow-y-auto">
-          <div className="sticky top-0 bg-white border-b border-gray-100 px-6 py-3">
-            <button
-              onClick={closeOptimize}
-              className="flex items-center gap-1.5 text-sm font-medium text-[#1b2a4a] hover:text-[#ff5a5f]"
-            >
-              <ChevronLeft size={18} /> Fermer
-            </button>
+          <div className="sticky top-0 z-10 bg-white border-b border-gray-100 py-3">
+            {/* Le retour est aligné sur le contenu (et non collé au bord de l'écran) : sur grand écran, personne ne le voyait */}
+            <div className="max-w-6xl mx-auto px-6 flex items-center gap-4">
+              <button
+                onClick={closeOptimize}
+                data-testid="optimize-back"
+                className="flex items-center gap-1.5 text-sm font-semibold text-[#a3242a] bg-[#fff1f1] hover:bg-[#ffe3e4] border border-[#f3a3a6] rounded-full pl-2.5 pr-4 py-1.5"
+              >
+                <ChevronLeft size={18} /> {view === "history" ? "Retour à Mes posts" : view === "create" ? "Retour à la création" : "Retour"}
+              </button>
+              <p className="text-sm font-bold text-[#1b2a4a] truncate">Optimiser votre post</p>
+            </div>
           </div>
           <div className="max-w-6xl mx-auto p-6 space-y-6">
           <div className="grid lg:grid-cols-2 gap-6 items-start">
