@@ -17689,6 +17689,7 @@ export default function Home() {
   const [resultPoll, setResultPoll] = useState(null); // sondage du post en cours de création (enregistré avec le brouillon)
   const [resultSlides, setResultSlides] = useState(null); // images du carrousel à publier en PDF (null = pas de PDF)
   const [resultCarouselMode, setResultCarouselMode] = useState("ia"); // post à plan de slides : slides IA | mes photos
+  const [resultFirstComment, setResultFirstComment] = useState(""); // premier commentaire publié juste après le post
   const [mediaMode, setMediaMode] = useState("photo"); // bloc « Image et médias » : photo ou vidéo | carrousel de photos
   const [resultMentions, setResultMentions] = useState([]); // pages/personnes taguées dans le post en cours de création (enregistrées avec le brouillon)
   const resultAreaRef = useRef(null);
@@ -18292,6 +18293,7 @@ export default function Home() {
           mentions: resultMentions.filter((m) => r.text.includes(`@${m.name}`)),
           poll: resultPoll,
           documentSlides: resultSlides?.length ? resultSlides : null,
+          firstComment: resultFirstComment.trim() || undefined,
         }),
       });
       const data = await readJson(res);
@@ -18319,6 +18321,7 @@ export default function Home() {
     setResultSlides(null);
     setResultCarouselMode("ia");
     setMediaMode("photo");
+    setResultFirstComment("");
     setPostImage(null);
     setPostVideo(null);
     setPostYoutube(null);
@@ -19013,12 +19016,12 @@ export default function Home() {
       const res = await fetch("/api/linkedin/publish", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: p.text, author: target, imageUrl: p.imageUrl ?? null, videoUrl: p.videoUrl ?? null, youtubeUrl: p.youtubeUrl ?? null, mentions: parseMentions(p.mentions), poll: p.poll ?? null, documentSlides: p.documentSlides ?? null, documentTitle: p.theme ?? null }),
+        body: JSON.stringify({ text: p.text, author: target, imageUrl: p.imageUrl ?? null, videoUrl: p.videoUrl ?? null, youtubeUrl: p.youtubeUrl ?? null, mentions: parseMentions(p.mentions), poll: p.poll ?? null, documentSlides: p.documentSlides ?? null, documentTitle: p.theme ?? null, firstComment: p.firstComment ?? null }),
       });
       const data = await readJson(res);
       if (!res.ok) throw new Error(data.error || "Erreur de publication");
-      await patchDraft(p.id, { status: "publié", postId: data.postId });
-      setDrafts((d) => d.map((x) => (x.id === p.id ? { ...x, status: "publié", postId: data.postId } : x)));
+      await patchDraft(p.id, { status: "publié", postId: data.postId, ...(data.firstCommentSent ? { firstCommentSent: true } : {}) });
+      setDrafts((d) => d.map((x) => (x.id === p.id ? { ...x, status: "publié", postId: data.postId, ...(data.firstCommentSent ? { firstCommentAt: new Date().toISOString() } : {}) } : x)));
       showToast(data.warning ? `Post publié, mais ${data.warning}` : "Post publié sur LinkedIn 🎉");
       return data.postId ?? true;
     } catch (e) {
@@ -19419,6 +19422,23 @@ export default function Home() {
                     }
                   } : undefined}
                 />
+                {optimizeText.draftId && (() => {
+                  const dr = drafts.find((x) => x.id === optimizeText.draftId);
+                  if (!dr || dr.status === "publié") return null;
+                  return (
+                    <div className="mt-3" data-testid="optimize-first-comment">
+                      <label className="text-xs font-semibold text-gray-500 block mb-1">Premier commentaire <span className="font-normal text-gray-400">(publié juste après le post, enregistré en quittant la zone)</span></label>
+                      <textarea
+                        value={dr.firstComment ?? ""}
+                        onChange={(e) => { const v = e.target.value.slice(0, 1250); setDrafts((ds) => ds.map((x) => (x.id === dr.id ? { ...x, firstComment: v } : x))); }}
+                        onBlur={(e) => patchDraft(dr.id, { firstComment: e.target.value.trim() || null }).catch((err) => showToast(err.message))}
+                        rows={2}
+                        placeholder="ex : Le lien vers l'article : https://…"
+                        className="w-full border border-gray-200 rounded-xl p-3 text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-[#ff5a5f] resize-y"
+                      />
+                    </div>
+                  );
+                })()}
                 <div className="mt-2">
                   <SnippetTool
                     text={optimizeText.text}
@@ -20464,6 +20484,23 @@ export default function Home() {
                     </div>
                   );
                 })()}
+
+                {/* Premier commentaire : posté par l'auteur juste après la publication (souvent le lien, pour garder le post sans lien sortant) */}
+                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5" data-testid="first-comment-block">
+                  <p className="text-sm font-semibold flex items-center gap-2">
+                    <MessageSquare size={15} className="text-[#ff5a5f]" /> Premier commentaire
+                    <span className="text-xs text-gray-400 font-normal">(optionnel — publié juste après le post)</span>
+                  </p>
+                  <textarea
+                    value={resultFirstComment}
+                    onChange={(e) => setResultFirstComment(e.target.value.slice(0, 1250))}
+                    rows={3}
+                    placeholder="ex : Le lien vers l'article : https://… (LinkedIn pénalise les liens dans le post lui-même)"
+                    data-testid="first-comment-input"
+                    className="w-full mt-3 border border-gray-200 rounded-xl p-3 text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-[#ff5a5f] resize-y"
+                  />
+                  <p className="text-[11px] text-gray-400 mt-1">Posté depuis le même compte que le post (profil ou page), y compris pour un post programmé. {resultFirstComment.length}/1250</p>
+                </div>
 
                 </>
               ) : (
@@ -21884,6 +21921,11 @@ export default function Home() {
                                   </button>
                                 )}
                                 {p.auto && <span className="bg-gray-100 px-1.5 py-0.5 rounded-full">auto</span>}
+                                {p.firstComment && (
+                                  p.status === "publié" && !p.firstCommentAt
+                                    ? <span className="bg-amber-50 text-amber-800 px-1.5 py-0.5 rounded-full" title={p.firstComment} data-testid="post-first-comment-missing">1er commentaire non publié : à ajouter sur LinkedIn</span>
+                                    : <span className="bg-gray-100 px-1.5 py-0.5 rounded-full" title={p.firstComment} data-testid="post-first-comment">{p.firstCommentAt ? "1er commentaire publié" : "+ 1er commentaire"}</span>
+                                )}
                                 {p.inspirationUrl && (
                                   <a
                                     href={p.inspirationUrl}
