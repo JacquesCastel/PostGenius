@@ -17871,8 +17871,9 @@ export default function Home() {
   const isTopic = curStep.id === "topic";
   const stepCls = (id) => (curStep.id === id ? (id === "topic" ? "space-y-4" : "space-y-5") : "hidden");
   // Page « Créer un post » (maquette 7) : un bloc par choix
-  const blockCls = "bg-white border border-slate-200 rounded-2xl p-5 shadow-sm";
-  const blockLb = "text-xs font-bold tracking-wide uppercase text-slate-500 mb-2.5 block";
+  const blockCls = "bg-white border border-slate-200 border-l-4 border-l-[#ff5a5f] rounded-2xl p-5 shadow-sm";
+  const blockLb = "text-base font-extrabold text-[#1b2a4a] mb-3 flex items-center gap-2.5";
+  const blockNum = (n) => <span aria-hidden="true" className="w-7 h-7 rounded-full bg-[#ff5a5f] text-white text-sm font-bold flex items-center justify-center shrink-0">{n}</span>;
   const pillCls = (on, tone = "pink") => `text-sm font-semibold px-3 py-1.5 rounded-full border ${on ? (tone === "amber" ? "bg-[#fff4d6] border-[#f0c560] text-[#7a4b00]" : "bg-[#ffe3e4] border-[#f3a3a6] text-[#a3242a]") : "bg-white border-slate-300 text-slate-700 hover:border-slate-400"}`;
 
   // Lit l'article (adresse) ou le document (fichier) choisi : le texte sert ensuite à écrire le post
@@ -20504,7 +20505,7 @@ export default function Home() {
       ) : view === "create" ? (
         <main className={`max-w-6xl mx-auto p-6 grid gap-6 ${isTopic ? "md:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]" : "md:grid-cols-2"}`}>
           {isTopic && (
-            <p className="md:col-span-2 text-sm text-slate-500 leading-relaxed -mb-2" data-testid="create-intro">
+            <p className="md:col-span-2 text-lg font-semibold text-[#1b2a4a] leading-snug -mb-1" data-testid="create-intro">
               {contexts.length > 0 || (linkedin.connected && linkedin.orgConnected && orgs.length > 0)
                 ? `${contexts.length > 0 && linkedin.connected && linkedin.orgConnected && orgs.length > 0 ? "Quatre" : "Trois"} choix, dans l'ordre où vous y pensez : de quoi parler, dans quelle humeur${contexts.length > 0 ? ", sous quelle thématique" : ""}${linkedin.connected && linkedin.orgConnected && orgs.length > 0 ? ", et où publier" : ""}.`
                 : "Deux choix, dans l'ordre où vous y pensez : de quoi parler, et dans quelle humeur."}
@@ -20529,7 +20530,7 @@ export default function Home() {
 
             <div className={stepCls("topic")}>
             <div className={blockCls} data-testid="create-block-topic">
-            <p className={blockLb}>1. De quoi voulez-vous parler aujourd&apos;hui ?</p>
+            <p className={blockLb}>{blockNum(1)}De quoi voulez-vous parler aujourd&apos;hui ?</p>
             {genMode === "series" && (
               <div>
                 <label className="text-sm font-medium text-gray-700 block mb-2">
@@ -20708,7 +20709,7 @@ export default function Home() {
             </div>
 
             <div data-testid="mood-block" className={blockCls}>
-              <p className={blockLb}>2. Dans quelle humeur ?</p>
+              <p className={blockLb}>{blockNum(2)}Dans quelle humeur ?</p>
               <div className="flex flex-wrap gap-2">
                 {MOOD_CHOICES.map((m) => (
                   <button
@@ -20732,7 +20733,7 @@ export default function Home() {
             <div className="space-y-4 empty:hidden">
             {contexts.length > 0 && (
               <div data-testid="context-picker" className={blockCls}>
-                <label className={blockLb}>3. Sous quelle thématique ?</label>
+                <label className={blockLb}>{blockNum(3)}Sous quelle thématique ?</label>
                 <div className="grid gap-2">
                   {themeOptions.map((o, i) => {
                     const on = (activeContextId ?? null) === o.id;
@@ -20768,7 +20769,7 @@ export default function Home() {
             {/* Où publier : la voix du post en dépend (profil « je », page « nous ») */}
             {linkedin.connected && linkedin.orgConnected && orgs.length > 0 && (
               <div data-testid="publish-as" className={blockCls}>
-                <label className={blockLb}>{contexts.length > 0 ? 4 : 3}. Où publier ?</label>
+                <label className={blockLb}>{blockNum(contexts.length > 0 ? 4 : 3)}Où publier ?</label>
                 <div className="grid gap-2">
                   {[
                     ...(linkedin.clientSpace ? [] : [{ v: "person", label: "Sur mon profil", sub: `${linkedin.name ? `${linkedin.name} · ` : ""}votre voix, à la première personne` }]),
