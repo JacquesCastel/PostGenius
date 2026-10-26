@@ -670,16 +670,17 @@ function ScheduleModal({ draft, linkedin, orgs, profile, onClose, onScheduled, s
 // pas lire le post (permission d'écriture seule) : on l'ouvre sur LinkedIn pour le lire.
 // Chaque action est envoyée immédiatement, sur demande ; plafonds horaires côté serveur.
 // ----------------------------------------------------------------
-function EngageView({ linkedin, showToast, onConnect, embedded = false, onSent, initialPost = "", initialComment = "", onPostUsed }) {
+function EngageView({ linkedin, showToast, onConnect, embedded = false, onSent, initialPost = "", initialComment = "", initialQuote = "", onPostUsed }) {
   const Wrap = embedded ? "div" : "main";
   const [postInput, setPostInput] = useState(initialPost || ""); // lien reçu dans la notification : post prérempli
   // Commentaire reçu (notification) : on le montre et la réponse part dessous, au nom de la page quand elle est connectée
-  const [replyTo, setReplyTo] = useState(/^urn:li:comment:/.test(initialComment) ? { urn: initialComment, text: null } : null);
+  const [replyTo, setReplyTo] = useState(/^urn:li:comment:/.test(initialComment) ? { urn: initialComment, text: initialQuote || null } : null);
   const [asPage, setAsPage] = useState(Boolean(initialComment) && Boolean(linkedin.orgConnected));
   useEffect(() => {
     if (initialPost || initialComment) onPostUsed?.();
     if (!replyTo) return;
-    fetch(`/api/linkedin/engage?comment=${encodeURIComponent(replyTo.urn)}`).then(readJson).then((d) => setReplyTo((r) => (r ? { ...r, text: d.text || "", status: d.status } : r))).catch(() => setReplyTo((r) => (r ? { ...r, text: "" } : r)));
+    // Texte reçu dans le lien de la notification : affiché tout de suite, et gardé si LinkedIn ne le renvoie pas une seconde fois
+    fetch(`/api/linkedin/engage?comment=${encodeURIComponent(replyTo.urn)}`).then(readJson).then((d) => setReplyTo((r) => (r ? { ...r, text: d.text || r.text || "", status: d.status } : r))).catch(() => setReplyTo((r) => (r ? { ...r, text: r.text || "" } : r)));
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(null); // "comment" | type de réaction en cours
@@ -779,7 +780,7 @@ function EngageView({ linkedin, showToast, onConnect, embedded = false, onSent, 
                 <span>Vous répondez à</span>
                 <button type="button" onClick={() => setReplyTo(null)} className="text-gray-400 hover:text-gray-600 underline">commenter le post à la place</button>
               </p>
-              {replyTo.text === null ? <span className="text-gray-400">Chargement…</span> : replyTo.text ? <span className="whitespace-pre-line">« {replyTo.text} »</span> : <span className="text-gray-400">Texte indisponible (LinkedIn ne l&apos;a pas renvoyé{replyTo.status ? ` : code ${replyTo.status}` : ""}) — ouvrez le post pour le lire.</span>}
+              {replyTo.text === null ? <span className="text-gray-400">Chargement…</span> : replyTo.text ? <span className="whitespace-pre-line">« {replyTo.text} »</span> : <span className="text-gray-400">Texte indisponible (LinkedIn ne l&apos;a pas renvoyé{replyTo.status ? ` : code ${replyTo.status}` : ""}). {ready ? <a href={postInput.trim()} target="_blank" rel="noreferrer" className="text-[#0a66c2] hover:underline">Ouvrir le post sur LinkedIn pour le lire ↗</a> : "Ouvrez le post sur LinkedIn pour le lire."}</span>}
             </div>
           )}
           {linkedin.orgConnected && linkedin.connected && (
@@ -17469,6 +17470,7 @@ export default function Home() {
     if (user && sharePayload && !shareOpened.current) { shareOpened.current = true; setView("share"); }
   }, [user, sharePayload]);
   const [engageComment, setEngageComment] = useState(() => { if (typeof window === "undefined") return ""; const c = new URLSearchParams(window.location.search).get("comment") || ""; return /^urn:li:comment:/.test(c) ? c : ""; }); // commentaire auquel répondre
+  const [engageQuote, setEngageQuote] = useState(() => (typeof window === "undefined" ? "" : (new URLSearchParams(window.location.search).get("q") || "").slice(0, 400))); // son texte, reçu dans le lien de l'e-mail
   const clientLink = useRef(typeof window === "undefined" ? null : (() => { const q = new URLSearchParams(window.location.search); return q.get("client") ? { cid: q.get("client"), view: q.get("view") || "dashboard" } : null; })());
   useEffect(() => {
     const link = clientLink.current;
@@ -21475,7 +21477,7 @@ export default function Home() {
           onDone={() => closeShare("dashboard")}
         />
       ) : view === "engage" ? (
-        <EngageView linkedin={linkedin} showToast={showToast} onConnect={() => setView("connections")} initialPost={engagePost} initialComment={engageComment} onPostUsed={() => { setEngagePost(""); setEngageComment(""); }} />
+        <EngageView linkedin={linkedin} showToast={showToast} onConnect={() => setView("connections")} initialPost={engagePost} initialComment={engageComment} initialQuote={engageQuote} onPostUsed={() => { setEngagePost(""); setEngageComment(""); setEngageQuote(""); }} />
       ) : view === "stats" ? (
         <StatsView linkedin={linkedin} orgs={orgs} profile={profile} drafts={drafts} showToast={showToast} onConnect={() => setView("connections")} />
       ) : view === "copilot" ? (
