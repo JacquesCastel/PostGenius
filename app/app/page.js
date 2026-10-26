@@ -17689,6 +17689,7 @@ export default function Home() {
   const [resultPoll, setResultPoll] = useState(null); // sondage du post en cours de création (enregistré avec le brouillon)
   const [resultSlides, setResultSlides] = useState(null); // images du carrousel à publier en PDF (null = pas de PDF)
   const [resultCarouselMode, setResultCarouselMode] = useState("ia"); // post à plan de slides : slides IA | mes photos
+  const [mediaMode, setMediaMode] = useState("photo"); // bloc « Image et médias » : photo ou vidéo | carrousel de photos
   const [resultMentions, setResultMentions] = useState([]); // pages/personnes taguées dans le post en cours de création (enregistrées avec le brouillon)
   const resultAreaRef = useRef(null);
   const [resultDraftText, setResultDraftText] = useState("");
@@ -18317,6 +18318,7 @@ export default function Home() {
     setResultPoll(null);
     setResultSlides(null);
     setResultCarouselMode("ia");
+    setMediaMode("photo");
     setPostImage(null);
     setPostVideo(null);
     setPostYoutube(null);
@@ -20422,12 +20424,41 @@ export default function Home() {
                     )}
                   </div>
                 )}
-                {/* Carrousel de ses propres photos : tout post sauf la vidéo ; pour un post à plan de slides IA, voir les onglets ci-dessus */}
-                {form.type !== "video" && !(form.type === "carrousel" && result.extra?.slides?.length > 0) && (
-                  <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5" data-testid="result-photo-carousel">
-                    <PhotoCarouselBlock standalone initial={resultSlides} onImages={setResultSlides} hasOtherMedia={Boolean(postImage || postVideo || postYoutube)} />
-                  </div>
-                )}
+                {/* Image et médias : un seul bloc, ouvert, juste sous l'aperçu. Photo ou vidéo, ou carrousel de ses propres photos
+                    (tout post sauf la vidéo ; pour un post à plan de slides IA, le carrousel se choisit dans l'encadré ci-dessus). */}
+                {(() => {
+                  const canCarousel = form.type !== "video" && !(form.type === "carrousel" && result.extra?.slides?.length > 0);
+                  const mode = canCarousel && (mediaMode === "carousel" || resultSlides?.length) ? "carousel" : "photo";
+                  return (
+                    <div className="space-y-3" data-testid="result-media">
+                      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+                        <p className="text-sm font-semibold flex items-center gap-2">
+                          <ImageIcon size={15} className="text-[#ff5a5f]" /> Image et médias
+                          <span className="text-xs text-gray-400 font-normal">(optionnels — publiés avec le post)</span>
+                        </p>
+                        {canCarousel && (
+                          <div className="flex gap-1 text-sm mt-3" role="tablist" data-testid="media-mode">
+                            {[["photo", "Photo ou vidéo"], ["carousel", "Carrousel de photos"]].map(([k, label]) => (
+                              <button key={k} type="button" role="tab" aria-selected={mode === k} onClick={() => setMediaMode(k)} data-testid={`media-mode-${k}`}
+                                className={`px-3.5 py-1.5 rounded-lg border ${mode === k ? "border-[#ff5a5f] bg-[#fff1f1] text-[#ff5a5f] font-semibold" : "border-gray-200 text-gray-500 hover:border-gray-300"}`}>{label}</button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      {mode === "carousel" ? (
+                        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5" data-testid="result-photo-carousel">
+                          <PhotoCarouselBlock standalone initial={resultSlides} onImages={setResultSlides} hasOtherMedia={Boolean(postImage || postVideo || postYoutube)} />
+                        </div>
+                      ) : (
+                        <>
+                          {renderImageBlock()}
+                          {renderVideoBlock()}
+                          {renderYoutubeBlock()}
+                        </>
+                      )}
+                    </div>
+                  );
+                })()}
 
                 </>
               ) : (
@@ -20507,13 +20538,6 @@ export default function Home() {
                 {!editingResult && result?.why && (
                   <PostWhy text={result.text} why={result.why} onReanalyze={reanalyzeWhy} reanalyzing={reanalyzing} />
                 )}
-                {/* Image du post — reste accessible en mode modification, et partagée avec
-                    l'écran "Optimiser mes posts" via renderImageBlock(). */}
-                <Fold icon={<ImageIcon size={15} className="text-[#ff5a5f]" />} title="Image et vidéo" hint="optionnelles" defaultOpen={Boolean(postImage || postVideo || postYoutube)}>
-                  {renderImageBlock()}
-                  {renderVideoBlock()}
-                  {renderYoutubeBlock()}
-                </Fold>
                 {!editingResult && result?.text && (
                   <Fold icon={<MessageSquare size={15} className="text-[#ff5a5f]" />} title="Une remarque pour vos prochains posts" hint="enregistrée pour tous vos posts">
                     <RemarkBox onApplyNow={handleRefine} onManage={() => setView("profile")} showToast={showToast} />
