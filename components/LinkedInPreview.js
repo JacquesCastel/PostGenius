@@ -13,6 +13,20 @@ function visibleText(text, limit) {
   return { shown: (at > limit * 0.6 ? cut.slice(0, at) : cut).trimEnd(), cut: true };
 }
 
+// Les hashtags s'affichent en bleu et en gras, comme dans le fil LinkedIn
+const HASHTAG = /(?<![\p{L}\p{N}_&#/\\])#[\p{L}\p{N}]*\p{L}[\p{L}\p{N}]*/gu;
+function withHashtags(t) {
+  const out = [];
+  let pos = 0;
+  for (const m of t.matchAll(HASHTAG)) {
+    if (m.index > pos) out.push(t.slice(pos, m.index));
+    out.push(<span key={m.index} className="font-semibold text-[#0a66c2]" data-testid="li-hashtag">{m[0]}</span>);
+    pos = m.index + m[0].length;
+  }
+  if (pos < t.length) out.push(t.slice(pos));
+  return out;
+}
+
 export default function LinkedInPreview({ text = "", name = "Vous", headline = "", isPage = false, imageUrl = null, className = "", startExpanded = false }) {
   const [device, setDevice] = useState("mobile");
   const [expanded, setExpanded] = useState(startExpanded);
@@ -42,7 +56,7 @@ export default function LinkedInPreview({ text = "", name = "Vous", headline = "
             </div>
           </div>
           <div className="px-3 pt-2.5 pb-2 text-sm leading-[1.4] whitespace-pre-wrap break-words" dir="auto" data-testid="li-text">
-            {expanded || !cut ? clean : shown}
+            {withHashtags(expanded || !cut ? clean : shown)}
             {cut && !expanded && (
               <>
                 … <button type="button" onClick={() => setExpanded(true)} className="text-[#00000099] hover:text-[#0a66c2] hover:underline" data-testid="li-more">voir plus</button>
