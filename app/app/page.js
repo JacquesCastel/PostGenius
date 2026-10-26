@@ -48,7 +48,7 @@ import { parseYouTubeId, youtubeWatchUrl, youtubeEmbedUrl, youtubeThumbUrl } fro
 import ImageEditor, { canvasToSafePng } from "@/components/ImageEditor";
 import { scorePost } from "@/lib/score";
 import { markdownToHtml } from "@/lib/markdown";
-import { parsePostUrn, REACTIONS } from "@/lib/linkedinPost";
+import { parsePostUrn, REACTIONS, parseCommentLink } from "@/lib/linkedinPost";
 import ShareView from "@/components/ShareView";
 import ShareHowTo from "@/components/ShareHowTo";
 import LeadsView from "@/components/LeadsView";
@@ -688,6 +688,12 @@ function EngageView({ linkedin, showToast, onConnect, embedded = false, onSent, 
 
   const parsed = postInput.trim() ? parsePostUrn(postInput) : null;
   const ready = parsed?.urn;
+  // Lien d'un commentaire copié dans LinkedIn (« Copier le lien » sur le commentaire) : la réponse part sous ce commentaire
+  const pastedComment = postInput.trim() ? parseCommentLink(postInput) : null;
+  useEffect(() => {
+    if (pastedComment) { setReplyTo((r) => (r?.urn === pastedComment ? r : { urn: pastedComment, text: "", fromLink: true })); setAsPage(Boolean(linkedin.orgConnected)); }
+    else setReplyTo((r) => (r?.fromLink ? null : r));
+  }, [pastedComment]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const send = async (action, extra, label) => {
     if (!ready || busy) return;
@@ -780,7 +786,7 @@ function EngageView({ linkedin, showToast, onConnect, embedded = false, onSent, 
                 <span>Vous répondez à</span>
                 <button type="button" onClick={() => setReplyTo(null)} className="text-gray-400 hover:text-gray-600 underline">commenter le post à la place</button>
               </p>
-              {replyTo.text === null ? <span className="text-gray-400">Chargement…</span> : replyTo.text ? <span className="whitespace-pre-line">« {replyTo.text} »</span> : <span className="text-gray-400">Texte indisponible (LinkedIn ne l&apos;a pas renvoyé{replyTo.status ? ` : code ${replyTo.status}` : ""}). {ready ? <a href={postInput.trim()} target="_blank" rel="noreferrer" className="text-[#0a66c2] hover:underline">Ouvrir le post sur LinkedIn pour le lire ↗</a> : "Ouvrez le post sur LinkedIn pour le lire."}</span>}
+              {replyTo.text === null ? <span className="text-gray-400">Chargement…</span> : replyTo.fromLink && !replyTo.text ? <span className="text-gray-500" data-testid="reply-from-link-ok">Commentaire reconnu depuis le lien collé : votre réponse partira juste en dessous.</span> : replyTo.text ? <span className="whitespace-pre-line">« {replyTo.text} »</span> : <span className="text-gray-400">Texte indisponible (LinkedIn ne l&apos;a pas renvoyé{replyTo.status ? ` : code ${replyTo.status}` : ""}). {ready ? <a href={postInput.trim()} target="_blank" rel="noreferrer" className="text-[#0a66c2] hover:underline">Ouvrir le post sur LinkedIn pour le lire ↗</a> : "Ouvrez le post sur LinkedIn pour le lire."}</span>}
             </div>
           )}
           {linkedin.orgConnected && linkedin.connected && (
@@ -851,6 +857,11 @@ function CommentsPanel({ draft, onClose, showToast, onIntegrate }) {
   // Suggestions de réponse par l'IA : proposées pour un commentaire, jamais envoyées sans clic
   const [suggest, setSuggest] = useState(null); // { id, loading, replies, error }
   const [replyTo, setReplyTo] = useState(null); // commentaire auquel la réponse en cours répond (fil de discussion)
+  // Profil personnel : LinkedIn ne permet pas de lire les commentaires. On répond depuis le lien du commentaire (copié sur LinkedIn)
+  // et, si on colle aussi son texte, l'IA propose des réponses.
+  const [link, setLink] = useState("");
+  const [pasted, setPasted] = useState("");
+  const linkUrn = parseCommentLink(link);
   const suggestReplies = async (c) => {
     setSuggest({ id: c.id, loading: true });
     try {
@@ -891,13 +902,14 @@ function CommentsPanel({ draft, onClose, showToast, onIntegrate }) {
       const res = await fetch("/api/linkedin/comments", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ draftId: draft.id, text: replyText, parentCommentUrn: replyTo?.commentUrn || undefined }),
+        body: JSON.stringify({ draftId: draft.id, text: replyText, parentCommentUrn: replyTo?.commentUrn || linkUrn || undefined }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Erreur");
       setComments((c) => [...(c ?? []), errorCode === "read_forbidden" ? { ...data.comment, authorName: "Vous" } : data.comment]);
       setReplyText("");
       setReplyTo(null);
+      if (linkUrn) { setLink(""); setPasted(""); setSuggest(null); }
       if (errorCode === "read_forbidden" || replyTo) showToast("Réponse publiée sur LinkedIn ✓");
     } catch (e) {
       showToast(e.message);
@@ -926,22 +938,48 @@ function CommentsPanel({ draft, onClose, showToast, onIntegrate }) {
             </p>
           )}
           {error && errorCode === "read_forbidden" ? (
-            <div className="rounded-xl bg-amber-50 border border-amber-200 p-4 space-y-3">
-              <p className="text-sm text-amber-900">{error}</p>
-              <p className="text-xs text-amber-800">
-                C&apos;est une restriction de LinkedIn : la lecture des commentaires d&apos;un profil personnel n&apos;est pas
-                ouverte à toutes les applications. Les commentaires s&apos;afficheront ici dès que l&apos;accès sera accordé.
-              </p>
-              {draft.postId && (
-                <a
-                  href={`https://www.linkedin.com/feed/update/${draft.postId}/`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center gap-1.5 bg-[#0a66c2] hover:bg-[#084d92] text-white text-xs font-medium px-3 py-2 rounded-lg"
-                >
-                  <Linkedin size={13} /> Voir les commentaires sur LinkedIn <ExternalLink size={12} />
-                </a>
-              )}
+            <div className="space-y-3" data-testid="comments-forbidden">
+              <div className="rounded-xl bg-amber-50 border border-amber-200 p-4 space-y-3">
+                <p className="text-sm font-semibold text-amber-900">LinkedIn ne permet pas à LinkeePost de lire les commentaires d&apos;un profil personnel.</p>
+                <p className="text-xs text-amber-800">
+                  C&apos;est une règle de LinkedIn, réservée à quelques partenaires : elle ne dépend pas de votre compte. Pour un post de <strong>page entreprise</strong>, les commentaires s&apos;affichent ici et vous recevez un e-mail à chaque nouveau commentaire. Pour un post de profil, ouvrez-le sur LinkedIn pour les lire.
+                </p>
+                {draft.postId && (
+                  <a
+                    href={`https://www.linkedin.com/feed/update/${draft.postId}/`}
+                    target="_blank"
+                    rel="noreferrer"
+                    data-testid="open-linkedin-comments"
+                    className="inline-flex items-center gap-1.5 bg-[#0a66c2] hover:bg-[#084d92] text-white text-sm font-semibold px-4 py-2.5 rounded-lg"
+                  >
+                    <Linkedin size={15} /> Ouvrir les commentaires sur LinkedIn <ExternalLink size={13} />
+                  </a>
+                )}
+              </div>
+              <div className="rounded-xl border border-gray-200 p-4 space-y-2.5" data-testid="reply-from-link">
+                <p className="text-sm font-semibold">Répondre à un commentaire depuis LinkeePost</p>
+                <ol className="text-xs text-gray-500 list-decimal pl-4 space-y-0.5">
+                  <li>Sur LinkedIn, cliquez « … » à côté du commentaire, puis « Copier le lien ».</li>
+                  <li>Collez ce lien ci-dessous.</li>
+                  <li>Collez aussi le texte du commentaire pour que l&apos;IA propose des réponses (facultatif).</li>
+                </ol>
+                <input type="url" value={link} onChange={(e) => setLink(e.target.value)} placeholder="Lien du commentaire (linkedin.com/feed/update/…commentUrn=…)" data-testid="comment-link" className="w-full border border-gray-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]" />
+                {link.trim() && (linkUrn
+                  ? <p className="text-[11px] text-green-700 flex items-center gap-1" data-testid="comment-link-ok"><Check size={12} /> Commentaire reconnu : votre réponse partira juste en dessous.</p>
+                  : <p className="text-[11px] text-red-600" data-testid="comment-link-bad">Lien non reconnu : copiez le lien du <em>commentaire</em> (« … » à côté de lui), pas celui du post.</p>)}
+                <textarea value={pasted} onChange={(e) => setPasted(e.target.value.slice(0, 1250))} rows={2} placeholder="Texte du commentaire (pour proposer des réponses)" data-testid="comment-pasted" className="w-full border border-gray-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[#ff5a5f] resize-y" />
+                <button type="button" onClick={() => suggestReplies({ id: "manual", text: pasted })} disabled={!pasted.trim() || suggest?.loading} data-testid="comment-suggest-manual" className="text-xs font-semibold text-[#ff5a5f] hover:underline disabled:opacity-40">Proposer des réponses</button>
+                {suggest?.id === "manual" && (
+                  <div className="space-y-1.5" data-testid="comment-suggestions">
+                    {suggest.loading && <p className="text-[11px] text-gray-400 flex items-center gap-1.5"><RefreshCw size={11} className="animate-spin" /> Rédaction des réponses…</p>}
+                    {suggest.error && <p className="text-[11px] text-red-600">{suggest.error}</p>}
+                    {suggest.replies?.map((r, i) => (
+                      <button key={i} type="button" onClick={() => { setReplyText(r); setSuggest(null); }} data-testid="comment-suggestion" className="block w-full text-left text-xs bg-white border border-gray-200 hover:border-[#ff5a5f] rounded-lg p-2 whitespace-pre-wrap">{r}</button>
+                    ))}
+                    {suggest.replies && <p className="text-[10px] text-gray-400">Cliquez une proposition pour la placer dans la zone de réponse en bas : vous pouvez la modifier avant d&apos;envoyer.</p>}
+                  </div>
+                )}
+              </div>
             </div>
           ) : (
             error && <p className="text-sm text-red-600 bg-red-50 rounded-lg p-3">{error}</p>
@@ -980,13 +1018,16 @@ function CommentsPanel({ draft, onClose, showToast, onIntegrate }) {
             <button type="button" onClick={() => setReplyTo(null)} className="text-gray-400 hover:text-gray-700" aria-label="Annuler la réponse ciblée"><X size={11} /></button>
           </p>
         )}
+        {!replyTo && linkUrn && errorCode === "read_forbidden" && (
+          <p className="px-3 pt-2 text-[11px] text-green-700 flex items-center gap-1.5 shrink-0" data-testid="reply-to-link">Réponse au commentaire du lien collé</p>
+        )}
         <div className="flex gap-2 p-3 border-t border-gray-100 shrink-0">
           <input
             type="text"
             value={replyText}
             onChange={(e) => setReplyText(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && sendReply()}
-            placeholder={draft.target?.startsWith("urn:li:organization:") ? "Répondre au nom de la page…" : errorCode === "read_forbidden" ? "Ajouter un commentaire sous votre post…" : "Commenter avec votre profil…"}
+            placeholder={draft.target?.startsWith("urn:li:organization:") ? "Répondre au nom de la page…" : errorCode === "read_forbidden" ? (linkUrn ? "Votre réponse à ce commentaire…" : "Ajouter un commentaire sous votre post…") : "Commenter avec votre profil…"}
             className="flex-1 min-w-0 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
           />
           <button

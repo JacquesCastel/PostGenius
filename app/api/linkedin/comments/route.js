@@ -4,6 +4,7 @@ import { getEffectiveUserId as getUserId } from "@/lib/session";
 import { decryptToken } from "@/lib/crypto";
 import { withDetail } from "@/lib/linkedinError";
 import { sendComment } from "@/lib/linkedinSocial";
+import { normalizeCommentUrn } from "@/lib/linkedinPost";
 import { logInteraction } from "@/lib/interactions";
 import { personalProfileBlocked, CLIENT_PROFILE_BLOCKED } from "@/lib/clientAccount";
 
@@ -125,6 +126,9 @@ export async function POST(req) {
 
   const { draft, token, actor, error, status } = await draftAndToken(userId, draftId);
   if (error) return NextResponse.json({ error }, { status });
+  // Forme canonique si possible ; un identifiant de commentaire renvoyé tel quel par LinkedIn (autre forme) reste accepté
+  const parentUrn = parentCommentUrn ? normalizeCommentUrn(parentCommentUrn) ?? (/^urn:li:comment:\(.{5,200}\)$/.test(String(parentCommentUrn)) ? String(parentCommentUrn) : null) : null;
+  if (parentCommentUrn && !parentUrn) return NextResponse.json({ error: "Commentaire à relier inconnu." }, { status: 400 });
 
   try {
     const { res, via } = await sendComment({
@@ -132,7 +136,7 @@ export async function POST(req) {
       actor,
       urn: draft.postId,
       text: text.trim().slice(0, 1250),
-      parentCommentUrn,
+      parentCommentUrn: parentUrn ?? undefined,
     });
     if (!res.ok) {
       const raw = await res.text();
