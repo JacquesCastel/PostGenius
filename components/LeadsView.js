@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useMemo } from "react";
-import { Users, Sparkles, Plus, Trash2, Pencil, ExternalLink, Download, Check } from "lucide-react";
-import { LEVELS, LEVEL_LABEL, STATUSES, isLinkedInLead, retention } from "@/lib/leadsText";
+import { Users, Sparkles, Plus, Trash2, Pencil, ExternalLink, Download, Check, Copy, MessageSquare } from "lucide-react";
+import { LEVELS, LEVEL_LABEL, STATUSES, isLinkedInLead, retention, splitName } from "@/lib/leadsText";
 
 // Base de leads : les personnes qui commentent la page entreprise arrivent ici toutes seules ; on peut aussi en ajouter à la main.
 // L'IA les note face au client idéal décrit ci-dessous. Aucun message n'est envoyé : la prise de contact reste manuelle.
@@ -24,6 +24,24 @@ function LeadCard({ lead, onChange, onDelete, scopes = [], scope = "main" }) {
   const [f, setF] = useState({ name: lead.name ?? "", headline: lead.headline ?? "", company: lead.company ?? "", profileUrl: lead.profileUrl ?? "" });
   const [note, setNote] = useState(lead.note ?? "");
   const patch = (body) => onChange(lead.id, body);
+  // Approche : signal d'achat, problème fréquent, premier message à valider. Rien n'est envoyé ni enregistré.
+  const [ap, setAp] = useState(null); // { loading } | { error } | { signal, probleme, message }
+  const prepare = async () => {
+    setAp({ loading: true });
+    try {
+      const res = await fetch(`/api/leads/${lead.id}/approach`, { method: "POST" });
+      const d = await json(res);
+      if (!res.ok) throw new Error(d.error || "Erreur");
+      setAp(d);
+    } catch (e) {
+      setAp({ error: e.message });
+    }
+  };
+  const copy = async (text, what) => {
+    try { await navigator.clipboard.writeText(text); setAp((a) => ({ ...a, copied: what })); setTimeout(() => setAp((a) => (a ? { ...a, copied: null } : a)), 2000); } catch {}
+  };
+  const { prenom, nom } = splitName(lead.name);
+  const enrich = `prenom: ${prenom}\nnom: ${nom}\nentreprise: ${lead.company ?? ""}`;
   const fromLinkedIn = isLinkedInLead(lead);
   const left = fromLinkedIn ? retention(lead.createdAt) : null;
   return (
@@ -53,9 +71,27 @@ function LeadCard({ lead, onChange, onDelete, scopes = [], scope = "main" }) {
             {scopes.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
           </select>
         )}
+        <button type="button" onClick={prepare} disabled={ap?.loading} className="text-[#ff5a5f] flex items-center gap-1 disabled:opacity-50" data-testid="lead-approach"><MessageSquare size={12} /> {ap?.loading ? "Rédaction…" : ap?.message ? "Régénérer l'approche" : "Préparer l'approche"}</button>
         {!fromLinkedIn && <button type="button" onClick={() => setEdit((v) => !v)} className="text-gray-500 flex items-center gap-1" data-testid="lead-edit"><Pencil size={12} /> {edit ? "Fermer" : "Modifier"}</button>}
         <button type="button" onClick={() => onDelete(lead.id)} className="text-gray-400 hover:text-red-500 flex items-center gap-1 ml-auto" data-testid="lead-delete"><Trash2 size={12} /> Supprimer</button>
       </div>
+      {ap && !ap.loading && (
+        <div className="mt-3 rounded-xl border border-[#ffd5d6] bg-[#fff8f8] p-3 space-y-2" data-testid="lead-approach-panel">
+          {ap.error ? <p className="text-xs text-red-600">{ap.error}</p> : (
+            <>
+              <p className="text-xs"><span className="font-semibold text-[#a3242a]">Accroche : </span>{ap.signal}</p>
+              <p className="text-xs"><span className="font-semibold text-[#a3242a]">Problème fréquent à ce poste : </span>{ap.probleme}</p>
+              <textarea value={ap.message} onChange={(e) => setAp((a) => ({ ...a, message: e.target.value }))} rows={6} className={`${field} text-sm`} data-testid="lead-approach-message" aria-label="Message d'approche" />
+              <div className="flex flex-wrap items-center gap-3 text-xs">
+                <button type="button" onClick={() => copy(ap.message, "message")} className="font-semibold text-white bg-[#ff5a5f] rounded-lg px-3 py-1.5 flex items-center gap-1.5" data-testid="lead-approach-copy"><Copy size={12} /> {ap.copied === "message" ? "Copié ✓" : "Copier le message"}</button>
+                <button type="button" onClick={() => copy(enrich, "enrich")} className="text-gray-600 border border-gray-200 rounded-lg px-3 py-1.5 flex items-center gap-1.5" data-testid="lead-approach-enrich" title="Prénom, nom et entreprise, à coller dans votre outil d'enrichissement d'e-mail"><Copy size={12} /> {ap.copied === "enrich" ? "Copié ✓" : "Copier prénom / nom / entreprise"}</button>
+                {lead.profileUrl && <a href={lead.profileUrl} target="_blank" rel="noopener noreferrer" className="text-[#0a66c2] flex items-center gap-1"><ExternalLink size={12} /> Ouvrir le profil</a>}
+              </div>
+              <p className="text-[11px] text-gray-400">Proposition à relire et adapter : rien n&apos;est envoyé ni enregistré. Copiez le message et envoyez-le vous-même sur LinkedIn.</p>
+            </>
+          )}
+        </div>
+      )}
       {edit && !fromLinkedIn && (
         <div className="mt-3 space-y-2">
           <p className="text-xs text-gray-400">LinkedIn ne donne pas toujours le nom ni le poste. Complétez-les ici : le lead sera renoté avec ces informations.</p>
