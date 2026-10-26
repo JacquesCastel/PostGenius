@@ -45,6 +45,7 @@ export async function PATCH(req, { params }) {
     data: {
       ...(text !== undefined && { text }),
       ...(status !== undefined && { status }),
+      ...(status === "publié" && { publishedAt: new Date() }),
       ...(postId !== undefined && { postId }),
       ...(scheduledAt !== undefined && { scheduledAt: scheduledAt ? new Date(scheduledAt) : null }),
       ...(target !== undefined && { target }),

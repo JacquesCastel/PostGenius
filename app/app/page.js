@@ -2802,6 +2802,13 @@ function MentionTool({ draftId, local, text, onInsert, mentions, onMentions, get
   const [pageId, setPageId] = useState("");
   const [opened, setOpened] = useState(false); // l'éditeur de LinkedIn a été ouvert : on propose de marquer le post comme publié
   const [marking, setMarking] = useState(false);
+  const [back, setBack] = useState(false); // l'utilisateur est revenu sur l'onglet après avoir ouvert LinkedIn
+  useEffect(() => {
+    if (!opened) return;
+    const onVisible = () => { if (document.visibilityState === "visible") setBack(true); };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, [opened]);
   // Taguer des personnes : LinkedIn ne permet pas de les retrouver depuis l'application. On ouvre son éditeur avec le texte du post (copié aussi
   // dans le presse-papiers) : les « @ » y sont retapés normalement, puis le post est publié depuis LinkedIn.
   const openLinkedIn = async () => {
@@ -2973,7 +2980,7 @@ function MentionTool({ draftId, local, text, onInsert, mentions, onMentions, get
       )}
       {opened && onMarkPublished && (
         <div className="rounded-lg bg-blue-50 border border-blue-200 p-2.5 text-xs text-blue-900 flex items-center gap-3 flex-wrap" data-testid="mention-opened">
-          <span className="flex-1 min-w-[12rem]">Publiez le post dans LinkedIn (en retapant « @ » devant les noms à taguer), puis revenez ici pour le marquer comme publié.</span>
+          <span className="flex-1 min-w-[12rem]">{back ? <><strong>De retour ?</strong> Si le post est publié sur LinkedIn, confirmez-le ici : il rejoindra « Mes posts » et vos statistiques.</> : "Publiez le post dans LinkedIn (en retapant « @ » devant les noms à taguer), puis revenez ici pour le marquer comme publié."}</span>
           <button type="button" onClick={markPublished} disabled={marking} data-testid="mention-mark-published" className="bg-[#0a66c2] hover:bg-[#004182] disabled:bg-gray-300 text-white px-3 py-1.5 rounded-lg">{marking ? "Enregistrement…" : "J'ai publié sur LinkedIn"}</button>
         </div>
       )}
@@ -20338,6 +20345,20 @@ export default function Home() {
                       mentions={resultMentions}
                       onMentions={setResultMentions}
                       showToast={showToast}
+                      onMarkPublished={async () => {
+                        // Le post a été publié depuis l'éditeur de LinkedIn (profil) : on l'enregistre ici, déjà marqué « publié »
+                        const d = await saveDraft({ silent: true, override: { target: "person" } });
+                        if (!d) return;
+                        try {
+                          await patchDraft(d.id, { status: "publié" });
+                          setDrafts((ds) => ds.map((x) => (x.id === d.id ? { ...x, status: "publié" } : x)));
+                          clearResultArea();
+                          setNextStep({ type: "published", postId: null });
+                          showToast("Post enregistré comme publié ✓");
+                        } catch (e) {
+                          showToast(e.message);
+                        }
+                      }}
                       getCursor={() => (editingResult ? resultAreaRef.current?.selectionStart : undefined)}
                       onInsert={(name, pos) => {
                         if (editingResult) setResultDraftText((t) => insertMention(t, name, pos ?? t.length).text);
