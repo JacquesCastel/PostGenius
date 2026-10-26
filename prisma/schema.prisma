@@ -571,6 +571,9 @@ model Draft {
   poll String?
   // Carrousel publié en document PDF : JSON des adresses des images des slides, dans l'ordre
   documentSlides String?
+  // Premier commentaire publié par l'auteur juste après le post (souvent le lien, pour garder le post sans lien sortant) ; firstCommentAt : date d'envoi
+  firstComment   String?
+  firstCommentAt DateTime?
 
   // Vecteur sémantique du texte { h: empreinte du texte, v: vecteur } : mémoire éditoriale (ce que l'auteur a déjà dit)
   embedding Json?

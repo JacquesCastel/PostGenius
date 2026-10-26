@@ -15,7 +15,7 @@ export async function PATCH(req, { params }) {
   if (!userId) return NextResponse.json({ error: "Non connecté." }, { status: 401 });
 
   const { id } = await params;
-  const { text, status, postId, scheduledAt, target, imageUrl, imagePrompt, videoUrl, youtubeUrl, mentions, poll, documentSlides } = await req.json();
+  const { text, status, postId, scheduledAt, target, imageUrl, imagePrompt, videoUrl, youtubeUrl, mentions, poll, documentSlides, firstComment, firstCommentSent } = await req.json();
 
   if (videoUrl) {
     try {
@@ -52,6 +52,8 @@ export async function PATCH(req, { params }) {
       ...(mentions !== undefined && { mentions: mentions === null ? null : JSON.stringify(sanitizeMentions(typeof mentions === "string" ? (() => { try { return JSON.parse(mentions); } catch { return []; } })() : mentions)) }),
       ...(poll !== undefined && { poll: (() => { const c = cleanPoll(poll); return c ? JSON.stringify(c) : null; })() }),
       ...(documentSlides !== undefined && { documentSlides: (() => { const c = cleanSlides(documentSlides); return c.length ? JSON.stringify(c) : null; })() }),
+      ...(firstComment !== undefined && { firstComment: typeof firstComment === "string" && firstComment.trim() ? firstComment.trim().slice(0, 1250) : null, ...(firstComment === null || !String(firstComment).trim() ? { firstCommentAt: null } : {}) }),
+      ...(firstCommentSent === true && { firstCommentAt: new Date() }),
       ...(imageUrl !== undefined && { imageUrl }),
       ...(imagePrompt !== undefined && { imagePrompt }),
       ...(videoUrl !== undefined && { videoUrl }),
