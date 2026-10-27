@@ -19124,7 +19124,8 @@ export default function Home() {
       </div>
     );
   }
-  if (!profile?.onboardedAt && !user.isSuperAdmin && !agencyHome) {
+  // Vue support (admin qui regarde un client) : jamais l'assistant de configuration du client, sinon l'admin ne voit pas le compte et ne peut pas en sortir
+  if (!profile?.onboardedAt && !user.isSuperAdmin && !agencyHome && !impersonating?.support) {
     return (
       <OnboardingWizard
         forClient={impersonating && !impersonating.support ? impersonating : null}
@@ -20063,6 +20064,7 @@ export default function Home() {
               {impersonating.support ? (
                 <>
                   Vue support, lecture seule — <span className="font-semibold">{impersonating.email}</span>
+                  {!profile?.onboardedAt && <span className="font-normal text-amber-700" data-testid="support-not-onboarded"> · configuration pas terminée par ce client</span>}
                 </>
               ) : (
                 <>
