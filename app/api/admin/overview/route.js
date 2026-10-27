@@ -27,7 +27,7 @@ export async function GET(req) {
         agencyId: true,
         agency: { select: { name: true } },
         // Collaborateur (ou propriétaire) d'une agence : rattaché via AgencyMember, pas via agencyId
-        agencyMembership: { select: { role: true, agency: { select: { name: true } } } },
+        agencyMembership: { select: { role: true, agencyId: true, agency: { select: { name: true } } } },
         onboardedAt: true,
         linkedin: { select: { personToken: true, orgToken: true } },
         _count: { select: { drafts: true, campaigns: true } },
@@ -70,6 +70,8 @@ export async function GET(req) {
       // du compte agence, ce n'est pas un utilisateur à part entière à compter/lister comme tel.
       agencyMember: u.agencyMembership?.role === "member",
       agencyName: u.agency?.name ?? u.agencyMembership?.agency?.name ?? null,
+      agencyKey: u.agencyId ?? u.agencyMembership?.agencyId ?? null, // regroupe le propriétaire d'une agence, ses collaborateurs et ses clients
+      agencyOwner: u.agencyMembership?.role === "owner",
       onboarded: Boolean(u.onboardedAt),
       linkedinConnected: Boolean(u.linkedin?.personToken),
       orgConnected: Boolean(u.linkedin?.orgToken),

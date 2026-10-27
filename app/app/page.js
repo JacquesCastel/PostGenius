@@ -4748,7 +4748,8 @@ function AdminView({ showToast }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [showAgencyClients, setShowAgencyClients] = useState(false);
+  const [showAgencyClients, setShowAgencyClients] = useState(true); // les clients d'une agence s'affichent sous leur agence ; la case les replie
+  const [closedAgencies, setClosedAgencies] = useState({}); // agence repliée : { [agencyKey]: true }
   const [quotaUser, setQuotaUser] = useState(null); // compte dont l'administrateur règle les limites
 
   const load = () => {
@@ -4827,12 +4828,25 @@ function AdminView({ showToast }) {
 
   const fmtCost = (c) => `${c.toFixed(2).replace(".", ",")} $`;
 
-  const filteredUsers = (data?.users ?? []).filter((u) => {
+  // Les clients et collaborateurs d'une agence s'affichent sous le compte de leur agence (c'est là que se trouvent leurs posts : le propriétaire
+  // n'a souvent aucun post à son nom), avec un résumé sur la ligne de l'agence. La recherche les retrouve aussi.
+  const allUsers = data?.users ?? [];
+  const isSub = (u) => u.agencyClient || u.agencyMember;
+  const agencyStats = {};
+  for (const u of allUsers) if (isSub(u) && u.agencyKey) { const s = (agencyStats[u.agencyKey] ??= { clients: 0, members: 0, published: 0, posts: 0 }); if (u.agencyClient) { s.clients++; s.published += u.published; s.posts += u.posts; } else s.members++; }
+  const filteredUsers = (() => {
     const q = search.trim().toLowerCase();
-    // les comptes clients et les collaborateurs d'une agence font partie d'un compte agence, ce ne sont pas des utilisateurs à part : repliés par défaut (la recherche les retrouve)
-    if (!q) return showAgencyClients || !(u.agencyClient || u.agencyMember);
-    return u.email?.toLowerCase().includes(q) || u.name?.toLowerCase().includes(q);
-  });
+    if (q) return allUsers.filter((u) => u.email?.toLowerCase().includes(q) || u.name?.toLowerCase().includes(q));
+    const top = allUsers.filter((u) => !isSub(u));
+    if (!showAgencyClients) return top;
+    const out = [];
+    const placed = new Set();
+    for (const u of top) {
+      out.push(u);
+      if (u.agencyOwner && u.agencyKey && !closedAgencies[u.agencyKey]) for (const c of allUsers) if (isSub(c) && c.agencyKey === u.agencyKey) { out.push(c); placed.add(c.id); }
+    }
+    return [...out, ...allUsers.filter((c) => isSub(c) && !placed.has(c.id) && !closedAgencies[c.agencyKey ?? ""] && !top.some((o) => o.agencyOwner && o.agencyKey === c.agencyKey))];
+  })();
 
   const newThisWeek = (data?.users ?? []).filter(
     (u) => !u.agencyClient && !u.agencyMember && Date.now() - new Date(u.createdAt).getTime() < 7 * 86400000
@@ -4956,8 +4970,8 @@ function AdminView({ showToast }) {
           </thead>
           <tbody className="divide-y divide-gray-50">
             {filteredUsers.map((u) => (
-              <tr key={u.id} className={u.disabled ? "opacity-50" : ""}>
-                <td className="p-3">
+              <tr key={u.id} className={`${u.disabled ? "opacity-50" : ""} ${isSub(u) ? "bg-gray-50/60" : ""}`} data-testid={isSub(u) ? "admin-sub-row" : "admin-row"}>
+                <td className={`p-3 ${isSub(u) ? "pl-8 border-l-4 border-l-[#ffd5d6]" : ""}`}>
                   <p className="font-medium flex items-center gap-1.5">
                     {u.name || u.email}
                     {u.isAdmin && (
@@ -4967,6 +4981,11 @@ function AdminView({ showToast }) {
                     )}
                   </p>
                   <p className="text-xs text-gray-400">{u.agencyClient ? `Client de ${u.agencyName || "une agence"}` : u.agencyMember ? `Collaborateur de ${u.agencyName || "une agence"} · ${u.email}` : u.email}</p>
+                  {u.agencyOwner && u.agencyKey && agencyStats[u.agencyKey] && (
+                    <button type="button" onClick={() => setClosedAgencies((c) => ({ ...c, [u.agencyKey]: !c[u.agencyKey] }))} data-testid="admin-agency-toggle" className="text-[11px] text-[#0a66c2] hover:underline mt-0.5 text-left">
+                      Agence : {agencyStats[u.agencyKey].clients} client{agencyStats[u.agencyKey].clients > 1 ? "s" : ""}, {agencyStats[u.agencyKey].published} post{agencyStats[u.agencyKey].published > 1 ? "s" : ""} publié{agencyStats[u.agencyKey].published > 1 ? "s" : ""} · {closedAgencies[u.agencyKey] ? "afficher" : "masquer"} les clients
+                    </button>
+                  )}
                 </td>
                 <td className="p-3 text-xs text-gray-500">
                   {new Date(u.createdAt).toLocaleDateString("fr-FR")}
