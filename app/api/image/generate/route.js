@@ -4,12 +4,13 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getEffectiveUserId as getUserId } from "@/lib/session";
 import { saveImage } from "@/lib/image";
+import { generateImageB64 } from "@/lib/openaiImage";
 import { logUsage } from "@/lib/usage";
 import { checkImageQuota, checkAccess, limitBody } from "@/lib/gating";
 
 // Génère une image pour un post : prompt fourni par le client,
 // ou rédigé par Claude à partir du contenu du post + contexte de marque.
-// Génération via OpenAI gpt-image-1 (OPENAI_API_KEY).
+// Génération via les modèles « gpt-image » d'OpenAI (OPENAI_API_KEY) : voir lib/openaiImage.js.
 
 export const maxDuration = 120;
 
@@ -96,50 +97,9 @@ export async function POST(req) {
     const { user } = await userWithContext(userId, contextId);
     const finalPrompt = customPrompt?.trim() || (await writeImagePrompt(user, text, useBrandKit ? await findKit(userId, contextId || null) : null));
 
-    // Essaie gpt-image-1 (accès org requis), sinon bascule sur dall-e-3
-    let b64 = null;
-    const failures = []; // une ligne par modèle essayé : sert au message d'erreur final
-    for (const cfg of [
-      { model: "gpt-image-1", size: "1536x1024", quality: "medium" },
-      { model: "dall-e-3",    size: "1792x1024", quality: "standard", response_format: "b64_json" },
-    ]) {
-      const res = await fetch("https://api.openai.com/v1/images/generations", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ prompt: finalPrompt, n: 1, ...cfg }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        b64 = data.data?.[0]?.b64_json ?? null;
-        if (b64) break;
-      } else {
-        const err = await res.text();
-        console.warn(`OpenAI ${cfg.model}:`, res.status, err.slice(0, 300));
-        let detail = "";
-        let code = "";
-        try { const j = JSON.parse(err).error ?? {}; detail = j.message ?? ""; code = j.code ?? ""; } catch {}
-        failures.push(`${cfg.model} : ${res.status}${detail ? " – " + detail.slice(0, 160) : ""}`);
-        // Contenu refusé par la modération : un autre modèle dira la même chose
-        if (code === "moderation_blocked" || /safety system|content policy/i.test(detail)) {
-          return NextResponse.json({ error: "L'image a été refusée par le filtre de sécurité d'OpenAI. Reformulez la description de l'image (évitez les sujets sensibles) et réessayez." }, { status: 422 });
-        }
-        if (res.status === 401) return NextResponse.json({ error: "Clé OpenAI refusée (401) : vérifiez OPENAI_API_KEY." }, { status: 502 });
-        if (res.status === 429 || /billing|quota/i.test(code + detail)) {
-          return NextResponse.json({ error: `OpenAI refuse la génération : quota ou crédit épuisé (${res.status}). Vérifiez le solde du compte OpenAI.` }, { status: 502 });
-        }
-        // Si le modèle n'est pas disponible (400/403/404), on essaie le suivant
-        if (res.status === 403 || res.status === 404 || res.status === 400) continue;
-        // Autre erreur : remonte directement
-        return NextResponse.json(
-          { error: `Génération d'image refusée (${res.status})${detail ? " : " + detail : ""}` },
-          { status: 502 }
-        );
-      }
-    }
-    if (!b64) throw new Error(`Aucun modèle d'image n'a répondu${failures.length ? " (" + failures.join(" ; ") + ")" : ""}. Vérifiez l'accès de votre organisation OpenAI à gpt-image-1.`);
+    const gen = await generateImageB64(finalPrompt);
+    if (gen.error) return NextResponse.json({ error: gen.error }, { status: gen.status });
+    const b64 = gen.b64;
 
     const { url } = await saveImage(b64);
     logUsage(userId, { kind: "image", context: "image", images: 1 });
