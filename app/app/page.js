@@ -11296,6 +11296,13 @@ function StatsView({ linkedin, orgs, profile, drafts, showToast, onConnect }) {
             <span>{pStats.error}</span>
           </div>
         ) : pStats ? (
+          <>
+          {pStats.quotaLimited && (
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-3 text-xs text-amber-800 flex items-start gap-2" data-testid="stats-quota-note">
+              <AlertCircle size={14} className="mt-0.5 shrink-0" />
+              <span>LinkedIn limite le nombre de demandes de statistiques par jour et l&apos;a atteinte pour votre compte. Les chiffres affichés sont les dernières mesures enregistrées ; les chiffres du jour reviennent demain.</span>
+            </div>
+          )}
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
             {[
               ["Impressions", pStats.aggregate?.impressionCount, Eye],
@@ -11316,6 +11323,7 @@ function StatsView({ linkedin, orgs, profile, drafts, showToast, onConnect }) {
               </div>
             ))}
           </div>
+          </>
         ) : (
           <p className="text-sm text-gray-400 bg-white rounded-xl border border-dashed border-gray-300 p-6 text-center">
             Données indisponibles — réessayez dans quelques minutes.
