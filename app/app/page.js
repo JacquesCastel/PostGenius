@@ -861,6 +861,18 @@ function CommentsPanel({ draft, onClose, showToast, onIntegrate }) {
   // et, si on colle aussi son texte, l'IA propose des réponses.
   const [link, setLink] = useState("");
   const [pasted, setPasted] = useState("");
+  // Profil personnel : LinkedIn ne donne pas le texte des commentaires, mais les statistiques du profil (r_member_postAnalytics) en donnent le NOMBRE
+  const [cCount, setCCount] = useState(null); // null = inconnu ; { n } | { unavailable: true }
+  useEffect(() => {
+    if (errorCode !== "read_forbidden") return;
+    let alive = true;
+    fetch("/api/linkedin/stats-personal").then((r) => r.json()).then((d) => {
+      if (!alive) return;
+      const n = d.posts?.find((p) => p.id === draft.id)?.stats?.commentCount;
+      setCCount(typeof n === "number" ? { n } : { unavailable: true, notConnected: d.connected === false });
+    }).catch(() => alive && setCCount({ unavailable: true }));
+    return () => { alive = false; };
+  }, [errorCode, draft.id]);
   const linkUrn = parseCommentLink(link);
   const suggestReplies = async (c) => {
     setSuggest({ id: c.id, loading: true });
@@ -944,6 +956,15 @@ function CommentsPanel({ draft, onClose, showToast, onIntegrate }) {
                 <p className="text-xs text-amber-800">
                   C&apos;est une règle de LinkedIn, réservée à quelques partenaires : elle ne dépend pas de votre compte. Pour un post de <strong>page entreprise</strong>, les commentaires s&apos;affichent ici et vous recevez un e-mail à chaque nouveau commentaire. Pour un post de profil, ouvrez-le sur LinkedIn pour les lire.
                 </p>
+                {cCount?.n != null && (
+                  <p className="text-sm font-semibold text-amber-900" data-testid="comment-count">
+                    {cCount.n === 0 ? "LinkedIn indique 0 commentaire sur ce post pour l'instant." : `LinkedIn indique ${cCount.n} commentaire${cCount.n > 1 ? "s" : ""} sur ce post.`}
+                    <span className="block text-[11px] font-normal text-amber-800">Nombre issu des statistiques du profil, mis à jour toutes les 10 minutes environ.</span>
+                  </p>
+                )}
+                {cCount?.unavailable && (
+                  <p className="text-[11px] text-amber-800" data-testid="comment-count-missing">Le nombre de commentaires n&apos;est pas disponible{cCount.notConnected ? " : connectez les statistiques du profil dans « Connexions »" : " pour ce post"}.</p>
+                )}
                 {draft.postId && (
                   <a
                     href={`https://www.linkedin.com/feed/update/${draft.postId}/`}
