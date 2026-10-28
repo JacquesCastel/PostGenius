@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getEffectiveUserId as getUserId } from "@/lib/session";
 import { decryptToken } from "@/lib/crypto";
+import { fetchMemberMetric, memberQuotaPaused } from "@/lib/linkedin/memberStats";
 
 // Statistiques du profil personnel — API officielle LinkedIn memberCreatorPostAnalytics
 // (remplace Phyllo). Permission requise : r_member_postAnalytics, disponible
@@ -12,7 +13,6 @@ import { decryptToken } from "@/lib/crypto";
 // ne pas lier les statistiques du profil perso à la connexion page entreprise.
 // Doc : https://learn.microsoft.com/en-us/linkedin/marketing/community-management/members/post-statistics
 
-const BASE = `${process.env.LINKEDIN_API_BASE || "https://api.linkedin.com"}/rest/memberCreatorPostAnalytics`;
 // Totaux de tous les posts du membre (finder « me ») : 1 appel par mesure
 const AGGREGATE_METRICS = [
   "IMPRESSION", "REACTION", "COMMENT", "RESHARE", "LINK_CLICKS",
@@ -22,37 +22,11 @@ const AGGREGATE_METRICS = [
 const PER_POST_METRICS = ["IMPRESSION", "MEMBERS_REACHED", "REACTION", "COMMENT", "RESHARE", "LINK_CLICKS"];
 const MAX_POSTS = 10; // limite le nombre d'appels (quota LinkedIn par membre)
 const POST_BATCH = 3; // posts interrogés en parallèle (18 appels simultanés au plus)
-const CACHE_TTL = 10 * 60_000; // 10 min par compte : la page ne doit pas rejouer 70 appels à chaque ouverture
+const CACHE_TTL = 30 * 60_000; // 30 min par compte : un affichage coûte jusqu'à 70 appels, et LinkedIn n'en accorde qu'environ 100 par jour
 const cache = new Map(); // userId -> { at, body }
 
-function liHeaders(token) {
-  return {
-    Authorization: `Bearer ${token}`,
-    "LinkedIn-Version": process.env.LINKEDIN_VERSION || "202604",
-    "X-Restli-Protocol-Version": "2.0.0",
-  };
-}
-
-// urn:li:share:123 → "(share:urn%3Ali%3Ashare%3A123)" ; urn:li:ugcPost:123 → "(ugc:...)"
-function entityParam(urn) {
-  const kind = urn.startsWith("urn:li:ugcPost:") ? "ugc" : "share";
-  return `(${kind}:${encodeURIComponent(urn)})`;
-}
-
-async function fetchMetric(token, { entity, queryType, silent } = {}) {
-  const params = entity
-    ? `q=entity&entity=${entityParam(entity)}&queryType=${queryType}`
-    : `q=me&queryType=${queryType}`;
-  const res = await fetch(`${BASE}?${params}`, { headers: liHeaders(token) });
-  if (!res.ok) {
-    if (!silent) console.error("memberCreatorPostAnalytics", res.status, queryType, entity ?? "(me)", await res.text());
-    const err = new Error(`LinkedIn a refusé la demande de statistiques (${res.status}).`);
-    err.status = res.status;
-    throw err;
-  }
-  const data = await res.json();
-  return data.elements?.[0]?.count ?? 0;
-}
+// Une mesure ; en cas d'échec on garde le code (429 : quota du jour de LinkedIn) pour l'expliquer à l'utilisateur
+const fetchMetric = (token, args) => fetchMemberMetric(token, { entity: args.entity, queryType: args.queryType });
 
 export async function GET(req) {
   const userId = await getUserId(req);
@@ -77,7 +51,7 @@ export async function GET(req) {
     const aggResults = await Promise.all(
       AGGREGATE_METRICS.map(async (queryType) => {
         try {
-          return [queryType, await fetchMetric(token, { queryType, silent: true }), null];
+          return [queryType, await fetchMetric(token, { queryType }), null];
         } catch (e) {
           return [queryType, null, e.status ?? 500];
         }
@@ -114,26 +88,34 @@ export async function GET(req) {
       take: MAX_POSTS,
     });
 
+    let throttled = statuses.includes(429);
+    // Dernière mesure enregistrée de chaque post (J+1 ou J+7) : sert quand LinkedIn refuse la mesure du jour
+    const saved = new Map();
+    for (const row of await prisma.postPerformance.findMany({ where: { draftId: { in: published.map((d) => d.id) } }, orderBy: { offsetHours: "asc" } })) saved.set(row.draftId, row);
     const fetchPost = async (d) => {
       const entries = await Promise.all(
         PER_POST_METRICS.map(async (queryType) => {
           try {
-            return [queryType, await fetchMetric(token, { entity: d.postId, queryType, silent: true })];
-          } catch {
+            return [queryType, await fetchMetric(token, { entity: d.postId, queryType })];
+          } catch (e) {
+            if (e.status === 429) throttled = true;
             return [queryType, null];
           }
         })
       );
       const m = Object.fromEntries(entries);
+      const old = saved.get(d.id);
+      const live = Object.values(m).some((v) => v != null);
       return {
         id: d.id,
+        ...(live ? {} : old ? { fromSnapshot: true } : {}),
         stats: {
-          impressionCount: m.IMPRESSION,
+          impressionCount: m.IMPRESSION ?? old?.impressions ?? null,
           reachedCount: m.MEMBERS_REACHED,
-          likeCount: m.REACTION,
-          commentCount: m.COMMENT,
-          shareCount: m.RESHARE,
-          clickCount: m.LINK_CLICKS,
+          likeCount: m.REACTION ?? old?.likes ?? null,
+          commentCount: m.COMMENT ?? old?.comments ?? null,
+          shareCount: m.RESHARE ?? old?.shares ?? null,
+          clickCount: m.LINK_CLICKS ?? old?.clicks ?? null,
         },
       };
     };
@@ -143,11 +125,23 @@ export async function GET(req) {
       posts.push(...(await Promise.all(published.slice(i, i + POST_BATCH).map(fetchPost))));
     }
 
-    const body = { connected: true, aggregate, posts };
-    cache.set(userId, { at: Date.now(), body });
+    const body = { connected: true, aggregate, posts, ...(throttled || memberQuotaPaused(token) ? { quotaLimited: true } : {}) };
+    // Un résultat dégradé par le quota n'est pas gardé longtemps en cache : on réessaiera dès que LinkedIn aura remis les compteurs à zéro
+    if (!body.quotaLimited) cache.set(userId, { at: Date.now(), body });
     return NextResponse.json(body);
   } catch (e) {
     console.error("Erreur stats profil personnel:", e);
+    if (e.status === 429) {
+      // Quota quotidien de LinkedIn atteint : on montre les dernières valeurs enregistrées plutôt qu'une erreur ou des tirets
+      const snap = await prisma.statSnapshot.findFirst({ where: { userId }, orderBy: { day: "desc" } });
+      const drafts = await prisma.draft.findMany({ where: { userId, status: "publié", target: "person", postId: { not: null } }, orderBy: { publishedAt: "desc" }, take: MAX_POSTS, include: { performance: { orderBy: { offsetHours: "asc" } } } });
+      return NextResponse.json({
+        connected: true,
+        quotaLimited: true,
+        aggregate: snap ? { impressionCount: snap.impressions, likeCount: snap.reactions, commentCount: snap.comments } : {},
+        posts: drafts.map((d) => { const o = d.performance[d.performance.length - 1]; return { id: d.id, fromSnapshot: Boolean(o), stats: { impressionCount: o?.impressions ?? null, likeCount: o?.likes ?? null, commentCount: o?.comments ?? null, shareCount: o?.shares ?? null, clickCount: o?.clicks ?? null } }; }),
+      });
+    }
     if (e.status === 403) {
       return NextResponse.json(
         { error: "LinkedIn refuse l'accès aux statistiques (permission r_member_postAnalytics pas encore approuvée — en attente de revue LinkedIn)." },
