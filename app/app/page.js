@@ -10110,6 +10110,112 @@ function ThemesNewsBanner({ profile, onOpen }) {
   );
 }
 
+// Carte « Vos résultats » du tableau de bord : 3 chiffres sur 30 jours (variation vs les 30 jours d'avant), meilleur post, bascule profil / page.
+function DashSpark({ data, color }) {
+  if (!data?.length || Math.max(...data) === 0) return <div className="h-7" />;
+  const max = Math.max(...data), w = 100, h = 28;
+  const pts = data.map((v, i) => `${((i / (data.length - 1)) * w).toFixed(1)},${(h - 2 - (v / max) * (h - 4)).toFixed(1)}`).join(" ");
+  return <svg viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none" className="w-full h-7 mt-1.5" aria-hidden="true"><polyline points={pts} fill="none" stroke={color} strokeWidth="1.8" strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke" /></svg>;
+}
+function DashResults({ linkedin, orgs, onGoView }) {
+  const hasProfile = Boolean(linkedin?.statsConnected);
+  const pages = (orgs ?? []).filter((o) => o?.urn);
+  const hasPage = Boolean(linkedin?.orgConnected) && pages.length > 0;
+  const [scope, setScope] = useState(null);
+  const [orgUrn, setOrgUrn] = useState(null);
+  const [d, setD] = useState(null);
+  useEffect(() => {
+    let saved = null, savedOrg = null;
+    try { saved = localStorage.getItem("lp_results_scope"); savedOrg = localStorage.getItem("lp_results_org"); } catch {}
+    setScope(saved === "page" && hasPage ? "page" : saved === "profile" && hasProfile ? "profile" : hasProfile ? "profile" : hasPage ? "page" : "none");
+    setOrgUrn(pages.find((o) => o.urn === savedOrg)?.urn ?? pages[0]?.urn ?? null);
+  }, [hasProfile, hasPage, pages.length]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (!scope || scope === "none" || (scope === "page" && !orgUrn)) return;
+    setD(null);
+    const url = scope === "page" ? `/api/stats/dashboard?scope=page&org=${encodeURIComponent(orgUrn)}` : "/api/stats/dashboard?scope=profile";
+    fetch(url).then(readJson).then((x) => setD(x.error && !x.scope ? { failed: true } : x)).catch(() => setD({ failed: true }));
+  }, [scope, orgUrn]);
+  if (scope == null) return null;
+  const pick = (v) => { setScope(v); try { localStorage.setItem("lp_results_scope", v); } catch {} };
+  const fmt = (v) => new Intl.NumberFormat("fr-FR").format(v);
+  const card = "bg-white border border-[#e8ecf2] rounded-[18px] px-5 py-4";
+  const head = (
+    <div className="flex items-center gap-3 flex-wrap mb-3">
+      <span className="text-xs font-bold tracking-wider uppercase text-[#5a6b85]">Vos résultats · 30 derniers jours</span>
+      {hasProfile && hasPage && (
+        <div className="inline-flex rounded-full border border-[#cbd5e1] p-0.5 bg-white" role="group" aria-label="Profil ou page" data-testid="dash-results-scope">
+          {[["profile", "Profil"], ["page", "Page"]].map(([k, l]) => (
+            <button key={k} type="button" aria-pressed={scope === k} onClick={() => pick(k)} data-testid={`dash-results-${k}`} className={`text-[12px] font-semibold px-3 py-1 rounded-full ${scope === k ? "bg-[#ffe3e4] text-[#a3242a]" : "text-[#33415c] hover:bg-gray-50"}`}>{l}</button>
+          ))}
+        </div>
+      )}
+      {scope === "page" && pages.length > 1 && (
+        <select value={orgUrn ?? ""} onChange={(e) => { setOrgUrn(e.target.value); try { localStorage.setItem("lp_results_org", e.target.value); } catch {} }} aria-label="Page" data-testid="dash-results-org" className="text-[12px] border border-[#cbd5e1] rounded-lg px-2 py-1 bg-white max-w-[12rem]">
+          {pages.map((o) => <option key={o.urn} value={o.urn}>{o.name || o.urn}</option>)}
+        </select>
+      )}
+      {scope !== "none" && <button type="button" onClick={() => onGoView?.("stats")} data-testid="dash-results-all" className="ml-auto text-[13px] font-semibold text-[#0a66c2] hover:underline">Voir tout</button>}
+    </div>
+  );
+  let body;
+  if (scope === "none" || d?.connected === false) {
+    body = (
+      <p className="text-[13px] text-[#33415c]">Connectez LinkedIn pour suivre ici vos impressions, vos réactions et vos commentaires. <button type="button" onClick={() => onGoView?.("connections")} data-testid="dash-results-connect" className="font-semibold text-[#0a66c2] hover:underline">Connecter LinkedIn</button></p>
+    );
+  } else if (!d) {
+    body = <div className="h-[92px] rounded-xl bg-[#f1f5f9] animate-pulse" data-testid="dash-results-loading" />;
+  } else if (d.failed || d.error) {
+    body = <p className="text-[13px] text-[#5a6b85]">{d.error || "Résultats indisponibles pour le moment."}</p>;
+  } else if (d.quotaLimited) {
+    body = <p className="text-[13px] text-[#7a4b00] bg-[#fff4d6] rounded-lg px-3 py-2" data-testid="dash-results-quota">LinkedIn a atteint sa limite d&apos;appels pour aujourd&apos;hui : vos résultats reviennent demain.</p>;
+  } else if (d.pending || !d.metrics) {
+    body = <p className="text-[13px] text-[#33415c]" data-testid="dash-results-pending">Premier relevé en cours : vos résultats apparaîtront ici dès la prochaine lecture de LinkedIn (une fois par jour).</p>;
+  } else {
+    const defs = [["impressions", "Impressions", "#0a66c2"], ["reactions", "Réactions", "#166534"], ["comments", "Commentaires", "#6b21a8"]];
+    const asOf = d.asOf ? new Date(d.asOf) : null;
+    body = (
+      <>
+        <div className="grid grid-cols-1 lg:grid-cols-[3fr_1fr] gap-4">
+          <div className="grid grid-cols-3 gap-3 min-w-0">
+          {defs.map(([k, label, color]) => {
+            const m = d.metrics[k];
+            return (
+              <div key={k} className="min-w-0" data-testid={`dash-result-${k}`}>
+                <span className="block text-[11px] font-bold tracking-wider uppercase text-[#5a6b85]">{label}</span>
+                <div className="text-[22px] sm:text-[28px] font-extrabold leading-tight" style={{ color }}>{m && !d.building ? fmt(m.total) : "—"}</div>
+                {m?.change != null && !d.building ? (
+                  Math.round(Math.abs(m.change) * 100) === 0
+                    ? <div className="text-xs font-semibold text-[#5a6b85]" data-testid={`dash-result-${k}-change`}>● Stable<span className="hidden sm:inline font-medium"> vs 30 j précédents</span></div>
+                    : <div className={`text-xs font-semibold ${m.change >= 0 ? "text-[#166534]" : "text-[#b42318]"}`} data-testid={`dash-result-${k}-change`}>{m.change >= 0 ? "▲ +" : "▼ −"}{Math.round(Math.abs(m.change) * 100)} %<span className="hidden sm:inline font-medium text-[#5a6b85]"> vs 30 j précédents</span></div>
+                ) : <div className="text-xs text-[#5a6b85]">{m ? "Comparaison à venir" : "Non disponible"}</div>}
+                <DashSpark data={d.building ? null : m?.spark} color={color} />
+              </div>
+            );
+          })}
+          </div>
+          <div className="min-w-0 lg:border-l lg:border-[#eef1f6] lg:pl-4" data-testid="dash-result-best">
+            <span className="block text-[11px] font-bold tracking-wider uppercase text-[#5a6b85]">Meilleur post</span>
+            {d.best ? (
+              <>
+                <p className="text-sm font-bold leading-snug mt-0.5 line-clamp-2" title={d.best.theme}>{d.best.theme || "Post"}</p>
+                <p className="text-xs text-[#5a6b85] mt-1">{fmt(d.best.impressions)} impressions · {fmt(d.best.reactions)} réactions · {fmt(d.best.comments)} commentaires</p>
+                <button type="button" onClick={() => onGoView?.("history")} className="text-[13px] font-semibold text-[#0a66c2] hover:underline mt-1.5">Voir dans Mes posts</button>
+              </>
+            ) : <p className="text-xs text-[#5a6b85] mt-0.5">Publiez un post pour voir celui qui marche le mieux.</p>}
+          </div>
+        </div>
+        {d.building && <p className="text-xs text-[#5a6b85] mt-2.5" data-testid="dash-results-building">Historique en cours de constitution : les chiffres se complètent chaque jour.</p>}
+        <p className={`text-xs mt-2.5 ${d.stale ? "text-[#7a4b00]" : "text-[#5a6b85]"}`} data-testid="dash-results-asof">
+          {asOf ? `Mesures du ${asOf.toLocaleDateString("fr-FR", { day: "numeric", month: "long" })} à ${asOf.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }).replace(":", " h ")}` : "Mesures LinkedIn"}
+          {scope === "profile" ? " · relevées une fois par jour" : " · mises à jour toutes les 6 heures"}{d.stale ? " · dernier relevé disponible" : ""}
+        </p>
+      </>
+    );
+  }
+  return <div className={card} data-testid="dash-results">{head}{body}</div>;
+}
+
 // Tableau de bord « Aujourd'hui » (maquette 12) : ce que le copilote suggère, quatre chiffres, les sept prochains jours,
 // puis les idées (à gauche), les campagnes et « Pour bien démarrer » (à droite). Un filtre réduit tout à une thématique.
 const ISO_DAY = { lun: 1, mar: 2, mer: 3, jeu: 4, ven: 5, sam: 6, dim: 7 };
@@ -10199,6 +10305,8 @@ function DashToday({ drafts, profile, ns, campaigns, canCampaigns, voiceOk, onGo
         {kpi("Publiés ce mois-ci", publishedMonth.length, "#166534", profile?.postsPerWeek ? `Rythme visé : ${profile.postsPerWeek} par semaine` : "Sur LinkedIn")}
         {kpi("Brouillons", brouillons.length, "#084a8d", brouillons.length ? "À publier ou programmer" : "Aucun en attente")}
       </div>
+
+      <DashResults linkedin={linkedin} orgs={orgs} onGoView={onGoView} />
 
       <div className="bg-white border border-[#e8ecf2] rounded-[18px] p-4" data-testid="dash-week">
         <div className="flex items-baseline gap-3 mb-2.5 flex-wrap">
