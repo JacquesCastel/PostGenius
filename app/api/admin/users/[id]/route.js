@@ -3,7 +3,7 @@ import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin";
 import { isPlanId } from "@/lib/plans";
 
-// Gestion d'un compte client : suspendre/réactiver, changer le plan/rôle, supprimer
+// Gestion d'un compte client : suspendre/réactiver, changer le plan/rôle, prolonger l'accès, supprimer
 
 export async function PATCH(req, { params }) {
   const admin = await requireAdmin(req);
@@ -39,6 +39,18 @@ export async function PATCH(req, { params }) {
     }
     data.plan = body.plan;
     data.planUpdatedAt = new Date();
+  }
+
+  // Prolongation de l'accès offert ou de l'essai : N jours de plus, à partir de la fin actuelle (ou d'aujourd'hui si elle est passée)
+  if (body.extendDays != null) {
+    const days = Number(body.extendDays);
+    if (!Number.isInteger(days) || days < 1 || days > 365) {
+      return NextResponse.json({ error: "Durée invalide (1 à 365 jours)." }, { status: 400 });
+    }
+    const u = await prisma.user.findUnique({ where: { id }, select: { trialEndsAt: true } });
+    if (!u) return NextResponse.json({ error: "Compte introuvable." }, { status: 404 });
+    const from = u.trialEndsAt && u.trialEndsAt.getTime() > Date.now() ? u.trialEndsAt.getTime() : Date.now();
+    data.trialEndsAt = new Date(from + days * 86400000);
   }
 
   if (Object.keys(data).length === 0) {
