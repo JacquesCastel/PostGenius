@@ -623,6 +623,9 @@ model StatSnapshot {
   shares      Int?
   clicks      Int?
   reached     Int?
+  // Mesures complètes du jour (10 totaux + chiffres par post) : l'écran « Statistiques » lit ce relevé, jamais LinkedIn directement
+  body        Json?
+  detailed    Boolean  @default(false) // vrai quand `body` est renseigné
   createdAt   DateTime @default(now())
 
   @@unique([userId, day])
