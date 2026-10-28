@@ -11300,8 +11300,14 @@ function StatsView({ linkedin, orgs, profile, drafts, showToast, onConnect }) {
           {pStats.quotaLimited && (
             <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-3 text-xs text-amber-800 flex items-start gap-2" data-testid="stats-quota-note">
               <AlertCircle size={14} className="mt-0.5 shrink-0" />
-              <span>LinkedIn limite le nombre de demandes de statistiques par jour et l&apos;a atteinte pour votre compte. Les chiffres affichés sont les dernières mesures enregistrées ; les chiffres du jour reviennent demain.</span>
+              <span>LinkedIn limite le nombre de demandes de statistiques par jour et l&apos;a atteinte : les premières mesures seront enregistrées après la remise à zéro de LinkedIn (minuit UTC, vers 1 h ou 2 h du matin à Paris).</span>
             </div>
+          )}
+          {pStats.asOf && (
+            <p className={`text-[11px] mb-2 ${pStats.stale ? "text-amber-700" : "text-gray-400"}`} data-testid="stats-as-of">
+              Mesures du {new Date(pStats.asOf).toLocaleDateString("fr-FR", { day: "numeric", month: "long" })} à {new Date(pStats.asOf).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}.
+              {pStats.stale ? " LinkedIn n'a pas encore renvoyé celles d'aujourd'hui (limite quotidienne) : elles sont relevées une fois par jour." : " LinkeePost relève ces chiffres une fois par jour pour respecter la limite quotidienne de LinkedIn."}
+            </p>
           )}
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
             {[
