@@ -10886,6 +10886,73 @@ function DashboardView({ drafts, canVeille = true, canEvents = false, canScore =
 // ----------------------------------------------------------------
 // Statistiques : profil personnel + page entreprise (LinkedIn API)
 // ----------------------------------------------------------------
+// Évolution du profil dans le temps et ce qui fonctionne le mieux (humeur, thématique) : lit uniquement les mesures déjà enregistrées
+const INSIGHT_METRICS = [["impressions", "Impressions"], ["reactions", "Réactions"], ["comments", "Commentaires"]];
+function InsightsPanel() {
+  const [d, setD] = useState(null);
+  const [metric, setMetric] = useState("impressions");
+  const [range, setRange] = useState(30);
+  useEffect(() => { fetch("/api/stats/insights").then(readJson).then((x) => setD(x.series ? x : { error: true })).catch(() => setD({ error: true })); }, []);
+  if (!d || d.error) return null;
+  const fmt = (v) => new Intl.NumberFormat("fr-FR").format(v);
+  // Évolution par jour = différence entre deux relevés consécutifs (les relevés sont des cumuls)
+  const bars = d.series.map((s, i) => (i === 0 || s[metric] == null || d.series[i - 1][metric] == null ? null : { day: s.day, v: Math.max(0, s[metric] - d.series[i - 1][metric]) })).filter(Boolean).slice(-range);
+  const total = bars.reduce((a, b) => a + b.v, 0);
+  const max = Math.max(1, ...bars.map((b) => b.v));
+  const pct = (r) => (r == null ? "—" : `${(r * 100).toFixed(1).replace(".", ",")} %`);
+  const table = (title, rows) => (
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 overflow-x-auto" data-testid="insights-table">
+      <p className="text-sm font-semibold mb-2">{title}</p>
+      <table className="w-full text-xs">
+        <thead><tr className="text-left text-gray-400"><th className="py-1 pr-2 font-medium">&nbsp;</th><th className="py-1 px-2 font-medium text-right">Posts</th><th className="py-1 px-2 font-medium text-right">Impressions moy.</th><th className="py-1 px-2 font-medium text-right">Réactions moy.</th><th className="py-1 px-2 font-medium text-right">Commentaires moy.</th><th className="py-1 pl-2 font-medium text-right">Engagement</th></tr></thead>
+        <tbody>
+          {rows.map((r) => (
+            <tr key={r.key} className="border-t border-gray-50">
+              <td className="py-1.5 pr-2 font-medium">{r.label}{r.n < 3 && <span className="ml-1 text-[10px] text-amber-600" title="Moins de 3 posts : à prendre comme un indice, pas comme une règle">indicatif</span>}</td>
+              <td className="py-1.5 px-2 text-right">{r.n}</td>
+              <td className="py-1.5 px-2 text-right">{fmt(r.avgImpressions)}</td>
+              <td className="py-1.5 px-2 text-right">{String(r.avgReactions).replace(".", ",")}</td>
+              <td className="py-1.5 px-2 text-right">{String(r.avgComments).replace(".", ",")}</td>
+              <td className="py-1.5 pl-2 text-right font-semibold">{pct(r.rate)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+  return (
+    <section data-testid="insights-panel">
+      <h3 className="font-semibold text-base mb-3 flex items-center gap-2"><TrendingUp size={16} className="text-[#ff5a5f]" /> Évolution et ce qui fonctionne</h3>
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 mb-3">
+        <div className="flex items-center gap-2 flex-wrap mb-3">
+          {INSIGHT_METRICS.map(([k, label]) => (<button key={k} type="button" onClick={() => setMetric(k)} aria-pressed={metric === k} data-testid={`insights-metric-${k}`} className={`text-xs px-3 py-1.5 rounded-full border ${metric === k ? "bg-[#ffe3e4] border-[#f3a3a6] text-[#a3242a] font-semibold" : "border-gray-200 text-gray-600"}`}>{label}</button>))}
+          <span className="ml-auto flex gap-1">{[7, 30, 90].map((r) => (<button key={r} type="button" onClick={() => setRange(r)} aria-pressed={range === r} className={`text-xs px-2.5 py-1 rounded-lg border ${range === r ? "border-[#ff5a5f] text-[#ff5a5f] font-semibold" : "border-gray-200 text-gray-500"}`}>{r} j</button>))}</span>
+        </div>
+        {bars.length === 0 ? (
+          <p className="text-sm text-gray-400" data-testid="insights-empty-series">La courbe se construit jour après jour : un relevé des totaux de votre profil est enregistré chaque jour, la première évolution apparaît dès le deuxième relevé.</p>
+        ) : (
+          <>
+            <p className="text-sm mb-2" data-testid="insights-total"><span className="text-2xl font-bold">+{fmt(total)}</span> <span className="text-gray-500">{INSIGHT_METRICS.find((m) => m[0] === metric)[1].toLowerCase()} sur {bars.length} jour{bars.length > 1 ? "s" : ""}</span></p>
+            <svg viewBox={`0 0 ${Math.max(bars.length, 1) * 12} 70`} className="w-full h-24" role="img" aria-label="Évolution quotidienne" preserveAspectRatio="none">
+              {bars.map((b, i) => (<rect key={b.day} x={i * 12 + 1} y={70 - (b.v / max) * 66} width="10" height={(b.v / max) * 66 + 0.5} rx="1.5" fill="#ff5a5f"><title>{`${b.day} : +${b.v}`}</title></rect>))}
+            </svg>
+            <p className="text-[11px] text-gray-400 mt-1">Chaque barre est l&apos;évolution d&apos;un jour sur l&apos;ensemble de vos posts, déduite de deux relevés successifs.</p>
+          </>
+        )}
+      </div>
+      {d.measured === 0 ? (
+        <p className="text-sm text-gray-400 bg-white rounded-xl border border-dashed border-gray-300 p-5 text-center" data-testid="insights-no-posts">Les résultats par humeur et par thématique apparaîtront quand vos posts auront été mesurés (à 24 heures et à 7 jours après leur publication).</p>
+      ) : (
+        <div className="grid lg:grid-cols-2 gap-3">
+          {table("Par humeur", d.byMood)}
+          {table("Par thématique", d.byTheme)}
+        </div>
+      )}
+      <p className="text-xs text-gray-400 mt-2">Mesures de LinkedIn prises 24 heures puis 7 jours après la publication ; l&apos;engagement est le total des réactions, commentaires et partages divisé par les impressions.</p>
+    </section>
+  );
+}
+
 function StatsView({ linkedin, orgs, profile, drafts, showToast, onConnect }) {
   const [org, setOrg] = useState(orgs[0]?.urn ?? "");
   const [data, setData] = useState(null);
@@ -11245,6 +11312,8 @@ function StatsView({ linkedin, orgs, profile, drafts, showToast, onConnect }) {
           Détail par post disponible ci-dessous, dans « Posts publiés & programmés via LinkeePost ».
         </p>
       </section>
+
+      <InsightsPanel />
 
       {/* ── Interactions envoyées depuis LinkeePost : commentaires et réactions ── */}
       <section>
@@ -17551,6 +17620,12 @@ export default function Home() {
     if (user && sharePayload && !shareOpened.current) { shareOpened.current = true; setView("share"); }
   }, [user, sharePayload]);
   const [engageComment, setEngageComment] = useState(() => { if (typeof window === "undefined") return ""; const c = new URLSearchParams(window.location.search).get("comment") || ""; return /^urn:li:comment:/.test(c) ? c : ""; }); // commentaire auquel répondre
+  // « Mes posts » : dernière mesure LinkedIn (24 h ou 7 jours après la publication) de chaque post publié
+  const [postInsights, setPostInsights] = useState({});
+  useEffect(() => {
+    if (view !== "history" || !user) return;
+    fetch("/api/stats/insights").then(readJson).then((d) => setPostInsights(Object.fromEntries((d.posts ?? []).map((p) => [p.id, p])))).catch(() => {});
+  }, [view, user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
   const [engageQuote, setEngageQuote] = useState(() => (typeof window === "undefined" ? "" : (new URLSearchParams(window.location.search).get("q") || "").slice(0, 400))); // son texte, reçu dans le lien de l'e-mail
   const clientLink = useRef(typeof window === "undefined" ? null : (() => { const q = new URLSearchParams(window.location.search); return q.get("client") ? { cid: q.get("client"), view: q.get("view") || "dashboard" } : null; })());
   useEffect(() => {
@@ -22006,6 +22081,11 @@ export default function Home() {
                                   </button>
                                 )}
                                 {p.auto && <span className="bg-gray-100 px-1.5 py-0.5 rounded-full">auto</span>}
+                                {postInsights[p.id] && (
+                                  <span className="bg-sky-50 text-sky-800 px-1.5 py-0.5 rounded-full" title={`Mesure de LinkedIn à ${postInsights[p.id].offsetHours >= 168 ? "7 jours" : "24 heures"} après la publication`} data-testid="post-insights">
+                                    👁 {new Intl.NumberFormat("fr-FR").format(postInsights[p.id].impressions ?? 0)} · 👍 {postInsights[p.id].likes ?? 0} · 💬 {postInsights[p.id].comments ?? 0}{postInsights[p.id].shares ? ` · ↻ ${postInsights[p.id].shares}` : ""} <span className="opacity-60">({postInsights[p.id].offsetHours >= 168 ? "J+7" : "J+1"})</span>
+                                  </span>
+                                )}
                                 {p.firstComment && (
                                   p.status === "publié" && !p.firstCommentAt
                                     ? <span className="bg-amber-50 text-amber-800 px-1.5 py-0.5 rounded-full" title={p.firstComment} data-testid="post-first-comment-missing">1er commentaire non publié : à ajouter sur LinkedIn</span>
