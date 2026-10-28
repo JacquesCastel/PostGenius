@@ -10902,18 +10902,31 @@ function InsightsPanel() {
   const pct = (r) => (r == null ? "—" : `${(r * 100).toFixed(1).replace(".", ",")} %`);
   const table = (title, rows) => (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 overflow-x-auto" data-testid="insights-table">
-      <p className="text-sm font-semibold mb-2">{title}</p>
-      <table className="w-full text-xs">
-        <thead><tr className="text-left text-gray-400"><th className="py-1 pr-2 font-medium">&nbsp;</th><th className="py-1 px-2 font-medium text-right">Posts</th><th className="py-1 px-2 font-medium text-right">Impressions moy.</th><th className="py-1 px-2 font-medium text-right">Réactions moy.</th><th className="py-1 px-2 font-medium text-right">Commentaires moy.</th><th className="py-1 pl-2 font-medium text-right">Engagement</th></tr></thead>
+      <p className="text-sm font-semibold">{title}</p>
+      <p className="text-[11px] text-gray-400 mb-2">Moyennes par post</p>
+      <ul className="sm:hidden divide-y divide-gray-50">
+        {rows.map((r) => (
+          <li key={r.key} className="py-2.5">
+            <div className="flex items-baseline justify-between gap-2">
+              <span className="font-medium text-sm">{r.label}</span>
+              <span className="text-sm font-bold">{pct(r.rate)} <span className="text-[10px] font-normal text-gray-400">engagement</span></span>
+            </div>
+            <p className="text-[11px] text-gray-500 mt-0.5">{r.n} post{r.n > 1 ? "s" : ""} · {fmt(r.avgImpressions)} impressions · {String(r.avgReactions).replace(".", ",")} réactions · {String(r.avgComments).replace(".", ",")} commentaires</p>
+            {r.n < 3 && <p className="text-[10px] text-amber-600">indicatif (moins de 3 posts)</p>}
+          </li>
+        ))}
+      </ul>
+      <table className="w-full text-sm hidden sm:table">
+        <thead><tr className="text-left text-xs text-gray-400"><th className="py-1 pr-3 font-medium">&nbsp;</th><th className="py-1 px-2 font-medium text-right whitespace-nowrap">Posts</th><th className="py-1 px-2 font-medium text-right whitespace-nowrap">Impressions</th><th className="py-1 px-2 font-medium text-right whitespace-nowrap">Réactions</th><th className="py-1 px-2 font-medium text-right whitespace-nowrap">Commentaires</th><th className="py-1 pl-2 font-medium text-right whitespace-nowrap">Engagement</th></tr></thead>
         <tbody>
           {rows.map((r) => (
             <tr key={r.key} className="border-t border-gray-50">
-              <td className="py-1.5 pr-2 font-medium">{r.label}{r.n < 3 && <span className="ml-1 text-[10px] text-amber-600" title="Moins de 3 posts : à prendre comme un indice, pas comme une règle">indicatif</span>}</td>
-              <td className="py-1.5 px-2 text-right">{r.n}</td>
-              <td className="py-1.5 px-2 text-right">{fmt(r.avgImpressions)}</td>
-              <td className="py-1.5 px-2 text-right">{String(r.avgReactions).replace(".", ",")}</td>
-              <td className="py-1.5 px-2 text-right">{String(r.avgComments).replace(".", ",")}</td>
-              <td className="py-1.5 pl-2 text-right font-semibold">{pct(r.rate)}</td>
+              <td className="py-2 pr-3 font-medium">{r.label}{r.n < 3 && <span className="block text-[10px] font-normal text-amber-600" title="Moins de 3 posts : à prendre comme un indice, pas comme une règle">indicatif (moins de 3 posts)</span>}</td>
+              <td className="py-2 px-2 text-right tabular-nums">{r.n}</td>
+              <td className="py-2 px-2 text-right tabular-nums">{fmt(r.avgImpressions)}</td>
+              <td className="py-2 px-2 text-right tabular-nums">{String(r.avgReactions).replace(".", ",")}</td>
+              <td className="py-2 px-2 text-right tabular-nums">{String(r.avgComments).replace(".", ",")}</td>
+              <td className="py-2 pl-2 text-right font-bold tabular-nums whitespace-nowrap">{pct(r.rate)}</td>
             </tr>
           ))}
         </tbody>
@@ -10933,8 +10946,8 @@ function InsightsPanel() {
         ) : (
           <>
             <p className="text-sm mb-2" data-testid="insights-total"><span className="text-2xl font-bold">+{fmt(total)}</span> <span className="text-gray-500">{INSIGHT_METRICS.find((m) => m[0] === metric)[1].toLowerCase()} sur {bars.length} jour{bars.length > 1 ? "s" : ""}</span></p>
-            <svg viewBox={`0 0 ${Math.max(bars.length, 1) * 12} 70`} className="w-full h-24" role="img" aria-label="Évolution quotidienne" preserveAspectRatio="none">
-              {bars.map((b, i) => (<rect key={b.day} x={i * 12 + 1} y={70 - (b.v / max) * 66} width="10" height={(b.v / max) * 66 + 0.5} rx="1.5" fill="#ff5a5f"><title>{`${b.day} : +${b.v}`}</title></rect>))}
+            <svg viewBox={`0 0 ${Math.max(bars.length, 14) * 12} 70`} className="w-full h-24" role="img" aria-label="Évolution quotidienne" preserveAspectRatio="none">
+              {bars.map((b, i) => (<rect key={b.day} x={(Math.max(bars.length, 14) - bars.length + i) * 12 + 1} y={70 - (b.v / max) * 66} width="10" height={(b.v / max) * 66 + 0.5} rx="1.5" fill="#ff5a5f"><title>{`${b.day} : +${b.v}`}</title></rect>))}
             </svg>
             <p className="text-[11px] text-gray-400 mt-1">Chaque barre est l&apos;évolution d&apos;un jour sur l&apos;ensemble de vos posts, déduite de deux relevés successifs.</p>
           </>
@@ -10943,7 +10956,7 @@ function InsightsPanel() {
       {d.measured === 0 ? (
         <p className="text-sm text-gray-400 bg-white rounded-xl border border-dashed border-gray-300 p-5 text-center" data-testid="insights-no-posts">Les résultats par humeur et par thématique apparaîtront quand vos posts auront été mesurés (à 24 heures et à 7 jours après leur publication).</p>
       ) : (
-        <div className="grid lg:grid-cols-2 gap-3">
+        <div className="space-y-3">
           {table("Par humeur", d.byMood)}
           {table("Par thématique", d.byTheme)}
         </div>
