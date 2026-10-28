@@ -4822,6 +4822,22 @@ function AdminView({ showToast }) {
     }
   };
 
+  const extend = async (u, days) => {
+    try {
+      const res = await fetch(`/api/admin/users/${u.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ extendDays: days }),
+      });
+      const d = await readJson(res);
+      if (!res.ok) throw new Error(d.error);
+      showToast(`Accès de ${u.email} prolongé de ${days} jours`);
+      load();
+    } catch (e) {
+      showToast(e.message);
+    }
+  };
+
   // Support : voir l'outil comme ce client (lecture seule, 2 h)
   const viewAs = async (u) => {
     try {
@@ -5031,6 +5047,20 @@ function AdminView({ showToast }) {
                     if (u.trialEndsAt) return <p className="text-[10px] text-amber-600 mt-0.5">essai · {trialDaysLeft(u)} j</p>;
                     return null;
                   })()}
+                  {!u.isAdmin && u.trialEndsAt && accessState(u) !== "active" && (
+                    <select
+                      value=""
+                      onChange={(e) => { if (e.target.value) extend(u, Number(e.target.value)); }}
+                      aria-label={`Prolonger l'accès de ${u.email}`}
+                      data-testid="admin-extend"
+                      className="mt-1 text-[10px] border border-gray-200 rounded-md px-1 py-0.5 bg-white text-gray-600"
+                    >
+                      <option value="">Prolonger…</option>
+                      <option value="30">+ 30 jours</option>
+                      <option value="60">+ 60 jours</option>
+                      <option value="90">+ 90 jours</option>
+                    </select>
+                  )}
                 </td>
                 <td className="p-3 text-right">
                   <span className="font-medium">{u.published}</span>
