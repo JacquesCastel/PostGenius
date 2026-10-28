@@ -54,6 +54,7 @@ model User {
   disabled Boolean @default(false) // compte suspendu par un admin
   leadIcp  String? // client idéal décrit pour qualifier les leads
   leads    Lead[]  @relation("UserLeads")
+  statSnapshots StatSnapshot[]
   moments  Moment[]
 
   // --- Offre / abonnement ---
@@ -609,6 +610,24 @@ model Draft {
 // paliers fixes après publication : la mémoire d'historique qui manquait pour un
 // jour relier les recommandations à de vrais résultats plutôt qu'au seul
 // accepté/ignoré (voir lib/editorial/learning.js).
+// Relevé quotidien des totaux du profil personnel (statistiques r_member_postAnalytics, cumul « à vie » à la date du relevé) :
+// la différence entre deux jours donne l'évolution (impressions, réactions, commentaires…). Un relevé par compte et par jour.
+model StatSnapshot {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  day         String // AAAA-MM-JJ (heure de Paris)
+  impressions Int?
+  reactions   Int?
+  comments    Int?
+  shares      Int?
+  clicks      Int?
+  reached     Int?
+  createdAt   DateTime @default(now())
+
+  @@unique([userId, day])
+}
+
 model PostPerformance {
   id          String   @id @default(cuid())
   draftId     String
