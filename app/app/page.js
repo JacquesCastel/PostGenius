@@ -10272,7 +10272,11 @@ function DashToday({ drafts, profile, ns, campaigns, canCampaigns, voiceOk, onGo
     <button type="button" onClick={go} data-testid="dash-kpi" className={`${card} text-left w-full hover:border-[#cbd5e1]`}><span className={lb}>{label}</span><div className="text-[34px] font-extrabold leading-none" style={{ color }}>{n}</div><div className="text-xs text-[#5a6b85] mt-1.5">{sub}</div></button>
   );
   const urgent = toValidate.length + errors.length;
-  const tabs = [["today", "Aujourd'hui", urgent], ["planning", "Planning", 0], ["results", "Résultats", 0]];
+  const tabs = [
+    ["today", "Aujourd'hui", urgent, Sparkles, urgent ? `${urgent} à traiter` : "Idées et à-faire"],
+    ["planning", "Planning", 0, CalendarDays, scheduledWeek.length ? `${scheduledWeek.length} programmé${scheduledWeek.length > 1 ? "s" : ""} cette semaine` : "7 jours et mois"],
+    ["results", "Résultats", 0, BarChart3, "Vos chiffres LinkedIn"],
+  ];
   return (
     <div className="space-y-4" data-testid="dash-today">
       <div className="flex items-center gap-4 flex-wrap">
@@ -10308,12 +10312,22 @@ function DashToday({ drafts, profile, ns, campaigns, canCampaigns, voiceOk, onGo
         {kpi("Brouillons", brouillons.length, "#084a8d", brouillons.length ? "À publier ou programmer" : "Aucun en attente", onGoHistory)}
       </div>
 
-      <div className="flex gap-1 border-b border-[#e8ecf2] overflow-x-auto" role="tablist" aria-label="Sections du tableau de bord" data-testid="dash-tabs">
-        {tabs.map(([id, label, badge]) => (
-          <button key={id} type="button" role="tab" id={`dash-tab-${id}`} aria-selected={tab === id} aria-controls={`dash-panel-${id}`} onClick={() => onTab(id)} data-testid={`dash-tab-${id}`} className={`shrink-0 text-sm font-bold px-4 py-2.5 -mb-px border-b-[3px] whitespace-nowrap ${tab === id ? "border-[#d63b42] text-[#a3242a]" : "border-transparent text-[#5a6b85] hover:text-[#1b2a4a]"}`}>
-            {label}{badge > 0 && <span className="ml-1.5 inline-block min-w-[18px] text-center text-[11px] font-bold px-1.5 py-[1px] rounded-full bg-[#d63b42] text-white" data-testid={`dash-tab-${id}-badge`} aria-label={`${badge} à traiter`}>{badge}</span>}
-          </button>
-        ))}
+      <div className="grid grid-cols-3 gap-2 sm:gap-3 pt-1" role="tablist" aria-label="Sections du tableau de bord" data-testid="dash-tabs">
+        {tabs.map(([id, label, badge, Icon, sub]) => {
+          const on = tab === id;
+          return (
+            <button key={id} type="button" role="tab" id={`dash-tab-${id}`} aria-selected={on} aria-controls={`dash-panel-${id}`} onClick={() => onTab(id)} data-testid={`dash-tab-${id}`}
+              className={`relative min-w-0 flex flex-col sm:flex-row items-center sm:items-center gap-1.5 sm:gap-3 rounded-2xl px-2 sm:px-4 py-3 sm:py-3.5 text-center sm:text-left transition ${on ? "text-white shadow-[0_8px_20px_-8px_rgba(214,59,66,0.7)]" : "bg-white border border-[#e8ecf2] text-[#33415c] hover:border-[#f3a3a6] hover:-translate-y-px"}`}
+              style={on ? { background: "linear-gradient(135deg,#d63b42,#ff5a5f 60%,#ff8a4c)" } : undefined}>
+              <span className={`shrink-0 w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center ${on ? "bg-white/20" : "bg-[#fff1f2] text-[#d63b42]"}`}><Icon size={19} aria-hidden="true" /></span>
+              <span className="min-w-0">
+                <span className="block text-[13px] sm:text-[16px] font-extrabold leading-tight truncate">{label}</span>
+                <span className={`hidden sm:block text-xs mt-0.5 truncate ${on ? "text-white/90" : "text-[#5a6b85]"}`}>{sub}</span>
+              </span>
+              {badge > 0 && <span className={`absolute -top-2 -right-1 min-w-[22px] text-center text-[12px] font-extrabold px-1.5 py-[2px] rounded-full border-2 ${on ? "bg-white text-[#d63b42] border-[#d63b42]" : "bg-[#d63b42] text-white border-white"}`} data-testid={`dash-tab-${id}-badge`} aria-label={`${badge} à traiter`}>{badge}</span>}
+            </button>
+          );
+        })}
       </div>
 
       {openPost && (() => {
