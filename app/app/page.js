@@ -7053,6 +7053,17 @@ function IdeasCard({ contextId, sourceCount, onWrite, showToast }) {
 function KnowledgePanel({ showToast, onCount, activeContextId = null, hasContexts = false, onGoHistory, profile = null, onChooseContext = null, onWriteIdea = null }) {
   const [data, setData] = useState(null); // { sources, limit, plan } ; null = chargement
   const open = true;
+  // Deux pages : « Ce que le moteur a appris de vous » et « Toutes les sources ». Choix mémorisé ; sans source, on ouvre les sources.
+  const [ddTab, setDdTabState] = useState("engine");
+  const ddTabChosen = useRef(false);
+  const chooseDdTab = (v) => { ddTabChosen.current = true; setDdTabState(v); try { window.localStorage.setItem("lp_datalake_tab", v); } catch {} };
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem("lp_datalake_tab");
+      const v = saved === "sources" || saved === "engine" ? saved : null;
+      if (v) { ddTabChosen.current = true; setDdTabState(v); }
+    } catch {}
+  }, []);
   const [adding, setAdding] = useState(false);
   const [allCompanies, setAllCompanies] = useState(false);
   const [kindFilter, setKindFilter] = useState("all");
@@ -7121,6 +7132,7 @@ function KnowledgePanel({ showToast, onCount, activeContextId = null, hasContext
   }, [data]);
 
   const used = data?.sources?.length ?? 0;
+  useEffect(() => { if (data && used === 0 && !ddTabChosen.current) setDdTabState("sources"); }, [data, used]); // eslint-disable-line react-hooks/exhaustive-deps
   const full = data && used >= data.limit;
   // Sources visibles : celles de l'entreprise active + les partagées (sauf « toutes les entreprises »)
   const inScope = (data?.sources ?? []).filter((x) => !hasContexts || allCompanies || x.shared || (x.contextId ?? null) === (activeContextId ?? null) || (x.links ?? []).includes(activeContextId ?? homeKey));
@@ -7229,12 +7241,7 @@ function KnowledgePanel({ showToast, onCount, activeContextId = null, hasContext
                   <button key={t.id} type="button" role="tab" aria-selected={on} data-testid="datalake-tab" data-tab={t.id} onClick={() => { setAllCompanies(false); if (!on) onChooseContext?.(t.id === homeKey ? null : t.id); }} className={`text-sm font-semibold px-4 py-2 rounded-t-xl border border-b-0 ${on ? "bg-white text-[#a3242a] border-gray-200" : "bg-gray-100 text-gray-600 border-transparent hover:bg-gray-200"}`}>{t.name} · {n}</button>
                 );
               })}
-              <button type="button" role="tab" aria-selected={allCompanies} data-testid="datalake-tab-all" onClick={() => setAllCompanies(true)} className={`text-sm px-4 py-2 ${allCompanies ? "font-semibold text-[#a3242a]" : "text-gray-500 hover:text-gray-800"}`}>Toutes les sources</button>
-            <span className="hidden lg:flex ml-auto items-center gap-1.5 text-[13px] text-[#5a6b85] pb-2" data-testid="datalake-goto">Aller à :
-                <a href="#datalake-sources" className="font-semibold text-[#a3242a] hover:underline">Sources</a> ·
-                <a href="#datalake-engine" className="hover:text-gray-900 hover:underline">Ce que le moteur a appris</a> ·
-                <a href="#datalake-language" className="hover:text-gray-900 hover:underline">Langage</a>
-              </span>
+              <button type="button" role="tab" aria-selected={allCompanies} data-testid="datalake-tab-all" onClick={() => setAllCompanies(true)} className={`text-sm px-4 py-2 ${allCompanies ? "font-semibold text-[#a3242a]" : "text-gray-500 hover:text-gray-800"}`}>Toutes les thématiques</button>
             </div>
           )}
           {full ? (
@@ -7353,8 +7360,24 @@ function KnowledgePanel({ showToast, onCount, activeContextId = null, hasContext
               </div>
             </div>
           )}
-          <div className="grid lg:grid-cols-[minmax(0,1fr)_400px] gap-5 items-start" data-testid="datalake-layout">
-            <div className="space-y-4 min-w-0">
+          <div className="grid grid-cols-2 gap-2 sm:gap-3 pt-1" role="tablist" aria-label="Datalake" data-testid="datalake-pagetabs">
+            {[["engine", "Ce que le moteur a appris de vous", Sparkles, "Synthèse, langage et idées"], ["sources", "Toutes les sources", Layers, data ? `${inScope.length} source${inScope.length > 1 ? "s" : ""}${hasContexts && !allCompanies ? " pour cette thématique" : ""}` : "Textes, liens, fichiers, posts"]].map(([id, label, Icon, sub]) => {
+              const on = ddTab === id;
+              return (
+                <button key={id} type="button" role="tab" aria-selected={on} aria-controls={`datalake-panel-${id}`} onClick={() => chooseDdTab(id)} data-testid={`datalake-pagetab-${id}`}
+                  className={`min-w-0 flex flex-col sm:flex-row items-center gap-1.5 sm:gap-3 rounded-2xl px-2 sm:px-4 py-3 sm:py-3.5 text-center sm:text-left transition ${on ? "text-white shadow-[0_8px_20px_-8px_rgba(214,59,66,0.7)]" : "bg-white border border-[#e8ecf2] text-[#33415c] hover:border-[#f3a3a6] hover:-translate-y-px"}`}
+                  style={on ? { background: "linear-gradient(135deg,#d63b42,#ff5a5f 60%,#ff8a4c)" } : undefined}>
+                  <span className={`shrink-0 w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center ${on ? "bg-white/20" : "bg-[#fff1f2] text-[#d63b42]"}`}><Icon size={19} aria-hidden="true" /></span>
+                  <span className="min-w-0">
+                    <span className="block text-[13px] sm:text-[16px] font-extrabold leading-tight sm:truncate">{label}</span>
+                    <span className={`hidden sm:block text-xs mt-0.5 truncate ${on ? "text-white/90" : "text-[#5a6b85]"}`}>{sub}</span>
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+          {ddTab === "sources" && (
+            <div className="space-y-4 min-w-0 max-w-[920px]" role="tabpanel" id="datalake-panel-sources" data-testid="datalake-panel-sources">
           {unread.length > 0 && (
             <div className="rounded-xl border border-[#ffd6d8] bg-[#fff6f6] p-3.5 flex items-center justify-between gap-3 flex-wrap" data-testid="datalake-unread">
               <p className="text-xs text-gray-700">
@@ -7465,6 +7488,18 @@ function KnowledgePanel({ showToast, onCount, activeContextId = null, hasContext
             </div>
           )}
           {data && <DatalakePosts contextId={activeContextId} onGoHistory={onGoHistory} />}
+            </div>
+          )}
+          {ddTab === "engine" && (
+          <div className="grid lg:grid-cols-[minmax(0,1fr)_400px] gap-5 items-start" role="tabpanel" id="datalake-panel-engine" data-testid="datalake-layout">
+            <div className="space-y-4 min-w-0">
+          {data && used > 0 && <EnginePanel contextId={activeContextId} sourceCount={inScope.length} showToast={showToast} onChanged={() => { load(); setEngineKey((k) => k + 1); }} />}
+          {data && used === 0 && !data.error && (
+            <div className="bg-white rounded-2xl border border-[#e8ecf2] px-[18px] py-6 text-center" data-testid="engine-nosources">
+              <p className="text-sm text-[#33415c] mb-3">Le moteur apprend de vos sources : ajoutez-en une pour obtenir une première synthèse.</p>
+              {!full && <button type="button" onClick={() => setAdding(true)} className="bg-[#d63b42] hover:bg-[#c2343a] text-white text-sm font-bold px-[18px] py-[11px] rounded-xl">Ajouter une source</button>}
+            </div>
+          )}
           {data && used > 0 && <LanguagePanel key={engineKey} contextId={activeContextId} contextName={hasContexts ? ctxList.find((c) => c.id === activeContextId)?.name ?? "mon activité" : ""} sourceCount={inScope.length} showToast={showToast} />}
           {inScope.length > 0 && synth.themes.length + synth.vocabulary.length + synth.positions.length > 0 && (
             <div id="datalake-synthesis" className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4 scroll-mt-24" data-testid="datalake-synthesis">
@@ -7505,7 +7540,6 @@ function KnowledgePanel({ showToast, onCount, activeContextId = null, hasContext
           )}
             </div>
             <div className="space-y-4 min-w-0">
-          {data && used > 0 && <EnginePanel contextId={activeContextId} sourceCount={inScope.length} showToast={showToast} onChanged={() => { load(); setEngineKey((k) => k + 1); }} />}
           {hasContexts && (
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4" data-testid="datalake-common">
               <p className="text-[11px] font-bold uppercase tracking-wider text-gray-500 mb-1.5">Commun à toutes vos thématiques</p>
@@ -7519,6 +7553,7 @@ function KnowledgePanel({ showToast, onCount, activeContextId = null, hasContext
           {data && used > 0 && !allCompanies && <IdeasCard key={activeContextId ?? "main"} contextId={activeContextId} sourceCount={inScope.length} onWrite={onWriteIdea} showToast={showToast} />}
             </div>
           </div>
+          )}
         </div>
       )}
     </div>
