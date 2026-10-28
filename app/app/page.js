@@ -10222,7 +10222,7 @@ const ISO_DAY = { lun: 1, mar: 2, mer: 3, jeu: 4, ven: 5, sam: 6, dim: 7 };
 const DAY_FULL = ["", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"];
 const isoDay = (d) => ((d.getDay() + 6) % 7) + 1;
 const sameDayStr = (a, b) => a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
-function DashToday({ drafts, profile, ns, campaigns, canCampaigns, voiceOk, onGoCreate, onGoHistory, onGoView, onGoVoice, onOpenMonth, ideas, onGoProfileField, linkedin, orgs }) {
+function DashToday({ drafts, profile, ns, campaigns, canCampaigns, voiceOk, onGoCreate, onGoHistory, onGoView, onGoVoice, onOpenMonth, ideas, onGoProfileField, linkedin, orgs, tab, onTab }) {
   const { contexts } = useContext(EntreprisesCtx);
   const [filter, setFilter] = useState("all");
   const [openPost, setOpenPost] = useState(null); // « Les 7 prochains jours » : détail d'un post
@@ -10268,9 +10268,11 @@ function DashToday({ drafts, profile, ns, campaigns, canCampaigns, voiceOk, onGo
   ];
   const card = "bg-white border border-[#e8ecf2] rounded-[18px] px-5 py-4";
   const lb = "block text-xs font-bold tracking-wider uppercase text-[#5a6b85] mb-2";
-  const kpi = (label, n, color, sub) => (
-    <div className={card} data-testid="dash-kpi"><span className={lb}>{label}</span><div className="text-[34px] font-extrabold leading-none" style={{ color }}>{n}</div><div className="text-xs text-[#5a6b85] mt-1.5">{sub}</div></div>
+  const kpi = (label, n, color, sub, go) => (
+    <button type="button" onClick={go} data-testid="dash-kpi" className={`${card} text-left w-full hover:border-[#cbd5e1]`}><span className={lb}>{label}</span><div className="text-[34px] font-extrabold leading-none" style={{ color }}>{n}</div><div className="text-xs text-[#5a6b85] mt-1.5">{sub}</div></button>
   );
+  const urgent = toValidate.length + errors.length;
+  const tabs = [["today", "Aujourd'hui", urgent], ["planning", "Planning", 0], ["results", "Résultats", 0]];
   return (
     <div className="space-y-4" data-testid="dash-today">
       <div className="flex items-center gap-4 flex-wrap">
@@ -10300,40 +10302,19 @@ function DashToday({ drafts, profile, ns, campaigns, canCampaigns, voiceOk, onGo
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
-        {kpi("À valider", toValidate.length, "#6b21a8", "Ils ne partent pas sans vous")}
-        {kpi("Programmés cette semaine", scheduledWeek.length, "#7a4b00", next ? `Prochain : ${fmtDateTime(next.scheduledAt)}` : "Rien de programmé")}
-        {kpi("Publiés ce mois-ci", publishedMonth.length, "#166534", profile?.postsPerWeek ? `Rythme visé : ${profile.postsPerWeek} par semaine` : "Sur LinkedIn")}
-        {kpi("Brouillons", brouillons.length, "#084a8d", brouillons.length ? "À publier ou programmer" : "Aucun en attente")}
+        {kpi("À valider", toValidate.length, "#6b21a8", "Ils ne partent pas sans vous", () => onTab("today"))}
+        {kpi("Programmés cette semaine", scheduledWeek.length, "#7a4b00", next ? `Prochain : ${fmtDateTime(next.scheduledAt)}` : "Rien de programmé", () => onTab("planning"))}
+        {kpi("Publiés ce mois-ci", publishedMonth.length, "#166534", profile?.postsPerWeek ? `Rythme visé : ${profile.postsPerWeek} par semaine` : "Sur LinkedIn", () => onTab("results"))}
+        {kpi("Brouillons", brouillons.length, "#084a8d", brouillons.length ? "À publier ou programmer" : "Aucun en attente", onGoHistory)}
       </div>
 
-      <DashResults linkedin={linkedin} orgs={orgs} onGoView={onGoView} />
-
-      <div className="bg-white border border-[#e8ecf2] rounded-[18px] p-4" data-testid="dash-week">
-        <div className="flex items-baseline gap-3 mb-2.5 flex-wrap">
-          <span className="text-xs font-bold tracking-wider uppercase text-[#5a6b85]">Les 7 prochains jours</span>
-          <button type="button" onClick={onOpenMonth} data-testid="dash-open-month" className="ml-auto text-[13px] font-semibold text-[#0a66c2] hover:underline">Voir le mois</button>
-        </div>
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
-          {days.map((day, i) => {
-            const evs = eventsOf(day).sort((a, b) => a.at - b.at);
-            const today = i === 0;
-            return (
-              <div key={i} data-testid="dash-day" className={`rounded-xl p-2 min-h-[110px] flex flex-col gap-1.5 min-w-0 ${today ? "border-2 border-[#d63b42] bg-[#fff8f8]" : "border border-[#eef1f6] bg-[#f8fafc]"}`}>
-                <span className={`text-[11px] font-bold uppercase tracking-wider ${today ? "text-[#a3242a]" : "text-[#5a6b85]"}`}>{today ? "Aujourd'hui" : cap(day.toLocaleDateString("fr-FR", { weekday: "short" }).replace(".", ""))} {day.getDate()}</span>
-                {evs.map(({ d, kind, at }) => (
-                  <button type="button" key={d.id} onClick={() => setOpenPost({ d, kind })} data-testid="dash-day-post" className={`text-left w-full text-[11px] font-semibold rounded-lg px-1.5 py-1 leading-snug hover:ring-2 hover:ring-[#f3a3a6] ${kind === "va" ? "bg-[#f3e8ff] text-[#6b21a8]" : kind === "pu" ? "bg-[#e6f6ec] text-[#166534]" : "bg-[#fff4d6] text-[#7a4b00]"}`} title={d.theme}>
-                    <span className="block truncate">{d.theme || "Post"}</span>
-                    <span className="font-medium">{kind === "va" ? "À valider" : kind === "pu" ? "Publié" : "Programmé"} · {at.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }).replace(":", " h ")}</span>
-                  </button>
-                ))}
-                {evs.length === 0 && <button type="button" onClick={onGoCreate} className="text-[11px] text-slate-400 border border-dashed border-slate-300 rounded-lg px-1.5 py-1 hover:text-[#a3242a] hover:border-[#f3a3a6]">Rien de prévu</button>}
-              </div>
-            );
-          })}
-        </div>
+      <div className="flex gap-1 border-b border-[#e8ecf2] overflow-x-auto" role="tablist" aria-label="Sections du tableau de bord" data-testid="dash-tabs">
+        {tabs.map(([id, label, badge]) => (
+          <button key={id} type="button" role="tab" id={`dash-tab-${id}`} aria-selected={tab === id} aria-controls={`dash-panel-${id}`} onClick={() => onTab(id)} data-testid={`dash-tab-${id}`} className={`shrink-0 text-sm font-bold px-4 py-2.5 -mb-px border-b-[3px] whitespace-nowrap ${tab === id ? "border-[#d63b42] text-[#a3242a]" : "border-transparent text-[#5a6b85] hover:text-[#1b2a4a]"}`}>
+            {label}{badge > 0 && <span className="ml-1.5 inline-block min-w-[18px] text-center text-[11px] font-bold px-1.5 py-[1px] rounded-full bg-[#d63b42] text-white" data-testid={`dash-tab-${id}-badge`} aria-label={`${badge} à traiter`}>{badge}</span>}
+          </button>
+        ))}
       </div>
-
-      <div className="min-w-0" data-testid="dash-ideas">{ideas}</div>
 
       {openPost && (() => {
         const { d, kind } = openPost;
@@ -10381,6 +10362,61 @@ function DashToday({ drafts, profile, ns, campaigns, canCampaigns, voiceOk, onGo
         );
       })()}
 
+      {tab === "results" && (
+        <div className="space-y-4" role="tabpanel" id="dash-panel-results" aria-labelledby="dash-tab-results" data-testid="dash-panel-results">
+          <DashResults linkedin={linkedin} orgs={orgs} onGoView={onGoView} />
+        </div>
+      )}
+
+      {tab === "planning" && (
+      <div className="space-y-4" role="tabpanel" id="dash-panel-planning" aria-labelledby="dash-tab-planning" data-testid="dash-panel-planning">
+      <div className="bg-white border border-[#e8ecf2] rounded-[18px] p-4" data-testid="dash-week">
+        <div className="flex items-baseline gap-3 mb-2.5 flex-wrap">
+          <span className="text-xs font-bold tracking-wider uppercase text-[#5a6b85]">Les 7 prochains jours</span>
+          <button type="button" onClick={onOpenMonth} data-testid="dash-open-month" className="ml-auto text-[13px] font-semibold text-[#0a66c2] hover:underline">Voir le mois</button>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
+          {days.map((day, i) => {
+            const evs = eventsOf(day).sort((a, b) => a.at - b.at);
+            const today = i === 0;
+            return (
+              <div key={i} data-testid="dash-day" className={`rounded-xl p-2 min-h-[110px] flex flex-col gap-1.5 min-w-0 ${today ? "border-2 border-[#d63b42] bg-[#fff8f8]" : "border border-[#eef1f6] bg-[#f8fafc]"}`}>
+                <span className={`text-[11px] font-bold uppercase tracking-wider ${today ? "text-[#a3242a]" : "text-[#5a6b85]"}`}>{today ? "Aujourd'hui" : cap(day.toLocaleDateString("fr-FR", { weekday: "short" }).replace(".", ""))} {day.getDate()}</span>
+                {evs.map(({ d, kind, at }) => (
+                  <button type="button" key={d.id} onClick={() => setOpenPost({ d, kind })} data-testid="dash-day-post" className={`text-left w-full text-[11px] font-semibold rounded-lg px-1.5 py-1 leading-snug hover:ring-2 hover:ring-[#f3a3a6] ${kind === "va" ? "bg-[#f3e8ff] text-[#6b21a8]" : kind === "pu" ? "bg-[#e6f6ec] text-[#166534]" : "bg-[#fff4d6] text-[#7a4b00]"}`} title={d.theme}>
+                    <span className="block truncate">{d.theme || "Post"}</span>
+                    <span className="font-medium">{kind === "va" ? "À valider" : kind === "pu" ? "Publié" : "Programmé"} · {at.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }).replace(":", " h ")}</span>
+                  </button>
+                ))}
+                {evs.length === 0 && <button type="button" onClick={onGoCreate} className="text-[11px] text-slate-400 border border-dashed border-slate-300 rounded-lg px-1.5 py-1 hover:text-[#a3242a] hover:border-[#f3a3a6]">Rien de prévu</button>}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      </div>
+      )}
+
+      {tab === "today" && (
+      <div className="space-y-4" role="tabpanel" id="dash-panel-today" aria-labelledby="dash-tab-today" data-testid="dash-panel-today">
+      {(toValidate.length > 0 || errors.length > 0) && (
+        <div className={card} data-testid="dash-validate">
+          <span className={lb}>À traiter</span>
+          <div className="space-y-1.5">
+            {errors.slice(0, 3).map((d) => (
+              <button type="button" key={d.id} onClick={onGoHistory} className="w-full text-left text-[13px] rounded-lg px-3 py-2 bg-[#fef2f2] text-[#b42318] font-semibold hover:ring-2 hover:ring-[#f3a3a6]"><span className="block truncate">Échec : « {d.theme || "Post"} »</span><span className="font-medium">{d.publishError || "erreur inconnue"}</span></button>
+            ))}
+            {toValidate.slice(0, 4).map((d) => (
+              <button type="button" key={d.id} onClick={() => setOpenPost({ d, kind: "va" })} data-testid="dash-validate-post" className="w-full text-left text-[13px] rounded-lg px-3 py-2 bg-[#f3e8ff] text-[#6b21a8] font-semibold hover:ring-2 hover:ring-[#d8b4fe]"><span className="block truncate">« {d.theme || "Post"} »</span><span className="font-medium">À valider · part {fmtDateTime(d.scheduledAt)}</span></button>
+            ))}
+          </div>
+          <button type="button" onClick={onGoHistory} className="text-[13px] font-semibold text-[#0a66c2] hover:underline mt-2">Tout voir dans Mes posts</button>
+        </div>
+      )}
+      <div className="min-w-0" data-testid="dash-ideas">{ideas}</div>
+
+
       <div className="grid md:grid-cols-2 md:[&>*:only-child]:col-span-2 gap-3.5 items-start">
         <div className="contents">
           {canCampaigns && (
@@ -10410,6 +10446,8 @@ function DashToday({ drafts, profile, ns, campaigns, canCampaigns, voiceOk, onGo
           )}
         </div>
       </div>
+      </div>
+      )}
     </div>
   );
 }
@@ -10421,7 +10459,17 @@ function DashboardView({ drafts, canVeille = true, canEvents = false, canScore =
   const [planningId, setPlanningId] = useState(null);
   const [campaigns, setCampaigns] = useState([]);
   const [wizardInit, setWizardInit] = useState(null); // {} = vierge, {theme,...} = pré-rempli
-  const [monthOpen, setMonthOpen] = useState(false); // « Voir le mois » ouvre le calendrier du mois
+  const [monthOpen, setMonthOpen] = useState(true); // dans l'onglet Planning, le calendrier du mois est ouvert
+  // Onglet du tableau de bord : ?tab= (liens des e-mails et notifications), sinon le dernier choix, sinon « Aujourd'hui »
+  const [tab, setTabState] = useState("today");
+  useEffect(() => {
+    try {
+      const q = new URLSearchParams(window.location.search).get("tab");
+      const v = ["today", "planning", "results"].includes(q) ? q : window.localStorage.getItem("lp_dash_tab");
+      if (["today", "planning", "results"].includes(v)) setTabState(v);
+    } catch {}
+  }, []);
+  const setTab = (v) => { setTabState(v); try { window.localStorage.setItem("lp_dash_tab", v); } catch {} };
 
   const loadCampaigns = () =>
     fetch("/api/campaigns")
@@ -10568,26 +10616,13 @@ function DashboardView({ drafts, canVeille = true, canEvents = false, canScore =
         onGoView={onGoView}
         onGoVoice={onGoVoice}
         onGoProfileField={onGoProfileField}
+        tab={tab}
+        onTab={setTab}
         onOpenMonth={() => { setMonthOpen(true); setTimeout(() => document.getElementById("dash-month")?.scrollIntoView({ behavior: "smooth", block: "start" }), 80); }}
         ideas={<RecoToday onGenerate={onGenerateFromReco} onGoCopilot={onGoCopilot} onGoVoice={onGoVoice} showToast={showToast} profile={profile} onProfileSaved={onProfileSaved} />}
       />
 
-      {errors.length > 0 && (
-        <div className="bg-red-50 border border-red-200 rounded-xl p-4">
-          <p className="text-sm font-medium text-red-700 flex items-center gap-2 mb-2">
-            <AlertCircle size={16} /> {errors.length} publication{errors.length > 1 ? "s" : ""} en échec
-          </p>
-          {errors.slice(0, 3).map((d) => (
-            <p key={d.id} className="text-xs text-red-600 truncate">
-              « {d.theme} » — {d.publishError || "erreur inconnue"}
-            </p>
-          ))}
-          <button onClick={onGoHistory} className="text-xs text-red-700 underline mt-2">
-            Gérer dans Mes posts →
-          </button>
-        </div>
-      )}
-
+      {tab === "planning" && (<>
       <div id="dash-month" className="scroll-mt-24">
       <DashSection id="month" title="Calendrier du mois et répartition" icon={CalendarDays} hint="Le mois en entier, à déplacer d'un glisser-déposer, et la répartition des posts" forceOpen={monthOpen}>
       <div className="space-y-4">
@@ -10705,6 +10740,7 @@ function DashboardView({ drafts, canVeille = true, canEvents = false, canScore =
       </div>
       </DashSection>
       </div>
+      </>)}
 
       {wizardInit && (
         <CampaignWizard
@@ -10724,6 +10760,7 @@ function DashboardView({ drafts, canVeille = true, canEvents = false, canScore =
         />
       )}
       {/* Le reste, replié par défaut : un clic pour l'ouvrir */}
+      {tab === "today" && (<>
       <DashSection id="campaigns" title="Mes campagnes" icon={Megaphone} hint="Séries de posts planifiées" forceOpen={Boolean(wizardInit)}>
       {!canCampaigns ? (
         <div className="bg-gradient-to-r from-[#fff1f1] to-white rounded-xl border border-[#ffd5d6] p-5 flex items-center justify-between flex-wrap gap-4">
@@ -10889,7 +10926,10 @@ function DashboardView({ drafts, canVeille = true, canEvents = false, canScore =
       )}
 
       </DashSection>
+      </>)}
 
+      {tab === "results" && (<>
+      <InsightsPanel />
       {(!canScore || avgScore != null) && (
       <DashSection id="score" title="Note de forme" icon={BarChart3} hint="La note de forme moyenne de vos posts">
       {!canScore && (
@@ -10954,8 +10994,9 @@ function DashboardView({ drafts, canVeille = true, canEvents = false, canScore =
 
       </DashSection>
       )}
+      </>)}
 
-      {recent.length > 0 && (
+      {tab === "planning" && recent.length > 0 && (
       <DashSection id="recent" title="Dernières publications" icon={History} hint="Ce que vous avez publié récemment">
       {recent.length > 0 && (
         <div>
