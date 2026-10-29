@@ -10413,6 +10413,260 @@ function DashSlots({ coach, profile, onProfileSaved, showToast }) {
   );
 }
 
+// « Donner une seconde vie à un contenu » (Pro et Agence) : un lien, un fichier ou un texte → faits et angles → posts relus → série programmée
+function RepurposeView({ profile, linkedin, orgs, canCampaigns, showToast, onGoCreate, onGoHistory, onGoView, onProfileSaved }) {
+  const { contexts } = useContext(EntreprisesCtx);
+  const [step, setStep] = useState(1);
+  const [mode, setMode] = useState("link");
+  const [url, setUrl] = useState("");
+  const [file, setFile] = useState(null);
+  const [fileKey, setFileKey] = useState(0);
+  const [text, setText] = useState("");
+  const [addToDatalake, setAddToDatalake] = useState(true);
+  const [contextId, setContextId] = useState("");
+  const [target, setTarget] = useState("person");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState(null);
+  const [analysis, setAnalysis] = useState(null); // { source, summary, facts, angles, datalake }
+  const [facts, setFacts] = useState([]); // [{ id, text, on }]
+  const [angles, setAngles] = useState([]); // [{ id, title, hook, kind, on }]
+  const [custom, setCustom] = useState("");
+  const [mood, setMood] = useState("");
+  const [posts, setPosts] = useState([]); // [{ angleTitle, kind, texts: [{ target, text, original, factsUsed }], editing }]
+  const [firstCommentOn, setFirstCommentOn] = useState(true);
+  const [needsValidation, setNeedsValidation] = useState(true);
+  const [done, setDone] = useState(null);
+
+  const pageOptions = (linkedin?.orgConnected ? orgs ?? [] : []).filter((o) => o?.urn);
+  const targets = [{ v: "person", label: "Mon profil" }, ...pageOptions.map((o) => ({ v: o.urn, label: `Ma page « ${o.name || "entreprise"} »` })), ...(linkedin?.connected ? pageOptions.map((o) => ({ v: `both:${o.urn}`, label: `Les deux : profil et page « ${o.name || "entreprise"} »` })) : [])];
+  const chosenFacts = facts.filter((f) => f.on && f.text.trim().length >= 8);
+  const chosenAngles = angles.filter((a) => a.on);
+  const nPosts = chosenAngles.length;
+  const slots = profile?.publishDays ? nextPreferredSlots(profile, Math.max(posts.length, 1)) : null;
+
+  const steps = [["Le contenu", 1], ["Faits et angles", 2], ["Relecture", 3]];
+
+  const fail = (e) => setError(typeof e === "string" ? e : e?.message || "Une erreur est survenue.");
+  const call = async (path, body, isForm = false) => {
+    const res = await fetch(path, isForm ? { method: "POST", body } : { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    const d = await readJson(res);
+    if (!res.ok) throw new Error(d.error || "Une erreur est survenue.");
+    return d;
+  };
+
+  const readIt = async () => {
+    setBusy(true); setError(null);
+    try {
+      let d;
+      if (mode === "file") {
+        const fd = new FormData();
+        fd.append("file", file); fd.append("kind", "file"); fd.append("addToDatalake", String(addToDatalake)); if (contextId) fd.append("contextId", contextId);
+        d = await call("/api/repurpose/analyze", fd, true);
+      } else {
+        d = await call("/api/repurpose/analyze", { kind: mode === "link" ? "link" : "text", url: url.trim(), text, addToDatalake, contextId: contextId || null });
+      }
+      setAnalysis(d);
+      setFacts(d.facts.map((f) => ({ ...f, on: true })));
+      setAngles(d.angles.map((a, i) => ({ ...a, on: i < 3 })));
+      setStep(2);
+      if (d.datalake?.added === false) showToast?.(`Contenu non ajouté au datalake : ${d.datalake.reason}`);
+    } catch (e) { fail(e); } finally { setBusy(false); }
+  };
+
+  const writeIt = async () => {
+    setBusy(true); setError(null);
+    try {
+      const d = await call("/api/repurpose/generate", {
+        title: analysis.source.title, sourceUrl: analysis.source.url,
+        facts: chosenFacts.map((f) => ({ id: f.id, text: f.text.trim() })),
+        angles: chosenAngles.map((a) => ({ title: a.title, hook: a.hook, kind: a.kind })),
+        mood: mood || undefined, contextId: contextId || null, target,
+      });
+      setPosts(d.posts.map((p) => ({ ...p, texts: p.texts.map((t) => ({ ...t, original: t.text })), editing: false })));
+      setStep(3);
+    } catch (e) { fail(e); } finally { setBusy(false); }
+  };
+
+  const scheduleIt = async () => {
+    setBusy(true); setError(null);
+    try {
+      const d = await call("/api/repurpose/schedule", {
+        name: `Seconde vie : ${analysis.source.title}`.slice(0, 80), theme: analysis.source.title,
+        factsText: chosenFacts.map((f) => f.text.trim()).join("\n"), mood: mood || undefined, contextId: contextId || null, needsValidation,
+        firstComment: firstCommentOn && analysis.source.url ? `Source : ${analysis.source.title} ${analysis.source.url}` : null,
+        posts: posts.map((p) => ({ angleTitle: p.angleTitle, texts: p.texts.map((t) => ({ target: t.target, text: t.text, original: t.original })) })),
+      });
+      setDone(d);
+      setStep(4);
+    } catch (e) { fail(e); } finally { setBusy(false); }
+  };
+
+  const restart = () => { setStep(1); setAnalysis(null); setFacts([]); setAngles([]); setPosts([]); setDone(null); setError(null); setUrl(""); setText(""); setFile(null); setFileKey((k) => k + 1); setCustom(""); };
+  const card = "bg-white border border-[#e8ecf2] rounded-[18px] px-5 py-4";
+  const lb = "block text-xs font-bold tracking-wider uppercase text-[#5a6b85] mb-2";
+  const btn = "text-sm font-bold text-white bg-[#d63b42] hover:bg-[#c2343a] disabled:opacity-50 px-4 py-2.5 rounded-xl";
+  const ghost = "text-sm font-semibold text-[#5a6b85] hover:text-[#1b2a4a] px-3 py-2";
+  const fmtSlot = (d) => new Date(d).toLocaleString("fr-FR", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }).replace(":", " h ");
+  const personName = linkedin?.name || profile?.name || "Vous";
+  const nameFor = (tg) => (isOrgUrn(tg) ? (orgs.find((o) => o.urn === tg)?.name || profile?.companyName || "Votre page") : personName);
+
+  if (!canCampaigns) {
+    return (
+      <main className="max-w-3xl mx-auto p-6" data-testid="repurpose-locked">
+        <div className={card}>
+          <h2 className="text-xl font-extrabold text-[#1b2a4a] mb-1">Donnez une seconde vie à vos contenus</h2>
+          <p className="text-sm text-[#33415c] leading-relaxed">Un article, une étude de cas, un PDF : LinkeePost en tire les faits, vous propose des angles, écrit une série de posts à partir de ces seuls faits et la programme à votre rythme.</p>
+          <p className="text-sm font-semibold text-[#7a4b00] bg-[#fff4d6] rounded-lg px-3 py-2 mt-3">Cet outil est inclus dans les offres Pro et Agence.</p>
+          <div className="flex gap-3 mt-4"><button type="button" onClick={() => onGoView?.("billing")} className={btn}>Voir les offres</button><button type="button" onClick={onGoCreate} className={ghost}>Créer un post</button></div>
+        </div>
+      </main>
+    );
+  }
+
+  return (
+    <main className="max-w-3xl mx-auto p-6 space-y-4" data-testid="repurpose">
+      <div>
+        <h2 className="text-xl font-extrabold text-[#1b2a4a]">Donner une seconde vie à un contenu</h2>
+        <p className="text-sm text-[#5a6b85] mt-0.5">Un article, une étude de cas, un document : vous obtenez une série de posts tirés de ce contenu, et de rien d&apos;autre.</p>
+      </div>
+      {step < 4 && (
+        <ol className="flex gap-2" data-testid="repurpose-steps">
+          {steps.map(([label, n]) => (
+            <li key={n} className={`flex-1 rounded-xl px-3 py-2 text-[13px] font-bold border ${step === n ? "bg-[#ffe3e4] border-[#f3a3a6] text-[#a3242a]" : step > n ? "bg-[#e6f6ec] border-[#bfe5cd] text-[#166534]" : "bg-white border-[#e8ecf2] text-[#5a6b85]"}`}>{step > n ? "✓" : n} · {label}</li>
+          ))}
+        </ol>
+      )}
+      {error && <p role="alert" className="text-sm text-[#b42318] bg-[#fef2f2] border border-[#fecaca] rounded-xl px-3 py-2" data-testid="repurpose-error">{error}</p>}
+
+      {step === 1 && (
+        <div className={card} data-testid="repurpose-step1">
+          <div className="flex gap-1.5 mb-3" role="tablist" aria-label="Type de contenu">
+            {[["link", "🔗 Un lien"], ["file", "📄 Un fichier"], ["text", "📝 Un texte"]].map(([k, l]) => (
+              <button key={k} type="button" role="tab" aria-selected={mode === k} onClick={() => { setMode(k); setError(null); }} data-testid={`repurpose-mode-${k}`} className={`text-[13px] font-semibold px-3 py-1.5 rounded-full border ${mode === k ? "bg-[#ffe3e4] border-[#f3a3a6] text-[#a3242a]" : "bg-white border-[#cbd5e1] text-[#33415c]"}`}>{l}</button>
+            ))}
+          </div>
+          {mode === "link" && <input type="url" value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://monsite.fr/mon-article" data-testid="repurpose-url" className="w-full border border-[#cbd5e1] rounded-xl px-3 py-2.5 text-sm" />}
+          {mode === "file" && (<div><input key={fileKey} type="file" accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" onChange={(e) => setFile(e.target.files?.[0] ?? null)} data-testid="repurpose-file" className="text-sm" /><p className="text-[11px] text-[#5a6b85] mt-1.5">PDF ou Word (.docx), 8 Mo au plus. Le fichier n&apos;est pas conservé.</p></div>)}
+          {mode === "text" && <textarea rows={7} value={text} onChange={(e) => setText(e.target.value)} placeholder="Collez ici le texte de votre article, de votre étude de cas…" data-testid="repurpose-text" className="w-full border border-[#cbd5e1] rounded-xl px-3 py-2.5 text-sm" />}
+          <div className="grid sm:grid-cols-2 gap-3 mt-4">
+            {contexts.length > 0 && (
+              <label className="text-[13px] text-[#33415c]"><span className={lb}>Thématique</span>
+                <select value={contextId} onChange={(e) => setContextId(e.target.value)} data-testid="repurpose-context" className="w-full border border-[#cbd5e1] rounded-xl px-3 py-2 text-sm bg-white"><option value="">{profile?.companyName || "Mon activité"}</option>{contexts.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select>
+              </label>
+            )}
+            <label className="text-[13px] text-[#33415c]"><span className={lb}>Où publier</span>
+              <select value={target} onChange={(e) => setTarget(e.target.value)} data-testid="repurpose-target" className="w-full border border-[#cbd5e1] rounded-xl px-3 py-2 text-sm bg-white">{targets.map((t) => <option key={t.v} value={t.v}>{t.label}</option>)}</select>
+            </label>
+          </div>
+          <label className="flex items-center gap-2 text-[13px] text-[#33415c] mt-3"><input type="checkbox" checked={addToDatalake} onChange={(e) => setAddToDatalake(e.target.checked)} data-testid="repurpose-datalake" /> Ajouter ce contenu à mon datalake éditorial</label>
+          <div className="flex justify-end mt-4"><button type="button" onClick={readIt} disabled={busy || (mode === "link" && !url.trim()) || (mode === "file" && !file) || (mode === "text" && text.trim().length < 50)} data-testid="repurpose-read" className={btn}>{busy ? "Lecture en cours…" : "Lire le contenu →"}</button></div>
+        </div>
+      )}
+
+      {step === 2 && analysis && (
+        <div className="space-y-4" data-testid="repurpose-step2">
+          <div className={card}>
+            <span className={lb}>{analysis.source.title}</span>
+            <p className="text-[13px] text-[#33415c] leading-relaxed">{analysis.summary}</p>
+          </div>
+          <div className={card} data-testid="repurpose-facts">
+            <span className={lb}>Les faits que je peux utiliser</span>
+            <p className="text-xs text-[#5a6b85] mb-2">Décochez ou corrigez : l&apos;IA n&apos;écrira qu&apos;à partir des faits cochés.</p>
+            <ul className="space-y-1.5">
+              {facts.map((f, i) => (
+                <li key={f.id} className="flex items-start gap-2"><input type="checkbox" checked={f.on} onChange={(e) => setFacts((l) => l.map((x, j) => (j === i ? { ...x, on: e.target.checked } : x)))} aria-label={`Utiliser le fait ${i + 1}`} className="mt-2" data-testid="repurpose-fact-check" />
+                  <textarea rows={2} value={f.text} onChange={(e) => setFacts((l) => l.map((x, j) => (j === i ? { ...x, text: e.target.value } : x)))} className={`flex-1 border border-[#e2e8f0] rounded-lg px-2.5 py-1.5 text-[13px] ${f.on ? "" : "text-[#94a3b8] line-through"}`} data-testid="repurpose-fact-text" /></li>
+              ))}
+            </ul>
+            <button type="button" onClick={() => setFacts((l) => [...l, { id: `f${Date.now()}`, text: "", on: true }])} data-testid="repurpose-fact-add" className="text-[13px] font-semibold text-[#0a66c2] hover:underline mt-2">+ Ajouter un fait</button>
+          </div>
+          <div className={card} data-testid="repurpose-angles">
+            <span className={lb}>Les angles : un post par angle choisi</span>
+            <ul className="space-y-1.5">
+              {angles.map((a, i) => (
+                <li key={a.id} className="flex items-start gap-2"><input type="checkbox" checked={a.on} onChange={(e) => setAngles((l) => l.map((x, j) => (j === i ? { ...x, on: e.target.checked } : x)))} aria-label={`Choisir l'angle ${a.title}`} className="mt-1" data-testid="repurpose-angle-check" />
+                  <span className="text-[13px] text-[#1b2a4a]"><b>{a.title}</b> <span className="ml-1 text-[11px] font-semibold uppercase text-[#5a6b85] bg-[#f1f5f9] rounded-full px-2 py-0.5">{a.kind}</span>{a.hook && <span className="block text-xs text-[#5a6b85]">{a.hook}</span>}</span></li>
+              ))}
+            </ul>
+            <div className="flex gap-2 mt-2">
+              <input value={custom} onChange={(e) => setCustom(e.target.value)} placeholder="Ajouter mon propre angle…" maxLength={150} data-testid="repurpose-angle-custom" className="flex-1 border border-[#cbd5e1] rounded-lg px-2.5 py-1.5 text-[13px]" />
+              <button type="button" disabled={custom.trim().length < 5} onClick={() => { setAngles((l) => [...l, { id: `c${Date.now()}`, title: custom.trim(), hook: "", kind: "idée", on: true }]); setCustom(""); }} data-testid="repurpose-angle-add" className="text-[13px] font-semibold text-[#0a66c2] disabled:opacity-40">Ajouter</button>
+            </div>
+          </div>
+          <div className={card}>
+            <label className="text-[13px] text-[#33415c]"><span className={lb}>Humeur des posts</span>
+              <select value={mood} onChange={(e) => setMood(e.target.value)} data-testid="repurpose-mood" className="w-full sm:w-64 border border-[#cbd5e1] rounded-xl px-3 py-2 text-sm bg-white"><option value="">Aucune en particulier</option>{MOOD_CHOICES.map((m) => <option key={m.code} value={m.code}>{m.emoji} {m.label}</option>)}</select>
+            </label>
+          </div>
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <button type="button" onClick={() => { setStep(1); setError(null); }} className={ghost}>← Retour</button>
+            <div className="flex items-center gap-3">
+              <span className="text-xs text-[#5a6b85]" data-testid="repurpose-count">{nPosts} post{nPosts > 1 ? "s" : ""} · {chosenFacts.length} fait{chosenFacts.length > 1 ? "s" : ""}{nPosts > 10 ? " · 10 posts au plus" : ""}</span>
+              <button type="button" onClick={writeIt} disabled={busy || nPosts < 1 || nPosts > 10 || chosenFacts.length < 1} data-testid="repurpose-write" className={btn}>{busy ? "Écriture en cours…" : "Écrire les posts →"}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {step === 3 && (
+        <div className="space-y-4" data-testid="repurpose-step3">
+          {posts.length === 0 && <p className="text-sm text-[#5a6b85]">Tous les posts ont été retirés. <button type="button" className="font-semibold text-[#0a66c2]" onClick={() => setStep(2)}>Revenir aux angles</button></p>}
+          {posts.map((p, i) => (
+            <div key={i} className={card} data-testid="repurpose-post">
+              <div className="flex items-start gap-2 flex-wrap mb-2">
+                <span className="text-xs font-bold tracking-wider uppercase text-[#5a6b85]">Post {i + 1} · {p.angleTitle}</span>
+                <span className="ml-auto text-xs text-[#5a6b85]">{slots?.[i] ? `Créneau indicatif : ${fmtSlot(slots[i])}` : ""}</span>
+              </div>
+              {p.texts.map((t, j) => (
+                <div key={j} className="mb-3 last:mb-0">
+                  {p.texts.length > 1 && <p className="text-[11px] font-bold uppercase text-[#5a6b85] mb-1">{t.target === "person" ? "Version profil" : "Version page"}</p>}
+                  {p.editing ? (
+                    <textarea rows={9} value={t.text} onChange={(e) => setPosts((l) => l.map((x, k) => (k === i ? { ...x, texts: x.texts.map((y, m) => (m === j ? { ...y, text: e.target.value } : y)) } : x)))} className="w-full border border-[#cbd5e1] rounded-xl px-3 py-2 text-sm" data-testid="repurpose-post-text" />
+                  ) : (
+                    <LinkedInPreview text={t.text} name={nameFor(t.target)} headline={isOrgUrn(t.target) ? "" : (profile?.headline ?? "")} isPage={isOrgUrn(t.target)} imageUrl={null} />
+                  )}
+                </div>
+              ))}
+              <div className="flex items-center gap-3 flex-wrap mt-1">
+                <span className="text-xs text-[#5a6b85]" data-testid="repurpose-facts-used">{p.texts[0].factsUsed?.length ? `Faits utilisés : ${p.texts[0].factsUsed.map((id) => facts.findIndex((f) => f.id === id) + 1).filter((n) => n > 0).join(", ")}` : ""}</span>
+                <button type="button" onClick={() => setPosts((l) => l.map((x, k) => (k === i ? { ...x, editing: !x.editing } : x)))} data-testid="repurpose-post-edit" className="ml-auto text-[13px] font-semibold text-[#0a66c2] hover:underline">{p.editing ? "Voir l'aperçu" : "Modifier"}</button>
+                <button type="button" onClick={() => setPosts((l) => l.filter((_, k) => k !== i))} data-testid="repurpose-post-remove" className="text-[13px] font-semibold text-[#b42318] hover:underline">Retirer</button>
+              </div>
+            </div>
+          ))}
+          {posts.length > 0 && (
+            <div className={card} data-testid="repurpose-options">
+              {analysis?.source?.url && <label className="flex items-center gap-2 text-[13px] text-[#33415c] mb-2"><input type="checkbox" checked={firstCommentOn} onChange={(e) => setFirstCommentOn(e.target.checked)} data-testid="repurpose-firstcomment" /> Mettre la source en lien dans le premier commentaire</label>}
+              <label className="flex items-center gap-2 text-[13px] text-[#33415c]"><input type="checkbox" checked={needsValidation} onChange={(e) => setNeedsValidation(e.target.checked)} data-testid="repurpose-validate" /> À valider avant publication</label>
+              {profile?.publishDays ? (
+                <p className="text-xs text-[#5a6b85] mt-2" data-testid="repurpose-rhythm">Rythme : {String(profile.publishDays).split(",").map((n) => DAY_FULL[Number(n)]).filter(Boolean).join(", ")} à {String(profile.publishTime ?? "09:00").replace(":", " h ")}. Chaque post prend le prochain créneau libre.</p>
+              ) : (
+                <p className="text-xs text-[#b42318] mt-2" data-testid="repurpose-norhythm">Aucun rythme de publication : <button type="button" onClick={() => onGoView?.("profile")} className="font-semibold underline">choisissez vos jours dans Mon profil</button> pour programmer la série.</p>
+              )}
+            </div>
+          )}
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <button type="button" onClick={() => { setStep(2); setError(null); }} className={ghost}>← Retour</button>
+            <button type="button" onClick={scheduleIt} disabled={busy || posts.length === 0 || !profile?.publishDays} data-testid="repurpose-schedule" className={btn}>{busy ? "Création…" : needsValidation ? `Créer la série (${posts.length} à valider)` : `Programmer la série (${posts.length})`}</button>
+          </div>
+        </div>
+      )}
+
+      {step === 4 && done && (
+        <div className={card} data-testid="repurpose-done">
+          <p className="text-lg font-extrabold text-[#166534]">C&apos;est fait : {done.created} post{done.created > 1 ? "s" : ""} {done.status === "à valider" ? "à valider" : "programmé" + (done.created > 1 ? "s" : "")}.</p>
+          <p className="text-sm text-[#33415c] mt-1">De {fmtDateTime(done.firstAt)} à {fmtDateTime(done.lastAt)}. La série est dans « Mes campagnes », et ses posts dans « Mes posts » et le planning.</p>
+          <div className="flex flex-wrap gap-3 mt-4">
+            <button type="button" onClick={() => onGoView?.("history")} data-testid="repurpose-go-history" className={btn}>Voir mes posts</button>
+            <button type="button" onClick={() => onGoView?.("campaigns")} className={ghost}>Voir la campagne</button>
+            <button type="button" onClick={restart} data-testid="repurpose-restart" className={ghost}>Un autre contenu</button>
+          </div>
+        </div>
+      )}
+    </main>
+  );
+}
+
 // Tableau de bord « Aujourd'hui » (maquette 12) : ce que le copilote suggère, quatre chiffres, les sept prochains jours,
 // puis les idées (à gauche), les campagnes et « Pour bien démarrer » (à droite). Un filtre réduit tout à une thématique.
 const ISO_DAY = { lun: 1, mar: 2, mer: 3, jeu: 4, ven: 5, sam: 6, dim: 7 };
@@ -10633,6 +10887,15 @@ function DashToday({ drafts, profile, ns, campaigns, canCampaigns, voiceOk, onGo
         </div>
       )}
       <div className="min-w-0" data-testid="dash-ideas">{ideas}</div>
+      <div className={card} data-testid="dash-repurpose">
+        <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex-1 min-w-[16rem]">
+            <span className={lb}>Seconde vie d&apos;un contenu{!canCampaigns && <span className="ml-2 normal-case tracking-normal text-[11px] font-bold text-[#7a4b00] bg-[#fff4d6] rounded-full px-2 py-0.5">Pro et Agence</span>}</span>
+            <p className="text-[13px] text-[#33415c] leading-relaxed">Un article, un webinaire, une étude de cas ? Transformez-le en une série de posts, écrits à partir de ses seuls faits, relus puis programmés.</p>
+          </div>
+          <button type="button" onClick={() => onGoView?.("repurpose")} data-testid="dash-repurpose-go" className="text-sm font-bold text-[#a3242a] bg-white border border-[#f3a3a6] hover:bg-[#fff8f8] px-4 py-2.5 rounded-xl">Donner une seconde vie à un contenu</button>
+        </div>
+      </div>
 
 
       <div className="grid md:grid-cols-2 md:[&>*:only-child]:col-span-2 gap-3.5 items-start">
@@ -13141,7 +13404,7 @@ const FEATURE_LABELS = {
   orgStats: "Les statistiques de page",
 };
 
-const DEEP_LINK_VIEWS = ["dashboard", "create", "history", "campaigns", "connections", "profile", "themes", "stats", "copilot", "events", "engage", "brand-kit", "billing", "clients", "queue", "followup", "team", "planning", "messages", "datalake", "share", "leads", "interview"];
+const DEEP_LINK_VIEWS = ["dashboard", "create", "history", "campaigns", "connections", "profile", "themes", "stats", "copilot", "events", "engage", "brand-kit", "billing", "clients", "queue", "followup", "team", "planning", "messages", "datalake", "share", "leads", "interview", "repurpose"];
 
 function ClientTableRow({ client, team = [], restrict = false, onManage, onViewDrafts, onDelete, deleting, onShowReport, onApproval, onQuota }) {
   const [open, setOpen] = useState(false);
@@ -19765,6 +20028,7 @@ export default function Home() {
   );
   const VIEW_TITLES = {
     dashboard: "Tableau de bord",
+    repurpose: "Seconde vie d'un contenu",
     create: "Créer un post",
     history: "Mes posts",
     engage: "Interagir sur LinkedIn",
@@ -21346,6 +21610,7 @@ export default function Home() {
                 {[["idea", "Mon idée"], ["link", "Un article"], ["file", "Un document"]].map(([id, text]) => (
                   <button key={id} type="button" aria-pressed={genMode === "single" && sourceMode === id} onClick={() => { setGenMode("single"); setSourceMode(id); setSource(null); setSourceError(null); }} className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${genMode === "single" && sourceMode === id ? "bg-slate-100 border-slate-400 text-slate-800" : "border-slate-200 text-slate-500 hover:border-slate-400"}`}>{text}</button>
                 ))}
+                <button type="button" onClick={() => setView("repurpose")} data-testid="mode-repurpose" className="text-xs font-semibold px-2.5 py-1 rounded-full border border-slate-200 text-slate-600 hover:border-slate-400">Un contenu, en série →</button>
                 <button type="button" aria-pressed={genMode === "series"} data-testid="mode-series" onClick={() => setGenMode(genMode === "series" ? "single" : "series")} className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${genMode === "series" ? "bg-slate-100 border-slate-400 text-slate-800" : "border-slate-200 text-slate-500 hover:border-slate-400"}`}>Série avec reveal</button>
               </div>
             </div>
@@ -22038,6 +22303,8 @@ export default function Home() {
         <CopilotView profile={profile} onProfileSaved={setProfile} showToast={showToast} onGoDashboard={() => setView("dashboard")} onGenerateFromReco={generateFromReco} onGoProfileField={goToProfileField} onGoCreate={() => setView("create")} onGoView={setView} clientSpace={clientSpace} />
       ) : view === "billing" ? (
         <BillingView user={user} showToast={showToast} focus={billingFocus} />
+      ) : view === "repurpose" ? (
+        <RepurposeView profile={profile} linkedin={linkedin} orgs={orgs} canCampaigns={plan.campaigns} showToast={showToast} onGoCreate={() => setView("create")} onGoHistory={() => setView("history")} onGoView={setView} onProfileSaved={setProfile} />
       ) : view === "datalake" ? (
         <main className="max-w-5xl mx-auto p-6">
           <KnowledgePanel key={activeContextId ?? "main"} showToast={showToast} activeContextId={activeContextId} hasContexts={contexts.length > 0} onGoHistory={() => setView("history")} profile={profile} onChooseContext={chooseContext} onWriteIdea={(title) => { setForm((f) => ({ ...f, theme: title })); setGenMode("single"); setSourceMode("idea"); setSource(null); setView("create"); }} />
