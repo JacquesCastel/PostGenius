@@ -10182,7 +10182,7 @@ function DashSpark({ data, color }) {
   const pts = data.map((v, i) => `${((i / (data.length - 1)) * w).toFixed(1)},${(h - 2 - (v / max) * (h - 4)).toFixed(1)}`).join(" ");
   return <svg viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none" className="w-full h-7 mt-1.5" aria-hidden="true"><polyline points={pts} fill="none" stroke={color} strokeWidth="1.8" strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke" /></svg>;
 }
-function DashResults({ linkedin, orgs, onGoView }) {
+function DashResults({ linkedin, orgs, onGoView, onGoCreate, onTab }) {
   const hasProfile = Boolean(linkedin?.statsConnected);
   const pages = (orgs ?? []).filter((o) => o?.urn);
   const hasPage = Boolean(linkedin?.orgConnected) && pages.length > 0;
@@ -10278,7 +10278,139 @@ function DashResults({ linkedin, orgs, onGoView }) {
       </>
     );
   }
-  return <div className={card} data-testid="dash-results">{head}{body}</div>;
+  return (
+    <>
+      <div className={card} data-testid="dash-results">{head}{body}</div>
+      {scope !== "none" && d?.connected !== false && <DashCoach scope={scope} orgUrn={orgUrn} onGoCreate={onGoCreate} onTab={onTab} />}
+    </>
+  );
+}
+
+// « Le coach » : ce qui marche le mieux chez vous d'après vos propres mesures (calcul simple, sans IA ni appel à LinkedIn)
+const fmtX = (v) => `${v.toFixed(1).replace(".", ",")}×`;
+function DashCoach({ scope, orgUrn, onGoCreate, onTab }) {
+  const [d, setD] = useState(null);
+  const [open, setOpen] = useState(null);
+  useEffect(() => {
+    if (scope === "page" && !orgUrn) return;
+    setD(null); setOpen(null);
+    const url = scope === "page" ? `/api/stats/coach?scope=page&org=${encodeURIComponent(orgUrn)}` : "/api/stats/coach?scope=profile";
+    fetch(url).then(readJson).then((x) => setD(x.error ? { failed: true } : x)).catch(() => setD({ failed: true }));
+  }, [scope, orgUrn]);
+  if (!d || d.failed) return null;
+  const card = "bg-white border border-[#e8ecf2] rounded-[18px] px-5 py-4";
+  const advice = (i) => {
+    if (i.action === "firstcomment") return i.key === "yes" && i.direction === "up" ? "Chez vous, un lien dans le texte ne freine pas la portée." : i.key === "yes" ? "Mettez plutôt le lien en premier commentaire : la portée est meilleure sans lien dans le texte." : i.direction === "up" ? "Gardez le lien pour le premier commentaire." : "Un post sans lien fait moins bien chez vous : testez avec le lien dans le texte.";
+    if (i.action === "slot") return i.direction === "up" ? "Programmez vos prochains posts à ce moment." : "Évitez ce moment pour vos posts importants.";
+    return i.direction === "up" ? "Écrivez-en davantage." : "À retravailler, ou à espacer.";
+  };
+  const go = (i) => (i.action === "slot" ? onTab?.("planning") : onGoCreate?.());
+  return (
+    <div className={card} data-testid="dash-coach">
+      <div className="flex items-baseline gap-3 flex-wrap mb-2.5">
+        <span className="text-xs font-bold tracking-wider uppercase text-[#5a6b85]">Le coach</span>
+        <span className="text-xs text-[#5a6b85]">d&apos;après vos {d.measured} post{d.measured > 1 ? "s" : ""} mesuré{d.measured > 1 ? "s" : ""} sur {scope === "page" ? "cette page" : "votre profil"}</span>
+      </div>
+      {d.needed > 0 ? (
+        <div data-testid="dash-coach-wait">
+          <p className="text-[13px] text-[#33415c]">Encore <b>{d.needed}</b> post{d.needed > 1 ? "s" : ""} mesuré{d.needed > 1 ? "s" : ""} avant les premiers conseils : en dessous de {d.minMeasured}, une différence entre deux jours ou deux formats ne veut encore rien dire. Les mesures arrivent 1 jour et 7 jours après chaque publication.</p>
+          <div className="h-[7px] rounded-full bg-[#e8ecf2] mt-2.5"><div className="h-[7px] rounded-full bg-[#ff5a5f]" style={{ width: `${Math.min(100, Math.round((d.measured / d.minMeasured) * 100))}%` }} /></div>
+        </div>
+      ) : d.insights.length === 0 ? (
+        <p className="text-[13px] text-[#33415c]" data-testid="dash-coach-none">Rien ne ressort nettement pour l&apos;instant : vos posts se valent à peu près, quel que soit le jour, le format ou l&apos;humeur. Le coach réessaie à chaque nouvelle mesure.</p>
+      ) : (
+        <ul className="space-y-3">
+          {d.insights.map((i) => {
+            const k = `${i.dimension}:${i.key}:${i.direction}`;
+            return (
+              <li key={k} className="rounded-xl border border-[#eef1f6] bg-[#f8fafc] px-3.5 py-3" data-testid="dash-coach-insight">
+                <div className="flex items-start gap-2.5">
+                  <span className={`shrink-0 text-sm font-extrabold ${i.direction === "up" ? "text-[#166534]" : "text-[#b42318]"}`} aria-hidden="true">{i.direction === "up" ? "▲" : "▼"}</span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-bold text-[#1b2a4a] leading-snug">Vos posts {i.label} : {fmtX(i.lift)} votre médiane</p>
+                    <p className="text-xs text-[#5a6b85] mt-0.5">{i.n} posts · confiance {i.confidence}{i.confidence === "faible" ? " : à confirmer avec les prochains posts" : ""}</p>
+                    <p className="text-[13px] text-[#33415c] mt-1">{advice(i)}</p>
+                    <div className="flex items-center gap-3 flex-wrap mt-1.5">
+                      <button type="button" onClick={() => go(i)} data-testid="dash-coach-action" className="text-[13px] font-semibold text-[#0a66c2] hover:underline">{i.action === "slot" ? "Voir le planning" : "Créer un post"}</button>
+                      <button type="button" onClick={() => setOpen(open === k ? null : k)} aria-expanded={open === k} data-testid="dash-coach-why" className="text-[13px] font-semibold text-[#5a6b85] hover:underline">{open === k ? "Masquer" : "Pourquoi ?"}</button>
+                    </div>
+                    {open === k && (
+                      <div className="mt-2 overflow-x-auto" data-testid="dash-coach-detail">
+                        <table className="w-full text-xs">
+                          <thead><tr className="text-left text-[#5a6b85]"><th className="font-semibold py-1 pr-3">Groupe</th><th className="font-semibold py-1 pr-3">Posts</th><th className="font-semibold py-1 pr-3">Impressions (médiane)</th><th className="font-semibold py-1 pr-3">Par rapport à votre médiane</th><th className="font-semibold py-1">Engagement moyen</th></tr></thead>
+                          <tbody>
+                            {i.detail.map((g) => (
+                              <tr key={g.key} className={`border-t border-[#eef1f6] ${g.key === i.key ? "font-bold text-[#1b2a4a]" : "text-[#33415c]"}`}>
+                                <td className="py-1 pr-3">{g.label}</td><td className="py-1 pr-3">{g.n}</td><td className="py-1 pr-3">{new Intl.NumberFormat("fr-FR").format(Math.round(g.medianImpressions))}</td><td className="py-1 pr-3">{fmtX(g.lift)}</td><td className="py-1">{(g.avgRate * 100).toFixed(1).replace(".", ",")} %</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                        <p className="text-[11px] text-[#5a6b85] mt-1.5">Seuls les groupes d&apos;au moins 3 posts sont comptés. Mesure : impressions du dernier relevé de chaque post.</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+      <p className="text-[11px] text-[#5a6b85] mt-3" data-testid="dash-coach-note">Des repères tirés de vos propres posts, pas des règles de LinkedIn : son algorithme n&apos;est pas public. Plus vous publiez, plus ils sont fiables.</p>
+    </div>
+  );
+}
+
+// Créneaux conseillés (onglet Planning) : jours et heure qui portent le mieux chez vous ; adoptés d'un clic, après confirmation
+function DashSlots({ coach, profile, onProfileSaved, showToast }) {
+  const [confirm, setConfirm] = useState(false);
+  const [busy, setBusy] = useState(false);
+  if (!coach || coach.failed) return null;
+  const card = "bg-white border border-[#e8ecf2] rounded-[18px] px-5 py-4";
+  const dayList = (days) => days.map((n) => DAY_FULL[n]).join(", ");
+  const timeFmt = (t) => (t ? t.replace(":", " h ").replace(/ h 00$/, " h") : null);
+  if (!coach.slots) {
+    if (coach.needed > 0) return <div className={card} data-testid="dash-slots"><span className="block text-xs font-bold tracking-wider uppercase text-[#5a6b85] mb-1.5">Créneaux conseillés</span><p className="text-[13px] text-[#33415c]">Le coach proposera vos meilleurs jours après {coach.minMeasured} posts mesurés ({coach.measured} pour l&apos;instant).</p></div>;
+    return null;
+  }
+  const s = coach.slots;
+  const time = s.time ?? coach.current.time;
+  // Proposition : les jours forts d'abord, puis les jours actuels (sauf les jours faibles) pour garder le même nombre de posts par semaine
+  const wanted = Math.max(coach.current.days.length, s.days.length);
+  const proposal = [...s.days];
+  for (const dday of coach.current.days) if (proposal.length < wanted && !proposal.includes(dday) && !(s.weak ?? []).includes(dday)) proposal.push(dday);
+  proposal.sort((a, b) => a - b);
+  const same = proposal.join() === [...coach.current.days].sort((a, b) => a - b).join() && (!s.time || s.time === coach.current.time);
+  const adopt = async () => {
+    setBusy(true);
+    try {
+      const res = await fetch("/api/profile", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ publishDays: proposal.join(","), publishTime: time, postsPerWeek: proposal.length }) });
+      const d = await readJson(res);
+      if (!res.ok) throw new Error(d.error || "Enregistrement impossible");
+      onProfileSaved?.(d.profile);
+      showToast?.("Créneaux enregistrés : vos prochains posts automatiques suivront ces jours.");
+      setConfirm(false);
+    } catch (e) { showToast?.(e.message); } finally { setBusy(false); }
+  };
+  return (
+    <div className={card} data-testid="dash-slots">
+      <span className="block text-xs font-bold tracking-wider uppercase text-[#5a6b85] mb-1.5">Créneaux conseillés par le coach</span>
+      <p className="text-[15px] font-bold text-[#1b2a4a] leading-snug" data-testid="dash-slots-text">{s.days.length > 1 ? "Jours forts" : "Jour fort"} : {dayList(s.days)}{timeFmt(time) ? `, vers ${timeFmt(time)}` : ""}</p>
+      <p className="text-xs text-[#5a6b85] mt-1">Les posts publiés {s.days.length > 1 ? "ces jours-là portent" : "ce jour-là portent"} le mieux chez vous ({s.n} posts · confiance {s.confidence}).{" "}
+        {coach.current.days.length ? `Votre rythme actuel : ${dayList([...coach.current.days].sort((a, b) => a - b))}${timeFmt(coach.current.time) ? ` à ${timeFmt(coach.current.time)}` : ""}.` : ""}</p>
+      {same ? <p className="text-xs font-semibold text-[#166534] mt-2" data-testid="dash-slots-same">Votre rythme suit déjà ce conseil.</p> : !confirm ? (
+        <button type="button" onClick={() => setConfirm(true)} data-testid="dash-slots-adopt" className="mt-2 text-sm font-bold text-white bg-[#d63b42] hover:bg-[#c2343a] px-3.5 py-2 rounded-xl">Adopter ces créneaux</button>
+      ) : (
+        <div className="mt-2 rounded-xl bg-[#fff8f8] border border-[#f3a3a6] px-3.5 py-3" data-testid="dash-slots-confirm">
+          <p className="text-[13px] text-[#33415c]">Nouveau rythme : <b>{dayList(proposal)}{timeFmt(time) ? ` à ${timeFmt(time)}` : ""}</b>, soit {proposal.length} post{proposal.length > 1 ? "s" : ""} par semaine comme aujourd&apos;hui. Vos publications automatiques et vos campagnes le suivront. Les posts déjà programmés ne bougent pas. Vous pourrez le modifier dans « Mon profil ».</p>
+          <div className="flex gap-2 mt-2.5">
+            <button type="button" onClick={adopt} disabled={busy} data-testid="dash-slots-confirm-yes" className="text-sm font-bold text-white bg-[#d63b42] hover:bg-[#c2343a] disabled:opacity-60 px-3.5 py-2 rounded-xl">{busy ? "Enregistrement…" : "Confirmer"}</button>
+            <button type="button" onClick={() => setConfirm(false)} className="text-sm font-semibold text-[#5a6b85] px-3 py-2">Annuler</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
 
 // Tableau de bord « Aujourd'hui » (maquette 12) : ce que le copilote suggère, quatre chiffres, les sept prochains jours,
@@ -10287,11 +10419,16 @@ const ISO_DAY = { lun: 1, mar: 2, mer: 3, jeu: 4, ven: 5, sam: 6, dim: 7 };
 const DAY_FULL = ["", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"];
 const isoDay = (d) => ((d.getDay() + 6) % 7) + 1;
 const sameDayStr = (a, b) => a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
-function DashToday({ drafts, profile, ns, campaigns, canCampaigns, voiceOk, onGoCreate, onGoHistory, onGoView, onGoVoice, onOpenMonth, ideas, onGoProfileField, linkedin, orgs, tab, onTab }) {
+function DashToday({ drafts, profile, ns, campaigns, canCampaigns, voiceOk, onGoCreate, onGoHistory, onGoView, onGoVoice, onOpenMonth, ideas, onGoProfileField, linkedin, orgs, tab, onTab, onProfileSaved, showToast }) {
   const { contexts } = useContext(EntreprisesCtx);
   const [filter, setFilter] = useState("all");
   const [openPost, setOpenPost] = useState(null); // « Les 7 prochains jours » : détail d'un post
   const [startHidden, setStartHidden] = useState(true);
+  const [coach, setCoach] = useState(null); // créneaux conseillés (onglet Planning)
+  useEffect(() => {
+    if (tab !== "planning") return;
+    fetch("/api/stats/coach?scope=all").then(readJson).then((x) => setCoach(x.error ? { failed: true } : x)).catch(() => setCoach({ failed: true }));
+  }, [tab, profile?.publishDays, profile?.publishTime]);
   useEffect(() => { try { setStartHidden(localStorage.getItem("lp_start_hidden") === "1"); } catch { setStartHidden(false); } }, []);
   const themes = contexts.length > 0 ? [{ id: "main", name: profile?.companyName || "Mon activité" }, ...contexts.map((c) => ({ id: c.id, name: c.name }))] : [];
   const mine = drafts.filter((d) => filter === "all" || (d.contextId ?? "main") === filter);
@@ -10443,12 +10580,13 @@ function DashToday({ drafts, profile, ns, campaigns, canCampaigns, voiceOk, onGo
 
       {tab === "results" && (
         <div className="space-y-4" role="tabpanel" id="dash-panel-results" aria-labelledby="dash-tab-results" data-testid="dash-panel-results">
-          <DashResults linkedin={linkedin} orgs={orgs} onGoView={onGoView} />
+          <DashResults linkedin={linkedin} orgs={orgs} onGoView={onGoView} onGoCreate={onGoCreate} onTab={onTab} />
         </div>
       )}
 
       {tab === "planning" && (
       <div className="space-y-4" role="tabpanel" id="dash-panel-planning" aria-labelledby="dash-tab-planning" data-testid="dash-panel-planning">
+      <DashSlots coach={coach} profile={profile} onProfileSaved={onProfileSaved} showToast={showToast} />
       <div className="bg-white border border-[#e8ecf2] rounded-[18px] p-4" data-testid="dash-week">
         <div className="flex items-baseline gap-3 mb-2.5 flex-wrap">
           <span className="text-xs font-bold tracking-wider uppercase text-[#5a6b85]">Les 7 prochains jours</span>
@@ -10461,6 +10599,7 @@ function DashToday({ drafts, profile, ns, campaigns, canCampaigns, voiceOk, onGo
             return (
               <div key={i} data-testid="dash-day" className={`rounded-xl p-2 min-h-[110px] flex flex-col gap-1.5 min-w-0 ${today ? "border-2 border-[#d63b42] bg-[#fff8f8]" : "border border-[#eef1f6] bg-[#f8fafc]"}`}>
                 <span className={`text-[11px] font-bold uppercase tracking-wider ${today ? "text-[#a3242a]" : "text-[#5a6b85]"}`}>{today ? "Aujourd'hui" : cap(day.toLocaleDateString("fr-FR", { weekday: "short" }).replace(".", ""))} {day.getDate()}</span>
+                {coach?.slots?.days?.includes(isoDay(day)) && <span className="text-[10px] font-bold text-[#a3242a]" data-testid="dash-day-strong" title="Jour qui porte le mieux chez vous, d'après le coach">★ jour fort</span>}
                 {evs.map(({ d, kind, at }) => (
                   <button type="button" key={d.id} onClick={() => setOpenPost({ d, kind })} data-testid="dash-day-post" className={`text-left w-full text-[11px] font-semibold rounded-lg px-1.5 py-1 leading-snug hover:ring-2 hover:ring-[#f3a3a6] ${kind === "va" ? "bg-[#f3e8ff] text-[#6b21a8]" : kind === "pu" ? "bg-[#e6f6ec] text-[#166534]" : "bg-[#fff4d6] text-[#7a4b00]"}`} title={d.theme}>
                     <span className="block truncate">{d.theme || "Post"}</span>
@@ -10697,6 +10836,8 @@ function DashboardView({ drafts, canVeille = true, canEvents = false, canScore =
         onGoProfileField={onGoProfileField}
         tab={tab}
         onTab={setTab}
+        onProfileSaved={onProfileSaved}
+        showToast={showToast}
         onOpenMonth={() => { setMonthOpen(true); setTimeout(() => document.getElementById("dash-month")?.scrollIntoView({ behavior: "smooth", block: "start" }), 80); }}
         ideas={<RecoToday onGenerate={onGenerateFromReco} onGoCopilot={onGoCopilot} onGoVoice={onGoVoice} showToast={showToast} profile={profile} onProfileSaved={onProfileSaved} />}
       />
