@@ -11794,20 +11794,20 @@ function StatsView({ linkedin, orgs, profile, drafts, showToast, onConnect }) {
             Aucun post publié ou programmé depuis l'application.
           </div>
         ) : (
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm max-h-[75vh] overflow-auto" data-testid="posts-table-scroll">
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-x-auto xl:overflow-x-clip" data-testid="posts-table-scroll">
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-left text-xs text-gray-500 border-b border-gray-100">
-                  <th className="sticky top-0 z-10 bg-white p-3 font-medium">Post</th>
-                  <th className="sticky top-0 z-10 bg-white p-3 font-medium">Cible</th>
-                  <th className="sticky top-0 z-10 bg-white p-3 font-medium text-right">Impressions</th>
-                  <th className="sticky top-0 z-10 bg-white p-3 font-medium text-right">Atteints</th>
-                  <th className="sticky top-0 z-10 bg-white p-3 font-medium text-right">Clics</th>
-                  <th className="sticky top-0 z-10 bg-white p-3 font-medium text-right">Réactions</th>
-                  <th className="sticky top-0 z-10 bg-white p-3 font-medium text-right">Comm.</th>
-                  <th className="sticky top-0 z-10 bg-white p-3 font-medium text-right">Partages</th>
-                  <th className="sticky top-0 z-10 bg-white p-3 font-medium text-right whitespace-nowrap">Vos actions</th>
-                  <th className="sticky top-0 z-10 bg-white p-3" />
+                  <th className="xl:sticky xl:top-0 xl:z-10 xl:shadow-[0_1px_0_#f3f4f6] bg-white p-3 font-medium">Post</th>
+                  <th className="xl:sticky xl:top-0 xl:z-10 xl:shadow-[0_1px_0_#f3f4f6] bg-white p-3 font-medium">Cible</th>
+                  <th className="xl:sticky xl:top-0 xl:z-10 xl:shadow-[0_1px_0_#f3f4f6] bg-white p-3 font-medium text-right">Impressions</th>
+                  <th className="xl:sticky xl:top-0 xl:z-10 xl:shadow-[0_1px_0_#f3f4f6] bg-white p-3 font-medium text-right">Atteints</th>
+                  <th className="xl:sticky xl:top-0 xl:z-10 xl:shadow-[0_1px_0_#f3f4f6] bg-white p-3 font-medium text-right">Clics</th>
+                  <th className="xl:sticky xl:top-0 xl:z-10 xl:shadow-[0_1px_0_#f3f4f6] bg-white p-3 font-medium text-right">Réactions</th>
+                  <th className="xl:sticky xl:top-0 xl:z-10 xl:shadow-[0_1px_0_#f3f4f6] bg-white p-3 font-medium text-right">Comm.</th>
+                  <th className="xl:sticky xl:top-0 xl:z-10 xl:shadow-[0_1px_0_#f3f4f6] bg-white p-3 font-medium text-right">Partages</th>
+                  <th className="xl:sticky xl:top-0 xl:z-10 xl:shadow-[0_1px_0_#f3f4f6] bg-white p-3 font-medium text-right whitespace-nowrap">Vos actions</th>
+                  <th className="xl:sticky xl:top-0 xl:z-10 xl:shadow-[0_1px_0_#f3f4f6] bg-white p-3" />
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
