@@ -55,6 +55,7 @@ model User {
   leadIcp  String? // client idéal décrit pour qualifier les leads
   leads    Lead[]  @relation("UserLeads")
   statSnapshots StatSnapshot[]
+  apiKeys   ApiKey[]
   moments  Moment[]
 
   // --- Offre / abonnement ---
@@ -1062,4 +1063,21 @@ model DatalakeBrief {
   createdAt DateTime @default(now())
 
   @@index([userId, contextId])
+}
+
+// Clé personnelle pour brancher un assistant (Claude Code, Cursor…) sur LinkeePost par le protocole MCP (/api/mcp).
+// Seul l'empreinte (SHA-256) est conservée : la clé complète n'est montrée qu'une fois, à sa création.
+model ApiKey {
+  id         String    @id @default(cuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name       String
+  prefix     String // début de la clé, pour la reconnaître dans la liste
+  hash       String    @unique
+  write      Boolean   @default(false) // false = lecture seule ; true = brouillons et sources aussi
+  lastUsedAt DateTime?
+  revokedAt  DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([userId])
 }

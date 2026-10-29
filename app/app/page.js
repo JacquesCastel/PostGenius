@@ -17148,6 +17148,73 @@ const THEME_COMPLETENESS = [
   { label: "une voix", done: (t) => Boolean(t.hasVoice) },
   { label: "des sources", done: (t) => t.sources > 0 },
 ];
+// Clés personnelles pour brancher un assistant (Claude Code, Cursor…) sur LinkeePost par le protocole MCP (Pro et Agence)
+function McpKeysCard({ allowed, showToast }) {
+  const [keys, setKeys] = useState(null);
+  const [name, setName] = useState("");
+  const [write, setWrite] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState(null);
+  const [fresh, setFresh] = useState(null); // clé tout juste créée (visible une seule fois)
+  const load = () => fetch("/api/api-keys").then(readJson).then((d) => setKeys(d.keys ?? [])).catch(() => setKeys([]));
+  useEffect(() => { if (allowed) load(); }, [allowed]);
+  const origin = typeof window !== "undefined" ? window.location.origin : "";
+  const create = async () => {
+    setBusy(true); setError(null);
+    try {
+      const res = await fetch("/api/api-keys", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name, write }) });
+      const d = await readJson(res);
+      if (!res.ok) throw new Error(d.error || "Création impossible.");
+      setFresh(d); setName(""); setWrite(false); load();
+    } catch (e) { setError(e.message); } finally { setBusy(false); }
+  };
+  const revoke = async (k) => {
+    if (!window.confirm(`Révoquer la clé « ${k.name} » ? L'assistant branché avec cette clé perdra l'accès immédiatement.`)) return;
+    const res = await fetch(`/api/api-keys/${k.id}`, { method: "DELETE" });
+    if (res.ok) { if (fresh?.id === k.id) setFresh(null); load(); showToast?.("Clé révoquée"); } else showToast?.("Révocation impossible");
+  };
+  const copy = (t) => { try { navigator.clipboard.writeText(t); showToast?.("Copié"); } catch { showToast?.("Copie impossible : sélectionnez le texte"); } };
+  const cmd = fresh ? `claude mcp add --transport http linkeepost ${origin}/api/mcp --header "Authorization: Bearer ${fresh.key}"` : "";
+  return (
+    <div className="bg-white border border-gray-100 rounded-2xl p-5" data-testid="mcp-card">
+      <p className="text-xs font-bold tracking-wider uppercase text-[#5a6b85] mb-1">Assistants (MCP)</p>
+      <p className="text-sm text-gray-700 leading-relaxed">Branchez Claude Code, Cursor ou un autre assistant compatible sur votre compte, avec une clé personnelle. Il peut lire vos posts, votre planning, vos résultats et les conseils du coach, et créer des <b>brouillons</b> que vous relirez. Il ne programme ni ne publie rien.</p>
+      {!allowed ? (
+        <p className="text-sm font-semibold text-[#7a4b00] bg-[#fff4d6] rounded-lg px-3 py-2 mt-3" data-testid="mcp-locked">Cette fonction est incluse dans les offres Pro et Agence.</p>
+      ) : (
+        <>
+          {fresh && (
+            <div className="mt-3 rounded-xl border border-[#bfe5cd] bg-[#f0fbf4] px-3.5 py-3" data-testid="mcp-fresh">
+              <p className="text-[13px] font-bold text-[#166534]">Votre clé « {fresh.name} » : copiez-la maintenant, elle ne sera plus affichée.</p>
+              <div className="flex items-center gap-2 mt-2"><code className="flex-1 min-w-0 break-all text-xs bg-white border border-[#e2e8f0] rounded-lg px-2.5 py-1.5" data-testid="mcp-fresh-key">{fresh.key}</code><button type="button" onClick={() => copy(fresh.key)} className="shrink-0 text-xs font-semibold text-[#0a66c2] hover:underline">Copier</button></div>
+              <p className="text-xs text-[#33415c] mt-2">Pour Claude Code, collez cette commande dans un terminal (adaptez-la si votre outil l&apos;exige) :</p>
+              <div className="flex items-start gap-2 mt-1"><code className="flex-1 min-w-0 break-all text-[11px] bg-white border border-[#e2e8f0] rounded-lg px-2.5 py-1.5" data-testid="mcp-command">{cmd}</code><button type="button" onClick={() => copy(cmd)} className="shrink-0 text-xs font-semibold text-[#0a66c2] hover:underline">Copier</button></div>
+              <button type="button" onClick={() => setFresh(null)} className="text-xs text-[#5a6b85] mt-2 underline">J&apos;ai copié la clé</button>
+            </div>
+          )}
+          {error && <p role="alert" className="text-sm text-[#b42318] mt-3" data-testid="mcp-error">{error}</p>}
+          {keys === null ? null : keys.length > 0 && (
+            <ul className="mt-3 divide-y divide-gray-100 border border-gray-100 rounded-xl" data-testid="mcp-keys">
+              {keys.map((k) => (
+                <li key={k.id} className="flex items-center gap-3 px-3 py-2 flex-wrap" data-testid="mcp-key">
+                  <div className="min-w-0 flex-1"><p className="text-sm font-semibold truncate">{k.name}</p><p className="text-xs text-gray-500">{k.prefix}… · {k.write ? "lecture et brouillons" : "lecture seule"} · {k.lastUsedAt ? `utilisée le ${new Date(k.lastUsedAt).toLocaleDateString("fr-FR")}` : "jamais utilisée"}</p></div>
+                  <button type="button" onClick={() => revoke(k)} data-testid="mcp-revoke" className="text-xs font-semibold text-[#b42318] hover:underline">Révoquer</button>
+                </li>
+              ))}
+            </ul>
+          )}
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <input value={name} onChange={(e) => setName(e.target.value)} maxLength={60} placeholder="Nom de la clé (ex. Claude Code, mon ordinateur)" data-testid="mcp-name" className="flex-1 min-w-[14rem] border border-[#cbd5e1] rounded-xl px-3 py-2 text-sm" />
+            <label className="flex items-center gap-1.5 text-[13px] text-[#33415c]"><input type="checkbox" checked={write} onChange={(e) => setWrite(e.target.checked)} data-testid="mcp-write" /> Autoriser les brouillons et les sources</label>
+            <button type="button" onClick={create} disabled={busy || name.trim().length < 2} data-testid="mcp-create" className="text-sm font-bold text-white bg-[#d63b42] hover:bg-[#c2343a] disabled:opacity-50 px-4 py-2 rounded-xl">{busy ? "Création…" : "Créer une clé"}</button>
+          </div>
+          <p className="text-[11px] text-gray-500 mt-2">Gardez la clé secrète : elle donne accès à votre compte. Vous pouvez la révoquer à tout moment ; 5 clés actives au plus.</p>
+        </>
+      )}
+    </div>
+  );
+}
+
 function ProfilePage({ user, plan, onGoView, ...props }) {
   const { profile, linkedin, instagram, focusField } = props;
   const [editing, setEditing] = useState(Boolean(focusField)); // formulaires détaillés
@@ -17281,6 +17348,7 @@ function ProfilePage({ user, plan, onGoView, ...props }) {
           <button type="button" onClick={() => onGoView("billing")} data-testid="profile-go-billing" className={link}>Gérer</button>
         </div>
       </div>
+      <McpKeysCard allowed={Boolean(plan?.campaigns)} showToast={props.showToast} />
       {popin && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={() => setPopin(null)} data-testid="profile-popin">
           <div role="dialog" aria-modal="true" aria-label={popin === "voice" ? "Ma voix, partout" : "Mes objectifs"} className="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[85vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
