@@ -16,14 +16,14 @@ export async function POST(req) {
   if (!feat.ok) return NextResponse.json(limitBody(feat), { status: 403 });
   const quota = await checkPostQuota(userId);
   if (!quota.ok) return NextResponse.json(limitBody(quota), { status: 403 });
-  if (!rateLimit(`repurpose-generate:${userId}`, { limit: 6, windowMs: 10 * 60_000 })) {
+  if (!rateLimit(`repurpose-generate:${userId}`, { limit: Number(process.env.REPURPOSE_GENERATE_LIMIT) || 6, windowMs: 10 * 60_000 })) {
     return NextResponse.json({ error: "Trop de séries à la suite. Réessayez dans quelques minutes." }, { status: 429 });
   }
   const body = await req.json().catch(() => ({}));
   const target = body.target ?? "person";
   if (target !== "person" && !/^(both:)?urn:li:organization:\d+$/.test(String(target))) return NextResponse.json({ error: "Compte de publication invalide." }, { status: 400 });
   try {
-    const posts = await generateSeries(userId, { title: body.title, sourceUrl: /^https?:\/\//i.test(String(body.sourceUrl ?? "")) ? body.sourceUrl : null, facts: body.facts, angles: body.angles, mood: body.mood, contextId: body.contextId || null, target });
+    const posts = await generateSeries(userId, { title: body.title, sourceUrl: /^https?:\/\//i.test(String(body.sourceUrl ?? "")) ? body.sourceUrl : null, facts: body.facts, angles: body.angles, mood: body.mood, contextId: body.contextId || null, target, rights: body.rights, credit: body.credit });
     return NextResponse.json({ posts });
   } catch (e) {
     if (e instanceof RepurposeError) return NextResponse.json({ error: e.message }, { status: e.status });

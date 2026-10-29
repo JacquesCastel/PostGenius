@@ -10423,6 +10423,8 @@ function RepurposeView({ profile, linkedin, orgs, canCampaigns, showToast, onGoC
   const [fileKey, setFileKey] = useState(0);
   const [text, setText] = useState("");
   const [addToDatalake, setAddToDatalake] = useState(true);
+  const [rights, setRights] = useState(""); // "" | own | third : droits sur le contenu (obligatoire)
+  const [credit, setCredit] = useState(""); // auteur ou source à citer (contenu de tiers)
   const [contextId, setContextId] = useState("");
   const [target, setTarget] = useState("person");
   const [busy, setBusy] = useState(false);
@@ -10460,10 +10462,10 @@ function RepurposeView({ profile, linkedin, orgs, canCampaigns, showToast, onGoC
       let d;
       if (mode === "file") {
         const fd = new FormData();
-        fd.append("file", file); fd.append("kind", "file"); fd.append("addToDatalake", String(addToDatalake)); if (contextId) fd.append("contextId", contextId);
+        fd.append("file", file); fd.append("kind", "file"); fd.append("addToDatalake", String(addToDatalake)); fd.append("rights", rights); fd.append("credit", credit); if (contextId) fd.append("contextId", contextId);
         d = await call("/api/repurpose/analyze", fd, true);
       } else {
-        d = await call("/api/repurpose/analyze", { kind: mode === "link" ? "link" : "text", url: url.trim(), text, addToDatalake, contextId: contextId || null });
+        d = await call("/api/repurpose/analyze", { kind: mode === "link" ? "link" : "text", url: url.trim(), text, addToDatalake, contextId: contextId || null, rights, credit });
       }
       setAnalysis(d);
       setFacts(d.facts.map((f) => ({ ...f, on: true })));
@@ -10480,7 +10482,7 @@ function RepurposeView({ profile, linkedin, orgs, canCampaigns, showToast, onGoC
         title: analysis.source.title, sourceUrl: analysis.source.url,
         facts: chosenFacts.map((f) => ({ id: f.id, text: f.text.trim() })),
         angles: chosenAngles.map((a) => ({ title: a.title, hook: a.hook, kind: a.kind })),
-        mood: mood || undefined, contextId: contextId || null, target,
+        mood: mood || undefined, contextId: contextId || null, target, rights: analysis.source.rights, credit: analysis.source.credit,
       });
       setPosts(d.posts.map((p) => ({ ...p, texts: p.texts.map((t) => ({ ...t, original: t.text })), editing: false })));
       setStep(3);
@@ -10494,6 +10496,7 @@ function RepurposeView({ profile, linkedin, orgs, canCampaigns, showToast, onGoC
         name: `Seconde vie : ${analysis.source.title}`.slice(0, 80), theme: analysis.source.title,
         factsText: chosenFacts.map((f) => f.text.trim()).join("\n"), mood: mood || undefined, contextId: contextId || null, needsValidation,
         firstComment: firstCommentOn && analysis.source.url ? `Source : ${analysis.source.title} ${analysis.source.url}` : null,
+        rights: analysis.source.rights, credit: analysis.source.credit, sourceUrl: analysis.source.url,
         posts: posts.map((p) => ({ angleTitle: p.angleTitle, texts: p.texts.map((t) => ({ target: t.target, text: t.text, original: t.original })) })),
       });
       setDone(d);
@@ -10501,7 +10504,7 @@ function RepurposeView({ profile, linkedin, orgs, canCampaigns, showToast, onGoC
     } catch (e) { fail(e); } finally { setBusy(false); }
   };
 
-  const restart = () => { setStep(1); setAnalysis(null); setFacts([]); setAngles([]); setPosts([]); setDone(null); setError(null); setUrl(""); setText(""); setFile(null); setFileKey((k) => k + 1); setCustom(""); };
+  const restart = () => { setRights(""); setCredit(""); setStep(1); setAnalysis(null); setFacts([]); setAngles([]); setPosts([]); setDone(null); setError(null); setUrl(""); setText(""); setFile(null); setFileKey((k) => k + 1); setCustom(""); };
   const card = "bg-white border border-[#e8ecf2] rounded-[18px] px-5 py-4";
   const lb = "block text-xs font-bold tracking-wider uppercase text-[#5a6b85] mb-2";
   const btn = "text-sm font-bold text-white bg-[#d63b42] hover:bg-[#c2343a] disabled:opacity-50 px-4 py-2.5 rounded-xl";
@@ -10548,6 +10551,18 @@ function RepurposeView({ profile, linkedin, orgs, canCampaigns, showToast, onGoC
           {mode === "link" && <input type="url" value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://monsite.fr/mon-article" data-testid="repurpose-url" className="w-full border border-[#cbd5e1] rounded-xl px-3 py-2.5 text-sm" />}
           {mode === "file" && (<div><input key={fileKey} type="file" accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" onChange={(e) => setFile(e.target.files?.[0] ?? null)} data-testid="repurpose-file" className="text-sm" /><p className="text-[11px] text-[#5a6b85] mt-1.5">PDF ou Word (.docx), 8 Mo au plus. Le fichier n&apos;est pas conservé.</p></div>)}
           {mode === "text" && <textarea rows={7} value={text} onChange={(e) => setText(e.target.value)} placeholder="Collez ici le texte de votre article, de votre étude de cas…" data-testid="repurpose-text" className="w-full border border-[#cbd5e1] rounded-xl px-3 py-2.5 text-sm" />}
+          <fieldset className="mt-4 rounded-xl border border-[#e2e8f0] px-4 py-3" data-testid="repurpose-rights">
+            <legend className="px-1 text-xs font-bold tracking-wider uppercase text-[#5a6b85]">Droits sur ce contenu</legend>
+            <label className="flex items-start gap-2 text-[13px] text-[#33415c] mb-1.5"><input type="radio" name="rights" checked={rights === "own"} onChange={() => setRights("own")} data-testid="repurpose-rights-own" className="mt-1" /> <span><b>C&apos;est mon contenu</b>, ou j&apos;ai le droit de le réutiliser (mon site, mon entreprise, un contenu dont j&apos;ai l&apos;autorisation).</span></label>
+            <label className="flex items-start gap-2 text-[13px] text-[#33415c]"><input type="radio" name="rights" checked={rights === "third"} onChange={() => { setRights("third"); setAddToDatalake(false); }} data-testid="repurpose-rights-third" className="mt-1" /> <span><b>C&apos;est le contenu de quelqu&apos;un d&apos;autre</b> (article de presse, étude, billet d&apos;un confrère…).</span></label>
+            {rights === "third" && (
+              <div className="mt-2 ml-6 space-y-2" data-testid="repurpose-third-note">
+                <input value={credit} onChange={(e) => setCredit(e.target.value)} maxLength={120} placeholder={mode === "link" ? "Auteur ou source à citer (facultatif : on prendra le nom du site)" : "Auteur ou source à citer (obligatoire)"} data-testid="repurpose-credit" className="w-full border border-[#cbd5e1] rounded-lg px-2.5 py-1.5 text-[13px]" />
+                <p className="text-xs text-[#5a6b85] leading-relaxed">Les idées et les faits sont libres, pas la façon dont l&apos;auteur les a écrits. Les posts seront donc <b>reformulés avec vos mots</b>, sans recopier de phrases, et la <b>source sera citée</b> en premier commentaire. Cela ne remplace pas une autorisation si vous voulez reprendre le texte lui-même.</p>
+              </div>
+            )}
+            {rights === "own" && <p className="text-xs text-[#5a6b85] mt-2 ml-6">Vous restez responsable des droits sur ce que vous déposez.</p>}
+          </fieldset>
           <div className="grid sm:grid-cols-2 gap-3 mt-4">
             {contexts.length > 0 && (
               <label className="text-[13px] text-[#33415c]"><span className={lb}>Thématique</span>
@@ -10559,7 +10574,7 @@ function RepurposeView({ profile, linkedin, orgs, canCampaigns, showToast, onGoC
             </label>
           </div>
           <label className="flex items-center gap-2 text-[13px] text-[#33415c] mt-3"><input type="checkbox" checked={addToDatalake} onChange={(e) => setAddToDatalake(e.target.checked)} data-testid="repurpose-datalake" /> Ajouter ce contenu à mon datalake éditorial</label>
-          <div className="flex justify-end mt-4"><button type="button" onClick={readIt} disabled={busy || (mode === "link" && !url.trim()) || (mode === "file" && !file) || (mode === "text" && text.trim().length < 50)} data-testid="repurpose-read" className={btn}>{busy ? "Lecture en cours…" : "Lire le contenu →"}</button></div>
+          <div className="flex justify-end mt-4"><button type="button" onClick={readIt} disabled={busy || !rights || (rights === "third" && mode !== "link" && !credit.trim()) || (mode === "link" && !url.trim()) || (mode === "file" && !file) || (mode === "text" && text.trim().length < 50)} data-testid="repurpose-read" className={btn}>{busy ? "Lecture en cours…" : "Lire le contenu →"}</button></div>
         </div>
       )}
 
@@ -10636,7 +10651,9 @@ function RepurposeView({ profile, linkedin, orgs, canCampaigns, showToast, onGoC
           ))}
           {posts.length > 0 && (
             <div className={card} data-testid="repurpose-options">
-              {analysis?.source?.url && <label className="flex items-center gap-2 text-[13px] text-[#33415c] mb-2"><input type="checkbox" checked={firstCommentOn} onChange={(e) => setFirstCommentOn(e.target.checked)} data-testid="repurpose-firstcomment" /> Mettre la source en lien dans le premier commentaire</label>}
+              {analysis?.source?.rights === "third" ? (
+                <p className="text-[13px] text-[#33415c] mb-2" data-testid="repurpose-credit-note">Contenu de quelqu&apos;un d&apos;autre : la source sera citée en premier commentaire (« Source : {analysis.source.credit}{analysis.source.url ? ` ${analysis.source.url}` : ""} »).</p>
+              ) : analysis?.source?.url && <label className="flex items-center gap-2 text-[13px] text-[#33415c] mb-2"><input type="checkbox" checked={firstCommentOn} onChange={(e) => setFirstCommentOn(e.target.checked)} data-testid="repurpose-firstcomment" /> Mettre la source en lien dans le premier commentaire</label>}
               <label className="flex items-center gap-2 text-[13px] text-[#33415c]"><input type="checkbox" checked={needsValidation} onChange={(e) => setNeedsValidation(e.target.checked)} data-testid="repurpose-validate" /> À valider avant publication</label>
               {profile?.publishDays ? (
                 <p className="text-xs text-[#5a6b85] mt-2" data-testid="repurpose-rhythm">Rythme : {String(profile.publishDays).split(",").map((n) => DAY_FULL[Number(n)]).filter(Boolean).join(", ")} à {String(profile.publishTime ?? "09:00").replace(":", " h ")}. Chaque post prend le prochain créneau libre.</p>
