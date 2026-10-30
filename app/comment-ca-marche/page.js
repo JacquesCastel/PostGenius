@@ -95,6 +95,14 @@ const STEPS = [
       </div>
     ),
   },
+  {
+    icon: Gauge,
+    title: "Écoutez le coach, donnez une seconde vie à vos contenus",
+    text: "Dès 8 posts mesurés, le coach compare vos posts à votre propre médiane et vous dit ce qui marche chez vous, avec le nombre de posts et son niveau de confiance ; vous adoptez vos créneaux conseillés d'un clic. Un article, un document ou une vidéo peut ensuite devenir une série de posts, écrits à partir des seuls faits que vous cochez (offres Pro et Agence). Vous pouvez aussi interroger vos posts et vos résultats depuis Claude ou ChatGPT.",
+    visual: (
+      <p className="text-xs text-[#5a6b85] flex items-center gap-1.5"><Gauge size={13} className="text-[#ff5a5f]" /> Vos posts du mardi : 2,5× votre médiane</p>
+    ),
+  },
 ];
 
 export default function CommentCaMarchePage() {
