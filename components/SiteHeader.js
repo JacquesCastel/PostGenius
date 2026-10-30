@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { LogIn, LogOut, Menu, X } from "lucide-react";
+import { UserRound, LogOut, Menu, X } from "lucide-react";
 import LpMark from "./LpMark";
 import GoodbyeDialog from "./GoodbyeDialog";
 
@@ -90,7 +90,7 @@ export default function SiteHeader() {
               data-testid="site-login"
               className="flex w-9 h-9 rounded-full border border-[#ffd5d6] items-center justify-center text-[#1b2a4a] hover:text-[#ff5a5f] hover:border-[#ff5a5f] transition-colors"
             >
-              <LogIn size={17} />
+              <UserRound size={17} />
             </Link>
           )}
           <button
