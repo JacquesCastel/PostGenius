@@ -2,7 +2,7 @@ import Link from "next/link";
 import {
   Sparkles, Megaphone, Eye, Clock, BarChart3, Image as ImageIcon, Check, ChevronRight,
   ShieldCheck, CalendarDays, Layers, UserRound, Send, ThumbsUp, MessageSquare, Share2, Rss, ArrowRight, MapPin, Bell,
-  MessageCircle, Video, Languages, Smile, Mic, Heart, BookOpen, Users, Database,
+  MessageCircle, Video, Languages, Smile, Mic, Heart, BookOpen, Users, Database, Gauge, Plug,
 } from "lucide-react";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
@@ -10,7 +10,7 @@ import SiteFooter from "@/components/SiteFooter";
 export const metadata = {
   title: "Fonctionnalités — LinkeePost",
   description:
-    "Dictée vocale, base de connaissances, voix et éléments de langage, partage de liens, mémoire éditoriale, campagnes guidées, base de leads, veille, images et vidéos, programmation, statistiques : toutes les fonctions de LinkeePost.",
+    "Dictée vocale, base de connaissances, seconde vie d'un contenu (article, document, vidéo), campagnes guidées, coach, accès par assistant IA (Claude, ChatGPT), base de leads, veille, images et vidéos, programmation, statistiques, équipe et clients : toutes les fonctions de LinkeePost.",
   alternates: { canonical: "/fonctionnalites" },
 };
 
@@ -25,6 +25,7 @@ const PIPELINE = [
   { icon: ThumbsUp, label: "Interactions" },
   { icon: Users, label: "Leads" },
   { icon: BarChart3, label: "Statistiques" },
+  { icon: Gauge, label: "Coach" },
 ];
 
 // Petit composant de section : texte + visuel, alterné gauche/droite
@@ -369,6 +370,35 @@ export default function FonctionnalitesPage() {
         </Feature>
 
         {/* 4. Veille connectée */}
+        {/* Seconde vie d'un contenu */}
+        <Feature
+          reverse
+          tag="Seconde vie d'un contenu · offres Pro et Agence"
+          title="Un article, un webinaire, une étude de cas : une série de posts"
+          text="Déposez un contenu qui vous a déjà demandé du travail : LinkeePost en tire les faits, vous propose des angles, puis écrit un post par angle choisi, à partir des seuls faits que vous avez cochés. Vous relisez, puis la série est programmée sur votre rythme de publication."
+          points={[
+            "Un lien, un PDF ou un document Word, un texte collé, ou une vidéo ou un enregistrement audio",
+            "Les faits utilisables sont listés : vous cochez, corrigez, ajoutez ; chaque chiffre doit se retrouver dans le contenu d'origine",
+            "Jusqu'à 10 angles (chiffre, histoire, erreur, coulisses, question…), un post par angle, et par destination si vous publiez sur votre profil et sur votre page",
+            "Droits d'auteur : vous indiquez si le contenu est le vôtre ; s'il est d'un tiers, les posts sont reformulés avec vos mots et la source est citée en premier commentaire",
+            "Vidéo ou audio : 60 minutes au plus, transcription relue avant l'analyse, repère dans la vidéo pour chaque fait, citations reprises mot pour mot ; le fichier n'est jamais conservé",
+            "La série devient une campagne, à valider ou programmée ; minutes de vidéo et d'audio incluses chaque mois : 120 en Pro, 300 par client en Agence",
+          ]}
+        >
+          <Card>
+            <p className="text-xs font-semibold flex items-center gap-1.5 mb-3"><Layers size={15} className="text-[#ff5a5f]" /> Webinaire : chantier d&apos;école</p>
+            <div className="space-y-1.5 mb-3">
+              {["Le délai moyen de pose est passé de 6 à 4 semaines (vers 00:00)", "« La préparation en atelier change tout » (vers 05:00)"].map((f, i) => (
+                <div key={f} className="flex items-start gap-2 text-xs border border-gray-100 rounded-xl px-3 py-2">
+                  <span className="bg-[#fff1f1] text-[#ff5a5f] p-0.5 rounded-md shrink-0 mt-0.5"><Check size={11} /></span>
+                  <span className="text-[#33415c]">{f}{i === 1 && <span className="ml-1.5 text-[9px] font-bold uppercase tracking-wide text-[#6b21a8] bg-[#f3e8ff] rounded-full px-1.5 py-0.5">citation exacte</span>}</span>
+                </div>
+              ))}
+            </div>
+            <p className="text-xs text-[#5a6b85] flex items-center gap-1.5"><CalendarDays size={13} className="text-[#ff5a5f]" /> 3 posts à valider · publiés sur votre rythme</p>
+          </Card>
+        </Feature>
+
         <Feature
           tag="Veille"
           title="Une veille connectée à votre secteur"
@@ -535,6 +565,7 @@ export default function FonctionnalitesPage() {
             "Commentaires et réactions de chaque post publié",
             "Progression par campagne",
             "Impressions et engagement de vos pages entreprise",
+            "Tableau de bord en trois onglets (Aujourd'hui, Planning, Résultats) avec vos résultats des 30 derniers jours et leur variation, pour votre profil ou pour votre page",
           ]}
         >
           <Card>
@@ -547,6 +578,31 @@ export default function FonctionnalitesPage() {
               ))}
             </div>
             <p className="text-xs text-[#5a6b85] mt-3 flex items-center gap-1.5"><BarChart3 size={13} className="text-[#ff5a5f]" /> Engagement en hausse, semaine après semaine</p>
+          </Card>
+        </Feature>
+
+        {/* Le coach */}
+        <Feature
+          reverse
+          tag="Le coach"
+          title="Ce qui marche vraiment chez vous, chiffres à l'appui"
+          text="Le coach lit les résultats de vos propres posts et les compare à votre médiane, c'est-à-dire à ce que fait un post « normal » chez vous. Il ne prétend pas deviner l'algorithme de LinkedIn : il vous montre ce que disent vos chiffres, avec le nombre de posts et un niveau de confiance."
+          points={[
+            "Jour de la semaine, moment de la journée, humeur, thématique, format, lien dans le texte, longueur : trois repères au plus, les plus nets",
+            "Chaque conseil indique le nombre de posts sur lequel il repose et un niveau de confiance (faible, moyenne, bonne) ; « Pourquoi ? » montre les posts comparés",
+            "Avant 8 posts mesurés, il ne dit rien plutôt que d'inventer : une barre de progression montre ce qui manque",
+            "Créneaux conseillés dans le planning : un clic adopte vos meilleurs jours et votre heure, sans changer votre nombre de posts par semaine",
+            "Des comparaisons simples et vérifiables, pas d'apprentissage automatique : le coach n'envoie rien à un tiers et ne compare jamais votre compte à ceux d'autres utilisateurs",
+          ]}
+        >
+          <Card>
+            <p className="text-xs font-semibold flex items-center gap-1.5 mb-3"><Gauge size={15} className="text-[#ff5a5f]" /> Le coach</p>
+            <div className="rounded-xl border border-gray-100 p-3 mb-2">
+              <span className="text-[10px] font-semibold uppercase tracking-wide bg-[#e6f6ec] text-[#166534] rounded-full px-2 py-0.5">Marche mieux</span>
+              <p className="text-sm font-semibold mt-1.5">Vos posts publiés le mardi : 2,5× votre médiane</p>
+              <p className="text-xs text-gray-400 mt-1">Sur 6 posts · confiance moyenne · <span className="text-[#0a66c2] font-semibold">Pourquoi ?</span></p>
+            </div>
+            <p className="text-xs text-[#5a6b85] flex items-center gap-1.5"><CalendarDays size={13} className="text-[#ff5a5f]" /> ★ jour fort : mardi, vers 8 h 30 · Adopter ces créneaux</p>
           </Card>
         </Feature>
 
@@ -570,6 +626,55 @@ export default function FonctionnalitesPage() {
               <span className="text-xs font-semibold bg-green-600 text-white px-3 py-1.5 rounded-lg flex items-center gap-1"><Check size={12} /> Valider ce post</span>
               <span className="text-xs font-medium border border-gray-300 text-gray-600 px-3 py-1.5 rounded-lg">Demander une modification</span>
             </div>
+          </Card>
+        </Feature>
+
+        {/* Assistants IA (MCP) */}
+        <Feature
+          tag="Assistants IA · offres Pro et Agence"
+          title="Parlez de vos posts à Claude, ChatGPT ou Cursor"
+          text="Branchez votre assistant IA sur votre compte LinkeePost : demandez-lui vos derniers posts, vos résultats ou les conseils du coach, et faites-lui préparer des brouillons. Il ne programme ni ne publie rien : vous relisez dans LinkeePost."
+          points={[
+            "Claude (claude.ai) : connexion en un clic, sans clé à copier. ChatGPT (Codex), Claude Code et Cursor : clé personnelle",
+            "Il lit vos posts, votre planning, vos résultats et les conseils du coach ; il peut créer des brouillons et ajouter des sources si vous l'avez autorisé (décoché par défaut)",
+            "Aucun outil pour programmer ou publier : un brouillon reste un brouillon jusqu'à votre relecture",
+            "Retrait en un clic, avec effet immédiat, et e-mail à chaque nouvelle connexion",
+            "Offre Agence : vous choisissez le compte sur lequel l'assistant travaille, le vôtre ou celui d'un client",
+          ]}
+        >
+          <Card>
+            <p className="text-xs font-semibold flex items-center gap-1.5 mb-3"><Plug size={15} className="text-[#ff5a5f]" /> Dans votre assistant</p>
+            <div className="space-y-1.5">
+              <div className="text-xs bg-[#0a66c2] text-white rounded-lg px-2.5 py-1.5 ml-auto w-fit max-w-[85%]">Avec LinkeePost, montre-moi mes 5 derniers posts</div>
+              <div className="text-xs bg-gray-50 border border-gray-100 rounded-lg px-2.5 py-1.5 w-fit max-w-[85%]">Voici vos 5 derniers posts et leurs résultats : le post du 28/10 arrive en tête…</div>
+              <div className="text-xs bg-[#0a66c2] text-white rounded-lg px-2.5 py-1.5 ml-auto w-fit max-w-[85%]">Prépare-moi un brouillon sur ce sujet</div>
+            </div>
+            <p className="text-xs text-[#5a6b85] mt-3 flex items-center gap-1.5"><ShieldCheck size={13} className="text-[#ff5a5f]" /> Brouillon créé : jamais publié sans vous</p>
+          </Card>
+        </Feature>
+
+        {/* Équipe et clients (offre Agence) */}
+        <Feature
+          reverse
+          tag="Équipe et clients · offre Agence"
+          title="Votre équipe, vos clients : chacun voit ce qu'il doit voir"
+          text="Jusqu'à 25 clients et 5 utilisateurs. Le propriétaire de l'agence affecte les clients à ses collaborateurs : par défaut, chacun ne voit que les clients qui lui sont affectés."
+          points={[
+            "Affectation des clients aux collaborateurs, cloisonnement activé par défaut ; un membre retiré de l'agence perd l'accès aussitôt",
+            "Tableau de bord d'agence : l'état de tous les clients d'un coup d'œil, et gestion des clients",
+            "Planning d'agence avec filtres par client",
+            "LinkedIn par client : profil et/ou page",
+            "Notifications d'équipe, dans l'application et par e-mail : client affecté, nouveau membre, erreur de publication, récapitulatif quotidien, commentaires de page",
+          ]}
+        >
+          <Card>
+            <p className="text-xs font-semibold flex items-center gap-1.5 mb-3"><Users size={15} className="text-[#ff5a5f]" /> Mon agence</p>
+            {[["Client Alpha", "Camille · 3 posts à valider"], ["Client Beta", "Samir · rien en attente"]].map(([c, d]) => (
+              <div key={c} className="flex items-center justify-between text-xs border border-gray-100 rounded-xl px-3 py-2 mb-2">
+                <span className="font-semibold">{c}</span><span className="text-[#5a6b85]">{d}</span>
+              </div>
+            ))}
+            <p className="text-xs text-[#5a6b85] flex items-center gap-1.5"><Bell size={13} className="text-[#ff5a5f]" /> Chaque collaborateur ne voit que ses clients</p>
           </Card>
         </Feature>
 
@@ -612,6 +717,7 @@ export default function FonctionnalitesPage() {
               révoquez l'accès quand vous voulez. Publiez sur votre <strong>profil personnel</strong> et, selon
               votre offre, sur vos <strong>pages entreprise</strong>.
             </p>
+            <p className="text-sm mt-4"><Link href="/securite" className="font-semibold text-[#ff5a5f] hover:underline">Où sont vos données, comment elles sont protégées : sécurité et confidentialité →</Link></p>
           </Card>
         </section>
 
