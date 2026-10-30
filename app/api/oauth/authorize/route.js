@@ -26,6 +26,8 @@ export async function GET(req) {
     const client = await findClient(q.get("client_id"), q.get("redirect_uri"));
     const host = (() => { const u = new URL(q.get("redirect_uri")); return u.host || u.protocol; })();
     const base = { client: { name: client.name, host } };
+    // Vue support (lecture seule sur un compte client) : aucune action possible, ni connexion ni autorisation
+    if ((await getSessionData(req))?.support) return out({ ...base, support: true });
     const user = await sessionUser(req);
     if (!user) return out({ ...base, needLogin: true });
     const feat = await checkFeature(user.id, "campaigns", "L'accès par assistant (MCP)");

@@ -67,6 +67,10 @@ function Authorize() {
   useEffect(() => { load().catch(() => setFatal("Chargement impossible. Réessayez.")); }, [load]);
 
   const goBack = (params) => { const u = new URL(q.redirect_uri); for (const [k, v] of Object.entries(params)) u.searchParams.set(k, v); window.location.assign(u.toString()); };
+  const quitSupport = async () => {
+    setBusy(true);
+    try { await fetch("/api/agency/impersonate", { method: "DELETE" }); await load(); } finally { setBusy(false); }
+  };
   const deny = () => goBack({ error: "access_denied", ...(q.state ? { state: q.state } : {}) });
   const allow = async () => {
     setBusy(true); setError(null);
@@ -81,6 +85,14 @@ function Authorize() {
   if (fatal) return <Shell><div className={card} data-testid="oauth-fatal"><h1 className="text-lg font-extrabold">Connexion impossible</h1><p className="text-sm text-gray-700 mt-2">{fatal}</p></div></Shell>;
   if (!ctx) return <Shell><p className="text-sm text-gray-500">Chargement…</p></Shell>;
   const name = ctx.client.name;
+
+  if (ctx.support) return (
+    <Shell><div className={card} data-testid="oauth-support">
+      <h1 className="text-lg font-extrabold">Vous êtes en vue support</h1>
+      <p className="text-sm text-gray-700 mt-2">Ce navigateur affiche un compte client en lecture seule : aucune autorisation n&apos;est possible dans ce mode. Quittez la vue support, puis autorisez {name} depuis votre propre compte.</p>
+      <div className="flex gap-3 mt-5"><button type="button" onClick={quitSupport} disabled={busy} data-testid="oauth-support-quit" className={`${btn} text-white bg-[#d63b42] hover:bg-[#c2343a]`}>{busy ? "…" : "Quitter la vue support"}</button></div>
+    </div></Shell>
+  );
 
   if (ctx.needLogin) return (
     <Shell><div className={card}>
