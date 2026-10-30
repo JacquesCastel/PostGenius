@@ -20498,7 +20498,7 @@ export default function Home() {
               { id: "admin", label: "Administration", icon: ShieldCheck, group: "Administration" },
               { id: "content", label: "Contenu du site", icon: PenLine, group: "Administration" },
               { id: "messages", label: "Messages", icon: MessageSquare, group: "Administration" },
-              ...(user.isSuperAdmin ? [{ id: "tech", label: "Technique", icon: Gauge, group: "Administration" }] : []),
+              { id: "tech", label: "Technique", icon: Gauge, group: "Administration" },
             ]
           : []),
       ]
@@ -20544,7 +20544,7 @@ export default function Home() {
               { id: "admin", label: "Administration", icon: ShieldCheck, group: "Administration" },
               { id: "content", label: "Contenu du site", icon: PenLine, group: "Administration" },
               { id: "messages", label: "Messages", icon: MessageSquare, group: "Administration" },
-              ...(user.isSuperAdmin ? [{ id: "tech", label: "Technique", icon: Gauge, group: "Administration" }] : []),
+              { id: "tech", label: "Technique", icon: Gauge, group: "Administration" },
             ]
           : []),
       ];
