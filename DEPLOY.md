@@ -95,6 +95,7 @@ Caddy obtient le certificat HTTPS automatiquement dès que le DNS pointe.
   ```bash
   cd /opt/postgenius && ./deploy.sh
   ```
+  Voir la section 12 : garde-fous du déploiement (retour arrière, copie de la base, contrôle automatique).
   ⚠️ NE PAS faire `docker compose up -d --build` seul : sur ce serveur,
   `next build` exécuté par `docker build` (ou directement sur le volume monté)
   prérend la page d'accueil À VIDE (~5,9 Ko au lieu de ~71 Ko ; la page bascule
@@ -220,3 +221,62 @@ Sans les deux variables `UMAMI_*` du `.env`, rien n'est chargé.
 
 Vérifier : ouvrir le site en navigation privée, puis voir la visite apparaître dans Umami (« Temps réel »). Les visites de `/app` n'y figurent pas.
 La politique de confidentialité (anglais dans le code, français dans l'Administration) mentionne cette mesure.
+
+## 12. Déployer sans risque : garde-fous de `./deploy.sh`
+
+`./deploy.sh` fait maintenant sept choses, dans cet ordre, pour qu'un échec ne laisse rien de cassé :
+
+1. `git pull`, et rappel de la version en ligne (`cat .deployed-sha`) et de celle à mettre en ligne ;
+2. **vérification du moment** : avertit (et demande confirmation) si un post doit partir dans les 15 minutes ou en retard, ou si une
+   transcription vidéo est en cours. Un redémarrage peut les retarder ou les perdre. `FORCE=1 ./deploy.sh` passe outre ;
+3. **copie de la base Neon** si le schéma Prisma a changé depuis la version en ligne (branche `avant-deploy-AAAAMMJJ-HHMM`) ;
+4. **build dans un conteneur** (`scripts/build-in-container.sh`) : contrôle du schéma, build, et **seulement si le build réussit**, changement de
+   schéma de la base ;
+5. **mise en place** : l'ancien build est gardé dans `.prev/` ;
+6. redémarrage ;
+7. **contrôle automatique** (`scripts/smoke.sh`) : santé et base, page d'accueil non vide, pages publiques, métadonnées OAuth, et connexion réelle
+   si un compte de contrôle est défini. **S'il échoue, retour arrière automatique** à la version précédente.
+
+### Changement de schéma destructif
+
+Le contrôle du schéma classe la différence avec la base en AUCUN, AJOUT (rien n'est perdu) ou DESTRUCTIF (suppression de table ou de colonne,
+changement de type). Un changement destructif **est refusé** (le build n'est même pas lancé) et la différence est écrite dans `.schema-diff.sql`.
+Après l'avoir lue, et si c'est voulu : `ALLOW_DATA_LOSS=1 ./deploy.sh`.
+
+### Retour arrière manuel
+
+```bash
+cd /opt/postgenius && ./rollback.sh
+```
+Remet en ligne la version d'avant le dernier déploiement en une minute, sans refaire de build, puis la contrôle. **La base n'est pas rétablie** : les
+changements de schéma sont des ajouts, l'ancienne version fonctionne avec. Le code du dépôt reste à la dernière version : avant de redéployer,
+corrigez le problème ou annulez la fusion sur GitHub (« Revert »), sinon le prochain déploiement remettra en ligne la version retirée.
+Un seul retour arrière est possible (la version précédente est gardée une seule fois).
+
+### Réglages à ajouter dans `/opt/postgenius/.env` (facultatifs, recommandés)
+
+| Réglage | Rôle |
+|---|---|
+| `NEON_API_KEY`, `NEON_PROJECT_ID` | Copie de la base avant chaque changement de schéma. Clé : console.neon.tech → Account settings → API keys. Identifiant du projet : Settings du projet. |
+| `NEON_KEEP_BRANCHES=5` | Garde les 5 dernières copies `avant-deploy-…` et supprime les plus anciennes (jamais une autre branche). |
+| `SMOKE_EMAIL`, `SMOKE_PASSWORD` | Compte de contrôle : un compte ordinaire (jamais administrateur), pour tester la vraie connexion après chaque déploiement. |
+| `SMOKE_URL` | Adresse contrôlée (par défaut `https://postgenius.network`). À changer si le serveur ne peut pas joindre sa propre adresse publique : sinon le contrôle automatique est désactivé avec un avertissement. |
+
+Sans réglage Neon, le déploiement fonctionne mais affiche « SANS-SNAPSHOT » quand le schéma change : le seul filet est alors la sauvegarde
+automatique de Neon.
+
+### Surveillance extérieure (à créer une fois, gratuit)
+
+Sur https://uptimerobot.com (ou équivalent) : un moniteur « mot-clé » sur `https://postgenius.network/api/health`, qui cherche `"ok":true`, toutes les
+5 minutes, avec alerte par e-mail (et notification sur téléphone). `/api/health` répond 200 si l'application tourne ET joint la base, 503 sinon.
+Un second moniteur sur la page d'accueil. C'est ce qui vous prévient si le serveur lui-même s'arrête.
+
+### À savoir
+
+- **Quand déployer :** hors des créneaux de publication (les posts partent typiquement entre 7 h et 9 h UTC) et pas avec des transcriptions en cours.
+- **Journal :** `deploys.log` (début, copie de la base, résultat, retours arrière).
+- **Disque :** `.prev/` et `.rolledback/` occupent chacun à peu près la taille de `.next`. L'alerte d'espace disque de l'administration les inclut.
+- **Si `deploy.sh` lui-même a un défaut :** `./deploy.legacy.sh` (ancienne version : même résultat, sans les garde-fous).
+- **Banc d'essai :** `bash tests/deploy/run.sh` rejoue le déroulé complet, pannes comprises, avec des doubles de `docker` et `git`. À relancer après toute
+  modification de `deploy.sh`, `rollback.sh` ou des scripts de `scripts/`.
+- **Premier déploiement avec ce script :** à faire à un moment calme, en gardant la sortie sous les yeux.
