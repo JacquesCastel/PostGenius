@@ -5172,12 +5172,13 @@ function ContentAdminView({ showToast }) {
 }
 
 // ----------------------------------------------------------------
-// Pages légales (admin) : CGU, confidentialité, mentions légales
+// Pages légales (admin) : CGU, confidentialité, mentions légales, sécurité
 // ----------------------------------------------------------------
 const FOOTER_PAGE_OPTIONS = [
   { key: "cgu", label: "CGU" },
   { key: "confidentialite", label: "Confidentialité" },
   { key: "mentions-legales", label: "Mentions légales" },
+  { key: "securite", label: "Sécurité" },
 ];
 
 function FooterPagesAdmin({ showToast }) {
