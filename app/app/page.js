@@ -17158,6 +17158,14 @@ function McpKeysCard({ allowed, showToast }) {
   const [fresh, setFresh] = useState(null); // clé tout juste créée (visible une seule fois)
   const load = () => fetch("/api/api-keys").then(readJson).then((d) => setKeys(d.keys ?? [])).catch(() => setKeys([]));
   useEffect(() => { if (allowed) load(); }, [allowed]);
+  const [grants, setGrants] = useState([]); // assistants connectés par OAuth (claude.ai…)
+  const loadGrants = () => fetch("/api/oauth/grants").then(readJson).then((d) => setGrants(d.grants ?? [])).catch(() => setGrants([]));
+  useEffect(() => { loadGrants(); }, []);
+  const removeGrant = async (g) => {
+    if (!window.confirm(`Retirer l'accès de « ${g.name} » ? L'assistant perdra l'accès à votre compte immédiatement.`)) return;
+    const res = await fetch(`/api/oauth/grants/${g.id}`, { method: "DELETE" });
+    if (res.ok) { loadGrants(); showToast?.("Accès retiré"); } else showToast?.("Retrait impossible");
+  };
   const origin = typeof window !== "undefined" ? window.location.origin : "";
   const create = async () => {
     setBusy(true); setError(null);
@@ -17178,7 +17186,20 @@ function McpKeysCard({ allowed, showToast }) {
   return (
     <div className="bg-white border border-gray-100 rounded-2xl p-5" data-testid="mcp-card">
       <p className="text-xs font-bold tracking-wider uppercase text-[#5a6b85] mb-1">Assistants (MCP)</p>
-      <p className="text-sm text-gray-700 leading-relaxed">Branchez Claude Code, Cursor ou un autre assistant compatible sur votre compte, avec une clé personnelle. Il peut lire vos posts, votre planning, vos résultats et les conseils du coach, et créer des <b>brouillons</b> que vous relirez. Il ne programme ni ne publie rien.</p>
+      <p className="text-sm text-gray-700 leading-relaxed">Branchez Claude (claude.ai), Claude Code, Cursor ou un autre assistant compatible sur votre compte : dans claude.ai, ajoutez un connecteur personnalisé avec l&apos;adresse <code className="text-xs bg-gray-100 rounded px-1">{origin}/api/mcp</code> ; pour les outils en ligne de commande, créez une clé personnelle. Il peut lire vos posts, votre planning, vos résultats et les conseils du coach, et créer des <b>brouillons</b> que vous relirez. Il ne programme ni ne publie rien.</p>
+      {grants.length > 0 && (
+        <div className="mt-3" data-testid="mcp-grants">
+          <p className="text-sm font-bold mb-1">Assistants connectés</p>
+          <ul className="divide-y divide-gray-100 border border-gray-100 rounded-xl">
+            {grants.map((g) => (
+              <li key={g.id} className="flex items-center gap-3 px-3 py-2 flex-wrap" data-testid="mcp-grant">
+                <div className="min-w-0 flex-1"><p className="text-sm font-semibold truncate">{g.name}{g.subject ? ` · ${g.subject}` : ""}</p><p className="text-xs text-gray-500">{g.write ? "lecture et brouillons" : "lecture seule"} · connecté le {new Date(g.createdAt).toLocaleDateString("fr-FR")} · {g.lastUsedAt ? `utilisé le ${new Date(g.lastUsedAt).toLocaleDateString("fr-FR")}` : "jamais utilisé"}</p></div>
+                <button type="button" onClick={() => removeGrant(g)} data-testid="mcp-grant-remove" className="text-xs font-semibold text-[#b42318] hover:underline">Retirer</button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
       {!allowed ? (
         <p className="text-sm font-semibold text-[#7a4b00] bg-[#fff4d6] rounded-lg px-3 py-2 mt-3" data-testid="mcp-locked">Cette fonction est incluse dans les offres Pro et Agence.</p>
       ) : (
