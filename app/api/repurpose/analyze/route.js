@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getEffectiveUserId as getUserId } from "@/lib/session";
 import { checkFeature, limitBody } from "@/lib/gating";
 import { rateLimit } from "@/lib/ratelimit";
-import { readContent, analyzeContent, cleanRights, RepurposeError, MIN_CONTENT_CHARS } from "@/lib/repurpose";
+import { readContent, analyzeContent, cleanRights, cleanSpeakers, RepurposeError, MIN_CONTENT_CHARS } from "@/lib/repurpose";
 import { createKnowledgeSource, guardKnowledgeAdd } from "@/lib/knowledge";
 import { MAX_FILE_BYTES } from "@/lib/docExtract";
 
@@ -25,6 +25,9 @@ export async function POST(req) {
     let addToDatalake = false;
     let contextId = null;
     let rightsIn = {};
+    let media = false; // texte issu d'une vidéo ou d'un enregistrement (transcription relue)
+    let speakers = false;
+    let videoUrl = null;
     if ((req.headers.get("content-type") ?? "").includes("multipart/form-data")) {
       const declared = Number(req.headers.get("content-length") ?? 0);
       if (declared > MAX_FILE_BYTES + 200_000) throw new RepurposeError("Fichier trop volumineux (8 Mo au maximum).", 413);
@@ -42,25 +45,30 @@ export async function POST(req) {
       addToDatalake = body.addToDatalake === true;
       contextId = body.contextId || null;
       rightsIn = { rights: body.rights, credit: body.credit };
+      media = body.kind === "text" && body.media === true;
+      speakers = body.speakers === true;
+      // Lien public de la vidéo (facultatif) : mis en lien dans les posts, jamais lu par LinkeePost
+      if (media && body.videoUrl) { try { const u = new URL(String(body.videoUrl).trim()); if (/^https?:$/.test(u.protocol) && u.href.length <= 500) videoUrl = u.href; } catch {} }
     }
     const content = await readContent(input);
     // Droits sur le contenu : à déclarer avant toute lecture par l'IA
     const rt = cleanRights({ ...rightsIn, url: content.kind === "link" ? content.origin : null });
+    cleanSpeakers({ media, speakers });
     if (content.text.length < MIN_CONTENT_CHARS) throw new RepurposeError(`Ce contenu est trop court (${content.text.length} caractères) : il en faut au moins ${MIN_CONTENT_CHARS} pour en tirer des faits.`);
-    const analysis = await analyzeContent(userId, { title: content.title, text: content.text });
+    const analysis = await analyzeContent(userId, { title: content.title, text: content.text, media });
 
     // Ajout au datalake (facultatif) : ne bloque jamais la suite
     let datalake = null;
     if (addToDatalake) {
       try {
         const quota = await guardKnowledgeAdd(userId);
-        await createKnowledgeSource(userId, { kind: content.kind, origin: content.origin, title: analysis.title, text: content.text, contextId }, quota);
+        await createKnowledgeSource(userId, { kind: content.kind, origin: content.origin, title: analysis.title, text: media ? content.text.replace(/^\[\d+(?::\d{2}){1,2}\]\s*/gm, "") : content.text, contextId }, quota);
         datalake = { added: true };
       } catch (e) {
         datalake = { added: false, reason: e.message };
       }
     }
-    return NextResponse.json({ source: { kind: content.kind, origin: content.origin, url: content.kind === "link" ? content.origin : null, title: analysis.title, chars: content.text.length, rights: rt.rights, credit: rt.credit }, summary: analysis.summary, facts: analysis.facts, angles: analysis.angles, datalake });
+    return NextResponse.json({ source: { kind: media ? "media" : content.kind, origin: content.origin, url: media ? videoUrl : content.kind === "link" ? content.origin : null, title: analysis.title, chars: content.text.length, rights: rt.rights, credit: rt.credit }, summary: analysis.summary, facts: analysis.facts, angles: analysis.angles, datalake });
   } catch (e) {
     if (e instanceof RepurposeError) return NextResponse.json({ error: e.message }, { status: e.status });
     console.error("[repurpose] lecture :", e);
