@@ -5788,8 +5788,8 @@ function TechAdminView({ showToast, currentEmail }) {
             {sched?.lastRunAt ? `dernier passage ${techAgo(sched.lastRunAt)}${sched.lastError ? ` · erreur : ${sched.lastError}` : ""} · ${sched.lastPublished} publié(s), ${sched.lastFailed} échec(s) au dernier passage` : "pas encore passé depuis le démarrage"}
             {p?.lateScheduled > 0 && ` · ${p.lateScheduled} post(s) programmé(s) en retard de plus de 10 min`}
           </TechRow>
-          <TechRow level={h ? (h.disk?.percent >= 90 ? "bad" : h.disk?.percent >= 80 ? "warn" : "ok") : "neutral"} label="Serveur et disque">
-            {h ? `disque ${h.disk?.percent ?? "?"} % utilisé · rapport ${techAgo(h.generatedAt)}` : "rapport du serveur indisponible (le cron health-check.sh n'est pas passé)"}
+          <TechRow level={h ? (h.disk?.usedPercent >= 90 ? "bad" : h.disk?.usedPercent >= 80 ? "warn" : "ok") : "neutral"} label="Serveur et disque">
+            {h ? `disque ${h.disk?.usedPercent ?? "?"} % utilisé · rapport ${techAgo(h.generatedAt)}` : "rapport du serveur indisponible (le cron health-check.sh n'est pas passé)"}
           </TechRow>
           <TechRow level={backup ? (backup.alerts?.length ? "bad" : "ok") : "neutral"} label="Sauvegardes">
             {backup ? (backup.alerts?.length ? backup.alerts.map((a) => a.message ?? a).join(" · ") : "à jour") : "état inconnu"}
