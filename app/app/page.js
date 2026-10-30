@@ -260,7 +260,7 @@ function AuthScreen({ onAuth }) {
   // Les invitations d'équipe (agence) n'ont besoin que d'un e-mail et d'un mot de passe
   const useQuestions = mode === "register" && !invite?.team;
   if (useQuestions && regStep === "questions") {
-    const inputCls = "w-full border border-gray-300 rounded-xl px-3.5 py-3 text-[15px] focus:outline-none focus:ring-2 focus:ring-[#ff5a5f] bg-white";
+    const inputCls = "w-full border border-gray-300 rounded-xl px-3.5 py-3 text-base sm:text-[15px] focus:outline-none focus:ring-2 focus:ring-[#ff5a5f] bg-white";
     const lbl = "block text-[13px] font-semibold text-gray-700 mb-1.5";
     const ex = "text-xs text-gray-500 mt-1.5 leading-snug";
     const ready = answers.name.trim() && answers.fonction.trim();
@@ -348,7 +348,7 @@ function AuthScreen({ onAuth }) {
       <main className="flex-1 flex items-center">
         <div className="w-full max-w-6xl mx-auto grid lg:grid-cols-2 gap-10 lg:gap-16 items-center px-6 py-12">
           {/* Gauche — communication centrée + visuel */}
-          <div className="flex flex-col items-center text-center">
+          <div className={`flex-col items-center text-center ${mode === "register" ? "flex" : "hidden lg:flex"}`}>
             <h1 className="text-4xl md:text-5xl font-extrabold leading-tight max-w-lg">
               Créez vos posts et <span className="text-[#ff5a5f]">campagnes LinkedIn</span> avec l'IA
             </h1>
@@ -456,30 +456,42 @@ function AuthScreen({ onAuth }) {
             {mode === "register" && !useQuestions && (
               <input
                 type="text"
+                name="name"
+                autoComplete="name"
                 placeholder="Votre nom"
                 value={fields.name}
                 onChange={(e) => setFields((f) => ({ ...f, name: e.target.value }))}
-                className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
+                className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
               />
             )}
             <input
               type="email"
+              name="email"
+              inputMode="email"
+              autoComplete={mode === "register" ? "email" : "username"}
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
+              data-testid="auth-email"
               required
               placeholder="Email"
               value={fields.email}
               readOnly={Boolean(invite?.token) && mode === "register"}
               onChange={(e) => setFields((f) => ({ ...f, email: e.target.value }))}
-              className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
+              className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
             />
             {mode !== "forgot" && (
               <input
                 type="password"
+                name="password"
+                autoComplete={mode === "register" ? "new-password" : "current-password"}
+                data-testid="auth-password"
                 required
                 minLength={8}
                 placeholder={mode === "register" ? "Mot de passe (8 caractères min.)" : "Mot de passe"}
                 value={fields.password}
                 onChange={(e) => setFields((f) => ({ ...f, password: e.target.value }))}
-                className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
+                className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
               />
             )}
             {error && (
@@ -495,6 +507,7 @@ function AuthScreen({ onAuth }) {
             <button
               type="submit"
               disabled={loading}
+              data-testid="auth-submit"
               className="w-full bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white font-semibold py-3 rounded-full flex items-center justify-center gap-2 shadow-lg shadow-rose-300/40 transition-colors"
             >
               {loading && <RefreshCw size={16} className="animate-spin" />}
@@ -516,7 +529,7 @@ function AuthScreen({ onAuth }) {
                 setMode("forgot");
                 setError(null);
               }}
-              className="text-xs text-gray-500 hover:text-[#ff5a5f] mt-3 block mx-auto"
+              className="text-sm sm:text-xs text-gray-500 hover:text-[#ff5a5f] mt-3 py-2 block mx-auto"
             >
               Mot de passe oublié ?
             </button>
@@ -528,7 +541,7 @@ function AuthScreen({ onAuth }) {
                 setError(null);
                 setInfo(null);
               }}
-              className="text-xs text-gray-500 hover:text-[#ff5a5f] mt-3 block mx-auto"
+              className="text-sm sm:text-xs text-gray-500 hover:text-[#ff5a5f] mt-3 py-2 block mx-auto"
             >
               ← Retour à la connexion
             </button>
@@ -20309,6 +20322,8 @@ export default function Home() {
   };
   const handleNav = (item) => setView(item.id);
   const isLocked = (item) => item.requires && !planAllows(user, item.requires);
+  // Logo : toujours le tableau de bord (première entrée du menu)
+  const goHome = () => { const home = navEntries().find((e) => !e.header); if (home) { setMobileMenuOpen(false); handleNav(home); } };
   const onNav = (item) =>
     isLocked(item) ? setUpgrade({ feature: item.featureLabel, requires: item.requires }) : handleNav(item);
 
@@ -20784,7 +20799,7 @@ export default function Home() {
 
       {/* Sidebar */}
       <aside className="w-60 bg-white h-screen sticky top-0 hidden md:flex flex-col shrink-0 border-r border-gray-100">
-        <div className="flex items-center gap-2.5 px-5 py-6">
+        <button type="button" onClick={goHome} data-testid="app-logo" aria-label="Retour au tableau de bord" className="flex items-center gap-2.5 px-5 py-6 text-left w-full">
           <div className="bg-[#ff5a5f] text-white p-2 rounded-xl shadow-md shadow-[#ffd5d6]">
             <LpMark size={20} />
           </div>
@@ -20792,7 +20807,7 @@ export default function Home() {
             <p className="font-bold leading-tight">LinkeePost</p>
             <p className="text-xs text-gray-400">Campagnes LinkedIn</p>
           </div>
-        </div>
+        </button>
         <nav className="flex-1 px-3 space-y-0.5 mt-1 overflow-y-auto">{navEntries().map((e) => (e.header ? navHeader(e.header) : navBtn(e)))}</nav>
         <div className="px-3 mt-2">
           {user.isSuperAdmin ? (
@@ -20866,7 +20881,7 @@ export default function Home() {
             <Menu size={20} />
           </button>
           <div className="flex items-center gap-1.5 text-sm font-semibold min-w-0 truncate">
-            <LpMark size={16} />
+            <button type="button" onClick={goHome} data-testid="app-logo-mobile" aria-label="Retour au tableau de bord" className="shrink-0 p-1 -m-1"><LpMark size={16} /></button>
             {VIEW_TITLES[view] ?? "LinkeePost"}
           </div>
           <button onClick={logout} className="text-gray-400 p-1.5 ml-auto shrink-0" title="Se déconnecter">

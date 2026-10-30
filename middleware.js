@@ -19,6 +19,21 @@ const SUPPORT_EXIT = /^\/api\/(agency\/impersonate|auth\/logout)$/;
 
 export async function middleware(req) {
   const { pathname } = req.nextUrl;
+  // Page d'accueil du site : une personne connectée retrouve toujours son tableau de bord (logo, retour arrière, lien enregistré).
+  // La vue support (administrateur sur un compte client) garde l'accès au site.
+  if (pathname === "/") {
+    const session = await getSessionData(req);
+    if (session?.userId && !session.support) {
+      // Adresse absolue construite avec l'adresse que le navigateur a demandée (Host, X-Forwarded-Proto transmis par Caddy) : celle de
+      // req.nextUrl reprendrait le nom d'hôte interne du serveur dans Docker, donc une mauvaise adresse et un cookie de session perdu.
+      const host = (req.headers.get("x-forwarded-host") ?? req.headers.get("host") ?? "").split(",")[0].trim();
+      if (/^[a-z0-9.-]+(:\d{1,5})?$/i.test(host)) {
+        const proto = (req.headers.get("x-forwarded-proto") ?? "").split(",")[0].trim() === "http" ? "http" : host.startsWith("localhost") || host.startsWith("127.0.0.1") ? "http" : "https";
+        return NextResponse.redirect(new URL("/app", `${proto}://${host}`), { headers: { "Cache-Control": "no-store" } });
+      }
+    }
+    return NextResponse.next();
+  }
   const isExit = SUPPORT_EXIT.test(pathname) && (req.method === "DELETE" || pathname.endsWith("/logout"));
   if (!SAFE_METHODS.has(req.method) && !isExit) {
     const session = await getSessionData(req);
@@ -37,5 +52,5 @@ export async function middleware(req) {
 }
 
 export const config = {
-  matcher: "/api/:path*",
+  matcher: ["/", "/api/:path*"],
 };
