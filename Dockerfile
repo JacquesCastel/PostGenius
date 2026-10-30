@@ -15,9 +15,9 @@ ENV NODE_ENV=production
 ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
 
-# openssl requis par le moteur Prisma ; utilisateur non-root
+# openssl requis par le moteur Prisma ; ffmpeg (et ffprobe) pour extraire l'audio des vidéos de « Seconde vie d'un contenu » ; utilisateur non-root
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends openssl \
+    && apt-get install -y --no-install-recommends openssl ffmpeg \
     && rm -rf /var/lib/apt/lists/* \
     && groupadd -r app && useradd -r -g app app
 

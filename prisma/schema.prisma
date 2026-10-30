@@ -57,6 +57,7 @@ model User {
   statSnapshots StatSnapshot[]
   apiKeys   ApiKey[]
   oauthGrants OAuthGrant[]
+  mediaJobs MediaJob[]
   moments  Moment[]
 
   // --- Offre / abonnement ---
@@ -471,7 +472,7 @@ model UsageEvent {
   id           String   @id @default(cuid())
   userId       String
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  kind         String   @default("claude") // claude | image | transcription
+  kind         String   @default("claude") // claude | image | transcription | media
   context      String? // post, série, variantes, retouche, campagne, cadrage, sources, image...
   inputTokens  Int      @default(0)
   outputTokens Int      @default(0)
@@ -1135,4 +1136,26 @@ model OAuthToken {
 
   @@index([grantId])
   @@index([expiresAt])
+}
+
+// Vidéo ou audio déposé dans « Seconde vie d'un contenu » : envoyé par morceaux, converti en audio, transcrit en arrière-plan.
+// Le fichier n'est jamais gardé (supprimé dès la transcription faite) ; la transcription est conservée au plus 24 h, le temps de la relecture.
+model MediaJob {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status      String   @default("uploading") // uploading | queued | processing | done | error
+  step        String? // extraction | transcription
+  progress    Int      @default(0) // 0 à 100
+  fileName    String
+  sizeBytes   Int
+  receivedBytes Int    @default(0)
+  language    String   @default("fr")
+  durationSec Int?
+  transcript  String?  @db.Text
+  error       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId, createdAt])
 }

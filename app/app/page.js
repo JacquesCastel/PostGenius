@@ -10438,6 +10438,24 @@ function RepurposeView({ profile, linkedin, orgs, canCampaigns, showToast, onGoC
   const [firstCommentOn, setFirstCommentOn] = useState(true);
   const [needsValidation, setNeedsValidation] = useState(true);
   const [done, setDone] = useState(null);
+  // Vidéo ou audio : fichier envoyé par morceaux, transcrit en arrière-plan, puis relu avant l'analyse
+  const [mediaFile, setMediaFile] = useState(null);
+  const [mediaText, setMediaText] = useState(""); // transcription collée (Zoom, Teams, Meet, YouTube Studio)
+  const [videoUrl, setVideoUrl] = useState("");
+  const [mediaLang, setMediaLang] = useState("fr");
+  const [speakers, setSpeakers] = useState(false); // les personnes qui parlent ont accepté d'être citées
+  const [mediaInfo, setMediaInfo] = useState(null); // { maxMb, maxMinutes, usedSeconds, limitSeconds }
+  const [mediaPhase, setMediaPhase] = useState("idle"); // idle | uploading | processing | review
+  const [mediaPct, setMediaPct] = useState(0);
+  const [mediaStep, setMediaStep] = useState("");
+  const [transcript, setTranscript] = useState("");
+  const mediaJobRef = useRef(null);
+  const mediaStop = useRef(false);
+  useEffect(() => () => { mediaStop.current = true; }, []);
+  useEffect(() => {
+    if (mode !== "media" || mediaInfo) return;
+    fetch("/api/repurpose/media").then(readJson).then((d) => { if (d?.maxMb) { setMediaInfo(d); setMediaLang(d.language || "fr"); } }).catch(() => {});
+  }, [mode, mediaInfo]);
 
   const pageOptions = (linkedin?.orgConnected ? orgs ?? [] : []).filter((o) => o?.urn);
   const targets = [{ v: "person", label: "Mon profil" }, ...pageOptions.map((o) => ({ v: o.urn, label: `Ma page « ${o.name || "entreprise"} »` })), ...(linkedin?.connected ? pageOptions.map((o) => ({ v: `both:${o.urn}`, label: `Les deux : profil et page « ${o.name || "entreprise"} »` })) : [])];
@@ -10456,7 +10474,68 @@ function RepurposeView({ profile, linkedin, orgs, canCampaigns, showToast, onGoC
     return d;
   };
 
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  const mediaApi = async (path, init) => {
+    const res = await fetch(path, init);
+    const d = await readJson(res);
+    if (!res.ok) throw Object.assign(new Error(d.error || "Une erreur est survenue."), { data: d, status: res.status });
+    return d;
+  };
+  const dropMediaJob = () => { const id = mediaJobRef.current; mediaJobRef.current = null; if (id) fetch(`/api/repurpose/media/${id}`, { method: "DELETE" }).catch(() => {}); };
+  const cancelMedia = () => { mediaStop.current = true; dropMediaJob(); setMediaPhase("idle"); setTranscript(""); setBusy(false); };
+
+  // Envoi par morceaux (reprend où le serveur en est en cas de décalage), puis suivi du traitement jusqu'à la transcription
+  const uploadMedia = async () => {
+    setBusy(true); setError(null); mediaStop.current = false;
+    try {
+      if (mediaInfo && mediaFile.size > mediaInfo.maxMb * 1048576) throw new Error(`Fichier trop volumineux : ${mediaInfo.maxMb} Mo au maximum. Vous pouvez aussi coller la transcription.`);
+      const job = await mediaApi("/api/repurpose/media", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: mediaFile.name, size: mediaFile.size, language: mediaLang }) });
+      mediaJobRef.current = job.job.id;
+      const chunk = job.chunkBytes || 8 * 1048576;
+      setMediaPhase("uploading"); setMediaPct(0);
+      let offset = 0;
+      while (offset < mediaFile.size) {
+        if (mediaStop.current) return;
+        const end = Math.min(offset + chunk, mediaFile.size);
+        let sent = false;
+        for (let attempt = 0; attempt < 3 && !sent; attempt++) {
+          try { await mediaApi(`/api/repurpose/media/${job.job.id}/chunk?offset=${offset}`, { method: "POST", headers: { "Content-Type": "application/octet-stream" }, body: mediaFile.slice(offset, end) }); sent = true; }
+          catch (e) { if (e.status === 409 && typeof e.data?.receivedBytes === "number") { offset = e.data.receivedBytes; sent = null; break; } if (attempt === 2 || (e.status && e.status < 500)) throw e; await sleep(1500); }
+        }
+        if (sent === null) continue;
+        offset = end; setMediaPct(Math.round((offset / mediaFile.size) * 100));
+      }
+      await mediaApi(`/api/repurpose/media/${job.job.id}/start`, { method: "POST" });
+      setMediaPhase("processing"); setMediaStep("extraction"); setMediaPct(1);
+      for (;;) {
+        await sleep(2500);
+        if (mediaStop.current) return;
+        const j = await mediaApi(`/api/repurpose/media/${job.job.id}`);
+        setMediaStep(j.step || ""); setMediaPct(j.progress || 0);
+        if (j.status === "error") throw new Error(j.error || "Le traitement a échoué.");
+        if (j.status === "done") { setTranscript(j.transcript || ""); setMediaPhase("review"); break; }
+      }
+    } catch (e) {
+      dropMediaJob(); setMediaPhase("idle"); fail(e);
+    } finally { setBusy(false); }
+  };
+
+  // Analyse du texte (transcription relue ou collée) : mêmes faits et angles que pour un article, avec repères horaires
+  const analyzeMedia = async (text) => {
+    setBusy(true); setError(null);
+    try {
+      const d = await call("/api/repurpose/analyze", { kind: "text", media: true, text, title: (mediaFile?.name || "Vidéo").replace(/\.[a-z0-9]{2,5}$/i, ""), videoUrl: videoUrl.trim() || undefined, speakers, addToDatalake, contextId: contextId || null, rights, credit });
+      dropMediaJob(); setMediaPhase("idle"); setTranscript("");
+      setAnalysis(d);
+      setFacts(d.facts.map((f) => ({ ...f, on: true })));
+      setAngles(d.angles.map((a, i) => ({ ...a, on: i < 3 })));
+      setStep(2);
+      if (d.datalake?.added === false) showToast?.(`Contenu non ajouté au datalake : ${d.datalake.reason}`);
+    } catch (e) { fail(e); } finally { setBusy(false); }
+  };
+
   const readIt = async () => {
+    if (mode === "media") { if (mediaFile) await uploadMedia(); else await analyzeMedia(mediaText); return; }
     setBusy(true); setError(null);
     try {
       let d;
@@ -10495,7 +10574,7 @@ function RepurposeView({ profile, linkedin, orgs, canCampaigns, showToast, onGoC
       const d = await call("/api/repurpose/schedule", {
         name: `Seconde vie : ${analysis.source.title}`.slice(0, 80), theme: analysis.source.title,
         factsText: chosenFacts.map((f) => f.text.trim()).join("\n"), mood: mood || undefined, contextId: contextId || null, needsValidation,
-        firstComment: firstCommentOn && analysis.source.url ? `Source : ${analysis.source.title} ${analysis.source.url}` : null,
+        firstComment: firstCommentOn && analysis.source.url ? `${analysis.source.kind === "media" ? "Vidéo complète" : "Source"} : ${analysis.source.title} ${analysis.source.url}` : null,
         rights: analysis.source.rights, credit: analysis.source.credit, sourceUrl: analysis.source.url,
         posts: posts.map((p) => ({ angleTitle: p.angleTitle, texts: p.texts.map((t) => ({ target: t.target, text: t.text, original: t.original })) })),
       });
@@ -10504,7 +10583,7 @@ function RepurposeView({ profile, linkedin, orgs, canCampaigns, showToast, onGoC
     } catch (e) { fail(e); } finally { setBusy(false); }
   };
 
-  const restart = () => { setRights(""); setCredit(""); setStep(1); setAnalysis(null); setFacts([]); setAngles([]); setPosts([]); setDone(null); setError(null); setUrl(""); setText(""); setFile(null); setFileKey((k) => k + 1); setCustom(""); };
+  const restart = () => { setRights(""); setCredit(""); setStep(1); setAnalysis(null); setFacts([]); setAngles([]); setPosts([]); setDone(null); setError(null); setUrl(""); setText(""); setFile(null); setFileKey((k) => k + 1); setCustom(""); dropMediaJob(); setMediaFile(null); setMediaText(""); setVideoUrl(""); setSpeakers(false); setMediaPhase("idle"); setTranscript(""); };
   const card = "bg-white border border-[#e8ecf2] rounded-[18px] px-5 py-4";
   const lb = "block text-xs font-bold tracking-wider uppercase text-[#5a6b85] mb-2";
   const btn = "text-sm font-bold text-white bg-[#d63b42] hover:bg-[#c2343a] disabled:opacity-50 px-4 py-2.5 rounded-xl";
@@ -10530,7 +10609,7 @@ function RepurposeView({ profile, linkedin, orgs, canCampaigns, showToast, onGoC
     <main className="max-w-3xl mx-auto p-6 space-y-4" data-testid="repurpose">
       <div>
         <h2 className="text-xl font-extrabold text-[#1b2a4a]">Donner une seconde vie à un contenu</h2>
-        <p className="text-sm text-[#5a6b85] mt-0.5">Un article, une étude de cas, un document : vous obtenez une série de posts tirés de ce contenu, et de rien d&apos;autre.</p>
+        <p className="text-sm text-[#5a6b85] mt-0.5">Un article, une étude de cas, un document, une vidéo : vous obtenez une série de posts tirés de ce contenu, et de rien d&apos;autre.</p>
       </div>
       {step < 4 && (
         <ol className="flex gap-2" data-testid="repurpose-steps">
@@ -10541,15 +10620,56 @@ function RepurposeView({ profile, linkedin, orgs, canCampaigns, showToast, onGoC
       )}
       {error && <p role="alert" className="text-sm text-[#b42318] bg-[#fef2f2] border border-[#fecaca] rounded-xl px-3 py-2" data-testid="repurpose-error">{error}</p>}
 
-      {step === 1 && (
+      {step === 1 && mediaPhase !== "idle" && (
+        <div className={card} data-testid="repurpose-media-panel">
+          {mediaPhase !== "review" ? (
+            <div>
+              <span className={lb}>{mediaPhase === "uploading" ? "Envoi du fichier" : mediaStep === "transcription" ? "Transcription en cours" : "Extraction de l'audio"}</span>
+              <div className="h-2 rounded-full bg-[#e8ecf2] my-2" role="progressbar" aria-valuenow={mediaPct} aria-valuemin={0} aria-valuemax={100} data-testid="repurpose-media-progress"><div className="h-2 rounded-full bg-[#ff5a5f] transition-all" style={{ width: `${mediaPct}%` }} /></div>
+              <p className="text-[13px] text-[#33415c]" data-testid="repurpose-media-status">{mediaPhase === "uploading" ? `${mediaPct} % envoyé : gardez cette page ouverte.` : `${mediaPct} % : environ 1 minute de traitement pour 10 minutes de vidéo. Gardez cette page ouverte.`}</p>
+              <button type="button" onClick={cancelMedia} data-testid="repurpose-media-cancel" className={`${ghost} mt-2`}>Annuler</button>
+            </div>
+          ) : (
+            <div data-testid="repurpose-media-review">
+              <span className={lb}>Relisez la transcription avant l&apos;analyse</span>
+              <p className="text-xs text-[#5a6b85] mb-2">Une transcription automatique peut se tromper sur un chiffre ou un nom propre : corrigez-les ici. Les repères [mm:ss] marquent le début de chaque tranche de 5 minutes ; ils servent à retrouver un passage dans la vidéo.</p>
+              <textarea rows={14} value={transcript} onChange={(e) => setTranscript(e.target.value)} data-testid="repurpose-media-transcript" className="w-full border border-[#cbd5e1] rounded-xl px-3 py-2.5 text-[13px] leading-relaxed" />
+              <label className="flex items-center gap-2 text-[13px] text-[#33415c] mt-3"><input type="checkbox" checked={addToDatalake} onChange={(e) => setAddToDatalake(e.target.checked)} data-testid="repurpose-media-datalake" /> Garder la transcription dans mon datalake éditorial</label>
+              <p className="text-xs text-[#5a6b85] mt-1">Sinon, elle est effacée dès que l&apos;analyse est faite (au plus tard après 24 h). La vidéo, elle, n&apos;est jamais conservée.</p>
+              <div className="flex justify-between mt-4"><button type="button" onClick={cancelMedia} disabled={busy} className={ghost}>Annuler</button><button type="button" onClick={() => analyzeMedia(transcript)} disabled={busy || transcript.trim().length < 50} data-testid="repurpose-media-analyze" className={btn}>{busy ? "Lecture en cours…" : "C'est bon, analyser →"}</button></div>
+            </div>
+          )}
+        </div>
+      )}
+      {step === 1 && mediaPhase === "idle" && (
         <div className={card} data-testid="repurpose-step1">
           <div className="flex gap-1.5 mb-3" role="tablist" aria-label="Type de contenu">
-            {[["link", "🔗 Un lien"], ["file", "📄 Un fichier"], ["text", "📝 Un texte"]].map(([k, l]) => (
-              <button key={k} type="button" role="tab" aria-selected={mode === k} onClick={() => { setMode(k); setError(null); }} data-testid={`repurpose-mode-${k}`} className={`text-[13px] font-semibold px-3 py-1.5 rounded-full border ${mode === k ? "bg-[#ffe3e4] border-[#f3a3a6] text-[#a3242a]" : "bg-white border-[#cbd5e1] text-[#33415c]"}`}>{l}</button>
+            {[["link", "🔗 Un lien"], ["file", "📄 Un fichier"], ["text", "📝 Un texte"], ["media", "🎬 Vidéo ou audio"]].map(([k, l]) => (
+              <button key={k} type="button" role="tab" aria-selected={mode === k} onClick={() => { if (k === "media") setAddToDatalake(false); else if (mode === "media" && rights !== "third") setAddToDatalake(true); setMode(k); setError(null); }} data-testid={`repurpose-mode-${k}`} className={`text-[13px] font-semibold px-3 py-1.5 rounded-full border ${mode === k ? "bg-[#ffe3e4] border-[#f3a3a6] text-[#a3242a]" : "bg-white border-[#cbd5e1] text-[#33415c]"}`}>{l}</button>
             ))}
           </div>
           {mode === "link" && <input type="url" value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://monsite.fr/mon-article" data-testid="repurpose-url" className="w-full border border-[#cbd5e1] rounded-xl px-3 py-2.5 text-sm" />}
           {mode === "file" && (<div><input key={fileKey} type="file" accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" onChange={(e) => setFile(e.target.files?.[0] ?? null)} data-testid="repurpose-file" className="text-sm" /><p className="text-[11px] text-[#5a6b85] mt-1.5">PDF ou Word (.docx), 8 Mo au plus. Le fichier n&apos;est pas conservé.</p></div>)}
+          {mode === "media" && (
+            <div className="space-y-3" data-testid="repurpose-media">
+              <div>
+                <input key={fileKey} type="file" accept="video/*,audio/*,.mp4,.mov,.m4v,.webm,.mkv,.mp3,.m4a,.wav,.ogg,.aac,.flac" onChange={(e) => { setMediaFile(e.target.files?.[0] ?? null); setError(null); }} data-testid="repurpose-media-file" className="text-sm" />
+                <p className="text-[11px] text-[#5a6b85] mt-1.5" data-testid="repurpose-media-limits">{mediaInfo ? `Vidéo ou audio (mp4, mov, webm, mp3, m4a, wav…), ${mediaInfo.maxMinutes} min et ${mediaInfo.maxMb} Mo au plus.${mediaInfo.limitSeconds != null ? ` Il vous reste ${Math.max(0, Math.floor((mediaInfo.limitSeconds - mediaInfo.usedSeconds) / 60))} min de vidéo et d'audio ce mois-ci.` : ""} Le fichier n'est pas conservé.` : "Vidéo ou audio (mp4, mov, webm, mp3, m4a, wav…). Le fichier n'est pas conservé."}</p>
+                {mediaFile && (<label className="block text-[13px] text-[#33415c] mt-2"><span className="mr-2">Langue parlée</span><select value={mediaLang} onChange={(e) => setMediaLang(e.target.value)} data-testid="repurpose-media-lang" className="border border-[#cbd5e1] rounded-lg px-2 py-1 text-sm bg-white">{[["fr", "Français"], ["en", "English"], ["es", "Español"], ["de", "Deutsch"], ["it", "Italiano"], ["pt", "Português"], ["nl", "Nederlands"], ["pl", "Polski"], ["ar", "العربية"]].map(([c, l]) => <option key={c} value={c}>{l}</option>)}</select></label>)}
+              </div>
+              {!mediaFile && (
+                <div>
+                  <p className="text-[13px] font-semibold text-[#33415c] mb-1">ou collez la transcription <span className="font-normal text-[#5a6b85]">(Zoom, Teams, Meet, YouTube Studio)</span></p>
+                  <textarea rows={6} value={mediaText} onChange={(e) => setMediaText(e.target.value)} placeholder="Collez ici le texte de la vidéo ou de l'enregistrement…" data-testid="repurpose-media-text" className="w-full border border-[#cbd5e1] rounded-xl px-3 py-2.5 text-sm" />
+                </div>
+              )}
+              <div>
+                <p className="text-[13px] font-semibold text-[#33415c] mb-1">Lien public de la vidéo <span className="font-normal text-[#5a6b85]">(facultatif)</span></p>
+                <input type="url" value={videoUrl} onChange={(e) => setVideoUrl(e.target.value)} placeholder="https://www.youtube.com/watch?v=…" data-testid="repurpose-media-url" className="w-full border border-[#cbd5e1] rounded-xl px-3 py-2 text-sm" />
+                <p className="text-[11px] text-[#5a6b85] mt-1">Il sera mis en lien dans le premier commentaire des posts. LinkeePost n&apos;ouvre pas ce lien : il ne sert que de renvoi.</p>
+              </div>
+            </div>
+          )}
           {mode === "text" && <textarea rows={7} value={text} onChange={(e) => setText(e.target.value)} placeholder="Collez ici le texte de votre article, de votre étude de cas…" data-testid="repurpose-text" className="w-full border border-[#cbd5e1] rounded-xl px-3 py-2.5 text-sm" />}
           <fieldset className="mt-4 rounded-xl border border-[#e2e8f0] px-4 py-3" data-testid="repurpose-rights">
             <legend className="px-1 text-xs font-bold tracking-wider uppercase text-[#5a6b85]">Droits sur ce contenu</legend>
@@ -10563,6 +10683,9 @@ function RepurposeView({ profile, linkedin, orgs, canCampaigns, showToast, onGoC
             )}
             {rights === "own" && <p className="text-xs text-[#5a6b85] mt-2 ml-6">Vous restez responsable des droits sur ce que vous déposez.</p>}
           </fieldset>
+          {mode === "media" && (
+            <label className="flex items-start gap-2 text-[13px] text-[#33415c] mt-3" data-testid="repurpose-speakers"><input type="checkbox" checked={speakers} onChange={(e) => setSpeakers(e.target.checked)} data-testid="repurpose-speakers-check" className="mt-1" /> <span><b>Les personnes qui parlent</b> dans cet enregistrement ont accepté d&apos;être citées (ou c&apos;est moi).</span></label>
+          )}
           <div className="grid sm:grid-cols-2 gap-3 mt-4">
             {contexts.length > 0 && (
               <label className="text-[13px] text-[#33415c]"><span className={lb}>Thématique</span>
@@ -10573,8 +10696,8 @@ function RepurposeView({ profile, linkedin, orgs, canCampaigns, showToast, onGoC
               <select value={target} onChange={(e) => setTarget(e.target.value)} data-testid="repurpose-target" className="w-full border border-[#cbd5e1] rounded-xl px-3 py-2 text-sm bg-white">{targets.map((t) => <option key={t.v} value={t.v}>{t.label}</option>)}</select>
             </label>
           </div>
-          <label className="flex items-center gap-2 text-[13px] text-[#33415c] mt-3"><input type="checkbox" checked={addToDatalake} onChange={(e) => setAddToDatalake(e.target.checked)} data-testid="repurpose-datalake" /> Ajouter ce contenu à mon datalake éditorial</label>
-          <div className="flex justify-end mt-4"><button type="button" onClick={readIt} disabled={busy || !rights || (rights === "third" && mode !== "link" && !credit.trim()) || (mode === "link" && !url.trim()) || (mode === "file" && !file) || (mode === "text" && text.trim().length < 50)} data-testid="repurpose-read" className={btn}>{busy ? "Lecture en cours…" : "Lire le contenu →"}</button></div>
+          <label className="flex items-center gap-2 text-[13px] text-[#33415c] mt-3"><input type="checkbox" checked={addToDatalake} onChange={(e) => setAddToDatalake(e.target.checked)} data-testid="repurpose-datalake" /> {mode === "media" ? "Garder la transcription dans mon datalake éditorial" : "Ajouter ce contenu à mon datalake éditorial"}</label>
+          <div className="flex justify-end mt-4"><button type="button" onClick={readIt} disabled={busy || !rights || (rights === "third" && mode !== "link" && !credit.trim()) || (mode === "link" && !url.trim()) || (mode === "file" && !file) || (mode === "text" && text.trim().length < 50) || (mode === "media" && (!speakers || (!mediaFile && mediaText.trim().length < 50)))} data-testid="repurpose-read" className={btn}>{busy ? (mode === "media" && mediaFile ? "Envoi en cours…" : "Lecture en cours…") : mode === "media" && mediaFile ? "Transcrire et analyser →" : "Lire le contenu →"}</button></div>
         </div>
       )}
 
@@ -10586,11 +10709,12 @@ function RepurposeView({ profile, linkedin, orgs, canCampaigns, showToast, onGoC
           </div>
           <div className={card} data-testid="repurpose-facts">
             <span className={lb}>Les faits que je peux utiliser</span>
-            <p className="text-xs text-[#5a6b85] mb-2">Décochez ou corrigez : l&apos;IA n&apos;écrira qu&apos;à partir des faits cochés.</p>
+            <p className="text-xs text-[#5a6b85] mb-2">Décochez ou corrigez : l&apos;IA n&apos;écrira qu&apos;à partir des faits cochés.{analysis.source.kind === "media" && " Le repère « (vers mm:ss) » vous aide à retrouver le passage dans la vidéo ; il n'est pas transmis à l'IA qui écrit les posts."}</p>
             <ul className="space-y-1.5">
               {facts.map((f, i) => (
                 <li key={f.id} className="flex items-start gap-2"><input type="checkbox" checked={f.on} onChange={(e) => setFacts((l) => l.map((x, j) => (j === i ? { ...x, on: e.target.checked } : x)))} aria-label={`Utiliser le fait ${i + 1}`} className="mt-2" data-testid="repurpose-fact-check" />
-                  <textarea rows={2} value={f.text} onChange={(e) => setFacts((l) => l.map((x, j) => (j === i ? { ...x, text: e.target.value } : x)))} className={`flex-1 border border-[#e2e8f0] rounded-lg px-2.5 py-1.5 text-[13px] ${f.on ? "" : "text-[#94a3b8] line-through"}`} data-testid="repurpose-fact-text" /></li>
+                  <div className="flex-1 min-w-0">{f.quote && <span className="inline-block text-[10px] font-bold uppercase tracking-wider text-[#6b21a8] bg-[#f3e8ff] rounded-full px-2 py-0.5 mb-1" data-testid="repurpose-fact-quote">citation exacte</span>}
+                  <textarea rows={2} value={f.text} onChange={(e) => setFacts((l) => l.map((x, j) => (j === i ? { ...x, text: e.target.value } : x)))} className={`w-full border border-[#e2e8f0] rounded-lg px-2.5 py-1.5 text-[13px] ${f.on ? "" : "text-[#94a3b8] line-through"}`} data-testid="repurpose-fact-text" /></div></li>
               ))}
             </ul>
             <button type="button" onClick={() => setFacts((l) => [...l, { id: `f${Date.now()}`, text: "", on: true }])} data-testid="repurpose-fact-add" className="text-[13px] font-semibold text-[#0a66c2] hover:underline mt-2">+ Ajouter un fait</button>
@@ -13844,7 +13968,7 @@ function ClientAssignments({ clients, showToast }) {
 }
 
 // Consommation du mois par rapport aux limites du compte : une barre par ressource, orange dès 80 %, rouge à 100 %.
-const QUOTA_ROWS = [["postsPerMonth", "Posts ce mois-ci"], ["imagesPerMonth", "Images IA ce mois-ci"], ["knowledgeSources", "Sources de connaissances"], ["voiceMinutesPerMonth", "Dictée vocale (min) ce mois-ci"]];
+const QUOTA_ROWS = [["postsPerMonth", "Posts ce mois-ci"], ["imagesPerMonth", "Images IA ce mois-ci"], ["knowledgeSources", "Sources de connaissances"], ["voiceMinutesPerMonth", "Dictée vocale (min) ce mois-ci"], ["mediaMinutesPerMonth", "Vidéo et audio (min) ce mois-ci"]];
 function UsageMeter({ limits, usage, compact = false }) {
   return (
     <div className={compact ? "space-y-2" : "space-y-3"} data-testid="usage-meter">
@@ -13873,7 +13997,7 @@ function UsageMeter({ limits, usage, compact = false }) {
 // Quotas d'un client d'agence (propriétaire) : limites propres au client, par-dessus celles de l'offre. Champ vide = pas de limite propre.
 function ClientQuotaDialog({ client, showToast, onClose }) {
   const [data, setData] = useState(null);
-  const [form, setForm] = useState({ postsPerMonth: "", imagesPerMonth: "", knowledgeSources: "", voiceMinutesPerMonth: "" });
+  const [form, setForm] = useState({ postsPerMonth: "", imagesPerMonth: "", knowledgeSources: "", voiceMinutesPerMonth: "", mediaMinutesPerMonth: "" });
   const [busy, setBusy] = useState(false);
   const url = `/api/agency/clients/${client.id}/quota`;
   const fill = (d) => { setData(d); setForm(Object.fromEntries(QUOTA_ROWS.map(([k]) => [k, d.overrides?.[k] === undefined ? "" : d.overrides[k] < 0 ? "-1" : String(d.overrides[k])]))); };
