@@ -20,7 +20,7 @@ const PIPELINE = [
   { icon: MessageCircle, label: "Copilote" },
   { icon: Megaphone, label: "Campagne" },
   { icon: Sparkles, label: "Génération IA" },
-  { icon: CalendarDays, label: "Programmation" },
+  { icon: CalendarDays, label: "Planning" },
   { icon: Send, label: "Publication" },
   { icon: ThumbsUp, label: "Interactions" },
   { icon: Users, label: "Leads" },
@@ -89,20 +89,21 @@ export default function FonctionnalitesPage() {
           </Link>
         </section>
 
-        {/* Schéma : le pipeline */}
-        <section className="max-w-5xl mx-auto px-6 py-10">
+        {/* Schéma : le pipeline. Onze étapes ne tiennent sur une seule ligne qu'à partir de 1536 px (avec leurs flèches) ; en dessous,
+            elles passent en grille (6, puis 4 colonnes), et en liste sur téléphone. Icônes et libellés alignés dans chaque ligne. */}
+        <section className="max-w-6xl 2xl:max-w-7xl mx-auto px-6 py-10">
           <Card className="!p-8">
             <p className="text-center text-sm font-semibold text-[#5a6b85] mb-6">Comment tout s'enchaîne</p>
-            <div className="flex flex-col md:flex-row items-center justify-between gap-4 md:gap-2">
+            <div className="flex flex-col gap-4 md:grid md:grid-cols-4 md:gap-y-6 lg:grid-cols-6 2xl:flex 2xl:flex-row 2xl:items-start 2xl:justify-between 2xl:gap-0" data-testid="pipeline">
               {PIPELINE.map((s, i) => (
-                <div key={s.label} className="flex md:flex-col items-center gap-3 md:gap-2 md:flex-1">
-                  <div className="w-14 h-14 rounded-2xl bg-[#fff1f1] text-[#ff5a5f] flex items-center justify-center shadow-sm">
-                    <s.icon size={24} />
+                <div key={s.label} className="flex md:flex-col items-center md:items-stretch gap-3 md:gap-2 2xl:flex-1 2xl:min-w-0" data-testid="pipeline-step">
+                  <div className="flex items-center md:justify-center 2xl:relative">
+                    <div className="w-14 h-14 rounded-2xl bg-[#fff1f1] text-[#ff5a5f] flex items-center justify-center shadow-sm shrink-0">
+                      <s.icon size={24} />
+                    </div>
+                    {i < PIPELINE.length - 1 && <ArrowRight size={16} className="text-rose-300 hidden 2xl:block 2xl:absolute 2xl:right-[-2px] 2xl:translate-x-1/2 2xl:top-1/2 2xl:-translate-y-1/2" />}
                   </div>
-                  <span className="text-sm font-semibold md:text-center">{s.label}</span>
-                  {i < PIPELINE.length - 1 && (
-                    <ArrowRight size={18} className="text-rose-300 hidden md:block md:rotate-0" />
-                  )}
+                  <span className="text-sm md:text-[13px] font-semibold md:text-center leading-tight">{s.label}</span>
                 </div>
               ))}
             </div>
