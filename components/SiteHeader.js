@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { LogIn, LogOut, Menu, X } from "lucide-react";
 import LpMark from "./LpMark";
+import GoodbyeDialog from "./GoodbyeDialog";
 
 // En-tête public partagé (landing, blog, contact, pages légales). Aussi rendu
 // depuis app/app/page.js (client) sur l'écran de connexion/inscription — d'où
@@ -20,6 +21,8 @@ const NAV = [
 
 export default function SiteHeader() {
   const [loggedIn, setLoggedIn] = useState(false);
+  const [userName, setUserName] = useState("");
+  const [goodbye, setGoodbye] = useState(false); // fenêtre d'au revoir après la déconnexion
   const [open, setOpen] = useState(false); // menu sur téléphone et tablette
 
   // Session : au chargement, et au retour sur une page restaurée par le navigateur (bouton retour sur téléphone : la page revient de
@@ -30,6 +33,7 @@ export default function SiteHeader() {
         .then((r) => r.json())
         .then((d) => {
           setLoggedIn(Boolean(d.user));
+          setUserName(d.user?.name ?? "");
           if (d.user && window.location.pathname === "/") window.location.replace("/app");
         })
         .catch(() => {});
@@ -41,8 +45,11 @@ export default function SiteHeader() {
 
   const logout = async () => {
     await fetch("/api/auth/logout", { method: "POST" });
-    window.location.href = "/";
+    setOpen(false);
+    setGoodbye(true);
   };
+
+  if (goodbye) return <GoodbyeDialog name={userName} />;
 
   return (
     <header className="max-w-6xl mx-auto px-4 sm:px-6 pt-5">
