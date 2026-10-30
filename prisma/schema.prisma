@@ -56,6 +56,7 @@ model User {
   leads    Lead[]  @relation("UserLeads")
   statSnapshots StatSnapshot[]
   apiKeys   ApiKey[]
+  oauthGrants OAuthGrant[]
   moments  Moment[]
 
   // --- Offre / abonnement ---
@@ -1080,4 +1081,58 @@ model ApiKey {
   createdAt  DateTime  @default(now())
 
   @@index([userId])
+}
+
+// Connexion d'un assistant par OAuth (claude.ai, etc.) : le client s'enregistre tout seul (RFC 7591), l'utilisateur autorise sur notre écran.
+// Une « autorisation » (OAuthGrant) = un assistant branché sur un compte ; les jetons et codes ne sont conservés que sous forme d'empreinte.
+model OAuthClient {
+  id           String   @id // client_id délivré à l'enregistrement
+  name         String
+  redirectUris Json // liste d'adresses de retour autorisées (comparaison exacte)
+  createdAt    DateTime @default(now())
+
+  grants OAuthGrant[]
+}
+
+model OAuthGrant {
+  id         String      @id @default(cuid())
+  userId     String // la personne qui a autorisé
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subjectId  String // le compte sur lequel l'assistant agit : le sien, ou un client de son agence
+  clientId   String
+  client     OAuthClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  clientName String // nom affiché à l'autorisation
+  write      Boolean     @default(false) // brouillons et sources autorisés
+  lastUsedAt DateTime?
+  revokedAt  DateTime?
+  createdAt  DateTime    @default(now())
+
+  codes  OAuthCode[]
+  tokens OAuthToken[]
+
+  @@index([userId])
+}
+
+model OAuthCode {
+  hash          String     @id
+  grantId       String
+  grant         OAuthGrant @relation(fields: [grantId], references: [id], onDelete: Cascade)
+  redirectUri   String
+  codeChallenge String
+  expiresAt     DateTime
+  usedAt        DateTime?
+
+  @@index([expiresAt])
+}
+
+model OAuthToken {
+  hash      String     @id
+  kind      String // access | refresh
+  grantId   String
+  grant     OAuthGrant @relation(fields: [grantId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime   @default(now())
+
+  @@index([grantId])
+  @@index([expiresAt])
 }

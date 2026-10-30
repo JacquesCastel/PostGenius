@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { authenticateKey } from "@/lib/apiKeys";
+import { authenticateOAuth, APP } from "@/lib/oauth";
 import { handleMessage } from "@/lib/mcp";
 import { checkFeature } from "@/lib/gating";
 import { rateLimit } from "@/lib/ratelimit";
@@ -19,10 +20,14 @@ export async function POST(req) {
     try { own = new URL(process.env.APP_URL || "http://localhost:3000").origin; } catch {}
     if (origin !== own) return json({ jsonrpc: "2.0", id: null, error: { code: -32000, message: "Origine refusée." } }, 403);
   }
-  const auth = await authenticateKey(req);
-  if (!auth) return json({ jsonrpc: "2.0", id: null, error: { code: -32001, message: "Clé invalide ou révoquée. Créez une clé dans Mon profil." } }, 401, { "WWW-Authenticate": 'Bearer realm="linkeepost"' });
+  const auth = (await authenticateKey(req)) ?? (await authenticateOAuth(req));
+  if (!auth) {
+    // resource_metadata indique à l'assistant où se connecter (OAuth) ; invalid_token lui dit de renouveler son jeton
+    const hasToken = /^Bearer\s+\S+/.test(req.headers.get("authorization") ?? "");
+    return json({ jsonrpc: "2.0", id: null, error: { code: -32001, message: "Accès invalide ou révoqué. Reconnectez l'assistant, ou créez une clé dans Mon profil." } }, 401, { "WWW-Authenticate": `Bearer realm="linkeepost", resource_metadata="${APP()}/.well-known/oauth-protected-resource"${hasToken ? ', error="invalid_token"' : ""}` });
+  }
   if (!rateLimit(`mcp:${auth.keyId}`, { limit: Number(process.env.MCP_RATE_LIMIT) || 60, windowMs: 60_000 })) return json({ jsonrpc: "2.0", id: null, error: { code: -32002, message: "Trop d'appels : réessayez dans une minute." } }, 429, { "Retry-After": "60" });
-  const feat = await checkFeature(auth.userId, "campaigns", "L'accès par assistant (MCP)");
+  const feat = await checkFeature(auth.actorId ?? auth.userId, "campaigns", "L'accès par assistant (MCP)");
   if (!feat.ok) return json({ jsonrpc: "2.0", id: null, error: { code: -32003, message: feat.error } }, 403);
 
   let body;
