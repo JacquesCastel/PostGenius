@@ -23,8 +23,13 @@ export async function POST(req) {
   const auth = (await authenticateKey(req)) ?? (await authenticateOAuth(req));
   if (!auth) {
     // resource_metadata indique à l'assistant où se connecter (OAuth) ; invalid_token lui dit de renouveler son jeton
-    const hasToken = /^Bearer\s+\S+/.test(req.headers.get("authorization") ?? "");
-    return json({ jsonrpc: "2.0", id: null, error: { code: -32001, message: "Accès invalide ou révoqué. Reconnectez l'assistant, ou créez une clé dans Mon profil." } }, 401, { "WWW-Authenticate": `Bearer realm="linkeepost", resource_metadata="${APP()}/.well-known/oauth-protected-resource"${hasToken ? ', error="invalid_token"' : ""}` });
+    const raw = (req.headers.get("authorization") ?? "").trim();
+    const hasToken = /^Bearer\s+\S+/.test(raw);
+    // Message adapté à l'erreur la plus fréquente : la clé collée sans le mot « Bearer » devant
+    const message = !raw ? "Aucune clé reçue. Ajoutez l'en-tête « Authorization: Bearer lkp_… » (clé créée dans Mon profil), ou connectez l'assistant par OAuth."
+      : !hasToken ? "L'en-tête Authorization doit commencer par le mot « Bearer », suivi d'une espace puis de la clé : « Bearer lkp_… »."
+      : "Accès invalide ou révoqué. Reconnectez l'assistant, ou créez une nouvelle clé dans Mon profil (format : « Authorization: Bearer lkp_… »).";
+    return json({ jsonrpc: "2.0", id: null, error: { code: -32001, message } }, 401, { "WWW-Authenticate": `Bearer realm="linkeepost", resource_metadata="${APP()}/.well-known/oauth-protected-resource"${hasToken ? ', error="invalid_token"' : ""}` });
   }
   if (!rateLimit(`mcp:${auth.keyId}`, { limit: Number(process.env.MCP_RATE_LIMIT) || 60, windowMs: 60_000 })) return json({ jsonrpc: "2.0", id: null, error: { code: -32002, message: "Trop d'appels : réessayez dans une minute." } }, 429, { "Retry-After": "60" });
   const feat = await checkFeature(auth.actorId ?? auth.userId, "campaigns", "L'accès par assistant (MCP)");
