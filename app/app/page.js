@@ -26,6 +26,7 @@ import { POLL_DURATIONS, POLL_QUESTION_MAX, POLL_OPTION_MAX, pollProblem } from 
 import { aggregateInsights } from "@/lib/knowledgeText";
 import { overlayProfile } from "@/lib/contextOverlay";
 import SiteHeader from "@/components/SiteHeader";
+import GoodbyeDialog from "@/components/GoodbyeDialog";
 // Polices de la charte graphique, chargées comme polices web pour que l'éditeur de
 // modèle de slide (SlideTemplateEditor) affiche vraiment celle choisie — jusqu'ici
 // seul le rendu final (Satori, côté serveur) l'appliquait, jamais le canevas d'édition.
@@ -18446,6 +18447,7 @@ function GenerationContextCard({ theme, sourceTitle, onGoProfile, postContext, c
 
 export default function Home() {
   const [user, setUser] = useState(null);
+  const [goodbye, setGoodbye] = useState(null); // { name } : fenêtre d'au revoir après la déconnexion, puis retour à la page d'accueil du site
   const [impersonating, setImpersonating] = useState(null); // { id, name, companyName } du client géré
   const [authChecked, setAuthChecked] = useState(false);
 
@@ -19092,7 +19094,9 @@ export default function Home() {
   }, [user]);
 
   const logout = async () => {
+    const name = user?.name ?? "";
     await fetch("/api/auth/logout", { method: "POST" });
+    setGoodbye({ name });
     setUser(null);
     setDrafts([]);
     setLinkedin({ connected: false, name: "", orgConnected: false });
@@ -20129,7 +20133,8 @@ export default function Home() {
     );
   }
 
-  if (!user) return <AuthScreen onAuth={setUser} />;
+  if (goodbye) return <GoodbyeDialog name={goodbye.name} />;
+  if (!user) return <AuthScreen onAuth={(u) => { setGoodbye(null); setUser(u); }} />;
 
   // Essai terminé sans abonnement actif → blocage (paywall), avant même l'onboarding.
   // Bloque uniquement si le paiement est configuré (sinon déploiement non bloquant). Admins exemptés.
