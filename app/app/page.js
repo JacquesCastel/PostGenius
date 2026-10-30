@@ -10778,6 +10778,16 @@ function DashToday({ drafts, profile, ns, campaigns, canCampaigns, voiceOk, onGo
         </div>
       </div>
 
+      <div className={card} data-testid="dash-repurpose">
+        <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex-1 min-w-[16rem]">
+            <span className={lb}>Seconde vie d&apos;un contenu{!canCampaigns && <span className="ml-2 normal-case tracking-normal text-[11px] font-bold text-[#7a4b00] bg-[#fff4d6] rounded-full px-2 py-0.5">Pro et Agence</span>}</span>
+            <p className="text-[13px] text-[#33415c] leading-relaxed">Un article, un webinaire, une étude de cas ? Transformez-le en une série de posts, écrits à partir de ses seuls faits, relus puis programmés.</p>
+          </div>
+          <button type="button" onClick={() => onGoView?.("repurpose")} data-testid="dash-repurpose-go" className="text-sm font-bold text-[#a3242a] bg-white border border-[#f3a3a6] hover:bg-[#fff8f8] px-4 py-2.5 rounded-xl">Donner une seconde vie à un contenu</button>
+        </div>
+      </div>
+
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
         {kpi("À valider", toValidate.length, "#6b21a8", "Ils ne partent pas sans vous", () => onTab("today"))}
         {kpi("Programmés cette semaine", scheduledWeek.length, "#7a4b00", next ? `Prochain : ${fmtDateTime(next.scheduledAt)}` : "Rien de programmé", () => onTab("planning"))}
@@ -10904,16 +10914,6 @@ function DashToday({ drafts, profile, ns, campaigns, canCampaigns, voiceOk, onGo
         </div>
       )}
       <div className="min-w-0" data-testid="dash-ideas">{ideas}</div>
-      <div className={card} data-testid="dash-repurpose">
-        <div className="flex items-center gap-3 flex-wrap">
-          <div className="flex-1 min-w-[16rem]">
-            <span className={lb}>Seconde vie d&apos;un contenu{!canCampaigns && <span className="ml-2 normal-case tracking-normal text-[11px] font-bold text-[#7a4b00] bg-[#fff4d6] rounded-full px-2 py-0.5">Pro et Agence</span>}</span>
-            <p className="text-[13px] text-[#33415c] leading-relaxed">Un article, un webinaire, une étude de cas ? Transformez-le en une série de posts, écrits à partir de ses seuls faits, relus puis programmés.</p>
-          </div>
-          <button type="button" onClick={() => onGoView?.("repurpose")} data-testid="dash-repurpose-go" className="text-sm font-bold text-[#a3242a] bg-white border border-[#f3a3a6] hover:bg-[#fff8f8] px-4 py-2.5 rounded-xl">Donner une seconde vie à un contenu</button>
-        </div>
-      </div>
-
 
       <div className="grid md:grid-cols-2 md:[&>*:only-child]:col-span-2 gap-3.5 items-start">
         <div className="contents">
