@@ -35,6 +35,7 @@ export default function SiteFooter() {
             <Link href="/mentions-legales" className="hover:text-[#ff5a5f]">Mentions légales</Link>
             <Link href="/cgu" className="hover:text-[#ff5a5f]">CGU</Link>
             <Link href="/confidentialite" className="hover:text-[#ff5a5f]">Confidentialité</Link>
+            <Link href="/securite" className="hover:text-[#ff5a5f]">Sécurité</Link>
             <Link href="/privacy-policy" className="hover:text-[#ff5a5f]">Privacy Policy</Link>
           </nav>
         </div>

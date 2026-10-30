@@ -16,6 +16,7 @@ const PAGES = [
   ["/mentions-legales", 0.2],
   ["/cgu", 0.2],
   ["/confidentialite", 0.2],
+  ["/securite", 0.4],
   ["/privacy-policy", 0.2],
 ];
 
