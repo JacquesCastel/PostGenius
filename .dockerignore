@@ -12,3 +12,14 @@
 node_modules/*
 !node_modules/.prisma
 !node_modules/@fontsource
+
+# Versions gardées pour le retour arrière et dossiers d'attente de deploy.sh : volumineux, inutiles pour l'image
+.prev
+.rolledback
+.next.new
+.prisma.new
+.schema-diff.sql*
+.schema-state
+.deployed-sha
+# Données persistantes (volume monté) : jamais copiées dans l'image
+data

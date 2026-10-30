@@ -4,6 +4,7 @@ import { getSessionData, clientAccessible } from "@/lib/session";
 import { isAdminUser } from "@/lib/admin";
 import { effectiveLimits } from "@/lib/quotas";
 import { accessSubject } from "@/lib/agencyAccess";
+import { logActiveOncePerDay } from "@/lib/activity";
 
 export async function GET(req) {
   const session = await getSessionData(req);
@@ -19,6 +20,7 @@ export async function GET(req) {
     },
   });
   if (!user || user.disabled) return NextResponse.json({ user: null });
+  if (!session.support) void logActiveOncePerDay(user.id); // jour actif (pas en vue support : ce n'est pas l'utilisateur)
 
   // Vue support (admin en lecture seule sur un compte client) : on renvoie le
   // compte du client tel qu'il le verrait — offre, abonnement, sans droits admin.

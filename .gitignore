@@ -6,3 +6,12 @@ node_modules/
 data/
 .DS_Store
 **/.DS_Store
+
+# Fichiers de travail de deploy.sh et rollback.sh (sur le serveur)
+.prev/
+.rolledback/
+.next.new/
+.prisma.new/
+.deployed-sha
+.schema-diff.sql*
+.schema-state

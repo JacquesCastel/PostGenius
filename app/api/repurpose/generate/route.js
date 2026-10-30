@@ -1,3 +1,4 @@
+import { logActivity } from "@/lib/activity";
 import { NextResponse } from "next/server";
 import { getEffectiveUserId as getUserId } from "@/lib/session";
 import { checkFeature, checkPostQuota, limitBody } from "@/lib/gating";
@@ -24,6 +25,7 @@ export async function POST(req) {
   if (target !== "person" && !/^(both:)?urn:li:organization:\d+$/.test(String(target))) return NextResponse.json({ error: "Compte de publication invalide." }, { status: 400 });
   try {
     const posts = await generateSeries(userId, { title: body.title, sourceUrl: /^https?:\/\//i.test(String(body.sourceUrl ?? "")) ? body.sourceUrl : null, facts: body.facts, angles: body.angles, mood: body.mood, contextId: body.contextId || null, target, rights: body.rights, credit: body.credit });
+    void logActivity(userId, "repurpose");
     return NextResponse.json({ posts });
   } catch (e) {
     if (e instanceof RepurposeError) return NextResponse.json({ error: e.message }, { status: e.status });

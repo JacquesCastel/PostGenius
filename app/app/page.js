@@ -5642,6 +5642,288 @@ function LandingAdmin({ showToast }) {
 // ----------------------------------------------------------------
 // Messages de contact (admin)
 // ----------------------------------------------------------------
+// Bandeau d'information posé par le super-admin (interrupteur « Maintenance ») : lu à l'ouverture puis toutes les 2 minutes
+function MaintenanceBanner() {
+  const [msg, setMsg] = useState("");
+  useEffect(() => {
+    let alive = true;
+    const read = () => fetch("/api/status", { cache: "no-store" }).then((r) => r.json()).then((d) => { if (alive) setMsg(d.maintenance ? d.message : ""); }).catch(() => {});
+    read();
+    const t = setInterval(read, 120000);
+    return () => { alive = false; clearInterval(t); };
+  }, []);
+  if (!msg) return null;
+  return <div role="status" data-testid="maintenance-banner" className="fixed top-0 inset-x-0 z-[60] bg-amber-500 text-white text-sm text-center px-4 py-2 shadow">{msg}</div>;
+}
+
+// Tableau de bord technique (super-admin) : santé, déploiements, usage, actions avec mot de passe, journal des actions
+const TECH_ACTION_LABELS = {
+  "flag.signups": "Inscriptions", "flag.ai": "IA", "flag.maintenance": "Maintenance", "account.suspend": "Suspension de compte",
+  "account.reactivate": "Réactivation de compte", "cache.clear": "Cache vidé", "scheduler.run": "Planificateur lancé",
+};
+const techAgo = (ts) => {
+  if (!ts) return "jamais";
+  const s = Math.max(0, Math.round((Date.now() - new Date(ts).getTime()) / 1000));
+  if (s < 90) return `il y a ${s} s`;
+  if (s < 5400) return `il y a ${Math.round(s / 60)} min`;
+  if (s < 129600) return `il y a ${Math.round(s / 3600)} h`;
+  return `il y a ${Math.round(s / 86400)} j`;
+};
+const techDateTime = (ts) => (ts ? new Date(ts).toLocaleString("fr-FR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : "—");
+
+function TechDot({ level }) {
+  const c = level === "ok" ? "bg-green-500" : level === "warn" ? "bg-amber-500" : level === "bad" ? "bg-red-500" : "bg-gray-300";
+  return <span className={`inline-block w-2.5 h-2.5 rounded-full ${c} shrink-0`} aria-hidden />;
+}
+
+function TechRow({ level, label, children }) {
+  return (
+    <div className="flex items-start gap-3 py-2.5 border-b border-gray-50 last:border-0">
+      <span className="mt-1.5"><TechDot level={level} /></span>
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-medium text-gray-800">{label}</p>
+        <p className="text-xs text-gray-500 mt-0.5 break-words">{children}</p>
+      </div>
+    </div>
+  );
+}
+
+function TechAdminView({ showToast, currentEmail }) {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [tab, setTab] = useState("sante");
+  const [confirm, setConfirm] = useState(null); // { action, value, message, email, title, text }
+  const [password, setPassword] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [suspendEmail, setSuspendEmail] = useState("");
+  const [maintMsg, setMaintMsg] = useState("");
+
+  const load = (quiet) => {
+    if (!quiet) setLoading(true);
+    fetch("/api/admin/tech/overview")
+      .then(readJson)
+      .then((d) => { if (d.error) throw new Error(d.error); setData(d); })
+      .catch((e) => showToast(e.message))
+      .finally(() => setLoading(false));
+  };
+  useEffect(() => {
+    load();
+    const t = setInterval(() => load(true), 30000);
+    return () => clearInterval(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const run = async (body) => {
+    setBusy(true);
+    try {
+      const res = await fetch("/api/admin/tech/actions", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+      const d = await readJson(res);
+      if (!res.ok) throw new Error(d.error || "Action impossible.");
+      showToast("Fait.");
+      setConfirm(null);
+      setPassword("");
+      load(true);
+    } catch (e) {
+      showToast(e.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  if (loading && !data) return <main className="max-w-4xl mx-auto p-6"><div className="bg-white rounded-2xl border border-gray-100 p-12 text-center"><RefreshCw size={22} className="mx-auto mb-2 animate-spin text-[#ff5a5f]" /></div></main>;
+  if (!data) return null;
+
+  const f = data.flags;
+  const h = data.host && !data.host.unavailable ? data.host : null;
+  const p = data.problems && !data.problems.unavailable ? data.problems : null;
+  const sched = data.scheduler;
+  const schedLevel = !sched?.lastRunAt ? "warn" : Date.now() - sched.lastRunAt > 3 * 60000 ? "bad" : sched.lastError ? "warn" : "ok";
+  const backup = h?.backup;
+  const journal = data.deploys?.journal;
+  const ver = data.deploys?.version;
+  const act = data.activity && !data.activity.unavailable ? data.activity : null;
+  const maxActive = act ? Math.max(1, ...act.activeByDay.map((d) => d.users)) : 1;
+
+  const ask = (c) => { setConfirm(c); setPassword(""); };
+  const Switch = ({ label, hint, on, onWarn, action, invert, message }) => (
+    <div className="flex items-start justify-between gap-3 py-3 border-b border-gray-50 last:border-0">
+      <div className="min-w-0">
+        <p className="text-sm font-medium text-gray-800">{label}</p>
+        <p className="text-xs text-gray-500 mt-0.5">{hint}</p>
+      </div>
+      <button
+        type="button"
+        onClick={() => ask({ action, value: !on, message, title: `${on ? "Rétablir" : "Activer"} : ${label.toLowerCase()}`, text: on ? "Le service revient à la normale pour tout le monde." : onWarn })}
+        className={`shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium border ${on ? "bg-red-50 text-red-700 border-red-200" : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50"}`}
+      >
+        {on ? (invert ? "Rouvrir" : "Rétablir") : "Activer"}
+      </button>
+    </div>
+  );
+
+  const tabs = [["sante", "Santé"], ["deploiements", "Déploiements"], ["usage", "Usage"], ["actions", "Actions"], ["journal", "Journal"]];
+
+  return (
+    <main className="max-w-4xl mx-auto p-6 space-y-4">
+      <div className="flex flex-wrap items-center gap-2">
+        {(f.signupsClosed || f.aiOff || f.maintenance) && (
+          <div className="w-full bg-amber-50 border border-amber-200 text-amber-800 text-sm rounded-xl px-4 py-2.5">
+            Interrupteurs actifs :{" "}
+            {[f.signupsClosed && "inscriptions fermées", f.aiOff && "IA coupée", f.maintenance && "maintenance"].filter(Boolean).join(" · ")}
+          </div>
+        )}
+        <div role="tablist" className="flex gap-1 bg-gray-100 rounded-xl p-1 overflow-x-auto max-w-full">
+          {tabs.map(([id, label]) => (
+            <button key={id} role="tab" aria-selected={tab === id} data-testid={`tech-tab-${id}`} onClick={() => setTab(id)} className={`px-3 py-1.5 rounded-lg text-sm whitespace-nowrap ${tab === id ? "bg-white shadow-sm font-medium text-gray-900" : "text-gray-500"}`}>{label}</button>
+          ))}
+        </div>
+        <button onClick={() => load()} className="ml-auto text-gray-400 hover:text-gray-600 p-2" aria-label="Actualiser"><RefreshCw size={16} /></button>
+      </div>
+
+      {tab === "sante" && (
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-5 py-2">
+          <TechRow level={data.db?.ok ? "ok" : "bad"} label="Base de données">{data.db?.ok ? `répond en ${data.db.ms} ms` : `injoignable ${data.db?.error ?? ""}`}</TechRow>
+          <TechRow level="ok" label="Application">en marche depuis {Math.round(data.process.uptimeSec / 3600) >= 1 ? `${Math.round(data.process.uptimeSec / 3600)} h` : `${Math.round(data.process.uptimeSec / 60)} min`} · Node {data.process.node} · mémoire {data.process.rssMb} Mo</TechRow>
+          <TechRow level={schedLevel} label="Planificateur de publications">
+            {sched?.lastRunAt ? `dernier passage ${techAgo(sched.lastRunAt)}${sched.lastError ? ` · erreur : ${sched.lastError}` : ""} · ${sched.lastPublished} publié(s), ${sched.lastFailed} échec(s) au dernier passage` : "pas encore passé depuis le démarrage"}
+            {p?.lateScheduled > 0 && ` · ${p.lateScheduled} post(s) programmé(s) en retard de plus de 10 min`}
+          </TechRow>
+          <TechRow level={h ? (h.disk?.percent >= 90 ? "bad" : h.disk?.percent >= 80 ? "warn" : "ok") : "neutral"} label="Serveur et disque">
+            {h ? `disque ${h.disk?.percent ?? "?"} % utilisé · rapport ${techAgo(h.generatedAt)}` : "rapport du serveur indisponible (le cron health-check.sh n'est pas passé)"}
+          </TechRow>
+          <TechRow level={backup ? (backup.alerts?.length ? "bad" : "ok") : "neutral"} label="Sauvegardes">
+            {backup ? (backup.alerts?.length ? backup.alerts.map((a) => a.message ?? a).join(" · ") : "à jour") : "état inconnu"}
+          </TechRow>
+          <TechRow level={p ? (p.emailFailed > 0 ? "warn" : "ok") : "neutral"} label="E-mails (24 h)">{p ? `${p.emailSent} envoyé(s), ${p.emailFailed} échec(s)${data.config.smtp ? "" : " · SMTP non configuré"}` : "indisponible"}</TechRow>
+          <TechRow level={p ? (p.draftErrors > 0 ? "warn" : "ok") : "neutral"} label="Publications en erreur (7 j)">
+            {p ? (p.draftErrors === 0 ? "aucune" : `${p.draftErrors} · ${p.recentErrors.map((e) => (e.publishError ?? "").slice(0, 80)).filter(Boolean).join(" / ")}`) : "indisponible"}
+          </TechRow>
+          <TechRow level={p ? ((p.jobs?.error ?? 0) > 0 ? "warn" : "ok") : "neutral"} label="Transcriptions vidéo">{p ? `en cours ${(p.jobs?.queued ?? 0) + (p.jobs?.processing ?? 0)} · en erreur ${p.jobs?.error ?? 0}` : "indisponible"}</TechRow>
+          <TechRow level={!data.stripe.configured ? "warn" : data.stripe.last && !data.stripe.last.ok ? "bad" : "ok"} label="Paiement (Stripe)">
+            {!data.stripe.configured ? "clé non configurée" : `${data.stripe.webhookConfigured ? "webhook configuré" : "webhook NON configuré"} · ${data.stripe.last ? `dernier événement ${data.stripe.last.type} ${techAgo(data.stripe.last.at)}${data.stripe.last.ok ? "" : ` · ÉCHEC ${data.stripe.last.error}`}` : "aucun événement depuis le démarrage"}`}
+          </TechRow>
+          <TechRow level={data.config.anthropic ? "ok" : "bad"} label="Fournisseurs d'IA">
+            Anthropic {data.config.anthropic ? "configuré" : "CLÉ ABSENTE"} · OpenAI {data.config.openai ? "configuré" : "clé absente"} · appels depuis le démarrage : {data.ai.anthropic} Anthropic, {data.ai.openai} OpenAI{data.ai.blocked ? `, ${data.ai.blocked} refusé(s) (IA coupée)` : ""}
+          </TechRow>
+        </div>
+      )}
+
+      {tab === "deploiements" && (
+        <div className="space-y-4">
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+            <p className="text-xs uppercase tracking-wide text-gray-400">Version en ligne</p>
+            <p className="text-lg font-semibold mt-1">{ver?.sha ? <code>{ver.sha}</code> : "inconnue"}</p>
+            <p className="text-xs text-gray-500 mt-1">{ver ? `mise en ligne ${techAgo(ver.at)} · précédente : ${ver.prev}` : "Le journal sera alimenté dès le prochain déploiement avec le nouveau script (deploy.sh)."}</p>
+            <p className="text-xs text-gray-500 mt-2">Sauvegardes de la base avant déploiement (Neon) : {data.config.neonSnapshots ? "activées" : "non configurées (NEON_API_KEY absent)"}.</p>
+          </div>
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-5 py-2">
+            <p className="text-sm font-medium py-3">Historique</p>
+            {!journal || journal.length === 0 ? <p className="text-sm text-gray-400 pb-4">Aucun déploiement journalisé pour l'instant.</p> : journal.map((j, i) => (
+              <div key={i} className="flex items-baseline gap-3 py-2 border-t border-gray-50 text-sm">
+                <span className="text-xs text-gray-400 w-28 shrink-0">{techDateTime(j.at)}</span>
+                <span className={`font-medium ${/échec|refus|retour/.test(j.event) ? "text-red-600" : j.event === "réussi" ? "text-green-700" : "text-gray-700"}`}>{j.event}</span>
+                <code className="text-xs text-gray-500">{j.sha}{j.prev ? ` ← ${j.prev}` : ""}</code>
+                {j.detail && <span className="text-xs text-gray-400 truncate">{j.detail}</span>}
+              </div>
+            ))}
+          </div>
+          <p className="text-xs text-gray-400">Déployer, revenir en arrière et sauvegarder se font encore sur le serveur : <code>./deploy.sh</code>, <code>./rollback.sh</code>. Ces actions viendront ici dans une prochaine étape.</p>
+        </div>
+      )}
+
+      {tab === "usage" && (
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {[["Comptes", data.accounts?.total], ["Nouveaux (7 j)", data.accounts?.newWeek], ["En essai", data.accounts?.trial], ["Abonnés", data.accounts?.paying]].map(([l, v]) => (
+              <div key={l} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4"><p className="text-xs text-gray-400">{l}</p><p className="text-2xl font-semibold mt-1">{v ?? "—"}</p></div>
+            ))}
+          </div>
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+            <p className="text-sm font-medium">Comptes actifs par jour (14 j)</p>
+            {act ? (
+              <>
+                <div className="flex items-end gap-1 h-24 mt-3" aria-label="Comptes actifs par jour">
+                  {act.activeByDay.map((d) => (
+                    <div key={d.day} className="flex-1 flex flex-col items-center justify-end h-full" title={`${d.day} : ${d.users}`}>
+                      <div className="w-full bg-[#ff5a5f]/80 rounded-t" style={{ height: `${Math.max(d.users ? 6 : 1, (d.users / maxActive) * 100)}%` }} />
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs text-gray-400 mt-2">Le journal d'activité a commencé {act.since ? techAgo(act.since) : "à l'instant"} : avant, rien n'a été enregistré.</p>
+                <p className="text-xs text-gray-500 mt-3">7 derniers jours : {Object.keys(act.kinds7).length === 0 ? "aucun événement" : Object.entries(act.kinds7).map(([k, n]) => `${{ login: "connexions", active: "jours actifs", coach: "coach consulté", repurpose: "séries Seconde vie", mcp: "jours d'usage assistant", assistant_connected: "assistants connectés" }[k] ?? k} ${n}`).join(" · ")}</p>
+              </>
+            ) : <p className="text-sm text-gray-400 mt-2">Indisponible.</p>}
+          </div>
+        </div>
+      )}
+
+      {tab === "actions" && (
+        <div className="space-y-4">
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-5 py-2">
+            <p className="text-sm font-medium py-3">Interrupteurs (votre mot de passe est redemandé)</p>
+            <Switch label="Inscriptions fermées" hint="Plus personne ne peut créer de compte librement. Les invitations de test et d'équipe continuent de fonctionner." on={f.signupsClosed} invert action="flag.signups" onWarn="Les nouvelles inscriptions libres seront refusées. Les invitations restent valables." />
+            <Switch label="IA coupée" hint="Plus aucun appel à Anthropic ni à OpenAI (rédaction, images, transcription). À utiliser si les coûts dérivent ou en cas d'abus." on={f.aiOff} action="flag.ai" onWarn="Toute génération sera refusée pour tout le monde, avec un message d'indisponibilité." />
+            <Switch label="Maintenance" hint="Affiche un bandeau d'information dans l'application. Ne bloque rien." on={f.maintenance} action="flag.maintenance" message={maintMsg} onWarn="Un bandeau sera affiché à tous les utilisateurs connectés." />
+            {!f.maintenance && (
+              <div className="pb-3">
+                <label className="text-xs text-gray-500" htmlFor="maint-msg">Message du bandeau (facultatif)</label>
+                <input id="maint-msg" value={maintMsg} onChange={(e) => setMaintMsg(e.target.value)} maxLength={300} placeholder="Maintenance en cours jusqu'à 14 h : certaines fonctions peuvent être indisponibles." className="mt-1 w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" />
+              </div>
+            )}
+          </div>
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+            <p className="text-sm font-medium">Suspendre ou réactiver un compte</p>
+            <p className="text-xs text-gray-500 mt-1">La personne ne peut plus se connecter ; ses données sont conservées.</p>
+            <div className="flex flex-wrap gap-2 mt-3">
+              <input value={suspendEmail} onChange={(e) => setSuspendEmail(e.target.value)} type="email" placeholder="adresse e-mail du compte" aria-label="Adresse e-mail du compte" className="flex-1 min-w-[14rem] border border-gray-200 rounded-lg px-3 py-2 text-sm" />
+              <button disabled={!suspendEmail.includes("@")} onClick={() => ask({ action: "account.suspend", email: suspendEmail, title: "Suspendre ce compte", text: suspendEmail })} className="px-3 py-2 rounded-lg text-sm border border-red-200 text-red-700 bg-red-50 disabled:opacity-40">Suspendre</button>
+              <button disabled={!suspendEmail.includes("@")} onClick={() => ask({ action: "account.reactivate", email: suspendEmail, title: "Réactiver ce compte", text: suspendEmail })} className="px-3 py-2 rounded-lg text-sm border border-gray-200 text-gray-700 disabled:opacity-40">Réactiver</button>
+            </div>
+          </div>
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+            <p className="text-sm font-medium">Sans risque</p>
+            <div className="flex flex-wrap gap-2 mt-3">
+              <button disabled={busy} onClick={() => run({ action: "cache.clear" })} className="px-3 py-2 rounded-lg text-sm border border-gray-200 text-gray-700">Vider le cache du site</button>
+              <button disabled={busy} onClick={() => run({ action: "scheduler.run" })} className="px-3 py-2 rounded-lg text-sm border border-gray-200 text-gray-700">Lancer le planificateur maintenant</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {tab === "journal" && (
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-5 py-2">
+          <p className="text-sm font-medium py-3">Journal de vos actions</p>
+          {!data.actions || data.actions.unavailable || data.actions.length === 0 ? <p className="text-sm text-gray-400 pb-4">Aucune action pour l'instant.</p> : data.actions.map((a) => (
+            <div key={a.id} className="flex items-baseline gap-3 py-2 border-t border-gray-50 text-sm">
+              <span className="text-xs text-gray-400 w-28 shrink-0">{techDateTime(a.createdAt)}</span>
+              <span className={a.ok ? "text-gray-800" : "text-red-600"}>{TECH_ACTION_LABELS[a.action] ?? a.action}{a.ok ? "" : " (refusée)"}</span>
+              <span className="text-xs text-gray-400 truncate">{a.detail?.params?.email ?? (a.detail?.params?.value === true ? "activé" : a.detail?.params?.value === false ? "désactivé" : a.detail?.reason ?? a.detail?.error ?? "")} · {a.adminEmail}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {confirm && (
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label={confirm.title}>
+          <form
+            onSubmit={(e) => { e.preventDefault(); run({ action: confirm.action, value: confirm.value, email: confirm.email, message: confirm.message, password }); }}
+            className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6"
+          >
+            <p className="font-semibold">{confirm.title}</p>
+            <p className="text-sm text-gray-500 mt-1">{confirm.text}</p>
+            <label htmlFor="tech-pw" className="block text-xs text-gray-500 mt-4">Votre mot de passe</label>
+            <input id="tech-pw" type="password" autoFocus autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} className="mt-1 w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" />
+            <div className="flex justify-end gap-2 mt-5">
+              <button type="button" onClick={() => setConfirm(null)} className="px-3 py-2 rounded-lg text-sm text-gray-600">Annuler</button>
+              <button type="submit" disabled={busy || !password} className="px-4 py-2 rounded-lg text-sm bg-[#ff5a5f] text-white disabled:opacity-40">Confirmer</button>
+            </div>
+          </form>
+        </div>
+      )}
+    </main>
+  );
+}
+
 function ContactAdminView({ showToast }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -18473,7 +18755,7 @@ export default function Home() {
   const agencyCollab = Boolean(user?.agencyCollaborator); // collaborateur simple : l'abonnement, la charte de l'agence et la création de clients restent au propriétaire
   const [clientTool, setClientTool] = useState(null); // "approval" | "report" : outils du client ouvert depuis le bandeau
   useEffect(() => {
-    if (agencyHome && !["clients", "queue", "planning", "followup", "team", "billing", "brand-kit", "admin", "content", "messages"].includes(view)) setView("clients");
+    if (agencyHome && !["clients", "queue", "planning", "followup", "team", "billing", "brand-kit", "admin", "content", "messages", "tech"].includes(view)) setView("clients");
     if (agencyHome && agencyCollab && ["billing", "brand-kit"].includes(view)) setView("clients");
     if (clientMode && ["billing", "clients", "queue", "followup", "team", "planning"].includes(view)) setView("dashboard");
   }, [agencyHome, agencyCollab, clientMode, view]);
@@ -20196,6 +20478,7 @@ export default function Home() {
         { id: "admin", label: "Administration", icon: ShieldCheck },
         { id: "content", label: "Contenu du site", icon: PenLine },
         { id: "messages", label: "Messages", icon: MessageSquare },
+        { id: "tech", label: "Technique", icon: Gauge },
       ]
     : agencyHome
     ? [
@@ -20215,6 +20498,7 @@ export default function Home() {
               { id: "admin", label: "Administration", icon: ShieldCheck, group: "Administration" },
               { id: "content", label: "Contenu du site", icon: PenLine, group: "Administration" },
               { id: "messages", label: "Messages", icon: MessageSquare, group: "Administration" },
+              ...(user.isSuperAdmin ? [{ id: "tech", label: "Technique", icon: Gauge, group: "Administration" }] : []),
             ]
           : []),
       ]
@@ -20260,6 +20544,7 @@ export default function Home() {
               { id: "admin", label: "Administration", icon: ShieldCheck, group: "Administration" },
               { id: "content", label: "Contenu du site", icon: PenLine, group: "Administration" },
               { id: "messages", label: "Messages", icon: MessageSquare, group: "Administration" },
+              ...(user.isSuperAdmin ? [{ id: "tech", label: "Technique", icon: Gauge, group: "Administration" }] : []),
             ]
           : []),
       ];
@@ -20302,6 +20587,7 @@ export default function Home() {
     team: "Équipe de l'agence",
     admin: "Administration",
     content: "Contenu du site",
+    tech: "Technique",
     messages: "Messages de contact",
   };
   // Charge une proposition du copilote dans le formulaire de création (tableau de bord et Copilote IA)
@@ -20423,6 +20709,7 @@ export default function Home() {
   return (
     <EntreprisesCtx.Provider value={{ contexts, moments, activeContextId, activeContext, chooseContext }}>
     <div className="min-h-screen flex overflow-x-clip">
+      <MaintenanceBanner />
       {/* Tutoriel de première connexion */}
       {showTutorial && <TutorialOverlay canEvents={planAllows(user, "events")} onClose={closeTutorial} />}
 
@@ -22514,6 +22801,8 @@ export default function Home() {
         <AdminView showToast={showToast} />
       ) : view === "content" && user.isAdmin ? (
         <ContentAdminView showToast={showToast} />
+      ) : view === "tech" && user.isAdmin ? (
+        <TechAdminView showToast={showToast} />
       ) : view === "messages" && user.isAdmin ? (
         <ContactAdminView showToast={showToast} />
       ) : view === "events" ? (
