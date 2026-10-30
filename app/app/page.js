@@ -5671,27 +5671,9 @@ const techAgo = (ts) => {
 };
 const techDateTime = (ts) => (ts ? new Date(ts).toLocaleString("fr-FR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : "—");
 
-function TechDot({ level }) {
-  const c = level === "ok" ? "bg-green-500" : level === "warn" ? "bg-amber-500" : level === "bad" ? "bg-red-500" : "bg-gray-300";
-  return <span className={`inline-block w-2.5 h-2.5 rounded-full ${c} shrink-0`} aria-hidden />;
-}
-
-function TechRow({ level, label, children }) {
-  return (
-    <div className="flex items-start gap-3 py-2.5 border-b border-gray-50 last:border-0">
-      <span className="mt-1.5"><TechDot level={level} /></span>
-      <div className="min-w-0 flex-1">
-        <p className="text-sm font-medium text-gray-800">{label}</p>
-        <p className="text-xs text-gray-500 mt-0.5 break-words">{children}</p>
-      </div>
-    </div>
-  );
-}
-
 function TechAdminView({ showToast, currentEmail }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState("sante");
   const [confirm, setConfirm] = useState(null); // { action, value, message, email, title, text }
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
@@ -5761,147 +5743,199 @@ function TechAdminView({ showToast, currentEmail }) {
     </div>
   );
 
-  const tabs = [["sante", "Santé"], ["deploiements", "Déploiements"], ["usage", "Usage"], ["actions", "Actions"], ["journal", "Journal"]];
+  const LV = { ok: ["bg-green-500", "text-green-700", "bg-green-50", "border-green-200"], warn: ["bg-amber-500", "text-amber-700", "bg-amber-50", "border-amber-200"], bad: ["bg-red-500", "text-red-700", "bg-red-50", "border-red-200"], neutral: ["bg-gray-300", "text-gray-500", "bg-gray-50", "border-gray-200"] };
+  const uptime = data.process.uptimeSec >= 3600 ? `${Math.round(data.process.uptimeSec / 3600)} h` : `${Math.max(1, Math.round(data.process.uptimeSec / 60))} min`;
+  const diskPct = h?.disk?.usedPercent ?? null;
+  const backupLevel = backup ? (backup.alerts?.length ? "bad" : "ok") : "neutral";
+  const checks = [
+    { key: "db", icon: Database, label: "Base de données", level: data.db?.ok ? "ok" : "bad", value: data.db?.ok ? `${data.db.ms} ms` : "Injoignable", sub: data.db?.ok ? "temps de réponse" : data.db?.error },
+    { key: "app", icon: Gauge, label: "Application", level: "ok", value: uptime, sub: `en marche · ${data.process.rssMb} Mo · Node ${data.process.node.replace("v", "")}` },
+    { key: "sched", icon: RefreshCw, label: "Planificateur", level: schedLevel, value: sched?.lastRunAt ? techAgo(sched.lastRunAt) : "—", sub: sched?.lastError ? `erreur : ${sched.lastError}` : p?.lateScheduled > 0 ? `${p.lateScheduled} post(s) en retard` : `${sched?.lastPublished ?? 0} publié(s) au dernier passage` },
+    { key: "disk", icon: Monitor, label: "Serveur et disque", level: h ? (diskPct >= 90 ? "bad" : diskPct >= 80 ? "warn" : "ok") : "neutral", value: diskPct != null ? `${diskPct} %` : "—", sub: h ? `rapport ${techAgo(h.generatedAt)}` : "rapport du serveur absent" },
+    { key: "backup", icon: Download, label: "Sauvegardes", level: backupLevel, value: backup ? (backup.alerts?.length ? "Alerte" : "À jour") : "Inconnu", sub: backup?.alerts?.length ? backup.alerts.map((a) => a.message ?? a).join(" · ") : "sauvegarde du dossier de données" },
+    { key: "mail", icon: MessageSquare, label: "E-mails (24 h)", level: p ? (p.emailFailed > 0 ? "warn" : "ok") : "neutral", value: p ? `${p.emailSent}` : "—", sub: p ? `${p.emailFailed} échec(s)${data.config.smtp ? "" : " · SMTP absent"}` : "indisponible" },
+    { key: "pub", icon: Megaphone, label: "Publications en erreur", level: p ? (p.draftErrors > 0 ? "warn" : "ok") : "neutral", value: p ? `${p.draftErrors}` : "—", sub: p ? (p.draftErrors === 0 ? "aucune sur 7 jours" : (p.recentErrors[0]?.publishError ?? "").slice(0, 70)) : "indisponible" },
+    { key: "video", icon: Mic, label: "Transcriptions vidéo", level: p ? ((p.jobs?.error ?? 0) > 0 ? "warn" : "ok") : "neutral", value: p ? `${(p.jobs?.queued ?? 0) + (p.jobs?.processing ?? 0)}` : "—", sub: p ? `en cours · ${p.jobs?.error ?? 0} en erreur` : "indisponible" },
+    { key: "stripe", icon: CreditCard, label: "Paiement (Stripe)", level: !data.stripe.configured ? "warn" : data.stripe.last && !data.stripe.last.ok ? "bad" : "ok", value: !data.stripe.configured ? "Clé absente" : data.stripe.last ? techAgo(data.stripe.last.at) : "Prêt", sub: !data.stripe.configured ? "STRIPE_SECRET_KEY manquante" : `${data.stripe.webhookConfigured ? "webhook configuré" : "webhook NON configuré"}${data.stripe.last ? ` · ${data.stripe.last.type}` : " · aucun événement"}` },
+    { key: "ai", icon: Sparkles, label: "Fournisseurs d'IA", level: f.aiOff ? "warn" : data.config.anthropic ? "ok" : "bad", value: f.aiOff ? "Coupée" : `${data.ai.anthropic + data.ai.openai}`, sub: `appels depuis le démarrage · Anthropic ${data.config.anthropic ? "ok" : "ABSENT"} · OpenAI ${data.config.openai ? "ok" : "absent"}` },
+  ];
+  const bad = checks.filter((c) => c.level === "bad"), warn = checks.filter((c) => c.level === "warn");
+  const overall = bad.length ? "bad" : warn.length ? "warn" : "ok";
+  const todayActive = act?.activeByDay?.[act.activeByDay.length - 1]?.users ?? 0;
+  const kpis = [
+    ["Comptes", data.accounts?.total], ["Nouveaux (7 j)", data.accounts?.newWeek], ["Actifs aujourd'hui", act ? todayActive : null],
+    ["En essai", data.accounts?.trial], ["Abonnés", data.accounts?.paying], ["Suspendus", data.accounts?.disabled],
+  ];
+  const KIND_LABEL = { login: "Connexions", active: "Jours actifs", coach: "Coach consulté", repurpose: "Séries Seconde vie", mcp: "Usage assistants", assistant_connected: "Assistants connectés" };
+  const kinds = act ? Object.entries(act.kinds7).sort((a, b) => b[1] - a[1]) : [];
+  const maxKind = Math.max(1, ...kinds.map(([, n]) => n));
+  const R = 52, C = 2 * Math.PI * R;
 
   return (
-    <main className="max-w-4xl mx-auto p-6 space-y-4">
-      <div className="flex flex-wrap items-center gap-2">
-        {(f.signupsClosed || f.aiOff || f.maintenance) && (
-          <div className="w-full bg-amber-50 border border-amber-200 text-amber-800 text-sm rounded-xl px-4 py-2.5">
-            Interrupteurs actifs :{" "}
-            {[f.signupsClosed && "inscriptions fermées", f.aiOff && "IA coupée", f.maintenance && "maintenance"].filter(Boolean).join(" · ")}
+    <main className="w-full px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+      {/* Bandeau d'état général */}
+      <div className={`rounded-3xl border ${LV[overall][3]} ${LV[overall][2]} p-6 flex flex-wrap items-center gap-x-8 gap-y-4`} data-testid="tech-overall">
+        <div className="flex items-center gap-4 min-w-0">
+          <span className={`relative flex h-5 w-5 shrink-0`}><span className={`absolute inline-flex h-full w-full rounded-full ${LV[overall][0]} opacity-40 animate-ping`} /><span className={`relative inline-flex rounded-full h-5 w-5 ${LV[overall][0]}`} /></span>
+          <div className="min-w-0">
+            <p className={`text-2xl sm:text-3xl font-semibold ${LV[overall][1]}`}>{overall === "ok" ? "Tout est en ordre" : overall === "warn" ? `${warn.length} point${warn.length > 1 ? "s" : ""} à surveiller` : `${bad.length} problème${bad.length > 1 ? "s" : ""} à traiter`}</p>
+            <p className="text-sm text-gray-600 mt-1">{[...bad, ...warn].map((c) => c.label).join(" · ") || `${checks.length} contrôles au vert`} · mis à jour toutes les 30 s</p>
           </div>
-        )}
-        <div role="tablist" className="flex gap-1 bg-gray-100 rounded-xl p-1 overflow-x-auto max-w-full">
-          {tabs.map(([id, label]) => (
-            <button key={id} role="tab" aria-selected={tab === id} data-testid={`tech-tab-${id}`} onClick={() => setTab(id)} className={`px-3 py-1.5 rounded-lg text-sm whitespace-nowrap ${tab === id ? "bg-white shadow-sm font-medium text-gray-900" : "text-gray-500"}`}>{label}</button>
-          ))}
         </div>
-        <button onClick={() => load()} className="ml-auto text-gray-400 hover:text-gray-600 p-2" aria-label="Actualiser"><RefreshCw size={16} /></button>
+        <div className="flex flex-wrap items-center gap-2 ml-auto">
+          {[[f.signupsClosed, "Inscriptions fermées"], [f.aiOff, "IA coupée"], [f.maintenance, "Maintenance"]].filter(([on]) => on).map(([, l]) => <span key={l} className="px-3 py-1.5 rounded-full bg-amber-500 text-white text-sm font-medium">{l}</span>)}
+          <div className="text-right mr-2"><p className="text-xs text-gray-500">Version en ligne</p><p className="font-semibold">{ver?.sha ? <code>{ver.sha}</code> : "—"}</p></div>
+          <button onClick={() => load()} className="p-2.5 rounded-xl bg-white/80 border border-gray-200 text-gray-500 hover:text-gray-800" aria-label="Actualiser"><RefreshCw size={18} /></button>
+        </div>
       </div>
 
-      {tab === "sante" && (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-5 py-2">
-          <TechRow level={data.db?.ok ? "ok" : "bad"} label="Base de données">{data.db?.ok ? `répond en ${data.db.ms} ms` : `injoignable ${data.db?.error ?? ""}`}</TechRow>
-          <TechRow level="ok" label="Application">en marche depuis {Math.round(data.process.uptimeSec / 3600) >= 1 ? `${Math.round(data.process.uptimeSec / 3600)} h` : `${Math.round(data.process.uptimeSec / 60)} min`} · Node {data.process.node} · mémoire {data.process.rssMb} Mo</TechRow>
-          <TechRow level={schedLevel} label="Planificateur de publications">
-            {sched?.lastRunAt ? `dernier passage ${techAgo(sched.lastRunAt)}${sched.lastError ? ` · erreur : ${sched.lastError}` : ""} · ${sched.lastPublished} publié(s), ${sched.lastFailed} échec(s) au dernier passage` : "pas encore passé depuis le démarrage"}
-            {p?.lateScheduled > 0 && ` · ${p.lateScheduled} post(s) programmé(s) en retard de plus de 10 min`}
-          </TechRow>
-          <TechRow level={h ? (h.disk?.usedPercent >= 90 ? "bad" : h.disk?.usedPercent >= 80 ? "warn" : "ok") : "neutral"} label="Serveur et disque">
-            {h ? `disque ${h.disk?.usedPercent ?? "?"} % utilisé · rapport ${techAgo(h.generatedAt)}` : "rapport du serveur indisponible (le cron health-check.sh n'est pas passé)"}
-          </TechRow>
-          <TechRow level={backup ? (backup.alerts?.length ? "bad" : "ok") : "neutral"} label="Sauvegardes">
-            {backup ? (backup.alerts?.length ? backup.alerts.map((a) => a.message ?? a).join(" · ") : "à jour") : "état inconnu"}
-          </TechRow>
-          <TechRow level={p ? (p.emailFailed > 0 ? "warn" : "ok") : "neutral"} label="E-mails (24 h)">{p ? `${p.emailSent} envoyé(s), ${p.emailFailed} échec(s)${data.config.smtp ? "" : " · SMTP non configuré"}` : "indisponible"}</TechRow>
-          <TechRow level={p ? (p.draftErrors > 0 ? "warn" : "ok") : "neutral"} label="Publications en erreur (7 j)">
-            {p ? (p.draftErrors === 0 ? "aucune" : `${p.draftErrors} · ${p.recentErrors.map((e) => (e.publishError ?? "").slice(0, 80)).filter(Boolean).join(" / ")}`) : "indisponible"}
-          </TechRow>
-          <TechRow level={p ? ((p.jobs?.error ?? 0) > 0 ? "warn" : "ok") : "neutral"} label="Transcriptions vidéo">{p ? `en cours ${(p.jobs?.queued ?? 0) + (p.jobs?.processing ?? 0)} · en erreur ${p.jobs?.error ?? 0}` : "indisponible"}</TechRow>
-          <TechRow level={!data.stripe.configured ? "warn" : data.stripe.last && !data.stripe.last.ok ? "bad" : "ok"} label="Paiement (Stripe)">
-            {!data.stripe.configured ? "clé non configurée" : `${data.stripe.webhookConfigured ? "webhook configuré" : "webhook NON configuré"} · ${data.stripe.last ? `dernier événement ${data.stripe.last.type} ${techAgo(data.stripe.last.at)}${data.stripe.last.ok ? "" : ` · ÉCHEC ${data.stripe.last.error}`}` : "aucun événement depuis le démarrage"}`}
-          </TechRow>
-          <TechRow level={data.config.anthropic ? "ok" : "bad"} label="Fournisseurs d'IA">
-            Anthropic {data.config.anthropic ? "configuré" : "CLÉ ABSENTE"} · OpenAI {data.config.openai ? "configuré" : "clé absente"} · appels depuis le démarrage : {data.ai.anthropic} Anthropic, {data.ai.openai} OpenAI{data.ai.blocked ? `, ${data.ai.blocked} refusé(s) (IA coupée)` : ""}
-          </TechRow>
-        </div>
-      )}
+      {/* Chiffres clés */}
+      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
+        {kpis.map(([l, v]) => (
+          <div key={l} className="bg-white rounded-3xl border border-gray-100 shadow-sm px-6 py-5">
+            <p className="text-sm text-gray-500">{l}</p>
+            <p className="text-4xl sm:text-5xl font-semibold tracking-tight mt-2 tabular-nums">{v ?? "—"}</p>
+          </div>
+        ))}
+      </div>
 
-      {tab === "deploiements" && (
-        <div className="space-y-4">
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-            <p className="text-xs uppercase tracking-wide text-gray-400">Version en ligne</p>
-            <p className="text-lg font-semibold mt-1">{ver?.sha ? <code>{ver.sha}</code> : "inconnue"}</p>
-            <p className="text-xs text-gray-500 mt-1">{ver ? `mise en ligne ${techAgo(ver.at)} · précédente : ${ver.prev}` : "Le journal sera alimenté dès le prochain déploiement avec le nouveau script (deploy.sh)."}</p>
-            <p className="text-xs text-gray-500 mt-2">Sauvegardes de la base avant déploiement (Neon) : {data.config.neonSnapshots ? "activées" : "non configurées (NEON_API_KEY absent)"}.</p>
-          </div>
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-5 py-2">
-            <p className="text-sm font-medium py-3">Historique</p>
-            {!journal || journal.length === 0 ? <p className="text-sm text-gray-400 pb-4">Aucun déploiement journalisé pour l'instant.</p> : journal.map((j, i) => (
-              <div key={i} className="flex items-baseline gap-3 py-2 border-t border-gray-50 text-sm">
-                <span className="text-xs text-gray-400 w-28 shrink-0">{techDateTime(j.at)}</span>
-                <span className={`font-medium ${/échec|refus|retour/.test(j.event) ? "text-red-600" : j.event === "réussi" ? "text-green-700" : "text-gray-700"}`}>{j.event}</span>
-                <code className="text-xs text-gray-500">{j.sha}{j.prev ? ` ← ${j.prev}` : ""}</code>
-                {j.detail && <span className="text-xs text-gray-400 truncate">{j.detail}</span>}
-              </div>
-            ))}
-          </div>
-          <p className="text-xs text-gray-400">Déployer, revenir en arrière et sauvegarder se font encore sur le serveur : <code>./deploy.sh</code>, <code>./rollback.sh</code>. Ces actions viendront ici dans une prochaine étape.</p>
-        </div>
-      )}
-
-      {tab === "usage" && (
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {[["Comptes", data.accounts?.total], ["Nouveaux (7 j)", data.accounts?.newWeek], ["En essai", data.accounts?.trial], ["Abonnés", data.accounts?.paying]].map(([l, v]) => (
-              <div key={l} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4"><p className="text-xs text-gray-400">{l}</p><p className="text-2xl font-semibold mt-1">{v ?? "—"}</p></div>
-            ))}
-          </div>
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-            <p className="text-sm font-medium">Comptes actifs par jour (14 j)</p>
-            {act ? (
-              <>
-                <div className="flex items-end gap-1 h-24 mt-3" aria-label="Comptes actifs par jour">
-                  {act.activeByDay.map((d) => (
-                    <div key={d.day} className="flex-1 flex flex-col items-center justify-end h-full" title={`${d.day} : ${d.users}`}>
-                      <div className="w-full bg-[#ff5a5f]/80 rounded-t" style={{ height: `${Math.max(d.users ? 6 : 1, (d.users / maxActive) * 100)}%` }} />
+      <div className="grid grid-cols-1 2xl:grid-cols-3 gap-6">
+        <div className="2xl:col-span-2 space-y-6 min-w-0">
+          {/* Santé : une tuile par contrôle */}
+          <section aria-label="Santé">
+            <h2 className="text-lg font-semibold mb-3">Santé</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+              {checks.map((c) => {
+                const Icon = c.icon;
+                return (
+                  <div key={c.key} data-testid={`tech-check-${c.key}`} className={`rounded-3xl border bg-white shadow-sm p-5 relative overflow-hidden ${LV[c.level][3]}`}>
+                    <span className={`absolute left-0 top-0 bottom-0 w-1.5 ${LV[c.level][0]}`} aria-hidden />
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 text-sm text-gray-600 min-w-0"><Icon size={16} className="shrink-0" /><span className="truncate">{c.label}</span></div>
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${LV[c.level][2]} ${LV[c.level][1]}`}>{c.level === "ok" ? "OK" : c.level === "warn" ? "À voir" : c.level === "bad" ? "Problème" : "Inconnu"}</span>
                     </div>
-                  ))}
-                </div>
-                <p className="text-xs text-gray-400 mt-2">Le journal d'activité a commencé {act.since ? techAgo(act.since) : "à l'instant"} : avant, rien n'a été enregistré.</p>
-                <p className="text-xs text-gray-500 mt-3">7 derniers jours : {Object.keys(act.kinds7).length === 0 ? "aucun événement" : Object.entries(act.kinds7).map(([k, n]) => `${{ login: "connexions", active: "jours actifs", coach: "coach consulté", repurpose: "séries Seconde vie", mcp: "jours d'usage assistant", assistant_connected: "assistants connectés" }[k] ?? k} ${n}`).join(" · ")}</p>
-              </>
-            ) : <p className="text-sm text-gray-400 mt-2">Indisponible.</p>}
-          </div>
-        </div>
-      )}
+                    {c.key === "disk" && diskPct != null ? (
+                      <div className="flex items-center gap-4 mt-3">
+                        <svg width="96" height="96" viewBox="0 0 120 120" className="shrink-0" role="img" aria-label={`Disque utilisé à ${diskPct} %`}>
+                          <circle cx="60" cy="60" r={R} fill="none" stroke="#f1f5f9" strokeWidth="14" />
+                          <circle cx="60" cy="60" r={R} fill="none" strokeWidth="14" strokeLinecap="round" stroke={diskPct >= 90 ? "#ef4444" : diskPct >= 80 ? "#f59e0b" : "#22c55e"} strokeDasharray={`${(C * diskPct) / 100} ${C}`} transform="rotate(-90 60 60)" />
+                          <text x="60" y="68" textAnchor="middle" fontSize="26" fontWeight="600" fill="#1b2a4a">{diskPct}%</text>
+                        </svg>
+                        <p className="text-sm text-gray-500">{c.sub}{h?.disk?.totalBytes ? ` · ${(h.disk.usedBytes / 1e9).toFixed(0)} sur ${(h.disk.totalBytes / 1e9).toFixed(0)} Go` : ""}</p>
+                      </div>
+                    ) : (
+                      <>
+                        <p className="text-4xl font-semibold tracking-tight mt-3 tabular-nums">{c.value}</p>
+                        <p className="text-sm text-gray-500 mt-1 break-words line-clamp-2">{c.sub}</p>
+                      </>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </section>
 
-      {tab === "actions" && (
-        <div className="space-y-4">
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-5 py-2">
-            <p className="text-sm font-medium py-3">Interrupteurs (votre mot de passe est redemandé)</p>
-            <Switch label="Inscriptions fermées" hint="Plus personne ne peut créer de compte librement. Les invitations de test et d'équipe continuent de fonctionner." on={f.signupsClosed} invert action="flag.signups" onWarn="Les nouvelles inscriptions libres seront refusées. Les invitations restent valables." />
-            <Switch label="IA coupée" hint="Plus aucun appel à Anthropic ni à OpenAI (rédaction, images, transcription). À utiliser si les coûts dérivent ou en cas d'abus." on={f.aiOff} action="flag.ai" onWarn="Toute génération sera refusée pour tout le monde, avec un message d'indisponibilité." />
-            <Switch label="Maintenance" hint="Affiche un bandeau d'information dans l'application. Ne bloque rien." on={f.maintenance} action="flag.maintenance" message={maintMsg} onWarn="Un bandeau sera affiché à tous les utilisateurs connectés." />
-            {!f.maintenance && (
-              <div className="pb-3">
-                <label className="text-xs text-gray-500" htmlFor="maint-msg">Message du bandeau (facultatif)</label>
-                <input id="maint-msg" value={maintMsg} onChange={(e) => setMaintMsg(e.target.value)} maxLength={300} placeholder="Maintenance en cours jusqu'à 14 h : certaines fonctions peuvent être indisponibles." className="mt-1 w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" />
+          {/* Usage */}
+          <section aria-label="Usage" className="grid grid-cols-1 xl:grid-cols-5 gap-4">
+            <div className="xl:col-span-3 bg-white rounded-3xl border border-gray-100 shadow-sm p-6">
+              <h2 className="text-lg font-semibold">Comptes actifs par jour</h2>
+              <p className="text-sm text-gray-500">14 derniers jours</p>
+              {act ? (
+                <>
+                  <div className="flex items-end gap-1.5 sm:gap-2 h-64 mt-5" data-testid="tech-chart">
+                    {act.activeByDay.map((d, i) => (
+                      <div key={d.day} className="flex-1 min-w-0 flex flex-col items-center justify-end h-full" title={`${d.day} : ${d.users}`}>
+                        <span className="text-xs text-gray-500 mb-1 tabular-nums">{d.users || ""}</span>
+                        <div className={`w-full rounded-t-lg ${i === act.activeByDay.length - 1 ? "bg-[#ff5a5f]" : "bg-[#ff5a5f]/55"}`} style={{ height: `${Math.max(d.users ? 4 : 1, (d.users / maxActive) * 85)}%` }} />
+                        <span className="text-[10px] sm:text-xs text-gray-400 mt-1.5">{d.day.slice(8)}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-xs text-gray-400 mt-3">Le journal d'activité a commencé {act.since ? techAgo(act.since) : "à l'instant"} : avant, rien n'a été enregistré.</p>
+                </>
+              ) : <p className="text-sm text-gray-400 mt-3">Indisponible.</p>}
+            </div>
+            <div className="xl:col-span-2 bg-white rounded-3xl border border-gray-100 shadow-sm p-6">
+              <h2 className="text-lg font-semibold">Ce qui s'utilise</h2>
+              <p className="text-sm text-gray-500">7 derniers jours</p>
+              <div className="mt-5 space-y-4">
+                {kinds.length === 0 ? <p className="text-sm text-gray-400">Aucun événement pour l'instant.</p> : kinds.map(([k, n]) => (
+                  <div key={k}>
+                    <div className="flex justify-between text-sm"><span className="text-gray-700">{KIND_LABEL[k] ?? k}</span><span className="font-semibold tabular-nums">{n}</span></div>
+                    <div className="h-3 rounded-full bg-gray-100 mt-1.5 overflow-hidden"><div className="h-full rounded-full bg-sky-500" style={{ width: `${Math.max(4, (n / maxKind) * 100)}%` }} /></div>
+                  </div>
+                ))}
               </div>
-            )}
-          </div>
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-            <p className="text-sm font-medium">Suspendre ou réactiver un compte</p>
-            <p className="text-xs text-gray-500 mt-1">La personne ne peut plus se connecter ; ses données sont conservées.</p>
-            <div className="flex flex-wrap gap-2 mt-3">
-              <input value={suspendEmail} onChange={(e) => setSuspendEmail(e.target.value)} type="email" placeholder="adresse e-mail du compte" aria-label="Adresse e-mail du compte" className="flex-1 min-w-[14rem] border border-gray-200 rounded-lg px-3 py-2 text-sm" />
-              <button disabled={!suspendEmail.includes("@")} onClick={() => ask({ action: "account.suspend", email: suspendEmail, title: "Suspendre ce compte", text: suspendEmail })} className="px-3 py-2 rounded-lg text-sm border border-red-200 text-red-700 bg-red-50 disabled:opacity-40">Suspendre</button>
-              <button disabled={!suspendEmail.includes("@")} onClick={() => ask({ action: "account.reactivate", email: suspendEmail, title: "Réactiver ce compte", text: suspendEmail })} className="px-3 py-2 rounded-lg text-sm border border-gray-200 text-gray-700 disabled:opacity-40">Réactiver</button>
             </div>
-          </div>
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-            <p className="text-sm font-medium">Sans risque</p>
-            <div className="flex flex-wrap gap-2 mt-3">
-              <button disabled={busy} onClick={() => run({ action: "cache.clear" })} className="px-3 py-2 rounded-lg text-sm border border-gray-200 text-gray-700">Vider le cache du site</button>
-              <button disabled={busy} onClick={() => run({ action: "scheduler.run" })} className="px-3 py-2 rounded-lg text-sm border border-gray-200 text-gray-700">Lancer le planificateur maintenant</button>
-            </div>
-          </div>
+          </section>
         </div>
-      )}
 
-      {tab === "journal" && (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-5 py-2">
-          <p className="text-sm font-medium py-3">Journal de vos actions</p>
-          {!data.actions || data.actions.unavailable || data.actions.length === 0 ? <p className="text-sm text-gray-400 pb-4">Aucune action pour l'instant.</p> : data.actions.map((a) => (
-            <div key={a.id} className="flex items-baseline gap-3 py-2 border-t border-gray-50 text-sm">
-              <span className="text-xs text-gray-400 w-28 shrink-0">{techDateTime(a.createdAt)}</span>
-              <span className={a.ok ? "text-gray-800" : "text-red-600"}>{TECH_ACTION_LABELS[a.action] ?? a.action}{a.ok ? "" : " (refusée)"}</span>
-              <span className="text-xs text-gray-400 truncate">{a.detail?.params?.email ?? (a.detail?.params?.value === true ? "activé" : a.detail?.params?.value === false ? "désactivé" : a.detail?.reason ?? a.detail?.error ?? "")} · {a.adminEmail}</span>
+        <div className="space-y-6 min-w-0">
+          {/* Actions */}
+          <section aria-label="Actions" className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6">
+            <h2 className="text-lg font-semibold">Actions</h2>
+            <p className="text-sm text-gray-500">Votre mot de passe est redemandé pour les interrupteurs.</p>
+            <div className="mt-3">
+              <Switch label="Inscriptions fermées" hint="Plus d'inscription libre. Les invitations de test et d'équipe passent toujours." on={f.signupsClosed} invert action="flag.signups" onWarn="Les nouvelles inscriptions libres seront refusées. Les invitations restent valables." />
+              <Switch label="IA coupée" hint="Plus aucun appel à Anthropic ni OpenAI. En cas de dérive des coûts ou d'abus." on={f.aiOff} action="flag.ai" onWarn="Toute génération sera refusée pour tout le monde, avec un message d'indisponibilité." />
+              <Switch label="Maintenance" hint="Bandeau d'information dans l'application. Ne bloque rien." on={f.maintenance} action="flag.maintenance" message={maintMsg} onWarn="Un bandeau sera affiché à tous les utilisateurs connectés." />
+              {!f.maintenance && (
+                <div className="pb-3">
+                  <label className="text-xs text-gray-500" htmlFor="maint-msg">Message du bandeau (facultatif)</label>
+                  <input id="maint-msg" value={maintMsg} onChange={(e) => setMaintMsg(e.target.value)} maxLength={300} placeholder="Maintenance en cours jusqu'à 14 h." className="mt-1 w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" />
+                </div>
+              )}
             </div>
-          ))}
+            <div className="pt-4 border-t border-gray-100">
+              <p className="text-sm font-medium">Suspendre ou réactiver un compte</p>
+              <input value={suspendEmail} onChange={(e) => setSuspendEmail(e.target.value)} type="email" placeholder="adresse e-mail du compte" aria-label="Adresse e-mail du compte" className="mt-2 w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" />
+              <div className="flex gap-2 mt-2">
+                <button disabled={!suspendEmail.includes("@")} onClick={() => ask({ action: "account.suspend", email: suspendEmail, title: "Suspendre ce compte", text: suspendEmail })} className="flex-1 px-3 py-2 rounded-lg text-sm border border-red-200 text-red-700 bg-red-50 disabled:opacity-40">Suspendre</button>
+                <button disabled={!suspendEmail.includes("@")} onClick={() => ask({ action: "account.reactivate", email: suspendEmail, title: "Réactiver ce compte", text: suspendEmail })} className="flex-1 px-3 py-2 rounded-lg text-sm border border-gray-200 text-gray-700 disabled:opacity-40">Réactiver</button>
+              </div>
+            </div>
+            <div className="pt-4 mt-4 border-t border-gray-100 flex flex-wrap gap-2">
+              <button disabled={busy} onClick={() => run({ action: "cache.clear" })} className="px-3 py-2 rounded-lg text-sm border border-gray-200 text-gray-700">Vider le cache</button>
+              <button disabled={busy} onClick={() => run({ action: "scheduler.run" })} className="px-3 py-2 rounded-lg text-sm border border-gray-200 text-gray-700">Lancer le planificateur</button>
+            </div>
+          </section>
+
+          {/* Déploiements */}
+          <section aria-label="Déploiements" className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6">
+            <h2 className="text-lg font-semibold">Déploiements</h2>
+            <p className="text-sm text-gray-500 mt-1">{ver ? <>En ligne : <code>{ver.sha}</code> · {techAgo(ver.at)} · précédente <code>{ver.prev}</code></> : "Le journal démarre au prochain déploiement."}</p>
+            <p className="text-xs text-gray-400 mt-1">Copie Neon avant déploiement : {data.config.neonSnapshots ? "activée" : "non configurée"}</p>
+            <ol className="mt-4 space-y-3 border-l-2 border-gray-100 ml-1.5">
+              {!journal || journal.length === 0 ? <li className="pl-4 text-sm text-gray-400">Aucun déploiement journalisé.</li> : journal.slice(0, 8).map((j, i) => {
+                const lvl = /échec|refus|retour/.test(j.event) ? "bad" : j.event === "réussi" ? "ok" : "neutral";
+                return (
+                  <li key={i} className="pl-4 relative">
+                    <span className={`absolute -left-[7px] top-1.5 w-3 h-3 rounded-full ring-4 ring-white ${LV[lvl][0]}`} />
+                    <p className="text-sm"><span className={`font-medium ${LV[lvl][1]}`}>{j.event}</span> <code className="text-xs text-gray-500">{j.sha}</code></p>
+                    <p className="text-xs text-gray-400">{techDateTime(j.at)}{j.detail ? ` · ${j.detail}` : ""}</p>
+                  </li>
+                );
+              })}
+            </ol>
+          </section>
+
+          {/* Journal des actions */}
+          <section aria-label="Journal" className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6">
+            <h2 className="text-lg font-semibold">Journal de vos actions</h2>
+            {!data.actions || data.actions.unavailable || data.actions.length === 0 ? <p className="text-sm text-gray-400 mt-3">Aucune action pour l'instant.</p> : (
+              <ul className="mt-3 divide-y divide-gray-50">
+                {data.actions.slice(0, 10).map((a) => (
+                  <li key={a.id} className="py-2 text-sm flex items-baseline gap-3">
+                    <span className="text-xs text-gray-400 w-24 shrink-0">{techDateTime(a.createdAt)}</span>
+                    <span className={a.ok ? "text-gray-800" : "text-red-600"}>{TECH_ACTION_LABELS[a.action] ?? a.action}{a.ok ? "" : " (refusée)"}</span>
+                    <span className="text-xs text-gray-400 truncate ml-auto">{a.detail?.params?.email ?? (a.detail?.params?.value === true ? "activé" : a.detail?.params?.value === false ? "désactivé" : a.detail?.reason ?? a.detail?.error ?? "")}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
         </div>
-      )}
+      </div>
 
       {confirm && (
         <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label={confirm.title}>
