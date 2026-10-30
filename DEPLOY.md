@@ -280,3 +280,12 @@ Un second moniteur sur la page d'accueil. C'est ce qui vous prévient si le serv
 - **Banc d'essai :** `bash tests/deploy/run.sh` rejoue le déroulé complet, pannes comprises, avec des doubles de `docker` et `git`. À relancer après toute
   modification de `deploy.sh`, `rollback.sh` ou des scripts de `scripts/`.
 - **Premier déploiement avec ce script :** à faire à un moment calme, en gardant la sortie sous les yeux.
+
+## 13. Tableau de bord technique (super-admin)
+
+Administration → **Technique** : santé (base, planificateur, disque, sauvegardes, e-mails, Stripe, IA), déploiements, usage, actions, journal.
+
+- **Déploiements :** `deploy.sh` et `rollback.sh` écrivent `data/state/deploys.jsonl` (une ligne JSON par événement) et `data/state/version.json` (version en ligne). L'application ne fait que les lire ; le journal est vide tant qu'aucun déploiement n'a été fait avec le nouveau script.
+- **Interrupteurs** (mot de passe redemandé, tracés dans le journal des actions) : *inscriptions fermées* (les invitations de test et d'équipe passent toujours), *IA coupée* (refus centralisé de tout appel à Anthropic et OpenAI, `lib/aiGuard.js`), *maintenance* (bandeau). Ils sont stockés en base (`SiteContent`, clé `ops-flags`), pris en compte en moins de 10 s. **Si un interrupteur est resté activé par erreur** et que vous ne pouvez plus ouvrir l'écran : `DELETE FROM "SiteContent" WHERE key = 'ops-flags';` rétablit tout.
+- **Journal d'activité** (`ActivityEvent`) : connexions, jour actif, coach, séries Seconde vie, usage des assistants, connexions d'assistants. Il ne se reconstitue pas après coup. Conservé 13 mois.
+- **Pas encore dans l'écran :** déployer, revenir en arrière et sauvegarder depuis le navigateur (étape suivante : file d'ordres exécutée par le serveur hôte).

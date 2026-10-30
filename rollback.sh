@@ -10,6 +10,12 @@ set -euo pipefail
 APP_DIR="${APP_DIR:-/opt/postgenius}"
 cd "$APP_DIR"
 LOG="$APP_DIR/deploys.log"
+# Journal lisible par l'application (tableau de bord technique) : une ligne JSON par événement, dans le volume de données partagé
+JLOG="$APP_DIR/data/state/deploys.jsonl"
+jlog() { # jlog <événement> <sha> <précédent> [détail]
+  mkdir -p "$APP_DIR/data/state" 2>/dev/null || return 0
+  printf '{"at":"%s","event":"%s","sha":"%s","prev":"%s","detail":"%s"}\n' "$(date -u '+%FT%TZ')" "$1" "${2:-}" "${3:-}" "$(printf '%s' "${4:-}" | tr -d '"\\' | tr '\n' ' ' | cut -c1-200)" >> "$JLOG" 2>/dev/null || true
+}
 log() { echo "$(date '+%F %T') $*" >> "$LOG"; }
 SMOKE="${SMOKE_SCRIPT:-$APP_DIR/scripts/smoke.sh}"
 
@@ -21,6 +27,7 @@ PREV_SHA=$(cat "$APP_DIR/.prev/sha" 2>/dev/null || echo inconnu)
 CUR_SHA=$(cat "$APP_DIR/.deployed-sha" 2>/dev/null || echo inconnu)
 echo "==> Retour arrière : $CUR_SHA  →  $PREV_SHA"
 log "retour arrière $CUR_SHA -> $PREV_SHA"
+jlog "retour arrière" "$PREV_SHA" "$CUR_SHA"
 
 # La version retirée est gardée un temps dans .rolledback/ pour analyse
 rm -rf "$APP_DIR/.rolledback"
@@ -36,10 +43,11 @@ docker compose up -d --build --force-recreate app
 if "$SMOKE"; then
   echo "$PREV_SHA" > "$APP_DIR/.deployed-sha"
   rm -rf "$APP_DIR/.prev"
-  log "retour arrière réussi : $PREV_SHA en ligne"
+  log "retour arrière réussi : $PREV_SHA en ligne"; jlog "retour arrière réussi" "$PREV_SHA" "$CUR_SHA"
+  printf '{"sha":"%s","prev":"%s","at":"%s"}\n' "$PREV_SHA" "$CUR_SHA" "$(date -u '+%FT%TZ')" > "$APP_DIR/data/state/version.json" 2>/dev/null || true
   echo "==> Terminé : $PREV_SHA est en ligne."
 else
-  log "retour arrière : le contrôle a échoué aussi"
+  log "retour arrière : le contrôle a échoué aussi"; jlog "retour arrière échoué" "$PREV_SHA" "$CUR_SHA" "contrôle échoué aussi"
   echo "==> ⚠ Le contrôle échoue aussi après le retour arrière : regardez docker compose logs app" >&2
   exit 1
 fi

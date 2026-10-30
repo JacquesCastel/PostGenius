@@ -1159,3 +1159,29 @@ model MediaJob {
 
   @@index([userId, createdAt])
 }
+
+// Journal des actions du super-admin (interrupteurs, suspensions, etc.) : qui, quoi, quand, avec quel résultat. Conservé tel quel, jamais purgé.
+model AdminAction {
+  id         String   @id @default(cuid())
+  createdAt  DateTime @default(now())
+  adminId    String
+  adminEmail String
+  action     String // ex. flag.signups, account.suspend
+  detail     Json?
+  ok         Boolean  @default(true)
+
+  @@index([createdAt])
+}
+
+// Journal d'activité d'exploitation (connexions, jour actif, coach, séries de Seconde vie, appels MCP…). Sert au tableau de bord technique.
+// Ne peut pas être reconstitué après coup : on l'alimente dès maintenant. Conservé 13 mois (purge dans le planificateur).
+model ActivityEvent {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  userId    String?
+  kind      String // login | active | coach | repurpose | mcp | assistant_connected
+  meta      Json?
+
+  @@index([kind, createdAt])
+  @@index([userId, createdAt])
+}

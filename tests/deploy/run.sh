@@ -112,6 +112,8 @@ check "la nouvelle version est en ligne" '[ "$(ver)" = new ]'
 check "l'ancienne version est gardée dans .prev" '[ "$(cat $APP/.prev/next/VERSION)" = old ] && [ "$(cat $APP/.prev/sha)" = aaa1111 ]'
 check "la version déployée est notée" '[ "$(cat $APP/.deployed-sha)" = bbb2222 ]'
 check "le journal garde la trace" 'grep -q "réussi bbb2222" $APP/deploys.log'
+check "journal lisible par l'application : lignes JSON valides, début puis réussi" 'python3 -c "import json,sys; r=[json.loads(l) for l in open(sys.argv[1])]; assert [x[\"event\"] for x in r]==[\"début\",\"réussi\"] and r[-1][\"sha\"]==\"bbb2222\" and r[-1][\"prev\"]==\"aaa1111\"" $APP/data/state/deploys.jsonl'
+check "version en ligne lisible par l'application" 'python3 -c "import json,sys; v=json.load(open(sys.argv[1])); assert v[\"sha\"]==\"bbb2222\" and v[\"prev\"]==\"aaa1111\"" $APP/data/state/version.json'
 
 echo "== 2. Schéma inchangé : ni copie ni changement de base"
 new_sandbox; export STUB_GATE=AUCUN STUB_SCHEMA_CHANGED=0
@@ -145,6 +147,7 @@ check "le déploiement est signalé en échec" '[ "$RC" = 1 ]'
 check "l'ancienne version est de nouveau en ligne" '[ "$(ver)" = old ] && [ "$(cat $APP/.deployed-sha)" = aaa1111 ]'
 check "la version retirée est gardée pour analyse" '[ "$(cat $APP/.rolledback/next/VERSION)" = new ]'
 check "le journal raconte les deux temps" 'grep -q "retour arrière automatique" $APP/deploys.log && grep -q "retour arrière réussi" $APP/deploys.log'
+check "journal JSON : retour automatique puis retour réussi, version remise à l'ancienne" 'grep -q "retour automatique" $APP/data/state/deploys.jsonl && grep -q "retour arrière réussi" $APP/data/state/deploys.jsonl && grep -q aaa1111 $APP/data/state/version.json'
 
 echo "== 7. Publication proche ou transcription en cours"
 new_sandbox; export STUB_GATE=AJOUT STUB_BUSY="BUSY 2 1"

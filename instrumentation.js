@@ -9,6 +9,11 @@ export async function register() {
     if (!process.env.SMTP_HOST) console.warn("[config] SMTP_HOST absent : aucun e-mail ne partira (invitations d'équipe, liens de validation client, notifications, mot de passe oublié).");
     if (!process.env.APP_URL || /localhost|127\.0\.0\.1/.test(process.env.APP_URL)) console.warn("[config] APP_URL absent ou local : les liens envoyés (validation client, rapports, invitations) pointeront vers une mauvaise adresse.");
   }
+  // Coupe-circuit de l'IA (interrupteur du tableau de bord technique) : un seul point pour tous les appels Anthropic / OpenAI
+  if (process.env.NEXT_RUNTIME === "nodejs") {
+    const { installAiGuard } = await import("./lib/aiGuard");
+    installAiGuard();
+  }
   // Transcriptions de vidéos : effacées au plus tard après 24 h, même si personne n'envoie rien dans l'intervalle
   if (process.env.NEXT_RUNTIME === "nodejs") {
     const { purgeMediaJobs } = await import("./lib/mediaJobs");

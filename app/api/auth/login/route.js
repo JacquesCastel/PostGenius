@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { createSessionToken, SESSION_COOKIE, sessionCookieOptions } from "@/lib/session";
 import { rateLimit, clientIp } from "@/lib/ratelimit";
 import { isAdminUser } from "@/lib/admin";
+import { logActivity } from "@/lib/activity";
 
 export async function POST(req) {
   if (!rateLimit(`login:${clientIp(req)}`, { limit: 10, windowMs: 60_000 })) {
@@ -20,6 +21,7 @@ export async function POST(req) {
     return NextResponse.json({ error: "Ce compte a été suspendu. Contactez le support." }, { status: 403 });
   }
 
+  void logActivity(user.id, "login");
   const res = NextResponse.json({
     user: {
       id: user.id,

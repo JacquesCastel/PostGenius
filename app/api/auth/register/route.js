@@ -7,6 +7,7 @@ import { isPlanId, DEFAULT_PLAN, TRIAL_DAYS } from "@/lib/plans";
 import { sendWelcomeEmail } from "@/lib/lifecycleEmails";
 import { notifyAgency } from "@/lib/agencyNotify";
 import { memberJoinedMail } from "@/lib/teamEmails";
+import { getFlags } from "@/lib/opsFlags";
 import { INVITE_PLAN, INVITE_ACCESS_DAYS, inviteStatus, normalizeEmail } from "@/lib/invites";
 
 export async function POST(req) {
@@ -25,6 +26,11 @@ export async function POST(req) {
   const existing = await prisma.user.findUnique({ where: { email: email.toLowerCase() } });
   if (existing) {
     return NextResponse.json({ error: "Un compte existe déjà avec cet email." }, { status: 409 });
+  }
+
+  // Inscriptions fermées par le super-admin : seules les invitations (test ou équipe) passent
+  if (!team && !invite && (await getFlags()).signupsClosed) {
+    return NextResponse.json({ error: "Les inscriptions sont fermées pour le moment. Si vous avez reçu une invitation, ouvrez le lien de votre e-mail." }, { status: 403 });
   }
 
   // Invitation à rejoindre une équipe d'agence : l'adresse doit être celle invitée ; le compte rejoint l'agence (accès de l'agence, sans abonnement)

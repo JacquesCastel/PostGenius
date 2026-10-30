@@ -25,6 +25,7 @@ export async function POST(req) {
     return new NextResponse(`Signature invalide : ${e.message}`, { status: 400 });
   }
 
+  globalThis.__stripeLast = { type: event.type, at: Date.now(), ok: true };
   try {
     switch (event.type) {
       case "checkout.session.completed": {
@@ -58,6 +59,7 @@ export async function POST(req) {
         break;
     }
   } catch (e) {
+    globalThis.__stripeLast = { type: event.type, at: Date.now(), ok: false, error: String(e?.message ?? e).slice(0, 200) };
     console.error("Webhook handler error:", e?.message);
     return new NextResponse("Erreur de traitement", { status: 500 });
   }

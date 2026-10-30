@@ -26,8 +26,16 @@ set -euo pipefail
 APP_DIR="${APP_DIR:-/opt/postgenius}"
 cd "$APP_DIR"
 LOG="$APP_DIR/deploys.log"
+# Journal lisible par l'application (tableau de bord technique) : une ligne JSON par événement, dans le volume de données partagé
+JLOG="$APP_DIR/data/state/deploys.jsonl"
+jlog() { # jlog <événement> <sha> <précédent> [détail]
+  mkdir -p "$APP_DIR/data/state" 2>/dev/null || return 0
+  printf '{"at":"%s","event":"%s","sha":"%s","prev":"%s","detail":"%s"}\n' "$(date -u '+%FT%TZ')" "$1" "${2:-}" "${3:-}" "$(printf '%s' "${4:-}" | tr -d '"\\' | tr '\n' ' ' | cut -c1-200)" >> "$JLOG" 2>/dev/null || true
+}
 log() { echo "$(date '+%F %T') $*" >> "$LOG"; }
 SMOKE="${SMOKE_SCRIPT:-$APP_DIR/scripts/smoke.sh}"
+# Version en ligne, lisible par l'application
+write_version() { printf '{"sha":"%s","prev":"%s","at":"%s"}\n' "$NEW_SHA" "$PREV_SHA" "$(date -u '+%FT%TZ')" > "$APP_DIR/data/state/version.json" 2>/dev/null || true; }
 SNAPSHOT="${SNAPSHOT_SCRIPT:-$APP_DIR/scripts/neon-snapshot.sh}"
 
 echo "==> 1/7  git pull"
@@ -36,6 +44,7 @@ NEW_SHA=$(git rev-parse --short HEAD 2>/dev/null || echo inconnu)
 PREV_SHA=$(cat "$APP_DIR/.deployed-sha" 2>/dev/null || echo inconnu)
 echo "    version en ligne : $PREV_SHA  →  à mettre en ligne : $NEW_SHA"
 log "début $PREV_SHA -> $NEW_SHA"
+jlog début "$NEW_SHA" "$PREV_SHA"
 
 # Image de base Node : retirée à chaque déploiement pour recevoir les correctifs de sécurité. Non bloquant si le réseau échoue.
 docker pull node:22-slim || echo "    ⚠ docker pull node:22-slim a échoué : l'image locale existante sera utilisée"
@@ -68,9 +77,9 @@ case "$BUSY" in
     if [ "${FORCE:-0}" != "1" ]; then
       if [ -t 0 ]; then
         read -r -p "      Continuer quand même ? (o/N) " REP
-        case "$REP" in o|O|oui|OUI) ;; *) echo "    Déploiement annulé."; log "annulé (publications ou transcriptions proches)"; exit 3 ;; esac
+        case "$REP" in o|O|oui|OUI) ;; *) echo "    Déploiement annulé."; log "annulé (publications ou transcriptions proches)"; jlog annulé "$NEW_SHA" "$PREV_SHA" "publications ou transcriptions proches"; exit 3 ;; esac
       else
-        echo "    Déploiement annulé (session non interactive). FORCE=1 ./deploy.sh pour passer outre."; log "annulé (publications ou transcriptions proches)"; exit 3
+        echo "    Déploiement annulé (session non interactive). FORCE=1 ./deploy.sh pour passer outre."; log "annulé (publications ou transcriptions proches)"; jlog annulé "$NEW_SHA" "$PREV_SHA" "publications ou transcriptions proches"; exit 3
       fi
     fi ;;
 esac
@@ -140,10 +149,10 @@ if [ "$RC" -ne 0 ]; then
   rm -rf "$APP_DIR/.next.new" "$APP_DIR/.prisma.new"
   if [ "$RC" -eq 20 ]; then
     echo "==> ARRÊT : changement de schéma destructif refusé. La version en ligne n'a pas changé."
-    log "refusé : schéma destructif"
+    log "refusé : schéma destructif"; jlog refusé "$NEW_SHA" "$PREV_SHA" "schéma destructif"
   else
     echo "==> ARRÊT : le build a échoué (code $RC). La version en ligne n'a pas changé."
-    log "échec build (code $RC)"
+    log "échec build (code $RC)"; jlog échec "$NEW_SHA" "$PREV_SHA" "build (code $RC)"
   fi
   exit "$RC"
 fi
@@ -165,14 +174,14 @@ echo "==> 7/7  contrôle automatique après déploiement"
 if [ "${SKIP_SMOKE:-0}" = "1" ]; then
   echo "    contrôle désactivé : vérifiez le site à la main."
   echo "$NEW_SHA" > "$APP_DIR/.deployed-sha"
-  log "réussi $NEW_SHA (sans contrôle automatique)"
+  log "réussi $NEW_SHA (sans contrôle automatique)"; jlog réussi "$NEW_SHA" "$PREV_SHA" "sans contrôle automatique"; write_version
 elif "$SMOKE"; then
   echo "$NEW_SHA" > "$APP_DIR/.deployed-sha"
-  log "réussi $NEW_SHA"
+  log "réussi $NEW_SHA"; jlog réussi "$NEW_SHA" "$PREV_SHA"; write_version
 else
   echo ""
   echo "==> ÉCHEC du contrôle : retour automatique à la version précédente ($PREV_SHA)"
-  log "contrôle échoué $NEW_SHA : retour arrière automatique"
+  log "contrôle échoué $NEW_SHA : retour arrière automatique"; jlog "retour automatique" "$NEW_SHA" "$PREV_SHA" "contrôle après déploiement échoué"
   if ROLLBACK_AUTO=1 "$APP_DIR/rollback.sh"; then
     echo "==> Retour arrière réussi : $PREV_SHA est de nouveau en ligne. Regardez : docker compose logs app"
   else

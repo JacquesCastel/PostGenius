@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { logActiveOncePerDay } from "@/lib/activity";
 import { authenticateKey } from "@/lib/apiKeys";
 import { authenticateOAuth, APP } from "@/lib/oauth";
 import { handleMessage } from "@/lib/mcp";
@@ -32,6 +33,7 @@ export async function POST(req) {
     return json({ jsonrpc: "2.0", id: null, error: { code: -32001, message } }, 401, { "WWW-Authenticate": `Bearer realm="linkeepost", resource_metadata="${APP()}/.well-known/oauth-protected-resource"${hasToken ? ', error="invalid_token"' : ""}` });
   }
   if (!rateLimit(`mcp:${auth.keyId}`, { limit: Number(process.env.MCP_RATE_LIMIT) || 60, windowMs: 60_000 })) return json({ jsonrpc: "2.0", id: null, error: { code: -32002, message: "Trop d'appels : réessayez dans une minute." } }, 429, { "Retry-After": "60" });
+  void logActiveOncePerDay(auth.actorId ?? auth.userId, "mcp");
   const feat = await checkFeature(auth.actorId ?? auth.userId, "campaigns", "L'accès par assistant (MCP)");
   if (!feat.ok) return json({ jsonrpc: "2.0", id: null, error: { code: -32003, message: feat.error } }, 403);
 
