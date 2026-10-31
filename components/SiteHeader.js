@@ -27,19 +27,30 @@ export default function SiteHeader() {
   const [open, setOpen] = useState(false); // menu sur téléphone et tablette
 
   // Session : au chargement, et au retour sur une page restaurée par le navigateur (bouton retour sur téléphone : la page revient de
-  // la mémoire sans repasser par le serveur). Connecté sur la page d'accueil : on repart sur le tableau de bord.
+  // la mémoire sans repasser par le serveur). Connecté : sur la page d'accueil, ou sur n'importe quelle page du site atteinte par le bouton
+  // retour (ou avancer), on repart sur le tableau de bord. Un clic volontaire sur un lien du site reste libre.
   useEffect(() => {
-    const check = () =>
+    // Trois façons d'arriver ici par l'historique : page restaurée de la mémoire (persisted), rechargée par le bouton retour
+    // (type « back_forward »), ou affichée sans rechargement par le routeur après un « popstate » (le cas du bouton « Tableau de bord »,
+    // qui est une navigation interne : le navigateur ne signale alors rien).
+    const viaHistory = (persisted) => {
+      if (persisted || Date.now() - (window.__lpPopAt ?? 0) < 4000) return true;
+      try { return performance.getEntriesByType("navigation")[0]?.type === "back_forward"; } catch { return false; }
+    };
+    const check = (persisted = false) =>
       fetch("/api/auth/me", { cache: "no-store" })
         .then((r) => r.json())
         .then((d) => {
           setLoggedIn(Boolean(d.user));
           setUserName(d.user?.name ?? "");
-          if (d.user && window.location.pathname === "/") window.location.replace("/app");
+          const path = window.location.pathname;
+          if (d.user && !path.startsWith("/app") && (path === "/" || viaHistory(persisted))) window.location.replace("/app");
         })
         .catch(() => {});
     check();
-    const onShow = (e) => { if (e.persisted) check(); };
+    const onPop = () => { window.__lpPopAt = Date.now(); };
+    if (!window.__lpPopListener) { window.__lpPopListener = true; window.addEventListener("popstate", onPop); }
+    const onShow = (e) => { if (e.persisted) check(true); };
     window.addEventListener("pageshow", onShow);
     return () => window.removeEventListener("pageshow", onShow);
   }, []);
