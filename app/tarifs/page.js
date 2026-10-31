@@ -6,13 +6,14 @@ import { COMPARE } from "@/lib/planFeatures";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 import PricingCards from "@/components/PricingCards";
+import { JOIN_HREF, pick } from "@/lib/access";
 
 export const dynamic = "force-dynamic";
 
 export const metadata = {
   title: "Tarifs — LinkeePost",
   description:
-    "Trois offres pour des posts LinkedIn écrits à partir de votre matière : Essentiel, Pro et Agence. 14 jours d'essai gratuit, sans carte bancaire.",
+    "Trois offres pour des posts LinkedIn écrits à partir de votre matière : Essentiel, Pro et Agence. " + pick("Accès sur invitation pendant la bêta fermée.", "14 jours d'essai gratuit, sans carte bancaire."),
   alternates: { canonical: "/tarifs" },
 };
 
@@ -40,7 +41,7 @@ export default async function TarifsPage() {
             <p className="text-sm font-semibold text-[#ff5a5f]">Tarifs</p>
             <h1 className="text-4xl md:text-5xl font-extrabold mt-2">Une offre pour chaque ambition</h1>
             <p className="text-[#5a6b85] mt-3 max-w-2xl mx-auto">
-              14 jours d'essai gratuit sur tous les plans, sans carte bancaire. Sans engagement, résiliable à tout moment.
+              {pick("Pendant la bêta fermée, l'accès est offert aux testeurs invités, sans carte bancaire. Tarifs prévus à l'ouverture publique.", "14 jours d'essai gratuit sur tous les plans, sans carte bancaire. Sans engagement, résiliable à tout moment.")}
             </p>
             <p className="text-[#5a6b85] mt-2 max-w-2xl mx-auto text-sm">
               Les offres se distinguent par le volume de posts et de sources que vous pouvez déposer, et par les outils autour : campagnes, veille, pages entreprise, équipe.
@@ -103,13 +104,13 @@ export default async function TarifsPage() {
           <div className="mt-16 rounded-[2.5rem] bg-gradient-to-br from-[#ff5a5f] to-pink-500 text-white text-center p-12 shadow-2xl shadow-rose-300/50 relative overflow-hidden">
             <div className="pointer-events-none absolute -top-10 -right-10 w-40 h-40 bg-white/15 rounded-full blur-2xl" />
             <h2 className="text-3xl font-extrabold">Une question sur l'offre qu'il vous faut ?</h2>
-            <p className="text-white/85 mt-3">Parlons de votre cas. On vous aide à choisir — ou démarrez l'essai gratuit dès maintenant.</p>
+            <p className="text-white/85 mt-3">Parlons de votre cas. {pick("On vous aide à choisir — ou demandez une invitation à la bêta.", "On vous aide à choisir — ou démarrez l'essai gratuit dès maintenant.")}</p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-7">
               <Link href="/contact" className="inline-flex items-center gap-2 bg-white text-[#ff5a5f] font-bold px-7 py-3.5 rounded-full hover:bg-rose-50 transition-colors">
                 Nous contacter
               </Link>
-              <Link href="/app" className="inline-flex items-center gap-2 bg-white/15 border border-white/40 text-white font-semibold px-7 py-3.5 rounded-full hover:bg-white/25 transition-colors">
-                Démarrer l'essai gratuit <ChevronRight size={17} />
+              <Link href={JOIN_HREF} className="inline-flex items-center gap-2 bg-white/15 border border-white/40 text-white font-semibold px-7 py-3.5 rounded-full hover:bg-white/25 transition-colors">
+                {pick("Rejoindre la bêta", "Démarrer l'essai gratuit")} <ChevronRight size={17} />
               </Link>
             </div>
           </div>

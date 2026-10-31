@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { UserRound, LogOut, Menu, X } from "lucide-react";
 import LpMark from "./LpMark";
 import GoodbyeDialog from "./GoodbyeDialog";
+import { JOIN_HREF, pick } from "@/lib/access";
 
 // En-tête public partagé (landing, blog, contact, pages légales). Aussi rendu
 // depuis app/app/page.js (client) sur l'écran de connexion/inscription — d'où
@@ -67,11 +68,11 @@ export default function SiteHeader() {
         </nav>
         <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
           <Link
-            href="/app"
+            href={loggedIn ? "/app" : JOIN_HREF}
             data-testid="site-cta"
             className="bg-[#ff5a5f] hover:bg-[#f63d44] text-white text-sm font-semibold px-3.5 sm:px-5 py-2 rounded-full shadow-md shadow-rose-300/40 transition-colors whitespace-nowrap"
           >
-            {loggedIn ? <><span className="sm:hidden">Mon espace</span><span className="hidden sm:inline">Tableau de bord</span></> : <><span className="sm:hidden">Essai</span><span className="hidden sm:inline">Essai gratuit</span></>}
+            {loggedIn ? <><span className="sm:hidden">Mon espace</span><span className="hidden sm:inline">Tableau de bord</span></> : <><span className="sm:hidden">{pick("Bêta", "Essai")}</span><span className="hidden sm:inline">{pick("Rejoindre la bêta", "Essai gratuit")}</span></>}
           </Link>
           {loggedIn ? (
             <button

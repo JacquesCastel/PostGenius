@@ -5,6 +5,7 @@ import {
 } from "lucide-react";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
+import { JOIN_HREF, pick } from "@/lib/access";
 
 export const metadata = {
   title: "Le contrôle de forme — LinkeePost",
@@ -69,8 +70,8 @@ export default function ScoringPage() {
               et réécrit ce qui doit l'être. Ce n'est pas une prévision de résultats : voici ce qu'il mesure, et ce qu'il ne mesure pas.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 mt-7">
-              <Link href="/app" className="bg-[#ff5a5f] hover:bg-[#f63d44] text-white font-semibold px-7 py-3.5 rounded-full shadow-lg shadow-rose-300/50 inline-flex items-center justify-center gap-2 transition-colors">
-                Tester gratuitement <ChevronRight size={17} />
+              <Link href={JOIN_HREF} className="bg-[#ff5a5f] hover:bg-[#f63d44] text-white font-semibold px-7 py-3.5 rounded-full shadow-lg shadow-rose-300/50 inline-flex items-center justify-center gap-2 transition-colors">
+                {pick("Rejoindre la bêta", "Tester gratuitement")} <ChevronRight size={17} />
               </Link>
               <Link href="/fonctionnalites" className="border-2 border-[#ffd5d6] hover:border-[#ff5a5f] text-[#1b2a4a] font-semibold px-7 py-3.5 rounded-full text-center transition-colors">
                 Toutes les fonctionnalités
@@ -195,10 +196,10 @@ export default function ScoringPage() {
           <div className="rounded-[2.5rem] bg-gradient-to-br from-[#ff5a5f] to-pink-500 text-white text-center p-12 shadow-2xl shadow-rose-300/50 relative overflow-hidden">
             <div className="pointer-events-none absolute -top-10 -right-10 w-40 h-40 bg-white/15 rounded-full blur-2xl" />
             <h2 className="text-3xl md:text-4xl font-extrabold">Faites grimper le score de votre prochain post</h2>
-            <p className="text-white/85 mt-3">14 jours d'essai gratuit, sans carte bancaire.</p>
+            <p className="text-white/85 mt-3">{pick("Accès offert aux testeurs de la bêta fermée, sans carte bancaire.", "14 jours d'essai gratuit, sans carte bancaire.")}</p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-7">
-              <Link href="/app" className="inline-flex items-center gap-2 bg-white text-[#ff5a5f] font-bold px-7 py-3.5 rounded-full hover:bg-rose-50 transition-colors">
-                Créer mon compte <ChevronRight size={17} />
+              <Link href={JOIN_HREF} className="inline-flex items-center gap-2 bg-white text-[#ff5a5f] font-bold px-7 py-3.5 rounded-full hover:bg-rose-50 transition-colors">
+                {pick("Demander une invitation", "Créer mon compte")} <ChevronRight size={17} />
               </Link>
               <Link href="/comment-ca-marche" className="inline-flex items-center gap-2 bg-white/15 border border-white/40 text-white font-semibold px-7 py-3.5 rounded-full hover:bg-white/25 transition-colors">
                 Comment ça marche

@@ -2,6 +2,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { yearlyPrice, ANNUAL_OFFER } from "@/lib/plans";
+import { BETA, pick } from "@/lib/access";
 
 // Cartes d'offres avec bascule mensuel / annuel (page tarifs publique).
 // plans : [{ id, name, price (nombre, mensuel HT), desc, highlight }]
@@ -59,21 +60,21 @@ export default function PricingCards({ plans }) {
                 {period === "year" ? `soit ${(yearly / 12).toFixed(2)} €/mois` : ""}
               </p>
               <Link
-                href={`/app?plan=${card.id}`}
+                href={BETA ? "/beta" : `/app?plan=${card.id}`}
                 className={`mt-5 block text-center font-semibold px-4 py-3 rounded-full transition-colors ${
                   card.highlight
                     ? "bg-[#ff5a5f] hover:bg-[#f63d44] text-white shadow-lg shadow-rose-300/40"
                     : "border-2 border-[#ffd5d6] hover:border-[#ff5a5f] text-[#1b2a4a]"
                 }`}
               >
-                Commencer l'essai
+                {pick("Demander une invitation", "Commencer l'essai")}
               </Link>
             </div>
           );
         })}
       </div>
       <p className="text-xs text-gray-400 text-center mt-5">
-        14 jours d'essai gratuit, sans carte bancaire. Le paiement (mensuel ou annuel) n'est demandé qu'à la fin de l'essai.
+        {pick("Pendant la bêta fermée, l'accès est offert aux testeurs invités, sans carte bancaire. Tarifs prévus à l'ouverture publique.", "14 jours d'essai gratuit, sans carte bancaire. Le paiement (mensuel ou annuel) n'est demandé qu'à la fin de l'essai.")}
       </p>
     </>
   );

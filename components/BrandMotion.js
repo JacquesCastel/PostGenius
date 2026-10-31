@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Mic, FileText, Link2, Check, BookOpen, Pause, Play, Volume2, VolumeX, ShieldCheck, Sparkles, ChevronRight } from "lucide-react";
 import LpMark from "./LpMark";
+import { pick } from "@/lib/access";
 
 // Motion design de 39 secondes pour la page d'accueil : dictée → post → programmation → funnel (commentaires → leads).
 // Toute l'animation est une fonction pure du temps t (secondes) : lecture, pause, boucle, et rendu image par image (/motion?record=1).
@@ -354,10 +355,10 @@ function SceneCta({ lt }) {
   return (
     <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center" }}>
       <div style={{ width: 110, height: 110, borderRadius: 30, background: C.coral, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 24px 50px -15px rgba(255,90,95,.55)", transform: `scale(${mark})`, marginBottom: 40 }}><LpMark size={70} /></div>
-      <Headline lt={lt} size={104} lines={[{ text: "Essayez 14 jours," }, { text: "gratuitement.", accent: true }]} />
-      <div style={{ fontSize: 38, color: C.muted, marginTop: 28, opacity: easeOut(seg(lt, 0.9, 0.5)) }}>Sans carte bancaire.</div>
+      <Headline lt={lt} size={104} lines={pick([{ text: "Rejoignez" }, { text: "la bêta fermée.", accent: true }], [{ text: "Essayez 14 jours," }, { text: "gratuitement.", accent: true }])} />
+      <div style={{ fontSize: 38, color: C.muted, marginTop: 28, opacity: easeOut(seg(lt, 0.9, 0.5)) }}>{pick("Sur invitation, sans carte bancaire.", "Sans carte bancaire.")}</div>
       <div style={{ marginTop: 48, display: "inline-flex", alignItems: "center", gap: 14, background: C.coral, color: "#fff", fontSize: 40, fontWeight: 700, padding: "26px 60px", borderRadius: 999, boxShadow: "0 28px 60px -18px rgba(255,90,95,.7)", opacity: easeOut(seg(lt, 1.1, 0.5)), transform: `scale(${pulse})` }}>
-        Démarrer gratuitement <ChevronRight size={40} />
+        {pick("Rejoindre la bêta", "Démarrer gratuitement")} <ChevronRight size={40} />
       </div>
       <div style={{ marginTop: 30, fontSize: 30, color: C.muted, opacity: easeOut(seg(lt, 1.3, 0.5)) }}>postgenius.network</div>
     </div>
@@ -521,7 +522,8 @@ export default function BrandMotion({ record = false, className = "" }) {
         </button>
       )}
       <p className="sr-only">
-        Étape 1 : vous parlez ou vous déposez vos documents et liens dans la base d'une thématique. Étape 2 : vous choisissez une humeur et LinkeePost rédige un post dans votre voix, avec les sources utilisées. Étape 3 : le post est programmé et publié depuis votre tableau de bord « Aujourd'hui », avec les idées du copilote. Étape 4 : les commentaires deviennent des contacts notés par l&apos;IA selon votre cible, et vous décidez qui contacter. 14 jours d&apos;essai gratuit, sans carte bancaire.
+        Étape 1 : vous parlez ou vous déposez vos documents et liens dans la base d'une thématique. Étape 2 : vous choisissez une humeur et LinkeePost rédige un post dans votre voix, avec les sources utilisées. Étape 3 : le post est programmé et publié depuis votre tableau de bord « Aujourd'hui », avec les idées du copilote. Étape 4 : les commentaires deviennent des contacts notés par l&apos;IA selon votre cible, et vous décidez qui contacter.
+        {pick(" Bêta fermée : accès sur invitation, sans carte bancaire.", " 14 jours d'essai gratuit, sans carte bancaire.")}
       </p>
     </div>
   );

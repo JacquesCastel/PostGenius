@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
+import { JOIN_HREF, pick } from "@/lib/access";
 
 export const metadata = {
   title: "Fonctionnalités — LinkeePost",
@@ -82,10 +83,10 @@ export default function FonctionnalitesPage() {
             vous relisez et vous validez.
           </p>
           <Link
-            href="/app"
+            href={JOIN_HREF}
             className="inline-flex items-center gap-2 bg-[#ff5a5f] hover:bg-[#f63d44] text-white font-semibold px-7 py-3.5 rounded-full shadow-lg shadow-rose-300/50 mt-8 transition-colors"
           >
-            Essayer gratuitement <ChevronRight size={17} />
+            {pick("Rejoindre la bêta", "Essayer gratuitement")} <ChevronRight size={17} />
           </Link>
         </section>
 
@@ -726,11 +727,11 @@ export default function FonctionnalitesPage() {
         <section className="max-w-4xl mx-auto px-6 py-16">
           <div className="rounded-[2.5rem] bg-gradient-to-br from-[#ff5a5f] to-pink-500 text-white text-center p-12 shadow-2xl shadow-rose-300/50 relative overflow-hidden">
             <div className="pointer-events-none absolute -top-10 -right-10 w-40 h-40 bg-white/15 rounded-full blur-2xl" />
-            <h2 className="text-3xl md:text-4xl font-extrabold">Toutes ces fonctionnalités, 14 jours gratuits</h2>
-            <p className="text-white/85 mt-3">Sans carte bancaire. Lancez votre première campagne en 5 minutes.</p>
+            <h2 className="text-3xl md:text-4xl font-extrabold">{pick("Toutes ces fonctionnalités, en bêta fermée", "Toutes ces fonctionnalités, 14 jours gratuits")}</h2>
+            <p className="text-white/85 mt-3">{pick("Accès offert aux testeurs invités, sans carte bancaire.", "Sans carte bancaire. Lancez votre première campagne en 5 minutes.")}</p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-7">
-              <Link href="/app" className="inline-flex items-center gap-2 bg-white text-[#ff5a5f] font-bold px-7 py-3.5 rounded-full hover:bg-rose-50 transition-colors">
-                Créer mon compte <ChevronRight size={17} />
+              <Link href={JOIN_HREF} className="inline-flex items-center gap-2 bg-white text-[#ff5a5f] font-bold px-7 py-3.5 rounded-full hover:bg-rose-50 transition-colors">
+                {pick("Demander une invitation", "Créer mon compte")} <ChevronRight size={17} />
               </Link>
               <Link href="/tarifs" className="inline-flex items-center gap-2 bg-white/15 border border-white/40 text-white font-semibold px-7 py-3.5 rounded-full hover:bg-white/25 transition-colors">
                 Voir les tarifs

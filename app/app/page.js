@@ -1,5 +1,6 @@
 "use client";
 
+import { pick } from "@/lib/access";
 import { useState, useEffect, useRef, createContext, useContext, useMemo } from "react";
 import { NotificationBell, AgencyPlanning } from "@/components/AgencyExtras";
 import {
@@ -422,7 +423,7 @@ function AuthScreen({ onAuth }) {
                     <span className="text-[11px] text-gray-400 block mt-0.5">/mois HT</span>
                   </p>
                 </div>
-                <p className="text-xs text-[#5a6b85] mt-1.5">14 jours d'essai gratuit, sans carte bancaire.</p>
+                <p className="text-xs text-[#5a6b85] mt-1.5">{pick("Accès sur invitation pendant la bêta, sans carte bancaire.", "14 jours d'essai gratuit, sans carte bancaire.")}</p>
               </div>
             ) : (
               <p className="mt-6 inline-flex items-center gap-1.5 text-sm font-semibold text-[#ff5a5f] bg-[#fff1f1] px-3 py-1.5 rounded-full">
