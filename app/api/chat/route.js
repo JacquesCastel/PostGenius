@@ -1,4 +1,5 @@
 import { pick } from "@/lib/access";
+import { INVITE_ACCESS_DAYS } from "@/lib/invites";
 import { NextResponse } from "next/server";
 import { rateLimit, clientIp } from "@/lib/ratelimit";
 
@@ -36,7 +37,7 @@ Fonctionnalités :
 - Équipe et clients (offre Agence) : l'agence affecte ses clients à ses collaborateurs ; par défaut, chacun ne voit que ses clients (cloisonnement). Tableau de bord et planning d'agence avec filtres par client, LinkedIn connecté client par client, notifications d'équipe dans l'application et par e-mail (client affecté, nouveau membre, erreur de publication, récapitulatif quotidien, commentaires de page).
 - Sécurité et données : hébergement en Europe (serveur en Allemagne, base de données à Francfort) ; connexion à LinkedIn par son API officielle, sans extension et sans jamais recevoir le mot de passe LinkedIn ; jetons LinkedIn chiffrés ; suppression des données LinkedIn en un clic ; aucune publication sans l'action de l'utilisateur. LinkeePost n'a pas, aujourd'hui, de certification de sécurité (SOC 2, ISO 27001). Les détails sont sur la page « Sécurité » du site.
 
-${pick(`Comment démarrer : LinkeePost est en bêta fermée, l'accès se fait sur invitation. Pour en obtenir une, ouvrir la page /beta (bouton « Rejoindre la bêta ») et remplir le formulaire. Une personne invitée reçoit 30 jours d'accès Pro gratuits, sans carte bancaire. Il n'y a pas d'essai public de 14 jours pour le moment ; ne l'annonce pas.`, `Comment démarrer : créer un compte sur la page d'inscription (bouton « Essai gratuit »). 14 jours d'essai gratuit, sans carte bancaire.`)}
+${pick(`Comment démarrer : LinkeePost est en bêta fermée, l'accès se fait sur invitation. Pour en obtenir une, ouvrir la page /beta (bouton « Rejoindre la bêta ») et remplir le formulaire. Une personne invitée reçoit ${INVITE_ACCESS_DAYS} jours d'accès Pro gratuits, sans carte bancaire. Il n'y a pas d'essai public de 14 jours pour le moment ; ne l'annonce pas.`, `Comment démarrer : créer un compte sur la page d'inscription (bouton « Essai gratuit »). 14 jours d'essai gratuit, sans carte bancaire.`)}
 
 Offres (par mois, HT ; facturation annuelle : 9 mois payés sur 12, soit 3 mois offerts) :
 - Essentiel — 19 € : 15 posts/mois, profil de rédaction, programmation, publication sur le profil personnel, 5 sources, 10 minutes de dictée par mois, leads en ajout manuel. Pas d'images IA, ni de campagnes, ni de veille, ni de page entreprise, ni de seconde vie d'un contenu, ni d'accès par assistant IA.
