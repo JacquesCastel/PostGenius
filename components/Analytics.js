@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 
 // Mesure d'audience Umami : sans cookie ni donnée personnelle, donc sans bandeau de consentement.
@@ -11,6 +11,16 @@ const PRIVATE = /^\/(app|valider|rapport|reset-password)(\/|$)/;
 export default function Analytics() {
   const path = usePathname();
   const isPrivate = PRIVATE.test(path || "");
+  const first = useRef(true); // la première page de la visite porte l'origine (document.referrer) ; les suivantes sont des navigations internes
+
+  // Mesure d'audience faite par LinkeePost (en plus d'Umami) : une page vue par page publique affichée. Rien n'est stocké côté navigateur.
+  useEffect(() => {
+    if (isPrivate) return;
+    const internal = !first.current;
+    first.current = false;
+    if (navigator.doNotTrack === "1" || navigator.globalPrivacyControl) return;
+    fetch("/api/site/visit", { method: "POST", keepalive: true, headers: { "Content-Type": "application/json" }, body: JSON.stringify({ path, ref: internal ? "" : document.referrer, internal }) }).catch(() => {});
+  }, [path, isPrivate]);
 
   useEffect(() => {
     if (isPrivate || document.querySelector("script[data-umami]")) return;

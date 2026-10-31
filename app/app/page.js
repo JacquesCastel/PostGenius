@@ -5695,6 +5695,7 @@ function TechAdminView({ showToast, currentEmail }) {
   const [busy, setBusy] = useState(false);
   const [suspendEmail, setSuspendEmail] = useState("");
   const [maintMsg, setMaintMsg] = useState("");
+  const [site, setSite] = useState(null); // visites du site (lues à part)
   const [extra, setExtra] = useState(null); // carnet de bêta, coûts, LinkedIn (lus à part, plus lourds)
 
   const load = (quiet) => {
@@ -5708,8 +5709,10 @@ function TechAdminView({ showToast, currentEmail }) {
   useEffect(() => {
     load();
     const loadExtra = () => fetch("/api/admin/tech/extra").then(readJson).then((d) => { if (!d.error) setExtra(d); }).catch(() => {});
+    const loadSite = () => fetch("/api/admin/tech/site").then(readJson).then((d) => setSite(d.error ? { error: true } : d)).catch(() => setSite({ error: true }));
     loadExtra();
-    const t = setInterval(() => { load(true); loadExtra(); }, 60000);
+    loadSite();
+    const t = setInterval(() => { load(true); loadExtra(); loadSite(); }, 60000);
     return () => clearInterval(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -5817,6 +5820,81 @@ function TechAdminView({ showToast, currentEmail }) {
           </div>
         ))}
       </div>
+
+      {/* Visites du site (mesure faite par LinkeePost) */}
+      <section aria-label="Visites du site" data-testid="tech-site" className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <div>
+            <h2 className="text-lg font-semibold">Visites du site</h2>
+            <p className="text-sm text-gray-500">Pages publiques seulement. Sans cookie ni donnée personnelle ; les robots et les personnes connectées ne sont pas comptés.</p>
+          </div>
+        </div>
+        {!site ? <p className="text-sm text-gray-400 mt-4">Chargement…</p> : site.error ? <p className="text-sm text-gray-400 mt-4">Indisponible.</p> : (
+          <>
+            <div className="grid grid-cols-3 gap-3 mt-5">
+              {[["Visiteurs aujourd'hui", site.today], ["Visiteurs sur 7 jours", site.visitors7], ["Pages vues (7 j)", site.views7]].map(([l, v]) => (
+                <div key={l} className="rounded-2xl bg-gray-50 px-4 py-3"><p className="text-xs text-gray-500">{l}</p><p className="text-3xl sm:text-4xl font-semibold mt-1 tabular-nums">{v}</p></div>
+              ))}
+            </div>
+            <div className="grid grid-cols-1 xl:grid-cols-5 gap-6 mt-6">
+              <div className="xl:col-span-3">
+                <p className="text-sm font-medium">Visiteurs par jour</p>
+                {(() => {
+                  const mx = Math.max(1, ...site.byDay.map((d) => d.visitors));
+                  return (
+                    <div className="flex items-end gap-1.5 h-44 mt-3" data-testid="tech-site-chart">
+                      {site.byDay.map((d, i) => (
+                        <div key={d.day} className="flex-1 min-w-0 flex flex-col items-center justify-end h-full" title={`${d.day} : ${d.visitors}`}>
+                          <span className="text-[10px] text-gray-500 mb-0.5 tabular-nums">{d.visitors || ""}</span>
+                          <div className={`w-full rounded-t ${i === site.byDay.length - 1 ? "bg-violet-500" : "bg-violet-400/60"}`} style={{ height: `${Math.max(d.visitors ? 4 : 1, (d.visitors / mx) * 80)}%` }} />
+                          <span className="text-[10px] text-gray-400 mt-1">{d.day.slice(8)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })()}
+                <p className="text-xs text-gray-400 mt-2">Un visiteur revenu un autre jour compte deux fois : sans suivi, impossible de le reconnaître. {site.since ? `Mesure démarrée ${techAgo(site.since)}.` : "Aucune visite enregistrée pour l'instant."} Les bloqueurs de publicité et le réglage « Ne pas me suivre » font sous-estimer les chiffres.</p>
+              </div>
+              <div className="xl:col-span-2 space-y-5">
+                <div>
+                  <p className="text-sm font-medium mb-2">Pages les plus vues (7 j)</p>
+                  {site.pages.length === 0 ? <p className="text-sm text-gray-400">—</p> : site.pages.map(([p, n]) => <div key={p} className="flex justify-between gap-3 text-sm py-0.5"><span className="text-gray-600 truncate">{p}</span><span className="font-medium tabular-nums">{n}</span></div>)}
+                </div>
+                <div>
+                  <p className="text-sm font-medium mb-2">D'où viennent-ils ?</p>
+                  {(() => {
+                    const tot = site.sources.reduce((a, [, n]) => a + n, 0);
+                    const LAB = { linkedin: "LinkedIn", direct: "Accès direct", recherche: "Moteurs de recherche", autre: "Autres sites" };
+                    return site.sources.length === 0 ? <p className="text-sm text-gray-400">—</p> : site.sources.map(([k, n]) => (
+                      <div key={k} className="mb-1.5"><div className="flex justify-between text-sm"><span className="text-gray-600">{LAB[k] ?? k}</span><span className="tabular-nums font-medium">{Math.round((n / tot) * 100)} %</span></div><div className="h-2 rounded-full bg-gray-100 mt-0.5 overflow-hidden"><div className="h-full rounded-full bg-sky-500" style={{ width: `${(n / tot) * 100}%` }} /></div></div>
+                    ));
+                  })()}
+                </div>
+                <div>
+                  <p className="text-sm font-medium mb-2">Appareils</p>
+                  {(() => {
+                    const tot = site.devices.reduce((a, [, n]) => a + n, 0);
+                    return site.devices.length === 0 ? <p className="text-sm text-gray-400">—</p> : <p className="text-sm text-gray-600">{site.devices.map(([k, n]) => `${k.charAt(0).toUpperCase() + k.slice(1)} ${Math.round((n / tot) * 100)} %`).join(" · ")}</p>;
+                  })()}
+                </div>
+              </div>
+            </div>
+            <div className="mt-6" data-testid="tech-site-funnel">
+              <p className="text-sm font-medium">Parcours bêta (7 jours)</p>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3">
+                {site.funnel.map(([l, n], i) => (
+                  <div key={l} className="rounded-2xl border border-violet-100 bg-violet-50/50 px-4 py-3 relative">
+                    <p className="text-xs text-gray-500">{l}</p>
+                    <p className="text-3xl font-semibold mt-1 tabular-nums">{n}</p>
+                    <p className="text-[11px] text-gray-400 mt-0.5">{i === 0 || !site.funnel[i - 1][1] || n > site.funnel[i - 1][1] ? "" : `${Math.round((n / site.funnel[i - 1][1]) * 100)} % de l'étape d'avant`}</p>
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs text-gray-400 mt-2">Les demandes d'invitation viennent du formulaire de la page bêta ; les comptes créés comptent toutes les inscriptions de la semaine.</p>
+            </div>
+          </>
+        )}
+      </section>
 
       <div className="grid grid-cols-1 2xl:grid-cols-3 gap-6">
         <div className="2xl:col-span-2 space-y-6 min-w-0">

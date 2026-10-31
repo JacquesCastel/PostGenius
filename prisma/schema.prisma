@@ -1185,3 +1185,19 @@ model ActivityEvent {
   @@index([kind, createdAt])
   @@index([userId, createdAt])
 }
+
+// Mesure d'audience du site, faite par LinkeePost lui-même (pages publiques seulement) : une ligne par page vue.
+// Aucune donnée personnelle : « visitor » est une empreinte qui change chaque jour (adresse et navigateur mélangés à un sel du jour,
+// jamais conservés), donc un visiteur ne peut pas être suivi d'un jour à l'autre. Conservé 13 mois.
+model SiteVisit {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  day       String // AAAA-MM-JJ (UTC)
+  path      String
+  source    String // direct | linkedin | recherche | autre | interne
+  device    String // mobile | tablette | ordinateur
+  visitor   String // empreinte du jour
+
+  @@index([day])
+  @@index([path, day])
+}
