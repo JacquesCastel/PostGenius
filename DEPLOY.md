@@ -289,3 +289,12 @@ Administration → **Technique** : santé (base, planificateur, disque, sauvegar
 - **Interrupteurs** (mot de passe redemandé, tracés dans le journal des actions) : *inscriptions fermées* (les invitations de test et d'équipe passent toujours), *IA coupée* (refus centralisé de tout appel à Anthropic et OpenAI, `lib/aiGuard.js`), *maintenance* (bandeau). Ils sont stockés en base (`SiteContent`, clé `ops-flags`), pris en compte en moins de 10 s. **Si un interrupteur est resté activé par erreur** et que vous ne pouvez plus ouvrir l'écran : `DELETE FROM "SiteContent" WHERE key = 'ops-flags';` rétablit tout.
 - **Journal d'activité** (`ActivityEvent`) : connexions, jour actif, coach, séries Seconde vie, usage des assistants, connexions d'assistants. Il ne se reconstitue pas après coup. Conservé 13 mois.
 - **Pas encore dans l'écran :** déployer, revenir en arrière et sauvegarder depuis le navigateur (étape suivante : file d'ordres exécutée par le serveur hôte).
+
+## 14. Mesure d'audience du site (faite par LinkeePost)
+
+Technique → **Visites du site** : visiteurs par jour, pages vues, pages les plus vues, origines (LinkedIn, accès direct, moteurs de recherche, autres sites), appareils, parcours bêta (visiteurs → page `/beta` → demandes d'invitation → comptes créés).
+
+- **Collecte :** `components/Analytics.js` envoie une page vue à `/api/site/visit` pour chaque page publique affichée (jamais dans l'application ni sur les pages à lien secret). Table `SiteVisit`, conservée 13 mois.
+- **Aucune donnée personnelle :** le visiteur est une empreinte qui change chaque jour (adresse et navigateur mélangés à un sel du jour, jamais conservés) : impossible de le suivre d'un jour à l'autre. Un même visiteur revenu un autre jour compte donc deux fois.
+- **Non comptés :** robots, « Ne pas me suivre » (DNT) et Global Privacy Control, personnes connectées, pages privées.
+- **Réglage :** `SITE_STATS_DISABLED=1` coupe la collecte. Umami reste chargé en parallèle (`UMAMI_DISABLED=1` pour le couper : mettre alors à jour la politique de confidentialité et la page Sécurité).
