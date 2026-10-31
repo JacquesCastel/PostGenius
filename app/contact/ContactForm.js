@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 
-export default function ContactForm() {
-  const [f, setF] = useState({ name: "", email: "", subject: "", message: "" });
+export default function ContactForm({ defaultSubject = "", messagePlaceholder = "Votre message", submitLabel = "Envoyer le message" }) {
+  const [f, setF] = useState({ name: "", email: "", subject: defaultSubject, message: "" });
   const [state, setState] = useState("idle"); // idle | sending | sent
   const [error, setError] = useState(null);
   const set = (k) => (e) => setF((v) => ({ ...v, [k]: e.target.value }));
@@ -50,7 +50,7 @@ export default function ContactForm() {
       <textarea
         className={input}
         rows={6}
-        placeholder="Votre message"
+        placeholder={messagePlaceholder}
         value={f.message}
         onChange={set("message")}
         required
@@ -61,7 +61,7 @@ export default function ContactForm() {
         disabled={state === "sending"}
         className="bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white font-medium px-6 py-2.5 rounded-xl"
       >
-        {state === "sending" ? "Envoi…" : "Envoyer le message"}
+        {state === "sending" ? "Envoi…" : submitLabel}
       </button>
     </form>
   );
