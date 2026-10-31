@@ -5679,6 +5679,7 @@ function TechAdminView({ showToast, currentEmail }) {
   const [busy, setBusy] = useState(false);
   const [suspendEmail, setSuspendEmail] = useState("");
   const [maintMsg, setMaintMsg] = useState("");
+  const [extra, setExtra] = useState(null); // carnet de bêta, coûts, LinkedIn (lus à part, plus lourds)
 
   const load = (quiet) => {
     if (!quiet) setLoading(true);
@@ -5690,7 +5691,9 @@ function TechAdminView({ showToast, currentEmail }) {
   };
   useEffect(() => {
     load();
-    const t = setInterval(() => load(true), 30000);
+    const loadExtra = () => fetch("/api/admin/tech/extra").then(readJson).then((d) => { if (!d.error) setExtra(d); }).catch(() => {});
+    loadExtra();
+    const t = setInterval(() => { load(true); loadExtra(); }, 60000);
     return () => clearInterval(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -5779,7 +5782,7 @@ function TechAdminView({ showToast, currentEmail }) {
           <span className={`relative flex h-5 w-5 shrink-0`}><span className={`absolute inline-flex h-full w-full rounded-full ${LV[overall][0]} opacity-40 animate-ping`} /><span className={`relative inline-flex rounded-full h-5 w-5 ${LV[overall][0]}`} /></span>
           <div className="min-w-0">
             <p className={`text-2xl sm:text-3xl font-semibold ${LV[overall][1]}`}>{overall === "ok" ? "Tout est en ordre" : overall === "warn" ? `${warn.length} point${warn.length > 1 ? "s" : ""} à surveiller` : `${bad.length} problème${bad.length > 1 ? "s" : ""} à traiter`}</p>
-            <p className="text-sm text-gray-600 mt-1">{[...bad, ...warn].map((c) => c.label).join(" · ") || `${checks.length} contrôles au vert`} · mis à jour toutes les 30 s</p>
+            <p className="text-sm text-gray-600 mt-1">{[...bad, ...warn].map((c) => c.label).join(" · ") || `${checks.length} contrôles au vert`} · mis à jour chaque minute</p>
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2 ml-auto">
@@ -5935,6 +5938,119 @@ function TechAdminView({ showToast, currentEmail }) {
             )}
           </section>
         </div>
+      </div>
+
+      {/* Bêta : carnet de testeurs */}
+      <section aria-label="Bêta" data-testid="tech-beta" className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6">
+        <h2 className="text-lg font-semibold">Bêta : carnet de testeurs</h2>
+        <p className="text-sm text-gray-500">Les comptes hors administrateurs, du parcours d'inscription jusqu'à l'usage régulier.</p>
+        {!extra ? <p className="text-sm text-gray-400 mt-4">Chargement…</p> : extra.beta?.unavailable ? <p className="text-sm text-gray-400 mt-4">Indisponible.</p> : (
+          <>
+            <div className="mt-5 space-y-2.5" data-testid="tech-funnel">
+              {extra.beta.funnel.map(([label, n], i) => {
+                const top = Math.max(1, extra.beta.funnel[0][1]);
+                return (
+                  <div key={label} className="flex items-center gap-3">
+                    <span className="w-48 sm:w-60 shrink-0 text-sm text-gray-700 truncate">{label}</span>
+                    <div className="flex-1 h-7 rounded-lg bg-gray-100 overflow-hidden"><div className="h-full rounded-lg bg-violet-500/80 flex items-center justify-end pr-2 text-xs font-semibold text-white" style={{ width: `${Math.max(n ? 6 : 0, (n / top) * 100)}%`, opacity: 1 - i * 0.08 }}>{n || ""}</div></div>
+                    <span className="w-10 text-right text-xs text-gray-400 tabular-nums">{extra.beta.funnel[0][1] ? `${Math.round((n / extra.beta.funnel[0][1]) * 100)} %` : ""}</span>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="mt-6 overflow-auto max-h-[26rem]" data-testid="tech-beta-table">
+              <table className="w-full text-sm min-w-[56rem]">
+                <thead className="sticky top-0 bg-white"><tr className="text-left text-xs text-gray-400 border-b border-gray-100"><th className="py-2 pr-3 font-medium">Compte</th><th className="pr-3 font-medium">Offre</th><th className="pr-3 font-medium">Inscrit</th><th className="pr-3 font-medium">Parcours</th><th className="pr-3 font-medium">LinkedIn</th><th className="pr-3 font-medium text-right">Posts</th><th className="pr-3 font-medium text-right">Publiés</th><th className="pr-3 font-medium">1er publié</th><th className="pr-3 font-medium">Dernière connexion</th><th className="font-medium text-right">Jours actifs (14 j)</th></tr></thead>
+                <tbody>
+                  {extra.beta.rows.map((r) => (
+                    <tr key={r.id} className="border-b border-gray-50">
+                      <td className="py-2 pr-3 max-w-[14rem] truncate">{r.email}</td>
+                      <td className="pr-3">{r.paying ? <span className="text-green-700">{r.plan} · abonné</span> : r.plan}</td>
+                      <td className="pr-3 text-gray-500 whitespace-nowrap">{techDateTime(r.createdAt)}</td>
+                      <td className="pr-3">{r.onboarded ? "✓" : <span className="text-gray-300">—</span>}</td>
+                      <td className="pr-3">{r.linkedin ? "✓" : <span className="text-gray-300">—</span>}</td>
+                      <td className="pr-3 text-right tabular-nums">{r.drafts}</td>
+                      <td className="pr-3 text-right tabular-nums">{r.published}</td>
+                      <td className="pr-3 text-gray-500 whitespace-nowrap">{r.firstPublishedAt ? techDateTime(r.firstPublishedAt) : "—"}</td>
+                      <td className="pr-3 text-gray-500 whitespace-nowrap">{r.lastLogin ? techAgo(r.lastLogin) : "—"}</td>
+                      <td className="text-right tabular-nums">{r.activeDays14}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {extra.beta.total > extra.beta.rows.length && <p className="text-xs text-gray-400 mt-2">{extra.beta.rows.length} comptes affichés sur {extra.beta.total} (les plus récents).</p>}
+            </div>
+          </>
+        )}
+      </section>
+
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        {/* Coûts d'IA */}
+        <section aria-label="Coûts" data-testid="tech-costs" className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6">
+          <h2 className="text-lg font-semibold">Coûts d'IA</h2>
+          <p className="text-sm text-gray-500">Estimation d'après les jetons, images et minutes enregistrés (tarifs indicatifs, en dollars). La facture réelle est celle du fournisseur.</p>
+          {!extra ? <p className="text-sm text-gray-400 mt-4">Chargement…</p> : extra.costs?.unavailable ? <p className="text-sm text-gray-400 mt-4">Indisponible.</p> : (
+            <>
+              <div className="grid grid-cols-3 gap-3 mt-5">
+                {[["Ce mois-ci", extra.costs.monthToDate], ["Projection du mois", extra.costs.monthProjected], ["30 derniers jours", extra.costs.total30]].map(([l, v]) => (
+                  <div key={l} className="rounded-2xl bg-gray-50 px-4 py-3"><p className="text-xs text-gray-500">{l}</p><p className="text-2xl sm:text-3xl font-semibold mt-1 tabular-nums">{v.toFixed(v < 10 ? 2 : 0)} $</p></div>
+                ))}
+              </div>
+              {(() => {
+                const mx = Math.max(0.01, ...extra.costs.byDay.map((d) => d.usd));
+                return (
+                  <div className="flex items-end gap-1 h-40 mt-5" aria-label="Coût par jour">
+                    {extra.costs.byDay.map((d) => <div key={d.day} className="flex-1 flex flex-col justify-end h-full" title={`${d.day} : ${d.usd.toFixed(2)} $`}><div className="w-full rounded-t bg-emerald-500/80" style={{ height: `${Math.max(d.usd ? 3 : 1, (d.usd / mx) * 100)}%` }} /></div>)}
+                  </div>
+                );
+              })()}
+              <p className="text-xs text-gray-400 mt-1">Par jour, 30 derniers jours · {extra.costs.accountsUsingAi} compte(s) ont utilisé l'IA</p>
+              <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div>
+                  <p className="text-sm font-medium mb-2">Par type</p>
+                  {extra.costs.byKind.length === 0 ? <p className="text-sm text-gray-400">Aucune consommation.</p> : extra.costs.byKind.map(([k, v]) => <div key={k} className="flex justify-between text-sm py-1"><span className="text-gray-600">{{ claude: "Rédaction (Claude)", image: "Images", transcription: "Transcription", media: "Vidéo et audio" }[k] ?? k}</span><span className="tabular-nums font-medium">{v.toFixed(2)} $</span></div>)}
+                </div>
+                <div>
+                  <p className="text-sm font-medium mb-2">Les plus gros consommateurs</p>
+                  {extra.costs.top.filter((u) => u.usd >= 0.005).length === 0 ? <p className="text-sm text-gray-400">—</p> : extra.costs.top.filter((u) => u.usd >= 0.005).map((u) => <div key={u.email} className="flex justify-between gap-3 text-sm py-1"><span className="text-gray-600 truncate">{u.email}</span><span className="tabular-nums font-medium shrink-0">{u.usd.toFixed(2)} $</span></div>)}
+                </div>
+              </div>
+            </>
+          )}
+        </section>
+
+        {/* LinkedIn */}
+        <section aria-label="LinkedIn" data-testid="tech-linkedin" className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6">
+          <h2 className="text-lg font-semibold">LinkedIn</h2>
+          <p className="text-sm text-gray-500">Appels à l'API et capacité tant que le niveau Standard n'est pas accordé.</p>
+          {!extra ? <p className="text-sm text-gray-400 mt-4">Chargement…</p> : extra.linkedin?.unavailable ? <p className="text-sm text-gray-400 mt-4">Indisponible.</p> : (
+            <>
+              <div className="mt-5 space-y-4">
+                {[["Pages entreprise connectées", extra.linkedin.pages, extra.caps.pages], ["Comptes avec statistiques de profil", extra.linkedin.stats, extra.caps.statAccounts]].map(([l, v, cap]) => (
+                  <div key={l}>
+                    <div className="flex justify-between text-sm"><span className="text-gray-700">{l}</span><span className="font-semibold tabular-nums">{v} / {cap}</span></div>
+                    <div className="h-3 rounded-full bg-gray-100 mt-1.5 overflow-hidden"><div className={`h-full rounded-full ${v >= cap ? "bg-red-500" : v >= cap * 0.8 ? "bg-amber-500" : "bg-sky-500"}`} style={{ width: `${Math.min(100, (v / cap) * 100)}%` }} /></div>
+                  </div>
+                ))}
+                <p className="text-xs text-gray-400">Plafonds estimés de l'accès actuel (environ 10 pages et 6 comptes avec statistiques de profil) : la cohorte de bêta doit rester dessous. {extra.linkedin.persons} profil(s) et {extra.linkedin.orgs} compte(s) de pages connectés.</p>
+              </div>
+              {(() => {
+                const mx = Math.max(1, ...extra.linkedin.days.map((d) => d.n));
+                return (
+                  <>
+                    <div className="grid grid-cols-3 gap-3 mt-5">
+                      {[["Appels (14 j)", extra.linkedin.total14], ["Erreurs", extra.linkedin.errors], ["Limites atteintes (429)", extra.linkedin.r429]].map(([l, v]) => <div key={l} className={`rounded-2xl px-4 py-3 ${l.startsWith("Limites") && v > 0 ? "bg-red-50" : "bg-gray-50"}`}><p className="text-xs text-gray-500">{l}</p><p className="text-2xl font-semibold mt-1 tabular-nums">{v}</p></div>)}
+                    </div>
+                    <div className="flex items-end gap-1 h-32 mt-5" aria-label="Appels LinkedIn par jour">
+                      {extra.linkedin.days.map((d) => <div key={d.day} className="flex-1 flex flex-col justify-end h-full" title={`${d.day} : ${d.n} appel(s), ${d.err} erreur(s)`}><div className="w-full rounded-t bg-[#0a66c2]/80" style={{ height: `${Math.max(d.n ? 4 : 1, (d.n / mx) * 100)}%` }} /></div>)}
+                    </div>
+                    <p className="text-xs text-gray-400 mt-1">Par jour, 14 derniers jours. Le comptage a commencé avec cette version : avant, rien n'a été enregistré.</p>
+                  </>
+                );
+              })()}
+            </>
+          )}
+        </section>
       </div>
 
       {confirm && (
