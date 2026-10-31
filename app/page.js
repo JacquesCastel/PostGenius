@@ -9,6 +9,7 @@ import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 import BrandMotion from "@/components/BrandMotion";
 import { BETA, JOIN_HREF, pick } from "@/lib/access";
+import { INVITE_ACCESS_DAYS } from "@/lib/invites";
 
 // Page vitrine publique — postgenius.network
 // Rendu à la requête : le contenu (offres, hero, FAQ) est éditable depuis l'admin.
@@ -57,7 +58,7 @@ const ORIGIN = [
 ];
 
 const PROOFS = [
-  ...(BETA ? [{ big: "30 j", small: "offerts aux testeurs invités" }] : [{ big: "14 j", small: "d'essai gratuit" }]),
+  ...(BETA ? [{ big: `${INVITE_ACCESS_DAYS} j`, small: "offerts aux testeurs invités" }] : [{ big: "14 j", small: "d'essai gratuit" }]),
   { big: "0 €", small: "sans carte bancaire" },
   { big: "100 %", small: "API officielle LinkedIn" },
   { big: "9", small: "langues de rédaction" },
