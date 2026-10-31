@@ -172,6 +172,7 @@ function AuthScreen({ onAuth }) {
   const [regStep, setRegStep] = useState("questions"); // questions | account
   const [answers, setAnswers] = useState({ name: "", fonction: "", topic: "", audience: "" });
   const [plan, setPlan] = useState(null); // offre choisie depuis la landing (?plan=)
+  const [signupsClosed, setSignupsClosed] = useState(false); // l'administrateur a fermé les inscriptions libres (bêta fermée)
   const [invite, setInvite] = useState(null); // invitation de test (?invite=) : { token, email, planName, accessDays } ou { invalid: true }
 
   // Si on arrive depuis un bouton d'offre (?plan=pro), pré-sélectionner l'inscription
@@ -186,6 +187,7 @@ function AuthScreen({ onAuth }) {
     }
     // Lien d'invitation de test : l'adresse invitée est pré-remplie et l'accès offert annoncé
     const teamToken = params.get("team");
+    if (teamToken || params.get("invite")) setInvite({ loading: true }); // évite d'afficher « inscriptions fermées » le temps de lire l'invitation
     if (teamToken) {
       setMode("register");
       fetch(`/api/team-invitations/${encodeURIComponent(teamToken)}`)
@@ -200,6 +202,7 @@ function AuthScreen({ onAuth }) {
         })
         .catch(() => setInvite({ invalid: true }));
     }
+    fetch("/api/status", { cache: "no-store" }).then((r) => r.json()).then((d) => setSignupsClosed(Boolean(d.signupsClosed))).catch(() => {});
     const token = params.get("invite");
     if (token) {
       setMode("register");
@@ -260,7 +263,9 @@ function AuthScreen({ onAuth }) {
   const planInfo = plan ? PLANS[plan] : null;
   // Les invitations d'équipe (agence) n'ont besoin que d'un e-mail et d'un mot de passe
   const useQuestions = mode === "register" && !invite?.team;
-  if (useQuestions && regStep === "questions") {
+  // Inscriptions libres fermées (bêta fermée) : ni questions ni formulaire, sauf avec une invitation
+  const closedNotice = mode === "register" && signupsClosed && (!invite || invite.invalid);
+  if (useQuestions && !closedNotice && regStep === "questions") {
     const inputCls = "w-full border border-gray-300 rounded-xl px-3.5 py-3 text-base sm:text-[15px] focus:outline-none focus:ring-2 focus:ring-[#ff5a5f] bg-white";
     const lbl = "block text-[13px] font-semibold text-gray-700 mb-1.5";
     const ex = "text-xs text-gray-500 mt-1.5 leading-snug";
@@ -278,7 +283,7 @@ function AuthScreen({ onAuth }) {
         <main className="flex-1">
           <div className="w-full max-w-6xl mx-auto grid lg:grid-cols-[1.1fr_1fr] gap-10 lg:gap-16 px-6 py-10 items-start" data-testid="register-questions">
             <form onSubmit={(e) => { e.preventDefault(); if (ready) setRegStep("account"); }} className="max-w-xl">
-              <p className="text-[13px] font-bold text-[#b3282f] tracking-wide uppercase">14 jours gratuits · sans carte bancaire{planInfo ? ` · offre ${planLabel(plan)}` : ""}</p>
+              <p className="text-[13px] font-bold text-[#b3282f] tracking-wide uppercase">{invite?.token && !invite.team ? `Invitation · ${invite.accessDays} jours offerts · sans carte bancaire` : `14 jours gratuits · sans carte bancaire${planInfo ? ` · offre ${planLabel(plan)}` : ""}`}</p>
               <h1 className="text-3xl md:text-4xl font-extrabold leading-tight mt-2">Trois questions pour commencer.</h1>
               <p className="text-[15px] text-[#5a6b85] mt-2 mb-5 leading-relaxed">Le reste (vos sites, votre voix, vos anciens posts), nous le déduisons ensuite, puis vous vérifiez.</p>
               <div className="space-y-4">
@@ -440,14 +445,23 @@ function AuthScreen({ onAuth }) {
                 ? `Vous rejoignez l'équipe « ${invite.agency} » : aucun abonnement à prévoir.`
                 : invite?.token
                 ? `Invitation de test : accès ${invite.planName} gratuit pendant ${invite.accessDays} jours, sans carte bancaire.`
-                : "Gratuit pendant 14 jours, sans carte bancaire."}
+                : closedNotice ? "Accès sur invitation." : "Gratuit pendant 14 jours, sans carte bancaire."}
             </p>
             {mode === "register" && invite?.invalid && (
               <p className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg p-2.5 mb-3">
-                Ce lien d&apos;invitation n&apos;est plus valide (déjà utilisé, révoqué ou expiré). Demandez-en un nouveau, ou créez un compte avec l&apos;essai gratuit habituel.
+                Ce lien d&apos;invitation n&apos;est plus valide (déjà utilisé, révoqué ou expiré). {signupsClosed ? <>Les inscriptions sont sur invitation : <a href="/beta#invitation" className="underline font-semibold">demandez-en une nouvelle</a>.</> : "Demandez-en un nouveau, ou créez un compte avec l&apos;essai gratuit habituel."}
               </p>
             )}
 
+          {closedNotice ? (
+            <div className="rounded-2xl bg-amber-50 border border-amber-200 p-4 text-sm text-amber-900" data-testid="signups-closed">
+              <p className="font-semibold">LinkeePost est en bêta fermée</p>
+              {invite?.invalid && <p className="mt-1">Ce lien d&apos;invitation n&apos;est plus valide (déjà utilisé, révoqué ou expiré).</p>}
+              <p className="mt-1">Les inscriptions se font pour l&apos;instant sur invitation. Demandez la vôtre, ou ouvrez le lien reçu par e-mail.</p>
+              <a href="/beta#invitation" className="inline-block mt-3 bg-[#ff5a5f] text-white font-semibold px-4 py-2 rounded-full">Demander une invitation</a>
+              <button type="button" onClick={() => { setMode("login"); setError(null); }} className="block mt-3 text-amber-800 underline">J&apos;ai déjà un compte</button>
+            </div>
+          ) : (<>
           {useQuestions && (
             <p className="text-sm text-gray-600 mb-3" data-testid="reg-recap">
               <strong>{answers.name}</strong>, {answers.fonction}. <button type="button" onClick={() => setRegStep("questions")} className="text-[#b3282f] font-semibold hover:underline" data-testid="reg-back">Modifier mes réponses</button>
@@ -523,6 +537,7 @@ function AuthScreen({ onAuth }) {
                 : "Envoyer le lien"}
             </button>
           </form>
+          </>)}
 
           {mode === "login" && (
             <button
