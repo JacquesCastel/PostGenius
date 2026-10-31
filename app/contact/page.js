@@ -3,6 +3,7 @@ import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 import ContactForm from "./ContactForm";
 import { CONTACT_EMAIL } from "@/lib/contact";
+import { pick } from "@/lib/access";
 
 export const metadata = {
   title: "Contact — LinkeePost",
@@ -37,8 +38,7 @@ export default function ContactPage() {
               Écrivez-nous : une vraie personne vous lit et vous répond.
             </p>
             <p className="text-[#5a6b85] mt-3 leading-relaxed">
-              Pas besoin d'attendre pour tester LinkeePost — l'essai est gratuit pendant 14 jours, sans carte
-              bancaire. Le formulaire est là pour tout le reste.
+              {pick("LinkeePost est en bêta fermée : pour y participer, demandez une invitation sur la page de la bêta. Le formulaire est là pour tout le reste.", "Pas besoin d'attendre pour tester LinkeePost — l'essai est gratuit pendant 14 jours, sans carte bancaire. Le formulaire est là pour tout le reste.")}
             </p>
 
             <ul className="mt-8 space-y-4">

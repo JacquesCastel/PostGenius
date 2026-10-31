@@ -1,3 +1,4 @@
+import { pick } from "@/lib/access";
 import { NextResponse } from "next/server";
 import { rateLimit, clientIp } from "@/lib/ratelimit";
 
@@ -35,7 +36,7 @@ Fonctionnalités :
 - Équipe et clients (offre Agence) : l'agence affecte ses clients à ses collaborateurs ; par défaut, chacun ne voit que ses clients (cloisonnement). Tableau de bord et planning d'agence avec filtres par client, LinkedIn connecté client par client, notifications d'équipe dans l'application et par e-mail (client affecté, nouveau membre, erreur de publication, récapitulatif quotidien, commentaires de page).
 - Sécurité et données : hébergement en Europe (serveur en Allemagne, base de données à Francfort) ; connexion à LinkedIn par son API officielle, sans extension et sans jamais recevoir le mot de passe LinkedIn ; jetons LinkedIn chiffrés ; suppression des données LinkedIn en un clic ; aucune publication sans l'action de l'utilisateur. LinkeePost n'a pas, aujourd'hui, de certification de sécurité (SOC 2, ISO 27001). Les détails sont sur la page « Sécurité » du site.
 
-Comment démarrer : créer un compte sur la page d'inscription (bouton « Essai gratuit »). 14 jours d'essai gratuit, sans carte bancaire.
+${pick(`Comment démarrer : LinkeePost est en bêta fermée, l'accès se fait sur invitation. Pour en obtenir une, ouvrir la page /beta (bouton « Rejoindre la bêta ») et remplir le formulaire. Une personne invitée reçoit 30 jours d'accès Pro gratuits, sans carte bancaire. Il n'y a pas d'essai public de 14 jours pour le moment ; ne l'annonce pas.`, `Comment démarrer : créer un compte sur la page d'inscription (bouton « Essai gratuit »). 14 jours d'essai gratuit, sans carte bancaire.`)}
 
 Offres (par mois, HT ; facturation annuelle : 9 mois payés sur 12, soit 3 mois offerts) :
 - Essentiel — 19 € : 15 posts/mois, profil de rédaction, programmation, publication sur le profil personnel, 5 sources, 10 minutes de dictée par mois, leads en ajout manuel. Pas d'images IA, ni de campagnes, ni de veille, ni de page entreprise, ni de seconde vie d'un contenu, ni d'accès par assistant IA.
@@ -47,7 +48,7 @@ Règles :
 - LinkeePost est en phase de lancement : ne cite aucun nombre de clients, aucun témoignage, aucun résultat chiffré obtenu par des utilisateurs, et ne promets aucun gain de vues ni de clients. Ne dis rien de l'algorithme de LinkedIn au-delà de ce qui est écrit ci-dessus.
 - Si on te demande un prix ou une limite précise, donne celle de l'offre concernée.
 - Si la question sort du sujet LinkeePost/LinkedIn, recadre gentiment.
-- Quand c'est pertinent, invite à essayer gratuitement (bouton « Essai gratuit ») ou à utiliser le formulaire de contact (contact@postgenius.network).
+- Quand c'est pertinent, ${pick("invite à demander une invitation à la bêta (bouton « Rejoindre la bêta »)", "invite à essayer gratuitement (bouton « Essai gratuit »)")} ou à utiliser le formulaire de contact (contact@postgenius.network).
 - Tu ne peux pas accéder au compte de l'utilisateur ni effectuer d'action ; tu informes et tu orientes.`;
 
 export async function POST(req) {

@@ -8,6 +8,7 @@ import { getLanding } from "@/lib/landing";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 import BrandMotion from "@/components/BrandMotion";
+import { BETA, JOIN_HREF, pick } from "@/lib/access";
 
 // Page vitrine publique — postgenius.network
 // Rendu à la requête : le contenu (offres, hero, FAQ) est éditable depuis l'admin.
@@ -16,7 +17,7 @@ export const dynamic = "force-dynamic";
 export const metadata = {
   title: "LinkeePost — Votre expertise, vos mots, vos posts LinkedIn",
   description:
-    "Déposez vos documents, vos liens et vos anciens posts : LinkeePost rédige, programme et publie des posts LinkedIn dans votre voix, à partir de vos propres faits. Essai gratuit 14 jours.",
+    "Déposez vos documents, vos liens et vos anciens posts : LinkeePost rédige, programme et publie des posts LinkedIn dans votre voix, à partir de vos propres faits. " + pick("Accès sur invitation pendant la bêta fermée.", "Essai gratuit 14 jours."),
   alternates: { canonical: "/" },
 };
 
@@ -56,7 +57,7 @@ const ORIGIN = [
 ];
 
 const PROOFS = [
-  { big: "14 j", small: "d'essai gratuit" },
+  ...(BETA ? [{ big: "30 j", small: "offerts aux testeurs invités" }] : [{ big: "14 j", small: "d'essai gratuit" }]),
   { big: "0 €", small: "sans carte bancaire" },
   { big: "100 %", small: "API officielle LinkedIn" },
   { big: "9", small: "langues de rédaction" },
@@ -95,7 +96,7 @@ export default async function Landing() {
               inLanguage: "fr",
               url: "https://postgenius.network",
               description: "Création, validation, programmation et suivi de posts LinkedIn assistés par IA, pour indépendants et agences.",
-              offers: { "@type": "Offer", price: "0", priceCurrency: "EUR", description: "Essai gratuit 14 jours, sans carte bancaire" },
+              offers: { "@type": "Offer", price: "0", priceCurrency: "EUR", description: pick("Accès sur invitation pendant la bêta fermée, sans carte bancaire", "Essai gratuit 14 jours, sans carte bancaire") },
             },
           ]).replace(/</g, "\\u003c"),
         }}
@@ -120,10 +121,10 @@ export default async function Landing() {
             <p className="text-lg text-[#5a6b85] mt-5 max-w-xl">{hero.subtitle}</p>
             <div className="flex items-center gap-4 mt-8">
               <Link
-                href="/app"
+                href={JOIN_HREF}
                 className="bg-[#ff5a5f] hover:bg-[#f63d44] text-white font-semibold px-7 py-3.5 rounded-full shadow-lg shadow-rose-300/50 flex items-center gap-2 transition-colors"
               >
-                Démarrer gratuitement <ChevronRight size={17} />
+                {pick("Rejoindre la bêta", "Démarrer gratuitement")} <ChevronRight size={17} />
               </Link>
               <a href="#comment" className="inline-flex items-center gap-2 font-medium text-[#1b2a4a] hover:text-[#ff5a5f] transition-colors">
                 <PlayCircle size={22} className="text-[#ff5a5f]" /> Voir comment ça marche
@@ -295,10 +296,10 @@ export default async function Landing() {
                   Comment on calcule la note <ChevronRight size={16} />
                 </Link>
                 <Link
-                  href="/app"
+                  href={JOIN_HREF}
                   className="border border-white/40 text-white font-semibold px-6 py-3 rounded-full hover:bg-white/10 transition-colors text-center"
                 >
-                  L'essayer gratuitement
+                  {pick("Rejoindre la bêta", "L'essayer gratuitement")}
                 </Link>
               </div>
             </div>
@@ -370,7 +371,7 @@ export default async function Landing() {
         <section id="tarifs" className="max-w-6xl mx-auto px-6 py-20">
           <BackToTop />
           <h2 className="text-3xl md:text-4xl font-extrabold text-center">Des tarifs simples</h2>
-          <p className="text-[#5a6b85] text-center mt-3">14 jours d'essai gratuit sur tous les plans, sans carte bancaire. Sans engagement.</p>
+          <p className="text-[#5a6b85] text-center mt-3">{pick("Pendant la bêta fermée, l'accès est offert aux testeurs invités. Tarifs prévus à l'ouverture publique.", "14 jours d'essai gratuit sur tous les plans, sans carte bancaire. Sans engagement.")}</p>
           <div className="grid md:grid-cols-3 gap-6 mt-12 items-start">
             {PLANS.map((p) => (
               <div
@@ -398,7 +399,7 @@ export default async function Landing() {
                   ))}
                 </ul>
                 <Link
-                  href={`/app?plan=${p.name.toLowerCase()}`}
+                  href={BETA ? "/beta" : `/app?plan=${p.name.toLowerCase()}`}
                   className={`mt-7 block text-center font-semibold px-4 py-3 rounded-full transition-colors ${
                     p.highlight
                       ? "bg-[#ff5a5f] hover:bg-[#f63d44] text-white shadow-lg shadow-rose-300/40"
@@ -424,14 +425,14 @@ export default async function Landing() {
             <div>
               <h3 className="text-xl font-extrabold">Prêt à automatiser votre LinkedIn ?</h3>
               <p className="text-[#5a6b85] text-sm mt-1">
-                Créez votre compte et lancez votre première campagne — 14 jours gratuits, sans carte bancaire.
+                {pick("Demandez une invitation à la bêta fermée et lancez votre première campagne — accès offert, sans carte bancaire.", "Créez votre compte et lancez votre première campagne — 14 jours gratuits, sans carte bancaire.")}
               </p>
             </div>
             <Link
-              href="/app"
+              href={JOIN_HREF}
               className="shrink-0 inline-flex items-center gap-2 bg-[#ff5a5f] hover:bg-[#f63d44] text-white font-semibold px-7 py-3.5 rounded-full shadow-lg shadow-rose-300/40 transition-colors"
             >
-              Créer un compte <ChevronRight size={17} />
+              {pick("Demander une invitation", "Créer un compte")} <ChevronRight size={17} />
             </Link>
           </div>
         </section>
@@ -458,9 +459,9 @@ export default async function Landing() {
           <div className="rounded-[2.5rem] bg-gradient-to-br from-[#ff5a5f] to-pink-500 text-white text-center p-12 shadow-2xl shadow-rose-300/50 relative overflow-hidden">
             <div className="pointer-events-none absolute -top-10 -right-10 w-40 h-40 bg-white/15 rounded-full blur-2xl" />
             <h2 className="text-3xl md:text-4xl font-extrabold">Votre prochaine campagne commence aujourd'hui</h2>
-            <p className="text-white/85 mt-3">14 jours pour l'essayer, 5 minutes pour la lancer.</p>
-            <Link href="/app" className="inline-flex items-center gap-2 bg-white text-[#ff5a5f] font-bold px-7 py-3.5 rounded-full mt-7 hover:bg-rose-50 transition-colors">
-              Créer mon compte gratuitement <ChevronRight size={17} />
+            <p className="text-white/85 mt-3">{pick("Une place dans la bêta fermée, pour construire l'outil avec nous.", "14 jours pour l'essayer, 5 minutes pour la lancer.")}</p>
+            <Link href={JOIN_HREF} className="inline-flex items-center gap-2 bg-white text-[#ff5a5f] font-bold px-7 py-3.5 rounded-full mt-7 hover:bg-rose-50 transition-colors">
+              {pick("Demander une invitation", "Créer mon compte gratuitement")} <ChevronRight size={17} />
             </Link>
           </div>
         </section>

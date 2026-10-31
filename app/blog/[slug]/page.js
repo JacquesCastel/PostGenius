@@ -5,6 +5,7 @@ import { memo, MEMO_TTL } from "@/lib/memoCache";
 import { markdownToHtml } from "@/lib/markdown";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
+import { JOIN_HREF, pick } from "@/lib/access";
 
 export const dynamic = "force-dynamic";
 
@@ -77,10 +78,10 @@ export default async function ArticlePage({ params }) {
         <div className="mt-12 border-t border-rose-100 pt-8 text-center">
           <p className="font-bold text-lg">Prêt à passer à l'action sur LinkedIn ?</p>
           <Link
-            href="/app"
+            href={JOIN_HREF}
             className="inline-block mt-3 bg-[#ff5a5f] text-white font-semibold px-7 py-3 rounded-full hover:bg-[#f63d44] shadow-lg shadow-rose-300/40"
           >
-            Démarrer l'essai gratuit
+            {pick("Rejoindre la bêta", "Démarrer l'essai gratuit")}
           </Link>
         </div>
       </article>

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import ChatWidget from "./ChatWidget";
 import LpMark from "./LpMark";
+import { pick } from "@/lib/access";
 
 // Pied de page public partagé (landing, blog, contact, pages légales)
 export default function SiteFooter() {
@@ -54,7 +55,7 @@ export default function SiteFooter() {
           {" "}<Link href="/tarifs" className="hover:text-[#ff5a5f] underline">offres et tarifs</Link>,
           {" "}le <Link href="/comment-ca-marche" className="hover:text-[#ff5a5f] underline">fonctionnement étape par étape</Link>
           {" "}et nos <Link href="/blog" className="hover:text-[#ff5a5f] underline">conseils pour réussir sur LinkedIn</Link>.
-          Essai gratuit 14 jours, sans carte bancaire.
+          {pick("Bêta fermée : accès sur invitation.", "Essai gratuit 14 jours, sans carte bancaire.")}
         </p>
         <p className="text-xs text-[#7c8aa3] mt-6">© {new Date().getFullYear()} LinkeePost</p>
         </div>
