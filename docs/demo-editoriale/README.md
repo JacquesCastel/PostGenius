@@ -48,8 +48,8 @@ Prototype isolé : **`/demo-editoriale`**. Un même sujet, trois entreprises, tr
 # 1. Comptes de démonstration (quatre comptes isolés, base de démonstration uniquement)
 DEMO_EDITORIALE_DB_OK=1 node --env-file=.env scripts/demo-editorial.mjs seed
 
-# 2. Trois générations par entreprise, avec le vrai moteur (le serveur doit tourner sur la même base)
-node --env-file=.env scripts/demo-editorial.mjs generate --base http://localhost:3000 --runs 3
+# 2. UNE génération par identité (Wharf, ASTER, AXIOME, témoin), avec le vrai moteur (le serveur doit tourner sur la même base)
+node --env-file=.env scripts/demo-editorial.mjs generate --base http://localhost:3000 --runs 1
 
 # 3. Lire les candidats, puis choisir
 node scripts/demo-editorial.mjs list
@@ -79,6 +79,16 @@ node scripts/demo-editorial.mjs verify
 2. **L'angle n'est pas une sortie du moteur** (voir §1).
 3. **L'empreinte n'est pas une signature** (voir §1).
 4. **Mise en page validée avec des textes de test** : la longueur et le rythme de vrais textes pourront demander un réglage.
-5. **Trois générations par entreprise** : un échantillon petit ; la sélection est annoncée, mais c'est tout de même un choix humain.
+5. **Une génération par identité par défaut** : aucun choix humain entre plusieurs essais, mais un échantillon d'un seul texte par entreprise. Relancer pour obtenir d'autres essais est possible ; la page annonce alors « retenu parmi N générations ».
 
 **Consulter le prototype** : `npm run build && npm start`, puis ouvrir `http://localhost:3000/demo-editoriale`. Avec un jeu de test : `DEMO_EDITORIALE_FIXTURE=/chemin/fichier.json` (bandeau « Données de test » affiché).
+
+## 5. Reprise : générer les quatre publications authentiques
+
+*À suivre dans une session où `ANTHROPIC_API_KEY` est définie (vérifier : la variable existe, sans l'afficher).*
+
+1. Base locale jetable, application construite sans simulateur ni variable de test : `npm run build`, puis `next start` avec `DATABASE_URL` locale, `AUTH_SECRET`, `TOKEN_ENCRYPTION_KEY` et la vraie clé.
+2. `DEMO_EDITORIALE_DB_OK=1 node scripts/demo-editorial.mjs seed`, puis `node scripts/demo-editorial.mjs generate --base http://localhost:<port> --runs 1`.
+3. Publier les quatre candidats **sans les modifier** : `publish --wharf <id> --aster <id> --axiome <id> --temoin <id>`, puis `verify`. Ne jamais éditer `content/demo-editoriale.json` à la main.
+4. **Interdits** : créer une fixture, retoucher un texte, relancer jusqu'à obtenir un texte plus flatteur sans que le nombre de générations soit annoncé, déployer sans validation.
+5. Si la génération échoue (clé, quota, réseau) : s'arrêter et le dire ; ne rien inventer.

@@ -8,7 +8,7 @@
 //
 // Commandes (voir docs/demo-editoriale/README.md) :
 //   seed      crée ou met à jour les comptes de démonstration           (exige DEMO_EDITORIALE_DB_OK=1)
-//   generate  génère N candidats par identité avec le vrai moteur         (--base http://localhost:3000 --runs 3 [--only wharf])
+//   generate  génère N candidats par identité avec le vrai moteur         (--base http://localhost:3000 --runs 1 [--only wharf])
 //   list      liste les candidats conservés
 //   publish   publie les candidats choisis dans content/demo-editoriale.json
 //             --wharf <id> --aster <id> --axiome <id> [--temoin <id>] [--comparison fichier.json]
@@ -75,7 +75,7 @@ async function login(base, email, password) {
 
 async function generate() {
   const base = (flag("base", "http://localhost:3000")).replace(/\/$/, "");
-  const runs = Math.min(10, Math.max(1, Number(flag("runs", "3")) || 3));
+  const runs = Math.min(10, Math.max(1, Number(flag("runs", "1")) || 1)); // une génération par identité par défaut : aucun choix humain entre plusieurs essais
   const only = flag("only");
   const accounts = readJson(ACC, null);
   if (!accounts) fail("Aucun compte de démonstration : lancez d'abord « seed ».");
