@@ -1,0 +1,5 @@
+{
+  "version": 1,
+  "note": "Ce fichier reçoit les exemples AUTHENTIQUES produits par scripts/demo-editorial.mjs (commande « publish »). Vide tant qu'aucun exemple n'a été généré avec le vrai moteur : la page affiche alors un état « en préparation », jamais un texte inventé.",
+  "entries": {}
+}
