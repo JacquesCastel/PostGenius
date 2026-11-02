@@ -15,6 +15,13 @@ A    linkeepost.app        → IP_SERVEUR
 A    www.linkeepost.app    → IP_SERVEUR
 ```
 
+### Conserver l'ancien domaine postgenius.network
+Ne pas laisser `postgenius.network` expirer : le `Caddyfile` le redirige en 301 vers `linkeepost.app` (chemin conservé), ce qui préserve les anciens liens et le référencement.
+- Renouveler le domaine (activer le renouvellement automatique).
+- Garder ses enregistrements `A` (`@` et `www`) vers `IP_SERVEUR`, sinon la redirection ne fonctionne plus.
+- Garder la boîte `contact@postgenius.network`, ou la rediriger vers `contact@linkeepost.app`, pour ne pas perdre les anciens e-mails.
+- Garder l'ancienne redirect URI LinkedIn et l'ancien webhook Stripe pendant la transition, puis les retirer une fois les nouveaux confirmés.
+
 ## 2. LinkedIn — redirect URIs de production
 Sur https://www.linkedin.com/developers/apps, app principale → onglet **Auth** → ajouter :
 ```
