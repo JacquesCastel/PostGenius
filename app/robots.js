@@ -1,4 +1,4 @@
-const SITE = (process.env.APP_URL || "https://postgenius.network").replace(/\/$/, "");
+const SITE = (process.env.APP_URL || "https://linkeepost.app").replace(/\/$/, "");
 
 // Pages publiques indexables ; l'application, l'API et les pages à lien secret restent hors des moteurs de recherche
 export default function robots() {

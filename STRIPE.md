@@ -10,7 +10,7 @@ STRIPE_SECRET_KEY=sk_test_xxx
 STRIPE_WEBHOOK_SECRET=whsec_xxx
 
 # URL publique de l'app (pour les redirections Checkout/portail)
-APP_URL=https://postgenius.network
+APP_URL=https://linkeepost.app
 
 # Price IDs (générés par scripts/stripe-setup.mjs)
 STRIPE_PRICE_ESSENTIEL_MONTH=price_xxx
@@ -44,7 +44,7 @@ Le script crée 3 produits (Essentiel/Pro/Agence) × 2 prix (mensuel/annuel : an
 
 Crée un endpoint dans Stripe → Developers → Webhooks :
 
-- URL : `https://postgenius.network/api/stripe/webhook`
+- URL : `https://linkeepost.app/api/stripe/webhook`
 - Événements : `checkout.session.completed`, `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`
 - Copie le **Signing secret** (`whsec_...`) dans `STRIPE_WEBHOOK_SECRET`.
 

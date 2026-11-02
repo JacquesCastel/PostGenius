@@ -5,7 +5,7 @@ import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
-const EMAIL = "demo@postgenius.network";
+const EMAIL = "demo@linkeepost.app";
 const PASSWORD = "Demo2026!";
 const NAME = "Demo LinkeePost";
 
@@ -28,6 +28,6 @@ if (existing) {
 
 console.log("   Email    :", EMAIL);
 console.log("   Password :", PASSWORD);
-console.log("   URL      : https://postgenius.network/app");
+console.log("   URL      : https://linkeepost.app/app");
 
 await prisma.$disconnect();
