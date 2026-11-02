@@ -5,11 +5,11 @@
 #   - page d'accueil servie et non vide (garde-fou du bug de rendu à vide de ce serveur) ;
 #   - page des offres, état de session, métadonnées OAuth ;
 #   - si SMOKE_EMAIL et SMOKE_PASSWORD sont définis (compte de contrôle) : connexion réelle, puis lecture de la session.
-# Usage : scripts/smoke.sh [adresse]   (défaut : $SMOKE_URL, sinon https://postgenius.network)
+# Usage : scripts/smoke.sh [adresse]   (défaut : $SMOKE_URL, sinon https://linkeepost.app)
 # Code de sortie : 0 si tout est bon, 1 sinon. Attend jusqu'à SMOKE_WAIT secondes (45 par défaut) que l'application démarre.
 #
 set -uo pipefail
-URL="${1:-${SMOKE_URL:-https://postgenius.network}}"
+URL="${1:-${SMOKE_URL:-https://linkeepost.app}}"
 URL="${URL%/}"
 WAIT="${SMOKE_WAIT:-45}"
 MIN_LANDING="${SMOKE_MIN_LANDING:-30000}"

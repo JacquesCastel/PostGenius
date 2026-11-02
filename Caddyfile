@@ -1,9 +1,14 @@
-# HTTPS automatique (Let's Encrypt) — postgenius.network
-postgenius.network {
+# HTTPS automatique (Let's Encrypt) — linkeepost.app
+linkeepost.app {
 	reverse_proxy app:3000
 }
 
 # Redirection www → apex
-www.postgenius.network {
-	redir https://postgenius.network{uri} permanent
+www.linkeepost.app {
+	redir https://linkeepost.app{uri} permanent
+}
+
+# Ancien domaine → nouveau domaine (301, conserve le chemin)
+postgenius.network, www.postgenius.network {
+	redir https://linkeepost.app{uri} permanent
 }

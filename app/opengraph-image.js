@@ -15,7 +15,7 @@ export default function OpengraphImage() {
         </div>
         <div style={{ marginTop: 48, fontSize: 70, fontWeight: 800, lineHeight: 1.1, display: "flex" }}>Votre expertise, vos mots, vos posts</div>
         <div style={{ marginTop: 28, fontSize: 32, color: "#475569", display: "flex" }}>Des posts LinkedIn écrits à partir de ce que vous savez</div>
-        <div style={{ position: "absolute", bottom: 48, right: 90, fontSize: 28, color: "#ff5a5f", fontWeight: 700, display: "flex" }}>postgenius.network</div>
+        <div style={{ position: "absolute", bottom: 48, right: 90, fontSize: 28, color: "#ff5a5f", fontWeight: 700, display: "flex" }}>linkeepost.app</div>
       </div>
     ),
     { ...size }

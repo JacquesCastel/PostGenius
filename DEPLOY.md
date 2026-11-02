@@ -1,9 +1,9 @@
-# Bascule en production — postgenius.network (Hetzner)
+# Bascule en production — linkeepost.app (Hetzner, DNS chez Gandi)
 
 Runbook complet. Temps estimé : ~45 min (hors propagation DNS).
 
 ## 0. Prérequis
-- Domaine **postgenius.network** acheté, accès à la zone DNS
+- Domaine **linkeepost.app** acheté, accès à la zone DNS
 - Serveur Hetzner (Ubuntu/Debian) accessible en SSH, IP notée ci-après `IP_SERVEUR`
   - **IP du serveur : `46.225.15.150`** → `ssh root@46.225.15.150`
 - Le projet fonctionne en local
@@ -11,19 +11,26 @@ Runbook complet. Temps estimé : ~45 min (hors propagation DNS).
 ## 1. DNS (à faire en premier — propagation 5 min à quelques heures)
 Dans la zone DNS du domaine :
 ```
-A    postgenius.network        → IP_SERVEUR
-A    www.postgenius.network    → IP_SERVEUR
+A    linkeepost.app        → IP_SERVEUR
+A    www.linkeepost.app    → IP_SERVEUR
 ```
+
+### Conserver l'ancien domaine postgenius.network
+Ne pas laisser `postgenius.network` expirer : le `Caddyfile` le redirige en 301 vers `linkeepost.app` (chemin conservé), ce qui préserve les anciens liens et le référencement.
+- Renouveler le domaine (activer le renouvellement automatique).
+- Garder ses enregistrements `A` (`@` et `www`) vers `IP_SERVEUR`, sinon la redirection ne fonctionne plus.
+- Garder la boîte `contact@postgenius.network`, ou la rediriger vers `contact@linkeepost.app`, pour ne pas perdre les anciens e-mails.
+- Garder l'ancienne redirect URI LinkedIn et l'ancien webhook Stripe pendant la transition, puis les retirer une fois les nouveaux confirmés.
 
 ## 2. LinkedIn — redirect URIs de production
 Sur https://www.linkedin.com/developers/apps, app principale → onglet **Auth** → ajouter :
 ```
-https://postgenius.network/api/linkedin/callback
+https://linkeepost.app/api/linkedin/callback
 ```
 (garder aussi l'URL localhost pour continuer à développer).
 Quand la 2e app (Community Management) sera active, y ajouter de même :
 ```
-https://postgenius.network/api/linkedin/callback-org
+https://linkeepost.app/api/linkedin/callback-org
 ```
 
 ## 3. Préparer le serveur (une seule fois)
@@ -57,9 +64,9 @@ cd /opt/postgenius && nano .env
 ```
 Partir du .env local en changeant UNIQUEMENT ces lignes :
 ```
-APP_URL=https://postgenius.network
-LINKEDIN_REDIRECT_URI=https://postgenius.network/api/linkedin/callback
-LINKEDIN_ORG_REDIRECT_URI=https://postgenius.network/api/linkedin/callback-org
+APP_URL=https://linkeepost.app
+LINKEDIN_REDIRECT_URI=https://linkeepost.app/api/linkedin/callback
+LINKEDIN_ORG_REDIRECT_URI=https://linkeepost.app/api/linkedin/callback-org
 ```
 ⚠️ GARDER les mêmes `AUTH_SECRET`, `TOKEN_ENCRYPTION_KEY` et `DATABASE_URL`
 qu'en local : la base Neon actuelle devient la base de PRODUCTION (vos comptes
@@ -74,7 +81,7 @@ docker compose logs -f app          # vérifier : "scheduler ... démarré", pas
 Caddy obtient le certificat HTTPS automatiquement dès que le DNS pointe.
 
 ## 7. Vérifications de mise en service
-1. https://postgenius.network s'ouvre en HTTPS → écran de connexion
+1. https://linkeepost.app s'ouvre en HTTPS → écran de connexion
 2. Connexion avec votre compte → l'entrée Administration est visible
 3. Profil → Connecter LinkedIn → OAuth OK (sinon : vérifier l'URI ajoutée à l'étape 2)
 4. Générer un post → publier → vérifier sur LinkedIn
@@ -104,7 +111,7 @@ Caddy obtient le certificat HTTPS automatiquement dès que le DNS pointe.
   inclut un garde-fou qui annule le déploiement si la landing ressort vide.
 - **Vérifier qu'un déploiement a pris effet** :
   ```bash
-  curl -s https://postgenius.network | grep -o '<title>[^<]*'
+  curl -s https://linkeepost.app | grep -o '<title>[^<]*'
   ```
 - **Sauvegardes** : la base est sauvegardée par Neon (snapshots). Le dossier
   `/opt/postgenius/data` (images, logos, fonds, médiathèque) est sauvegardé par
@@ -146,7 +153,7 @@ Caddy obtient le certificat HTTPS automatiquement dès que le DNS pointe.
   avant de restaurer comme ci-dessus.
 
 ## Dépannage rapide
-- Certificat HTTPS absent → DNS pas encore propagé (`dig postgenius.network`)
+- Certificat HTTPS absent → DNS pas encore propagé (`dig linkeepost.app`)
 - OAuth LinkedIn "Bummer" → redirect URI manquante ou différente dans l'app LinkedIn
 - 502 → `docker compose logs app` (souvent variable .env manquante)
 - **Le site sert une ancienne version malgré les rebuilds** (vécu !) :
@@ -203,21 +210,21 @@ Le script n'est chargé que sur les pages publiques (jamais dans `/app`, `/valid
 Sans les deux variables `UMAMI_*` du `.env`, rien n'est chargé.
 
 **Option A : Umami Cloud** (le plus simple, aucun serveur à gérer)
-1. Créer un compte sur https://cloud.umami.is, puis ajouter le site `postgenius.network`.
+1. Créer un compte sur https://cloud.umami.is, puis ajouter le site `linkeepost.app`.
 2. Dans `.env` : `UMAMI_SCRIPT_URL=https://cloud.umami.is/script.js` et `UMAMI_WEBSITE_ID=` (l'identifiant du site, un UUID).
 3. `./deploy.sh`.
 
 **Option B : auto-hébergé** (les données restent chez vous)
-1. Créer un enregistrement DNS `stats.postgenius.network` vers le serveur (même adresse que `postgenius.network`).
+1. Créer un enregistrement DNS `stats.linkeepost.app` vers le serveur (même adresse que `linkeepost.app`).
 2. Dans `.env` : `COMPOSE_PROFILES=stats`, `UMAMI_DB_PASSWORD=` (mot de passe long), `UMAMI_APP_SECRET=` (`openssl rand -hex 32`).
 3. Ajouter dans le `Caddyfile` :
    ```
-   stats.postgenius.network {
+   stats.linkeepost.app {
    	reverse_proxy umami:3000
    }
    ```
-4. `./deploy.sh`, puis ouvrir `https://stats.postgenius.network` (identifiants initiaux `admin` / `umami` : **à changer immédiatement**).
-5. Ajouter le site `postgenius.network`, puis dans `.env` : `UMAMI_SCRIPT_URL=https://stats.postgenius.network/script.js` et `UMAMI_WEBSITE_ID=` (l'UUID du site). `./deploy.sh`.
+4. `./deploy.sh`, puis ouvrir `https://stats.linkeepost.app` (identifiants initiaux `admin` / `umami` : **à changer immédiatement**).
+5. Ajouter le site `linkeepost.app`, puis dans `.env` : `UMAMI_SCRIPT_URL=https://stats.linkeepost.app/script.js` et `UMAMI_WEBSITE_ID=` (l'UUID du site). `./deploy.sh`.
 
 Vérifier : ouvrir le site en navigation privée, puis voir la visite apparaître dans Umami (« Temps réel »). Les visites de `/app` n'y figurent pas.
 La politique de confidentialité (anglais dans le code, français dans l'Administration) mentionne cette mesure.
@@ -260,14 +267,14 @@ Un seul retour arrière est possible (la version précédente est gardée une se
 | `NEON_API_KEY`, `NEON_PROJECT_ID` | Copie de la base avant chaque changement de schéma. Clé : console.neon.tech → Account settings → API keys. Identifiant du projet : Settings du projet. |
 | `NEON_KEEP_BRANCHES=5` | Garde les 5 dernières copies `avant-deploy-…` et supprime les plus anciennes (jamais une autre branche). |
 | `SMOKE_EMAIL`, `SMOKE_PASSWORD` | Compte de contrôle : un compte ordinaire (jamais administrateur), pour tester la vraie connexion après chaque déploiement. |
-| `SMOKE_URL` | Adresse contrôlée (par défaut `https://postgenius.network`). À changer si le serveur ne peut pas joindre sa propre adresse publique : sinon le contrôle automatique est désactivé avec un avertissement. |
+| `SMOKE_URL` | Adresse contrôlée (par défaut `https://linkeepost.app`). À changer si le serveur ne peut pas joindre sa propre adresse publique : sinon le contrôle automatique est désactivé avec un avertissement. |
 
 Sans réglage Neon, le déploiement fonctionne mais affiche « SANS-SNAPSHOT » quand le schéma change : le seul filet est alors la sauvegarde
 automatique de Neon.
 
 ### Surveillance extérieure (à créer une fois, gratuit)
 
-Sur https://uptimerobot.com (ou équivalent) : un moniteur « mot-clé » sur `https://postgenius.network/api/health`, qui cherche `"ok":true`, toutes les
+Sur https://uptimerobot.com (ou équivalent) : un moniteur « mot-clé » sur `https://linkeepost.app/api/health`, qui cherche `"ok":true`, toutes les
 5 minutes, avec alerte par e-mail (et notification sur téléphone). `/api/health` répond 200 si l'application tourne ET joint la base, 503 sinon.
 Un second moniteur sur la page d'accueil. C'est ce qui vous prévient si le serveur lui-même s'arrête.
 

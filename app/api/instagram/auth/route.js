@@ -10,7 +10,7 @@ import { oauthTarget, bindOauthTarget, READ_ONLY_MESSAGE } from "@/lib/oauthTarg
 //   INSTAGRAM_APP_ID        → Instagram App ID (section "API setup with Instagram login"
 //                             dans Meta App Dashboard, ≠ Facebook App ID)
 //   INSTAGRAM_APP_SECRET    → Instagram App Secret (même section)
-//   INSTAGRAM_REDIRECT_URI  → https://postgenius.network/api/instagram/callback
+//   INSTAGRAM_REDIRECT_URI  → https://linkeepost.app/api/instagram/callback
 
 export async function GET(req) {
   const appUrl = process.env.APP_URL || "http://localhost:3000";

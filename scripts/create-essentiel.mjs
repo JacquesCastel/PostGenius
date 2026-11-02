@@ -5,7 +5,7 @@ import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
-const EMAIL = "test-essentiel@postgenius.fr";
+const EMAIL = "test-essentiel@linkeepost.app";
 const PASSWORD = "Essentiel2026!";
 
 const user = await prisma.user.upsert({

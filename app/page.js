@@ -11,7 +11,7 @@ import BrandMotion from "@/components/BrandMotion";
 import { BETA, JOIN_HREF, pick } from "@/lib/access";
 import { INVITE_ACCESS_DAYS } from "@/lib/invites";
 
-// Page vitrine publique — postgenius.network
+// Page vitrine publique — linkeepost.app
 // Rendu à la requête : le contenu (offres, hero, FAQ) est éditable depuis l'admin.
 export const dynamic = "force-dynamic";
 
@@ -87,7 +87,7 @@ export default async function Landing() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{
           __html: JSON.stringify([
-            { "@context": "https://schema.org", "@type": "Organization", name: "LinkeePost", url: "https://postgenius.network", logo: "https://postgenius.network/icon.svg" },
+            { "@context": "https://schema.org", "@type": "Organization", name: "LinkeePost", url: "https://linkeepost.app", logo: "https://linkeepost.app/icon.svg" },
             {
               "@context": "https://schema.org",
               "@type": "SoftwareApplication",
@@ -95,7 +95,7 @@ export default async function Landing() {
               applicationCategory: "BusinessApplication",
               operatingSystem: "Web",
               inLanguage: "fr",
-              url: "https://postgenius.network",
+              url: "https://linkeepost.app",
               description: "Création, validation, programmation et suivi de posts LinkedIn assistés par IA, pour indépendants et agences.",
               offers: { "@type": "Offer", price: "0", priceCurrency: "EUR", description: pick("Accès sur invitation pendant la bêta fermée, sans carte bancaire", "Essai gratuit 14 jours, sans carte bancaire") },
             },

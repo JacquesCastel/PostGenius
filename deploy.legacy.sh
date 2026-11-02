@@ -105,6 +105,6 @@ docker image prune -f >/dev/null 2>&1 || true
 docker builder prune -af >/dev/null 2>&1 || true
 echo "    disque : $(df -h / | awk 'NR==2{print $3" utilisés sur "$2" ("$5")"}')"
 echo -n "    titre servi en prod : "
-curl -skL https://postgenius.network | grep -o '<title>[^<]*' || true
+curl -skL https://linkeepost.app | grep -o '<title>[^<]*' || true
 echo
 echo "==> Terminé."

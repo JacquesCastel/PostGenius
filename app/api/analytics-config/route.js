@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 // GET — configuration de la mesure d'audience (Umami), lue à l'exécution : le script n'est chargé que si les deux variables sont valides.
 // UMAMI_SCRIPT_URL : adresse du script (https://cloud.umami.is/script.js, ou celle de votre Umami) ; UMAMI_WEBSITE_ID : identifiant du site (UUID).
-// Par défaut : Umami Cloud et le site postgenius.network (l'identifiant du site est public, visible dans le code de chaque page) ;
+// Par défaut : Umami Cloud et le site linkeepost.app (l'identifiant du site est public, visible dans le code de chaque page) ;
 // les variables du serveur les remplacent, par exemple pour un Umami auto-hébergé. UMAMI_DISABLED=1 coupe la mesure.
 export const dynamic = "force-dynamic";
 

@@ -5,7 +5,7 @@
 # Usage : sur le serveur,  cd /opt/postgenius && ./deploy.sh
 #   FORCE=1            ne demande pas confirmation s'une publication est proche ou une transcription en cours
 #   ALLOW_DATA_LOSS=1  autorise un changement de schéma qui supprime ou transforme des données (à n'utiliser qu'après avoir lu .schema-diff.sql)
-#   SMOKE_URL=…        adresse contrôlée après déploiement (défaut : https://postgenius.network)
+#   SMOKE_URL=…        adresse contrôlée après déploiement (défaut : https://linkeepost.app)
 #   SKIP_SMOKE=1       désactive le contrôle automatique et le retour arrière automatique (à éviter)
 # Retour arrière : ./rollback.sh   (la version précédente est conservée dans .prev/). Journal : deploys.log
 # En cas de défaut de ce script lui-même : ./deploy.legacy.sh (ancienne version).
@@ -108,7 +108,7 @@ export SMOKE_URL="${SMOKE_URL:-$(getenv SMOKE_URL)}" SMOKE_EMAIL="${SMOKE_EMAIL:
 
 # Le contrôle automatique appelle l'adresse publique depuis ce serveur. Si le serveur ne peut pas la joindre (résolution du nom, pare-feu),
 # le contrôle échouerait à chaque fois et déclencherait un retour arrière pour rien : on le désactive alors, avec un avertissement.
-SMOKE_BASE="${SMOKE_URL:-https://postgenius.network}"
+SMOKE_BASE="${SMOKE_URL:-https://linkeepost.app}"
 if [ "${SKIP_SMOKE:-0}" != "1" ]; then
   REACH=$(curl -sk --max-time 10 -o /dev/null -w '%{http_code}' "${SMOKE_BASE%/}/" 2>/dev/null || true)
   if [ "$REACH" != "200" ]; then

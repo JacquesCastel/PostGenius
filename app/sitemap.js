@@ -3,7 +3,7 @@ import { memo, MEMO_TTL } from "@/lib/memoCache";
 
 export const dynamic = "force-dynamic";
 
-const SITE = (process.env.APP_URL || "https://postgenius.network").replace(/\/$/, "");
+const SITE = (process.env.APP_URL || "https://linkeepost.app").replace(/\/$/, "");
 
 const PAGES = [
   ["/", 1],

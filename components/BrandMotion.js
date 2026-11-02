@@ -360,7 +360,7 @@ function SceneCta({ lt }) {
       <div style={{ marginTop: 48, display: "inline-flex", alignItems: "center", gap: 14, background: C.coral, color: "#fff", fontSize: 40, fontWeight: 700, padding: "26px 60px", borderRadius: 999, boxShadow: "0 28px 60px -18px rgba(255,90,95,.7)", opacity: easeOut(seg(lt, 1.1, 0.5)), transform: `scale(${pulse})` }}>
         {pick("Rejoindre la bêta", "Démarrer gratuitement")} <ChevronRight size={40} />
       </div>
-      <div style={{ marginTop: 30, fontSize: 30, color: C.muted, opacity: easeOut(seg(lt, 1.3, 0.5)) }}>postgenius.network</div>
+      <div style={{ marginTop: 30, fontSize: 30, color: C.muted, opacity: easeOut(seg(lt, 1.3, 0.5)) }}>linkeepost.app</div>
     </div>
   );
 }

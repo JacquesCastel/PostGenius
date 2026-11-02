@@ -92,12 +92,12 @@ Prérequis sur le serveur : Docker + Docker Compose, un domaine pointant vers l'
 1. **Base** : sur Neon, utiliser la branche principale pour la prod. Lancer une fois depuis votre machine :
    `DATABASE_URL="<url neon prod>" npx prisma db push`
 2. **LinkedIn** : dans les deux apps LinkedIn (onglet Auth), ajouter les redirect URIs de prod :
-   `https://postgenius.votredomaine.fr/api/linkedin/callback` et `.../callback-org`
+   `https://linkeepost.app/api/linkedin/callback` et `.../callback-org`
 3. **Serveur** :
    ```bash
    git clone <votre-repo> && cd postgenius
    cp .env.example .env   # remplir avec les valeurs de PROD
-   # APP_URL=https://postgenius.votredomaine.fr, redirect URIs de prod,
+   # APP_URL=https://linkeepost.app, redirect URIs de prod,
    # AUTH_SECRET et TOKEN_ENCRYPTION_KEY générés (openssl rand -hex 32), SMTP réel
    nano Caddyfile          # remplacer par votre domaine
    docker compose up -d --build
