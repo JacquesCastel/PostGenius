@@ -13,7 +13,7 @@ export async function POST(req) {
   if (pre.response) return pre.response;
   const body = await readBody(req);
   const text = typeof body.text === "string" ? body.text.trim() : "";
-  const brief = typeof body.brief === "string" ? body.brief.trim().slice(0, 2500) : "";
+  const brief = typeof body.brief === "string" ? body.brief.trim().slice(0, 6000) : "";
   if (!text) return NextResponse.json({ error: "Aucun texte à vérifier." }, { status: 400 });
   if (text.length > MAX_TEXT_CHARS) return NextResponse.json({ error: `Le texte est trop long pour être vérifié (${MAX_TEXT_CHARS} caractères au maximum).` }, { status: 413 });
   if (!brief) return NextResponse.json({ error: "Le brief d'origine est nécessaire à la vérification." }, { status: 400 });

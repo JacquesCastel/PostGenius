@@ -4,6 +4,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import crypto from "node:crypto";
+import { campaignFacts, campaignItemBrief, CAMPAIGN_FACTS_MAX, ITEM_BRIEF_MAX } from "../lib/advisorCampaign.js";
 import { advisorEnabled, decideAdvisorAccess, ADVISOR_MODES } from "../lib/advisorFlag.js";
 import { needsBriefAnalysis, parseBriefAnalysis, deriveBriefStatus, appendClarifications, briefUserPrompt, BRIEF_SYSTEM, MAX_QUESTIONS, MAX_BRIEF_CHARS } from "../lib/advisorBrief.js";
 import { hashText, locatePassage, idleReview, startReview, failReview, applyVerification, decide, syncWithText, openCount, reviewLabel, loadReview, saveReview, buildSegments, removePassage } from "../lib/advisorReview.js";
@@ -316,7 +317,7 @@ test("compagnon : en tête de la colonne du résultat, puis dans la page d'édit
   assert.ok(page.includes("key={optimizeText.draftId ?? \"post-en-cours\"}"), "une relecture par brouillon");
   assert.ok(page.includes("const focusOptPassage") && page.includes("const applyOptAdvisorText"));
   assert.ok(/applyOptAdvisorText = \(newText\) => \{\s*setVersions\(/.test(page) && !/applyOptAdvisorText[\s\S]{0,400}patchDraft/.test(page), "appliquer ne sauvegarde jamais : version récupérable, enregistrement explicite");
-  assert.equal((page.match(/<ReviewCard/g) ?? []).length, 2, "deux emplacements seulement");
+  assert.equal((page.match(/<ReviewCard/g) ?? []).length, 3, "trois emplacements seulement : résultat, page d'édition d'un brouillon, publication d'une campagne");
 });
 
 // ── 11. Activation par compte (Administration) ─────────────────────────────────────────────────────────────────────────────
@@ -354,4 +355,42 @@ test("activation par compte : serveur d'abord, compte ensuite, Administration r�
   assert.ok(/advisorAccess Boolean @default\(false\)/.test(schema), "colonne ajoutée, fermée par défaut (ajout simple, rien n'est perdu)");
   const page = read("app/app/page.js");
   assert.ok(page.includes("<AdminAdvisorCard") && page.includes("admin-advisor-toggle"), "carte de périmètre et bouton par compte dans l'Administration");
+});
+
+// ── 12. Conseiller dans les campagnes ──────────────────────────────────────────────────────────────────────────────────────
+test("campagnes : le brief de vérification reprend ce que l'auteur a fourni, pas les règles ni les interdits", () => {
+  const brief = { context: "Wharf accompagne des PME industrielles.", audiences: "Directions logistiques", objective: "Générer des rendez-vous", message: "Un indicateur, une définition.", rules: ["Pas d'emoji"], forbidden: ["Ne jamais citer de client"], sources: [{ label: "Site", url: "https://exemple.fr" }] };
+  const facts = campaignFacts(brief, "Précision : le -20 % vient du tableau de bord achats.");
+  assert.ok(facts.includes("Wharf accompagne") && facts.includes("Directions logistiques") && facts.includes("Un indicateur") && facts.includes("tableau de bord achats"));
+  assert.ok(!/emoji|jamais citer|exemple\.fr/i.test(facts), "règles, interdits et liens ne sont pas des faits");
+  const item = { angle: "Deux mesures du même délai", objective: "Faire réfléchir", cta: "Commenter", format: "texte", toConfirm: "Chiffre exact du trimestre", visual: "Schéma", media: "à produire" };
+  const b = campaignItemBrief(item, facts);
+  assert.ok(b.startsWith("Sujet et angle : Deux mesures du même délai"), "la publication d'abord, la campagne ensuite");
+  assert.ok(b.includes("PAS confirmés") && b.includes("Chiffre exact du trimestre"), "les faits à confirmer sont signalés comme non établis");
+  assert.ok(b.includes("Wharf accompagne"));
+  assert.ok(!/Schéma|à produire/.test(b), "brief visuel et statut du média ne sont pas des faits");
+  assert.equal(campaignItemBrief({}, "").length, 0);
+});
+
+test("campagnes : bornes de taille cohérentes avec la route de vérification", () => {
+  const big = "x".repeat(20_000);
+  assert.ok(campaignFacts({ context: big, message: big }, big).length <= CAMPAIGN_FACTS_MAX);
+  const b = campaignItemBrief({ angle: big, objective: big, cta: big, toConfirm: big }, campaignFacts({ context: big }, ""));
+  assert.ok(b.length <= ITEM_BRIEF_MAX + CAMPAIGN_FACTS_MAX + 2);
+  assert.ok(ITEM_BRIEF_MAX + CAMPAIGN_FACTS_MAX + 2 <= 6000, "le tout tient dans la limite de la route (6000)");
+  assert.ok(read("app/api/advisor/verify/route.js").includes(".slice(0, 6000)"));
+});
+
+test("campagnes : carte du compagnon dans le texte d'une publication, derrière le drapeau et sans publication automatique", () => {
+  const page = read("app/app/page.js");
+  const i = page.indexOf("function PlanText(");
+  const body = page.slice(i, page.indexOf("function PlanEditor(", i) > i ? page.indexOf("function PlanEditor(", i) : i + 12000);
+  assert.ok(body.includes("{advisor && !published && ("), "carte masquée si le compagnon est inactif pour ce compte ou si le post est publié");
+  assert.ok(body.includes("campaignItemBrief(it, advisor.facts)") && body.includes("contextId={advisor.contextId || undefined}"));
+  assert.ok(/applyAdvisorText = async \(next\)[\s\S]{0,400}\/text`, \{ method: "PUT"/.test(body), "« Appliquer » n'enregistre que le texte (route texte existante)");
+  const apply = body.slice(body.indexOf("const applyAdvisorText"), body.indexOf("const validate = async"));
+  assert.ok(apply.length > 100 && !/validate|publi|schedul|programm/i.test(apply), "ni validation, ni programmation, ni publication");
+  assert.ok(page.includes("advisor={advisorOn ? { facts: data.campaign.advisorFacts"), "transmis seulement si actif");
+  assert.ok(page.includes("key={`${it.id}:${it.draft.status}`}"), "la carte n'est pas remontée à chaque enregistrement du texte");
+  assert.ok(read("lib/campaignPlanStore.js").includes("advisorFacts: campaignFacts(brief, c.context)"));
 });
