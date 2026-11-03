@@ -4842,6 +4842,84 @@ function AdminEmailLogCard() {
   );
 }
 
+// Envoi manuel d'un e-mail à l'équipe d'un client (ou à une personne) : « Leads à qualifier » calculé sur les vrais leads, ou message libre.
+// Toujours un aperçu avec la liste des destinataires, puis une confirmation : rien ne part sans ces deux étapes.
+function AdminSendMailCard({ showToast }) {
+  const [d, setD] = useState(null);
+  const [template, setTemplate] = useState("leads");
+  const [acct, setAcct] = useState("");
+  const [subject, setSubject] = useState("");
+  const [body, setBody] = useState("");
+  const [preview, setPreview] = useState(null);
+  const [busy, setBusy] = useState(false);
+  useEffect(() => { fetch("/api/admin/emails").then(readJson).then((x) => (x.error ? null : setD(x))).catch(() => {}); }, []);
+  if (!d) return null;
+  // Toute modification du message ou du compte rend l'aperçu caduc
+  const reset = () => setPreview(null);
+  const call = async (action) => {
+    const res = await fetch("/api/admin/emails/send", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action, template, userId: acct, subject, body, ...(action === "send" ? { confirm: true } : {}) }) });
+    const r = await readJson(res);
+    if (!res.ok) throw new Error(r.error || "Erreur");
+    return r;
+  };
+  const doPreview = async () => {
+    setBusy(true);
+    try { setPreview(await call("preview")); } catch (e) { setPreview(null); showToast(e.message); } finally { setBusy(false); }
+  };
+  const doSend = async () => {
+    if (!preview) return;
+    const n = preview.recipients.length;
+    if (!window.confirm(`Envoyer ce message à ${n} destinataire${n > 1 ? "s" : ""} (${preview.recipients.map((r) => r.email).join(", ")}) ?\n\nIl part immédiatement.`)) return;
+    setBusy(true);
+    try {
+      const r = await call("send");
+      showToast(`Message envoyé à ${r.sent} destinataire${r.sent > 1 ? "s" : ""} ✓${r.failed ? ` (${r.failed} échec${r.failed > 1 ? "s" : ""})` : ""}`);
+      setPreview(null);
+    } catch (e) {
+      showToast(e.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+  const field = "w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white";
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5" data-testid="admin-sendmail">
+      <div className="flex items-center justify-between flex-wrap gap-2 mb-1">
+        <p className="text-sm font-semibold">E-mails : envoyer un message à l&apos;équipe d&apos;un client</p>
+        <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${d.smtp ? "bg-green-50 text-green-700" : "bg-amber-50 text-amber-800"}`}>{d.smtp ? "Envoi configuré" : "Envoi non configuré"}</span>
+      </div>
+      <p className="text-xs text-gray-400 mb-3">Ce message part vraiment, à l&apos;équipe de l&apos;agence du client (ou à la personne). Vous voyez d&apos;abord l&apos;aperçu et la liste des destinataires ; ceux qui ont coupé les e-mails ne le reçoivent pas.</p>
+      <div className="flex gap-2 flex-wrap">
+        <select value={template} onChange={(e) => { setTemplate(e.target.value); reset(); }} className={`${field} flex-1 min-w-[14rem]`} data-testid="admin-sendmail-template" aria-label="Modèle de message">
+          <option value="leads">Leads à qualifier (calculé sur les vrais leads)</option>
+          <option value="custom">Message libre</option>
+        </select>
+        <select value={acct} onChange={(e) => { setAcct(e.target.value); reset(); }} className={`${field} flex-1 min-w-[16rem]`} data-testid="admin-sendmail-account" aria-label="Compte">
+          <option value="">Compte : choisir…</option>
+          {d.accounts.map((a) => <option key={a.id} value={a.id}>{a.label}</option>)}
+        </select>
+      </div>
+      {template === "custom" && (
+        <div className="mt-2 space-y-2">
+          <input value={subject} onChange={(e) => { setSubject(e.target.value); reset(); }} maxLength={120} placeholder="Objet du message" className={field} data-testid="admin-sendmail-subject" aria-label="Objet" />
+          <textarea value={body} onChange={(e) => { setBody(e.target.value); reset(); }} maxLength={3000} rows={6} placeholder="Votre message. Une ligne vide sépare deux paragraphes. Le texte est envoyé tel quel (pas de mise en forme)." className={field} data-testid="admin-sendmail-body" aria-label="Message" />
+        </div>
+      )}
+      <div className="mt-3">
+        <button type="button" onClick={doPreview} disabled={busy || !acct || (template === "custom" && (!subject.trim() || !body.trim()))} className="border border-gray-300 hover:border-[#ff5a5f] hover:text-[#ff5a5f] disabled:opacity-40 text-sm font-medium px-4 py-2 rounded-lg" data-testid="admin-sendmail-preview">{busy && !preview ? "Calcul…" : "Voir l'aperçu"}</button>
+      </div>
+      {preview && (
+        <div className="mt-3 rounded-xl border border-gray-200 bg-gray-50 p-4 space-y-2" data-testid="admin-sendmail-result">
+          <p className="text-xs text-gray-500">À : <strong>{preview.recipients.map((r) => r.email).join(", ")}</strong>{preview.skipped ? ` · ${preview.skipped} destinataire${preview.skipped > 1 ? "s" : ""} ignoré${preview.skipped > 1 ? "s" : ""} (e-mails coupés ou compte suspendu)` : ""}</p>
+          <p className="text-sm font-semibold text-gray-800">{preview.subject}</p>
+          <pre className="whitespace-pre-wrap text-xs text-gray-700 font-sans leading-relaxed">{preview.text.split("\n\n").slice(1).join("\n\n")}</pre>
+          <button type="button" onClick={doSend} disabled={busy || !d.smtp} className="bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white text-sm font-semibold px-4 py-2 rounded-lg" data-testid="admin-sendmail-send">{busy ? "Envoi…" : `Envoyer à ${preview.recipients.length} destinataire${preview.recipients.length > 1 ? "s" : ""}`}</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function AdminEmailsCard({ showToast }) {
   const [d, setD] = useState(null);
   const [sel, setSel] = useState("live:quota");
@@ -5075,6 +5153,7 @@ function AdminView({ showToast }) {
       <AdminReportsPreviewCard />
       <AdminEmailLogCard />
       <AdminEmailsCard showToast={showToast} />
+      <AdminSendMailCard showToast={showToast} />
       {quotaUser && <AdminQuotaDialog user={quotaUser} showToast={showToast} onClose={() => setQuotaUser(null)} />}
 
       {/* Totaux plateforme */}
