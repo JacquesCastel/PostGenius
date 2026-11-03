@@ -48,6 +48,13 @@ export async function GET(req) {
     prisma.agencyNotification.findMany({ where: { kind: "page_comment", createdAt: { gte: since } }, select: { createdAt: true }, take: 20000 }),
     prisma.lifecycleEmail.findMany({ where: { key: { startsWith: "page_comment:" }, sentAt: { gte: since } }, select: { sentAt: true }, take: 20000 }), // pages personnelles
   ]);
+  // Leads à qualifier : même principe (cloche et e-mail de l'équipe ; notification et e-mail pour une page personnelle)
+  const [leadRows, ownLeadRows] = await Promise.all([
+    prisma.agencyNotification.findMany({ where: { kind: "new_leads", createdAt: { gte: since } }, select: { createdAt: true }, take: 20000 }),
+    prisma.lifecycleEmail.findMany({ where: { key: { startsWith: "new_leads:" }, sentAt: { gte: since } }, select: { sentAt: true }, take: 20000 }),
+  ]);
+  const leadTimes = [...leadRows.map((r) => r.createdAt), ...ownLeadRows.map((r) => r.sentAt)];
+  const leadNotifs = { n: leadTimes.length, last: leadTimes.reduce((m, t) => (!m || t > m ? t : m), null) };
   const commentTimes = [...commentRows.map((r) => r.createdAt), ...ownCommentRows.map((r) => r.sentAt)];
   const commentNotifs = { n: commentTimes.length, last: commentTimes.reduce((m, t) => (!m || t > m ? t : m), null) };
 
@@ -62,6 +69,7 @@ export async function GET(req) {
     { id: "digest", label: "Récapitulatif de la semaine", when: "Chaque lundi à partir de 8 h (heure du serveur), s'il y a de l'activité", sent: sent.digest?.n ?? 0, last: sent.digest?.last ?? null, eligible: digest, lastRun: run("digest"), run: "digest" },
     { id: "reminders", label: "Relance de validation (clients des agences)", when: "Tous les 3 jours, 3 relances au plus, pour les clients où l'agence l'a activée", sent: remindedLinks, last: null, eligible: reminders, lastRun: run("reminders"), run: "reminders" },
     { id: "comments", label: "Commentaires de page (clients d'agence et pages personnelles)", when: "Toutes les 30 minutes (quota LinkedIn) : nouveaux commentaires et mentions sur une page LinkedIn connectée. Client d'agence : cloche et e-mail de l'équipe ; page personnelle : notification et e-mail. Les auteurs des commentaires alimentent aussi la base de leads. « Lancer maintenant » consomme du quota LinkedIn : à n'utiliser qu'une fois par jour", sent: commentNotifs.n, last: commentNotifs.last, eligible: commentPages, lastRun: run("comments"), run: "comments" },
+    { id: "leads", label: "Leads à qualifier (clients d'agence et pages personnelles)", when: "À chaque passage de lecture des commentaires qui crée de nouveaux leads : le nombre de leads en attente et le délai avant leur effacement (profil 24 h, lead 48 h, règle LinkedIn). Aucune donnée de profil dans le message.", sent: leadNotifs.n, last: leadNotifs.last, eligible: null, lastRun: run("comments"), run: null },
     { id: "reports", label: "Rapport du mois (clients des agences)", when: "Du 1er au 3 du mois, pour les clients où l'agence l'a activé", sent: reportedLinks, last: null, eligible: reports, lastRun: run("reports"), run: "reports" },
   ];
   return NextResponse.json({
