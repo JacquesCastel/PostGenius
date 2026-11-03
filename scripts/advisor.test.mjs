@@ -297,3 +297,24 @@ test("interface : formulation « ajouts du rédacteur », lecture par origine, v
   assert.ok(/checked=\{Boolean\(state\.accepted\[p\.id\]\)\}/.test(src), "chaque proposition se coche ou se décoche");
   assert.ok(src.includes("Appliquer {chosen.length}"), "l'application est un geste explicite avec le nombre de reformulations");
 });
+
+// ── Compagnon éditorial : mise en avant et édition d'un brouillon existant ────────────────────────────────────────────────
+test("compagnon : invitation après génération, repliable sans disparaître, couleur selon l'état", () => {
+  const src = read("components/EditorialAdvisor.js");
+  for (const k of ["Votre compagnon éditorial", "Votre post est prêt. Je le relis avec vous ?", "advisor-invite", "advisor-later", "Plus tard", "advisor-collapsed", "const ACCENT"]) assert.ok(src.includes(k), k);
+  for (const etat of ["idle", "running", "error", "stale", "todo", "finished"]) assert.ok(new RegExp(`${etat}: "border-`).test(src), `couleur pour l'état ${etat}`);
+  assert.ok(src.indexOf('const [dismissed') < src.indexOf('if (review.status === "idle" && dismissed)'), "hooks déclarés avant le retour anticipé");
+  assert.ok(src.indexOf("const [showInterp") < src.indexOf('if (review.status === "idle" && dismissed)'), "aucun hook après le retour anticipé");
+  assert.ok(!/100\s?%\s?fiable|fiabilité garantie|texte (est )?garanti/i.test(src), "toujours aucune promesse de fiabilité");
+});
+test("compagnon : en tête de la colonne du résultat, puis dans la page d'édition d'un brouillon existant, toujours derrière l'interrupteur", () => {
+  const page = read("app/app/page.js");
+  const iCard = page.indexOf("<ReviewCard\n                    key={advisorKey}"), iChat = page.indexOf("<RefineChat\n                    thread={thread}");
+  assert.ok(iCard > 0 && iChat > 0 && iCard < iChat, "le compagnon précède « Améliorer ce post »");
+  assert.ok(page.includes("{advisorOn && optimizeText.text?.trim() && ("), "page d'édition derrière le drapeau");
+  assert.ok(page.includes("drafts.find((d) => d.id === optimizeText.draftId)?.theme"), "le brief du brouillon est celui enregistré");
+  assert.ok(page.includes("key={optimizeText.draftId ?? \"post-en-cours\"}"), "une relecture par brouillon");
+  assert.ok(page.includes("const focusOptPassage") && page.includes("const applyOptAdvisorText"));
+  assert.ok(/applyOptAdvisorText = \(newText\) => \{\s*setVersions\(/.test(page) && !/applyOptAdvisorText[\s\S]{0,400}patchDraft/.test(page), "appliquer ne sauvegarde jamais : version récupérable, enregistrement explicite");
+  assert.equal((page.match(/<ReviewCard/g) ?? []).length, 2, "deux emplacements seulement");
+});
