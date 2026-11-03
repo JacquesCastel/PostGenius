@@ -19200,6 +19200,16 @@ export default function Home() {
   // Édition manuelle dans l'aperçu (recalcule le score en direct, sans enregistrer)
   const editOptimizeText = (newText) => setOptimizeText((o) => ({ ...o, text: newText }));
 
+  // Compagnon éditorial : « Modifier » place le curseur sur le passage ; « Appliquer » remplace le passage (version précédente récupérable ; l'enregistrement du brouillon reste un geste explicite)
+  const focusOptPassage = (quote) => {
+    const el = optAreaRef.current, loc = locatePassage(optimizeText?.text ?? "", quote);
+    if (el && loc) { el.scrollIntoView({ block: "center", behavior: "smooth" }); el.focus(); el.setSelectionRange(loc.start, loc.end); }
+  };
+  const applyOptAdvisorText = (newText) => {
+    setVersions((vs) => [...vs, { id: Date.now(), text: newText, label: "Compagnon éditorial", score: scorePost({ text: newText, type: optimizeText.type }).score }]);
+    editOptimizeText(newText);
+  };
+
   // Enregistre l'édition manuelle courante
   const saveOptimize = () => {
     persistOptimized(optimizeText.text);
@@ -21189,7 +21199,19 @@ export default function Home() {
               {renderYoutubeBlock()}
 
             </div>
-            {/* Droite : module d'optimisation (réservé Pro/Agence) */}
+            {/* Droite : le compagnon éditorial (si activé), puis le module d'optimisation (réservé Pro/Agence) */}
+            <div className="space-y-4 min-w-0">
+            {advisorOn && optimizeText.text?.trim() && (
+              <ReviewCard
+                key={optimizeText.draftId ?? "post-en-cours"}
+                text={optimizeText.text}
+                brief={optimizeText.draftId ? (drafts.find((d) => d.id === optimizeText.draftId)?.theme ?? "") : form.theme}
+                contextId={optimizeText.draftId ? (drafts.find((d) => d.id === optimizeText.draftId)?.contextId || undefined) : (activeContextId || undefined)}
+                intro="Je relis ce post avec vous ?"
+                onEditPassage={focusOptPassage}
+                onApplyText={applyOptAdvisorText}
+              />
+            )}
             {canScore ? (
               <ScorePanel text={optimizeText.text} type={optimizeText.type} recomputing={rewriting} onTips={setScoreTips} />
             ) : (
@@ -21215,6 +21237,7 @@ export default function Home() {
                 </div>
               </div>
             )}
+            </div>
           </div>
           </div>
           {/* Pied de page fixe : toujours visible pendant qu'on lit les conseils et qu'on modifie le post.
@@ -22161,6 +22184,20 @@ export default function Home() {
             {/* Droite : améliorer (conversation), puis le reste replié */}
             {result && (
               <div className="space-y-4">
+                {advisorOn && result?.text && (
+                  <ReviewCard
+                    key={advisorKey}
+                    text={result.text}
+                    brief={form.theme}
+                    contextId={activeContextId || undefined}
+                    sourceIds={chosenSources ?? undefined}
+                    source={activeSource}
+                    disabled={editingResult}
+                    onEditPassage={focusPassage}
+                    onApplyText={applyAdvisorText}
+                  />
+                )}
+
                 {!editingResult && result?.text && (
                   <RefineChat
                     thread={thread}
@@ -22183,20 +22220,6 @@ export default function Home() {
                     }}
                     onRemember={rememberFromChat}
                     onDismiss={(i, j) => setRememberState(i, j, "dismissed")}
-                  />
-                )}
-
-                {advisorOn && result?.text && (
-                  <ReviewCard
-                    key={advisorKey}
-                    text={result.text}
-                    brief={form.theme}
-                    contextId={activeContextId || undefined}
-                    sourceIds={chosenSources ?? undefined}
-                    source={activeSource}
-                    disabled={editingResult}
-                    onEditPassage={focusPassage}
-                    onApplyText={applyAdvisorText}
                   />
                 )}
 

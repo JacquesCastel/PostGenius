@@ -50,6 +50,7 @@ export function BriefAdvisorCard({ analysis, onSubmit, onGenerateAnyway, onCance
       <div className="flex items-start gap-2.5">
         <AlertCircle size={18} className={`${blocked ? "text-amber-600" : "text-[#ff5a5f]"} mt-0.5 shrink-0`} aria-hidden="true" />
         <div>
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-[#d63b42]">Votre compagnon éditorial</p>
           <h3 className="text-sm font-bold text-[#1b2a4a]">{blocked ? "Avant d'écrire : une contradiction à clarifier" : "Avant d'écrire : une précision utile"}</h3>
           <p className="text-xs text-[#5a6b85] mt-0.5">
             {blocked
@@ -93,12 +94,21 @@ export function BriefAdvisorCard({ analysis, onSubmit, onGenerateAnyway, onCance
 
 // ── Après la génération : « Vérifier mon post » ────────────────────────────────────────────────────────────────────────────
 const CHIP = {
-  idle: "bg-gray-100 text-gray-600",
+  idle: "bg-[#ff5a5f]/10 text-[#d63b42]",
   running: "bg-blue-50 text-blue-700",
   error: "bg-red-50 text-red-700",
   stale: "bg-amber-50 text-amber-800",
   todo: "bg-amber-50 text-amber-800",
   finished: "bg-emerald-50 text-emerald-700",
+};
+// Le compagnon est un bloc de premier plan : il prend la couleur de son état (invitation, en cours, à examiner, terminé, erreur)
+const ACCENT = {
+  idle: "border-[#ff5a5f]/40 bg-gradient-to-br from-[#fff1f1] via-white to-[#eef4ff] shadow-md",
+  running: "border-blue-200 bg-gradient-to-br from-blue-50 via-white to-white shadow-md",
+  error: "border-red-200 bg-gradient-to-br from-red-50 via-white to-white shadow-md",
+  stale: "border-amber-300 bg-gradient-to-br from-amber-50 via-white to-white shadow-md",
+  todo: "border-amber-300 bg-gradient-to-br from-amber-50 via-white to-white shadow-md",
+  finished: "border-emerald-300 bg-gradient-to-br from-emerald-50 via-white to-white shadow-md",
 };
 const BADGE = { unsupported: "bg-red-50 text-red-700 border-red-100", to_confirm: "bg-amber-50 text-amber-800 border-amber-100" };
 const DECISION_TEXT = {
@@ -237,8 +247,10 @@ function BatchRewrite({ text, alerts, canAct, onApplyText }) {
 }
 
 // text : texte actuel du post ; brief : sujet d'origine (avec précisions) ; disabled : édition en cours ; onEditPassage / onApplyText : gestes explicites sur le texte
-export function ReviewCard({ text, brief, contextId, sourceIds, source, disabled, onEditPassage, onApplyText }) {
+export function ReviewCard({ text, brief, contextId, sourceIds, source, disabled, onEditPassage, onApplyText, intro = "Votre post est prêt. Je le relis avec vous ?" }) {
   const [review, setReview] = useState(() => idleReview());
+  const [dismissed, setDismissed] = useState(false); // « Plus tard » : le compagnon se replie en barre, sans disparaître
+  const [showInterp, setShowInterp] = useState(false);
   const abortRef = useRef(null);
   const storage = () => { try { return window.localStorage; } catch { return null; } };
 
@@ -272,18 +284,38 @@ export function ReviewCard({ text, brief, contextId, sourceIds, source, disabled
   const running = review.status === "running";
   const hasList = (review.status === "done" || review.status === "stale") && review.alerts.length > 0;
   const stale = review.status === "stale";
-  const [showInterp, setShowInterp] = useState(false);
+  if (review.status === "idle" && dismissed) {
+    return (
+      <button type="button" onClick={() => setDismissed(false)} data-testid="advisor-collapsed"
+        className="w-full flex items-center justify-between gap-3 rounded-2xl border-2 border-[#ff5a5f]/40 bg-gradient-to-r from-[#fff1f1] to-[#eef4ff] px-5 py-3.5 text-left hover:border-[#ff5a5f] focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]">
+        <span className="flex items-center gap-2.5">
+          <span className="bg-[#ff5a5f] text-white p-2 rounded-xl shrink-0" aria-hidden="true"><Sparkles size={16} /></span>
+          <span><span className="block font-bold text-sm text-[#1b2a4a]">Votre compagnon éditorial</span><span className="block text-xs text-[#5a6b85]">Relire ce post avec vous : ce qui dépasse votre brief</span></span>
+        </span>
+        <ChevronDown size={18} className="text-[#ff5a5f] shrink-0" aria-hidden="true" />
+      </button>
+    );
+  }
 
   return (
-    <section aria-label="Relecture factuelle indépendante" className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-3" data-testid="advisor-review" data-state={lab.code}>
-      <div className="flex items-center justify-between gap-2 flex-wrap">
-        <h3 className="text-sm font-semibold flex items-center gap-2 text-[#1b2a4a]"><Search size={15} className="text-[#ff5a5f]" aria-hidden="true" /> Relecture factuelle</h3>
-        <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full ${CHIP[lab.code]}`} data-testid="advisor-state">{lab.label}</span>
+    <section aria-label="Relecture factuelle indépendante" className={`rounded-2xl border-2 p-5 space-y-3 ${ACCENT[lab.code] ?? ACCENT.idle}`} data-testid="advisor-review" data-state={lab.code}>
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-center gap-2.5">
+          <span className="bg-[#ff5a5f] text-white p-2 rounded-xl shrink-0" aria-hidden="true"><Sparkles size={16} /></span>
+          <div>
+            <h3 className="font-extrabold text-sm text-[#1b2a4a] leading-tight">Votre compagnon éditorial</h3>
+            <p className="text-[11px] text-[#5a6b85]">Relecture factuelle</p>
+          </div>
+        </div>
+        <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full shrink-0 ${CHIP[lab.code]}`} data-testid="advisor-state">{lab.label}</span>
       </div>
       <div aria-live="polite" className="sr-only">{running ? "Vérification en cours" : lab.label}</div>
 
       {review.status === "idle" && (
-        <p className="text-xs text-[#5a6b85]">Le rédacteur peut ajouter des détails que votre brief ne contient pas. Une relecture indépendante les repère : vous validez, reformulez ou retirez chacun. C'est un avis, pas une preuve : vous décidez.</p>
+        <div className="space-y-1.5">
+          <p className="text-base font-bold text-[#1b2a4a]" data-testid="advisor-invite">{intro}</p>
+          <p className="text-sm text-[#5a6b85]">Le rédacteur peut ajouter des détails que votre brief ne contient pas. Je les repère ; vous validez, reformulez ou retirez chacun. C'est un avis, pas une preuve : vous décidez.</p>
+        </div>
       )}
       {running && (
         <div className="flex items-center gap-2 text-sm text-blue-700" role="status"><RefreshCw size={15} className="animate-spin" aria-hidden="true" /> Relecture en cours, une dizaine de secondes…
@@ -322,10 +354,19 @@ export function ReviewCard({ text, brief, contextId, sourceIds, source, disabled
         </div>
       )}
 
-      {!running && (
+      {!running && review.status === "idle" && (
+        <div className="flex flex-col sm:flex-row gap-2">
+          <button type="button" onClick={verify} disabled={disabled || !text?.trim()} data-testid="advisor-verify"
+            className="flex-1 text-sm font-semibold px-4 py-3 rounded-xl flex items-center justify-center gap-2 min-h-[48px] bg-[#ff5a5f] hover:bg-[#f63d44] text-white shadow-sm disabled:opacity-40 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#ff5a5f]">
+            <Search size={16} aria-hidden="true" /> Vérifier mon post
+          </button>
+          <button type="button" onClick={() => setDismissed(true)} data-testid="advisor-later" className="text-sm text-gray-600 hover:bg-white px-4 py-3 rounded-xl min-h-[48px]">Plus tard</button>
+        </div>
+      )}
+      {!running && review.status !== "idle" && (
         <button type="button" onClick={verify} disabled={disabled || !text?.trim()} data-testid="advisor-verify"
-          className={`w-full text-sm font-medium px-4 py-2.5 rounded-lg flex items-center justify-center gap-2 min-h-[44px] disabled:opacity-40 ${review.status === "idle" || review.status === "error" || stale ? "bg-[#1b2a4a] hover:bg-[#2a3d66] text-white" : "border border-gray-300 text-gray-700 hover:bg-gray-50"}`}>
-          <Search size={15} aria-hidden="true" /> {review.status === "idle" ? "Vérifier mon post" : review.status === "error" ? "Réessayer la vérification" : stale ? "Vérifier à nouveau" : "Revérifier"}
+          className={`w-full text-sm font-medium px-4 py-2.5 rounded-lg flex items-center justify-center gap-2 min-h-[44px] disabled:opacity-40 ${review.status === "error" || stale ? "bg-[#1b2a4a] hover:bg-[#2a3d66] text-white" : "border border-gray-300 bg-white text-gray-700 hover:bg-gray-50"}`}>
+          <Search size={15} aria-hidden="true" /> {review.status === "error" ? "Réessayer la vérification" : stale ? "Vérifier à nouveau" : "Revérifier"}
         </button>
       )}
       {disabled && <p className="text-[11px] text-gray-400">Validez ou annulez votre modification pour lancer la vérification.</p>}
