@@ -1,0 +1,98 @@
+{
+  "_note": "Premier relevé de l'assistant qui prépare le dossier, à confirmer ou infirmer par la relecture humaine. Il ne sert pas de notation.",
+  "sections": [
+    {
+      "id": "s1",
+      "title": "1. AXIOME / transformation : pourquoi B perd en qualité",
+      "question": "A (96/100) relie l'outil de planification aux besoins transmis aux fournisseurs. B (86/100) le ramène à « on a acheté une solution avant d'avoir défini le problème ». Que perd-on exactement, et est-ce dû à la règle factuelle ?",
+      "cases": ["transformation|axiome"]
+    },
+    {
+      "id": "s2",
+      "title": "2. Industrie : les inventions qui persistent dans les quatre versions",
+      "question": "Les 12 textes sont jugés bloquants. Quelles affirmations précises dépassent le brief, et lesquelles sont en réalité des lectures permises du brief (« une entreprise industrielle identifie… ») ?",
+      "cases": ["industrie|wharf", "industrie|aster", "industrie|axiome"]
+    },
+    {
+      "id": "s3",
+      "title": "3. Contradiction : détection, interprétation, décision de non-publication",
+      "question": "Pour chaque texte et sa réponse complète : le problème est-il détecté ? Une explication est-elle proposée, légitime ou inventée ? Y a-t-il une vraie décision de ne pas publier en l'état ?",
+      "cases": ["contradictoire|wharf", "contradictoire|aster", "contradictoire|axiome"]
+    },
+    {
+      "id": "s4",
+      "title": "4. ASTER / réglementaire : les « connaissances générales »",
+      "question": "Le brief ne nomme pas le règlement ni ses obligations. Quels éléments viennent de connaissances générales fiables, lesquels dépassent le brief ? Attention : le règlement s'applique en réalité depuis le 12 août 2026, alors que le brief le dit « en cours d'adoption ».",
+      "cases": ["reglementaire|aster"]
+    },
+    {
+      "id": "s5",
+      "title": "5. ASTER / RH : l'amélioration factuelle abîme-t-elle la qualité éditoriale ?",
+      "question": "B et D+ sont jugés plus rigoureux que A et D. Sont-ils aussi bons en angle et en fidélité à ASTER, ou deviennent-ils prudents et génériques ?",
+      "cases": ["rh|aster"]
+    }
+  ],
+  "readings": {
+    "transformation|axiome": [
+      "A : le raisonnement est original et reste interprétatif. Le lien « outil de planification → besoins transmis aux fournisseurs → les achats doivent être associés » est la valeur du texte. Un seul point factuel discutable : « C'est une situation saine » (jugement) et « ce qu'on observe dans beaucoup d'entreprises ».",
+      "B : ce lien disparaît. Le texte devient « le déploiement a peut-être précédé la réflexion sur le besoin » et « c'est souvent le signe qu'on a acheté une solution avant d'avoir défini le problème ». C'est une hypothèse, marquée par « peut-être », mais « souvent le signe » reste une généralisation non étayée.",
+      "B : le champ advisory ne signale aucun manque de fait (résultats de l'atelier pilote, raison de la demande de formation). Il pose des questions sur la signature et le secteur : l'avertissement porte sur de la forme.",
+      "D : « Nous avons lancé… Pourquoi cette prudence ? » attribue une intention (prudence voulue) et « elles avaient raison » juge les équipes : inventions d'intention.",
+      "D+ : proche de B par la structure, plus fidèle aux faits (« peut-être que non »), mais l'angle achats est plus mince."
+    ],
+    "industrie|wharf": [
+      "Brief : « une entreprise industrielle identifie… une discussion entre les deux bureaux d'études permet de proposer une simplification… aucun gain connu ».",
+      "A : « un bureau d'études repère » (acteur), « personne ne l'avait encore formulé » (invention), « ce moment n'existait pas dans un rapport ni un appel d'offres » (invention).",
+      "B : « un industriel repère » correspond au brief ; « ils constatent ensemble qu'elle ne semble pas indispensable » est une légère reformulation. Je ne vois pas d'invention évidente. L'accroche « coûte autant qu'une tolérance nécessaire » est logiquement confuse (choix de formulation, pas un fait). B pourrait avoir été jugé trop sévèrement.",
+      "D : « Elle ne l'était pas » (certitude), « ils interrogent l'origine de cette exigence » et « le processus de fabrication devient moins contraignant » (résultat) sont inventés.",
+      "D+ : « présente depuis longtemps, sans que personne ne l'ait questionnée » (invention) ; « la réponse n'était pas évidente » (invention)."
+    ],
+    "industrie|aster": [
+      "A : « nous avons relevé… nous l'avons remontée » (l'auteur devient l'acteur) ; « héritée d'une version précédente » (origine inventée) ; « nous essayons de le systématiser dès le chiffrage » (pratique, plausible d'après le profil).",
+      "B : « nous avons identifié… soumis… examiné » (même passage à la première personne) et surtout « simplification… proposée — et retenue » : la décision d'adopter n'est pas dans le brief.",
+      "D : « la tolérance est ajustée, la fonction préservée » (résultat affirmé comme acquis), « on ne modifie rien sans accord » (pratique).",
+      "D+ : « nous avons identifié… » mais précise « pas d'accord signé, pas de gain annoncé » : une inférence de plus que le brief, sans le contredire ; « Pas d'accord signé » est une absence affirmée.",
+      "Piste : le brief ne dit pas qui, de l'auteur ou du client, a repéré la tolérance ; chaque version attribue ce rôle à l'auteur."
+    ],
+    "industrie|axiome": [
+      "A : « personne ne s'est jamais demandé si elle était nécessaire » (invention), « elle renchérit la pièce » (effet), « ils trouvent des marges que la négociation ne touchera jamais » (généralisation).",
+      "B : « un de nos clients industriels repère… sur une pièce achetée » ajoute des éléments (nos clients, pièce achetée) ; la suite est fidèle (« aucun gain chiffré »).",
+      "D : « elle vient d'un héritage de plan, jamais remis en question » (origine inventée), « la réponse arrive vite » (invention), « le chiffrage est en cours » (invention).",
+      "D+ : « personne ne savait vraiment pourquoi elle était là » (invention) et « une conviction qui se confirme projet après projet » (expérience affirmée sans source)."
+    ],
+    "contradictoire|wharf": [
+      "Brief : « −20 % de délais ce trimestre. Le directeur logistique dit que les délais n'ont pas évolué depuis un an. » Aucune cause connue. Conseiller attendu : demander quelle mesure est exacte avant tout post.",
+      "A : traite le −20 % comme un résultat réel (« Réduire ses délais de 20 % sans que personne ne le sache ») : choisit une version sans le dire. Aucun signal.",
+      "B : met la contradiction au centre (« Sauf que non ») et dit que l'entreprise ne sait pas ce qu'elle a mesuré. Hypothèse légitime : « aucune des deux n'est forcément fausse ». Invention : « un problème que nous rencontrons souvent ». advisory : demande si le cas est réel, pas quel indicateur vérifier.",
+      "D : « Ils ont raison tous les deux. Le premier mesure depuis l'entrepôt, le second depuis la commande » : explication inventée présentée comme un fait.",
+      "D+ : « Les deux ne peuvent pas avoir raison en même temps. Qu'a-t-on mesuré ? » est la meilleure détection ; mais plus loin « un problème que nous rencontrons souvent » est inventé."
+    ],
+    "contradictoire|aster": [
+      "A : concilie par une histoire inventée (« les délais de production n'avaient pas bougé ; ce qui a changé, c'est en amont… ») et attribue le gain à l'activité d'ASTER.",
+      "B : « elles mesurent peut-être des choses différentes » est une hypothèse légitime ; « on ne l'a pas résolu… on l'a pris comme un signal » invente une action interne. Le hook affirme les deux chiffres en « nos délais ont baissé de 20 % ». L'advisory demande la source du chiffre : utile.",
+      "D : supprime le −20 % et affirme « nos délais sont stables depuis un an » : choisit un camp en silence. (Dans sa note finale, D explique avoir écarté le chiffre : avis éditorial utile, non conservé dans le post.)",
+      "D+ : « Laquelle est vraie ? On ne sait pas encore. Peut-être que les deux mesurent des choses différentes. Peut-être que l'une est fausse » est la formulation la plus honnête ; puis le texte glisse vers le métier d'usineur sans lien."
+    ],
+    "contradictoire|axiome": [
+      "A : « le chiffre vient des fournisseurs, pas de la logistique » (invention) et une cause détaillée (« le besoin avait été redéfini en amont… ») : fausse conciliation complète.",
+      "B : « les deux peuvent avoir raison », avec hypothèse de périmètre au conditionnel (« n'a peut-être pas encore intégré ») : hypothèse légitime. ATTENTION : l'advisory conclut « reste publiable » alors que la contradiction n'est pas levée : il rassure à tort.",
+      "D : conciliation inventée (« délai contractuel » contre « délai constaté en réception ») et dialogue de client inventé (« Un client nous a partagé cette stat »).",
+      "D+ : « Ni l'un ni l'autre, probablement. Elles ne mesurent pas la même chose » : conclut sans preuve ; plus court, sans promotion du cabinet."
+    ],
+    "reglementaire|aster": [
+      "Brief : règlement européen sur les emballages « en cours d'adoption », date d'application non fixée, détails susceptibles d'évoluer. Le brief ne nomme pas le règlement et ne donne aucune obligation.",
+      "A : nomme « le Règlement Emballages (PPWR) » et énumère « réduction des emballages, exigences de recyclabilité, traçabilité » + « emballages de pièces usinées : conditionnement, calages ». Connaissance générale + extension à l'activité d'ASTER.",
+      "B : nomme « PPWR » et énumère « moins de matière, plus de réutilisabilité, recyclabilité imposée » ; l'advisory signale lui-même que le périmètre pour les emballages industriels est en discussion, mais le texte l'affirme.",
+      "D : n'invente aucune obligation mais ajoute « certains de nos clients commencent déjà à anticiper… ils nous posent des questions » et « un échange de 30 minutes » (inventions).",
+      "D+ : ne nomme pas le texte, n'énumère aucune obligation, reste sur la date non fixée et les détails évolutifs. Le plus fidèle au brief.",
+      "Tension à trancher : en novembre 2026 le règlement s'applique déjà. Un moteur qui « sait » devrait-il corriger le brief ou le signaler dans advisory ?"
+    ],
+    "rh|aster": [
+      "Brief : journée d'intégration pour les nouveaux arrivants ; retours oraux positifs ; effet sur la fidélisation non mesuré.",
+      "A : « une première journée » (« première » est inventé), contenu de la journée inventé (« comprendre nos méthodes, nos exigences… »), mais reconnaît le « trop tôt pour le dire ».",
+      "B : fidèle (retours oraux, effet non mesuré) ; conviction clairement marquée (« ce que nous pensons ») ; « nous prendrons le temps de mesurer » est un engagement non fourni ; « voit les machines, les pièces » est une description légère du contenu.",
+      "D : contenu inventé (« découverte des ateliers, échanges avec les équipes, présentation de nos process qualité »), « les participants ont apprécié le temps qu'on leur a accordé » ; coquille « usimons ».",
+      "D+ : très fidèle (« C'est notre conviction. Pas encore une donnée. ») ; « dans les mois qui viennent » est un engagement non fourni. Plus générique côté ASTER."
+    ]
+  }
+}
