@@ -21,6 +21,9 @@ export async function PATCH(req, { params }) {
     data.disabled = body.disabled;
   }
 
+  // Accès au conseiller éditorial (utile quand l'accès est réservé à certains comptes)
+  if (typeof body.advisorAccess === "boolean") data.advisorAccess = body.advisorAccess;
+
   // Changement de rôle (pas sur son propre compte)
   if (typeof body.role === "string") {
     if (!["user", "admin"].includes(body.role)) {

@@ -43,6 +43,16 @@ Retour d'usage : voir le moteur « énumérer des problèmes » après coup est 
 - **Édition d'un brouillon existant** : dans « Mes posts » → « Modifier et optimiser » (page « Optimiser votre post »), le compagnon est en tête de la colonne de droite. Il utilise le **brief enregistré avec le brouillon** (`theme`) et l'entreprise du brouillon. « Modifier » place le curseur sur le passage dans l'éditeur ; « Appliquer » remplace le texte **dans l'éditeur seulement** et ajoute une version « Compagnon éditorial » à l'historique ; l'enregistrement du brouillon reste le geste explicite « Enregistrer le brouillon » (vérifié : le texte enregistré ne change pas tant qu'on n'enregistre pas). Rouvrir le même texte retrouve la relecture et les décisions (même empreinte, dans le même navigateur).
 - Limites constatées : sur un **sujet thématique**, le vérificateur signale parfois beaucoup de généralisations (5 ajouts sur un post d'opinion) ; sur **mobile**, la carte se place sous l'aperçu (colonne unique) et peut passer inaperçue ; le bouton n'existe toujours pas pour les séries, les variantes ni les campagnes.
 
+## 3 quater. Activation par compte (Administration)
+
+`EDITORIAL_ADVISOR=1` reste l'interrupteur général du serveur : sans lui, personne n'a le conseiller. Au-dessus, l'Administration choisit le périmètre (carte « Compagnon éditorial », réglage stocké dans `SiteContent` sous `advisor-mode`, effet en moins de 10 s) :
+
+- **Tous les comptes** : comportement d'avant, et valeur par défaut tant que rien n'est enregistré (la mise en ligne ne change donc rien pour les utilisateurs) ;
+- **Comptes choisis** : seuls les comptes cochés (bouton « Conseiller » sur chaque ligne de la liste des utilisateurs, champ `User.advisorAccess`, fermé par défaut) et les administrateurs ;
+- **Personne** : coupure sans toucher au serveur.
+
+Le test se fait côté serveur, sur le compte effectif de la session (donc le client observé avec « Voir comme ») : `/api/advisor/status` répond `enabled` pour ce compte, et les quatre routes de calcul répondent 404 aux autres, avant tout calcul ou comptage de limite. Chaque changement de périmètre est inscrit au journal des actions d'administration. Le changement de schéma est un simple ajout de colonne.
+
 ## 4. Parcours utilisateur (vérifié dans l'application)
 1. L'auteur saisit un sujet contradictoire et clique sur « Générer mon post ». La carte « Avant d'écrire : une contradiction à clarifier » s'affiche, avec la citation, une question précise et un champ de réponse déjà actif.
 2. Il répond, clique sur « Ajouter et générer » : le post est écrit à partir du sujet précisé, sans conciliation inventée.

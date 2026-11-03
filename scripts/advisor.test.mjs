@@ -4,7 +4,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import crypto from "node:crypto";
-import { advisorEnabled } from "../lib/advisorFlag.js";
+import { advisorEnabled, decideAdvisorAccess, ADVISOR_MODES } from "../lib/advisorFlag.js";
 import { needsBriefAnalysis, parseBriefAnalysis, deriveBriefStatus, appendClarifications, briefUserPrompt, BRIEF_SYSTEM, MAX_QUESTIONS, MAX_BRIEF_CHARS } from "../lib/advisorBrief.js";
 import { hashText, locatePassage, idleReview, startReview, failReview, applyVerification, decide, syncWithText, openCount, reviewLabel, loadReview, saveReview, buildSegments, removePassage } from "../lib/advisorReview.js";
 import { buildVerifyPrompt, mapVerifierToAlerts, MAX_ALERTS } from "../lib/advisorVerify.js";
@@ -317,4 +317,41 @@ test("compagnon : en tête de la colonne du résultat, puis dans la page d'édit
   assert.ok(page.includes("const focusOptPassage") && page.includes("const applyOptAdvisorText"));
   assert.ok(/applyOptAdvisorText = \(newText\) => \{\s*setVersions\(/.test(page) && !/applyOptAdvisorText[\s\S]{0,400}patchDraft/.test(page), "appliquer ne sauvegarde jamais : version récupérable, enregistrement explicite");
   assert.equal((page.match(/<ReviewCard/g) ?? []).length, 2, "deux emplacements seulement");
+});
+
+// ── 11. Activation par compte (Administration) ─────────────────────────────────────────────────────────────────────────────
+test("activation par compte : décision selon le serveur, le périmètre et le compte", () => {
+  assert.deepEqual(ADVISOR_MODES, ["all", "accounts", "off"]);
+  const d = (o) => decideAdvisorAccess({ envOn: true, mode: "all", userAllowed: false, isAdmin: false, ...o });
+  assert.equal(d({}), true, "tous les comptes : comportement d'avant");
+  assert.equal(d({ mode: "off", userAllowed: true, isAdmin: true }), false, "personne, même coché ou administrateur");
+  assert.equal(d({ mode: "accounts" }), false, "compte non coché");
+  assert.equal(d({ mode: "accounts", userAllowed: true }), true, "compte coché");
+  assert.equal(d({ mode: "accounts", isAdmin: true }), true, "administrateur toujours admis dans ce mode");
+  assert.equal(d({ envOn: false, mode: "all", userAllowed: true, isAdmin: true }), false, "serveur coupé : rien ne rouvre l'accès");
+  assert.equal(d({ mode: "inconnu" }), true, "valeur stockée inconnue : traitée en amont comme « all »");
+});
+
+test("activation par compte : serveur d'abord, compte ensuite, Administration réservée aux admins", () => {
+  const pre = read("lib/advisorRoute.js");
+  assert.ok(pre.indexOf("advisorEnabled()") < pre.indexOf("getEffectiveUserId(req)"));
+  assert.ok(pre.indexOf("getEffectiveUserId(req)") < pre.indexOf("advisorAccessFor(userId)"), "le compte est connu avant le test d'accès");
+  assert.ok(pre.indexOf("advisorAccessFor(userId)") < pre.indexOf("checkAccess(userId)") && pre.indexOf("advisorAccessFor(userId)") < pre.indexOf("rateLimit("), "accès refusé (404) avant toute consommation");
+  const status = read("app/api/advisor/status/route.js");
+  assert.ok(status.includes("advisorAccessFor(userId)") && status.includes("getEffectiveUserId(req)"), "le statut dépend du compte (y compris « Voir comme »)");
+  assert.ok(status.includes("let enabled = false"), "sans compte ou en cas d'erreur : désactivé");
+  const acc = read("lib/advisorAccess.js");
+  assert.ok(acc.includes('return ADVISOR_MODES.includes(v.mode) ? v.mode : "all"'), "sans réglage stocké : tous les comptes");
+  assert.ok(acc.includes("if (!advisorEnabled(env) || !userId) return false"));
+  for (const f of ["app/api/admin/advisor/route.js"]) {
+    const src = read(f);
+    assert.equal((src.match(/requireAdmin\(req\)/g) ?? []).length, 2, "GET et PUT réservés aux administrateurs");
+    assert.ok(src.includes("ADVISOR_MODES.includes(body.mode)"), "mode validé");
+  }
+  const users = read("app/api/admin/users/[id]/route.js");
+  assert.ok(users.includes('typeof body.advisorAccess === "boolean"') && users.includes("requireAdmin(req)"));
+  const schema = read("prisma/schema.prisma");
+  assert.ok(/advisorAccess Boolean @default\(false\)/.test(schema), "colonne ajoutée, fermée par défaut (ajout simple, rien n'est perdu)");
+  const page = read("app/app/page.js");
+  assert.ok(page.includes("<AdminAdvisorCard") && page.includes("admin-advisor-toggle"), "carte de périmètre et bouton par compte dans l'Administration");
 });

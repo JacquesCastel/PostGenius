@@ -52,6 +52,7 @@ model User {
   createdAt DateTime         @default(now())
   role     String  @default("user") // user | admin
   disabled Boolean @default(false) // compte suspendu par un admin
+  advisorAccess Boolean @default(false) // accès au conseiller éditorial quand l'Administration le réserve à certains comptes
   leadIcp  String? // client idéal décrit pour qualifier les leads
   leads    Lead[]  @relation("UserLeads")
   statSnapshots StatSnapshot[]

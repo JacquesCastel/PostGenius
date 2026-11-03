@@ -4455,6 +4455,62 @@ function AdminInvitationsCard({ showToast }) {
 
 // Administration : limites de chaque offre (posts, images, sources) et réglage d'un compte. Valeur vide = valeur d'origine ; « -1 » = illimité.
 // Les prix et les fonctions incluses ne se modifient pas ici : ils sont liés à Stripe et au code.
+// Périmètre du conseiller éditorial : tous les comptes, seulement les comptes cochés dans la liste ci-dessous, ou personne.
+function AdminAdvisorCard({ showToast, onChanged }) {
+  const [d, setD] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const load = () => fetch("/api/admin/advisor").then(readJson).then((x) => (x.error ? null : setD(x))).catch(() => {});
+  useEffect(() => { load(); }, []);
+  if (!d) return null;
+  const OPTIONS = [
+    { id: "all", label: "Tous les comptes", hint: "Le conseiller est proposé à chaque utilisateur." },
+    { id: "accounts", label: "Comptes choisis", hint: "Seuls les comptes cochés « Conseiller » dans la liste des utilisateurs, et les administrateurs, le voient." },
+    { id: "off", label: "Personne", hint: "Le conseiller est coupé partout, sans toucher au serveur." },
+  ];
+  const choose = async (mode) => {
+    if (mode === d.mode || busy) return;
+    setBusy(true);
+    try {
+      const res = await fetch("/api/admin/advisor", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mode }) });
+      const r = await readJson(res);
+      if (!res.ok) throw new Error(r.error || "Erreur");
+      showToast(`Conseiller éditorial : ${OPTIONS.find((o) => o.id === mode).label.toLowerCase()}`);
+      await load();
+      onChanged?.();
+    } catch (e) {
+      showToast(e.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+  const current = OPTIONS.find((o) => o.id === d.mode);
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5" data-testid="admin-advisor">
+      <div className="flex items-center justify-between flex-wrap gap-2 mb-1">
+        <p className="text-sm font-semibold">Compagnon éditorial</p>
+        <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${d.serverOn ? "bg-green-50 text-green-700" : "bg-amber-50 text-amber-800"}`}>{d.serverOn ? "Activé sur le serveur" : "Coupé sur le serveur"}</span>
+      </div>
+      <p className="text-xs text-gray-400 mb-3">
+        {d.serverOn
+          ? "Choisissez qui voit le compagnon éditorial (questions avant la génération, relecture à la demande). Chaque relecture appelle l'IA : réserver l'accès à quelques comptes limite le coût."
+          : "L'interrupteur du serveur (EDITORIAL_ADVISOR=1) est absent : personne ne voit le conseiller, quel que soit le choix ci-dessous."}
+      </p>
+      <div className="inline-flex rounded-lg border border-gray-200 overflow-hidden" role="radiogroup" aria-label="Périmètre du compagnon éditorial">
+        {OPTIONS.map((o) => (
+          <button key={o.id} type="button" role="radio" aria-checked={d.mode === o.id} disabled={busy} onClick={() => choose(o.id)} data-testid={`admin-advisor-${o.id}`}
+            className={`text-xs px-3 py-1.5 border-r border-gray-200 last:border-r-0 ${d.mode === o.id ? "bg-[#ff5a5f] text-white font-semibold" : "bg-white text-gray-600 hover:bg-gray-50"}`}>
+            {o.label}
+          </button>
+        ))}
+      </div>
+      <p className="text-xs text-gray-500 mt-2">
+        {current.hint}
+        {d.mode === "accounts" && <> <strong>{d.allowed}</strong> compte{d.allowed > 1 ? "s" : ""} coché{d.allowed > 1 ? "s" : ""}.</>}
+      </p>
+    </div>
+  );
+}
+
 function AdminPlansCard({ showToast }) {
   const [plans, setPlans] = useState(null);
   const [forms, setForms] = useState({});
@@ -4855,6 +4911,22 @@ function AdminView({ showToast }) {
     }
   };
 
+  const setAdvisorAccess = async (u, advisorAccess) => {
+    try {
+      const res = await fetch(`/api/admin/users/${u.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ advisorAccess }),
+      });
+      const d = await readJson(res);
+      if (!res.ok) throw new Error(d.error);
+      showToast(advisorAccess ? `Compagnon éditorial ouvert à ${u.email}` : `Compagnon éditorial retiré à ${u.email}`);
+      load();
+    } catch (e) {
+      showToast(e.message);
+    }
+  };
+
   const extend = async (u, days) => {
     try {
       const res = await fetch(`/api/admin/users/${u.id}`, {
@@ -4959,6 +5031,7 @@ function AdminView({ showToast }) {
       <AdminFunnelCard />
       <AdminInvitationsCard showToast={showToast} />
       <AdminPlansCard showToast={showToast} />
+      <AdminAdvisorCard showToast={showToast} onChanged={load} />
       <AdminAutomationCard showToast={showToast} />
       <AdminReportsPreviewCard />
       <AdminEmailLogCard />
@@ -5133,6 +5206,21 @@ function AdminView({ showToast }) {
                         title="Limites de ce compte"
                       >
                         <Gauge size={11} /> Quotas
+                      </button>
+                      <button
+                        onClick={() => setAdvisorAccess(u, !u.advisorAccess)}
+                        data-testid="admin-advisor-toggle"
+                        aria-pressed={Boolean(u.advisorAccess)}
+                        className={`text-[11px] border px-2 py-1 rounded-lg inline-flex items-center gap-1 ${
+                          u.advisorAccess ? "border-[#ff5a5f] bg-[#fff1f1] text-[#d63d44]" : "border-gray-300 text-gray-600 hover:bg-gray-50"
+                        } ${data.advisorMode === "accounts" ? "" : "opacity-60"}`}
+                        title={
+                          data.advisorMode === "accounts"
+                            ? "Ouvrir ou retirer le compagnon éditorial pour ce compte"
+                            : "Sans effet tant que le périmètre n'est pas « Comptes choisis »"
+                        }
+                      >
+                        <Sparkles size={11} /> Conseiller{u.advisorAccess ? " ✓" : ""}
                       </button>
                       <button
                         onClick={() => viewAs(u)}
