@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireAdmin, isAdminUser } from "@/lib/admin";
 import { estimateCost } from "@/lib/usage";
+import { getAdvisorMode } from "@/lib/advisorAccess";
 
 // Vue d'ensemble super admin : comptes + consommation IA (30 derniers jours)
 
@@ -20,6 +21,7 @@ export async function GET(req) {
         name: true,
         role: true,
         disabled: true,
+        advisorAccess: true,
         plan: true,
         trialEndsAt: true,
         subscriptionStatus: true,
@@ -61,6 +63,7 @@ export async function GET(req) {
       name: u.name,
       isAdmin: isAdminUser(u),
       disabled: u.disabled,
+      advisorAccess: u.advisorAccess,
       plan: u.plan,
       trialEndsAt: u.trialEndsAt,
       subscriptionStatus: u.subscriptionStatus,
@@ -115,5 +118,5 @@ export async function GET(req) {
     { users: 0, agencyClients: 0, agencyMembers: 0, published: 0, inputTokens30: 0, outputTokens30: 0, images30: 0, cost30: 0 }
   );
 
-  return NextResponse.json({ totals, users: rows });
+  return NextResponse.json({ totals, users: rows, advisorMode: await getAdvisorMode() });
 }
