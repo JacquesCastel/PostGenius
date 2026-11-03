@@ -1,0 +1,265 @@
+{
+  "_note": "Briefs figés AVANT toute modification du moteur. 'facts' = ce que le brief établit. 'unknown' = ce que le brief ne dit pas et qu'un texte ne doit donc pas affirmer. Le jeu 'val' n'est lancé qu'après le jeu 'explo' et ne sert jamais à régler le moteur.",
+  "explo": [
+    {
+      "id": "explo-industrie",
+      "category": "industrie",
+      "brief": "Dans un projet client, une entreprise industrielle identifie une tolérance de fabrication particulièrement contraignante, qui ne semble pas indispensable à la fonction de la pièce. Une discussion entre les bureaux d'études (celui du client et celui de l'industriel) permet de proposer une simplification technique. Aucun gain financier chiffré n'est connu à ce stade.",
+      "facts": [
+        "Une tolérance de fabrication très contraignante a été identifiée",
+        "Elle ne semble pas indispensable à la fonction de la pièce",
+        "Une discussion entre les deux bureaux d'études a permis de proposer une simplification technique",
+        "Aucun gain chiffré n'est connu"
+      ],
+      "unknown": [
+        "Qui a identifié la tolérance",
+        "Origine de la tolérance",
+        "Durée de l'échange",
+        "Gain financier ou de fabrication",
+        "La simplification est-elle adoptée"
+      ]
+    },
+    {
+      "id": "explo-rh",
+      "category": "rh-marque-employeur",
+      "brief": "Notre entreprise a organisé une journée d'intégration pour ses nouveaux arrivants. Les retours oraux des participants sont positifs. Nous n'avons pas encore mesuré l'effet sur la fidélisation.",
+      "facts": [
+        "Une journée d'intégration a eu lieu pour les nouveaux arrivants",
+        "Les retours oraux sont positifs",
+        "L'effet sur la fidélisation n'est pas mesuré"
+      ],
+      "unknown": [
+        "Nombre de participants",
+        "Contenu du programme",
+        "Citations de participants",
+        "Taux de fidélisation ou de rétention",
+        "Date, durée"
+      ]
+    },
+    {
+      "id": "explo-transformation",
+      "category": "transformation",
+      "brief": "Nous avons commencé à déployer un nouvel outil de planification de la production dans un seul atelier. Le déploiement dans les autres ateliers n'est pas décidé. Les équipes ont demandé davantage de formation.",
+      "facts": [
+        "Un nouvel outil de planification est déployé dans un seul atelier",
+        "Le déploiement ailleurs n'est pas décidé",
+        "Les équipes ont demandé plus de formation"
+      ],
+      "unknown": [
+        "Nom de l'outil",
+        "Gains de productivité ou de délais",
+        "Calendrier",
+        "Nombre d'utilisateurs",
+        "Résistance au changement ou adhésion"
+      ]
+    },
+    {
+      "id": "explo-reglementaire",
+      "category": "technique-reglementaire",
+      "brief": "Une nouvelle réglementation européenne sur les emballages est en cours d'adoption. Sa date d'application n'est pas définitivement fixée et certains détails techniques peuvent encore évoluer.",
+      "facts": [
+        "Une réglementation européenne sur les emballages est en cours d'adoption",
+        "La date d'application n'est pas fixée définitivement",
+        "Des détails techniques peuvent évoluer"
+      ],
+      "unknown": [
+        "Date d'application",
+        "Seuils ou taux chiffrés",
+        "Numéros d'articles",
+        "Sanctions",
+        "Contenu précis des obligations"
+      ],
+      "note": "Scénario fictif daté (le règlement a été adopté depuis) : il teste le respect d’un brief, pas la fiabilité réglementaire actuelle. Jeu de référence conservé tel quel."
+    },
+    {
+      "id": "explo-incomplet",
+      "category": "brief-incomplet",
+      "brief": "Nous avons reçu un prix pour notre démarche de sécurité au travail.",
+      "facts": [
+        "L'entreprise a reçu un prix",
+        "Il concerne sa démarche de sécurité au travail"
+      ],
+      "unknown": [
+        "Nom du prix",
+        "Organisme remettant",
+        "Date",
+        "Critères ou jury",
+        "Contenu de la démarche",
+        "Résultats chiffrés (accidents, taux)"
+      ],
+      "expectedAdvice": "Signaler que le brief est trop mince (quel prix ? quel organisme ? quels résultats ?) et ne pas bâtir de récit sur des faits absents."
+    },
+    {
+      "id": "explo-contradictoire",
+      "category": "brief-contradictoire",
+      "brief": "Nous avons réduit nos délais de livraison de 20 % ce trimestre. Le directeur logistique indique pourtant que les délais n'ont pas évolué depuis un an.",
+      "facts": [
+        "Une affirmation: délais réduits de 20 % ce trimestre",
+        "Une affirmation contraire du directeur logistique: pas d'évolution depuis un an",
+        "Les deux informations sont en contradiction"
+      ],
+      "unknown": [
+        "Laquelle des deux est exacte",
+        "Méthode de mesure",
+        "Cause d'un écart éventuel"
+      ],
+      "expectedAdvice": "Signaler la contradiction et recommander de clarifier ce qui a été mesuré avant toute publication. Ne pas affirmer l’une des deux versions, ni inventer d’explication qui les concilie."
+    }
+  ],
+  "val": [
+    {
+      "id": "val-industrie-2",
+      "category": "industrie",
+      "brief": "Un client nous a demandé une série de pièces avec un traitement de surface différent de celui prévu sur le plan. Nous lui avons proposé une alternative et il l'étudie.",
+      "facts": [
+        "Le client a demandé un traitement de surface différent de celui du plan",
+        "Une alternative a été proposée",
+        "Le client l'étudie"
+      ],
+      "unknown": [
+        "Nature du traitement",
+        "Motif de la demande",
+        "Délais ou coûts",
+        "Décision du client"
+      ]
+    },
+    {
+      "id": "val-industrie-3",
+      "category": "industrie",
+      "brief": "Un atelier a testé un nouveau montage d'usinage sur un prototype. Le test est en cours et les résultats ne sont pas encore connus.",
+      "facts": [
+        "Un nouveau montage d'usinage est testé sur un prototype",
+        "Le test est en cours",
+        "Les résultats ne sont pas connus"
+      ],
+      "unknown": [
+        "Résultats du test",
+        "Gain de temps ou de précision",
+        "Pièce concernée",
+        "Durée du test"
+      ]
+    },
+    {
+      "id": "val-rh",
+      "category": "rh-marque-employeur",
+      "brief": "Nous recrutons des techniciens de maintenance et nous peinons à trouver des profils. Nous envisageons d'ouvrir des stages en immersion, mais rien n'est décidé.",
+      "facts": [
+        "Recrutement de techniciens de maintenance en cours",
+        "Difficulté à trouver des profils",
+        "Des stages en immersion sont envisagés, rien n'est décidé"
+      ],
+      "unknown": [
+        "Nombre de postes",
+        "Durée de la difficulté",
+        "Causes de la pénurie",
+        "Contenu des stages",
+        "Échéance"
+      ]
+    },
+    {
+      "id": "val-corporate",
+      "category": "communication-corporate",
+      "brief": "Notre direction réfléchit à refondre la présentation de l'entreprise sur son site. Aucune décision n'est prise sur le contenu ni sur le calendrier.",
+      "facts": [
+        "La direction réfléchit à refondre la présentation de l'entreprise sur son site",
+        "Aucune décision sur le contenu",
+        "Aucune décision sur le calendrier"
+      ],
+      "unknown": [
+        "Motif de la refonte",
+        "Prestataire",
+        "Budget",
+        "Contenu envisagé",
+        "Date"
+      ]
+    },
+    {
+      "id": "val-transformation",
+      "category": "transformation",
+      "brief": "Le comité de direction a décidé de réorganiser deux services pour rapprocher la production et la maintenance. La mise en œuvre commence le mois prochain et le périmètre exact reste à préciser.",
+      "facts": [
+        "Décision de réorganiser deux services",
+        "Objectif: rapprocher production et maintenance",
+        "Mise en œuvre le mois prochain",
+        "Périmètre exact à préciser"
+      ],
+      "unknown": [
+        "Gains attendus chiffrés",
+        "Noms des services",
+        "Réaction des équipes",
+        "Calendrier détaillé",
+        "Effectifs"
+      ]
+    },
+    {
+      "id": "val-reglementaire",
+      "category": "technique-reglementaire",
+      "brief": "Un nouveau texte sur le devoir de vigilance des entreprises vient d'être publié. Son impact sur nos clients n'a pas encore été analysé.",
+      "facts": [
+        "Un texte sur le devoir de vigilance vient d'être publié",
+        "L'impact sur les clients n'est pas analysé"
+      ],
+      "unknown": [
+        "Contenu précis du texte",
+        "Entreprises concernées",
+        "Dates et sanctions",
+        "Impact sur les clients"
+      ]
+    },
+    {
+      "id": "val-incomplet",
+      "category": "brief-incomplet",
+      "brief": "Nous avons fait une visite chez un client hier.",
+      "facts": [
+        "Une visite chez un client a eu lieu hier"
+      ],
+      "unknown": [
+        "Nom ou secteur du client",
+        "Motif de la visite",
+        "Ce qui s'est dit ou décidé",
+        "Participants"
+      ],
+      "expectedAdvice": "Signaler qu une visite sans objet ni résultat ne suffit pas à fonder un post, et dire ce qu’il faudrait préciser."
+    },
+    {
+      "id": "val-contradictoire",
+      "category": "brief-contradictoire",
+      "brief": "Le dernier audit qualité conclut que le processus de contrôle est conforme. Un opérateur rapporte pourtant avoir relevé plusieurs écarts la semaine dernière.",
+      "facts": [
+        "L'audit conclut à la conformité",
+        "Un opérateur dit avoir relevé plusieurs écarts la semaine dernière",
+        "Les deux informations sont en tension"
+      ],
+      "unknown": [
+        "Nombre ou nature des écarts",
+        "Lequel est exact",
+        "Portée de l'audit",
+        "Suite donnée"
+      ],
+      "expectedAdvice": "Signaler la tension entre l’audit et le témoignage de l’opérateur et recommander de vérifier avant de publier. Ne pas trancher ni inventer de cause."
+    },
+    {
+      "id": "val-reglementaire-date",
+      "category": "technique-reglementaire-date-et-source",
+      "brief": "Le règlement européen sur les emballages et les déchets d’emballages (PPWR, règlement (UE) 2025/40) est entré en vigueur le 11 février 2025, et la plupart de ses obligations s’appliquent depuis le 12 août 2026. Nous n’avons pas encore analysé son effet sur nos clients.",
+      "sources": [
+        "https://environment.ec.europa.eu/topics/waste-and-recycling/packaging-waste_en",
+        "https://www.douane.gouv.fr/en/node/18948"
+      ],
+      "verifiedOn": "2026-11-02",
+      "facts": [
+        "Règlement (UE) 2025/40, dit PPWR",
+        "Entré en vigueur le 11 février 2025",
+        "La plupart des obligations s’appliquent depuis le 12 août 2026",
+        "L’effet sur les clients n’est pas analysé"
+      ],
+      "unknown": [
+        "Obligations précises par article",
+        "Échéances ultérieures (marquage, consigne : les sources divergent)",
+        "Sanctions et montants",
+        "Situation de conformité des clients",
+        "Coût de mise en conformité"
+      ]
+    }
+  ]
+}

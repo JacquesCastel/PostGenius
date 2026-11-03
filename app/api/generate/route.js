@@ -20,7 +20,7 @@ import { cleanPostContext, postContextBlock, audienceLine } from "@/lib/postCont
 import { getContextFor } from "@/lib/contexts";
 import { getMomentFor, momentBlock } from "@/lib/moments";
 import { overlayProfile } from "@/lib/contextOverlay";
-import { writingRulesPrompt, WHY_INSTRUCTION, WHY_JSON_FORMAT, cleanWhy } from "@/lib/linkedinRules";
+import { writingRulesPrompt, WHY_INSTRUCTION, WHY_JSON_FORMAT, cleanWhy, ADVISORY_INSTRUCTION, ADVISORY_JSON_FORMAT, cleanAdvisory, ANALYSIS_INSTRUCTION_B2, ANALYSIS_JSON_FORMAT_B2, ADVISORY_INSTRUCTION_B2, finalizeAdvisoryB2, ANALYSIS_INSTRUCTION_B2B, ANALYSIS_JSON_FORMAT_B2B, AUDIT_INSTRUCTION_B2B, AUDIT_JSON_FORMAT_B2B, ADVISORY_INSTRUCTION_B2B, finalizeAdvisoryB2b } from "@/lib/linkedinRules";
 
 // Génération du post via l'API Claude (Messages API).
 // Le profil de rédaction du client (titre, consignes de style) enrichit le prompt.
@@ -29,6 +29,15 @@ import { writingRulesPrompt, WHY_INSTRUCTION, WHY_JSON_FORMAT, cleanWhy } from "
 const SYSTEM_PROMPT = `Tu es un expert en copywriting LinkedIn francophone.
 Tu rédiges des posts qui maximisent l'engagement en appliquant strictement les règles
 d'écriture LinkedIn fournies dans chaque demande.
+Tu réponds UNIQUEMENT avec un objet JSON valide, sans backticks ni texte autour.`;
+
+// Moteurs expérimentaux : EDITORIAL_ENGINE=B, B2 ou B2b (B2b : B2 condensée, « missing » contraignant, auto-audit du texte écrit, advisory piloté en code) ; absente = moteur A inchangé. B2 = B + rôle de l'auteur, interdits étendus, classement interne et
+// advisory piloté par ce classement. EDITORIAL_DEBUG=1 ajoute le classement à la réponse (mesure uniquement).
+// Moteur B (variable d'environnement EDITORIAL_ENGINE=B, absente = moteur A inchangé) : même rôle, sans viser l'engagement avant la justesse,
+// avec la frontière factuelle (lib/linkedinRules.js) et le champ optionnel « advisory » pour un post simple.
+const SYSTEM_PROMPT_B = `Tu es un expert en communication éditoriale LinkedIn francophone.
+Tu rédiges des posts justes pour la marque qui s'exprime, en appliquant strictement les règles
+d'écriture LinkedIn fournies dans chaque demande, sans jamais inventer les faits qui servent ta démonstration.
 Tu réponds UNIQUEMENT avec un objet JSON valide, sans backticks ni texte autour.`;
 
 // Rappel du format JSON attendu pour "extra", selon le type de post — le carrousel a
@@ -41,7 +50,7 @@ function extraFormat(type) {
   return `{"title": "...", "items": ["..."]}`;
 }
 
-function buildUserPrompt({ type, theme, expertise, tone, maxChars, refine, mode, count, variants, inspiration, language, mood, source, voice, postContext }, profile, remarks = [], knowledge = { picked: [], block: "" }, styleBlock = "") {
+function buildUserPrompt({ type, theme, expertise, tone, maxChars, refine, mode, count, variants, inspiration, language, mood, source, voice, postContext, engineB = false, engineB2 = false, engineB2b = false }, profile, remarks = [], knowledge = { picked: [], block: "" }, styleBlock = "") {
   // Les sources de la base de connaissances sont numérotées [S1]… ; le modèle indique celles qu'il a utilisées
   const srcFmt = knowledge.picked.length ? ', "sources": [numéros des sources [S…] réellement utilisées dans le post, ou une liste vide]' : "";
   let extraSpec = "";
@@ -98,7 +107,7 @@ Contraintes inchangées :
 - Ton : ${tone}
 - Longueur maximale STRICTE : ${maxChars} caractères${profileSpec}${extraSpec}
 
-${writingRulesPrompt(maxChars)}
+${writingRulesPrompt(maxChars, { factBoundary: engineB2b ? "B2b" : engineB2 ? "B2" : engineB })}
 (Ces règles s'appliquent sauf si la consigne ci-dessus demande explicitement le contraire.)
 
 ${WHY_INSTRUCTION}
@@ -126,7 +135,7 @@ Contraintes :
 - Ton : ${tone}
 - Longueur maximale STRICTE par post : ${maxChars} caractères${profileSpec}
 
-${writingRulesPrompt(maxChars)}
+${writingRulesPrompt(maxChars, { factBoundary: engineB2b ? "B2b" : engineB2 ? "B2" : engineB })}
 (Règles à appliquer à chaque post de la série.)
 
 Format de réponse JSON (exactement ${n} posts) :
@@ -151,7 +160,7 @@ Citer la source si pertinent.`;
 - Ton : ${tone}
 - Longueur maximale STRICTE : ${maxChars} caractères${profileSpec}${inspirationSpec}${sourceBlock(source)}${extraSpec}
 
-${writingRulesPrompt(maxChars)}`;
+${writingRulesPrompt(maxChars, { factBoundary: engineB2b ? "B2b" : engineB2 ? "B2" : engineB })}`;
 
   // Variantes : plusieurs propositions d'angles différents
   if (variants && Number(variants) > 1) {
@@ -169,10 +178,10 @@ Format de réponse JSON (exactement ${n} variantes) :
 
   return `${base}
 
-${WHY_INSTRUCTION}
+${WHY_INSTRUCTION}${engineB2b ? `\n\n${ANALYSIS_INSTRUCTION_B2B}\n\n${AUDIT_INSTRUCTION_B2B}\n\n${ADVISORY_INSTRUCTION_B2B}` : engineB2 ? `\n\n${ANALYSIS_INSTRUCTION_B2}\n\n${ADVISORY_INSTRUCTION_B2}` : engineB ? `\n\n${ADVISORY_INSTRUCTION}` : ""}
 
 Format de réponse JSON :
-{"text": "le post complet", "extra": ${extraFormat(type)}, ${WHY_JSON_FORMAT}${srcFmt}}`;
+{${engineB2b ? `${ANALYSIS_JSON_FORMAT_B2B}, ` : engineB2 ? `${ANALYSIS_JSON_FORMAT_B2}, ` : ""}"text": "le post complet", ${engineB2b ? `${AUDIT_JSON_FORMAT_B2B}, ` : ""}"extra": ${extraFormat(type)}, ${WHY_JSON_FORMAT}${engineB ? `, ${ADVISORY_JSON_FORMAT}` : ""}${srcFmt}}`;
 }
 
 export async function POST(req) {
@@ -186,6 +195,9 @@ export async function POST(req) {
 
   const params = await req.json();
   const { expertise } = params;
+  const engineB2b = process.env.EDITORIAL_ENGINE === "B2b";
+  const engineB2 = process.env.EDITORIAL_ENGINE === "B2";
+  const engineB = process.env.EDITORIAL_ENGINE === "B" || engineB2 || engineB2b;
   // Post libre : la matière d'un article ou d'un document peut remplacer la thématique (son titre sert de sujet)
   const source = params.mode === "series" || params.refine?.text ? null : cleanSource(params.source);
   const theme = (typeof params.theme === "string" ? params.theme.trim() : "").slice(0, 1500) || source?.title || "";
@@ -273,8 +285,8 @@ export async function POST(req) {
           // maintenant, ce qui fait disparaître "slides" en silence (JSON invalide, ou le
           // modèle raccourcit pour tenir dans le budget).
           max_tokens: params.mode === "series" || params.variants || params.type === "carrousel" || params.type === "video" ? 8000 : 2048,
-          system: systemPromptFor(SYSTEM_PROMPT, language),
-          messages: [{ role: "user", content: buildUserPrompt({ ...params, theme, source, language, voice, postContext }, profile, remarks, knowledge, styleBlock) }],
+          system: systemPromptFor(engineB ? SYSTEM_PROMPT_B : SYSTEM_PROMPT, language),
+          messages: [{ role: "user", content: buildUserPrompt({ ...params, theme, source, language, voice, postContext, engineB, engineB2, engineB2b }, profile, remarks, knowledge, styleBlock) }],
         }),
       });
 
@@ -325,7 +337,10 @@ export async function POST(req) {
     }
 
     const chat = params.refine?.text ? cleanRefineChat(result, remarks) : null;
-    return NextResponse.json({ text: result.text, extra: params.type === "video" ? normalizeVideoExtra(result.extra) : result.extra ?? null, why: cleanWhy(result.why, result.text), sources: usedSources(result.sources, knowledge.picked), ...(chat ? { reply: chat.reply, remember: chat.remember } : {}) });
+    // Moteur B, post simple uniquement : champ optionnel « advisory » (absent si le modèle ne le renvoie pas ou s'il est invalide)
+    const finalB2 = !params.refine?.text ? (engineB2b ? finalizeAdvisoryB2b(result.advisory, result.analysis, result.audit, result.text) : engineB2 ? finalizeAdvisoryB2(result.advisory, result.analysis) : null) : null;
+    const advisory = finalB2 ? finalB2.advisory : engineB && !params.refine?.text ? cleanAdvisory(result.advisory) : null;
+    return NextResponse.json({ text: result.text, extra: params.type === "video" ? normalizeVideoExtra(result.extra) : result.extra ?? null, why: cleanWhy(result.why, result.text), sources: usedSources(result.sources, knowledge.picked), ...(chat ? { reply: chat.reply, remember: chat.remember } : {}), ...(advisory ? { advisory } : {}), ...(finalB2 && process.env.EDITORIAL_DEBUG === "1" ? { analysis: finalB2.analysis, ...(finalB2.audit ? { audit: finalB2.audit } : {}), guard: finalB2.guard } : {}) });
   } catch (e) {
     console.error("Erreur génération:", e);
     return NextResponse.json({ error: "Échec de la génération. Réessayez." }, { status: 500 });

@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dossier de décision B2</title>
+<style>
+:root{color-scheme:light dark;--bg:#fff;--fg:#1d2330;--mut:#667;--card:#f5f6f8;--line:#d9dce3;--acc:#2a5bd7;--warn:#b4540a}
+@media(prefers-color-scheme:dark){:root{--bg:#161a22;--fg:#e8eaf0;--mut:#9aa3b2;--card:#1f2430;--line:#323948;--acc:#7da2ff;--warn:#f0a35e}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.5 system-ui,sans-serif}
+header{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line);padding:10px 16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+header b{flex:1;min-width:200px}
+nav{display:flex;gap:6px;flex-wrap:wrap}
+nav a{font-size:13px;padding:3px 9px;border:1px solid var(--line);border-radius:14px;color:var(--fg);text-decoration:none;background:var(--card)}
+button{font:inherit;padding:6px 12px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--fg);cursor:pointer}
+button.p{background:var(--acc);border-color:var(--acc);color:#fff}
+main{max-width:1500px;margin:0 auto;padding:16px}
+.defs{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;margin:8px 0 18px}
+.def{background:var(--card);border-radius:10px;padding:10px 12px;font-size:14px}
+.def b{display:block;margin-bottom:2px}
+h2{font-size:20px;margin:34px 0 4px}
+h3{font-size:17px;margin:26px 0 6px;padding-top:10px;border-top:2px solid var(--line)}
+.q{background:var(--card);border-left:4px solid var(--acc);padding:8px 12px;border-radius:6px;margin:6px 0 12px;font-size:15px}
+.ctx{background:var(--card);border-radius:10px;padding:10px 14px;font-size:14px;color:var(--mut)}
+.ctx p{margin:4px 0}
+.ctx b{color:var(--fg)}
+.read{border:1px dashed var(--warn);border-radius:10px;padding:8px 14px;margin:10px 0;font-size:14px}
+.read summary{cursor:pointer;color:var(--warn);font-weight:600}
+.read ul{margin:6px 0 2px;padding-left:20px}
+.cols{display:grid;grid-template-columns:repeat(var(--n,4),minmax(0,1fr));gap:12px;margin-top:12px}
+@media(max-width:1200px){.cols{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.prev{color:var(--warn)}
+@media(max-width:700px){.cols{grid-template-columns:1fr}}
+.col{border:1px solid var(--line);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.col.done{border-color:var(--acc)}
+.vh{font-weight:700;color:var(--acc)}
+.vh small{color:var(--mut);font-weight:400}
+.txt{white-space:pre-wrap;font-size:15px;overflow-wrap:anywhere}
+.det{font-size:12.5px;color:var(--mut)}
+details.d{font-size:13px;color:var(--mut);border-top:1px solid var(--line);padding-top:6px}
+details.d summary{cursor:pointer}
+details.d pre{white-space:pre-wrap;overflow-wrap:anywhere;margin:6px 0;font:12.5px/1.4 ui-monospace,monospace;color:var(--fg)}
+.f{display:flex;flex-direction:column;gap:2px;font-size:13px;color:var(--mut)}
+.row{display:flex;gap:8px}
+.row .f{flex:1}
+select,textarea{font:inherit;font-size:14px;padding:4px 6px;border-radius:6px;border:1px solid var(--line);background:var(--bg);color:var(--fg);width:100%}
+.cats{display:flex;flex-direction:column;gap:3px;font-size:13.5px;color:var(--fg)}
+.cats label{display:flex;gap:6px;align-items:flex-start}
+.sub{margin-top:4px;font-size:12.5px;color:var(--mut)}
+.case-end{margin-top:12px;display:grid;grid-template-columns:1fr 240px;gap:10px}
+@media(max-width:700px){.case-end{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header>
+  <b>Dossier de décision B2 — relecture humaine</b>
+  <span id="prog"></span>
+  <nav id="nav"></nav>
+  <button class="p" id="exp">Exporter mes réponses</button>
+</header>
+<main>
+  <p class="ctx">Les versions sont <b>révélées</b> ici : A = LinkeePost actuel, B = garde-fous factuels et champ <code>advisory</code>, D = Claude direct, D+ = Claude direct avec la même règle factuelle. Les « relevés » en orange sont une première lecture de l'assistant : à confirmer ou contredire. Vos réponses sont enregistrées automatiquement dans ce navigateur ; « Exporter » télécharge <code>dossier-decision-B2-reponses.json</code>. Rien n'est envoyé nulle part.</p>
+  <div class="defs" id="defs"></div>
+  <div id="app"></div>
+</main>
+<script>
+const DATA = __DATA__;
+const KEY = DATA.meta.key;
+let S = {}; try { S = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch {}
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch {} };
+const esc = (s) => String(s ?? "").replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+const LABEL = { A: "A · LinkeePost actuel", B: "B · garde-fous + advisory", B2: "B2 · B + rôle de l'auteur + classement", D: "D · Claude direct", E: "D+ · Claude direct + règle" };
+const CATS = [["invention", "Invention factuelle significative"], ["hypothese", "Hypothèse légitime et identifiée"], ["manque", "Information manquante empêchant la publication"], ["formulation", "Simple choix de formulation"]];
+
+document.getElementById("defs").innerHTML = DATA.defs.map((d) => `<div class="def"><b>${esc(d.t)}</b>${esc(d.d)}</div>`).join("");
+document.getElementById("nav").innerHTML = DATA.sections.map((s) => `<a href="#${s.id}">${esc(s.title.split(" : ")[0].replace(/^\d+\. /, ""))}</a>`).join("");
+
+const sel = (key, field, opts, cur) => `<select data-k="${key}" data-f="${field}"><option value="">—</option>${opts.map(([v, l]) => `<option value="${v}"${String(cur) === String(v) ? " selected" : ""}>${esc(l)}</option>`).join("")}</select>`;
+const n05 = [0, 1, 2, 3, 4, 5].map((n) => [n, n]);
+const n02 = [0, 1, 2].map((n) => [n, n]);
+
+function col(c, t) {
+  const k = `${c.key}|${t.version}`, s = S[k] || {}, ai = t.ai;
+  const resp = [];
+  if (t.advisory) resp.push("advisory : " + JSON.stringify(t.advisory, null, 1));
+  if (t.comments.length) resp.push("Commentaires de l'assistant retirés du post :\n" + t.comments.join("\n— "));
+  if (t.why) resp.push("why : " + JSON.stringify(t.why, null, 1));
+  const contradiction = c.contradiction ? `
+    <div class="sub"><b>Contradiction</b></div>
+    <div class="row"><label class="f">Détection (0-2)${sel(k, "detection", n02, s.detection)}</label>
+    <label class="f">Décision de non-publication${sel(k, "decision", [["oui", "oui, explicite"], ["ambigu", "ambigu"], ["non", "non"]], s.decision)}</label></div>
+    <label class="f">Explication proposée${sel(k, "interpretation", [["aucune", "aucune"], ["hypothese", "hypothèse légitime"], ["inventee", "explication inventée"]], s.interpretation)}</label>` : "";
+  return `<div class="col${done(k, c) ? " done" : ""}" id="c-${k.replace(/\W/g, "_")}">
+    <div class="vh">${LABEL[t.version]} <small>${t.id}</small></div>
+    <div class="txt">${esc(t.text)}</div>
+    <div class="det">${t.details.length ? "Détecteur mécanique : " + esc(t.details.join(" ; ")) : "Détecteur mécanique : rien de suspect."}</div>
+    <details class="d"><summary>Évaluation de l'assistant IA (précédente)</summary><pre>angle ${ai.angle} · fidélité ${ai.fidelite} · raisonnement ${ai.raisonnement} · rigueur ${ai.rigueur} · rédaction ${ai.redaction}\nbloquant : ${ai.bloquant ? "oui" : "non"} · jugement : ${ai.jugement}\n${esc(ai.note)}</pre></details>
+    ${t.prev ? `<details class="d"><summary>Lecture précédente (relecture IA du dossier)</summary><pre class="prev">${esc(t.prev)}</pre></details>` : ""}
+    ${resp.length ? `<details class="d"><summary>Réponse complète autour du post</summary><pre>${esc(resp.join("\n\n"))}</pre></details>` : ""}
+    <div class="row"><label class="f">Angle (0-5)${sel(k, "angle", n05, s.angle)}</label><label class="f">Fidélité marque (0-5)${sel(k, "fidelite", n05, s.fidelite)}</label></div>
+    <div class="cats">${CATS.map(([f, l]) => `<label><input type="checkbox" data-k="${k}" data-f="cat_${f}"${s["cat_" + f] ? " checked" : ""}> ${esc(l)}</label>`).join("")}</div>
+    <label class="f">Passages concernés (citer)<textarea rows="3" data-k="${k}" data-f="passages">${esc(s.passages || "")}</textarea></label>
+    ${contradiction}
+    <label class="f">Recommandation de publication${sel(k, "reco", [["publier", "publier"], ["verifier", "publier après vérification"], ["non", "ne pas publier en l'état"]], s.reco)}</label>
+  </div>`;
+}
+const done = (k, c) => { const s = S[k] || {}; return typeof s.angle !== "undefined" && s.angle !== "" && typeof s.fidelite !== "undefined" && s.fidelite !== "" && s.reco; };
+
+document.getElementById("app").innerHTML = DATA.sections.map((sec) => `<section id="${sec.id}"><h2>${esc(sec.title)}</h2><div class="q">${esc(sec.question)}</div>` + sec.cases.map((c) => {
+  const ck = `case|${c.key}`, cs = S[ck] || {};
+  return `<h3>${esc(c.label)}</h3>
+  <div class="ctx"><p><b>Brief original :</b> ${esc(c.brief)}</p><p><b>Faits établis :</b> ${esc(c.facts.join(" ; "))}</p><p><b>Non établi (ne doit pas être affirmé) :</b> ${esc(c.unknown.join(" ; "))}</p>${c.advice ? `<p><b>Attendu d'un conseiller éditorial :</b> ${esc(c.advice)}</p>` : ""}<p><b>Conviction de la marque :</b> ${esc(c.conviction || "—")}</p></div>
+  <details class="read" open><summary>Relevé de l'assistant (à confirmer)</summary><ul>${c.reading.map((r) => `<li>${esc(r)}</li>`).join("")}</ul></details>
+  <div class="cols" style="--n:${c.texts.length}">${c.texts.map((t) => col(c, t)).join("")}</div>
+  <div class="case-end"><label class="f">Ce que B2 devrait corriger ou protéger ici (une phrase)<textarea rows="2" data-k="${ck}" data-f="b2">${esc(cs.b2 || "")}</textarea></label>
+  <label class="f">Évaluation IA précédente de ce cas${sel(ck, "verdict", [["ok", "confirmée"], ["severe", "trop sévère"], ["indulgente", "trop indulgente"]], cs.verdict)}</label></div>`;
+}).join("") + `</section>`).join("");
+
+function prog() {
+  const all = DATA.sections.flatMap((s) => s.cases.flatMap((c) => c.texts.map((t) => [`${c.key}|${t.version}`, c])));
+  document.getElementById("prog").textContent = all.filter(([k, c]) => done(k, c)).length + " / " + all.length + " textes relus";
+}
+function setVal(k, f, v) { S[k] = S[k] || {}; S[k][f] = v; save(); prog(); const el = document.getElementById("c-" + k.replace(/\W/g, "_")); if (el) { const c = DATA.sections.flatMap((s) => s.cases).find((x) => k.startsWith(x.key + "|")); el.classList.toggle("done", !!done(k, c)); } }
+const app = document.getElementById("app");
+app.addEventListener("change", (e) => { const el = e.target, k = el.dataset.k, f = el.dataset.f; if (!k) return; setVal(k, f, el.type === "checkbox" ? el.checked : el.value); });
+app.addEventListener("input", (e) => { const el = e.target; if (el.tagName === "TEXTAREA" && el.dataset.k) setVal(el.dataset.k, el.dataset.f, el.value); });
+document.getElementById("exp").onclick = () => {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([JSON.stringify({ exporteLe: new Date().toISOString(), reponses: S }, null, 2)], { type: "application/json" }));
+  a.download = DATA.meta.file; a.click();
+};
+prog();
+</script>
+</body>
+</html>

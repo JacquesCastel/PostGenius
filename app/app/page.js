@@ -22,6 +22,9 @@ import { isOrgUrn } from "@/lib/publishVoice";
 import { cleanPostContext } from "@/lib/postContext";
 import { planSheet, sheetAll } from "@/lib/campaignPlan";
 import { parseMentions, findManualTags, insertMention } from "@/lib/mentions";
+import { useAdvisorEnabled, BriefAdvisorCard, ReviewCard, analyzeBriefRequest } from "@/components/EditorialAdvisor";
+import { appendClarifications } from "@/lib/advisorBrief";
+import { locatePassage } from "@/lib/advisorReview";
 import { insertSnippet, SNIPPET_KINDS } from "@/lib/snippets";
 import { POLL_DURATIONS, POLL_QUESTION_MAX, POLL_OPTION_MAX, pollProblem } from "@/lib/postExtras";
 import { aggregateInsights } from "@/lib/knowledgeText";
@@ -19351,6 +19354,12 @@ export default function Home() {
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  // Conseiller éditorial (interrupteur de développement EDITORIAL_ADVISOR=1) : questions avant la rédaction, relecture après
+  const advisorOn = useAdvisorEnabled();
+  const [briefCheck, setBriefCheck] = useState(null); // { analysis } quand le brief appelle une clarification
+  const [briefBusy, setBriefBusy] = useState(false);
+  const [pendingGen, setPendingGen] = useState(false);
+  const [advisorKey, setAdvisorKey] = useState(0); // nouvelle génération = nouvelle relecture
   const [drafts, setDrafts] = useState([]);
   const [copied, setCopied] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -19652,7 +19661,39 @@ export default function Home() {
     setTarget(next[i].target);
   };
 
-  const handleGenerate = async () => {
+  // Conseiller éditorial : « Modifier » ouvre l'édition avec le passage sélectionné ; « Appliquer » remplace le passage (version précédente récupérable)
+  const focusPassage = (quote) => {
+    const t = result?.text ?? "";
+    setResultDraftText(t);
+    setEditingResult(true);
+    setTimeout(() => {
+      const el = resultAreaRef.current, loc = locatePassage(t, quote);
+      if (el && loc) { el.focus(); el.setSelectionRange(loc.start, loc.end); }
+    }, 80);
+  };
+  const applyAdvisorText = (newText) => {
+    setHistory((h) => [...h, result]);
+    setResult((r) => ({ ...r, text: newText }));
+    setEditingResult(false);
+  };
+  // Après des précisions ajoutées au sujet, la génération repart avec le sujet mis à jour (sans reposer les questions)
+  useEffect(() => {
+    if (pendingGen) { setPendingGen(false); handleGenerate({ skipBriefCheck: true }); }
+  }, [pendingGen]);
+
+  const handleGenerate = async (opts) => {
+    if (advisorOn && genMode === "single" && !opts?.skipBriefCheck) {
+      setLoading(true);
+      setError(null);
+      try {
+        const a = await analyzeBriefRequest(form.theme, form.expertise);
+        if (a.status !== "ready") { setBriefCheck({ analysis: a }); setLoading(false); return; }
+      } catch {
+        // l'analyse du brief est facultative : en cas d'erreur, la génération continue comme avant
+      }
+    }
+    setBriefCheck(null);
+    setAdvisorKey((k) => k + 1);
     setLoading(true);
     setError(null);
     setResult(null);
@@ -22145,6 +22186,20 @@ export default function Home() {
                   />
                 )}
 
+                {advisorOn && result?.text && (
+                  <ReviewCard
+                    key={advisorKey}
+                    text={result.text}
+                    brief={form.theme}
+                    contextId={activeContextId || undefined}
+                    sourceIds={chosenSources ?? undefined}
+                    source={activeSource}
+                    disabled={editingResult}
+                    onEditPassage={focusPassage}
+                    onApplyText={applyAdvisorText}
+                  />
+                )}
+
                 {!editingResult && result?.text && canScore && (
                   <button
                     onClick={() => openOptimize(result.text, form?.type)}
@@ -22713,6 +22768,15 @@ export default function Home() {
           </section>
 
           <section className="space-y-4">
+            {advisorOn && briefCheck?.analysis && !result && (
+              <BriefAdvisorCard
+                analysis={briefCheck.analysis}
+                busy={briefBusy || loading}
+                onSubmit={(answers) => { setForm((f) => ({ ...f, theme: appendClarifications(f.theme, answers) })); setBriefCheck(null); setPendingGen(true); }}
+                onGenerateAnyway={() => handleGenerate({ skipBriefCheck: true })}
+                onCancel={() => setBriefCheck(null)}
+              />
+            )}
             {error && (
               <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl p-4 text-sm flex items-start gap-2">
                 <AlertCircle size={16} className="mt-0.5 shrink-0" />
