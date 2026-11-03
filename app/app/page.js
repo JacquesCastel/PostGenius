@@ -23,6 +23,7 @@ import { cleanPostContext } from "@/lib/postContext";
 import { planSheet, sheetAll } from "@/lib/campaignPlan";
 import { parseMentions, findManualTags, insertMention } from "@/lib/mentions";
 import { useAdvisorEnabled, BriefAdvisorCard, ReviewCard, analyzeBriefRequest } from "@/components/EditorialAdvisor";
+import { campaignItemBrief } from "@/lib/advisorCampaign";
 import { appendClarifications } from "@/lib/advisorBrief";
 import { locatePassage } from "@/lib/advisorReview";
 import { insertSnippet, SNIPPET_KINDS } from "@/lib/snippets";
@@ -3092,8 +3093,16 @@ function MentionTool({ draftId, local, text, onInsert, mentions, onMentions, get
 
 // Texte rédigé d'une publication du plan : on clique dedans pour le peaufiner (enregistré en quittant la zone),
 // puis on le valide (programmé à la date proposée). Les publications suivantes tiennent compte de ces retouches.
-function PlanText({ it, base, onReload, showToast, onGoHistory, onOpenMedia }) {
+function PlanText({ it, base, onReload, showToast, onGoHistory, onOpenMedia, advisor }) {
   const [text, setText] = useState(it.draft.text);
+  // Le texte enregistré change (réécriture, retouche enregistrée) : on le reprend, sauf si une modification locale n'est pas encore enregistrée.
+  // (La carte du compagnon n'est ainsi pas remontée à chaque enregistrement : elle garde sa relecture et vos décisions.)
+  const serverText = useRef(it.draft.text);
+  useEffect(() => {
+    if (it.draft.text === serverText.current) return;
+    setText((t) => (t === serverText.current ? it.draft.text : t));
+    serverText.current = it.draft.text;
+  }, [it.draft.text]);
   const [saved, setSaved] = useState(null); // null | "saving" | "ok" | "error"
   const [busy, setBusy] = useState(false);
   const [mentions, setMentions] = useState(() => parseMentions(it.draft.mentions));
@@ -3122,6 +3131,26 @@ function PlanText({ it, base, onReload, showToast, onGoHistory, onOpenMedia }) {
       setSaved("error");
       showToast(e.message);
       return false;
+    }
+  };
+  // Le compagnon éditorial : « Modifier » place le curseur sur le passage ; « Appliquer » écrit dans le texte (geste explicite de l'utilisateur)
+  // et l'enregistre comme toute retouche de cette zone (rien n'est validé ni programmé par là).
+  const focusAdvisorPassage = (quote) => {
+    const el = taRef.current, loc = locatePassage(text, quote);
+    if (el && loc) { el.scrollIntoView({ block: "center", behavior: "smooth" }); el.focus(); el.setSelectionRange(loc.start, loc.end); }
+  };
+  const applyAdvisorText = async (next) => {
+    setText(next);
+    setSaved("saving");
+    try {
+      const res = await fetch(`${base}/${it.id}/text`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text: next }) });
+      const d = await readJson(res);
+      if (!res.ok) throw new Error(d.error || "Erreur");
+      setSaved("ok");
+      await onReload();
+    } catch (e) {
+      setSaved("error");
+      showToast(e.message);
     }
   };
   const validate = async (validated) => {
@@ -3159,6 +3188,15 @@ function PlanText({ it, base, onReload, showToast, onGoHistory, onOpenMedia }) {
         <span data-testid="plan-item-save-state">{saved === "saving" ? "Enregistrement…" : saved === "ok" ? "Modifications enregistrées ✓" : saved === "error" ? "Non enregistré" : dirty ? "Modifié : enregistré en quittant la zone" : it.draft.edited ? "Retouché par vous" : ""}</span>
         <span className="ml-auto">{published ? "Publié" : it.draft.validated ? `Validé · programmé${it.draft.scheduledAt ? ` le ${fmtDateTime(it.draft.scheduledAt)}` : ""}` : it.draft.scheduledAt ? `À valider · proposé le ${fmtDateTime(it.draft.scheduledAt)}` : "À valider · sans date"}</span>
       </div>
+      {advisor && !published && (
+        <ReviewCard
+          text={text}
+          brief={campaignItemBrief(it, advisor.facts)}
+          contextId={advisor.contextId || undefined}
+          onEditPassage={focusAdvisorPassage}
+          onApplyText={applyAdvisorText}
+        />
+      )}
       {!published && <MentionTool draftId={it.draft.id} text={text} onInsert={insertAt} mentions={mentions} onMentions={saveMentions} getCursor={() => taRef.current?.selectionStart} showToast={showToast}
         onMarkPublished={async () => {
           try {
@@ -3200,6 +3238,7 @@ function PlanText({ it, base, onReload, showToast, onGoHistory, onOpenMedia }) {
 // ----------------------------------------------------------------
 function PlanEditor({ campaign, onBack, showToast, onChanged, onGoHistory, onOpenMedia }) {
   const [data, setData] = useState(null);
+  const advisorOn = useAdvisorEnabled();
   const [openId, setOpenId] = useState(null);
   const [busyIds, setBusyIds] = useState([]);
   const [all, setAll] = useState(null); // { done, total } pendant « tout rédiger »
@@ -3412,7 +3451,7 @@ function PlanEditor({ campaign, onBack, showToast, onChanged, onGoHistory, onOpe
                         {it.checks.map((c, k) => (<li key={k} className={`flex gap-1.5 ${c.severity === "error" ? "text-red-700" : "text-amber-700"}`}><span>{c.severity === "error" ? "✖" : "⚠"}</span><span>{c.text}</span></li>))}
                       </ul>
                     )}
-                    {it.draft && <PlanText key={`${it.id}:${it.draft.text}:${it.draft.status}`} it={it} base={base} onReload={load} showToast={showToast} onGoHistory={onGoHistory} onOpenMedia={onOpenMedia} />}
+                    {it.draft && <PlanText key={`${it.id}:${it.draft.status}`} it={it} base={base} onReload={load} showToast={showToast} onGoHistory={onGoHistory} onOpenMedia={onOpenMedia} advisor={advisorOn ? { facts: data.campaign.advisorFacts, contextId: data.campaign.contextId } : null} />}
                     <details open={!it.draft} className="rounded-lg border border-gray-100 px-3 py-2" data-testid="plan-item-params">
                       <summary className="text-[11px] font-medium text-gray-500 cursor-pointer select-none">Paramètres de la publication (objectif, sujet, lien, brief visuel, faits à confirmer)</summary>
                       <div className="space-y-2.5 mt-2.5">

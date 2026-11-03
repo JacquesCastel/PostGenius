@@ -41,7 +41,7 @@ Retour d'usage : voir le moteur « énumérer des problèmes » après coup est 
 ## 3 ter. « Votre compagnon éditorial » : mise en avant et édition d'un brouillon existant
 - **Mise en avant** : la carte porte la couleur de son état (coral pour l'invitation, bleu en cours, ambre pour les points à examiner, vert quand tout est traité, rouge en cas d'erreur) et passe **en tête de la colonne de droite**, avant « Améliorer ce post ». Après la génération, elle invite : « Votre post est prêt. Je le relis avec vous ? », avec un bouton principal « Vérifier mon post » et « Plus tard ». « Plus tard » replie la carte en une barre colorée toujours cliquable ; elle ne disparaît jamais.
 - **Édition d'un brouillon existant** : dans « Mes posts » → « Modifier et optimiser » (page « Optimiser votre post »), le compagnon est en tête de la colonne de droite. Il utilise le **brief enregistré avec le brouillon** (`theme`) et l'entreprise du brouillon. « Modifier » place le curseur sur le passage dans l'éditeur ; « Appliquer » remplace le texte **dans l'éditeur seulement** et ajoute une version « Compagnon éditorial » à l'historique ; l'enregistrement du brouillon reste le geste explicite « Enregistrer le brouillon » (vérifié : le texte enregistré ne change pas tant qu'on n'enregistre pas). Rouvrir le même texte retrouve la relecture et les décisions (même empreinte, dans le même navigateur).
-- Limites constatées : sur un **sujet thématique**, le vérificateur signale parfois beaucoup de généralisations (5 ajouts sur un post d'opinion) ; sur **mobile**, la carte se place sous l'aperçu (colonne unique) et peut passer inaperçue ; le bouton n'existe toujours pas pour les séries, les variantes ni les campagnes.
+- Limites constatées : sur un **sujet thématique**, le vérificateur signale parfois beaucoup de généralisations (5 ajouts sur un post d'opinion) ; sur **mobile**, la carte se place sous l'aperçu (colonne unique) et peut passer inaperçue ; le compagnon n'existe toujours pas pour les séries ni les variantes (les campagnes : voir § 3 quinquies).
 
 ## 3 quater. Activation par compte (Administration)
 
@@ -52,6 +52,16 @@ Retour d'usage : voir le moteur « énumérer des problèmes » après coup est 
 - **Personne** : coupure sans toucher au serveur.
 
 Le test se fait côté serveur, sur le compte effectif de la session (donc le client observé avec « Voir comme ») : `/api/advisor/status` répond `enabled` pour ce compte, et les quatre routes de calcul répondent 404 aux autres, avant tout calcul ou comptage de limite. Chaque changement de périmètre est inscrit au journal des actions d'administration. Le changement de schéma est un simple ajout de colonne.
+
+## 3 quinquies. Campagnes
+
+Le compagnon apparaît aussi sous le texte de chaque publication rédigée d'un plan de campagne (hors publications déjà publiées), derrière les mêmes interrupteurs (serveur, périmètre, compte).
+
+- **Brief d'origine donné au vérificateur** (`lib/advisorCampaign.js`) : sujet, objectif, appel à l'action et format de la publication, puis les faits de la campagne (contexte, publics, objectif, message du brief structuré, précisions enregistrées avec la campagne). Les règles, les interdits, les liens et le brief visuel ne sont pas des faits et ne sont pas transmis. Les « faits à confirmer » de la publication le sont, signalés comme **non confirmés** : le vérificateur ne les tient pas pour établis. La limite du brief de la route de vérification passe de 2 500 à 6 000 caractères.
+- **Marque** : la relecture utilise l'entreprise de la campagne (`contextId`), comme la rédaction.
+- **Appliquer / Retirer / Reformuler** écrivent dans le texte de la publication et l'enregistrent par la route texte existante, comme toute retouche de cette zone (la version générée est conservée). Rien n'est validé, programmé ni publié par ce geste. « Modifier » place le curseur sur le passage.
+- La zone de texte n'est plus remontée à chaque enregistrement (la clé ne contient plus le texte) : la relecture et les décisions survivent à l'enregistrement. Une réécriture de la publication ou un enregistrement venu d'ailleurs sont repris tant qu'aucune modification locale n'est en attente.
+- Limites : la production « par lots » ne déclenche aucune relecture (à la demande uniquement) ; la limite de 30 relectures par heure et par compte s'applique, une campagne longue peut l'atteindre.
 
 ## 4. Parcours utilisateur (vérifié dans l'application)
 1. L'auteur saisit un sujet contradictoire et clique sur « Générer mon post ». La carte « Avant d'écrire : une contradiction à clarifier » s'affiche, avec la citation, une question précise et un champ de réponse déjà actif.
