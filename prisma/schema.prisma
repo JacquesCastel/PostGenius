@@ -408,6 +408,8 @@ model LinkedInAccount {
   personToken     String?
   personSub       String?
   personName      String?
+  personPicture   String?   // URL de la photo de profil (champ « picture » de userinfo, URL signée qui finit par expirer)
+  personPictureAt DateTime? // dernière lecture de la photo : relue au plus une fois par semaine
   personExpiresAt DateTime?
   personScope     String? // permissions accordées par LinkedIn à la dernière connexion (champ « scope » du jeton)
   orgToken        String?

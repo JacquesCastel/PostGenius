@@ -64,6 +64,8 @@ export async function GET(req) {
       personToken: encryptToken(access_token),
       personSub: me.sub,
       personName: me.name ?? null,
+      personPicture: typeof me.picture === "string" && me.picture.startsWith("https://") ? me.picture : null,
+      personPictureAt: new Date(),
       personExpiresAt: expiresAt,
       personScope: scope ?? null,
     };
