@@ -12803,9 +12803,7 @@ function StatsView({ linkedin, orgs, profile, drafts, showToast, onConnect }) {
           <div className="bg-[#fff1f1] border border-[#ffe0e0] rounded-xl p-4 text-sm text-[#1b2a4a] flex items-start gap-2">
             <AlertCircle size={16} className="mt-0.5 shrink-0" />
             <span>
-              Connectez les statistiques de votre profil (menu « Connexions ») pour les voir ici. Cette
-              fonctionnalité dépend d'une approbation de LinkedIn (revue en cours) : l'autorisation
-              peut échouer tant qu'elle n'est pas accordée.
+              Connectez les statistiques de votre profil (menu « Connexions ») pour les voir ici.
             </span>
           </div>
         ) : pLoading ? (
@@ -19805,7 +19803,7 @@ export default function Home() {
       refused: liMsg || "Vous avez refusé l'autorisation LinkedIn",
       org_refused: liMsg ? `Page entreprise refusée : ${liMsg}` : "Autorisation refusée pour la page entreprise",
       stats_refused: liMsg ? `Statistiques refusées : ${liMsg}` : "Autorisation refusée pour les statistiques du profil",
-      stats_pending: "Statistiques du profil personnel en attente d'approbation par LinkedIn — réessayez plus tard.",
+      stats_pending: "LinkedIn n'a pas encore autorisé l'accès aux statistiques du profil personnel — réessayez dans quelques instants.",
       state_mismatch: "Session OAuth expirée — réessayez la connexion",
       target_mismatch: "Le compte géré a changé pendant la connexion : elle a été annulée. Relancez-la depuis le bon client.",
       not_logged_in: "Connectez-vous d'abord à votre compte LinkeePost",
