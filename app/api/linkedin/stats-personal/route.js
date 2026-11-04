@@ -25,7 +25,7 @@ export async function GET(req) {
   if (!snap) {
     const r = await captureProfileStats(userId);
     if (r.snapshot) snap = r.snapshot;
-    else if (r.status === 403) return NextResponse.json({ error: "LinkedIn refuse l'accès aux statistiques (permission r_member_postAnalytics pas encore approuvée — en attente de revue LinkedIn)." }, { status: 403 });
+    else if (r.status === 403) return NextResponse.json({ error: "LinkedIn refuse l'accès aux statistiques (permission r_member_postAnalytics). Reconnectez les statistiques du profil (menu « Connexions »)." }, { status: 403 });
     else if (r.status === 401) return NextResponse.json({ error: "Session LinkedIn expirée — reconnectez les statistiques du profil (menu « Connexions »)." }, { status: 401 });
     else if (r.status === 429) return NextResponse.json({ connected: true, noData: true, quotaLimited: true, aggregate: {}, posts: [] });
     else return NextResponse.json({ error: "Échec de la récupération des statistiques." }, { status: 500 });
