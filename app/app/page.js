@@ -2317,6 +2317,7 @@ function ReviewPostsModal({ posts, linkedinConnected, onValidate, onSaveText, on
                     text={String(post.text ?? "").replace(/@\[([^\]]+)\]\([^)]*\)/g, "@$1")}
                     name={(isOrgUrn(post.target) ? author?.orgs?.find((o) => o.urn === post.target)?.name : null) || author?.name || post.client?.name || "Vous"}
                     headline={isOrgUrn(post.target) ? "" : (author?.headline ?? "")}
+                    photoUrl={isOrgUrn(post.target) ? "" : (author?.picture ?? "")}
                     isPage={isOrgUrn(post.target)}
                     imageUrl={post.imageUrl ?? null}
                   />
@@ -11512,7 +11513,7 @@ function RepurposeView({ profile, linkedin, orgs, canCampaigns, showToast, onGoC
                   {p.editing ? (
                     <textarea rows={9} value={t.text} onChange={(e) => setPosts((l) => l.map((x, k) => (k === i ? { ...x, texts: x.texts.map((y, m) => (m === j ? { ...y, text: e.target.value } : y)) } : x)))} className="w-full border border-[#cbd5e1] rounded-xl px-3 py-2 text-sm" data-testid="repurpose-post-text" />
                   ) : (
-                    <LinkedInPreview text={t.text} name={nameFor(t.target)} headline={isOrgUrn(t.target) ? "" : (profile?.headline ?? "")} isPage={isOrgUrn(t.target)} imageUrl={null} />
+                    <LinkedInPreview text={t.text} name={nameFor(t.target)} headline={isOrgUrn(t.target) ? "" : (profile?.headline ?? "")} isPage={isOrgUrn(t.target)} photoUrl={isOrgUrn(t.target) ? "" : (linkedin?.picture ?? "")} imageUrl={null} />
                   )}
                 </div>
               ))}
@@ -11720,6 +11721,7 @@ function DashToday({ drafts, profile, ns, campaigns, canCampaigns, voiceOk, onGo
                   text={String(d.text ?? "").replace(/@\[([^\]]+)\]\([^)]*\)/g, "@$1")}
                   name={pageName || linkedin?.name || "Vous"}
                   headline={pageName ? "" : (profile?.headline ?? "")}
+                  photoUrl={pageName ? "" : (linkedin?.picture ?? "")}
                   isPage={Boolean(pageName)}
                   imageUrl={d.imageUrl ?? null}
                 />
@@ -19590,7 +19592,7 @@ export default function Home() {
     () => (clientSpace
       ? personalOk
         ? { ...linkedinRaw, clientSpace: false, memberConnected: false, statsConnected: false }
-        : { ...linkedinRaw, clientSpace: true, connected: Boolean(linkedinRaw.orgConnected), name: "", personExpiresAt: null, memberConnected: false, statsConnected: false }
+        : { ...linkedinRaw, clientSpace: true, connected: Boolean(linkedinRaw.orgConnected), name: "", picture: "", personExpiresAt: null, memberConnected: false, statsConnected: false }
       : linkedinRaw),
     [linkedinRaw, clientSpace, personalOk]
   );
@@ -22227,6 +22229,7 @@ export default function Home() {
                         text={optimizeText ? optimizeText.text : result.text}
                         name={isOrgUrn(target) ? (orgs.find((o) => o.urn === target)?.name || profile?.companyName || "Votre page") : (linkedin.name || user?.name || "Vous")}
                         headline={isOrgUrn(target) ? "" : (profile?.headline ?? "")}
+                        photoUrl={isOrgUrn(target) ? "" : (linkedin?.picture ?? "")}
                         isPage={isOrgUrn(target)}
                         imageUrl={postImage?.url ?? null}
                       />
@@ -24036,7 +24039,7 @@ export default function Home() {
             </>
           )}
           {reviewOpen && (
-            <ReviewPostsModal posts={toReview} linkedinConnected={linkedin.connected} onValidate={validateOne} onSaveText={saveDraftText} onClose={() => setReviewOpen(false)} author={{ name: linkedin.name || user?.name, headline: profile?.headline ?? "", orgs }} />
+            <ReviewPostsModal posts={toReview} linkedinConnected={linkedin.connected} onValidate={validateOne} onSaveText={saveDraftText} onClose={() => setReviewOpen(false)} author={{ name: linkedin.name || user?.name, headline: profile?.headline ?? "", picture: linkedin.picture ?? "", orgs }} />
           )}
           {previewPost && (() => {
             const pageName = isOrgUrn(previewPost.target) ? orgs.find((o) => o.urn === previewPost.target)?.name || profile?.companyName || "Votre page" : null;
@@ -24052,6 +24055,7 @@ export default function Home() {
                       text={String(previewPost.text ?? "").replace(/@\[([^\]]+)\]\([^)]*\)/g, "@$1")}
                       name={pageName || linkedin.name || user?.name || "Vous"}
                       headline={pageName ? "" : (profile?.headline ?? "")}
+                      photoUrl={pageName ? "" : (linkedin?.picture ?? "")}
                       isPage={Boolean(pageName)}
                       imageUrl={previewPost.imageUrl ?? null}
                     />

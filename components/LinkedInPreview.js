@@ -27,12 +27,15 @@ function withHashtags(t) {
   return out;
 }
 
-export default function LinkedInPreview({ text = "", name = "Vous", headline = "", isPage = false, imageUrl = null, className = "", startExpanded = false }) {
+export default function LinkedInPreview({ text = "", name = "Vous", headline = "", isPage = false, imageUrl = null, photoUrl = "", className = "", startExpanded = false }) {
   const [device, setDevice] = useState("mobile");
   const [expanded, setExpanded] = useState(startExpanded);
   const clean = String(text ?? "");
   const { shown, cut } = visibleText(clean, LIMIT[device]);
   const initial = (name.trim()[0] || "V").toUpperCase();
+  // Photo du profil (jamais pour une page) ; si LinkedIn ne la sert plus (URL expirée), on retombe sur l'initiale.
+  const [photoFailed, setPhotoFailed] = useState(false);
+  const showPhoto = Boolean(photoUrl) && !isPage && !photoFailed;
   return (
     <div className={className} data-testid="li-preview">
       <div className="flex items-center justify-between mb-2">
@@ -48,7 +51,11 @@ export default function LinkedInPreview({ text = "", name = "Vous", headline = "
       <div className="bg-[#f3f2ef] rounded-xl p-3 flex justify-center">
         <article className={`bg-white rounded-lg border border-[#e0dfdc] shadow-sm w-full ${device === "mobile" ? "max-w-[360px]" : "max-w-[540px]"} text-[#000000e6]`} style={{ fontFamily: "-apple-system, system-ui, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" }}>
           <div className="flex items-start gap-2.5 px-3 pt-3">
-            <span className={`w-12 h-12 shrink-0 flex items-center justify-center text-white font-semibold text-lg ${isPage ? "rounded bg-[#0a66c2]" : "rounded-full bg-gradient-to-br from-orange-400 to-[#ff5a5f]"}`} aria-hidden="true">{initial}</span>
+            {showPhoto ? (
+              <img src={photoUrl} alt="" referrerPolicy="no-referrer" onError={() => setPhotoFailed(true)} className="w-12 h-12 shrink-0 rounded-full object-cover bg-gray-100" data-testid="li-photo" />
+            ) : (
+              <span className={`w-12 h-12 shrink-0 flex items-center justify-center text-white font-semibold text-lg ${isPage ? "rounded bg-[#0a66c2]" : "rounded-full bg-gradient-to-br from-orange-400 to-[#ff5a5f]"}`} aria-hidden="true">{initial}</span>
+            )}
             <div className="min-w-0">
               <p className="text-sm font-semibold leading-tight truncate" data-testid="li-name">{name}</p>
               {headline && <p className="text-xs text-[#00000099] leading-snug line-clamp-2">{headline}</p>}
