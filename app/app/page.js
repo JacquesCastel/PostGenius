@@ -1,6 +1,7 @@
 "use client";
 
 import { pick } from "@/lib/access";
+import { figuresToCheck } from "@/lib/figureCheck";
 import { useState, useEffect, useRef, createContext, useContext, useMemo } from "react";
 import { NotificationBell, AgencyPlanning } from "@/components/AgencyExtras";
 import {
@@ -22467,6 +22468,15 @@ export default function Home() {
                   </button>
                 )}
 
+                {!editingResult && result?.text && (() => {
+                  const figures = figuresToCheck(result.text, result.figureBase);
+                  return figures.length > 0 ? (
+                    <div data-testid="figures-check" className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                      <p className="font-semibold">Chiffres à vérifier avant de publier : {figures.join(", ")}</p>
+                      <p className="text-xs mt-1 leading-snug">Ces chiffres ne figurent pas dans les informations fournies (thématique, profil, sources). S&apos;ils viennent de votre expérience, gardez-les ; sinon retirez-les ou remplacez-les par une formulation qualitative. Un chiffre doit pouvoir être ouvert : si vous ne savez pas d&apos;où il vient, ne le publiez pas.</p>
+                    </div>
+                  ) : null;
+                })()}
                 <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-400 px-1 pt-1">Aller plus loin</p>
                 {!editingResult && result?.why && (
                   <PostWhy text={result.text} why={result.why} onReanalyze={reanalyzeWhy} reanalyzing={reanalyzing} />
