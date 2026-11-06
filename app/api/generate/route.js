@@ -13,6 +13,7 @@ import { normalizeMood, moodInstruction } from "@/lib/moods";
 import { styleExamplesFor } from "@/lib/styleCorpus";
 import { knowledgeFor } from "@/lib/knowledge";
 import { usedSources } from "@/lib/knowledgeText";
+import { numberBase } from "@/lib/figureCheck";
 import { cleanSource, sourceBlock } from "@/lib/generationSource";
 import { REFINE_CHAT_JSON, REFINE_CHAT_INSTRUCTION, historyBlock, cleanRefineChat } from "@/lib/refineChat";
 import { publishVoiceBlock } from "@/lib/publishVoice";
@@ -168,7 +169,7 @@ ${writingRulesPrompt(maxChars, { factBoundary: engineB2b ? "B2b" : engineB2 ? "B
     return `${base}
 
 Propose ${n} VARIANTES distinctes du post : angles d'attaque différents
-(ex : anecdote, chiffre choc, question provocante), même thématique et mêmes contraintes.
+(ex : anecdote, constat, prise de position, question provocante), même thématique et mêmes contraintes. N'utilise un chiffre que s'il figure dans les informations fournies.
 
 ${WHY_INSTRUCTION}
 
@@ -323,6 +324,14 @@ export async function POST(req) {
       }
     }
 
+    // Nombres des informations données à la génération : le navigateur en déduit les chiffres du post absents de ces informations
+    // (contrôle indicatif, voir lib/figureCheck.js). Le texte retouché (refine.text) n'en fait pas partie : un chiffre déjà présent n'est pas validé pour autant.
+    const figureBase = numberBase([
+      theme, expertise, source?.title, source?.text, params.inspiration?.title, params.inspiration?.excerpt,
+      params.refine?.instruction, ...(Array.isArray(params.refine?.history) ? params.refine.history : []),
+      JSON.stringify(params.postContext ?? {}), JSON.stringify(profile ?? {}), JSON.stringify(remarks ?? []), knowledge.block,
+    ]);
+
     // Série de posts
     if (params.mode === "series") {
       if (!Array.isArray(result.posts) || result.posts.length === 0)
@@ -332,7 +341,7 @@ export async function POST(req) {
     // Variantes
     if (params.variants && Array.isArray(result.variants) && result.variants.length > 0) {
       return NextResponse.json({
-        variants: result.variants.map((v) => ({ text: v.text, extra: params.type === "video" ? normalizeVideoExtra(v.extra) : v.extra ?? null, why: cleanWhy(v.why, v.text), sources: usedSources(v.sources, knowledge.picked) })),
+        variants: result.variants.map((v) => ({ text: v.text, extra: params.type === "video" ? normalizeVideoExtra(v.extra) : v.extra ?? null, why: cleanWhy(v.why, v.text), sources: usedSources(v.sources, knowledge.picked), figureBase })),
       });
     }
 
@@ -340,7 +349,7 @@ export async function POST(req) {
     // Moteur B, post simple uniquement : champ optionnel « advisory » (absent si le modèle ne le renvoie pas ou s'il est invalide)
     const finalB2 = !params.refine?.text ? (engineB2b ? finalizeAdvisoryB2b(result.advisory, result.analysis, result.audit, result.text) : engineB2 ? finalizeAdvisoryB2(result.advisory, result.analysis) : null) : null;
     const advisory = finalB2 ? finalB2.advisory : engineB && !params.refine?.text ? cleanAdvisory(result.advisory) : null;
-    return NextResponse.json({ text: result.text, extra: params.type === "video" ? normalizeVideoExtra(result.extra) : result.extra ?? null, why: cleanWhy(result.why, result.text), sources: usedSources(result.sources, knowledge.picked), ...(chat ? { reply: chat.reply, remember: chat.remember } : {}), ...(advisory ? { advisory } : {}), ...(finalB2 && process.env.EDITORIAL_DEBUG === "1" ? { analysis: finalB2.analysis, ...(finalB2.audit ? { audit: finalB2.audit } : {}), guard: finalB2.guard } : {}) });
+    return NextResponse.json({ text: result.text, extra: params.type === "video" ? normalizeVideoExtra(result.extra) : result.extra ?? null, why: cleanWhy(result.why, result.text), sources: usedSources(result.sources, knowledge.picked), figureBase, ...(chat ? { reply: chat.reply, remember: chat.remember } : {}), ...(advisory ? { advisory } : {}), ...(finalB2 && process.env.EDITORIAL_DEBUG === "1" ? { analysis: finalB2.analysis, ...(finalB2.audit ? { audit: finalB2.audit } : {}), guard: finalB2.guard } : {}) });
   } catch (e) {
     console.error("Erreur génération:", e);
     return NextResponse.json({ error: "Échec de la génération. Réessayez." }, { status: 500 });

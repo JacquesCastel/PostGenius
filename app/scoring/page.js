@@ -15,7 +15,7 @@ export const metadata = {
 };
 
 const CRITERIA = [
-  { label: "Accroche", weight: 25, text: "La première ligne, seule visible avant le « voir plus » : elle doit porter à elle seule l'idée du post, pas juste l'annoncer. Une tension (chiffre, question, « : ») peut l'aider à percuter, mais ce n'est jamais une obligation — une ligne courte et claire obtient déjà la meilleure note." },
+  { label: "Accroche", weight: 25, text: "La première ligne, seule visible avant le « voir plus » : elle doit porter à elle seule l'idée du post, pas juste l'annoncer. Une tension (question, « : ») peut l'aider à percuter, mais ce n'est jamais une obligation — une ligne courte et claire obtient déjà la meilleure note." },
   { label: "Longueur & aération", weight: 25, text: "Entre 400 et 1 600 caractères, découpé en courts paragraphes. Un pavé compact décourage la lecture, quelle que soit sa longueur." },
   { label: "Question / interaction", weight: 10, text: "Un bonus, pas une fin imposée : si une question ouverte vient naturellement, elle invite aux commentaires. Un post qui conclut sur sa propre idée fonctionne tout aussi bien." },
   { label: "Hashtags", weight: 10, text: "Aucun minimum : zéro hashtag est un choix tout aussi valable. Au-delà de 5, ça commence à paraître spammy." },
