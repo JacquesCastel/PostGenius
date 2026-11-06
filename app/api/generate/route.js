@@ -260,6 +260,9 @@ export async function POST(req) {
   knowledge.block += momentBlock(moment);
   // Éléments de langage validés pour cette entreprise : transmis avec les connaissances, dans le même bloc de prompt
   knowledge.block += languageBlock(await elementsFor(userId, ctx?.id ?? null));
+  // Informations à partir desquelles un chiffre est « connu » (contrôle des chiffres) : sources, temps fort, éléments de langage validés.
+  // La mémoire éditoriale (posts déjà écrits) n'en fait pas partie : un chiffre déjà publié n'est pas forcément exact.
+  const figureKnowledge = knowledge.block;
   // Mémoire éditoriale : ce que l'auteur a déjà dit (continuité, pas de répétition) ; sans objet pour la retouche d'un post existant
   if (!params.refine?.text) knowledge.block += (await memoryFor(userId, topic, { contextId: ctx?.id ?? null })).block;
   // Exemples de voix : les posts de l'auteur les plus proches du sujet (corpus), sinon ses posts types
@@ -326,10 +329,12 @@ export async function POST(req) {
 
     // Nombres des informations données à la génération : le navigateur en déduit les chiffres du post absents de ces informations
     // (contrôle indicatif, voir lib/figureCheck.js). Le texte retouché (refine.text) n'en fait pas partie : un chiffre déjà présent n'est pas validé pour autant.
+    // Le profil sans ses exemples de posts (anciens textes de l'auteur) : ils ne fournissent pas de chiffres vérifiés.
+    const { styleExamples: _examples, ...profileForFigures } = profile ?? {};
     const figureBase = numberBase([
       theme, expertise, source?.title, source?.text, params.inspiration?.title, params.inspiration?.excerpt,
       params.refine?.instruction, ...(Array.isArray(params.refine?.history) ? params.refine.history : []),
-      JSON.stringify(params.postContext ?? {}), JSON.stringify(profile ?? {}), JSON.stringify(remarks ?? []), knowledge.block,
+      JSON.stringify(params.postContext ?? {}), JSON.stringify(profileForFigures), JSON.stringify(remarks ?? []), figureKnowledge,
     ]);
 
     // Série de posts

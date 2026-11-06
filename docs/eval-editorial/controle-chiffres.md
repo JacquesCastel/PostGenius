@@ -10,7 +10,8 @@ Modifications faites avant un nouveau test du moteur. **Les prompts du moteur A 
 ## Limites connues
 - **Indicatif et numérique seulement.** Il ne voit ni les inventions sans chiffre (ancienneté, durée « depuis longtemps », pratique interne, engagement futur, citation), qui sont la majorité de celles relevées par l'évaluation (`synthese-explo.md`, `synthese-arbitrage-verificateur-IA.md`), ni un chiffre déformé dont la valeur figure ailleurs dans les sources.
 - Les chiffres isolés de moins de deux chiffres sans unité, les années seules, les adresses et les hashtags sont ignorés.
-- La base inclut la mémoire éditoriale et les posts précédents de l'auteur : un chiffre déjà publié est considéré comme connu.
+- **Mise à jour du 6 novembre (après test à l'écran) :** un nombre suivi d'une unité (« 11 mois », « 42 % ») n'est connu que si le même nombre figure avec la même unité dans les informations fournies (« 11 collaborateurs » ne valide pas « 11 mois »). La mémoire éditoriale et les exemples de posts du profil ne comptent plus comme informations fournies : un chiffre déjà publié n'est pas forcément exact. Un serveur plus ancien (clés seules) retombe sur l'ancien comportement.
+- Les informations fournies restent permissives pour un nombre sans unité reconnue (« 11 pièces », « 38 ») : il suffit que le nombre figure quelque part.
 - Pas de mesure de l'effet : à mesurer avec le protocole existant (taux de textes avec chiffre signalé contre chiffres réellement inventés).
 
 ## Non modifié, à décider
