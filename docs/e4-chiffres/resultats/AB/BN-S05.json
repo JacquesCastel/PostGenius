@@ -1,0 +1,78 @@
+{
+  "id": "BN-S05",
+  "provider": "openai",
+  "requestedModel": "gpt-5.5-2026-04-23",
+  "request": {
+    "model": "gpt-5.5-2026-04-23",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Écris un post LinkedIn de 150 à 250 mots sur le sujet suivant : rédiger une annonce de recrutement qui attire les bonnes personnes.\n\nVoici les informations dont tu disposes :\nF1. Auteure : consultante RH indépendante fictive, « Nadia Sorel ».\nF2. Conseil : décrire par écrit les situations concrètes que le poste devra gérer, avant de rédiger l'annonce.\nF3. Erreur fréquente observée par l'auteure : décrire des qualités plutôt que des tâches.\nF4. L'auteure ne dispose d'aucune donnée chiffrée sur le sujet."
+      }
+    ],
+    "max_completion_tokens": 4000
+  },
+  "status": 200,
+  "response": {
+    "id": "chatcmpl-EiLH0scFE7KYZgcqqkDnr98458U4T",
+    "object": "chat.completion",
+    "created": 1794236914,
+    "model": "gpt-5.5-2026-04-23",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "📌 Une bonne annonce de recrutement ne commence pas par une liste de qualités.\n\nElle commence par une question simple :  \n**“Quelles situations concrètes la personne devra-t-elle gérer dans ce poste ?”**\n\nJe vois souvent des annonces qui cherchent une personne “autonome”, “rigoureuse”, “dynamique”, “force de proposition”… Mais ces mots disent finalement peu de choses sur le quotidien réel du poste.\n\nAvant de rédiger, je conseille toujours de poser par écrit quelques scènes très concrètes :\n\n➡️ Quels problèmes devra-t-elle résoudre ?  \n➡️ Avec quels interlocuteurs devra-t-elle collaborer ?  \n➡️ Quelles décisions devra-t-elle prendre seule ?  \n➡️ Quels sujets seront fréquents, urgents, sensibles ou complexes ?  \n➡️ À quoi ressemblera une journée difficile dans ce poste ?\n\nUne annonce attire les bonnes personnes quand elle leur permet de se projeter.\n\nDire “vous êtes organisé” est moins utile que :  \n“Vous coordonnez chaque semaine les demandes de trois équipes, avec des priorités qui peuvent changer rapidement.”\n\nDire “vous avez un bon relationnel” est moins précis que :  \n“Vous échangez avec des clients mécontents et cherchez des solutions acceptables avec l’équipe support.”\n\nLes qualités comptent, bien sûr.  \nMais ce sont les situations décrites qui permettent aux candidats de se reconnaître — ou de s’écarter lucidement.\n\nEt c’est déjà un très bon filtre.\n\n— Nadia Sorel, consultante RH indépendante",
+          "refusal": null,
+          "annotations": []
+        },
+        "finish_reason": "stop"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 136,
+      "completion_tokens": 386,
+      "total_tokens": 522,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "audio_tokens": 0
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 74,
+        "audio_tokens": 0,
+        "accepted_prediction_tokens": 0,
+        "rejected_prediction_tokens": 0
+      }
+    },
+    "service_tier": "default",
+    "system_fingerprint": null
+  },
+  "modelReturned": "gpt-5.5-2026-04-23",
+  "finish": "stop",
+  "usage": {
+    "prompt_tokens": 136,
+    "completion_tokens": 386,
+    "total_tokens": 522,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 74,
+      "audio_tokens": 0,
+      "accepted_prediction_tokens": 0,
+      "rejected_prediction_tokens": 0
+    }
+  },
+  "text": "📌 Une bonne annonce de recrutement ne commence pas par une liste de qualités.\n\nElle commence par une question simple :  \n**“Quelles situations concrètes la personne devra-t-elle gérer dans ce poste ?”**\n\nJe vois souvent des annonces qui cherchent une personne “autonome”, “rigoureuse”, “dynamique”, “force de proposition”… Mais ces mots disent finalement peu de choses sur le quotidien réel du poste.\n\nAvant de rédiger, je conseille toujours de poser par écrit quelques scènes très concrètes :\n\n➡️ Quels problèmes devra-t-elle résoudre ?  \n➡️ Avec quels interlocuteurs devra-t-elle collaborer ?  \n➡️ Quelles décisions devra-t-elle prendre seule ?  \n➡️ Quels sujets seront fréquents, urgents, sensibles ou complexes ?  \n➡️ À quoi ressemblera une journée difficile dans ce poste ?\n\nUne annonce attire les bonnes personnes quand elle leur permet de se projeter.\n\nDire “vous êtes organisé” est moins utile que :  \n“Vous coordonnez chaque semaine les demandes de trois équipes, avec des priorités qui peuvent changer rapidement.”\n\nDire “vous avez un bon relationnel” est moins précis que :  \n“Vous échangez avec des clients mécontents et cherchez des solutions acceptables avec l’équipe support.”\n\nLes qualités comptent, bien sûr.  \nMais ce sont les situations décrites qui permettent aux candidats de se reconnaître — ou de s’écarter lucidement.\n\nEt c’est déjà un très bon filtre.\n\n— Nadia Sorel, consultante RH indépendante",
+  "attempts": [
+    {
+      "n": 1,
+      "startedAt": "2026-11-09T15:08:34.440Z",
+      "status": 200
+    }
+  ],
+  "generatedAt": "2026-11-09T15:08:34.440Z",
+  "sha256": "3daac2460e9a4c41aff915850863499e78fab9190ab84b6b054beed1567991aa"
+}

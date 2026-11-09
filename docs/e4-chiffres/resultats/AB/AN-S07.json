@@ -1,0 +1,78 @@
+{
+  "id": "AN-S07",
+  "provider": "openai",
+  "requestedModel": "gpt-5.5-2026-04-23",
+  "request": {
+    "model": "gpt-5.5-2026-04-23",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Écris un post LinkedIn de 150 à 250 mots sur le sujet suivant : le remplacement d'un four dans une fonderie."
+      }
+    ],
+    "max_completion_tokens": 4000
+  },
+  "status": 200,
+  "response": {
+    "id": "chatcmpl-EiLG3mN3KAzAd8FFUD4QUdZo2cz46",
+    "object": "chat.completion",
+    "created": 1794236855,
+    "model": "gpt-5.5-2026-04-23",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "🔧 **Remplacer un four dans une fonderie : un projet bien plus stratégique qu’il n’y paraît**\n\nDans une fonderie, le four est bien plus qu’un équipement de production : c’est le cœur du process. Son remplacement représente donc un véritable défi technique, humain et organisationnel.\n\nAu-delà du choix de la technologie — rendement énergétique, capacité de fusion, précision de température, compatibilité avec les alliages — la réussite d’un tel projet repose sur une préparation rigoureuse : étude des flux, adaptation des infrastructures, sécurisation des opérations, formation des équipes et planification de l’arrêt de production.\n\nL’objectif est clair : limiter l’impact sur l’activité tout en améliorant durablement la performance industrielle.\n\nUn nouveau four peut apporter des bénéfices majeurs : réduction de la consommation énergétique, meilleure stabilité métallurgique, diminution des émissions, amélioration des conditions de travail et fiabilité accrue. Mais ces gains ne sont possibles que si l’intégration est anticipée dans les moindres détails.\n\nCe type de projet rappelle une chose essentielle : moderniser un outil industriel, ce n’est pas seulement remplacer une machine. C’est repenser une partie du process pour gagner en efficacité, en sécurité et en durabilité.\n\nUn investissement exigeant, mais souvent décisif pour l’avenir d’une fonderie.",
+          "refusal": null,
+          "annotations": []
+        },
+        "finish_reason": "stop"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 35,
+      "completion_tokens": 321,
+      "total_tokens": 356,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "audio_tokens": 0
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 43,
+        "audio_tokens": 0,
+        "accepted_prediction_tokens": 0,
+        "rejected_prediction_tokens": 0
+      }
+    },
+    "service_tier": "default",
+    "system_fingerprint": null
+  },
+  "modelReturned": "gpt-5.5-2026-04-23",
+  "finish": "stop",
+  "usage": {
+    "prompt_tokens": 35,
+    "completion_tokens": 321,
+    "total_tokens": 356,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 43,
+      "audio_tokens": 0,
+      "accepted_prediction_tokens": 0,
+      "rejected_prediction_tokens": 0
+    }
+  },
+  "text": "🔧 **Remplacer un four dans une fonderie : un projet bien plus stratégique qu’il n’y paraît**\n\nDans une fonderie, le four est bien plus qu’un équipement de production : c’est le cœur du process. Son remplacement représente donc un véritable défi technique, humain et organisationnel.\n\nAu-delà du choix de la technologie — rendement énergétique, capacité de fusion, précision de température, compatibilité avec les alliages — la réussite d’un tel projet repose sur une préparation rigoureuse : étude des flux, adaptation des infrastructures, sécurisation des opérations, formation des équipes et planification de l’arrêt de production.\n\nL’objectif est clair : limiter l’impact sur l’activité tout en améliorant durablement la performance industrielle.\n\nUn nouveau four peut apporter des bénéfices majeurs : réduction de la consommation énergétique, meilleure stabilité métallurgique, diminution des émissions, amélioration des conditions de travail et fiabilité accrue. Mais ces gains ne sont possibles que si l’intégration est anticipée dans les moindres détails.\n\nCe type de projet rappelle une chose essentielle : moderniser un outil industriel, ce n’est pas seulement remplacer une machine. C’est repenser une partie du process pour gagner en efficacité, en sécurité et en durabilité.\n\nUn investissement exigeant, mais souvent décisif pour l’avenir d’une fonderie.",
+  "attempts": [
+    {
+      "n": 1,
+      "startedAt": "2026-11-09T15:07:34.634Z",
+      "status": 200
+    }
+  ],
+  "generatedAt": "2026-11-09T15:07:34.634Z",
+  "sha256": "89cc2e242e8b77a78aa2d464e07bbdcbe8a3cf8f2954dd23f6485fa4e5cb0843"
+}

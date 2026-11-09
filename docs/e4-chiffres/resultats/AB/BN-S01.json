@@ -1,0 +1,78 @@
+{
+  "id": "BN-S01",
+  "provider": "openai",
+  "requestedModel": "gpt-5.5-2026-04-23",
+  "request": {
+    "model": "gpt-5.5-2026-04-23",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Écris un post LinkedIn de 150 à 250 mots sur le sujet suivant : retour sur une mission d'organisation des tournées de livraison.\n\nVoici les informations dont tu disposes :\nF1. Auteur : dirigeant du cabinet fictif « Cabinet Lormand Conseil » (organisation logistique).\nF2. Client : « Transports Aubrac Lemaire », PME de transport.\nF3. Mission : réorganisation des tournées de livraison.\nF4. Résultat mesuré par le client : les retards de livraison sont passés de 18 par mois à 7 par mois.\nF5. Le dirigeant du client a dit avoir surtout apprécié que l'équipe d'exploitation soit associée aux décisions."
+      }
+    ],
+    "max_completion_tokens": 4000
+  },
+  "status": 200,
+  "response": {
+    "id": "chatcmpl-EiLGWqV21KrjXXQ28kmklctr7DuUK",
+    "object": "chat.completion",
+    "created": 1794236884,
+    "model": "gpt-5.5-2026-04-23",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "Retour sur une mission menée récemment avec **Transports Aubrac Lemaire**, PME de transport, autour d’un enjeu très concret : **réorganiser les tournées de livraison**.\n\nComme souvent en logistique, la performance ne se joue pas uniquement dans les outils ou les tableaux de bord. Elle se joue aussi dans la connaissance terrain : contraintes clients, aléas de circulation, habitudes de chargement, priorités opérationnelles…\n\nAvec l’équipe de **Cabinet Lormand Conseil**, nous avons donc travaillé au plus près de l’exploitation : analyse des tournées existantes, identification des points de friction, ajustement des secteurs, clarification des règles de priorisation et mise en place d’un suivi simple.\n\nLe résultat mesuré par le client est parlant : les retards de livraison sont passés de **18 par mois à 7 par mois**.\n\nMais au-delà du chiffre, ce qui m’a marqué, c’est le retour du dirigeant de Transports Aubrac Lemaire : il a surtout apprécié que **l’équipe d’exploitation soit associée aux décisions**.\n\nC’est un point essentiel : une organisation durable ne se décrète pas depuis un bureau. Elle se construit avec celles et ceux qui la font vivre chaque jour.\n\nBravo aux équipes pour leur engagement et leur pragmatisme.\n\n#Logistique #Transport #Organisation #Livraison #PerformanceOpérationnelle",
+          "refusal": null,
+          "annotations": []
+        },
+        "finish_reason": "stop"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 152,
+      "completion_tokens": 357,
+      "total_tokens": 509,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "audio_tokens": 0
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 69,
+        "audio_tokens": 0,
+        "accepted_prediction_tokens": 0,
+        "rejected_prediction_tokens": 0
+      }
+    },
+    "service_tier": "default",
+    "system_fingerprint": null
+  },
+  "modelReturned": "gpt-5.5-2026-04-23",
+  "finish": "stop",
+  "usage": {
+    "prompt_tokens": 152,
+    "completion_tokens": 357,
+    "total_tokens": 509,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 69,
+      "audio_tokens": 0,
+      "accepted_prediction_tokens": 0,
+      "rejected_prediction_tokens": 0
+    }
+  },
+  "text": "Retour sur une mission menée récemment avec **Transports Aubrac Lemaire**, PME de transport, autour d’un enjeu très concret : **réorganiser les tournées de livraison**.\n\nComme souvent en logistique, la performance ne se joue pas uniquement dans les outils ou les tableaux de bord. Elle se joue aussi dans la connaissance terrain : contraintes clients, aléas de circulation, habitudes de chargement, priorités opérationnelles…\n\nAvec l’équipe de **Cabinet Lormand Conseil**, nous avons donc travaillé au plus près de l’exploitation : analyse des tournées existantes, identification des points de friction, ajustement des secteurs, clarification des règles de priorisation et mise en place d’un suivi simple.\n\nLe résultat mesuré par le client est parlant : les retards de livraison sont passés de **18 par mois à 7 par mois**.\n\nMais au-delà du chiffre, ce qui m’a marqué, c’est le retour du dirigeant de Transports Aubrac Lemaire : il a surtout apprécié que **l’équipe d’exploitation soit associée aux décisions**.\n\nC’est un point essentiel : une organisation durable ne se décrète pas depuis un bureau. Elle se construit avec celles et ceux qui la font vivre chaque jour.\n\nBravo aux équipes pour leur engagement et leur pragmatisme.\n\n#Logistique #Transport #Organisation #Livraison #PerformanceOpérationnelle",
+  "attempts": [
+    {
+      "n": 1,
+      "startedAt": "2026-11-09T15:08:04.083Z",
+      "status": 200
+    }
+  ],
+  "generatedAt": "2026-11-09T15:08:04.083Z",
+  "sha256": "f40d0e3cc30b9b4c66bd66c95647bc8d4c715a4a8ab39e3ce50420fd47f12bbe"
+}

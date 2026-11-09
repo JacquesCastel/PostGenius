@@ -1,0 +1,78 @@
+{
+  "id": "AN-S10",
+  "provider": "openai",
+  "requestedModel": "gpt-5.5-2026-04-23",
+  "request": {
+    "model": "gpt-5.5-2026-04-23",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Écris un post LinkedIn de 150 à 250 mots sur le sujet suivant : retour sur un salon professionnel."
+      }
+    ],
+    "max_completion_tokens": 4000
+  },
+  "status": 200,
+  "response": {
+    "id": "chatcmpl-EiLGPWvXYAKPzHiKsXKMH95g72Uqp",
+    "object": "chat.completion",
+    "created": 1794236877,
+    "model": "gpt-5.5-2026-04-23",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "Retour sur une belle expérience au salon professionnel de cette semaine 🚀\n\nPendant deux jours, j’ai eu l’opportunité d’échanger avec des professionnels passionnés, de découvrir des innovations inspirantes et de prendre le pouls des grandes tendances du secteur.\n\nCe type d’événement rappelle à quel point les rencontres en présentiel restent essentielles. Derrière chaque stand, chaque démonstration et chaque conférence, il y a des idées, des expertises et surtout des femmes et des hommes engagés pour faire avancer leur métier.\n\nParmi les temps forts : des discussions très enrichissantes avec des partenaires, la découverte de solutions concrètes pour répondre aux enjeux actuels, et de nombreuses pistes de collaboration à explorer dans les prochaines semaines.\n\nUn grand merci aux organisateurs pour la qualité de l’événement, ainsi qu’à toutes les personnes rencontrées sur place pour leur disponibilité et la richesse des échanges.\n\nJe repars avec de nouvelles idées, une énergie renouvelée et la conviction que l’innovation se construit avant tout grâce au dialogue et au partage d’expérience.\n\nAu plaisir de poursuivre les échanges initiés sur le salon !\n\n#SalonProfessionnel #Networking #Innovation #Business #Collaboration",
+          "refusal": null,
+          "annotations": []
+        },
+        "finish_reason": "stop"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 30,
+      "completion_tokens": 276,
+      "total_tokens": 306,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "audio_tokens": 0
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 30,
+        "audio_tokens": 0,
+        "accepted_prediction_tokens": 0,
+        "rejected_prediction_tokens": 0
+      }
+    },
+    "service_tier": "default",
+    "system_fingerprint": null
+  },
+  "modelReturned": "gpt-5.5-2026-04-23",
+  "finish": "stop",
+  "usage": {
+    "prompt_tokens": 30,
+    "completion_tokens": 276,
+    "total_tokens": 306,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 30,
+      "audio_tokens": 0,
+      "accepted_prediction_tokens": 0,
+      "rejected_prediction_tokens": 0
+    }
+  },
+  "text": "Retour sur une belle expérience au salon professionnel de cette semaine 🚀\n\nPendant deux jours, j’ai eu l’opportunité d’échanger avec des professionnels passionnés, de découvrir des innovations inspirantes et de prendre le pouls des grandes tendances du secteur.\n\nCe type d’événement rappelle à quel point les rencontres en présentiel restent essentielles. Derrière chaque stand, chaque démonstration et chaque conférence, il y a des idées, des expertises et surtout des femmes et des hommes engagés pour faire avancer leur métier.\n\nParmi les temps forts : des discussions très enrichissantes avec des partenaires, la découverte de solutions concrètes pour répondre aux enjeux actuels, et de nombreuses pistes de collaboration à explorer dans les prochaines semaines.\n\nUn grand merci aux organisateurs pour la qualité de l’événement, ainsi qu’à toutes les personnes rencontrées sur place pour leur disponibilité et la richesse des échanges.\n\nJe repars avec de nouvelles idées, une énergie renouvelée et la conviction que l’innovation se construit avant tout grâce au dialogue et au partage d’expérience.\n\nAu plaisir de poursuivre les échanges initiés sur le salon !\n\n#SalonProfessionnel #Networking #Innovation #Business #Collaboration",
+  "attempts": [
+    {
+      "n": 1,
+      "startedAt": "2026-11-09T15:07:56.817Z",
+      "status": 200
+    }
+  ],
+  "generatedAt": "2026-11-09T15:07:56.817Z",
+  "sha256": "2d9a5345f3a2ae6f45d6dc35d227d34c4fcfb2af306f7e7ffc9d0da774f7f4df"
+}

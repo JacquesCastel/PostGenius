@@ -1,0 +1,78 @@
+{
+  "id": "AN-S01",
+  "provider": "openai",
+  "requestedModel": "gpt-5.5-2026-04-23",
+  "request": {
+    "model": "gpt-5.5-2026-04-23",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Écris un post LinkedIn de 150 à 250 mots sur le sujet suivant : retour sur une mission d'organisation des tournées de livraison."
+      }
+    ],
+    "max_completion_tokens": 4000
+  },
+  "status": 200,
+  "response": {
+    "id": "chatcmpl-EiLFLTM3DUqjRXhtbLjTMeaqmRX1p",
+    "object": "chat.completion",
+    "created": 1794236811,
+    "model": "gpt-5.5-2026-04-23",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "🚚 Retour d’expérience : optimiser les tournées de livraison, bien plus qu’un sujet de planning\n\nCes dernières semaines, j’ai accompagné une équipe dans la réorganisation de ses tournées de livraison. L’objectif était simple en apparence : réduire les kilomètres parcourus, fiabiliser les horaires et améliorer la qualité de service.\n\nMais très vite, la mission a montré que l’optimisation ne se limite pas à tracer des itinéraires sur une carte.\n\nNous avons d’abord analysé les données existantes : volumes livrés, contraintes horaires, temps de chargement, zones géographiques, retours terrain des chauffeurs. Ce travail a permis d’identifier plusieurs leviers : regroupement de points proches, meilleure répartition des charges, prise en compte des créneaux clients et ajustement des départs.\n\nL’un des enseignements clés : les chauffeurs détiennent une connaissance terrain indispensable. Leur implication a permis d’éviter des décisions théoriques mais peu applicables au quotidien.\n\nRésultats : des tournées plus cohérentes, moins de kilomètres inutiles, une meilleure lisibilité pour les équipes et davantage de ponctualité côté clients.\n\nCette mission rappelle qu’une bonne organisation logistique repose sur trois piliers : la donnée, l’écoute du terrain et l’amélioration continue.\n\nUn beau projet collectif, concret, et directement mesurable dans ses impacts.",
+          "refusal": null,
+          "annotations": []
+        },
+        "finish_reason": "stop"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 36,
+      "completion_tokens": 337,
+      "total_tokens": 373,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "audio_tokens": 0
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 50,
+        "audio_tokens": 0,
+        "accepted_prediction_tokens": 0,
+        "rejected_prediction_tokens": 0
+      }
+    },
+    "service_tier": "default",
+    "system_fingerprint": null
+  },
+  "modelReturned": "gpt-5.5-2026-04-23",
+  "finish": "stop",
+  "usage": {
+    "prompt_tokens": 36,
+    "completion_tokens": 337,
+    "total_tokens": 373,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 50,
+      "audio_tokens": 0,
+      "accepted_prediction_tokens": 0,
+      "rejected_prediction_tokens": 0
+    }
+  },
+  "text": "🚚 Retour d’expérience : optimiser les tournées de livraison, bien plus qu’un sujet de planning\n\nCes dernières semaines, j’ai accompagné une équipe dans la réorganisation de ses tournées de livraison. L’objectif était simple en apparence : réduire les kilomètres parcourus, fiabiliser les horaires et améliorer la qualité de service.\n\nMais très vite, la mission a montré que l’optimisation ne se limite pas à tracer des itinéraires sur une carte.\n\nNous avons d’abord analysé les données existantes : volumes livrés, contraintes horaires, temps de chargement, zones géographiques, retours terrain des chauffeurs. Ce travail a permis d’identifier plusieurs leviers : regroupement de points proches, meilleure répartition des charges, prise en compte des créneaux clients et ajustement des départs.\n\nL’un des enseignements clés : les chauffeurs détiennent une connaissance terrain indispensable. Leur implication a permis d’éviter des décisions théoriques mais peu applicables au quotidien.\n\nRésultats : des tournées plus cohérentes, moins de kilomètres inutiles, une meilleure lisibilité pour les équipes et davantage de ponctualité côté clients.\n\nCette mission rappelle qu’une bonne organisation logistique repose sur trois piliers : la donnée, l’écoute du terrain et l’amélioration continue.\n\nUn beau projet collectif, concret, et directement mesurable dans ses impacts.",
+  "attempts": [
+    {
+      "n": 1,
+      "startedAt": "2026-11-09T15:06:50.404Z",
+      "status": 200
+    }
+  ],
+  "generatedAt": "2026-11-09T15:06:50.404Z",
+  "sha256": "11984ebe4638cf60dea68153817e38ed9991c2bce559fb21e36cfd0e3bf468ca"
+}

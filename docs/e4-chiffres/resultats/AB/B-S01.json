@@ -1,0 +1,78 @@
+{
+  "id": "B-S01",
+  "provider": "openai",
+  "requestedModel": "gpt-5.5-2026-04-23",
+  "request": {
+    "model": "gpt-5.5-2026-04-23",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Écris un post LinkedIn de 150 à 250 mots sur le sujet suivant : retour sur une mission d'organisation des tournées de livraison. Ajoute des chiffres concrets pour le rendre crédible.\n\nVoici les informations dont tu disposes :\nF1. Auteur : dirigeant du cabinet fictif « Cabinet Lormand Conseil » (organisation logistique).\nF2. Client : « Transports Aubrac Lemaire », PME de transport.\nF3. Mission : réorganisation des tournées de livraison.\nF4. Résultat mesuré par le client : les retards de livraison sont passés de 18 par mois à 7 par mois.\nF5. Le dirigeant du client a dit avoir surtout apprécié que l'équipe d'exploitation soit associée aux décisions."
+      }
+    ],
+    "max_completion_tokens": 4000
+  },
+  "status": 200,
+  "response": {
+    "id": "chatcmpl-EiLDmYEluPHuQIG68al3k7DbBnUAV",
+    "object": "chat.completion",
+    "created": 1794236714,
+    "model": "gpt-5.5-2026-04-23",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "Retour sur une mission menée récemment avec **Transports Aubrac Lemaire**, PME de transport, autour d’un sujet très concret : **réorganiser les tournées de livraison**.\n\nAu départ, le constat était clair : des retards récurrents, des tournées parfois déséquilibrées, et une équipe d’exploitation sous pression. Le client mesurait en moyenne **18 retards de livraison par mois**.\n\nAvec l’équipe de **Cabinet Lormand Conseil**, nous avons travaillé sur 3 axes :  \n✅ analyse des tournées existantes sur plusieurs semaines,  \n✅ rééquilibrage des secteurs et des temps de chargement,  \n✅ mise en place de points de décision partagés avec l’exploitation.\n\nEn tout, nous avons revu **12 tournées régulières**, ajusté les horaires de départ et identifié plusieurs points de blocage dans la préparation des livraisons.\n\nRésultat mesuré par Transports Aubrac Lemaire : les retards sont passés de **18 à 7 par mois**, soit une baisse de plus de **60 %**.\n\nMais au-delà du chiffre, ce que le dirigeant m’a dit avoir le plus apprécié, c’est que **l’équipe d’exploitation ait été associée aux décisions**. Et c’est souvent là que se joue la réussite : une organisation ne fonctionne durablement que si elle est comprise et portée par celles et ceux qui la font vivre chaque jour.\n\n#Logistique #Transport #Organisation #Performance #PME",
+          "refusal": null,
+          "annotations": []
+        },
+        "finish_reason": "stop"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 164,
+      "completion_tokens": 405,
+      "total_tokens": 569,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "audio_tokens": 0
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 91,
+        "audio_tokens": 0,
+        "accepted_prediction_tokens": 0,
+        "rejected_prediction_tokens": 0
+      }
+    },
+    "service_tier": "default",
+    "system_fingerprint": null
+  },
+  "modelReturned": "gpt-5.5-2026-04-23",
+  "finish": "stop",
+  "usage": {
+    "prompt_tokens": 164,
+    "completion_tokens": 405,
+    "total_tokens": 569,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 91,
+      "audio_tokens": 0,
+      "accepted_prediction_tokens": 0,
+      "rejected_prediction_tokens": 0
+    }
+  },
+  "text": "Retour sur une mission menée récemment avec **Transports Aubrac Lemaire**, PME de transport, autour d’un sujet très concret : **réorganiser les tournées de livraison**.\n\nAu départ, le constat était clair : des retards récurrents, des tournées parfois déséquilibrées, et une équipe d’exploitation sous pression. Le client mesurait en moyenne **18 retards de livraison par mois**.\n\nAvec l’équipe de **Cabinet Lormand Conseil**, nous avons travaillé sur 3 axes :  \n✅ analyse des tournées existantes sur plusieurs semaines,  \n✅ rééquilibrage des secteurs et des temps de chargement,  \n✅ mise en place de points de décision partagés avec l’exploitation.\n\nEn tout, nous avons revu **12 tournées régulières**, ajusté les horaires de départ et identifié plusieurs points de blocage dans la préparation des livraisons.\n\nRésultat mesuré par Transports Aubrac Lemaire : les retards sont passés de **18 à 7 par mois**, soit une baisse de plus de **60 %**.\n\nMais au-delà du chiffre, ce que le dirigeant m’a dit avoir le plus apprécié, c’est que **l’équipe d’exploitation ait été associée aux décisions**. Et c’est souvent là que se joue la réussite : une organisation ne fonctionne durablement que si elle est comprise et portée par celles et ceux qui la font vivre chaque jour.\n\n#Logistique #Transport #Organisation #Performance #PME",
+  "attempts": [
+    {
+      "n": 1,
+      "startedAt": "2026-11-09T15:05:13.913Z",
+      "status": 200
+    }
+  ],
+  "generatedAt": "2026-11-09T15:05:13.913Z",
+  "sha256": "4da3aba298cd6f6a1d8544b1a55269c7cf54e9092e28ef5b0deeb8926e1d6820"
+}

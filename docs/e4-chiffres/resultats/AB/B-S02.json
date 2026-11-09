@@ -1,0 +1,78 @@
+{
+  "id": "B-S02",
+  "provider": "openai",
+  "requestedModel": "gpt-5.5-2026-04-23",
+  "request": {
+    "model": "gpt-5.5-2026-04-23",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Écris un post LinkedIn de 150 à 250 mots sur le sujet suivant : lancement d'une formation sur la réponse aux appels d'offres publics. Ajoute des chiffres concrets pour le rendre crédible.\n\nVoici les informations dont tu disposes :\nF1. Auteur : formatrice indépendante fictive, « Claire Montrel ».\nF2. Intitulé : « Négocier avec un acheteur public ».\nF3. Public : commerciaux de PME qui répondent à des appels d'offres.\nF4. Début de la première session : 12 mars 2027.\nF5. Prix : 1 450 € HT par personne.\nF6. Format : en présentiel."
+      }
+    ],
+    "max_completion_tokens": 4000
+  },
+  "status": 200,
+  "response": {
+    "id": "chatcmpl-EiLDukVj0CCVXYT1RH6Vmjct6EG0A",
+    "object": "chat.completion",
+    "created": 1794236722,
+    "model": "gpt-5.5-2026-04-23",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "📢 Lancement de ma nouvelle formation : **« Négocier avec un acheteur public »**\n\nRépondre à un appel d’offres public, ce n’est pas seulement “remplir un dossier”. C’est comprendre les règles du jeu, analyser les attentes de l’acheteur, construire une offre solide… et savoir défendre sa valeur.\n\nEn France, la commande publique représente environ **160 milliards d’euros par an**. Pourtant, beaucoup de PME renoncent encore à candidater, ou perdent des points sur des critères clés : mémoire technique trop générique, prix mal justifié, manque de stratégie en phase de négociation.\n\nC’est pour aider les commerciaux de PME à gagner en méthode que je lance ma formation en présentiel :\n\n🎯 **Négocier avec un acheteur public**  \n📅 Première session : **12 mars 2027**  \n📍 Format : **présentiel**  \n💰 Tarif : **1 450 € HT par personne**  \n👥 Public : commerciaux de PME répondant à des appels d’offres publics\n\nAu programme : lecture stratégique du DCE, construction d’un argumentaire, préparation des échanges avec l’acheteur, pièges à éviter, cas pratiques et mises en situation.\n\nObjectif : repartir avec une méthode claire pour mieux répondre, mieux négocier et augmenter ses chances de succès.\n\nJe suis **Claire Montrel**, formatrice indépendante, et j’aurai plaisir à accompagner les PME sur ce sujet clé.",
+          "refusal": null,
+          "annotations": []
+        },
+        "finish_reason": "stop"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 151,
+      "completion_tokens": 409,
+      "total_tokens": 560,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "audio_tokens": 0
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 98,
+        "audio_tokens": 0,
+        "accepted_prediction_tokens": 0,
+        "rejected_prediction_tokens": 0
+      }
+    },
+    "service_tier": "default",
+    "system_fingerprint": null
+  },
+  "modelReturned": "gpt-5.5-2026-04-23",
+  "finish": "stop",
+  "usage": {
+    "prompt_tokens": 151,
+    "completion_tokens": 409,
+    "total_tokens": 560,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 98,
+      "audio_tokens": 0,
+      "accepted_prediction_tokens": 0,
+      "rejected_prediction_tokens": 0
+    }
+  },
+  "text": "📢 Lancement de ma nouvelle formation : **« Négocier avec un acheteur public »**\n\nRépondre à un appel d’offres public, ce n’est pas seulement “remplir un dossier”. C’est comprendre les règles du jeu, analyser les attentes de l’acheteur, construire une offre solide… et savoir défendre sa valeur.\n\nEn France, la commande publique représente environ **160 milliards d’euros par an**. Pourtant, beaucoup de PME renoncent encore à candidater, ou perdent des points sur des critères clés : mémoire technique trop générique, prix mal justifié, manque de stratégie en phase de négociation.\n\nC’est pour aider les commerciaux de PME à gagner en méthode que je lance ma formation en présentiel :\n\n🎯 **Négocier avec un acheteur public**  \n📅 Première session : **12 mars 2027**  \n📍 Format : **présentiel**  \n💰 Tarif : **1 450 € HT par personne**  \n👥 Public : commerciaux de PME répondant à des appels d’offres publics\n\nAu programme : lecture stratégique du DCE, construction d’un argumentaire, préparation des échanges avec l’acheteur, pièges à éviter, cas pratiques et mises en situation.\n\nObjectif : repartir avec une méthode claire pour mieux répondre, mieux négocier et augmenter ses chances de succès.\n\nJe suis **Claire Montrel**, formatrice indépendante, et j’aurai plaisir à accompagner les PME sur ce sujet clé.",
+  "attempts": [
+    {
+      "n": 1,
+      "startedAt": "2026-11-09T15:05:22.519Z",
+      "status": 200
+    }
+  ],
+  "generatedAt": "2026-11-09T15:05:22.519Z",
+  "sha256": "00b88075d0427f2b430e45a87c809eca3251fb0e3b46d18c10d774f8c954c335"
+}

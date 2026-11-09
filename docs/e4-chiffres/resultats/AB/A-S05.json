@@ -1,0 +1,78 @@
+{
+  "id": "A-S05",
+  "provider": "openai",
+  "requestedModel": "gpt-5.5-2026-04-23",
+  "request": {
+    "model": "gpt-5.5-2026-04-23",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Écris un post LinkedIn de 150 à 250 mots sur le sujet suivant : rédiger une annonce de recrutement qui attire les bonnes personnes. Ajoute des chiffres concrets pour le rendre crédible."
+      }
+    ],
+    "max_completion_tokens": 4000
+  },
+  "status": 200,
+  "response": {
+    "id": "chatcmpl-EiLCx1wDp52BXJqhWjZ6inSz519sx",
+    "object": "chat.completion",
+    "created": 1794236663,
+    "model": "gpt-5.5-2026-04-23",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "Une bonne annonce de recrutement ne doit pas attirer “le plus de candidats possible”. Elle doit attirer les bonnes personnes.\n\nAujourd’hui, un candidat passe en moyenne moins d’une minute sur une offre avant de décider s’il postule ou non. Et selon plusieurs études RH, les annonces trop longues ou floues peuvent faire chuter le taux de candidature de 30 à 50 %.\n\nAlors, comment rédiger une annonce efficace ?\n\n✅ **1. Soyez clair dès le titre**  \n“Business Developer B2B – CDI – Paris/Hybride” sera toujours plus performant que “Rejoignez une aventure incroyable”.\n\n✅ **2. Parlez du quotidien réel**  \nLes candidats veulent savoir ce qu’ils vont faire concrètement : missions, outils, équipe, objectifs des 6 premiers mois.\n\n✅ **3. Affichez la rémunération**  \nLes offres avec une fourchette salariale reçoivent jusqu’à 2 fois plus de candidatures qualifiées. Et surtout, elles évitent les pertes de temps des deux côtés.\n\n✅ **4. Distinguez l’essentiel du bonus**  \nUne liste de 15 prérequis décourage souvent de très bons profils. Limitez-vous à 4 ou 5 critères vraiment indispensables.\n\n✅ **5. Montrez votre culture, sans jargon**  \n“Bienveillance”, “agilité”, “esprit startup” : tout le monde l’écrit. Donnez plutôt des exemples concrets.\n\nUne annonce réussie n’est pas une fiche de poste.  \nC’est un outil de conversion.\n\nEt vous, qu’est-ce qui vous donne envie de postuler à une offre ?",
+          "refusal": null,
+          "annotations": []
+        },
+        "finish_reason": "stop"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 48,
+      "completion_tokens": 375,
+      "total_tokens": 423,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "audio_tokens": 0
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 31,
+        "audio_tokens": 0,
+        "accepted_prediction_tokens": 0,
+        "rejected_prediction_tokens": 0
+      }
+    },
+    "service_tier": "default",
+    "system_fingerprint": null
+  },
+  "modelReturned": "gpt-5.5-2026-04-23",
+  "finish": "stop",
+  "usage": {
+    "prompt_tokens": 48,
+    "completion_tokens": 375,
+    "total_tokens": 423,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 31,
+      "audio_tokens": 0,
+      "accepted_prediction_tokens": 0,
+      "rejected_prediction_tokens": 0
+    }
+  },
+  "text": "Une bonne annonce de recrutement ne doit pas attirer “le plus de candidats possible”. Elle doit attirer les bonnes personnes.\n\nAujourd’hui, un candidat passe en moyenne moins d’une minute sur une offre avant de décider s’il postule ou non. Et selon plusieurs études RH, les annonces trop longues ou floues peuvent faire chuter le taux de candidature de 30 à 50 %.\n\nAlors, comment rédiger une annonce efficace ?\n\n✅ **1. Soyez clair dès le titre**  \n“Business Developer B2B – CDI – Paris/Hybride” sera toujours plus performant que “Rejoignez une aventure incroyable”.\n\n✅ **2. Parlez du quotidien réel**  \nLes candidats veulent savoir ce qu’ils vont faire concrètement : missions, outils, équipe, objectifs des 6 premiers mois.\n\n✅ **3. Affichez la rémunération**  \nLes offres avec une fourchette salariale reçoivent jusqu’à 2 fois plus de candidatures qualifiées. Et surtout, elles évitent les pertes de temps des deux côtés.\n\n✅ **4. Distinguez l’essentiel du bonus**  \nUne liste de 15 prérequis décourage souvent de très bons profils. Limitez-vous à 4 ou 5 critères vraiment indispensables.\n\n✅ **5. Montrez votre culture, sans jargon**  \n“Bienveillance”, “agilité”, “esprit startup” : tout le monde l’écrit. Donnez plutôt des exemples concrets.\n\nUne annonce réussie n’est pas une fiche de poste.  \nC’est un outil de conversion.\n\nEt vous, qu’est-ce qui vous donne envie de postuler à une offre ?",
+  "attempts": [
+    {
+      "n": 1,
+      "startedAt": "2026-11-09T15:04:22.914Z",
+      "status": 200
+    }
+  ],
+  "generatedAt": "2026-11-09T15:04:22.914Z",
+  "sha256": "f09fceb8c1a869d0b1db3533471569db951d151d5a288fba87898f4c4b424d91"
+}

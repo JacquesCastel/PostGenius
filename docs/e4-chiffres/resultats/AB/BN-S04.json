@@ -1,0 +1,78 @@
+{
+  "id": "BN-S04",
+  "provider": "openai",
+  "requestedModel": "gpt-5.5-2026-04-23",
+  "request": {
+    "model": "gpt-5.5-2026-04-23",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Écris un post LinkedIn de 150 à 250 mots sur le sujet suivant : bilan de l'année d'une petite menuiserie.\n\nVoici les informations dont tu disposes :\nF1. Auteure : dirigeante de « Maison Bellange », menuiserie fictive.\nF2. Chiffre d'affaires de l'année : 2,4 millions d'euros.\nF3. Évolution : hausse de 6 % par rapport à l'année précédente.\nF4. Effectif : 17 personnes.\nF5. Leçon retenue : ne plus accepter de chantiers hors du périmètre de l'atelier.\nF6. La marge n'est pas communiquée."
+      }
+    ],
+    "max_completion_tokens": 4000
+  },
+  "status": 200,
+  "response": {
+    "id": "chatcmpl-EiLGsHK5AwFD5TFLJlODhMIbj1rvD",
+    "object": "chat.completion",
+    "created": 1794236906,
+    "model": "gpt-5.5-2026-04-23",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "Cette fin d’année est l’occasion de prendre un peu de recul sur le chemin parcouru chez Maison Bellange.\n\nEn 2024, notre menuiserie a réalisé un chiffre d’affaires de 2,4 millions d’euros, en hausse de 6 % par rapport à l’année précédente. Derrière ce chiffre, il y a surtout l’engagement de 17 personnes : menuisiers, poseurs, apprentis, fonctions support… une équipe à taille humaine, mais avec une exigence forte sur la qualité du travail rendu.\n\nCette année nous a aussi appris une chose essentielle : savoir dire non. Nous avons parfois accepté des chantiers trop éloignés de notre périmètre d’atelier, avec ce que cela implique en complexité, en organisation et en énergie. La leçon est claire : pour bien servir nos clients, nous devons rester concentrés sur ce que nous savons faire le mieux.\n\nMerci à nos clients, partenaires et fournisseurs pour leur confiance tout au long de l’année. Merci aussi à l’équipe Maison Bellange, qui donne du sens à cette aventure collective.\n\nCap sur l’année prochaine, avec la même envie : fabriquer juste, poser proprement, et continuer à grandir sans perdre notre identité.",
+          "refusal": null,
+          "annotations": []
+        },
+        "finish_reason": "stop"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 149,
+      "completion_tokens": 345,
+      "total_tokens": 494,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "audio_tokens": 0
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 87,
+        "audio_tokens": 0,
+        "accepted_prediction_tokens": 0,
+        "rejected_prediction_tokens": 0
+      }
+    },
+    "service_tier": "default",
+    "system_fingerprint": null
+  },
+  "modelReturned": "gpt-5.5-2026-04-23",
+  "finish": "stop",
+  "usage": {
+    "prompt_tokens": 149,
+    "completion_tokens": 345,
+    "total_tokens": 494,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 87,
+      "audio_tokens": 0,
+      "accepted_prediction_tokens": 0,
+      "rejected_prediction_tokens": 0
+    }
+  },
+  "text": "Cette fin d’année est l’occasion de prendre un peu de recul sur le chemin parcouru chez Maison Bellange.\n\nEn 2024, notre menuiserie a réalisé un chiffre d’affaires de 2,4 millions d’euros, en hausse de 6 % par rapport à l’année précédente. Derrière ce chiffre, il y a surtout l’engagement de 17 personnes : menuisiers, poseurs, apprentis, fonctions support… une équipe à taille humaine, mais avec une exigence forte sur la qualité du travail rendu.\n\nCette année nous a aussi appris une chose essentielle : savoir dire non. Nous avons parfois accepté des chantiers trop éloignés de notre périmètre d’atelier, avec ce que cela implique en complexité, en organisation et en énergie. La leçon est claire : pour bien servir nos clients, nous devons rester concentrés sur ce que nous savons faire le mieux.\n\nMerci à nos clients, partenaires et fournisseurs pour leur confiance tout au long de l’année. Merci aussi à l’équipe Maison Bellange, qui donne du sens à cette aventure collective.\n\nCap sur l’année prochaine, avec la même envie : fabriquer juste, poser proprement, et continuer à grandir sans perdre notre identité.",
+  "attempts": [
+    {
+      "n": 1,
+      "startedAt": "2026-11-09T15:08:26.609Z",
+      "status": 200
+    }
+  ],
+  "generatedAt": "2026-11-09T15:08:26.609Z",
+  "sha256": "16bdc5b3f0ba7025d6c61a6b69c6d5e227fd9529b4f7d6b6b4c2aa35aa9740f6"
+}

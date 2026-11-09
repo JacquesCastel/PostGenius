@@ -1,0 +1,78 @@
+{
+  "id": "A-S09",
+  "provider": "openai",
+  "requestedModel": "gpt-5.5-2026-04-23",
+  "request": {
+    "model": "gpt-5.5-2026-04-23",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Écris un post LinkedIn de 150 à 250 mots sur le sujet suivant : retour d'une enquête interne sur les points d'équipe hebdomadaires. Ajoute des chiffres concrets pour le rendre crédible."
+      }
+    ],
+    "max_completion_tokens": 4000
+  },
+  "status": 200,
+  "response": {
+    "id": "chatcmpl-EiLDWCtdy3jlUYupaHzeZJ8DIGKWb",
+    "object": "chat.completion",
+    "created": 1794236698,
+    "model": "gpt-5.5-2026-04-23",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "📊 **Ce que notre enquête interne nous a appris sur les points d’équipe hebdomadaires**\n\nNous avons récemment mené une enquête interne pour mieux comprendre la perception de nos points d’équipe hebdomadaires. L’objectif : identifier ce qui fonctionne, ce qui peut être amélioré, et surtout rendre ces moments plus utiles pour chacun.\n\nQuelques chiffres clés ressortent :\n\n✅ **82 % des répondants** estiment que le point hebdomadaire les aide à mieux comprendre les priorités de l’équipe.  \n✅ **76 %** considèrent que ce rendez-vous favorise le partage d’informations entre collègues.  \n✅ En revanche, **41 %** trouvent que certaines réunions manquent encore de structure.  \n✅ Et **34 %** souhaiteraient davantage de temps consacré aux blocages opérationnels et aux décisions concrètes.\n\nCes retours confirment une chose : le point d’équipe reste un rituel important, mais il doit continuer à évoluer.\n\nÀ partir de ces résultats, nous allons tester plusieurs ajustements : un ordre du jour partagé en amont, un temps limité à **30 minutes**, et une meilleure distinction entre information, discussion et décision.\n\nMerci à toutes celles et ceux qui ont pris le temps de répondre. Vos retours nous permettent d’améliorer nos pratiques collectives, pas à pas.\n\nEt vous, qu’est-ce qui rend un point d’équipe vraiment efficace selon vous ?",
+          "refusal": null,
+          "annotations": []
+        },
+        "finish_reason": "stop"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 51,
+      "completion_tokens": 331,
+      "total_tokens": 382,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "audio_tokens": 0
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 39,
+        "audio_tokens": 0,
+        "accepted_prediction_tokens": 0,
+        "rejected_prediction_tokens": 0
+      }
+    },
+    "service_tier": "default",
+    "system_fingerprint": null
+  },
+  "modelReturned": "gpt-5.5-2026-04-23",
+  "finish": "stop",
+  "usage": {
+    "prompt_tokens": 51,
+    "completion_tokens": 331,
+    "total_tokens": 382,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 39,
+      "audio_tokens": 0,
+      "accepted_prediction_tokens": 0,
+      "rejected_prediction_tokens": 0
+    }
+  },
+  "text": "📊 **Ce que notre enquête interne nous a appris sur les points d’équipe hebdomadaires**\n\nNous avons récemment mené une enquête interne pour mieux comprendre la perception de nos points d’équipe hebdomadaires. L’objectif : identifier ce qui fonctionne, ce qui peut être amélioré, et surtout rendre ces moments plus utiles pour chacun.\n\nQuelques chiffres clés ressortent :\n\n✅ **82 % des répondants** estiment que le point hebdomadaire les aide à mieux comprendre les priorités de l’équipe.  \n✅ **76 %** considèrent que ce rendez-vous favorise le partage d’informations entre collègues.  \n✅ En revanche, **41 %** trouvent que certaines réunions manquent encore de structure.  \n✅ Et **34 %** souhaiteraient davantage de temps consacré aux blocages opérationnels et aux décisions concrètes.\n\nCes retours confirment une chose : le point d’équipe reste un rituel important, mais il doit continuer à évoluer.\n\nÀ partir de ces résultats, nous allons tester plusieurs ajustements : un ordre du jour partagé en amont, un temps limité à **30 minutes**, et une meilleure distinction entre information, discussion et décision.\n\nMerci à toutes celles et ceux qui ont pris le temps de répondre. Vos retours nous permettent d’améliorer nos pratiques collectives, pas à pas.\n\nEt vous, qu’est-ce qui rend un point d’équipe vraiment efficace selon vous ?",
+  "attempts": [
+    {
+      "n": 1,
+      "startedAt": "2026-11-09T15:04:58.244Z",
+      "status": 200
+    }
+  ],
+  "generatedAt": "2026-11-09T15:04:58.244Z",
+  "sha256": "8012dc9c053abbda4f233fa6f8b2df3244b5cf4c8b460316ec0516af9fddccd9"
+}

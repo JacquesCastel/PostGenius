@@ -1,0 +1,78 @@
+{
+  "id": "BN-S07",
+  "provider": "openai",
+  "requestedModel": "gpt-5.5-2026-04-23",
+  "request": {
+    "model": "gpt-5.5-2026-04-23",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Écris un post LinkedIn de 150 à 250 mots sur le sujet suivant : le remplacement d'un four dans une fonderie.\n\nVoici les informations dont tu disposes :\nF1. Auteur : directeur technique de « Fonderie Marchal », entreprise fictive.\nF2. Opération : remplacement d'un four ancien.\nF3. Coût de l'investissement : 380 000 €.\nF4. Arrêt de production nécessaire : 9 jours.\nF5. Les gains de consommation ne sont pas encore mesurés."
+      }
+    ],
+    "max_completion_tokens": 4000
+  },
+  "status": 200,
+  "response": {
+    "id": "chatcmpl-EiLHGP5dhCBIZ4K8AOjbn87mNX5xA",
+    "object": "chat.completion",
+    "created": 1794236930,
+    "model": "gpt-5.5-2026-04-23",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "🔥 Moderniser pour préparer l’avenir de notre fonderie\n\nEn tant que directeur technique de Fonderie Marchal, je suis heureux de partager une étape importante pour notre outil industriel : le remplacement d’un four ancien, au cœur de notre process de production.\n\nCet investissement de 380 000 € représente un engagement fort pour la fiabilité, la sécurité et la performance de notre fonderie. Une telle opération ne se résume pas à l’installation d’un nouvel équipement : elle implique une préparation minutieuse, une coordination étroite entre les équipes internes et les partenaires externes, ainsi qu’une parfaite maîtrise du calendrier.\n\nLe chantier a nécessité 9 jours d’arrêt de production. C’est un choix exigeant, mais indispensable pour mener les travaux dans de bonnes conditions et garantir une reprise sécurisée.\n\nLes gains de consommation énergétique ne sont pas encore mesurés à ce stade. Nous allons désormais suivre les données d’exploitation avec attention afin d’évaluer concrètement les impacts de ce nouvel équipement dans la durée.\n\nMerci à toutes les équipes mobilisées pour leur professionnalisme et leur engagement. Ce projet illustre notre volonté de continuer à investir dans un outil industriel robuste, moderne et tourné vers l’avenir.\n\n#Industrie #Fonderie #Investissement #Maintenance #PerformanceIndustrielle",
+          "refusal": null,
+          "annotations": []
+        },
+        "finish_reason": "stop"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 118,
+      "completion_tokens": 315,
+      "total_tokens": 433,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "audio_tokens": 0
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 44,
+        "audio_tokens": 0,
+        "accepted_prediction_tokens": 0,
+        "rejected_prediction_tokens": 0
+      }
+    },
+    "service_tier": "default",
+    "system_fingerprint": null
+  },
+  "modelReturned": "gpt-5.5-2026-04-23",
+  "finish": "stop",
+  "usage": {
+    "prompt_tokens": 118,
+    "completion_tokens": 315,
+    "total_tokens": 433,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 44,
+      "audio_tokens": 0,
+      "accepted_prediction_tokens": 0,
+      "rejected_prediction_tokens": 0
+    }
+  },
+  "text": "🔥 Moderniser pour préparer l’avenir de notre fonderie\n\nEn tant que directeur technique de Fonderie Marchal, je suis heureux de partager une étape importante pour notre outil industriel : le remplacement d’un four ancien, au cœur de notre process de production.\n\nCet investissement de 380 000 € représente un engagement fort pour la fiabilité, la sécurité et la performance de notre fonderie. Une telle opération ne se résume pas à l’installation d’un nouvel équipement : elle implique une préparation minutieuse, une coordination étroite entre les équipes internes et les partenaires externes, ainsi qu’une parfaite maîtrise du calendrier.\n\nLe chantier a nécessité 9 jours d’arrêt de production. C’est un choix exigeant, mais indispensable pour mener les travaux dans de bonnes conditions et garantir une reprise sécurisée.\n\nLes gains de consommation énergétique ne sont pas encore mesurés à ce stade. Nous allons désormais suivre les données d’exploitation avec attention afin d’évaluer concrètement les impacts de ce nouvel équipement dans la durée.\n\nMerci à toutes les équipes mobilisées pour leur professionnalisme et leur engagement. Ce projet illustre notre volonté de continuer à investir dans un outil industriel robuste, moderne et tourné vers l’avenir.\n\n#Industrie #Fonderie #Investissement #Maintenance #PerformanceIndustrielle",
+  "attempts": [
+    {
+      "n": 1,
+      "startedAt": "2026-11-09T15:08:49.847Z",
+      "status": 200
+    }
+  ],
+  "generatedAt": "2026-11-09T15:08:49.847Z",
+  "sha256": "30ac714705f0a346e9dfa25568c3576c1249f3875c39077ae0f068d7d72ba9ed"
+}

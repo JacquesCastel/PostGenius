@@ -1,0 +1,78 @@
+{
+  "id": "AN-S09",
+  "provider": "openai",
+  "requestedModel": "gpt-5.5-2026-04-23",
+  "request": {
+    "model": "gpt-5.5-2026-04-23",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Écris un post LinkedIn de 150 à 250 mots sur le sujet suivant : retour d'une enquête interne sur les points d'équipe hebdomadaires."
+      }
+    ],
+    "max_completion_tokens": 4000
+  },
+  "status": 200,
+  "response": {
+    "id": "chatcmpl-EiLGHJjjfPrx9lJcMFLxiqeQUugJf",
+    "object": "chat.completion",
+    "created": 1794236869,
+    "model": "gpt-5.5-2026-04-23",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "📊 **Retour d’enquête interne : nos points d’équipe hebdomadaires**\n\nNous avons récemment interrogé les équipes sur nos points hebdomadaires afin de mieux comprendre ce qui fonctionne… et ce que nous pouvons améliorer.\n\nPremier enseignement : ces rendez-vous restent essentiels pour maintenir l’alignement, partager les priorités et renforcer la coordination entre les membres de l’équipe. Beaucoup soulignent également leur utilité pour identifier rapidement les blocages et favoriser l’entraide.\n\nMais l’enquête met aussi en lumière plusieurs axes d’amélioration :  \n✅ clarifier davantage les objectifs de chaque réunion  \n✅ mieux prioriser les sujets abordés  \n✅ réduire le temps consacré aux informations descendantes  \n✅ laisser plus de place aux échanges utiles et aux décisions concrètes\n\nÀ partir de ces retours, nous allons faire évoluer le format : un ordre du jour plus structuré, un temps limité par sujet, et un suivi plus clair des actions décidées. L’objectif n’est pas de “réunir pour réunir”, mais de faire de ces points un véritable levier d’efficacité collective.\n\nMerci à toutes celles et ceux qui ont pris le temps de répondre. Vos retours sont précieux pour construire des rituels d’équipe plus simples, plus utiles et plus engageants.\n\nEt vous, quels sont vos ingrédients pour un point d’équipe vraiment efficace ?",
+          "refusal": null,
+          "annotations": []
+        },
+        "finish_reason": "stop"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 39,
+      "completion_tokens": 318,
+      "total_tokens": 357,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "audio_tokens": 0
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 35,
+        "audio_tokens": 0,
+        "accepted_prediction_tokens": 0,
+        "rejected_prediction_tokens": 0
+      }
+    },
+    "service_tier": "default",
+    "system_fingerprint": null
+  },
+  "modelReturned": "gpt-5.5-2026-04-23",
+  "finish": "stop",
+  "usage": {
+    "prompt_tokens": 39,
+    "completion_tokens": 318,
+    "total_tokens": 357,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 35,
+      "audio_tokens": 0,
+      "accepted_prediction_tokens": 0,
+      "rejected_prediction_tokens": 0
+    }
+  },
+  "text": "📊 **Retour d’enquête interne : nos points d’équipe hebdomadaires**\n\nNous avons récemment interrogé les équipes sur nos points hebdomadaires afin de mieux comprendre ce qui fonctionne… et ce que nous pouvons améliorer.\n\nPremier enseignement : ces rendez-vous restent essentiels pour maintenir l’alignement, partager les priorités et renforcer la coordination entre les membres de l’équipe. Beaucoup soulignent également leur utilité pour identifier rapidement les blocages et favoriser l’entraide.\n\nMais l’enquête met aussi en lumière plusieurs axes d’amélioration :  \n✅ clarifier davantage les objectifs de chaque réunion  \n✅ mieux prioriser les sujets abordés  \n✅ réduire le temps consacré aux informations descendantes  \n✅ laisser plus de place aux échanges utiles et aux décisions concrètes\n\nÀ partir de ces retours, nous allons faire évoluer le format : un ordre du jour plus structuré, un temps limité par sujet, et un suivi plus clair des actions décidées. L’objectif n’est pas de “réunir pour réunir”, mais de faire de ces points un véritable levier d’efficacité collective.\n\nMerci à toutes celles et ceux qui ont pris le temps de répondre. Vos retours sont précieux pour construire des rituels d’équipe plus simples, plus utiles et plus engageants.\n\nEt vous, quels sont vos ingrédients pour un point d’équipe vraiment efficace ?",
+  "attempts": [
+    {
+      "n": 1,
+      "startedAt": "2026-11-09T15:07:49.576Z",
+      "status": 200
+    }
+  ],
+  "generatedAt": "2026-11-09T15:07:49.576Z",
+  "sha256": "1d925b4ac179a6875b7a858977e888b961c6695260d204228ba827c93b7d1fe6"
+}

@@ -1,0 +1,78 @@
+{
+  "id": "AN-S06",
+  "provider": "openai",
+  "requestedModel": "gpt-5.5-2026-04-23",
+  "request": {
+    "model": "gpt-5.5-2026-04-23",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Écris un post LinkedIn de 150 à 250 mots sur le sujet suivant : annonce d'un partenariat de formation."
+      }
+    ],
+    "max_completion_tokens": 4000
+  },
+  "status": 200,
+  "response": {
+    "id": "chatcmpl-EiLFvkEWpL980b5qosELuUTC8Rv6b",
+    "object": "chat.completion",
+    "created": 1794236847,
+    "model": "gpt-5.5-2026-04-23",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "🚀 Nous sommes ravis d’annoncer un nouveau partenariat de formation !\n\nChez [Nom de l’entreprise], nous sommes convaincus que le développement des compétences est un levier essentiel pour accompagner les transformations du marché et préparer les talents aux défis de demain.\n\nC’est pourquoi nous nous associons aujourd’hui à [Nom du partenaire], acteur reconnu dans le domaine de la formation, afin de proposer un programme complet, concret et adapté aux besoins des professionnels.\n\nCe partenariat permettra de déployer des parcours axés sur [thématiques : leadership, digital, management, IA, relation client, etc.], combinant apports théoriques, cas pratiques et accompagnement personnalisé. L’objectif : offrir aux participants des compétences immédiatement mobilisables dans leur quotidien professionnel.\n\nNous sommes fiers de cette collaboration, qui reflète notre engagement commun en faveur de l’apprentissage continu, de l’innovation pédagogique et de la montée en compétences durable.\n\nUn grand merci aux équipes impliquées dans la construction de ce projet. Nous avons hâte de voir les premiers résultats et de partager les prochaines étapes avec vous.\n\n📌 Restez connectés : le lancement officiel du programme arrive très bientôt !\n\n#Formation #Partenariat #Compétences #DéveloppementProfessionnel #LearningAndDevelopment",
+          "refusal": null,
+          "annotations": []
+        },
+        "finish_reason": "stop"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 31,
+      "completion_tokens": 304,
+      "total_tokens": 335,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "audio_tokens": 0
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 42,
+        "audio_tokens": 0,
+        "accepted_prediction_tokens": 0,
+        "rejected_prediction_tokens": 0
+      }
+    },
+    "service_tier": "default",
+    "system_fingerprint": null
+  },
+  "modelReturned": "gpt-5.5-2026-04-23",
+  "finish": "stop",
+  "usage": {
+    "prompt_tokens": 31,
+    "completion_tokens": 304,
+    "total_tokens": 335,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 42,
+      "audio_tokens": 0,
+      "accepted_prediction_tokens": 0,
+      "rejected_prediction_tokens": 0
+    }
+  },
+  "text": "🚀 Nous sommes ravis d’annoncer un nouveau partenariat de formation !\n\nChez [Nom de l’entreprise], nous sommes convaincus que le développement des compétences est un levier essentiel pour accompagner les transformations du marché et préparer les talents aux défis de demain.\n\nC’est pourquoi nous nous associons aujourd’hui à [Nom du partenaire], acteur reconnu dans le domaine de la formation, afin de proposer un programme complet, concret et adapté aux besoins des professionnels.\n\nCe partenariat permettra de déployer des parcours axés sur [thématiques : leadership, digital, management, IA, relation client, etc.], combinant apports théoriques, cas pratiques et accompagnement personnalisé. L’objectif : offrir aux participants des compétences immédiatement mobilisables dans leur quotidien professionnel.\n\nNous sommes fiers de cette collaboration, qui reflète notre engagement commun en faveur de l’apprentissage continu, de l’innovation pédagogique et de la montée en compétences durable.\n\nUn grand merci aux équipes impliquées dans la construction de ce projet. Nous avons hâte de voir les premiers résultats et de partager les prochaines étapes avec vous.\n\n📌 Restez connectés : le lancement officiel du programme arrive très bientôt !\n\n#Formation #Partenariat #Compétences #DéveloppementProfessionnel #LearningAndDevelopment",
+  "attempts": [
+    {
+      "n": 1,
+      "startedAt": "2026-11-09T15:07:27.084Z",
+      "status": 200
+    }
+  ],
+  "generatedAt": "2026-11-09T15:07:27.084Z",
+  "sha256": "ea6c960a92bfe3e8f583aaf30c9a5042ad6060fc82db26271859c88bda46ad5f"
+}

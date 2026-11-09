@@ -1,0 +1,78 @@
+{
+  "id": "AN-S05",
+  "provider": "openai",
+  "requestedModel": "gpt-5.5-2026-04-23",
+  "request": {
+    "model": "gpt-5.5-2026-04-23",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Écris un post LinkedIn de 150 à 250 mots sur le sujet suivant : rédiger une annonce de recrutement qui attire les bonnes personnes."
+      }
+    ],
+    "max_completion_tokens": 4000
+  },
+  "status": 200,
+  "response": {
+    "id": "chatcmpl-EiLFoxsXPQw03cveQbg94NgJiNfy0",
+    "object": "chat.completion",
+    "created": 1794236840,
+    "model": "gpt-5.5-2026-04-23",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "Une bonne annonce de recrutement ne doit pas attirer “le plus de candidats possible”.\n\nElle doit attirer les bonnes personnes.\n\nTrop souvent, les offres d’emploi ressemblent à une liste de courses : 12 compétences obligatoires, 8 qualités attendues, un intitulé flou, et une phrase générique sur “une entreprise dynamique en pleine croissance”.\n\nRésultat : les meilleurs profils ne se projettent pas.\n\nPour rédiger une annonce plus efficace, commencez par répondre à 3 questions :\n\n✅ **Quelle mission concrète la personne va-t-elle accomplir ?**  \nPas seulement “gérer des projets”, mais : quels projets, avec quels enjeux, pour quel impact ?\n\n✅ **Pourquoi rejoindre votre entreprise maintenant ?**  \nCe qui vous différencie : culture, autonomie, équipe, vision, produit, management, conditions de travail…\n\n✅ **À qui cette opportunité s’adresse vraiment ?**  \nSoyez clair sur les compétences indispensables, mais évitez la surenchère. Une annonce trop exigeante peut décourager d’excellents candidats.\n\nUne annonce réussie parle autant du poste que de la personne que vous cherchez à embarquer.\n\nElle doit permettre au candidat de se dire :  \n“Je comprends le défi, je vois ma place, j’ai envie d’en savoir plus.”\n\nRecruter, ce n’est pas seulement publier une offre.  \nC’est raconter une opportunité avec justesse, transparence et précision.",
+          "refusal": null,
+          "annotations": []
+        },
+        "finish_reason": "stop"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 36,
+      "completion_tokens": 322,
+      "total_tokens": 358,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "audio_tokens": 0
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 22,
+        "audio_tokens": 0,
+        "accepted_prediction_tokens": 0,
+        "rejected_prediction_tokens": 0
+      }
+    },
+    "service_tier": "default",
+    "system_fingerprint": null
+  },
+  "modelReturned": "gpt-5.5-2026-04-23",
+  "finish": "stop",
+  "usage": {
+    "prompt_tokens": 36,
+    "completion_tokens": 322,
+    "total_tokens": 358,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 22,
+      "audio_tokens": 0,
+      "accepted_prediction_tokens": 0,
+      "rejected_prediction_tokens": 0
+    }
+  },
+  "text": "Une bonne annonce de recrutement ne doit pas attirer “le plus de candidats possible”.\n\nElle doit attirer les bonnes personnes.\n\nTrop souvent, les offres d’emploi ressemblent à une liste de courses : 12 compétences obligatoires, 8 qualités attendues, un intitulé flou, et une phrase générique sur “une entreprise dynamique en pleine croissance”.\n\nRésultat : les meilleurs profils ne se projettent pas.\n\nPour rédiger une annonce plus efficace, commencez par répondre à 3 questions :\n\n✅ **Quelle mission concrète la personne va-t-elle accomplir ?**  \nPas seulement “gérer des projets”, mais : quels projets, avec quels enjeux, pour quel impact ?\n\n✅ **Pourquoi rejoindre votre entreprise maintenant ?**  \nCe qui vous différencie : culture, autonomie, équipe, vision, produit, management, conditions de travail…\n\n✅ **À qui cette opportunité s’adresse vraiment ?**  \nSoyez clair sur les compétences indispensables, mais évitez la surenchère. Une annonce trop exigeante peut décourager d’excellents candidats.\n\nUne annonce réussie parle autant du poste que de la personne que vous cherchez à embarquer.\n\nElle doit permettre au candidat de se dire :  \n“Je comprends le défi, je vois ma place, j’ai envie d’en savoir plus.”\n\nRecruter, ce n’est pas seulement publier une offre.  \nC’est raconter une opportunité avec justesse, transparence et précision.",
+  "attempts": [
+    {
+      "n": 1,
+      "startedAt": "2026-11-09T15:07:19.760Z",
+      "status": 200
+    }
+  ],
+  "generatedAt": "2026-11-09T15:07:19.760Z",
+  "sha256": "6c7277eba63207f1c4d82cbc375ffc42655b4d840c4ddaab06c25626da76abc6"
+}

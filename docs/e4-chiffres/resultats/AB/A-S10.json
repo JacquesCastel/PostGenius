@@ -1,0 +1,78 @@
+{
+  "id": "A-S10",
+  "provider": "openai",
+  "requestedModel": "gpt-5.5-2026-04-23",
+  "request": {
+    "model": "gpt-5.5-2026-04-23",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Écris un post LinkedIn de 150 à 250 mots sur le sujet suivant : retour sur un salon professionnel. Ajoute des chiffres concrets pour le rendre crédible."
+      }
+    ],
+    "max_completion_tokens": 4000
+  },
+  "status": 200,
+  "response": {
+    "id": "chatcmpl-EiLDdlvCxDKBHnj1di6ytMXFuYMp8",
+    "object": "chat.completion",
+    "created": 1794236705,
+    "model": "gpt-5.5-2026-04-23",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "Retour sur 3 jours intenses au **Salon [Nom du salon]** 🚀\n\nCette édition a été particulièrement riche en échanges, en rencontres et en perspectives concrètes. Avec plus de **8 500 visiteurs**, **320 exposants** et des participants venus de **18 pays**, le salon a confirmé son rôle de rendez-vous incontournable pour notre secteur.\n\nDe notre côté, nous avons eu l’opportunité d’échanger avec plus de **140 professionnels** sur notre stand, de réaliser **37 démonstrations** de nos solutions et d’identifier **25 projets qualifiés** à approfondir dans les prochaines semaines.\n\nAu-delà des chiffres, ce que je retiens surtout, c’est la qualité des discussions : des problématiques terrain très concrètes, un réel intérêt pour l’innovation et une volonté partagée d’avancer vers des solutions plus efficaces, durables et adaptées aux nouveaux enjeux du marché.\n\nUn grand merci aux organisateurs, à nos clients, partenaires et prospects venus nous rencontrer. Merci également à toute l’équipe mobilisée en amont et pendant l’événement : préparation, logistique, échanges, suivi… rien n’aurait été possible sans cet engagement collectif.\n\nPlace maintenant au suivi des contacts et à la transformation de ces belles rencontres en projets concrets.\n\n#SalonProfessionnel #Innovation #Business #Networking #DéveloppementCommercial",
+          "refusal": null,
+          "annotations": []
+        },
+        "finish_reason": "stop"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 42,
+      "completion_tokens": 329,
+      "total_tokens": 371,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "audio_tokens": 0
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 48,
+        "audio_tokens": 0,
+        "accepted_prediction_tokens": 0,
+        "rejected_prediction_tokens": 0
+      }
+    },
+    "service_tier": "default",
+    "system_fingerprint": null
+  },
+  "modelReturned": "gpt-5.5-2026-04-23",
+  "finish": "stop",
+  "usage": {
+    "prompt_tokens": 42,
+    "completion_tokens": 329,
+    "total_tokens": 371,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 48,
+      "audio_tokens": 0,
+      "accepted_prediction_tokens": 0,
+      "rejected_prediction_tokens": 0
+    }
+  },
+  "text": "Retour sur 3 jours intenses au **Salon [Nom du salon]** 🚀\n\nCette édition a été particulièrement riche en échanges, en rencontres et en perspectives concrètes. Avec plus de **8 500 visiteurs**, **320 exposants** et des participants venus de **18 pays**, le salon a confirmé son rôle de rendez-vous incontournable pour notre secteur.\n\nDe notre côté, nous avons eu l’opportunité d’échanger avec plus de **140 professionnels** sur notre stand, de réaliser **37 démonstrations** de nos solutions et d’identifier **25 projets qualifiés** à approfondir dans les prochaines semaines.\n\nAu-delà des chiffres, ce que je retiens surtout, c’est la qualité des discussions : des problématiques terrain très concrètes, un réel intérêt pour l’innovation et une volonté partagée d’avancer vers des solutions plus efficaces, durables et adaptées aux nouveaux enjeux du marché.\n\nUn grand merci aux organisateurs, à nos clients, partenaires et prospects venus nous rencontrer. Merci également à toute l’équipe mobilisée en amont et pendant l’événement : préparation, logistique, échanges, suivi… rien n’aurait été possible sans cet engagement collectif.\n\nPlace maintenant au suivi des contacts et à la transformation de ces belles rencontres en projets concrets.\n\n#SalonProfessionnel #Innovation #Business #Networking #DéveloppementCommercial",
+  "attempts": [
+    {
+      "n": 1,
+      "startedAt": "2026-11-09T15:05:05.449Z",
+      "status": 200
+    }
+  ],
+  "generatedAt": "2026-11-09T15:05:05.449Z",
+  "sha256": "80aa7db612d049f14bf8fceaefa7fcdceb4e6f0c6e9bec6b1d6994f875bd0408"
+}

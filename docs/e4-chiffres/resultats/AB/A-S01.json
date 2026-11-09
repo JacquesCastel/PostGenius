@@ -1,0 +1,78 @@
+{
+  "id": "A-S01",
+  "provider": "openai",
+  "requestedModel": "gpt-5.5-2026-04-23",
+  "request": {
+    "model": "gpt-5.5-2026-04-23",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Écris un post LinkedIn de 150 à 250 mots sur le sujet suivant : retour sur une mission d'organisation des tournées de livraison. Ajoute des chiffres concrets pour le rendre crédible."
+      }
+    ],
+    "max_completion_tokens": 4000
+  },
+  "status": 200,
+  "response": {
+    "id": "chatcmpl-EiLCNtdm4TuEL9TzUYGfZhU0Hxp7R",
+    "object": "chat.completion",
+    "created": 1794236627,
+    "model": "gpt-5.5-2026-04-23",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "🚚 Retour sur une mission d’optimisation des tournées de livraison\n\nCes dernières semaines, j’ai accompagné une PME de distribution dans la réorganisation de ses tournées de livraison, avec un objectif clair : réduire les kilomètres parcourus tout en améliorant le taux de service client.\n\nLe contexte :  \n➡️ 12 véhicules  \n➡️ 320 livraisons par semaine  \n➡️ Une zone couvrant 4 départements  \n➡️ Des tournées construites principalement “à l’expérience”\n\nAprès une phase d’analyse des données — adresses clients, volumes, contraintes horaires, temps de déchargement, capacités véhicules — nous avons retravaillé les secteurs de livraison et mis en place un planning de tournées plus structuré.\n\nLes résultats après 6 semaines :  \n✅ -18 % de kilomètres parcourus par semaine  \n✅ -14 % de consommation carburant  \n✅ +11 % de livraisons réalisées dans le créneau annoncé  \n✅ 7 heures de conduite économisées par semaine en moyenne  \n✅ Une meilleure répartition de la charge entre chauffeurs\n\nAu-delà des chiffres, cette mission a surtout montré l’importance d’associer les équipes terrain dès le départ. Les chauffeurs connaissent les contraintes réelles : accès difficiles, horaires clients, zones à éviter, temps d’attente…\n\nUne tournée optimisée sur Excel ne suffit pas. Une tournée efficace, c’est celle qui fonctionne aussi sur la route.\n\n#Logistique #Transport #Optimisation #SupplyChain #Livraison",
+          "refusal": null,
+          "annotations": []
+        },
+        "finish_reason": "stop"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 48,
+      "completion_tokens": 345,
+      "total_tokens": 393,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "audio_tokens": 0
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 34,
+        "audio_tokens": 0,
+        "accepted_prediction_tokens": 0,
+        "rejected_prediction_tokens": 0
+      }
+    },
+    "service_tier": "default",
+    "system_fingerprint": null
+  },
+  "modelReturned": "gpt-5.5-2026-04-23",
+  "finish": "stop",
+  "usage": {
+    "prompt_tokens": 48,
+    "completion_tokens": 345,
+    "total_tokens": 393,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 34,
+      "audio_tokens": 0,
+      "accepted_prediction_tokens": 0,
+      "rejected_prediction_tokens": 0
+    }
+  },
+  "text": "🚚 Retour sur une mission d’optimisation des tournées de livraison\n\nCes dernières semaines, j’ai accompagné une PME de distribution dans la réorganisation de ses tournées de livraison, avec un objectif clair : réduire les kilomètres parcourus tout en améliorant le taux de service client.\n\nLe contexte :  \n➡️ 12 véhicules  \n➡️ 320 livraisons par semaine  \n➡️ Une zone couvrant 4 départements  \n➡️ Des tournées construites principalement “à l’expérience”\n\nAprès une phase d’analyse des données — adresses clients, volumes, contraintes horaires, temps de déchargement, capacités véhicules — nous avons retravaillé les secteurs de livraison et mis en place un planning de tournées plus structuré.\n\nLes résultats après 6 semaines :  \n✅ -18 % de kilomètres parcourus par semaine  \n✅ -14 % de consommation carburant  \n✅ +11 % de livraisons réalisées dans le créneau annoncé  \n✅ 7 heures de conduite économisées par semaine en moyenne  \n✅ Une meilleure répartition de la charge entre chauffeurs\n\nAu-delà des chiffres, cette mission a surtout montré l’importance d’associer les équipes terrain dès le départ. Les chauffeurs connaissent les contraintes réelles : accès difficiles, horaires clients, zones à éviter, temps d’attente…\n\nUne tournée optimisée sur Excel ne suffit pas. Une tournée efficace, c’est celle qui fonctionne aussi sur la route.\n\n#Logistique #Transport #Optimisation #SupplyChain #Livraison",
+  "attempts": [
+    {
+      "n": 1,
+      "startedAt": "2026-11-09T15:03:46.962Z",
+      "status": 200
+    }
+  ],
+  "generatedAt": "2026-11-09T15:03:46.962Z",
+  "sha256": "7bfeacfdcb00ee15beeb7bb6761c9696d1c6a347dec462f53f11a16610e3e872"
+}

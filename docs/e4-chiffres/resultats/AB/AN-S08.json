@@ -1,0 +1,78 @@
+{
+  "id": "AN-S08",
+  "provider": "openai",
+  "requestedModel": "gpt-5.5-2026-04-23",
+  "request": {
+    "model": "gpt-5.5-2026-04-23",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Écris un post LinkedIn de 150 à 250 mots sur le sujet suivant : l'obligation de justifier l'origine des matières pour les sous-traitants."
+      }
+    ],
+    "max_completion_tokens": 4000
+  },
+  "status": 200,
+  "response": {
+    "id": "chatcmpl-EiLGApmc7jSdUAm6Ve7C4nxBEVDcn",
+    "object": "chat.completion",
+    "created": 1794236862,
+    "model": "gpt-5.5-2026-04-23",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "Dans un contexte de chaînes d’approvisionnement de plus en plus complexes, l’obligation de justifier l’origine des matières devient un enjeu majeur pour les sous-traitants.\n\nIl ne s’agit plus seulement de produire dans les délais et au bon niveau de qualité. Les donneurs d’ordre attendent désormais une traçabilité claire : certificats fournisseurs, factures, bons de livraison, déclarations d’origine, fiches techniques, preuves de conformité réglementaire… Chaque matière utilisée doit pouvoir être documentée.\n\nPourquoi est-ce essentiel ?\n\n✅ Sécuriser la relation avec les clients  \n✅ Répondre aux exigences réglementaires et douanières  \n✅ Prévenir les risques liés aux matières interdites ou non conformes  \n✅ Renforcer la transparence et la confiance dans la chaîne de valeur  \n✅ Se différencier dans les appels d’offres\n\nPour les sous-traitants, cette obligation implique une organisation rigoureuse : collecte systématique des documents, archivage, contrôle des fournisseurs et mise à jour régulière des informations.\n\nLa traçabilité n’est plus une contrainte administrative secondaire. Elle devient un véritable levier de crédibilité et de compétitivité.\n\nLes entreprises qui sauront anticiper ces exigences auront une longueur d’avance.\n\n#SousTraitance #Traçabilité #Compliance #SupplyChain #Achats",
+          "refusal": null,
+          "annotations": []
+        },
+        "finish_reason": "stop"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 41,
+      "completion_tokens": 378,
+      "total_tokens": 419,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "audio_tokens": 0
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 101,
+        "audio_tokens": 0,
+        "accepted_prediction_tokens": 0,
+        "rejected_prediction_tokens": 0
+      }
+    },
+    "service_tier": "default",
+    "system_fingerprint": null
+  },
+  "modelReturned": "gpt-5.5-2026-04-23",
+  "finish": "stop",
+  "usage": {
+    "prompt_tokens": 41,
+    "completion_tokens": 378,
+    "total_tokens": 419,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 101,
+      "audio_tokens": 0,
+      "accepted_prediction_tokens": 0,
+      "rejected_prediction_tokens": 0
+    }
+  },
+  "text": "Dans un contexte de chaînes d’approvisionnement de plus en plus complexes, l’obligation de justifier l’origine des matières devient un enjeu majeur pour les sous-traitants.\n\nIl ne s’agit plus seulement de produire dans les délais et au bon niveau de qualité. Les donneurs d’ordre attendent désormais une traçabilité claire : certificats fournisseurs, factures, bons de livraison, déclarations d’origine, fiches techniques, preuves de conformité réglementaire… Chaque matière utilisée doit pouvoir être documentée.\n\nPourquoi est-ce essentiel ?\n\n✅ Sécuriser la relation avec les clients  \n✅ Répondre aux exigences réglementaires et douanières  \n✅ Prévenir les risques liés aux matières interdites ou non conformes  \n✅ Renforcer la transparence et la confiance dans la chaîne de valeur  \n✅ Se différencier dans les appels d’offres\n\nPour les sous-traitants, cette obligation implique une organisation rigoureuse : collecte systématique des documents, archivage, contrôle des fournisseurs et mise à jour régulière des informations.\n\nLa traçabilité n’est plus une contrainte administrative secondaire. Elle devient un véritable levier de crédibilité et de compétitivité.\n\nLes entreprises qui sauront anticiper ces exigences auront une longueur d’avance.\n\n#SousTraitance #Traçabilité #Compliance #SupplyChain #Achats",
+  "attempts": [
+    {
+      "n": 1,
+      "startedAt": "2026-11-09T15:07:42.268Z",
+      "status": 200
+    }
+  ],
+  "generatedAt": "2026-11-09T15:07:42.268Z",
+  "sha256": "86738b553abdae448e8a70b19a82b76f306f3671c313f86f5f4a5dbd0f9c948f"
+}

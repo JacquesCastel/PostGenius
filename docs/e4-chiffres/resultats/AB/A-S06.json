@@ -1,0 +1,78 @@
+{
+  "id": "A-S06",
+  "provider": "openai",
+  "requestedModel": "gpt-5.5-2026-04-23",
+  "request": {
+    "model": "gpt-5.5-2026-04-23",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Écris un post LinkedIn de 150 à 250 mots sur le sujet suivant : annonce d'un partenariat de formation. Ajoute des chiffres concrets pour le rendre crédible."
+      }
+    ],
+    "max_completion_tokens": 4000
+  },
+  "status": 200,
+  "response": {
+    "id": "chatcmpl-EiLD5SMzOiUTvSXLuKnKRDi4nd6nW",
+    "object": "chat.completion",
+    "created": 1794236671,
+    "model": "gpt-5.5-2026-04-23",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "🚀 Nous sommes ravis d’annoncer notre nouveau partenariat de formation avec **[Nom du partenaire]** !\n\nL’objectif : accompagner les professionnels dans le développement de compétences clés, concrètes et immédiatement applicables sur le terrain.\n\nÀ travers ce partenariat, nous lancerons dès le mois prochain un programme structuré autour de **3 parcours de formation** :  \n✅ management et leadership  \n✅ transformation digitale  \n✅ efficacité opérationnelle\n\nAu total, ce sont **plus de 120 heures de contenus pédagogiques**, réparties en modules courts, ateliers pratiques et sessions de coaching collectif. Notre ambition est de former **500 collaborateurs d’ici 12 mois**, avec un taux de satisfaction visé de **90 %** et une progression mesurable des compétences grâce à des évaluations avant/après formation.\n\nCe partenariat repose sur une conviction forte : la formation n’est pas seulement un levier de montée en compétences, c’est aussi un moteur d’engagement, de performance et d’innovation durable.\n\nUn grand merci aux équipes de **[Nom du partenaire]** pour leur confiance et leur implication dans la construction de ce projet.\n\nNous avons hâte de voir les premiers résultats sur le terrain !\n\n#Formation #Partenariat #Compétences #Leadership #TransformationDigitale #DéveloppementProfessionnel",
+          "refusal": null,
+          "annotations": []
+        },
+        "finish_reason": "stop"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 43,
+      "completion_tokens": 307,
+      "total_tokens": 350,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "audio_tokens": 0
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 40,
+        "audio_tokens": 0,
+        "accepted_prediction_tokens": 0,
+        "rejected_prediction_tokens": 0
+      }
+    },
+    "service_tier": "default",
+    "system_fingerprint": null
+  },
+  "modelReturned": "gpt-5.5-2026-04-23",
+  "finish": "stop",
+  "usage": {
+    "prompt_tokens": 43,
+    "completion_tokens": 307,
+    "total_tokens": 350,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 40,
+      "audio_tokens": 0,
+      "accepted_prediction_tokens": 0,
+      "rejected_prediction_tokens": 0
+    }
+  },
+  "text": "🚀 Nous sommes ravis d’annoncer notre nouveau partenariat de formation avec **[Nom du partenaire]** !\n\nL’objectif : accompagner les professionnels dans le développement de compétences clés, concrètes et immédiatement applicables sur le terrain.\n\nÀ travers ce partenariat, nous lancerons dès le mois prochain un programme structuré autour de **3 parcours de formation** :  \n✅ management et leadership  \n✅ transformation digitale  \n✅ efficacité opérationnelle\n\nAu total, ce sont **plus de 120 heures de contenus pédagogiques**, réparties en modules courts, ateliers pratiques et sessions de coaching collectif. Notre ambition est de former **500 collaborateurs d’ici 12 mois**, avec un taux de satisfaction visé de **90 %** et une progression mesurable des compétences grâce à des évaluations avant/après formation.\n\nCe partenariat repose sur une conviction forte : la formation n’est pas seulement un levier de montée en compétences, c’est aussi un moteur d’engagement, de performance et d’innovation durable.\n\nUn grand merci aux équipes de **[Nom du partenaire]** pour leur confiance et leur implication dans la construction de ce projet.\n\nNous avons hâte de voir les premiers résultats sur le terrain !\n\n#Formation #Partenariat #Compétences #Leadership #TransformationDigitale #DéveloppementProfessionnel",
+  "attempts": [
+    {
+      "n": 1,
+      "startedAt": "2026-11-09T15:04:31.038Z",
+      "status": 200
+    }
+  ],
+  "generatedAt": "2026-11-09T15:04:31.038Z",
+  "sha256": "9f75e0834c9bd60fc26c9c36eaca1ed5927408203267dd80f99885074f2d4580"
+}

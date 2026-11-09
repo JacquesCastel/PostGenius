@@ -1,0 +1,78 @@
+{
+  "id": "A-S04",
+  "provider": "openai",
+  "requestedModel": "gpt-5.5-2026-04-23",
+  "request": {
+    "model": "gpt-5.5-2026-04-23",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Écris un post LinkedIn de 150 à 250 mots sur le sujet suivant : bilan de l'année d'une petite menuiserie. Ajoute des chiffres concrets pour le rendre crédible."
+      }
+    ],
+    "max_completion_tokens": 4000
+  },
+  "status": 200,
+  "response": {
+    "id": "chatcmpl-EiLCpjnzwsqMAjFQ22OaJ9dWmiPzQ",
+    "object": "chat.completion",
+    "created": 1794236655,
+    "model": "gpt-5.5-2026-04-23",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "🔨 **Bilan de l’année : une belle étape pour notre petite menuiserie**\n\nAlors que l’année touche à sa fin, nous avons pris le temps de faire le point sur ces 12 derniers mois riches en projets, en rencontres et en apprentissages.\n\nEn 2024, notre atelier a réalisé **86 chantiers**, dont **34 cuisines sur mesure**, **21 dressings**, **18 projets d’agencement intérieur** et **13 créations extérieures** comme des terrasses, portes ou volets. Au total, ce sont près de **1 250 heures de fabrication** passées à l’atelier et plus de **3 800 km parcourus** pour rencontrer nos clients et assurer les poses.\n\nNous avons également travaillé avec **7 essences de bois différentes**, principalement du chêne, du hêtre et du frêne, et utilisé environ **4,2 m³ de bois massif** sur l’année. Côté équipe, nous sommes restés une petite structure de **3 personnes**, avec la même exigence : prendre le temps de bien faire.\n\nCette année a aussi été marquée par un investissement important : l’achat d’une nouvelle scie à format, qui nous a permis de gagner en précision et en confort de travail.\n\nMerci à nos clients pour leur confiance, à nos fournisseurs locaux pour leur réactivité, et à toutes les personnes qui recommandent notre travail.\n\nCap sur 2025, avec toujours la même envie : créer du solide, du beau et du durable. 🌿",
+          "refusal": null,
+          "annotations": []
+        },
+        "finish_reason": "stop"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 47,
+      "completion_tokens": 357,
+      "total_tokens": 404,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "audio_tokens": 0
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 38,
+        "audio_tokens": 0,
+        "accepted_prediction_tokens": 0,
+        "rejected_prediction_tokens": 0
+      }
+    },
+    "service_tier": "default",
+    "system_fingerprint": null
+  },
+  "modelReturned": "gpt-5.5-2026-04-23",
+  "finish": "stop",
+  "usage": {
+    "prompt_tokens": 47,
+    "completion_tokens": 357,
+    "total_tokens": 404,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 38,
+      "audio_tokens": 0,
+      "accepted_prediction_tokens": 0,
+      "rejected_prediction_tokens": 0
+    }
+  },
+  "text": "🔨 **Bilan de l’année : une belle étape pour notre petite menuiserie**\n\nAlors que l’année touche à sa fin, nous avons pris le temps de faire le point sur ces 12 derniers mois riches en projets, en rencontres et en apprentissages.\n\nEn 2024, notre atelier a réalisé **86 chantiers**, dont **34 cuisines sur mesure**, **21 dressings**, **18 projets d’agencement intérieur** et **13 créations extérieures** comme des terrasses, portes ou volets. Au total, ce sont près de **1 250 heures de fabrication** passées à l’atelier et plus de **3 800 km parcourus** pour rencontrer nos clients et assurer les poses.\n\nNous avons également travaillé avec **7 essences de bois différentes**, principalement du chêne, du hêtre et du frêne, et utilisé environ **4,2 m³ de bois massif** sur l’année. Côté équipe, nous sommes restés une petite structure de **3 personnes**, avec la même exigence : prendre le temps de bien faire.\n\nCette année a aussi été marquée par un investissement important : l’achat d’une nouvelle scie à format, qui nous a permis de gagner en précision et en confort de travail.\n\nMerci à nos clients pour leur confiance, à nos fournisseurs locaux pour leur réactivité, et à toutes les personnes qui recommandent notre travail.\n\nCap sur 2025, avec toujours la même envie : créer du solide, du beau et du durable. 🌿",
+  "attempts": [
+    {
+      "n": 1,
+      "startedAt": "2026-11-09T15:04:13.809Z",
+      "status": 200
+    }
+  ],
+  "generatedAt": "2026-11-09T15:04:13.809Z",
+  "sha256": "2ec4897bcac9a145a65e8f5e121623ff60425f3eee0ea1049b038a73b5acb91d"
+}

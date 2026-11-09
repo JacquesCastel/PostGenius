@@ -1,0 +1,78 @@
+{
+  "id": "A-S08",
+  "provider": "openai",
+  "requestedModel": "gpt-5.5-2026-04-23",
+  "request": {
+    "model": "gpt-5.5-2026-04-23",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Écris un post LinkedIn de 150 à 250 mots sur le sujet suivant : l'obligation de justifier l'origine des matières pour les sous-traitants. Ajoute des chiffres concrets pour le rendre crédible."
+      }
+    ],
+    "max_completion_tokens": 4000
+  },
+  "status": 200,
+  "response": {
+    "id": "chatcmpl-EiLDL9TvlH1JALOsSiO1dPstzlVRl",
+    "object": "chat.completion",
+    "created": 1794236687,
+    "model": "gpt-5.5-2026-04-23",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "🔎 **Sous-traitants : l’origine des matières n’est plus un “plus”, c’est une obligation business.**\n\nAujourd’hui, un donneur d’ordre ne demande plus seulement un prix, un délai et une conformité technique. Il exige aussi de savoir **d’où viennent les matières** : acier, plastique, textile, composants électroniques, bois, minerais, etc.\n\nPourquoi ? Parce que les risques sont concrets : non-conformité réglementaire, sanctions douanières, atteinte à l’image, rupture de chaîne d’approvisionnement.\n\nDans certains secteurs, un simple certificat matière peut faire la différence. Par exemple, pour une pièce usinée à 8 € contenant un alliage spécifique, l’absence de certificat d’origine ou de certificat matière peut bloquer une livraison complète de **50 000 €**. Et dans un audit fournisseur, il suffit parfois de **3 documents manquants sur 100 références** pour déclencher un plan d’actions correctives.\n\nLes sous-traitants doivent donc être capables de fournir rapidement :\n\n✅ certificats matière  \n✅ pays d’origine  \n✅ fournisseurs de rang 1, voire rang 2  \n✅ preuves d’achat  \n✅ fiches techniques et déclarations de conformité  \n✅ traçabilité par lot ou numéro de commande  \n\nLa bonne pratique ? Mettre en place un dossier matière dès l’achat, pas au moment de l’audit.\n\nCar demain, la traçabilité ne sera plus un avantage concurrentiel.  \nCe sera simplement le ticket d’entrée pour travailler avec les grands donneurs d’ordre.",
+          "refusal": null,
+          "annotations": []
+        },
+        "finish_reason": "stop"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 53,
+      "completion_tokens": 539,
+      "total_tokens": 592,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "audio_tokens": 0
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 214,
+        "audio_tokens": 0,
+        "accepted_prediction_tokens": 0,
+        "rejected_prediction_tokens": 0
+      }
+    },
+    "service_tier": "default",
+    "system_fingerprint": null
+  },
+  "modelReturned": "gpt-5.5-2026-04-23",
+  "finish": "stop",
+  "usage": {
+    "prompt_tokens": 53,
+    "completion_tokens": 539,
+    "total_tokens": 592,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 214,
+      "audio_tokens": 0,
+      "accepted_prediction_tokens": 0,
+      "rejected_prediction_tokens": 0
+    }
+  },
+  "text": "🔎 **Sous-traitants : l’origine des matières n’est plus un “plus”, c’est une obligation business.**\n\nAujourd’hui, un donneur d’ordre ne demande plus seulement un prix, un délai et une conformité technique. Il exige aussi de savoir **d’où viennent les matières** : acier, plastique, textile, composants électroniques, bois, minerais, etc.\n\nPourquoi ? Parce que les risques sont concrets : non-conformité réglementaire, sanctions douanières, atteinte à l’image, rupture de chaîne d’approvisionnement.\n\nDans certains secteurs, un simple certificat matière peut faire la différence. Par exemple, pour une pièce usinée à 8 € contenant un alliage spécifique, l’absence de certificat d’origine ou de certificat matière peut bloquer une livraison complète de **50 000 €**. Et dans un audit fournisseur, il suffit parfois de **3 documents manquants sur 100 références** pour déclencher un plan d’actions correctives.\n\nLes sous-traitants doivent donc être capables de fournir rapidement :\n\n✅ certificats matière  \n✅ pays d’origine  \n✅ fournisseurs de rang 1, voire rang 2  \n✅ preuves d’achat  \n✅ fiches techniques et déclarations de conformité  \n✅ traçabilité par lot ou numéro de commande  \n\nLa bonne pratique ? Mettre en place un dossier matière dès l’achat, pas au moment de l’audit.\n\nCar demain, la traçabilité ne sera plus un avantage concurrentiel.  \nCe sera simplement le ticket d’entrée pour travailler avec les grands donneurs d’ordre.",
+  "attempts": [
+    {
+      "n": 1,
+      "startedAt": "2026-11-09T15:04:46.881Z",
+      "status": 200
+    }
+  ],
+  "generatedAt": "2026-11-09T15:04:46.881Z",
+  "sha256": "1f55c19e452b36cb660308d4740222a470cd02e15124e4bda801d985628ad5e3"
+}

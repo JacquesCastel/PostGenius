@@ -1,0 +1,78 @@
+{
+  "id": "A-S02",
+  "provider": "openai",
+  "requestedModel": "gpt-5.5-2026-04-23",
+  "request": {
+    "model": "gpt-5.5-2026-04-23",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Écris un post LinkedIn de 150 à 250 mots sur le sujet suivant : lancement d'une formation sur la réponse aux appels d'offres publics. Ajoute des chiffres concrets pour le rendre crédible."
+      }
+    ],
+    "max_completion_tokens": 4000
+  },
+  "status": 200,
+  "response": {
+    "id": "chatcmpl-EiLCUkeojjrHtSpbxKNvfjdXK50Xf",
+    "object": "chat.completion",
+    "created": 1794236634,
+    "model": "gpt-5.5-2026-04-23",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "🚀 Lancement de notre nouvelle formation : **Répondre efficacement aux appels d’offres publics**\n\nChaque année, la commande publique représente près de **160 milliards d’euros** en France. Pourtant, de nombreuses entreprises — TPE, PME, associations — n’osent pas se lancer ou abandonnent face à la complexité des dossiers.\n\nC’est pour répondre à ce besoin que nous lançons une formation opérationnelle dédiée à la réponse aux marchés publics.\n\n🎯 Objectif : vous aider à passer de “je ne sais pas par où commencer” à “je sais identifier, analyser et déposer une offre solide”.\n\nAu programme :\n✅ Comprendre le fonctionnement des marchés publics  \n✅ Identifier les appels d’offres adaptés à votre activité  \n✅ Décrypter un DCE : RC, CCTP, CCAP, AE…  \n✅ Construire une réponse technique et financière convaincante  \n✅ Éviter les erreurs qui peuvent entraîner un rejet administratif  \n✅ Optimiser votre mémoire technique  \n\nLa formation s’appuie sur des cas concrets, des modèles prêts à l’emploi et une méthodologie en **7 étapes** pour structurer vos réponses.\n\n📌 Format : formation courte et pratique  \n⏱ Durée : **2 jours**  \n👥 Public : dirigeants, commerciaux, responsables administratifs, consultants, associations\n\nLes marchés publics ne sont pas réservés aux grandes entreprises. Avec la bonne méthode, ils peuvent devenir un véritable levier de croissance.\n\n📩 Intéressé(e) ? Contactez-moi pour recevoir le programme complet.",
+          "refusal": null,
+          "annotations": []
+        },
+        "finish_reason": "stop"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 50,
+      "completion_tokens": 437,
+      "total_tokens": 487,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "audio_tokens": 0
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 113,
+        "audio_tokens": 0,
+        "accepted_prediction_tokens": 0,
+        "rejected_prediction_tokens": 0
+      }
+    },
+    "service_tier": "default",
+    "system_fingerprint": null
+  },
+  "modelReturned": "gpt-5.5-2026-04-23",
+  "finish": "stop",
+  "usage": {
+    "prompt_tokens": 50,
+    "completion_tokens": 437,
+    "total_tokens": 487,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 113,
+      "audio_tokens": 0,
+      "accepted_prediction_tokens": 0,
+      "rejected_prediction_tokens": 0
+    }
+  },
+  "text": "🚀 Lancement de notre nouvelle formation : **Répondre efficacement aux appels d’offres publics**\n\nChaque année, la commande publique représente près de **160 milliards d’euros** en France. Pourtant, de nombreuses entreprises — TPE, PME, associations — n’osent pas se lancer ou abandonnent face à la complexité des dossiers.\n\nC’est pour répondre à ce besoin que nous lançons une formation opérationnelle dédiée à la réponse aux marchés publics.\n\n🎯 Objectif : vous aider à passer de “je ne sais pas par où commencer” à “je sais identifier, analyser et déposer une offre solide”.\n\nAu programme :\n✅ Comprendre le fonctionnement des marchés publics  \n✅ Identifier les appels d’offres adaptés à votre activité  \n✅ Décrypter un DCE : RC, CCTP, CCAP, AE…  \n✅ Construire une réponse technique et financière convaincante  \n✅ Éviter les erreurs qui peuvent entraîner un rejet administratif  \n✅ Optimiser votre mémoire technique  \n\nLa formation s’appuie sur des cas concrets, des modèles prêts à l’emploi et une méthodologie en **7 étapes** pour structurer vos réponses.\n\n📌 Format : formation courte et pratique  \n⏱ Durée : **2 jours**  \n👥 Public : dirigeants, commerciaux, responsables administratifs, consultants, associations\n\nLes marchés publics ne sont pas réservés aux grandes entreprises. Avec la bonne méthode, ils peuvent devenir un véritable levier de croissance.\n\n📩 Intéressé(e) ? Contactez-moi pour recevoir le programme complet.",
+  "attempts": [
+    {
+      "n": 1,
+      "startedAt": "2026-11-09T15:03:54.223Z",
+      "status": 200
+    }
+  ],
+  "generatedAt": "2026-11-09T15:03:54.223Z",
+  "sha256": "d509f5e62cfa2ea8810fa710ee8e7bbf2c373a6c76347150577c230d26ba4e4a"
+}

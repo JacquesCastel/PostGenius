@@ -1,0 +1,78 @@
+{
+  "id": "A-S07",
+  "provider": "openai",
+  "requestedModel": "gpt-5.5-2026-04-23",
+  "request": {
+    "model": "gpt-5.5-2026-04-23",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Écris un post LinkedIn de 150 à 250 mots sur le sujet suivant : le remplacement d'un four dans une fonderie. Ajoute des chiffres concrets pour le rendre crédible."
+      }
+    ],
+    "max_completion_tokens": 4000
+  },
+  "status": 200,
+  "response": {
+    "id": "chatcmpl-EiLDCd4xk3xh1wWbVG26BfBPJLsLF",
+    "object": "chat.completion",
+    "created": 1794236678,
+    "model": "gpt-5.5-2026-04-23",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "🔧 Remplacer un four en fonderie : un projet industriel qui ne laisse aucune place à l’improvisation\n\nNous venons de finaliser le remplacement d’un four de fusion sur notre site de fonderie. Un chantier stratégique, préparé pendant plusieurs mois, avec un objectif clair : améliorer la performance énergétique, sécuriser la production et réduire notre impact environnemental.\n\nL’ancien four, en service depuis plus de 20 ans, consommait en moyenne 720 kWh par tonne fondue. Le nouveau équipement permet de descendre à environ 580 kWh/tonne, soit une réduction estimée de 19 % de la consommation électrique.\n\nQuelques chiffres clés du projet :\n✅ 8 semaines de préparation technique  \n✅ 12 jours d’arrêt planifié  \n✅ 35 tonnes d’équipement démontées et évacuées  \n✅ 1 nouveau four d’une capacité de 6 tonnes par charge  \n✅ Jusqu’à 1 200 tonnes de métal fondues par mois  \n✅ 140 tonnes de CO₂ évitées chaque année grâce aux gains énergétiques  \n\nAu-delà des chiffres, ce projet a surtout été une réussite collective : maintenance, production, sécurité, fournisseurs et équipes travaux ont travaillé main dans la main pour tenir les délais sans compromis sur la sécurité.\n\nDans une fonderie, moderniser un four, ce n’est pas seulement remplacer une machine. C’est investir dans la fiabilité, la compétitivité et l’avenir industriel.  \n\n#Industrie #Fonderie #Maintenance #Energie #PerformanceIndustrielle #Décarbonation",
+          "refusal": null,
+          "annotations": []
+        },
+        "finish_reason": "stop"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 47,
+      "completion_tokens": 376,
+      "total_tokens": 423,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "audio_tokens": 0
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 44,
+        "audio_tokens": 0,
+        "accepted_prediction_tokens": 0,
+        "rejected_prediction_tokens": 0
+      }
+    },
+    "service_tier": "default",
+    "system_fingerprint": null
+  },
+  "modelReturned": "gpt-5.5-2026-04-23",
+  "finish": "stop",
+  "usage": {
+    "prompt_tokens": 47,
+    "completion_tokens": 376,
+    "total_tokens": 423,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 44,
+      "audio_tokens": 0,
+      "accepted_prediction_tokens": 0,
+      "rejected_prediction_tokens": 0
+    }
+  },
+  "text": "🔧 Remplacer un four en fonderie : un projet industriel qui ne laisse aucune place à l’improvisation\n\nNous venons de finaliser le remplacement d’un four de fusion sur notre site de fonderie. Un chantier stratégique, préparé pendant plusieurs mois, avec un objectif clair : améliorer la performance énergétique, sécuriser la production et réduire notre impact environnemental.\n\nL’ancien four, en service depuis plus de 20 ans, consommait en moyenne 720 kWh par tonne fondue. Le nouveau équipement permet de descendre à environ 580 kWh/tonne, soit une réduction estimée de 19 % de la consommation électrique.\n\nQuelques chiffres clés du projet :\n✅ 8 semaines de préparation technique  \n✅ 12 jours d’arrêt planifié  \n✅ 35 tonnes d’équipement démontées et évacuées  \n✅ 1 nouveau four d’une capacité de 6 tonnes par charge  \n✅ Jusqu’à 1 200 tonnes de métal fondues par mois  \n✅ 140 tonnes de CO₂ évitées chaque année grâce aux gains énergétiques  \n\nAu-delà des chiffres, ce projet a surtout été une réussite collective : maintenance, production, sécurité, fournisseurs et équipes travaux ont travaillé main dans la main pour tenir les délais sans compromis sur la sécurité.\n\nDans une fonderie, moderniser un four, ce n’est pas seulement remplacer une machine. C’est investir dans la fiabilité, la compétitivité et l’avenir industriel.  \n\n#Industrie #Fonderie #Maintenance #Energie #PerformanceIndustrielle #Décarbonation",
+  "attempts": [
+    {
+      "n": 1,
+      "startedAt": "2026-11-09T15:04:38.384Z",
+      "status": 200
+    }
+  ],
+  "generatedAt": "2026-11-09T15:04:38.384Z",
+  "sha256": "d3fa50ee559208b55c85e822f2dfb7b41dca4ebe802a6c202c5040676b124aab"
+}

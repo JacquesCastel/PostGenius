@@ -1,0 +1,78 @@
+{
+  "id": "AN-S02",
+  "provider": "openai",
+  "requestedModel": "gpt-5.5-2026-04-23",
+  "request": {
+    "model": "gpt-5.5-2026-04-23",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Écris un post LinkedIn de 150 à 250 mots sur le sujet suivant : lancement d'une formation sur la réponse aux appels d'offres publics."
+      }
+    ],
+    "max_completion_tokens": 4000
+  },
+  "status": 200,
+  "response": {
+    "id": "chatcmpl-EiLFS9fB0ekJ8RU7RXZ6dNltcA3te",
+    "object": "chat.completion",
+    "created": 1794236818,
+    "model": "gpt-5.5-2026-04-23",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "🚀 Nouvelle formation : maîtriser la réponse aux appels d’offres publics\n\nRépondre à un appel d’offres public peut représenter une formidable opportunité de développement pour une entreprise… à condition d’en comprendre les codes.\n\nEntre les pièces administratives, le mémoire technique, les critères de sélection, les délais à respecter et la stratégie de réponse à adopter, l’exercice peut vite sembler complexe. Pourtant, avec une méthode claire, il devient beaucoup plus accessible.\n\nC’est pourquoi nous lançons une formation dédiée à la réponse aux appels d’offres publics.\n\n🎯 Objectif : permettre aux entreprises, dirigeants, responsables commerciaux, chargés de développement ou équipes administratives de structurer efficacement leurs réponses et d’augmenter leurs chances de succès.\n\nAu programme :\n✅ comprendre le fonctionnement des marchés publics  \n✅ identifier les opportunités pertinentes  \n✅ analyser un DCE  \n✅ construire une réponse administrative et technique solide  \n✅ valoriser ses atouts dans le mémoire technique  \n✅ éviter les erreurs fréquentes qui peuvent coûter cher  \n\nCette formation se veut concrète, opérationnelle et orientée terrain, avec des exemples pratiques et des outils directement réutilisables.\n\nLes marchés publics ne sont pas réservés aux grandes entreprises. Avec la bonne méthode, les TPE, PME et structures de toutes tailles peuvent aussi y trouver de vraies opportunités.\n\n📩 Intéressé(e) ? Contactez-nous pour en savoir plus sur le programme et les prochaines sessions.\n\n#Formation #MarchésPublics #AppelsDOffres #DéveloppementCommercial #PME",
+          "refusal": null,
+          "annotations": []
+        },
+        "finish_reason": "stop"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 38,
+      "completion_tokens": 345,
+      "total_tokens": 383,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "audio_tokens": 0
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 21,
+        "audio_tokens": 0,
+        "accepted_prediction_tokens": 0,
+        "rejected_prediction_tokens": 0
+      }
+    },
+    "service_tier": "default",
+    "system_fingerprint": null
+  },
+  "modelReturned": "gpt-5.5-2026-04-23",
+  "finish": "stop",
+  "usage": {
+    "prompt_tokens": 38,
+    "completion_tokens": 345,
+    "total_tokens": 383,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 21,
+      "audio_tokens": 0,
+      "accepted_prediction_tokens": 0,
+      "rejected_prediction_tokens": 0
+    }
+  },
+  "text": "🚀 Nouvelle formation : maîtriser la réponse aux appels d’offres publics\n\nRépondre à un appel d’offres public peut représenter une formidable opportunité de développement pour une entreprise… à condition d’en comprendre les codes.\n\nEntre les pièces administratives, le mémoire technique, les critères de sélection, les délais à respecter et la stratégie de réponse à adopter, l’exercice peut vite sembler complexe. Pourtant, avec une méthode claire, il devient beaucoup plus accessible.\n\nC’est pourquoi nous lançons une formation dédiée à la réponse aux appels d’offres publics.\n\n🎯 Objectif : permettre aux entreprises, dirigeants, responsables commerciaux, chargés de développement ou équipes administratives de structurer efficacement leurs réponses et d’augmenter leurs chances de succès.\n\nAu programme :\n✅ comprendre le fonctionnement des marchés publics  \n✅ identifier les opportunités pertinentes  \n✅ analyser un DCE  \n✅ construire une réponse administrative et technique solide  \n✅ valoriser ses atouts dans le mémoire technique  \n✅ éviter les erreurs fréquentes qui peuvent coûter cher  \n\nCette formation se veut concrète, opérationnelle et orientée terrain, avec des exemples pratiques et des outils directement réutilisables.\n\nLes marchés publics ne sont pas réservés aux grandes entreprises. Avec la bonne méthode, les TPE, PME et structures de toutes tailles peuvent aussi y trouver de vraies opportunités.\n\n📩 Intéressé(e) ? Contactez-nous pour en savoir plus sur le programme et les prochaines sessions.\n\n#Formation #MarchésPublics #AppelsDOffres #DéveloppementCommercial #PME",
+  "attempts": [
+    {
+      "n": 1,
+      "startedAt": "2026-11-09T15:06:57.813Z",
+      "status": 200
+    }
+  ],
+  "generatedAt": "2026-11-09T15:06:57.813Z",
+  "sha256": "2f70f558ee542f924d627cea67d72c4040edcf70dd63dd7dc42e6a6651af1b54"
+}
