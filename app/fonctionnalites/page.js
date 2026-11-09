@@ -144,7 +144,7 @@ export default function FonctionnalitesPage() {
           reverse
           tag="Votre matière"
           title="Une base de connaissances que le moteur sait résumer"
-          text="Déposez documents, liens et notes : LinkeePost en retient les faits, les cas et les positions, et vos posts sont conçus pour les reprendre sans rien inventer. Le moteur résume ce qu'il a appris de vous ; vous échangez avec lui pour corriger ou préciser, et rien n'est retenu sans votre clic. Un article ou un post vu en ligne s'envoie d'un geste depuis le menu Partager du téléphone (Android) ou un favori du navigateur."
+          text="Déposez documents, liens et notes : LinkeePost en retient les faits, les cas et les positions, et vos posts sont conçus pour les reprendre fidèlement ; un contrôle signale, sous le post, les chiffres qui ne figurent pas dans vos informations. Le moteur résume ce qu'il a appris de vous ; vous échangez avec lui pour corriger ou préciser, et rien n'est retenu sans votre clic. Un article ou un post vu en ligne s'envoie d'un geste depuis le menu Partager du téléphone (Android) ou un favori du navigateur."
           points={[
             "Résumé de ce que le moteur a appris : positions, voix, preuves, zones d'ombre",
             "Échange avec le moteur pour affiner : ce qu'il propose de retenir attend votre accord",
