@@ -1,6 +1,6 @@
 # Protocole E4 : combien de chiffres non fournis dans un post généré ?
 
-*Version 4 (**provisoire, non gelée**), du 9 novembre 2026 : les conditions A et B sont générées par l'API d'un modèle OpenAI, et non plus par l'application ChatGPT, après l'abandon de la génération manuelle (voir la section 2). Le modèle exact doit être fixé avant le gel. Version 3 : deux règles ajoutées (phrases d'ouverture et de clôture, version du moteur). Version 1 rédigée le 4 novembre. **Aucune génération valable n'a eu lieu.** Ce protocole doit être relu, puis **figé (empreintes SHA-256, gist public) avant** la première génération. Après le gel, aucune modification des sujets, des consignes, des définitions ni des règles de décision. Toute erreur découverte ensuite est notée dans le compte rendu, jamais corrigée en silence.*
+*Version 4 (**prête pour le gel**), du 9 novembre 2026 : les conditions A et B sont générées par l'API d'un modèle OpenAI, et non plus par l'application ChatGPT, après l'abandon de la génération manuelle (voir la section 2). Modèle fixé le 9 novembre 2026 : `gpt-5.5-2026-04-23` (version datée, appelée avec succès le jour même ; plafond de sortie : 4 000 jetons, aucun autre paramètre). Version 3 : deux règles ajoutées (phrases d'ouverture et de clôture, version du moteur). Version 1 rédigée le 4 novembre. **Aucune génération valable n'a eu lieu.** Ce protocole doit être relu, puis **figé (empreintes SHA-256, gist public) avant** la première génération. Après le gel, aucune modification des sujets, des consignes, des définitions ni des règles de décision. Toute erreur découverte ensuite est notée dans le compte rendu, jamais corrigée en silence.*
 
 ## 1. Question et honnêteté de départ
 
@@ -13,7 +13,7 @@
 
 | Cond. | Outil | Faits fournis | Rôle |
 |---|---|---|---|
-| **A** | Modèle OpenAI par l'API (`[MODÈLE À FIXER AVANT LE GEL]`), sans instructions système ni mémoire, un appel indépendant par texte | **Non** : seulement le sujet | Mesure le modèle seul, sans l'application |
+| **A** | Modèle OpenAI par l'API (`gpt-5.5-2026-04-23`), sans instructions système ni mémoire, un appel indépendant par texte | **Non** : seulement le sujet | Mesure le modèle seul, sans l'application |
 | **B** | Même modèle, même type d’appel | **Oui** : la fiche de faits | Isole l'effet « donner les faits » |
 | **C** | Moteur LinkeePost réel (profil neutre identique pour tous les sujets, sources = la fiche) | **Oui** : la même fiche | Mesure le produit tel qu'il est |
 | **D** *(retenue)* | Même modèle que C, appelé directement par l'API, sans l'invite de LinkeePost | **Oui** | Isole l'apport de l'invite de LinkeePost, à modèle constant |
@@ -29,7 +29,7 @@
 - **Phrases d'ouverture et de clôture.** Toute réponse est conservée en entier dans les enregistrements bruts. À l'anonymisation, les phrases qui ne font pas partie du post (« Voici un post… », « Souhaitez-vous une version plus courte ? ») sont retirées, et ce qui a été retiré est consigné texte par texte.
 - **Version du moteur pour C et D.** C est généré avec le moteur LinkeePost par défaut (moteur A : la variable `EDITORIAL_ENGINE` n'est pas définie), à partir du code de `main` au commit `421c37f` (ou, si le code change avant la génération, du commit alors utilisé, noté). Les prompts de A, B, B2 et B2b ne changent pas entre-temps (empreintes de `scripts/engine-b*.test.mjs`). Le bandeau « Chiffres à vérifier » n'agit pas sur la génération : il n'est pas utilisé dans ce test.
 
-## 3. Les 10 sujets (à fixer avant le gel)
+## 3. Les 10 sujets (figés par le gel)
 
 Sujets B2B génériques, **entièrement fictifs** pour les fiches de faits (entreprises et clients inventés, déclarés comme tels dans le compte rendu : ils servent d'entrée de test, jamais de fait publié). Répartition :
 
@@ -135,7 +135,7 @@ Pour B, C, D, ajouter : « Voici les informations dont tu disposes : [FICHE]. »
 1. Condition D : **oui**.
 2. Générations : **1** par cas.
 3. Consigne neutre : **oui, pour A, B et C** (B neutre ajouté le 5 novembre sur la recommandation de Claude, validé par Jacques).
-4. A et B : **modèle OpenAI par l'API** (décision du 9 novembre 2026, après abandon de la génération manuelle) ; modèle exact à fixer avant le gel, noté avec la date.
+4. A et B : **modèle OpenAI par l'API** (décision du 9 novembre 2026, après abandon de la génération manuelle) : **`gpt-5.5-2026-04-23`**, choisi par Jacques parmi les modèles qui répondaient ce jour-là (cinq autres modèles testés avec la phrase « Réponds par le mot OK », sans lien avec les sujets du test ; `gpt-6.1-sol` refusait l'appel). Le nom ne désigne pas le modèle de l'application ChatGPT.
 5. Seuil de « nettement » : **2 éléments par post**.
 
-**Reste avant le gel** : fixer le modèle OpenAI (liste lue avec la clé, `node scripts/e4-generate.mjs --list-models`), publier le gist **public** (quatre fichiers nommés) avec les nouvelles empreintes.
+**Reste avant le gel** : publier le gist **public** (cinq fichiers nommés) avec les empreintes. Le modèle OpenAI est fixé (voir la décision 4).

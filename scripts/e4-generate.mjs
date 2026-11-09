@@ -25,6 +25,7 @@ const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(HERE, "..");
 export const CONSIGNES_FILE = path.join(ROOT, "docs/e4-chiffres/consignes-E4-chatgpt-40.md");
 export const CONSIGNES_SHA256 = "d53de006cc3ca23ef428cf74cdf85247a194a31ea18cfe16d4026a50610bb0f9";
+export const FROZEN_OPENAI_MODEL = "gpt-5.5-2026-04-23"; // modèle fixé par le protocole version 4 (conditions A et B)
 const ANTHROPIC_DEFAULT_MODEL = "claude-sonnet-4-6"; // identique à app/api/generate/route.js (ANTHROPIC_MODEL ou ce défaut)
 
 export const sha256 = (s) => crypto.createHash("sha256").update(s).digest("hex");
@@ -131,6 +132,7 @@ async function main() {
   }
   const model = a.model ?? (a.provider === "anthropic" ? process.env.ANTHROPIC_MODEL || ANTHROPIC_DEFAULT_MODEL : null);
   if (!model) throw new Error("--model est obligatoire pour OpenAI (voir --list-models). Le modèle doit être celui fixé dans le protocole gelé.");
+  if (a.provider === "openai" && !a.base && model !== FROZEN_OPENAI_MODEL) throw new Error(`Le protocole gelé impose le modèle ${FROZEN_OPENAI_MODEL} pour A et B (reçu : ${model}).`);
   if (!a.out) throw new Error("--out est obligatoire (dossier des enregistrements bruts).");
   fs.mkdirSync(a.out, { recursive: true });
   for (const j of picked) {
