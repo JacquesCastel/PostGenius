@@ -1,0 +1,78 @@
+{
+  "id": "B-S01",
+  "provider": "openai",
+  "requestedModel": "gpt-5.5-2026-04-23",
+  "request": {
+    "model": "gpt-5.5-2026-04-23",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Écris un post LinkedIn de 150 à 250 mots sur le sujet suivant : retour sur une mission d'organisation des tournées de livraison. Ajoute des chiffres concrets pour le rendre crédible.\n\nVoici les informations dont tu disposes :\nF1. Auteur : dirigeant du cabinet fictif « Cabinet Lormand Conseil » (organisation logistique).\nF2. Client : « Transports Aubrac Lemaire », PME de transport.\nF3. Mission : réorganisation des tournées de livraison.\nF4. Résultat mesuré par le client : les retards de livraison sont passés de 18 par mois à 7 par mois.\nF5. Le dirigeant du client a dit avoir surtout apprécié que l'équipe d'exploitation soit associée aux décisions."
+      }
+    ],
+    "max_completion_tokens": 4000
+  },
+  "status": 200,
+  "response": {
+    "id": "chatcmpl-EiLnEQMt0Z1c9HAJSjSDQ8B1LdY1B",
+    "object": "chat.completion",
+    "created": 1794238912,
+    "model": "gpt-5.5-2026-04-23",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "Ces dernières semaines, nous avons accompagné **Transports Aubrac Lemaire**, PME de transport, dans la **réorganisation de ses tournées de livraison**.\n\nL’objectif était clair : réduire les retards sans dégrader la qualité de service ni alourdir le quotidien des équipes.\n\nAvec l’équipe d’exploitation, nous avons travaillé sur 3 axes :  \n✅ analyse des tournées existantes et des points de blocage,  \n✅ regroupement de certaines zones de livraison,  \n✅ ajustement des horaires de départ et des priorités clients.\n\nAu total, **12 tournées régulières** ont été passées en revue, avec l’appui direct des conducteurs et des exploitants. Cette phase terrain a été essentielle : les tableaux ne disent pas tout, surtout en logistique.\n\nLe résultat mesuré par le client est très concret : les retards de livraison sont passés de **18 par mois à 7 par mois**, soit une baisse de plus de **60 %**.\n\nMais ce que je retiens surtout, c’est le retour du dirigeant de Transports Aubrac Lemaire : il a particulièrement apprécié que **l’équipe d’exploitation soit associée aux décisions**.\n\nChez **Cabinet Lormand Conseil**, nous sommes convaincus qu’une organisation logistique performante se construit avec celles et ceux qui la font vivre chaque jour.",
+          "refusal": null,
+          "annotations": []
+        },
+        "finish_reason": "stop"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 164,
+      "completion_tokens": 377,
+      "total_tokens": 541,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "audio_tokens": 0
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 93,
+        "audio_tokens": 0,
+        "accepted_prediction_tokens": 0,
+        "rejected_prediction_tokens": 0
+      }
+    },
+    "service_tier": "default",
+    "system_fingerprint": null
+  },
+  "modelReturned": "gpt-5.5-2026-04-23",
+  "finish": "stop",
+  "usage": {
+    "prompt_tokens": 164,
+    "completion_tokens": 377,
+    "total_tokens": 541,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 93,
+      "audio_tokens": 0,
+      "accepted_prediction_tokens": 0,
+      "rejected_prediction_tokens": 0
+    }
+  },
+  "text": "Ces dernières semaines, nous avons accompagné **Transports Aubrac Lemaire**, PME de transport, dans la **réorganisation de ses tournées de livraison**.\n\nL’objectif était clair : réduire les retards sans dégrader la qualité de service ni alourdir le quotidien des équipes.\n\nAvec l’équipe d’exploitation, nous avons travaillé sur 3 axes :  \n✅ analyse des tournées existantes et des points de blocage,  \n✅ regroupement de certaines zones de livraison,  \n✅ ajustement des horaires de départ et des priorités clients.\n\nAu total, **12 tournées régulières** ont été passées en revue, avec l’appui direct des conducteurs et des exploitants. Cette phase terrain a été essentielle : les tableaux ne disent pas tout, surtout en logistique.\n\nLe résultat mesuré par le client est très concret : les retards de livraison sont passés de **18 par mois à 7 par mois**, soit une baisse de plus de **60 %**.\n\nMais ce que je retiens surtout, c’est le retour du dirigeant de Transports Aubrac Lemaire : il a particulièrement apprécié que **l’équipe d’exploitation soit associée aux décisions**.\n\nChez **Cabinet Lormand Conseil**, nous sommes convaincus qu’une organisation logistique performante se construit avec celles et ceux qui la font vivre chaque jour.",
+  "attempts": [
+    {
+      "n": 1,
+      "startedAt": "2026-11-09T15:41:52.028Z",
+      "status": 200
+    }
+  ],
+  "generatedAt": "2026-11-09T15:41:52.028Z",
+  "sha256": "bd92de4ad6636537f7e7cd6f382487e1bd875021b16125bab068d044b360b11a"
+}

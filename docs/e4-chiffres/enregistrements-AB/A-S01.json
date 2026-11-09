@@ -1,0 +1,78 @@
+{
+  "id": "A-S01",
+  "provider": "openai",
+  "requestedModel": "gpt-5.5-2026-04-23",
+  "request": {
+    "model": "gpt-5.5-2026-04-23",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Écris un post LinkedIn de 150 à 250 mots sur le sujet suivant : retour sur une mission d'organisation des tournées de livraison. Ajoute des chiffres concrets pour le rendre crédible."
+      }
+    ],
+    "max_completion_tokens": 4000
+  },
+  "status": 200,
+  "response": {
+    "id": "chatcmpl-EiLlqI0bPTuA47b05HQubBHHVQk71",
+    "object": "chat.completion",
+    "created": 1794238826,
+    "model": "gpt-5.5-2026-04-23",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "🚚 Retour d’expérience : optimiser les tournées de livraison, un levier très concret de performance\n\nCes dernières semaines, j’ai accompagné une équipe logistique dans la réorganisation de ses tournées de livraison sur un périmètre régional.\n\nLe contexte :  \n➡️ 18 chauffeurs  \n➡️ 420 livraisons par semaine  \n➡️ 7 secteurs géographiques  \n➡️ Des tournées construites principalement “à l’habitude”\n\nL’objectif était simple : réduire les kilomètres inutiles, fiabiliser les horaires de passage et améliorer le confort des équipes terrain.\n\nAprès une phase d’analyse des données — volumes, adresses, créneaux clients, temps de déchargement, contraintes véhicules — nous avons retravaillé la sectorisation et les séquences de livraison.\n\nRésultats après 4 semaines de test :  \n✅ -14 % de kilomètres parcourus  \n✅ -11 % de temps moyen par tournée  \n✅ +18 % de livraisons réalisées dans le créneau annoncé  \n✅ 1 tournée quotidienne supprimée sans dégrader le service  \n✅ Une économie estimée à 3 200 € par mois en carburant et temps opérationnel\n\nAu-delà des chiffres, le point clé a été l’implication des chauffeurs. Leurs retours terrain ont permis d’éviter des optimisations “théoriques” mais peu applicables dans la réalité.\n\nCette mission rappelle une chose : une bonne organisation logistique ne repose pas uniquement sur un outil ou un algorithme. Elle naît de la combinaison entre données fiables, contraintes opérationnelles et expérience terrain.\n\n#Logistique #Transport #Optimisation #SupplyChain #Livraison",
+          "refusal": null,
+          "annotations": []
+        },
+        "finish_reason": "stop"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 48,
+      "completion_tokens": 367,
+      "total_tokens": 415,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "audio_tokens": 0
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 21,
+        "audio_tokens": 0,
+        "accepted_prediction_tokens": 0,
+        "rejected_prediction_tokens": 0
+      }
+    },
+    "service_tier": "default",
+    "system_fingerprint": null
+  },
+  "modelReturned": "gpt-5.5-2026-04-23",
+  "finish": "stop",
+  "usage": {
+    "prompt_tokens": 48,
+    "completion_tokens": 367,
+    "total_tokens": 415,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 21,
+      "audio_tokens": 0,
+      "accepted_prediction_tokens": 0,
+      "rejected_prediction_tokens": 0
+    }
+  },
+  "text": "🚚 Retour d’expérience : optimiser les tournées de livraison, un levier très concret de performance\n\nCes dernières semaines, j’ai accompagné une équipe logistique dans la réorganisation de ses tournées de livraison sur un périmètre régional.\n\nLe contexte :  \n➡️ 18 chauffeurs  \n➡️ 420 livraisons par semaine  \n➡️ 7 secteurs géographiques  \n➡️ Des tournées construites principalement “à l’habitude”\n\nL’objectif était simple : réduire les kilomètres inutiles, fiabiliser les horaires de passage et améliorer le confort des équipes terrain.\n\nAprès une phase d’analyse des données — volumes, adresses, créneaux clients, temps de déchargement, contraintes véhicules — nous avons retravaillé la sectorisation et les séquences de livraison.\n\nRésultats après 4 semaines de test :  \n✅ -14 % de kilomètres parcourus  \n✅ -11 % de temps moyen par tournée  \n✅ +18 % de livraisons réalisées dans le créneau annoncé  \n✅ 1 tournée quotidienne supprimée sans dégrader le service  \n✅ Une économie estimée à 3 200 € par mois en carburant et temps opérationnel\n\nAu-delà des chiffres, le point clé a été l’implication des chauffeurs. Leurs retours terrain ont permis d’éviter des optimisations “théoriques” mais peu applicables dans la réalité.\n\nCette mission rappelle une chose : une bonne organisation logistique ne repose pas uniquement sur un outil ou un algorithme. Elle naît de la combinaison entre données fiables, contraintes opérationnelles et expérience terrain.\n\n#Logistique #Transport #Optimisation #SupplyChain #Livraison",
+  "attempts": [
+    {
+      "n": 1,
+      "startedAt": "2026-11-09T15:40:24.279Z",
+      "status": 200
+    }
+  ],
+  "generatedAt": "2026-11-09T15:40:24.279Z",
+  "sha256": "fd153dadb81fcf0a5fbf02e09fd37d384e1aafc91d6b8ce8af18ff7c647c85e5"
+}

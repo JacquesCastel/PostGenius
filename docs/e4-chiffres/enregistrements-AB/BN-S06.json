@@ -1,0 +1,78 @@
+{
+  "id": "BN-S06",
+  "provider": "openai",
+  "requestedModel": "gpt-5.5-2026-04-23",
+  "request": {
+    "model": "gpt-5.5-2026-04-23",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Écris un post LinkedIn de 150 à 250 mots sur le sujet suivant : annonce d'un partenariat de formation.\n\nVoici les informations dont tu disposes :\nF1. Auteur : dirigeant de « Kléros Formation », organisme fictif.\nF2. Partenaire : « Studio Haldane Numérique », entreprise fictive.\nF3. Objet : construire ensemble un parcours de formation à la maintenance prédictive des machines.\nF4. Annonce faite le 9 février 2027.\nF5. Aucun montant ni calendrier de déploiement n'est communiqué."
+      }
+    ],
+    "max_completion_tokens": 4000
+  },
+  "status": 200,
+  "response": {
+    "id": "chatcmpl-EiLqdftk2173opvX6TnpEwHtY98PW",
+    "object": "chat.completion",
+    "created": 1794239123,
+    "model": "gpt-5.5-2026-04-23",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "📣 Aujourd’hui, 9 février 2027, j’ai le plaisir d’annoncer un nouveau partenariat entre **Klérôs Formation** et **Studio Haldane Numérique**.\n\nEnsemble, nous allons construire un **parcours de formation dédié à la maintenance prédictive des machines**.\n\nNotre ambition commune : aider les professionnels à mieux comprendre, anticiper et prévenir les défaillances grâce à une approche pédagogique à la fois concrète, progressive et ancrée dans les réalités du terrain.\n\nLa maintenance prédictive transforme déjà les métiers industriels : exploitation des données, analyse des signaux faibles, aide à la décision, optimisation de la disponibilité des équipements… Autant de compétences qui deviennent essentielles pour accompagner les équipes vers des pratiques plus efficaces et plus durables.\n\nAvec Studio Haldane Numérique, nous partageons la conviction que la formation doit être un levier opérationnel, accessible et utile dès la mise en pratique.\n\nAucun montant ni calendrier de déploiement n’est communiqué à ce stade, mais cette collaboration marque une étape importante pour Klérôs Formation.\n\nMerci aux équipes engagées dans ce projet. Hâte de construire la suite ensemble.\n\n#Formation #MaintenancePrédictive #Industrie #Compétences #Partenariat",
+          "refusal": null,
+          "annotations": []
+        },
+        "finish_reason": "stop"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 122,
+      "completion_tokens": 328,
+      "total_tokens": 450,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "audio_tokens": 0
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 64,
+        "audio_tokens": 0,
+        "accepted_prediction_tokens": 0,
+        "rejected_prediction_tokens": 0
+      }
+    },
+    "service_tier": "default",
+    "system_fingerprint": null
+  },
+  "modelReturned": "gpt-5.5-2026-04-23",
+  "finish": "stop",
+  "usage": {
+    "prompt_tokens": 122,
+    "completion_tokens": 328,
+    "total_tokens": 450,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 64,
+      "audio_tokens": 0,
+      "accepted_prediction_tokens": 0,
+      "rejected_prediction_tokens": 0
+    }
+  },
+  "text": "📣 Aujourd’hui, 9 février 2027, j’ai le plaisir d’annoncer un nouveau partenariat entre **Klérôs Formation** et **Studio Haldane Numérique**.\n\nEnsemble, nous allons construire un **parcours de formation dédié à la maintenance prédictive des machines**.\n\nNotre ambition commune : aider les professionnels à mieux comprendre, anticiper et prévenir les défaillances grâce à une approche pédagogique à la fois concrète, progressive et ancrée dans les réalités du terrain.\n\nLa maintenance prédictive transforme déjà les métiers industriels : exploitation des données, analyse des signaux faibles, aide à la décision, optimisation de la disponibilité des équipements… Autant de compétences qui deviennent essentielles pour accompagner les équipes vers des pratiques plus efficaces et plus durables.\n\nAvec Studio Haldane Numérique, nous partageons la conviction que la formation doit être un levier opérationnel, accessible et utile dès la mise en pratique.\n\nAucun montant ni calendrier de déploiement n’est communiqué à ce stade, mais cette collaboration marque une étape importante pour Klérôs Formation.\n\nMerci aux équipes engagées dans ce projet. Hâte de construire la suite ensemble.\n\n#Formation #MaintenancePrédictive #Industrie #Compétences #Partenariat",
+  "attempts": [
+    {
+      "n": 1,
+      "startedAt": "2026-11-09T15:45:23.496Z",
+      "status": 200
+    }
+  ],
+  "generatedAt": "2026-11-09T15:45:23.496Z",
+  "sha256": "c57ad5be86872571936ccd358e849c9b23c03074201cb96e23aa429663e9baa5"
+}

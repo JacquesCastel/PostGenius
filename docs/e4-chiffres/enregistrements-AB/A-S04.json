@@ -1,0 +1,78 @@
+{
+  "id": "A-S04",
+  "provider": "openai",
+  "requestedModel": "gpt-5.5-2026-04-23",
+  "request": {
+    "model": "gpt-5.5-2026-04-23",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Écris un post LinkedIn de 150 à 250 mots sur le sujet suivant : bilan de l'année d'une petite menuiserie. Ajoute des chiffres concrets pour le rendre crédible."
+      }
+    ],
+    "max_completion_tokens": 4000
+  },
+  "status": 200,
+  "response": {
+    "id": "chatcmpl-EiLmGDfzjl5x213ncirscbgY9pxk8",
+    "object": "chat.completion",
+    "created": 1794238852,
+    "model": "gpt-5.5-2026-04-23",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "📌 **Bilan de l’année pour notre petite menuiserie**\n\nAlors que l’année se termine, c’est le moment de prendre un peu de recul sur le chemin parcouru.\n\nEn 2024, notre atelier de menuiserie a réalisé **86 projets**, dont **34 cuisines sur mesure**, **21 dressings**, **12 escaliers** et plusieurs aménagements intérieurs pour des particuliers et des professionnels.\n\nNous avons travaillé près de **18 m³ de chêne, frêne et hêtre**, posé plus de **420 m² d’agencements**, et parcouru environ **9 500 km** pour nos chantiers dans la région.\n\nCôté équipe, nous sommes restés une structure à taille humaine : **3 menuisiers à l’atelier**, **1 apprenti**, et beaucoup d’entraide au quotidien. Notre apprenti a d’ailleurs réalisé son premier meuble complet en autonomie, une vraie fierté pour toute l’équipe.\n\nCette année a aussi été marquée par quelques défis : hausse du prix des matériaux, délais parfois tendus, et planning chargé avant l’été. Mais grâce à la confiance de nos clients, nous avons clôturé l’année avec une progression de **17 % de notre chiffre d’affaires** par rapport à 2023.\n\nMerci à tous ceux qui nous ont confié leurs projets, recommandé notre travail ou simplement encouragés.\n\nCap maintenant sur 2025, avec la même ambition : fabriquer du beau, du solide, et du durable. 🪵✨",
+          "refusal": null,
+          "annotations": []
+        },
+        "finish_reason": "stop"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 47,
+      "completion_tokens": 356,
+      "total_tokens": 403,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "audio_tokens": 0
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 36,
+        "audio_tokens": 0,
+        "accepted_prediction_tokens": 0,
+        "rejected_prediction_tokens": 0
+      }
+    },
+    "service_tier": "default",
+    "system_fingerprint": null
+  },
+  "modelReturned": "gpt-5.5-2026-04-23",
+  "finish": "stop",
+  "usage": {
+    "prompt_tokens": 47,
+    "completion_tokens": 356,
+    "total_tokens": 403,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 36,
+      "audio_tokens": 0,
+      "accepted_prediction_tokens": 0,
+      "rejected_prediction_tokens": 0
+    }
+  },
+  "text": "📌 **Bilan de l’année pour notre petite menuiserie**\n\nAlors que l’année se termine, c’est le moment de prendre un peu de recul sur le chemin parcouru.\n\nEn 2024, notre atelier de menuiserie a réalisé **86 projets**, dont **34 cuisines sur mesure**, **21 dressings**, **12 escaliers** et plusieurs aménagements intérieurs pour des particuliers et des professionnels.\n\nNous avons travaillé près de **18 m³ de chêne, frêne et hêtre**, posé plus de **420 m² d’agencements**, et parcouru environ **9 500 km** pour nos chantiers dans la région.\n\nCôté équipe, nous sommes restés une structure à taille humaine : **3 menuisiers à l’atelier**, **1 apprenti**, et beaucoup d’entraide au quotidien. Notre apprenti a d’ailleurs réalisé son premier meuble complet en autonomie, une vraie fierté pour toute l’équipe.\n\nCette année a aussi été marquée par quelques défis : hausse du prix des matériaux, délais parfois tendus, et planning chargé avant l’été. Mais grâce à la confiance de nos clients, nous avons clôturé l’année avec une progression de **17 % de notre chiffre d’affaires** par rapport à 2023.\n\nMerci à tous ceux qui nous ont confié leurs projets, recommandé notre travail ou simplement encouragés.\n\nCap maintenant sur 2025, avec la même ambition : fabriquer du beau, du solide, et du durable. 🪵✨",
+  "attempts": [
+    {
+      "n": 1,
+      "startedAt": "2026-11-09T15:40:52.417Z",
+      "status": 200
+    }
+  ],
+  "generatedAt": "2026-11-09T15:40:52.417Z",
+  "sha256": "57c20c0663d81036b1127dd090624ef211a69eebcfd588b17513b01cf43a34cb"
+}

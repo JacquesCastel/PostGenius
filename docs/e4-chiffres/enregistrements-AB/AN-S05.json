@@ -1,0 +1,78 @@
+{
+  "id": "AN-S05",
+  "provider": "openai",
+  "requestedModel": "gpt-5.5-2026-04-23",
+  "request": {
+    "model": "gpt-5.5-2026-04-23",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Écris un post LinkedIn de 150 à 250 mots sur le sujet suivant : rédiger une annonce de recrutement qui attire les bonnes personnes."
+      }
+    ],
+    "max_completion_tokens": 4000
+  },
+  "status": 200,
+  "response": {
+    "id": "chatcmpl-EiLpLHnFHttrzHWfgAfuaUNlnOlzu",
+    "object": "chat.completion",
+    "created": 1794239043,
+    "model": "gpt-5.5-2026-04-23",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "Une annonce de recrutement n’est pas une simple fiche de poste.  \nC’est souvent le premier vrai contact entre une entreprise et ses futurs talents.\n\nEt pourtant, beaucoup d’annonces se ressemblent :  \n« entreprise dynamique », « profil motivé », « salaire selon expérience »…  \nRésultat : elles attirent tout le monde, sauf parfois les bonnes personnes.\n\nPour rédiger une annonce efficace, il faut d’abord répondre à une question simple :  \n👉 À qui veut-on vraiment parler ?\n\nUne bonne annonce doit être claire sur :\n\n✅ Les missions réelles du poste  \nPas une liste interminable, mais ce que la personne fera concrètement au quotidien.\n\n✅ Le contexte  \nCréation de poste ? Remplacement ? Équipe en croissance ? Projets à venir ? Ces informations donnent du sens.\n\n✅ Les attentes essentielles  \nInutile d’exiger 15 compétences si 5 sont vraiment indispensables.\n\n✅ Ce que l’entreprise offre  \nSalaire, télétravail, formation, management, évolution, culture d’équipe… Les candidats veulent se projeter.\n\n✅ Le ton  \nUne annonce doit refléter l’entreprise. Trop froide, elle décourage. Trop vague, elle inquiète.\n\nRecruter les bonnes personnes commence bien avant l’entretien.  \nCela commence par une annonce honnête, précise et humaine.\n\nUne annonce bien rédigée ne cherche pas à plaire à tout le monde.  \nElle cherche à parler aux bonnes personnes.",
+          "refusal": null,
+          "annotations": []
+        },
+        "finish_reason": "stop"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 36,
+      "completion_tokens": 332,
+      "total_tokens": 368,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "audio_tokens": 0
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 35,
+        "audio_tokens": 0,
+        "accepted_prediction_tokens": 0,
+        "rejected_prediction_tokens": 0
+      }
+    },
+    "service_tier": "default",
+    "system_fingerprint": null
+  },
+  "modelReturned": "gpt-5.5-2026-04-23",
+  "finish": "stop",
+  "usage": {
+    "prompt_tokens": 36,
+    "completion_tokens": 332,
+    "total_tokens": 368,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 35,
+      "audio_tokens": 0,
+      "accepted_prediction_tokens": 0,
+      "rejected_prediction_tokens": 0
+    }
+  },
+  "text": "Une annonce de recrutement n’est pas une simple fiche de poste.  \nC’est souvent le premier vrai contact entre une entreprise et ses futurs talents.\n\nEt pourtant, beaucoup d’annonces se ressemblent :  \n« entreprise dynamique », « profil motivé », « salaire selon expérience »…  \nRésultat : elles attirent tout le monde, sauf parfois les bonnes personnes.\n\nPour rédiger une annonce efficace, il faut d’abord répondre à une question simple :  \n👉 À qui veut-on vraiment parler ?\n\nUne bonne annonce doit être claire sur :\n\n✅ Les missions réelles du poste  \nPas une liste interminable, mais ce que la personne fera concrètement au quotidien.\n\n✅ Le contexte  \nCréation de poste ? Remplacement ? Équipe en croissance ? Projets à venir ? Ces informations donnent du sens.\n\n✅ Les attentes essentielles  \nInutile d’exiger 15 compétences si 5 sont vraiment indispensables.\n\n✅ Ce que l’entreprise offre  \nSalaire, télétravail, formation, management, évolution, culture d’équipe… Les candidats veulent se projeter.\n\n✅ Le ton  \nUne annonce doit refléter l’entreprise. Trop froide, elle décourage. Trop vague, elle inquiète.\n\nRecruter les bonnes personnes commence bien avant l’entretien.  \nCela commence par une annonce honnête, précise et humaine.\n\nUne annonce bien rédigée ne cherche pas à plaire à tout le monde.  \nElle cherche à parler aux bonnes personnes.",
+  "attempts": [
+    {
+      "n": 1,
+      "startedAt": "2026-11-09T15:44:03.076Z",
+      "status": 200
+    }
+  ],
+  "generatedAt": "2026-11-09T15:44:03.076Z",
+  "sha256": "a57729051f570dbb743925c12ed9a9ba47250952a113d6b29e628f11a1880400"
+}

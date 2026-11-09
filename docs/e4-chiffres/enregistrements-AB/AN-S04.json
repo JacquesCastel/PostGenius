@@ -1,0 +1,78 @@
+{
+  "id": "AN-S04",
+  "provider": "openai",
+  "requestedModel": "gpt-5.5-2026-04-23",
+  "request": {
+    "model": "gpt-5.5-2026-04-23",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Écris un post LinkedIn de 150 à 250 mots sur le sujet suivant : bilan de l'année d'une petite menuiserie."
+      }
+    ],
+    "max_completion_tokens": 4000
+  },
+  "status": 200,
+  "response": {
+    "id": "chatcmpl-EiLpDzPFRL1PYcETx7DzDtjf0ObwK",
+    "object": "chat.completion",
+    "created": 1794239035,
+    "model": "gpt-5.5-2026-04-23",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "🔨 **Bilan de l’année : une belle étape pour notre petite menuiserie**\n\nAlors que l’année touche à sa fin, nous prenons un moment pour regarder le chemin parcouru. Et quel chemin !\n\nCette année, notre atelier a vu passer de nombreux projets : agencements sur mesure, meubles uniques, rénovations, portes, escaliers, rangements… Chaque réalisation a été l’occasion de mettre en avant ce qui nous tient le plus à cœur : le travail bien fait, le choix des matériaux, l’écoute du client et le respect du savoir-faire artisanal.\n\nNous avons aussi relevé quelques défis : des délais parfois serrés, des approvisionnements à anticiper, des demandes toujours plus personnalisées. Mais grâce à la confiance de nos clients et à l’engagement de notre petite équipe, nous avons continué à avancer, à apprendre et à nous améliorer.\n\nUn grand merci à celles et ceux qui nous ont confié leurs projets, recommandés autour d’eux ou simplement soutenus par un message, un avis ou une visite à l’atelier.\n\nNous terminons cette année avec de la gratitude, de la fierté et déjà beaucoup d’idées pour la suite.\n\nRendez-vous l’année prochaine pour de nouveaux projets en bois, toujours sur mesure et avec passion. 🌳✨\n\n#Menuiserie #Artisanat #Bois #SurMesure #SavoirFaire #BilanAnnuel",
+          "refusal": null,
+          "annotations": []
+        },
+        "finish_reason": "stop"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 35,
+      "completion_tokens": 325,
+      "total_tokens": 360,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "audio_tokens": 0
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 25,
+        "audio_tokens": 0,
+        "accepted_prediction_tokens": 0,
+        "rejected_prediction_tokens": 0
+      }
+    },
+    "service_tier": "default",
+    "system_fingerprint": null
+  },
+  "modelReturned": "gpt-5.5-2026-04-23",
+  "finish": "stop",
+  "usage": {
+    "prompt_tokens": 35,
+    "completion_tokens": 325,
+    "total_tokens": 360,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 25,
+      "audio_tokens": 0,
+      "accepted_prediction_tokens": 0,
+      "rejected_prediction_tokens": 0
+    }
+  },
+  "text": "🔨 **Bilan de l’année : une belle étape pour notre petite menuiserie**\n\nAlors que l’année touche à sa fin, nous prenons un moment pour regarder le chemin parcouru. Et quel chemin !\n\nCette année, notre atelier a vu passer de nombreux projets : agencements sur mesure, meubles uniques, rénovations, portes, escaliers, rangements… Chaque réalisation a été l’occasion de mettre en avant ce qui nous tient le plus à cœur : le travail bien fait, le choix des matériaux, l’écoute du client et le respect du savoir-faire artisanal.\n\nNous avons aussi relevé quelques défis : des délais parfois serrés, des approvisionnements à anticiper, des demandes toujours plus personnalisées. Mais grâce à la confiance de nos clients et à l’engagement de notre petite équipe, nous avons continué à avancer, à apprendre et à nous améliorer.\n\nUn grand merci à celles et ceux qui nous ont confié leurs projets, recommandés autour d’eux ou simplement soutenus par un message, un avis ou une visite à l’atelier.\n\nNous terminons cette année avec de la gratitude, de la fierté et déjà beaucoup d’idées pour la suite.\n\nRendez-vous l’année prochaine pour de nouveaux projets en bois, toujours sur mesure et avec passion. 🌳✨\n\n#Menuiserie #Artisanat #Bois #SurMesure #SavoirFaire #BilanAnnuel",
+  "attempts": [
+    {
+      "n": 1,
+      "startedAt": "2026-11-09T15:43:54.947Z",
+      "status": 200
+    }
+  ],
+  "generatedAt": "2026-11-09T15:43:54.947Z",
+  "sha256": "c9aeb53682e9665262a0a9e3cbfaca398a1d0e08b01a1c0fd9ac2752c6fb382e"
+}

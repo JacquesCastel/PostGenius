@@ -1,0 +1,78 @@
+{
+  "id": "AN-S01",
+  "provider": "openai",
+  "requestedModel": "gpt-5.5-2026-04-23",
+  "request": {
+    "model": "gpt-5.5-2026-04-23",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Écris un post LinkedIn de 150 à 250 mots sur le sujet suivant : retour sur une mission d'organisation des tournées de livraison."
+      }
+    ],
+    "max_completion_tokens": 4000
+  },
+  "status": 200,
+  "response": {
+    "id": "chatcmpl-EiLorsAGYKyZVf2suDNyOgtM1bzSt",
+    "object": "chat.completion",
+    "created": 1794239013,
+    "model": "gpt-5.5-2026-04-23",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "🚚 **Retour de mission : optimiser les tournées de livraison pour gagner en efficacité**\n\nCes dernières semaines, j’ai accompagné une entreprise dans la réorganisation de ses tournées de livraison, avec un objectif clair : améliorer la ponctualité, réduire les kilomètres parcourus et fluidifier le quotidien des équipes terrain.\n\nLa mission a commencé par une phase d’observation et d’analyse : volumes livrés, contraintes horaires, zones géographiques, temps de chargement, retours clients, disponibilité des véhicules… Très vite, certains leviers sont apparus : regroupement de secteurs, meilleure priorisation des créneaux, équilibrage des charges entre chauffeurs et anticipation des aléas.\n\nNous avons ensuite construit un nouveau schéma de tournées, testé progressivement avec les équipes. Leur retour a été essentiel : ce sont elles qui connaissent le terrain, les habitudes clients, les points de blocage et les réalités que les tableaux ne montrent pas toujours.\n\nLes premiers résultats sont encourageants : moins de kilomètres inutiles, des tournées plus cohérentes, une meilleure visibilité pour l’exploitation et une réduction du stress pour les livreurs.\n\nCette mission rappelle une chose importante : l’optimisation logistique n’est pas seulement une affaire d’outils ou d’algorithmes. C’est avant tout un travail collectif, concret, au service de la performance et de la qualité de service.\n\n#Logistique #Transport #Livraison #Optimisation #SupplyChain #Organisation",
+          "refusal": null,
+          "annotations": []
+        },
+        "finish_reason": "stop"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 36,
+      "completion_tokens": 340,
+      "total_tokens": 376,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "audio_tokens": 0
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 36,
+        "audio_tokens": 0,
+        "accepted_prediction_tokens": 0,
+        "rejected_prediction_tokens": 0
+      }
+    },
+    "service_tier": "default",
+    "system_fingerprint": null
+  },
+  "modelReturned": "gpt-5.5-2026-04-23",
+  "finish": "stop",
+  "usage": {
+    "prompt_tokens": 36,
+    "completion_tokens": 340,
+    "total_tokens": 376,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 36,
+      "audio_tokens": 0,
+      "accepted_prediction_tokens": 0,
+      "rejected_prediction_tokens": 0
+    }
+  },
+  "text": "🚚 **Retour de mission : optimiser les tournées de livraison pour gagner en efficacité**\n\nCes dernières semaines, j’ai accompagné une entreprise dans la réorganisation de ses tournées de livraison, avec un objectif clair : améliorer la ponctualité, réduire les kilomètres parcourus et fluidifier le quotidien des équipes terrain.\n\nLa mission a commencé par une phase d’observation et d’analyse : volumes livrés, contraintes horaires, zones géographiques, temps de chargement, retours clients, disponibilité des véhicules… Très vite, certains leviers sont apparus : regroupement de secteurs, meilleure priorisation des créneaux, équilibrage des charges entre chauffeurs et anticipation des aléas.\n\nNous avons ensuite construit un nouveau schéma de tournées, testé progressivement avec les équipes. Leur retour a été essentiel : ce sont elles qui connaissent le terrain, les habitudes clients, les points de blocage et les réalités que les tableaux ne montrent pas toujours.\n\nLes premiers résultats sont encourageants : moins de kilomètres inutiles, des tournées plus cohérentes, une meilleure visibilité pour l’exploitation et une réduction du stress pour les livreurs.\n\nCette mission rappelle une chose importante : l’optimisation logistique n’est pas seulement une affaire d’outils ou d’algorithmes. C’est avant tout un travail collectif, concret, au service de la performance et de la qualité de service.\n\n#Logistique #Transport #Livraison #Optimisation #SupplyChain #Organisation",
+  "attempts": [
+    {
+      "n": 1,
+      "startedAt": "2026-11-09T15:43:32.751Z",
+      "status": 200
+    }
+  ],
+  "generatedAt": "2026-11-09T15:43:32.751Z",
+  "sha256": "c551ade1eb0591a14a06ac67147db17500caa5fae33849f960330e8e0090d4bb"
+}

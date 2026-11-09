@@ -1,0 +1,78 @@
+{
+  "id": "BN-S02",
+  "provider": "openai",
+  "requestedModel": "gpt-5.5-2026-04-23",
+  "request": {
+    "model": "gpt-5.5-2026-04-23",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Écris un post LinkedIn de 150 à 250 mots sur le sujet suivant : lancement d'une formation sur la réponse aux appels d'offres publics.\n\nVoici les informations dont tu disposes :\nF1. Auteur : formatrice indépendante fictive, « Claire Montrel ».\nF2. Intitulé : « Négocier avec un acheteur public ».\nF3. Public : commerciaux de PME qui répondent à des appels d'offres.\nF4. Début de la première session : 12 mars 2027.\nF5. Prix : 1 450 € HT par personne.\nF6. Format : en présentiel."
+      }
+    ],
+    "max_completion_tokens": 4000
+  },
+  "status": 200,
+  "response": {
+    "id": "chatcmpl-EiLqBPrWDxFKkc2QatXNJ2ZyrvLn5",
+    "object": "chat.completion",
+    "created": 1794239095,
+    "model": "gpt-5.5-2026-04-23",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "🚀 Nouvelle formation : mieux répondre aux appels d’offres publics\n\nCommerciaux de PME, vous répondez déjà à des marchés publics… mais vous avez parfois l’impression que la relation avec l’acheteur public reste difficile à décoder ?\n\nJ’ai le plaisir d’annoncer le lancement de ma nouvelle formation en présentiel :\n\n🎯 **« Négocier avec un acheteur public »**\n\nCette formation s’adresse aux commerciaux de PME qui souhaitent renforcer leur approche des appels d’offres publics, mieux comprendre les attentes des acheteurs et structurer des réponses plus solides, plus lisibles et plus convaincantes.\n\nAu programme : posture commerciale, préparation de l’échange, compréhension du cadre public, valorisation de l’offre, formulation des arguments et points de vigilance dans la relation avec l’acheteur.\n\n📅 **Première session : 12 mars 2027**  \n📍 **Format : présentiel**  \n💶 **Tarif : 1 450 € HT par personne**\n\nMon objectif : vous aider à aborder les marchés publics avec plus de méthode, de clarté et de confiance.\n\nLes inscriptions sont ouvertes.  \nPour recevoir le programme détaillé ou échanger sur vos besoins, contactez-moi directement en message privé.\n\n— Claire Montrel  \nFormatrice indépendante\n\n#Formation #AppelsDOffres #MarchésPublics #PME #Commercial #AchatPublic",
+          "refusal": null,
+          "annotations": []
+        },
+        "finish_reason": "stop"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 139,
+      "completion_tokens": 363,
+      "total_tokens": 502,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "audio_tokens": 0
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 68,
+        "audio_tokens": 0,
+        "accepted_prediction_tokens": 0,
+        "rejected_prediction_tokens": 0
+      }
+    },
+    "service_tier": "default",
+    "system_fingerprint": null
+  },
+  "modelReturned": "gpt-5.5-2026-04-23",
+  "finish": "stop",
+  "usage": {
+    "prompt_tokens": 139,
+    "completion_tokens": 363,
+    "total_tokens": 502,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 68,
+      "audio_tokens": 0,
+      "accepted_prediction_tokens": 0,
+      "rejected_prediction_tokens": 0
+    }
+  },
+  "text": "🚀 Nouvelle formation : mieux répondre aux appels d’offres publics\n\nCommerciaux de PME, vous répondez déjà à des marchés publics… mais vous avez parfois l’impression que la relation avec l’acheteur public reste difficile à décoder ?\n\nJ’ai le plaisir d’annoncer le lancement de ma nouvelle formation en présentiel :\n\n🎯 **« Négocier avec un acheteur public »**\n\nCette formation s’adresse aux commerciaux de PME qui souhaitent renforcer leur approche des appels d’offres publics, mieux comprendre les attentes des acheteurs et structurer des réponses plus solides, plus lisibles et plus convaincantes.\n\nAu programme : posture commerciale, préparation de l’échange, compréhension du cadre public, valorisation de l’offre, formulation des arguments et points de vigilance dans la relation avec l’acheteur.\n\n📅 **Première session : 12 mars 2027**  \n📍 **Format : présentiel**  \n💶 **Tarif : 1 450 € HT par personne**\n\nMon objectif : vous aider à aborder les marchés publics avec plus de méthode, de clarté et de confiance.\n\nLes inscriptions sont ouvertes.  \nPour recevoir le programme détaillé ou échanger sur vos besoins, contactez-moi directement en message privé.\n\n— Claire Montrel  \nFormatrice indépendante\n\n#Formation #AppelsDOffres #MarchésPublics #PME #Commercial #AchatPublic",
+  "attempts": [
+    {
+      "n": 1,
+      "startedAt": "2026-11-09T15:44:55.131Z",
+      "status": 200
+    }
+  ],
+  "generatedAt": "2026-11-09T15:44:55.131Z",
+  "sha256": "67f5b1b7cab6647f91efbd0008004ad1eeaa8a8e6d9520f5a9127d02e4fd1a96"
+}

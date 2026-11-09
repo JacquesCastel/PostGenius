@@ -1,0 +1,78 @@
+{
+  "id": "AN-S07",
+  "provider": "openai",
+  "requestedModel": "gpt-5.5-2026-04-23",
+  "request": {
+    "model": "gpt-5.5-2026-04-23",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Écris un post LinkedIn de 150 à 250 mots sur le sujet suivant : le remplacement d'un four dans une fonderie."
+      }
+    ],
+    "max_completion_tokens": 4000
+  },
+  "status": 200,
+  "response": {
+    "id": "chatcmpl-EiLpZhd7lylcgWY5lTgfTBoMmP7RX",
+    "object": "chat.completion",
+    "created": 1794239057,
+    "model": "gpt-5.5-2026-04-23",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "🔧 Remplacer un four dans une fonderie : bien plus qu’un simple changement d’équipement\n\nDans une fonderie, le four est au cœur de la production. Son remplacement représente donc un projet stratégique, à la croisée des enjeux techniques, énergétiques, économiques et humains.\n\nUn tel chantier nécessite une préparation rigoureuse : analyse des besoins de production, choix de la technologie adaptée, étude de l’implantation, anticipation des interfaces avec les équipements existants, planification des arrêts et sécurisation des opérations. Chaque détail compte pour limiter l’impact sur l’activité et garantir une remise en route efficace.\n\nMais remplacer un four, c’est aussi une opportunité. Une opportunité d’améliorer la performance énergétique, de réduire les émissions, d’optimiser la qualité métallurgique et de renforcer la sécurité des équipes. C’est également un moment clé pour former les opérateurs, adapter les procédures et intégrer de nouvelles pratiques industrielles.\n\nLa réussite d’un tel projet repose sur une collaboration étroite entre les équipes production, maintenance, HSE, méthodes, fournisseurs et direction. C’est cette coordination qui transforme un investissement technique en véritable levier de performance durable.\n\nDans l’industrie, moderniser ses outils, c’est préparer l’avenir. Et dans une fonderie, le remplacement d’un four en est un parfait exemple.\n\n#Industrie #Fonderie #Maintenance #PerformanceIndustrielle #TransitionÉnergétique",
+          "refusal": null,
+          "annotations": []
+        },
+        "finish_reason": "stop"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 35,
+      "completion_tokens": 339,
+      "total_tokens": 374,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "audio_tokens": 0
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 39,
+        "audio_tokens": 0,
+        "accepted_prediction_tokens": 0,
+        "rejected_prediction_tokens": 0
+      }
+    },
+    "service_tier": "default",
+    "system_fingerprint": null
+  },
+  "modelReturned": "gpt-5.5-2026-04-23",
+  "finish": "stop",
+  "usage": {
+    "prompt_tokens": 35,
+    "completion_tokens": 339,
+    "total_tokens": 374,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 39,
+      "audio_tokens": 0,
+      "accepted_prediction_tokens": 0,
+      "rejected_prediction_tokens": 0
+    }
+  },
+  "text": "🔧 Remplacer un four dans une fonderie : bien plus qu’un simple changement d’équipement\n\nDans une fonderie, le four est au cœur de la production. Son remplacement représente donc un projet stratégique, à la croisée des enjeux techniques, énergétiques, économiques et humains.\n\nUn tel chantier nécessite une préparation rigoureuse : analyse des besoins de production, choix de la technologie adaptée, étude de l’implantation, anticipation des interfaces avec les équipements existants, planification des arrêts et sécurisation des opérations. Chaque détail compte pour limiter l’impact sur l’activité et garantir une remise en route efficace.\n\nMais remplacer un four, c’est aussi une opportunité. Une opportunité d’améliorer la performance énergétique, de réduire les émissions, d’optimiser la qualité métallurgique et de renforcer la sécurité des équipes. C’est également un moment clé pour former les opérateurs, adapter les procédures et intégrer de nouvelles pratiques industrielles.\n\nLa réussite d’un tel projet repose sur une collaboration étroite entre les équipes production, maintenance, HSE, méthodes, fournisseurs et direction. C’est cette coordination qui transforme un investissement technique en véritable levier de performance durable.\n\nDans l’industrie, moderniser ses outils, c’est préparer l’avenir. Et dans une fonderie, le remplacement d’un four en est un parfait exemple.\n\n#Industrie #Fonderie #Maintenance #PerformanceIndustrielle #TransitionÉnergétique",
+  "attempts": [
+    {
+      "n": 1,
+      "startedAt": "2026-11-09T15:44:17.022Z",
+      "status": 200
+    }
+  ],
+  "generatedAt": "2026-11-09T15:44:17.022Z",
+  "sha256": "4c1fa98e196b2d523b4d3a6f36f9acf3008877a6413d9686e11290bd9d2aaa3a"
+}
