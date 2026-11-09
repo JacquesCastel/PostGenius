@@ -166,7 +166,7 @@ function ScenePost({ lt }) {
     { t: "Chez nous, chaque manager ouvre la semaine par un rituel de dix minutes avec son équipe.", a: 1.7, d: 1.4 },
     { t: "Pas une réunion de plus. Dix minutes pour aligner tout le monde.", a: 3.0, d: 1.0 },
   ];
-  const chips = [[BookOpen, "Sources utilisées : 2 sur ce post", C.sky, C.blue, 3.7], [Check, "Votre voix respectée", "#e8f7ee", C.green, 4.1], [ShieldCheck, "Aucun chiffre inventé", C.rose, C.coral, 4.5]];
+  const chips = [[BookOpen, "Sources utilisées : 2 sur ce post", C.sky, C.blue, 3.7], [Check, "Votre voix respectée", "#e8f7ee", C.green, 4.1], [ShieldCheck, "Chiffres à vérifier signalés", C.rose, C.coral, 4.5]];
   return (
     <>
       <Left>

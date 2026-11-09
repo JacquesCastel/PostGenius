@@ -23,7 +23,7 @@ export const metadata = {
 };
 
 const FEATURES = [
-  { icon: BookOpen, title: "Base de connaissances", text: "Déposez documents, liens et notes : LinkeePost en retient les faits et les cas, et vos posts sont conçus pour les reprendre fidèlement, sans en inventer. Chaque post indique les sources qu'il a utilisées. Le moteur résume ce qu'il a appris et vous pouvez échanger avec lui pour l'affiner ; un lien ou un texte se partage depuis le téléphone ou le navigateur." },
+  { icon: BookOpen, title: "Base de connaissances", text: "Déposez documents, liens et notes : LinkeePost en retient les faits et les cas, et vos posts sont conçus pour les reprendre fidèlement ; un contrôle signale, sous le post, les chiffres qui ne figurent pas dans vos informations. Chaque post indique les sources qu'il a utilisées. Le moteur résume ce qu'il a appris et vous pouvez échanger avec lui pour l'affiner ; un lien ou un texte se partage depuis le téléphone ou le navigateur." },
   { icon: Mic, title: "Votre voix", text: "Consignes de style, mots à privilégier, mots à bannir, formulations types, anciens posts comme exemples : le ton et le rythme restent les vôtres, et vos consignes priment sur les règles génériques." },
   { icon: History, title: "Mémoire éditoriale", text: "LinkeePost sait ce que vous avez déjà publié ou programmé : il assure la continuité sans se répéter, ni reprendre la même accroche." },
   { icon: Megaphone, title: "Campagnes guidées", text: "Un thème, un brief cadré avec l'IA, un post d'exemple à valider — puis une série de posts qui progressent vers votre message clé, planifiée sur vos créneaux." },

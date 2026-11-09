@@ -8003,7 +8003,7 @@ function KnowledgePanel({ showToast, onCount, activeContextId = null, hasContext
         <div className="space-y-4">
           <div className="flex items-start gap-4 flex-wrap">
             <div className="flex-1 min-w-[16rem]">
-              <p className="text-sm text-[#5a6b85] leading-relaxed max-w-[700px]">{hasContexts ? "Chaque thématique a son propre datalake : vos notes sur un sujet ne se mélangent pas avec un autre. Le copilote ne pioche que dans la thématique choisie." : "Documents, articles, liens, notes : tout ce que vous déposez ici est lu par l'IA, qui en retient les thèmes, votre vocabulaire, vos positions et vos faits précis. Le copilote puise dedans pour écrire juste, sans rien inventer au-delà."} <span className="text-gray-400">Vos sources ne sont partagées avec personne et se suppriment à tout moment.</span></p>
+              <p className="text-sm text-[#5a6b85] leading-relaxed max-w-[700px]">{hasContexts ? "Chaque thématique a son propre datalake : vos notes sur un sujet ne se mélangent pas avec un autre. Le copilote ne pioche que dans la thématique choisie." : "Documents, articles, liens, notes : tout ce que vous déposez ici est lu par l'IA, qui en retient les thèmes, votre vocabulaire, vos positions et vos faits précis. Le copilote puise dedans pour écrire juste ; il peut toutefois ajouter ce qu'elles ne contiennent pas, donc vérifiez les chiffres avant de publier."} <span className="text-gray-400">Vos sources ne sont partagées avec personne et se suppriment à tout moment.</span></p>
               <p className="text-xs text-gray-400 mt-1" data-testid="datalake-count">{data ? `${used}/${data.limit} sources` : ""}</p>
             </div>
             {!full && (

@@ -110,7 +110,7 @@ export default function ShareView({ payload, activeContextId = null, showToast, 
             </div>
           )}
           <div className="flex items-start justify-between gap-3 flex-wrap">
-            <p className="text-sm text-gray-700 max-w-md"><strong>Écrire un post à partir de ça.</strong> {kind === "web" ? "LinkeePost lit la page puis rédige avec votre voix, sans rien inventer." : "LinkeePost s'inspire du texte collé pour rédiger avec votre voix : il reformule, il ne recopie pas."}</p>
+            <p className="text-sm text-gray-700 max-w-md"><strong>Écrire un post à partir de ça.</strong> {kind === "web" ? "LinkeePost lit la page puis rédige avec votre voix à partir de ce qu'elle dit ; un contrôle signale, sous le post, les chiffres qui ne figurent pas dans vos informations." : "LinkeePost s'inspire du texte collé pour rédiger avec votre voix : il reformule, il ne recopie pas."}</p>
             <button type="button" onClick={write} disabled={!canWrite || busy !== null} className={`${btn} bg-[#ff5a5f] hover:bg-[#f63d44] text-white`} data-testid="share-write">
               {busy === "post" ? <RefreshCw size={14} className="animate-spin" /> : <PenLine size={14} />} Écrire un post
             </button>
