@@ -13,7 +13,7 @@
 
 | Cond. | Outil | Faits fournis | Rôle |
 |---|---|---|---|
-| **A** | Modèle OpenAI par l'API (`[MODÈLE À FIXER AVANT LE GEL]`), sans instructions système ni mémoire, un appel indépendant par texte | **Non** : seulement le sujet | Mesure le modèle seul, sans l'application |
+| **A** | Modèle OpenAI par l'API (`gpt-6-sol`), sans instructions système ni mémoire, un appel indépendant par texte | **Non** : seulement le sujet | Mesure le modèle seul, sans l'application |
 | **B** | Même modèle, même type d’appel | **Oui** : la fiche de faits | Isole l'effet « donner les faits » |
 | **C** | Moteur LinkeePost réel (profil neutre identique pour tous les sujets, sources = la fiche) | **Oui** : la même fiche | Mesure le produit tel qu'il est |
 | **D** *(retenue)* | Même modèle que C, appelé directement par l'API, sans l'invite de LinkeePost | **Oui** | Isole l'apport de l'invite de LinkeePost, à modèle constant |
