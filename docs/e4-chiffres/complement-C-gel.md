@@ -9,6 +9,6 @@ Complément au gel du 9 novembre 2026 (gist https://gist.github.com/JacquesCaste
 
 **Paramètres fixés.** 20 textes (`C-S01` à `C-S10`, `CN-S01` à `CN-S10`) ; vrai moteur LinkeePost (`POST /api/generate`), moteur A par défaut, sans `EDITORIAL_ENGINE` ; consigne de base `A-Sxx` / `AN-Sxx` du fichier gelé transmise mot pour mot comme thème ; fiche transmise comme matière source ; profil neutre unique (titre « Professionnel B2B », style « Ton sobre et direct. Phrases courtes. ») ; **`maxChars` = 1700** ; une génération par texte, aucune régénération ni sélection ; code du dépôt : commit noté dans chaque enregistrement.
 
-**Date et heure de publication de ce complément :** ______ (à remplir par Jacques)
+**Date et heure de publication de ce complément :** 9 November 2026, 17:20 (UTC)
 
 Vérifier soi-même : `sha256sum e4-generate-c.mjs README-C.md`
