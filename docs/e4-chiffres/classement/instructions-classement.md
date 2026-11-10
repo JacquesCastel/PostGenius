@@ -33,8 +33,8 @@ Critère principal : nombre d'éléments **I + X + D** par post. Chaque élémen
 4. Ne corrigez pas un classement après avoir vu celui de l'autre classeur : les désaccords sont listés puis tranchés à deux, jamais effacés, et leur nombre est publié.
 5. Notez l'heure de début et de fin de votre classement (dans vos remarques du premier et du dernier texte).
 
-## Précision proposée par l'assistant, NON prévue par le protocole (à valider par Jacques avant le classement)
-Les entreprises, personnes et chiffres des fiches sont **fictifs**. Proposition : un élément absent de la fiche et qui concerne ces entités fictives (un chiffre, une date, un nom attribué à « Maison Bellange », par exemple) est classé **I**, sans recherche, puisqu'il n'existe nulle part ailleurs. Si cette précision n'est pas retenue, chaque classeur applique la règle des 5 minutes telle quelle, et on le note.
+## Entités fictives : aucune règle ajoutée
+Décision de Jacques (10 novembre 2026) : pas de précision en plus du protocole. La règle des 5 minutes s'applique telle quelle, y compris à un élément absent de la fiche qui concerne une entité fictive : chaque classeur note ce qu'il a cherché.
 
 ## Limite
 La mise en forme d'un texte trahit parfois son origine. Si vous croyez reconnaître une condition, notez-le dans les remarques sans en tenir compte pour le code.
