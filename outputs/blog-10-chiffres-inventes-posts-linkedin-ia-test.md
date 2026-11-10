@@ -166,7 +166,7 @@ L'ordre des conditions ne change pas, mais l'écart entre LinkeePost et B tombe 
 
 ## Reproduire et vérifier
 
-Les consignes, fiches, protocole, scripts et leurs empreintes sont publiés ; chaque génération est enregistrée avec sa requête, sa réponse et son empreinte. Les 70 textes complets, avec la consigne exacte, le modèle et la date de génération de chaque condition, la grille de classement (287 éléments) et les résultats détaillés sont en annexe : [annexes du test](https://gist.github.com/JacquesCastel/2bb20a046c7df003dd13765cf0924cf1).
+Les consignes, fiches, protocole, scripts de génération et leurs empreintes sont publiés dans les gists datés ; les scripts d'anonymisation, de classement et de calcul sont dans le dépôt du test ; chaque génération est enregistrée avec sa requête, sa réponse et son empreinte. Les 70 textes complets, avec la consigne exacte, le modèle et la date de génération de chaque condition, la grille de classement (287 éléments) et les résultats détaillés sont en annexe : [annexes du test](https://gist.github.com/JacquesCastel/2bb20a046c7df003dd13765cf0924cf1).
 
 Les quatre gists datés :
 

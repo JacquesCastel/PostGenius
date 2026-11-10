@@ -160,7 +160,7 @@ L'ordre des conditions ne change pas, mais l'écart entre C et B tombe à 1,5. I
 
 ## Reproduire et vérifier
 
-- Les consignes, fiches, protocole, scripts et leurs empreintes sont publiés ; chaque génération est enregistrée avec sa requête, sa réponse et son empreinte.
+- Les consignes, fiches, protocole, scripts de génération et leurs empreintes sont publiés dans les gists datés ; les scripts d'anonymisation, de classement et de calcul sont dans le dépôt du test ; chaque génération est enregistrée avec sa requête, sa réponse et son empreinte.
 - Les 70 textes complets sont en annexe, avec la consigne exacte, le modèle et la date de génération de chaque condition.
 - La grille de classement (287 éléments) et les résultats par texte sont publiés.
 
@@ -174,7 +174,7 @@ L'ordre des conditions ne change pas, mais l'écart entre C et B tombe à 1,5. I
 
 1. **Le dépôt est-il public ?** Les liens vers les fichiers du dépôt ne fonctionnent que s'il l'est, ou si les annexes sont jointes. Les quatre gists sont publics.
 2. **Relire les formules de conclusion** : « l'écart vient de l'invite » ne doit pas être lu comme une supériorité générale. Le protocole interdit d'en écrire une.
-3. **Le nom du produit** : le protocole et les gists disent LinkeePost ; le site actuel est `postgenius.network`. Harmoniser.
+3. **Le nom du produit** : décision de Jacques le 10 novembre 2026, on garde **LinkeePost** (nom du protocole, des gists, de l'article et du site). Vérifié : aucun document publiable ne dit autrement.
 4. **Si l'article cite l'étude Vectara ou le cas de la Cour suprême du Nouveau-Mexique**, ajouter la mention du protocole : ce test ne les remplace ni ne les valide (l'ordonnance elle-même reste à vérifier).
 5. **Révocation de la clé de test** et retrait de la variable d'environnement (étape 7 du protocole), à faire et à noter au journal : la clé Anthropic utilisée pour D et C, et la clé OpenAI. Supprimer aussi le `.env` de test sur le serveur.
 6. **Une deuxième lecture indépendante** reste possible : si Jacques classe les 70 textes (page de lecture), le compte rendu pourra publier le nombre de désaccords et retirer sa première limite.
