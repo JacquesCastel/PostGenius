@@ -42,9 +42,10 @@ test("rendu par le moteur du site : aucun marqueur Markdown brut ne subsiste", a
   assert.ok(!text.includes("**"), "gras non rendu : " + (text.match(/.{20}\*\*.{20}/) || [""])[0]);
   assert.ok(!/`/.test(text), "code inline non rendu");
   assert.ok(!/\[[^\]]+\]\(/.test(text.replace(/\(URL_ANNEXE\)/, "")), "lien non rendu");
+  const annexe = !body.includes("(URL_ANNEXE)");
   assert.equal((html.match(/<h2/g) || []).length, (body.match(/^## /gm) || []).length);
   assert.equal((html.match(/<h3/g) || []).length, (body.match(/^### /gm) || []).length);
-  assert.equal((html.match(/href="https:\/\/gist\.github\.com\/JacquesCastel\/[0-9a-f]{32}"/g) || []).length, 4);
+  assert.equal((html.match(/href="https:\/\/gist\.github\.com\/JacquesCastel\/[0-9a-f]{32}"/g) || []).length, annexe ? 5 : 4);
 });
 
 const fr = (x) => Number(String(x).replace(",", "."));
@@ -73,6 +74,7 @@ test("les chiffres de la version site = résultats calculés", () => {
 
 test("lien d'annexe : placeholder toléré en préparation, refusé en version finale", () => {
   const n = (body.match(/\(URL_ANNEXE\)/g) || []).length;
-  assert.equal(n, 1);
-  if (process.env.E4_BLOG_FINAL === "1") assert.fail("URL_ANNEXE doit être remplacé par l'adresse des annexes avant publication");
+  assert.ok(n <= 1);
+  if (process.env.E4_BLOG_FINAL === "1") assert.equal(n, 0, "URL_ANNEXE doit être remplacé par l'adresse des annexes avant publication");
+  else assert.ok(n === 1 || /\]\(https:\/\/gist\.github\.com\/JacquesCastel\/[0-9a-f]{32}\)/.test(body));
 });
