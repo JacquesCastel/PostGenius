@@ -4,9 +4,10 @@ Prototype isolé : **`/demo-editoriale`**. Un même sujet, trois profils (deux e
 
 > **Décisions du 10 novembre 2026, prises avant toute génération (point de transparence, pas une omission).**
 > 1. **Wharf est exclu de la démonstration.** Wharf est la société de Jacques : le risque que cela soulève est levé par cette décision. Aucun texte de la démonstration n'a été généré avec Wharf ; il a été retiré du code et des documents de la démonstration avant la première génération. (Le profil Wharf a servi à des évaluations du moteur, hors démonstration : voir `docs/eval-editorial/`.)
-> 2. **Un profil d'expert indépendant fictif est ajouté** (c'était le « 4e profil » de la décision, comptée avant l'exclusion de Wharf), Mathis Garlandier (Garlandier Conseil), consultant et formateur en cotation fonctionnelle. La démonstration compte donc **trois profils** (BELVANTE INDUSTRIE, CANTEVEL Conseil, Mathis Garlandier) **et le témoin : quatre textes**. Le nom a été vérifié sans collision (`verification-noms-fictifs.md`).
+> 2. **Un profil d'expert indépendant fictif est ajouté** (c'était le « 4e profil » de la décision, comptée avant l'exclusion de Wharf), Mathis Vauberlet (Vauberlet Conseil), consultant et formateur en cotation fonctionnelle. La démonstration compte donc **trois profils** (BELVANTE INDUSTRIE, CANTEVEL Conseil, Mathis Vauberlet) **et le témoin : quatre textes**. Le nom a été vérifié sans collision (`verification-noms-fictifs.md`).
 > 3. Le protocole de test et ses seuils restent valides : l'appariement porte toujours sur trois profils (voir `protocole-test.md`).
-> 4. Les profils doivent être **figés avant la session de génération** (`gel-demo-empreintes.md`) : tout changement ultérieur invalide les empreintes.
+> 4. **Trois noms fictifs ont été changés avant le gel**, après une vérification dans les registres d'entreprises (`verification-noms-fictifs.md`) : AXIOME Conseil (collision avec des entreprises réelles) est devenu **CANTEVEL Conseil** ; ASTER INDUSTRIE (proximité forte avec des entreprises réelles) est devenu **BELVANTE INDUSTRIE** ; Mathis Garlandier (le patronyme existe dans le registre) est devenu **Mathis Vauberlet**.
+> 5. Les profils doivent être **figés avant la session de génération** (`gel-demo-empreintes.md`) : tout changement ultérieur invalide les empreintes.
 
 > **État aujourd'hui : le prototype est fonctionnel, mais aucun exemple authentique n'a pu être généré.** Il n'y a pas de clé `ANTHROPIC_API_KEY` dans l'environnement où il a été construit. La page affiche donc, pour chaque entreprise, « Prise de parole en préparation », et **jamais** un texte inventé. Les textes que l'on voit dans les captures de développement sont des **données de test**, signalées comme telles à l'écran (bandeau et étiquette sur chaque texte). La procédure pour produire les vrais exemples est en §3.
 
@@ -33,7 +34,7 @@ Prototype isolé : **`/demo-editoriale`**. Un même sujet, trois profils (deux e
 
 | Élément | Rôle |
 |---|---|
-| `lib/demoEditorialCore.mjs` | Socle pur : le sujet commun, les quatre identités (BELVANTE INDUSTRIE, CANTEVEL Conseil, Mathis Garlandier, témoin), l'empreinte, la validation, le relevé mécanique. Partagé par la page et le script |
+| `lib/demoEditorialCore.mjs` | Socle pur : le sujet commun, les quatre identités (BELVANTE INDUSTRIE, CANTEVEL Conseil, Mathis Vauberlet, témoin), l'empreinte, la validation, le relevé mécanique. Partagé par la page et le script |
 | `scripts/demo-editorial.mjs` | `seed`, `generate`, `list`, `publish`, `verify` |
 | `content/demo-editoriale.json` | Les exemples publiés (vide aujourd'hui) |
 | `lib/demoEditorial.js` | Lecture et validation côté serveur ; refuse tout exemple dont l'empreinte ne correspond plus |
@@ -41,7 +42,7 @@ Prototype isolé : **`/demo-editoriale`**. Un même sujet, trois profils (deux e
 | `components/DemoEditoriale.js` | Les cinq écrans : sujet, entreprises, prise de parole, ce qui change, conversion |
 | `docs/demo-editoriale/*` | Ce document, la recommandation marketing, le protocole de test |
 
-**L'expérience.** Une seule page, dans l'ordre : (1) la même information ; (2) trois cartes de profil **courtes** (positionnement et conviction, avec l'étiquette « entreprise fictive » pour BELVANTE et CANTEVEL et « expert fictif » pour Mathis Garlandier) ; (3) **les trois publications complètes côte à côte** (empilées sur mobile), première ligne mise en évidence, puis **le témoin sans profil**, visible sans clic ; (4) si l'équipe l'a rédigée, une **lecture éditoriale**, dans un encadré distinct qui dit « Ce n'est pas une sortie du moteur » ; (5) l'invitation, qui réutilise le parcours existant (`JOIN_HREF`, donc `/beta` pendant la bêta). **Zone secondaire repliée** : profils complets, provenance, choix d'écriture annoncés par le moteur, relevé mécanique des textes. États gérés : absence d'exemple, exemple invalide (refusé), données de test (bandeau), fichier illisible. Accessibilité : structure sémantique, mouvement réduit respecté. Aucune dépendance ajoutée.
+**L'expérience.** Une seule page, dans l'ordre : (1) la même information ; (2) trois cartes de profil **courtes** (positionnement et conviction, avec l'étiquette « entreprise fictive » pour BELVANTE et CANTEVEL et « expert fictif » pour Mathis Vauberlet) ; (3) **les trois publications complètes côte à côte** (empilées sur mobile), première ligne mise en évidence, puis **le témoin sans profil**, visible sans clic ; (4) si l'équipe l'a rédigée, une **lecture éditoriale**, dans un encadré distinct qui dit « Ce n'est pas une sortie du moteur » ; (5) l'invitation, qui réutilise le parcours existant (`JOIN_HREF`, donc `/beta` pendant la bêta). **Zone secondaire repliée** : profils complets, provenance, choix d'écriture annoncés par le moteur, relevé mécanique des textes. États gérés : absence d'exemple, exemple invalide (refusé), données de test (bandeau), fichier illisible. Accessibilité : structure sémantique, mouvement réduit respecté. Aucune dépendance ajoutée.
 
 ## 3. Produire, conserver et remplacer les exemples authentiques
 

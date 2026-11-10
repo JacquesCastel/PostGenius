@@ -13,8 +13,8 @@ test("composition : BELVANTE, CANTEVEL, l'expert, puis le témoin ; Wharf n'y fi
 
 test("transparence : tous les profils sont déclarés fictifs", () => {
   assert.ok(IDENTITIES.every((i) => i.fictional === true));
-  assert.equal(identityOf("expert").name, "Mathis Garlandier");
-  assert.equal(identityOf("expert").profile.companyName, "Garlandier Conseil");
+  assert.equal(identityOf("expert").name, "Mathis Vauberlet");
+  assert.equal(identityOf("expert").profile.companyName, "Vauberlet Conseil");
 });
 
 test("la forme ne distingue pas les profils : mêmes consignes de style pour tous, témoin compris", () => {
@@ -67,4 +67,11 @@ test("plan de l'article 3 (v3) : aucun reste de l'ancien décompte hors du table
   const motif = /cinq textes|cinq générations|quatre identités|quatre profils|quatre points de vue|quatre entreprises|trois industrielles/i;
   assert.ok(!motif.test(vivant), (vivant.match(new RegExp(`.{30}(${motif.source}).{20}`, "i")) || [""])[0]);
   assert.match(plan, /PR 344 déjà fusionnée/);
+});
+
+test("noms fictifs : ceux qui ont échoué à la vérification n'existent plus dans le code ni dans la page", () => {
+  const code = ["lib/demoEditorialCore.mjs", "lib/demoEditorial.js", "components/DemoEditoriale.js", "app/demo-editoriale/page.js", "scripts/demo-editorial.mjs"].map((f) => fs.readFileSync(new URL(`../${f}`, import.meta.url), "utf8")).join("\n");
+  assert.ok(!/ASTER|AXIOME|Garlandier|Wharf/i.test(code.replace(/master|faster/gi, "")), "ancien nom présent dans le code");
+  assert.deepEqual(IDENTITIES.filter((i) => !i.control).map((i) => i.profile.companyName), ["BELVANTE INDUSTRIE", "CANTEVEL Conseil", "Vauberlet Conseil"]);
+  assert.equal(identityOf("expert").name, "Mathis Vauberlet");
 });

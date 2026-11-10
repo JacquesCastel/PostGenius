@@ -217,7 +217,7 @@ export default function DemoEditoriale({ subject, identities, derived, compariso
             )}
 
             <ul className="list-disc pl-5 space-y-1 text-[#34445f]">
-              <li>BELVANTE INDUSTRIE, CANTEVEL Conseil et Mathis Garlandier (Garlandier Conseil) sont fictifs : deux entreprises et un expert indépendant inventés pour la démonstration. Rien n&apos;est publié sur LinkedIn.</li>
+              <li>BELVANTE INDUSTRIE, CANTEVEL Conseil et Mathis Vauberlet (Vauberlet Conseil) sont fictifs : deux entreprises et un expert indépendant inventés pour la démonstration. Rien n&apos;est publié sur LinkedIn.</li>
               <li>Les profils sont des données que nous avons saisies : la démonstration montre des textes cohérents avec une identité, pas un angle que le moteur aurait découvert seul.</li>
             </ul>
           </div>

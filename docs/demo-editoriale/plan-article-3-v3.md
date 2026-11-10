@@ -6,20 +6,21 @@
 
 | Passage de la v2 | Dans la v3 | Pourquoi |
 |---|---|---|
-| « cinq textes », « trois identités industrielles + une identité experte + un témoin » | **quatre textes** : deux entreprises industrielles fictives (BELVANTE INDUSTRIE, CANTEVEL Conseil), un expert indépendant fictif (Mathis Garlandier), un témoin | Wharf, l'une des trois « industrielles » de la v2, est exclue ; décision de Jacques du 10 novembre de ne pas créer de troisième entreprise |
+| « cinq textes », « trois identités industrielles + une identité experte + un témoin » | **quatre textes** : deux entreprises industrielles fictives (BELVANTE INDUSTRIE, CANTEVEL Conseil), un expert indépendant fictif (Mathis Vauberlet), un témoin | Wharf, l'une des trois « industrielles » de la v2, est exclue ; décision de Jacques du 10 novembre de ne pas créer de troisième entreprise |
 | « quatre identités », « quatre points de vue », « quatre profils » | **trois profils** (et un témoin) | idem |
 | « validé pour un appariement à quatre identités » | **validé pour trois profils, protocole inchangé** : hasard 1 sur 6, seuils 40 % et 60 % | `protocole-test.md`, section du 10 novembre. Avec quatre textes à apparier, le hasard tomberait à 1 sur 24 et le seuil de 60 % serait à redéfinir avant le test |
 | Titre « Même sujet, quatre points de vue » et variante « Quatre entreprises… » | titre en **trois** ; variante « Deux entreprises, un expert, un sujet… » | l'expert n'est pas une entreprise |
 | « PR 344, non fusionnée » ; « Fusion de la PR 344 seulement après vrais textes » | **PR 344 déjà fusionnée dans `main` le 3 novembre 2026** (page `/demo-editoriale` présente, vide) ; les changements de la v3 sont sur la branche `claude/funny-goodall-f2dvgs` | état vérifié sur GitHub le 10 novembre |
 | Section 5 : « cette règle d'invite est ce qui fait tomber les éléments non supportés de 2,8 à 0,3 » | **reformulé** : E4 mesure l'effet de l'invite de LinkeePost dans son ensemble, il n'isole pas la consigne « aucun chiffre inventé » ; limites publiées reprises | cette attribution à une règle précise n'est pas dans les résultats E4 |
 | « les résultats E4 ont été publiés le 10 novembre », « Article 1 publié avant » | **résultats et annexes publics (gists) ; l'article E4 n'est pas encore publié** | état au 10 novembre : la condition 4 de publication reste ouverte |
+| Noms des trois profils (ASTER INDUSTRIE, AXIOME Conseil, Mathis Garlandier) | **BELVANTE INDUSTRIE, CANTEVEL Conseil, Mathis Vauberlet (Vauberlet Conseil)** | Vérification dans les registres d'entreprises le 10 novembre : collision confirmée pour AXIOME Conseil, proximité forte pour ASTER, patronyme Garlandier existant. Noms changés **avant le gel** (`verification-noms-fictifs.md`) |
 | « La page de démonstration mise à jour pour cinq textes » | **fait côté code pour quatre textes** (branche `claude/funny-goodall-f2dvgs`) ; reste la PR et le déploiement | commit `5a07619` |
 
 ## Décisions tranchées le 10 novembre 2026
 
 | Décision | Choix | Conséquence |
 |---|---|---|
-| Profil expert indépendant | **Ajouté** (Mathis Garlandier, Garlandier Conseil) | La démonstration compte **trois profils et un témoin : quatre textes** ; profil à figer avant toute génération |
+| Profil expert indépendant | **Ajouté** (Mathis Vauberlet, Vauberlet Conseil) | La démonstration compte **trois profils et un témoin : quatre textes** ; profil à figer avant toute génération |
 | Wharf (société de Jacques) | **Exclue** | Le conflit d'intérêts est levé par décision, datée et antérieure aux générations |
 | Composition | **Quatre textes** (pas cinq) | Aucune troisième entreprise n'est créée |
 | Appel à l'action | **Démo + bêta** | Lien `/demo-editoriale` dans le corps (preuve) ; lien bêta hors corps (premier commentaire ou fin d'article), séparé et identifié |

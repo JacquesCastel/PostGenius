@@ -6,12 +6,14 @@
 | Décision | Où |
 |---|---|
 | Wharf exclu | retiré de `lib/demoEditorialCore.mjs` ; note de transparence datée dans `README.md` |
-| Expert indépendant ajouté (Mathis Garlandier, Garlandier Conseil) | `lib/demoEditorialCore.mjs` (profil complet, déclaré fictif) ; libellés de la page (« Trois profils », « Expert fictif ») ; `verification-noms-fictifs.md` |
-| **Composition : trois profils + le témoin = quatre textes** (choix de Jacques, 10 novembre) | BELVANTE INDUSTRIE, CANTEVEL Conseil, Mathis Garlandier, témoin |
+| Expert indépendant ajouté (Mathis Vauberlet, Vauberlet Conseil) | `lib/demoEditorialCore.mjs` (profil complet, déclaré fictif) ; libellés de la page (« Trois profils », « Expert fictif ») ; `verification-noms-fictifs.md` |
+| **Composition : trois profils + le témoin = quatre textes** (choix de Jacques, 10 novembre) | BELVANTE INDUSTRIE, CANTEVEL Conseil, Mathis Vauberlet, témoin |
 | Seuils du protocole de test | **inchangés** : l'appariement reste sur trois profils (hasard 1 sur 6, seuils 40 % et 60 %), documenté dans `protocole-test.md` avant tout entretien |
 | Profil figé avant la session | `gel-demo-empreintes.md` (à publier avant la génération) |
 | Session de génération | `session-generation-checklist.md` : base isolée, enregistrement complet, empreinte par enregistrement, `--runs 1`, révocation de la clé |
 | Tests | `scripts/demo-editorial.test.mjs` (7 tests : composition, mention « fictif », consignes de style identiques, profils sans chiffre, refus d'un profil modifié) |
+
+**Noms.** Après vérification dans les registres le 10 novembre, trois noms fictifs ont été changés avant le gel : AXIOME Conseil (collision) → CANTEVEL Conseil ; ASTER INDUSTRIE (proximité) → BELVANTE INDUSTRIE ; Mathis Garlandier (patronyme existant) → Mathis Vauberlet. Voir `verification-noms-fictifs.md`.
 
 **Pourquoi « quatre textes » et pas « cinq » : la consigne de départ comptait « trois industrielles + expert + témoin ».** Wharf était l'une des trois ; Wharf étant exclu, il reste deux entreprises, l'expert et le témoin. Choix de Jacques : on s'en tient à quatre textes (une troisième entreprise n'est pas créée).
 

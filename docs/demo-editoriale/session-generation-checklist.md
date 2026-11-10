@@ -1,6 +1,6 @@
 # Check-list de la session de génération (démonstration éditoriale)
 
-La session ne sert **plus qu'à une chose** : les **quatre générations** de la démonstration (BELVANTE INDUSTRIE, CANTEVEL Conseil, Mathis Garlandier, témoin), E4 étant terminé. Si autre chose doit être regroupé dans cette session, le dire **avant** de commencer.
+La session ne sert **plus qu'à une chose** : les **quatre générations** de la démonstration (BELVANTE INDUSTRIE, CANTEVEL Conseil, Mathis Vauberlet, témoin), E4 étant terminé. Si autre chose doit être regroupé dans cette session, le dire **avant** de commencer.
 
 **Ordre impératif : profils figés et publiés, puis session.** Si un profil change après le gel, les empreintes sont à refaire.
 
