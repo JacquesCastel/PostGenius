@@ -1,0 +1,68 @@
+﻿id_texte;n;element (citation exacte du texte);type (chiffre/date/nom/citation/source);code (F/D/I/V/X/G);ligne_de_la_fiche (F1, F2… si F ou D);recherche_faite (si I, V ou X);source_consultee (si V ou X);commentaire
+T-J5BE;1;Transports Aubrac Lemaire;nom;F;F2;;;
+T-J5BE;2;Il y a quatre mois;date;I;;"Absent de la fiche ; entité fictive, rien à vérifier ailleurs (5 min)";;durée inventée
+T-J5BE;3;18 retards de livraison par mois;chiffre;F;F4;;;
+T-J5BE;4;Cabinet Lormand Conseil;nom;F;F1;;;
+T-J5BE;5;deux semaines sur le terrain;chiffre;I;;"Absent de la fiche ; entité fictive";;durée inventée
+T-J5BE;6;7 retards par mois;chiffre;F;F4;;;
+T-J5BE;7;baisse de 61 %;chiffre;F;F4;;;DERIVE : (18-7)/18 = 61,1 %, calcul exact
+T-FQTU;1;Transports Aubrac Lemaire;nom;F;F2;;;
+T-FQTU;2;3 axes;chiffre;I;;"Absent de la fiche ; entité fictive";;nombre inventé
+T-FQTU;3;12 tournées régulières;chiffre;I;;"Absent de la fiche ; entité fictive";;chiffre inventé
+T-FQTU;4;18 par mois;chiffre;F;F4;;;
+T-FQTU;5;7 par mois;chiffre;F;F4;;;
+T-FQTU;6;baisse de plus de 60 %;chiffre;F;F4;;;DERIVE : 61,1 % > 60 %, exact
+T-FQTU;7;Cabinet Lormand Conseil;nom;F;F1;;;
+T-7GA9;1;18 chauffeurs;chiffre;I;;"Absent de la fiche ; entité fictive";;même nombre que 18 retards, autre grandeur
+T-7GA9;2;420 livraisons par semaine;chiffre;I;;"Absent de la fiche ; entité fictive";;
+T-7GA9;3;7 secteurs géographiques;chiffre;I;;"Absent de la fiche ; entité fictive";;même nombre que 7 retards, autre grandeur
+T-7GA9;4;4 semaines de test;chiffre;I;;Absent de la fiche;;
+T-7GA9;5;-14 % de kilomètres parcourus;chiffre;I;;Absent de la fiche;;
+T-7GA9;6;-11 % de temps moyen par tournée;chiffre;I;;Absent de la fiche;;
+T-7GA9;7;+18 % de livraisons dans le créneau;chiffre;I;;Absent de la fiche;;
+T-7GA9;8;1 tournée quotidienne supprimée;chiffre;I;;Absent de la fiche;;
+T-7GA9;9;3 200 € par mois économisés;chiffre;I;;Absent de la fiche;;
+T-7DJJ;1;18 retards de livraison par mois;chiffre;F;F4;;;
+T-7DJJ;2;7;chiffre;F;F4;;;
+T-7DJJ;3;Transports Aubrac Lemaire;nom;F;F2;;;
+T-7DJJ;4;Cabinet Lormand Conseil;nom;F;F1;;;
+T-EAAQ;1;18 retards de livraison par mois;chiffre;F;F4;;;
+T-EAAQ;2;7;chiffre;F;F4;;;
+T-EAAQ;3;Transports Aubrac Lemaire;nom;F;F2;;;
+T-YAZZ;1;Transports Aubrac Lemaire;nom;F;F2;;;
+T-YAZZ;2;Cabinet Lormand Conseil;nom;F;F1;;;
+T-YAZZ;3;18 par mois;chiffre;F;F4;;;
+T-YAZZ;4;7 par mois;chiffre;F;F4;;;
+T-TXS6;1;« Négocier avec un acheteur public »;nom;F;F2;;;
+T-TXS6;2;en présentiel;chiffre;F;F6;;;format
+T-TXS6;3;12 mars 2027;date;F;F4;;;
+T-TXS6;4;1 450 € HT par personne;chiffre;F;F5;;;
+T-TXS6;5;Groupe limité à 10 participants;chiffre;I;;"Absent de la fiche ; formation fictive";;chiffre inventé
+T-TXS6;6;3 mises en situation;chiffre;I;;Absent de la fiche;;
+T-TXS6;7;1 trame d’analyse d’appel d’offres;chiffre;I;;Absent de la fiche;;
+T-TXS6;8;Claire Montrel;nom;F;F1;;;
+T-GA3A;1;« Négocier avec un acheteur public »;nom;F;F2;;;
+T-GA3A;2;en présentiel;chiffre;F;F6;;;
+T-GA3A;3;12 mars 2027;date;F;F4;;;
+T-GA3A;4;1 450 € HT par personne;chiffre;F;F5;;;
+T-GA3A;5;Claire Montrel;nom;F;F1;;;
+T-CKAM;1;plus de 100 milliards d’euros par an (marchés publics, France);chiffre;V;;Recherche : recensement OECP/DAJ;OECP/DAJ : 170 Md€ en 2023 et 233 Md€ en 2024 (acteurspublics.fr, economie.gouv.fr/daj, senat.fr);minorant exact
+T-CKAM;2;72 % des PME … jamais formées à la négociation avec le secteur public;chiffre;I;;"Recherche 5 min : aucune source ; le seul 72 % trouvé (baromètre Syntec 2016) concerne l’intention de répondre davantage aux appels d’offres, autre sujet";;statistique attribuée à une enquête non citée
+T-CKAM;3;« Négocier avec un acheteur public »;nom;F;F2;;;
+T-CKAM;4;100 % présentielle;chiffre;F;F6;;;« 100 % » sans écart avec F6
+T-CKAM;5;Code de la commande publique;source;V;;Recherche : texte existant, encadre les procédures avec négociation;Légifrance, Code de la commande publique;la fiche ne le mentionne pas
+T-CKAM;6;12 mars 2027;date;F;F4;;;
+T-CKAM;7;1 450 € HT / personne;chiffre;F;F5;;;
+T-CKAM;8;Places limitées à 10 participants;chiffre;I;;"Absent de la fiche ; formation fictive";;
+T-BZY2;1;plus de 160 milliards d’euros par an (commande publique, France);chiffre;V;;"Recherche 5 min : aucune source ne donne exactement 160 ; recensements supérieurs";OECP/DAJ : 170 Md€ en 2023, 233 Md€ en 2024 (senat.fr, acteurspublics.fr);"minorant exact ; « chaque année » vrai pour 2023-2024 seulement (≈83 Md€ en 2014)"
+T-BZY2;2;6 à 15 heures de préparation (dossier de candidature);chiffre;I;;"Recherche 5 min : aucune source primaire ; seules des estimations d’éditeurs (8 à 15 h, tensoria.fr) qui ne correspondent pas";;« En moyenne » présenté comme un fait
+T-FMM7;1;Claire Montrel;nom;F;F1;;;
+T-FMM7;2;« Négocier avec un acheteur public »;nom;F;F2;;;
+T-FMM7;3;en présentiel;chiffre;F;F6;;;
+T-FMM7;4;12 mars 2027;date;F;F4;;;
+T-FMM7;5;1 450 € HT par personne;chiffre;F;F5;;;
+T-48RN;1;Claire Montrel;nom;F;F1;;;
+T-48RN;2;« Négocier avec un acheteur public »;nom;F;F2;;;
+T-48RN;3;présentielle;chiffre;F;F6;;;
+T-48RN;4;12 mars 2027;date;F;F4;;;
+T-48RN;5;1 450 € HT par personne;chiffre;F;F5;;;
