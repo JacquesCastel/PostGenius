@@ -57,3 +57,14 @@ test("lecture comparative : colonnes aster, axiome, expert", () => {
   const c = cleanComparison({ authoredBy: "Jacques", rows: [{ label: "Problème retenu", aster: "a", axiome: "b", expert: "c", wharf: "ignoré" }, { label: "vide" }] });
   assert.deepEqual(c.rows, [{ label: "Problème retenu", aster: "a", axiome: "b", expert: "c" }]);
 });
+
+import fs from "node:fs";
+test("plan de l'article 3 (v3) : aucun reste de l'ancien décompte hors du tableau des modifications et du texte barré (risques levés)", () => {
+  const plan = fs.readFileSync(new URL("../docs/demo-editoriale/plan-article-3-v3.md", import.meta.url), "utf8");
+  const apres = plan.split("## Décisions tranchées le 10 novembre 2026")[1];
+  assert.ok(apres, "section des décisions");
+  const vivant = apres.replace(/~~[\s\S]*?~~/g, "");
+  const motif = /cinq textes|cinq générations|quatre identités|quatre profils|quatre points de vue|quatre entreprises|trois industrielles/i;
+  assert.ok(!motif.test(vivant), (vivant.match(new RegExp(`.{30}(${motif.source}).{20}`, "i")) || [""])[0]);
+  assert.match(plan, /PR 344 déjà fusionnée/);
+});

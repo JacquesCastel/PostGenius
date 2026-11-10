@@ -1,6 +1,6 @@
 # Article 3 : décisions du 10 novembre 2026 et ce qu'elles changent
 
-**Le plan de l'article 3 lui-même (titre de travail, accroche, tableau de la section 4, section 7, fiche, « Risques et pièges ») n'a pas été retrouvé** : ni dans le dépôt, ni dans les artefacts, ni dans Notion. Ce document contient donc (1) ce qui a été appliqué au code et aux documents de la démonstration, et (2) les modifications à reporter dans le plan, avec leur règle de transformation. Envoyer le plan (collé ou en lien) permet de les y appliquer en place.
+**Le plan de l'article 3 corrigé est `plan-article-3-v3.md`** (Jacques a collé la v2 le 10 novembre ; la v3 en reprend le texte et change seulement ce que les décisions et les vérifications imposent, avec un tableau des modifications en tête). Ce document-ci garde (1) ce qui a été appliqué au code et aux documents de la démonstration, et (2) la règle de transformation utilisée.
 
 ## 1. Ce qui est fait dans le dépôt
 | Décision | Où |
