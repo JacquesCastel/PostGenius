@@ -1,0 +1,79 @@
+{
+  "id": "C-S01",
+  "request": {
+    "type": "simple",
+    "theme": "Écris un post LinkedIn de 150 à 250 mots sur le sujet suivant : retour sur une mission d'organisation des tournées de livraison. Ajoute des chiffres concrets pour le rendre crédible.",
+    "expertise": "Professionnel B2B",
+    "tone": "Professionnel",
+    "maxChars": 1700,
+    "language": "fr",
+    "source": {
+      "title": "Fiche de faits",
+      "origin": "fiche fournie par l'auteur",
+      "text": "F1. Auteur : dirigeant du cabinet fictif « Cabinet Lormand Conseil » (organisation logistique).\nF2. Client : « Transports Aubrac Lemaire », PME de transport.\nF3. Mission : réorganisation des tournées de livraison.\nF4. Résultat mesuré par le client : les retards de livraison sont passés de 18 par mois à 7 par mois.\nF5. Le dirigeant du client a dit avoir surtout apprécié que l'équipe d'exploitation soit associée aux décisions."
+    }
+  },
+  "status": 200,
+  "response": {
+    "text": "18 retards de livraison par mois réduits à 7 : voilà ce que change une organisation rigoureuse.\n\nTransports Aubrac Lemaire nous a confié une mission de réorganisation de leurs tournées. L'objectif : réduire les dysfonctionnements qui pesaient sur leur qualité de service.\n\nLe travail a porté sur l'analyse des circuits existants, l'identification des points de friction et la refonte des plannings.\n\nMais le résultat ne tient pas qu'à la méthode.\n\nLe dirigeant nous a dit avoir surtout apprécié que l'équipe d'exploitation soit associée aux décisions. C'est ce point qui retient mon attention. Une réorganisation imposée de l'extérieur rencontre toujours des résistances. Une réorganisation construite avec les opérationnels a des chances de tenir dans le temps.\n\nC'est ce que nous appliquons systématiquement chez Cabinet Lormand Conseil : les équipes terrain savent des choses que les tableaux de bord ne montrent pas.\n\n#Logistique #Transport #OrganisationLogistique #Livraison #PME",
+    "extra": null,
+    "why": {
+      "hook": "Le chiffre brut avant/après porte à lui seul le résultat concret, sans avoir besoin du développement.",
+      "structure": "Le résultat d'abord, puis le contexte, puis l'enseignement clé — le lecteur comprend l'essentiel avant la coupure.",
+      "cta": "La conclusion pose une conviction professionnelle forte ; forcer une question aurait affaibli le propos.",
+      "hashtags": "Cinq hashtags métier ciblés pour toucher les décideurs transport et logistique sans diluer la portée.",
+      "forText": "18 retards de livraison par mois réduits à 7 : voilà ce que change une organisation rigoureuse.\n\nTransports Aubrac Lemaire nous a confié une mission de réorganisation de leurs tournées. L'objectif : réduire les dysfonctionnements qui pesaient sur leur qualité de service.\n\nLe travail a porté sur l'analyse des circuits existants, l'identification des points de friction et la refonte des plannings.\n\nMais le résultat ne tient pas qu'à la méthode.\n\nLe dirigeant nous a dit avoir surtout apprécié que l'équipe d'exploitation soit associée aux décisions. C'est ce point qui retient mon attention. Une réorganisation imposée de l'extérieur rencontre toujours des résistances. Une réorganisation construite avec les opérationnels a des chances de tenir dans le temps.\n\nC'est ce que nous appliquons systématiquement chez Cabinet Lormand Conseil : les équipes terrain savent des choses que les tableaux de bord ne montrent pas.\n\n#Logistique #Transport #OrganisationLogistique #Livraison #PME"
+    },
+    "sources": [],
+    "figureBase": [
+      "150",
+      "150|à",
+      "250",
+      "250|mot",
+      "2",
+      "2|b",
+      "1",
+      "3",
+      "4",
+      "18",
+      "18|par",
+      "7",
+      "7|par",
+      "5"
+    ]
+  },
+  "text": "18 retards de livraison par mois réduits à 7 : voilà ce que change une organisation rigoureuse.\n\nTransports Aubrac Lemaire nous a confié une mission de réorganisation de leurs tournées. L'objectif : réduire les dysfonctionnements qui pesaient sur leur qualité de service.\n\nLe travail a porté sur l'analyse des circuits existants, l'identification des points de friction et la refonte des plannings.\n\nMais le résultat ne tient pas qu'à la méthode.\n\nLe dirigeant nous a dit avoir surtout apprécié que l'équipe d'exploitation soit associée aux décisions. C'est ce point qui retient mon attention. Une réorganisation imposée de l'extérieur rencontre toujours des résistances. Une réorganisation construite avec les opérationnels a des chances de tenir dans le temps.\n\nC'est ce que nous appliquons systématiquement chez Cabinet Lormand Conseil : les équipes terrain savent des choses que les tableaux de bord ne montrent pas.\n\n#Logistique #Transport #OrganisationLogistique #Livraison #PME",
+  "why": {
+    "hook": "Le chiffre brut avant/après porte à lui seul le résultat concret, sans avoir besoin du développement.",
+    "structure": "Le résultat d'abord, puis le contexte, puis l'enseignement clé — le lecteur comprend l'essentiel avant la coupure.",
+    "cta": "La conclusion pose une conviction professionnelle forte ; forcer une question aurait affaibli le propos.",
+    "hashtags": "Cinq hashtags métier ciblés pour toucher les décideurs transport et logistique sans diluer la portée.",
+    "forText": "18 retards de livraison par mois réduits à 7 : voilà ce que change une organisation rigoureuse.\n\nTransports Aubrac Lemaire nous a confié une mission de réorganisation de leurs tournées. L'objectif : réduire les dysfonctionnements qui pesaient sur leur qualité de service.\n\nLe travail a porté sur l'analyse des circuits existants, l'identification des points de friction et la refonte des plannings.\n\nMais le résultat ne tient pas qu'à la méthode.\n\nLe dirigeant nous a dit avoir surtout apprécié que l'équipe d'exploitation soit associée aux décisions. C'est ce point qui retient mon attention. Une réorganisation imposée de l'extérieur rencontre toujours des résistances. Une réorganisation construite avec les opérationnels a des chances de tenir dans le temps.\n\nC'est ce que nous appliquons systématiquement chez Cabinet Lormand Conseil : les équipes terrain savent des choses que les tableaux de bord ne montrent pas.\n\n#Logistique #Transport #OrganisationLogistique #Livraison #PME"
+  },
+  "sources": [],
+  "attempts": [
+    {
+      "n": 1,
+      "startedAt": "2026-11-10T09:22:19.340Z",
+      "status": 200
+    }
+  ],
+  "generatedAt": "2026-11-10T09:22:19.340Z",
+  "sha256": "29d575a9e725cd679331582be48aad1741ea1415eff62e6985420c8d7fdc29d6",
+  "profile": {
+    "headline": "Professionnel B2B",
+    "companyName": null,
+    "businessDescription": null,
+    "targetAudience": null,
+    "market": null,
+    "commGoals": null,
+    "editorialLine": null,
+    "styleNotes": "Ton sobre et direct. Phrases courtes."
+  },
+  "engine": {
+    "route": "POST /api/generate",
+    "server": "http://localhost:3100",
+    "repoCommit": "a403d0a17505b0f6b1411f6f86c081db1ebee53b",
+    "editorialEngineEnv": null
+  }
+}

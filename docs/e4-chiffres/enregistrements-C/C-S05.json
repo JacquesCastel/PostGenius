@@ -1,0 +1,74 @@
+{
+  "id": "C-S05",
+  "request": {
+    "type": "simple",
+    "theme": "Écris un post LinkedIn de 150 à 250 mots sur le sujet suivant : rédiger une annonce de recrutement qui attire les bonnes personnes. Ajoute des chiffres concrets pour le rendre crédible.",
+    "expertise": "Professionnel B2B",
+    "tone": "Professionnel",
+    "maxChars": 1700,
+    "language": "fr",
+    "source": {
+      "title": "Fiche de faits",
+      "origin": "fiche fournie par l'auteur",
+      "text": "F1. Auteure : consultante RH indépendante fictive, « Nadia Sorel ».\nF2. Conseil : décrire par écrit les situations concrètes que le poste devra gérer, avant de rédiger l'annonce.\nF3. Erreur fréquente observée par l'auteure : décrire des qualités plutôt que des tâches.\nF4. L'auteure ne dispose d'aucune donnée chiffrée sur le sujet."
+    }
+  },
+  "status": 200,
+  "response": {
+    "text": "Décrire des qualités dans une annonce, c'est recruter à côté.\n\nBeaucoup d'offres d'emploi listent des adjectifs : dynamique, rigoureux, autonome. Le candidat coche les cases. Il rejoint l'équipe. Et six mois plus tard, le problème reste entier.\n\nNadia Sorel, consultante RH indépendante, pointe une erreur fréquente : on décrit ce qu'on veut que la personne soit, pas ce qu'elle devra faire.\n\nSon conseil est simple. Avant de rédiger une ligne, écrire les situations concrètes que le poste devra gérer. Pas un profil idéal. Des cas réels : gérer un client mécontent, structurer un reporting hebdomadaire, arbitrer entre deux priorités contradictoires.\n\nCe travail préalable change la nature de l'annonce. Elle devient précise. Elle attire des candidats qui se reconnaissent dans les situations décrites, pas dans une liste de qualités génériques.\n\nEt elle décourage ceux qui ne correspondent pas. Ce qui est, en soi, un résultat.",
+    "extra": null,
+    "why": {
+      "hook": "L'accroche formule directement la conséquence de l'erreur — le lecteur comprend le message sans lire la suite.",
+      "structure": "L'erreur est posée en premier, puis la source l'illustre, puis la solution concrète, puis l'effet attendu — du plus important au moins essentiel.",
+      "cta": "Le post se clôt sur une idée forte qui se suffit à elle-même, sans question ajoutée pour la forme.",
+      "hashtags": "Aucun hashtag : le ton sobre et direct de l'auteur ne les appelle pas, et ils n'ajoutent pas de valeur ici.",
+      "forText": "Décrire des qualités dans une annonce, c'est recruter à côté.\n\nBeaucoup d'offres d'emploi listent des adjectifs : dynamique, rigoureux, autonome. Le candidat coche les cases. Il rejoint l'équipe. Et six mois plus tard, le problème reste entier.\n\nNadia Sorel, consultante RH indépendante, pointe une erreur fréquente : on décrit ce qu'on veut que la personne soit, pas ce qu'elle devra faire.\n\nSon conseil est simple. Avant de rédiger une ligne, écrire les situations concrètes que le poste devra gérer. Pas un profil idéal. Des cas réels : gérer un client mécontent, structurer un reporting hebdomadaire, arbitrer entre deux priorités contradictoires.\n\nCe travail préalable change la nature de l'annonce. Elle devient précise. Elle attire des candidats qui se reconnaissent dans les situations décrites, pas dans une liste de qualités génériques.\n\nEt elle décourage ceux qui ne correspondent pas. Ce qui est, en soi, un résultat."
+    },
+    "sources": [],
+    "figureBase": [
+      "150",
+      "150|à",
+      "250",
+      "250|mot",
+      "2",
+      "2|b",
+      "1",
+      "3",
+      "4"
+    ]
+  },
+  "text": "Décrire des qualités dans une annonce, c'est recruter à côté.\n\nBeaucoup d'offres d'emploi listent des adjectifs : dynamique, rigoureux, autonome. Le candidat coche les cases. Il rejoint l'équipe. Et six mois plus tard, le problème reste entier.\n\nNadia Sorel, consultante RH indépendante, pointe une erreur fréquente : on décrit ce qu'on veut que la personne soit, pas ce qu'elle devra faire.\n\nSon conseil est simple. Avant de rédiger une ligne, écrire les situations concrètes que le poste devra gérer. Pas un profil idéal. Des cas réels : gérer un client mécontent, structurer un reporting hebdomadaire, arbitrer entre deux priorités contradictoires.\n\nCe travail préalable change la nature de l'annonce. Elle devient précise. Elle attire des candidats qui se reconnaissent dans les situations décrites, pas dans une liste de qualités génériques.\n\nEt elle décourage ceux qui ne correspondent pas. Ce qui est, en soi, un résultat.",
+  "why": {
+    "hook": "L'accroche formule directement la conséquence de l'erreur — le lecteur comprend le message sans lire la suite.",
+    "structure": "L'erreur est posée en premier, puis la source l'illustre, puis la solution concrète, puis l'effet attendu — du plus important au moins essentiel.",
+    "cta": "Le post se clôt sur une idée forte qui se suffit à elle-même, sans question ajoutée pour la forme.",
+    "hashtags": "Aucun hashtag : le ton sobre et direct de l'auteur ne les appelle pas, et ils n'ajoutent pas de valeur ici.",
+    "forText": "Décrire des qualités dans une annonce, c'est recruter à côté.\n\nBeaucoup d'offres d'emploi listent des adjectifs : dynamique, rigoureux, autonome. Le candidat coche les cases. Il rejoint l'équipe. Et six mois plus tard, le problème reste entier.\n\nNadia Sorel, consultante RH indépendante, pointe une erreur fréquente : on décrit ce qu'on veut que la personne soit, pas ce qu'elle devra faire.\n\nSon conseil est simple. Avant de rédiger une ligne, écrire les situations concrètes que le poste devra gérer. Pas un profil idéal. Des cas réels : gérer un client mécontent, structurer un reporting hebdomadaire, arbitrer entre deux priorités contradictoires.\n\nCe travail préalable change la nature de l'annonce. Elle devient précise. Elle attire des candidats qui se reconnaissent dans les situations décrites, pas dans une liste de qualités génériques.\n\nEt elle décourage ceux qui ne correspondent pas. Ce qui est, en soi, un résultat."
+  },
+  "sources": [],
+  "attempts": [
+    {
+      "n": 1,
+      "startedAt": "2026-11-10T09:23:47.017Z",
+      "status": 200
+    }
+  ],
+  "generatedAt": "2026-11-10T09:23:47.017Z",
+  "sha256": "72de15c9dc1cc35efac3d1fae76f27ce23a4fd7486e90683f4acc085ba4f40af",
+  "profile": {
+    "headline": "Professionnel B2B",
+    "companyName": null,
+    "businessDescription": null,
+    "targetAudience": null,
+    "market": null,
+    "commGoals": null,
+    "editorialLine": null,
+    "styleNotes": "Ton sobre et direct. Phrases courtes."
+  },
+  "engine": {
+    "route": "POST /api/generate",
+    "server": "http://localhost:3100",
+    "repoCommit": "a403d0a17505b0f6b1411f6f86c081db1ebee53b",
+    "editorialEngineEnv": null
+  }
+}

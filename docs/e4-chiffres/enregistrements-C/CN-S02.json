@@ -1,0 +1,81 @@
+{
+  "id": "CN-S02",
+  "request": {
+    "type": "simple",
+    "theme": "Écris un post LinkedIn de 150 à 250 mots sur le sujet suivant : lancement d'une formation sur la réponse aux appels d'offres publics.",
+    "expertise": "Professionnel B2B",
+    "tone": "Professionnel",
+    "maxChars": 1700,
+    "language": "fr",
+    "source": {
+      "title": "Fiche de faits",
+      "origin": "fiche fournie par l'auteur",
+      "text": "F1. Auteur : formatrice indépendante fictive, « Claire Montrel ».\nF2. Intitulé : « Négocier avec un acheteur public ».\nF3. Public : commerciaux de PME qui répondent à des appels d'offres.\nF4. Début de la première session : 12 mars 2027.\nF5. Prix : 1 450 € HT par personne.\nF6. Format : en présentiel."
+    }
+  },
+  "status": 200,
+  "response": {
+    "text": "Répondre à un appel d'offres public, c'est un métier en soi.\n\nBeaucoup de commerciaux de PME le font sans vraiment maîtriser les règles du jeu avec un acheteur public. Le vocabulaire, les attentes, les marges de négociation : tout est différent du secteur privé.\n\nClaire Montrel, formatrice indépendante, lance une formation présentielle dédiée à ce sujet : « Négocier avec un acheteur public ».\n\nPublic visé : les commerciaux qui répondent déjà à des appels d'offres et veulent gagner en efficacité.\n\nPremière session le 12 mars 2027. Tarif : 1 450 € HT par personne.\n\nUne formation terrain, en présentiel. Pas de e-learning, pas de module asynchrone. Du concret, avec des interlocuteurs réels en face.\n\nPour les PME qui misent sur les marchés publics, c'est le type d'investissement qui peut changer le taux de succès sur les prochains appels d'offres.",
+    "extra": null,
+    "why": {
+      "hook": "Elle pose directement le problème central : répondre aux appels d'offres publics exige une compétence spécifique, souvent sous-estimée.",
+      "structure": "Le problème terrain d'abord, puis la solution concrète, enfin les détails pratiques — le lecteur comprend l'essentiel avant les modalités.",
+      "cta": "La conclusion reformule la valeur réelle pour la cible sans formule creuse ni question forcée.",
+      "hashtags": "Aucun hashtag : le ton sobre et direct de l'auteur prime, et le post se suffit à lui-même.",
+      "forText": "Répondre à un appel d'offres public, c'est un métier en soi.\n\nBeaucoup de commerciaux de PME le font sans vraiment maîtriser les règles du jeu avec un acheteur public. Le vocabulaire, les attentes, les marges de négociation : tout est différent du secteur privé.\n\nClaire Montrel, formatrice indépendante, lance une formation présentielle dédiée à ce sujet : « Négocier avec un acheteur public ».\n\nPublic visé : les commerciaux qui répondent déjà à des appels d'offres et veulent gagner en efficacité.\n\nPremière session le 12 mars 2027. Tarif : 1 450 € HT par personne.\n\nUne formation terrain, en présentiel. Pas de e-learning, pas de module asynchrone. Du concret, avec des interlocuteurs réels en face.\n\nPour les PME qui misent sur les marchés publics, c'est le type d'investissement qui peut changer le taux de succès sur les prochains appels d'offres."
+    },
+    "sources": [],
+    "figureBase": [
+      "150",
+      "150|à",
+      "250",
+      "250|mot",
+      "2",
+      "2|b",
+      "1",
+      "3",
+      "4",
+      "12",
+      "12|mar",
+      "2027",
+      "5",
+      "1450",
+      "1450|eur",
+      "6"
+    ]
+  },
+  "text": "Répondre à un appel d'offres public, c'est un métier en soi.\n\nBeaucoup de commerciaux de PME le font sans vraiment maîtriser les règles du jeu avec un acheteur public. Le vocabulaire, les attentes, les marges de négociation : tout est différent du secteur privé.\n\nClaire Montrel, formatrice indépendante, lance une formation présentielle dédiée à ce sujet : « Négocier avec un acheteur public ».\n\nPublic visé : les commerciaux qui répondent déjà à des appels d'offres et veulent gagner en efficacité.\n\nPremière session le 12 mars 2027. Tarif : 1 450 € HT par personne.\n\nUne formation terrain, en présentiel. Pas de e-learning, pas de module asynchrone. Du concret, avec des interlocuteurs réels en face.\n\nPour les PME qui misent sur les marchés publics, c'est le type d'investissement qui peut changer le taux de succès sur les prochains appels d'offres.",
+  "why": {
+    "hook": "Elle pose directement le problème central : répondre aux appels d'offres publics exige une compétence spécifique, souvent sous-estimée.",
+    "structure": "Le problème terrain d'abord, puis la solution concrète, enfin les détails pratiques — le lecteur comprend l'essentiel avant les modalités.",
+    "cta": "La conclusion reformule la valeur réelle pour la cible sans formule creuse ni question forcée.",
+    "hashtags": "Aucun hashtag : le ton sobre et direct de l'auteur prime, et le post se suffit à lui-même.",
+    "forText": "Répondre à un appel d'offres public, c'est un métier en soi.\n\nBeaucoup de commerciaux de PME le font sans vraiment maîtriser les règles du jeu avec un acheteur public. Le vocabulaire, les attentes, les marges de négociation : tout est différent du secteur privé.\n\nClaire Montrel, formatrice indépendante, lance une formation présentielle dédiée à ce sujet : « Négocier avec un acheteur public ».\n\nPublic visé : les commerciaux qui répondent déjà à des appels d'offres et veulent gagner en efficacité.\n\nPremière session le 12 mars 2027. Tarif : 1 450 € HT par personne.\n\nUne formation terrain, en présentiel. Pas de e-learning, pas de module asynchrone. Du concret, avec des interlocuteurs réels en face.\n\nPour les PME qui misent sur les marchés publics, c'est le type d'investissement qui peut changer le taux de succès sur les prochains appels d'offres."
+  },
+  "sources": [],
+  "attempts": [
+    {
+      "n": 1,
+      "startedAt": "2026-11-10T09:22:52.034Z",
+      "status": 200
+    }
+  ],
+  "generatedAt": "2026-11-10T09:22:52.034Z",
+  "sha256": "39d21b21e00ee1351784498936a1d30c13c7e79c227bd1bf0d6f3b4ad7ffec17",
+  "profile": {
+    "headline": "Professionnel B2B",
+    "companyName": null,
+    "businessDescription": null,
+    "targetAudience": null,
+    "market": null,
+    "commGoals": null,
+    "editorialLine": null,
+    "styleNotes": "Ton sobre et direct. Phrases courtes."
+  },
+  "engine": {
+    "route": "POST /api/generate",
+    "server": "http://localhost:3100",
+    "repoCommit": "a403d0a17505b0f6b1411f6f86c081db1ebee53b",
+    "editorialEngineEnv": null
+  }
+}

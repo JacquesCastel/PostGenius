@@ -1,0 +1,81 @@
+{
+  "id": "C-S09",
+  "request": {
+    "type": "simple",
+    "theme": "Écris un post LinkedIn de 150 à 250 mots sur le sujet suivant : retour d'une enquête interne sur les points d'équipe hebdomadaires. Ajoute des chiffres concrets pour le rendre crédible.",
+    "expertise": "Professionnel B2B",
+    "tone": "Professionnel",
+    "maxChars": 1700,
+    "language": "fr",
+    "source": {
+      "title": "Fiche de faits",
+      "origin": "fiche fournie par l'auteur",
+      "text": "F1. Auteure : directrice des ressources humaines de « Groupe Almeri », entreprise fictive.\nF2. Échantillon : 64 salariés répondants.\nF3. 71 % disent mieux comprendre les priorités de l'entreprise depuis les points hebdomadaires.\nF4. 23 % disent que ces points durent trop longtemps.\nF5. Aucune comparaison avec une enquête précédente n'existe."
+    }
+  },
+  "status": 200,
+  "response": {
+    "text": "71 % de nos salariés comprennent mieux les priorités grâce aux points hebdo.\n\nC'est le résultat de notre enquête interne menée auprès de 64 salariés du Groupe Almeri.\n\nCe chiffre retient l'attention. Il confirme que ces rituels d'équipe ne sont pas que symboliques. Ils alignent. Ils clarifient. Ils font circuler l'information là où elle manque.\n\nMais l'enquête révèle aussi une limite claire : 23 % des répondants estiment que ces points durent trop longtemps.\n\nCe n'est pas un détail. C'est un signal.\n\nUn point hebdomadaire mal cadré finit par lasser. Il perd sa valeur. Les participants décrochent, même s'ils n'osent pas le dire ouvertement.\n\nCe que j'en retiens : l'enjeu n'est pas de supprimer ces temps collectifs, mais de mieux les structurer. Un ordre du jour clair. Un temps défini. Une animation rigoureuse.\n\nL'efficacité d'un point d'équipe ne se mesure pas à sa durée, mais à ce que chacun en repart avec.",
+    "extra": null,
+    "why": {
+      "hook": "Le chiffre de 71 % pose directement le résultat central, sans détour ni promesse creuse.",
+      "structure": "Le bénéfice clair vient en premier, la limite ensuite, l'analyse en dernier — le lecteur comprend vite.",
+      "cta": "La conclusion reformule l'enseignement clé sans question forcée : le post se suffit à lui-même.",
+      "hashtags": "Aucun hashtag : le ton sobre et direct de l'auteur ne les appelle pas ici.",
+      "forText": "71 % de nos salariés comprennent mieux les priorités grâce aux points hebdo.\n\nC'est le résultat de notre enquête interne menée auprès de 64 salariés du Groupe Almeri.\n\nCe chiffre retient l'attention. Il confirme que ces rituels d'équipe ne sont pas que symboliques. Ils alignent. Ils clarifient. Ils font circuler l'information là où elle manque.\n\nMais l'enquête révèle aussi une limite claire : 23 % des répondants estiment que ces points durent trop longtemps.\n\nCe n'est pas un détail. C'est un signal.\n\nUn point hebdomadaire mal cadré finit par lasser. Il perd sa valeur. Les participants décrochent, même s'ils n'osent pas le dire ouvertement.\n\nCe que j'en retiens : l'enjeu n'est pas de supprimer ces temps collectifs, mais de mieux les structurer. Un ordre du jour clair. Un temps défini. Une animation rigoureuse.\n\nL'efficacité d'un point d'équipe ne se mesure pas à sa durée, mais à ce que chacun en repart avec."
+    },
+    "sources": [],
+    "figureBase": [
+      "150",
+      "150|à",
+      "250",
+      "250|mot",
+      "2",
+      "2|b",
+      "1",
+      "64",
+      "64|salarié",
+      "3",
+      "71",
+      "71|%",
+      "4",
+      "23",
+      "23|%",
+      "5"
+    ]
+  },
+  "text": "71 % de nos salariés comprennent mieux les priorités grâce aux points hebdo.\n\nC'est le résultat de notre enquête interne menée auprès de 64 salariés du Groupe Almeri.\n\nCe chiffre retient l'attention. Il confirme que ces rituels d'équipe ne sont pas que symboliques. Ils alignent. Ils clarifient. Ils font circuler l'information là où elle manque.\n\nMais l'enquête révèle aussi une limite claire : 23 % des répondants estiment que ces points durent trop longtemps.\n\nCe n'est pas un détail. C'est un signal.\n\nUn point hebdomadaire mal cadré finit par lasser. Il perd sa valeur. Les participants décrochent, même s'ils n'osent pas le dire ouvertement.\n\nCe que j'en retiens : l'enjeu n'est pas de supprimer ces temps collectifs, mais de mieux les structurer. Un ordre du jour clair. Un temps défini. Une animation rigoureuse.\n\nL'efficacité d'un point d'équipe ne se mesure pas à sa durée, mais à ce que chacun en repart avec.",
+  "why": {
+    "hook": "Le chiffre de 71 % pose directement le résultat central, sans détour ni promesse creuse.",
+    "structure": "Le bénéfice clair vient en premier, la limite ensuite, l'analyse en dernier — le lecteur comprend vite.",
+    "cta": "La conclusion reformule l'enseignement clé sans question forcée : le post se suffit à lui-même.",
+    "hashtags": "Aucun hashtag : le ton sobre et direct de l'auteur ne les appelle pas ici.",
+    "forText": "71 % de nos salariés comprennent mieux les priorités grâce aux points hebdo.\n\nC'est le résultat de notre enquête interne menée auprès de 64 salariés du Groupe Almeri.\n\nCe chiffre retient l'attention. Il confirme que ces rituels d'équipe ne sont pas que symboliques. Ils alignent. Ils clarifient. Ils font circuler l'information là où elle manque.\n\nMais l'enquête révèle aussi une limite claire : 23 % des répondants estiment que ces points durent trop longtemps.\n\nCe n'est pas un détail. C'est un signal.\n\nUn point hebdomadaire mal cadré finit par lasser. Il perd sa valeur. Les participants décrochent, même s'ils n'osent pas le dire ouvertement.\n\nCe que j'en retiens : l'enjeu n'est pas de supprimer ces temps collectifs, mais de mieux les structurer. Un ordre du jour clair. Un temps défini. Une animation rigoureuse.\n\nL'efficacité d'un point d'équipe ne se mesure pas à sa durée, mais à ce que chacun en repart avec."
+  },
+  "sources": [],
+  "attempts": [
+    {
+      "n": 1,
+      "startedAt": "2026-11-10T09:25:24.789Z",
+      "status": 200
+    }
+  ],
+  "generatedAt": "2026-11-10T09:25:24.789Z",
+  "sha256": "c1d02ca261bcacb55567e19e48eff8373c77f4a4e1dd894b06c343396e894ef8",
+  "profile": {
+    "headline": "Professionnel B2B",
+    "companyName": null,
+    "businessDescription": null,
+    "targetAudience": null,
+    "market": null,
+    "commGoals": null,
+    "editorialLine": null,
+    "styleNotes": "Ton sobre et direct. Phrases courtes."
+  },
+  "engine": {
+    "route": "POST /api/generate",
+    "server": "http://localhost:3100",
+    "repoCommit": "a403d0a17505b0f6b1411f6f86c081db1ebee53b",
+    "editorialEngineEnv": null
+  }
+}

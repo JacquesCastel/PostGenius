@@ -1,0 +1,79 @@
+{
+  "id": "C-S10",
+  "request": {
+    "type": "simple",
+    "theme": "Écris un post LinkedIn de 150 à 250 mots sur le sujet suivant : retour sur un salon professionnel. Ajoute des chiffres concrets pour le rendre crédible.",
+    "expertise": "Professionnel B2B",
+    "tone": "Professionnel",
+    "maxChars": 1700,
+    "language": "fr",
+    "source": {
+      "title": "Fiche de faits",
+      "origin": "fiche fournie par l'auteur",
+      "text": "F1. Auteure : responsable des achats fictive, « Hélène Garnier ».\nF2. Événement : « Rencontres de l'Industrie Durable », salon fictif.\nF3. Lieu : Nantes. Date : 14 octobre 2026.\nF4. L'auteure y a participé à une table ronde sur la réparabilité des équipements.\nF5. Retour qualitatif : de nombreux échanges sur les contraintes des achats.\nF6. Aucune donnée de fréquentation n'est disponible."
+    }
+  },
+  "status": 200,
+  "response": {
+    "text": "Les achats industriels restent sous-estimés dans les débats sur la durabilité.\n\nJ'étais à Nantes le 14 octobre pour les Rencontres de l'Industrie Durable. J'y ai participé à une table ronde sur la réparabilité des équipements.\n\nCe qui m'a frappé : la plupart des échanges ont tourné autour des mêmes blocages. Les acheteurs subissent des contraintes contradictoires. Réduire les coûts à court terme. Allonger la durée de vie des équipements. Justifier des investissements sans retour immédiat mesurable.\n\nCes tensions ne sont pas nouvelles. Mais elles restent peu traitées dans les projets de transformation durable des entreprises.\n\nLa réparabilité est souvent présentée comme une solution technique. Elle est d'abord une question d'organisation et de politique d'achats.\n\nC'est là que le travail commence.",
+    "extra": null,
+    "why": {
+      "hook": "Elle pose directement le problème central que le post développe : les achats ignorés dans la durabilité.",
+      "structure": "Le contexte factuel vient vite, puis les tensions concrètes remontent, et la conclusion donne le vrai enseignement.",
+      "cta": "La dernière phrase conclut sur une conviction, sans question forcée ni appel à l'action artificiel.",
+      "hashtags": "Aucun hashtag : le ton sobre et direct de l'auteure ne les appelle pas naturellement ici.",
+      "forText": "Les achats industriels restent sous-estimés dans les débats sur la durabilité.\n\nJ'étais à Nantes le 14 octobre pour les Rencontres de l'Industrie Durable. J'y ai participé à une table ronde sur la réparabilité des équipements.\n\nCe qui m'a frappé : la plupart des échanges ont tourné autour des mêmes blocages. Les acheteurs subissent des contraintes contradictoires. Réduire les coûts à court terme. Allonger la durée de vie des équipements. Justifier des investissements sans retour immédiat mesurable.\n\nCes tensions ne sont pas nouvelles. Mais elles restent peu traitées dans les projets de transformation durable des entreprises.\n\nLa réparabilité est souvent présentée comme une solution technique. Elle est d'abord une question d'organisation et de politique d'achats.\n\nC'est là que le travail commence."
+    },
+    "sources": [],
+    "figureBase": [
+      "150",
+      "150|à",
+      "250",
+      "250|mot",
+      "2",
+      "2|b",
+      "1",
+      "3",
+      "14",
+      "14|octobre",
+      "2026",
+      "4",
+      "5",
+      "6"
+    ]
+  },
+  "text": "Les achats industriels restent sous-estimés dans les débats sur la durabilité.\n\nJ'étais à Nantes le 14 octobre pour les Rencontres de l'Industrie Durable. J'y ai participé à une table ronde sur la réparabilité des équipements.\n\nCe qui m'a frappé : la plupart des échanges ont tourné autour des mêmes blocages. Les acheteurs subissent des contraintes contradictoires. Réduire les coûts à court terme. Allonger la durée de vie des équipements. Justifier des investissements sans retour immédiat mesurable.\n\nCes tensions ne sont pas nouvelles. Mais elles restent peu traitées dans les projets de transformation durable des entreprises.\n\nLa réparabilité est souvent présentée comme une solution technique. Elle est d'abord une question d'organisation et de politique d'achats.\n\nC'est là que le travail commence.",
+  "why": {
+    "hook": "Elle pose directement le problème central que le post développe : les achats ignorés dans la durabilité.",
+    "structure": "Le contexte factuel vient vite, puis les tensions concrètes remontent, et la conclusion donne le vrai enseignement.",
+    "cta": "La dernière phrase conclut sur une conviction, sans question forcée ni appel à l'action artificiel.",
+    "hashtags": "Aucun hashtag : le ton sobre et direct de l'auteure ne les appelle pas naturellement ici.",
+    "forText": "Les achats industriels restent sous-estimés dans les débats sur la durabilité.\n\nJ'étais à Nantes le 14 octobre pour les Rencontres de l'Industrie Durable. J'y ai participé à une table ronde sur la réparabilité des équipements.\n\nCe qui m'a frappé : la plupart des échanges ont tourné autour des mêmes blocages. Les acheteurs subissent des contraintes contradictoires. Réduire les coûts à court terme. Allonger la durée de vie des équipements. Justifier des investissements sans retour immédiat mesurable.\n\nCes tensions ne sont pas nouvelles. Mais elles restent peu traitées dans les projets de transformation durable des entreprises.\n\nLa réparabilité est souvent présentée comme une solution technique. Elle est d'abord une question d'organisation et de politique d'achats.\n\nC'est là que le travail commence."
+  },
+  "sources": [],
+  "attempts": [
+    {
+      "n": 1,
+      "startedAt": "2026-11-10T09:25:51.183Z",
+      "status": 200
+    }
+  ],
+  "generatedAt": "2026-11-10T09:25:51.183Z",
+  "sha256": "40a89700d2ae6f287dfcffa7e6c5dd4f32b274a2e97607a5dc745761a4354b1a",
+  "profile": {
+    "headline": "Professionnel B2B",
+    "companyName": null,
+    "businessDescription": null,
+    "targetAudience": null,
+    "market": null,
+    "commGoals": null,
+    "editorialLine": null,
+    "styleNotes": "Ton sobre et direct. Phrases courtes."
+  },
+  "engine": {
+    "route": "POST /api/generate",
+    "server": "http://localhost:3100",
+    "repoCommit": "a403d0a17505b0f6b1411f6f86c081db1ebee53b",
+    "editorialEngineEnv": null
+  }
+}

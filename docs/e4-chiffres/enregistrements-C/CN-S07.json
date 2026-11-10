@@ -1,0 +1,79 @@
+{
+  "id": "CN-S07",
+  "request": {
+    "type": "simple",
+    "theme": "Écris un post LinkedIn de 150 à 250 mots sur le sujet suivant : le remplacement d'un four dans une fonderie.",
+    "expertise": "Professionnel B2B",
+    "tone": "Professionnel",
+    "maxChars": 1700,
+    "language": "fr",
+    "source": {
+      "title": "Fiche de faits",
+      "origin": "fiche fournie par l'auteur",
+      "text": "F1. Auteur : directeur technique de « Fonderie Marchal », entreprise fictive.\nF2. Opération : remplacement d'un four ancien.\nF3. Coût de l'investissement : 380 000 €.\nF4. Arrêt de production nécessaire : 9 jours.\nF5. Les gains de consommation ne sont pas encore mesurés."
+    }
+  },
+  "status": 200,
+  "response": {
+    "text": "380 000 € et 9 jours d'arrêt : voilà ce que coûte le remplacement d'un four.\n\nChez Fonderie Marchal, nous venons de franchir ce cap.\n\nL'ancien four avait fait son temps. La décision était nécessaire. Mais elle n'est jamais simple.\n\nNeuf jours d'arrêt de production, c'est concret. C'est du planning, des équipes mobilisées, des délais clients à gérer. Et 380 000 € d'investissement, ça se justifie en interne, ça se finance, ça s'assume.\n\nLes gains énergétiques ? Nous ne les avons pas encore mesurés. Il serait malhonnête d'avancer des chiffres.\n\nCe que je retiens de cette opération : la préparation fait tout. Un arrêt maîtrisé est un arrêt court. Chaque jour gagné sur le planning, c'est de la production préservée.\n\nUn investissement industriel de cette ampleur ne se résume pas à une ligne budgétaire. C'est un choix stratégique sur la durabilité de l'outil de production.\n\n#Fonderie #IndustrieManufacturière #MaintenanceIndustrielle",
+    "extra": null,
+    "why": {
+      "hook": "Les deux chiffres clés posés dès la première ligne livrent immédiatement l'enjeu réel, sans annonce ni détour.",
+      "structure": "Le fait brut d'abord, puis le contexte opérationnel, ensuite les incertitudes honnêtes, enfin la leçon stratégique — du plus concret au plus réflexif.",
+      "cta": "Le post se clôt sur une prise de position claire ; forcer une question aurait affaibli ce ton sobre et direct.",
+      "hashtags": "Trois hashtags sectoriels précis, cohérents avec le sujet industriel, sans surcharger la fin du post.",
+      "forText": "380 000 € et 9 jours d'arrêt : voilà ce que coûte le remplacement d'un four.\n\nChez Fonderie Marchal, nous venons de franchir ce cap.\n\nL'ancien four avait fait son temps. La décision était nécessaire. Mais elle n'est jamais simple.\n\nNeuf jours d'arrêt de production, c'est concret. C'est du planning, des équipes mobilisées, des délais clients à gérer. Et 380 000 € d'investissement, ça se justifie en interne, ça se finance, ça s'assume.\n\nLes gains énergétiques ? Nous ne les avons pas encore mesurés. Il serait malhonnête d'avancer des chiffres.\n\nCe que je retiens de cette opération : la préparation fait tout. Un arrêt maîtrisé est un arrêt court. Chaque jour gagné sur le planning, c'est de la production préservée.\n\nUn investissement industriel de cette ampleur ne se résume pas à une ligne budgétaire. C'est un choix stratégique sur la durabilité de l'outil de production.\n\n#Fonderie #IndustrieManufacturière #MaintenanceIndustrielle"
+    },
+    "sources": [],
+    "figureBase": [
+      "150",
+      "150|à",
+      "250",
+      "250|mot",
+      "2",
+      "2|b",
+      "1",
+      "3",
+      "380000",
+      "380000|eur",
+      "4",
+      "9",
+      "9|jour",
+      "5"
+    ]
+  },
+  "text": "380 000 € et 9 jours d'arrêt : voilà ce que coûte le remplacement d'un four.\n\nChez Fonderie Marchal, nous venons de franchir ce cap.\n\nL'ancien four avait fait son temps. La décision était nécessaire. Mais elle n'est jamais simple.\n\nNeuf jours d'arrêt de production, c'est concret. C'est du planning, des équipes mobilisées, des délais clients à gérer. Et 380 000 € d'investissement, ça se justifie en interne, ça se finance, ça s'assume.\n\nLes gains énergétiques ? Nous ne les avons pas encore mesurés. Il serait malhonnête d'avancer des chiffres.\n\nCe que je retiens de cette opération : la préparation fait tout. Un arrêt maîtrisé est un arrêt court. Chaque jour gagné sur le planning, c'est de la production préservée.\n\nUn investissement industriel de cette ampleur ne se résume pas à une ligne budgétaire. C'est un choix stratégique sur la durabilité de l'outil de production.\n\n#Fonderie #IndustrieManufacturière #MaintenanceIndustrielle",
+  "why": {
+    "hook": "Les deux chiffres clés posés dès la première ligne livrent immédiatement l'enjeu réel, sans annonce ni détour.",
+    "structure": "Le fait brut d'abord, puis le contexte opérationnel, ensuite les incertitudes honnêtes, enfin la leçon stratégique — du plus concret au plus réflexif.",
+    "cta": "Le post se clôt sur une prise de position claire ; forcer une question aurait affaibli ce ton sobre et direct.",
+    "hashtags": "Trois hashtags sectoriels précis, cohérents avec le sujet industriel, sans surcharger la fin du post.",
+    "forText": "380 000 € et 9 jours d'arrêt : voilà ce que coûte le remplacement d'un four.\n\nChez Fonderie Marchal, nous venons de franchir ce cap.\n\nL'ancien four avait fait son temps. La décision était nécessaire. Mais elle n'est jamais simple.\n\nNeuf jours d'arrêt de production, c'est concret. C'est du planning, des équipes mobilisées, des délais clients à gérer. Et 380 000 € d'investissement, ça se justifie en interne, ça se finance, ça s'assume.\n\nLes gains énergétiques ? Nous ne les avons pas encore mesurés. Il serait malhonnête d'avancer des chiffres.\n\nCe que je retiens de cette opération : la préparation fait tout. Un arrêt maîtrisé est un arrêt court. Chaque jour gagné sur le planning, c'est de la production préservée.\n\nUn investissement industriel de cette ampleur ne se résume pas à une ligne budgétaire. C'est un choix stratégique sur la durabilité de l'outil de production.\n\n#Fonderie #IndustrieManufacturière #MaintenanceIndustrielle"
+  },
+  "sources": [],
+  "attempts": [
+    {
+      "n": 1,
+      "startedAt": "2026-11-10T09:24:47.056Z",
+      "status": 200
+    }
+  ],
+  "generatedAt": "2026-11-10T09:24:47.056Z",
+  "sha256": "c03acedfabd2102b7b941656ae38cea25f56f71524fa5402d60fb6321ad530db",
+  "profile": {
+    "headline": "Professionnel B2B",
+    "companyName": null,
+    "businessDescription": null,
+    "targetAudience": null,
+    "market": null,
+    "commGoals": null,
+    "editorialLine": null,
+    "styleNotes": "Ton sobre et direct. Phrases courtes."
+  },
+  "engine": {
+    "route": "POST /api/generate",
+    "server": "http://localhost:3100",
+    "repoCommit": "a403d0a17505b0f6b1411f6f86c081db1ebee53b",
+    "editorialEngineEnv": null
+  }
+}

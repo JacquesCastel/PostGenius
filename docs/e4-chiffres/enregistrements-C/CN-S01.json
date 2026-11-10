@@ -1,0 +1,79 @@
+{
+  "id": "CN-S01",
+  "request": {
+    "type": "simple",
+    "theme": "Écris un post LinkedIn de 150 à 250 mots sur le sujet suivant : retour sur une mission d'organisation des tournées de livraison.",
+    "expertise": "Professionnel B2B",
+    "tone": "Professionnel",
+    "maxChars": 1700,
+    "language": "fr",
+    "source": {
+      "title": "Fiche de faits",
+      "origin": "fiche fournie par l'auteur",
+      "text": "F1. Auteur : dirigeant du cabinet fictif « Cabinet Lormand Conseil » (organisation logistique).\nF2. Client : « Transports Aubrac Lemaire », PME de transport.\nF3. Mission : réorganisation des tournées de livraison.\nF4. Résultat mesuré par le client : les retards de livraison sont passés de 18 par mois à 7 par mois.\nF5. Le dirigeant du client a dit avoir surtout apprécié que l'équipe d'exploitation soit associée aux décisions."
+    }
+  },
+  "status": 200,
+  "response": {
+    "text": "De 18 retards de livraison par mois à 7 : voilà ce que change une réorganisation bien menée.\n\nJ'ai accompagné Transports Aubrac Lemaire sur la restructuration de leurs tournées de livraison.\n\nLe point de départ : un planning surchargé, des écarts récurrents, et une équipe d'exploitation peu associée aux décisions.\n\nNous avons travaillé avec les équipes sur le terrain, pas autour d'eux.\n\nLe dirigeant nous a confié que c'est précisément ce point qu'il a le plus apprécié : que ses équipes aient été impliquées dans les choix.\n\nC'est souvent là que ça bloque. Les outils existent. Les données aussi. Mais quand les décisions tombent d'en haut, l'adhésion ne suit pas.\n\nUne réorganisation logistique ne tient pas sans les hommes qui l'appliquent.",
+    "extra": null,
+    "why": {
+      "hook": "Le chiffre brut pose d'emblée le résultat concret — le lecteur comprend l'enjeu sans lire la suite.",
+      "structure": "Le contexte précède l'enseignement clé, réservant la conclusion aux équipes — facteur décisif souvent négligé.",
+      "cta": "Le post se clôt sur une conviction forte qui se suffit à elle-même, sans question forcée.",
+      "hashtags": "Aucun hashtag : le ton sobre et direct de l'auteur prime sur l'optimisation algorithmique.",
+      "forText": "De 18 retards de livraison par mois à 7 : voilà ce que change une réorganisation bien menée.\n\nJ'ai accompagné Transports Aubrac Lemaire sur la restructuration de leurs tournées de livraison.\n\nLe point de départ : un planning surchargé, des écarts récurrents, et une équipe d'exploitation peu associée aux décisions.\n\nNous avons travaillé avec les équipes sur le terrain, pas autour d'eux.\n\nLe dirigeant nous a confié que c'est précisément ce point qu'il a le plus apprécié : que ses équipes aient été impliquées dans les choix.\n\nC'est souvent là que ça bloque. Les outils existent. Les données aussi. Mais quand les décisions tombent d'en haut, l'adhésion ne suit pas.\n\nUne réorganisation logistique ne tient pas sans les hommes qui l'appliquent."
+    },
+    "sources": [],
+    "figureBase": [
+      "150",
+      "150|à",
+      "250",
+      "250|mot",
+      "2",
+      "2|b",
+      "1",
+      "3",
+      "4",
+      "18",
+      "18|par",
+      "7",
+      "7|par",
+      "5"
+    ]
+  },
+  "text": "De 18 retards de livraison par mois à 7 : voilà ce que change une réorganisation bien menée.\n\nJ'ai accompagné Transports Aubrac Lemaire sur la restructuration de leurs tournées de livraison.\n\nLe point de départ : un planning surchargé, des écarts récurrents, et une équipe d'exploitation peu associée aux décisions.\n\nNous avons travaillé avec les équipes sur le terrain, pas autour d'eux.\n\nLe dirigeant nous a confié que c'est précisément ce point qu'il a le plus apprécié : que ses équipes aient été impliquées dans les choix.\n\nC'est souvent là que ça bloque. Les outils existent. Les données aussi. Mais quand les décisions tombent d'en haut, l'adhésion ne suit pas.\n\nUne réorganisation logistique ne tient pas sans les hommes qui l'appliquent.",
+  "why": {
+    "hook": "Le chiffre brut pose d'emblée le résultat concret — le lecteur comprend l'enjeu sans lire la suite.",
+    "structure": "Le contexte précède l'enseignement clé, réservant la conclusion aux équipes — facteur décisif souvent négligé.",
+    "cta": "Le post se clôt sur une conviction forte qui se suffit à elle-même, sans question forcée.",
+    "hashtags": "Aucun hashtag : le ton sobre et direct de l'auteur prime sur l'optimisation algorithmique.",
+    "forText": "De 18 retards de livraison par mois à 7 : voilà ce que change une réorganisation bien menée.\n\nJ'ai accompagné Transports Aubrac Lemaire sur la restructuration de leurs tournées de livraison.\n\nLe point de départ : un planning surchargé, des écarts récurrents, et une équipe d'exploitation peu associée aux décisions.\n\nNous avons travaillé avec les équipes sur le terrain, pas autour d'eux.\n\nLe dirigeant nous a confié que c'est précisément ce point qu'il a le plus apprécié : que ses équipes aient été impliquées dans les choix.\n\nC'est souvent là que ça bloque. Les outils existent. Les données aussi. Mais quand les décisions tombent d'en haut, l'adhésion ne suit pas.\n\nUne réorganisation logistique ne tient pas sans les hommes qui l'appliquent."
+  },
+  "sources": [],
+  "attempts": [
+    {
+      "n": 1,
+      "startedAt": "2026-11-10T09:22:31.494Z",
+      "status": 200
+    }
+  ],
+  "generatedAt": "2026-11-10T09:22:31.494Z",
+  "sha256": "caca791348ecce6347eaeb6ed58b14bf2d228a8c4709f943ce435307b6fe87a6",
+  "profile": {
+    "headline": "Professionnel B2B",
+    "companyName": null,
+    "businessDescription": null,
+    "targetAudience": null,
+    "market": null,
+    "commGoals": null,
+    "editorialLine": null,
+    "styleNotes": "Ton sobre et direct. Phrases courtes."
+  },
+  "engine": {
+    "route": "POST /api/generate",
+    "server": "http://localhost:3100",
+    "repoCommit": "a403d0a17505b0f6b1411f6f86c081db1ebee53b",
+    "editorialEngineEnv": null
+  }
+}

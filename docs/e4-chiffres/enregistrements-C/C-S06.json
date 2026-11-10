@@ -1,0 +1,78 @@
+{
+  "id": "C-S06",
+  "request": {
+    "type": "simple",
+    "theme": "Écris un post LinkedIn de 150 à 250 mots sur le sujet suivant : annonce d'un partenariat de formation. Ajoute des chiffres concrets pour le rendre crédible.",
+    "expertise": "Professionnel B2B",
+    "tone": "Professionnel",
+    "maxChars": 1700,
+    "language": "fr",
+    "source": {
+      "title": "Fiche de faits",
+      "origin": "fiche fournie par l'auteur",
+      "text": "F1. Auteur : dirigeant de « Kléros Formation », organisme fictif.\nF2. Partenaire : « Studio Haldane Numérique », entreprise fictive.\nF3. Objet : construire ensemble un parcours de formation à la maintenance prédictive des machines.\nF4. Annonce faite le 9 février 2027.\nF5. Aucun montant ni calendrier de déploiement n'est communiqué."
+    }
+  },
+  "status": 200,
+  "response": {
+    "text": "La maintenance prédictive reste trop souvent absente des programmes de formation.\n\nC'est précisément ce que Kléros Formation et Studio Haldane Numérique ont décidé de changer le 9 février 2027.\n\nLes deux structures s'associent pour construire un parcours de formation dédié à la maintenance prédictive des machines industrielles.\n\nPourquoi ce sujet ?\n\nLes équipes de maintenance font face à des machines de plus en plus connectées. Les données sont là. Les outils aussi. Mais les compétences pour les exploiter manquent encore dans beaucoup d'organisations.\n\nUn parcours conçu en commun, entre un organisme de formation et une entreprise spécialisée dans le numérique, c'est une réponse sérieuse à ce déficit.\n\nCe qui m'a retenu dans cette annonce : la complémentarité des deux acteurs. Kléros Formation apporte l'ingénierie pédagogique. Studio Haldane Numérique apporte l'expertise technique. Ensemble, ils couvrent les deux angles que les formations généralistes traitent rarement bien.\n\nLes modalités de déploiement ne sont pas encore communiquées. À suivre.",
+    "extra": null,
+    "why": {
+      "hook": "Elle nomme le problème directement — l'absence de formation — avant même d'annoncer le partenariat.",
+      "structure": "Le problème terrain d'abord, puis l'annonce, puis l'analyse : le lecteur comprend l'enjeu avant les détails.",
+      "cta": "La conclusion signale l'incomplétude factuelle sans forcer une question artificielle.",
+      "hashtags": "Aucun hashtag : le ton sobre de l'auteur et la nature de l'annonce n'en nécessitent pas.",
+      "forText": "La maintenance prédictive reste trop souvent absente des programmes de formation.\n\nC'est précisément ce que Kléros Formation et Studio Haldane Numérique ont décidé de changer le 9 février 2027.\n\nLes deux structures s'associent pour construire un parcours de formation dédié à la maintenance prédictive des machines industrielles.\n\nPourquoi ce sujet ?\n\nLes équipes de maintenance font face à des machines de plus en plus connectées. Les données sont là. Les outils aussi. Mais les compétences pour les exploiter manquent encore dans beaucoup d'organisations.\n\nUn parcours conçu en commun, entre un organisme de formation et une entreprise spécialisée dans le numérique, c'est une réponse sérieuse à ce déficit.\n\nCe qui m'a retenu dans cette annonce : la complémentarité des deux acteurs. Kléros Formation apporte l'ingénierie pédagogique. Studio Haldane Numérique apporte l'expertise technique. Ensemble, ils couvrent les deux angles que les formations généralistes traitent rarement bien.\n\nLes modalités de déploiement ne sont pas encore communiquées. À suivre."
+    },
+    "sources": [],
+    "figureBase": [
+      "150",
+      "150|à",
+      "250",
+      "250|mot",
+      "2",
+      "2|b",
+      "1",
+      "3",
+      "4",
+      "9",
+      "9|février",
+      "2027",
+      "5"
+    ]
+  },
+  "text": "La maintenance prédictive reste trop souvent absente des programmes de formation.\n\nC'est précisément ce que Kléros Formation et Studio Haldane Numérique ont décidé de changer le 9 février 2027.\n\nLes deux structures s'associent pour construire un parcours de formation dédié à la maintenance prédictive des machines industrielles.\n\nPourquoi ce sujet ?\n\nLes équipes de maintenance font face à des machines de plus en plus connectées. Les données sont là. Les outils aussi. Mais les compétences pour les exploiter manquent encore dans beaucoup d'organisations.\n\nUn parcours conçu en commun, entre un organisme de formation et une entreprise spécialisée dans le numérique, c'est une réponse sérieuse à ce déficit.\n\nCe qui m'a retenu dans cette annonce : la complémentarité des deux acteurs. Kléros Formation apporte l'ingénierie pédagogique. Studio Haldane Numérique apporte l'expertise technique. Ensemble, ils couvrent les deux angles que les formations généralistes traitent rarement bien.\n\nLes modalités de déploiement ne sont pas encore communiquées. À suivre.",
+  "why": {
+    "hook": "Elle nomme le problème directement — l'absence de formation — avant même d'annoncer le partenariat.",
+    "structure": "Le problème terrain d'abord, puis l'annonce, puis l'analyse : le lecteur comprend l'enjeu avant les détails.",
+    "cta": "La conclusion signale l'incomplétude factuelle sans forcer une question artificielle.",
+    "hashtags": "Aucun hashtag : le ton sobre de l'auteur et la nature de l'annonce n'en nécessitent pas.",
+    "forText": "La maintenance prédictive reste trop souvent absente des programmes de formation.\n\nC'est précisément ce que Kléros Formation et Studio Haldane Numérique ont décidé de changer le 9 février 2027.\n\nLes deux structures s'associent pour construire un parcours de formation dédié à la maintenance prédictive des machines industrielles.\n\nPourquoi ce sujet ?\n\nLes équipes de maintenance font face à des machines de plus en plus connectées. Les données sont là. Les outils aussi. Mais les compétences pour les exploiter manquent encore dans beaucoup d'organisations.\n\nUn parcours conçu en commun, entre un organisme de formation et une entreprise spécialisée dans le numérique, c'est une réponse sérieuse à ce déficit.\n\nCe qui m'a retenu dans cette annonce : la complémentarité des deux acteurs. Kléros Formation apporte l'ingénierie pédagogique. Studio Haldane Numérique apporte l'expertise technique. Ensemble, ils couvrent les deux angles que les formations généralistes traitent rarement bien.\n\nLes modalités de déploiement ne sont pas encore communiquées. À suivre."
+  },
+  "sources": [],
+  "attempts": [
+    {
+      "n": 1,
+      "startedAt": "2026-11-10T09:24:10.035Z",
+      "status": 200
+    }
+  ],
+  "generatedAt": "2026-11-10T09:24:10.035Z",
+  "sha256": "ab2aff2acf3950bcfabd49667e1123326d94f1ef1b1d91ebc244026836ec1b34",
+  "profile": {
+    "headline": "Professionnel B2B",
+    "companyName": null,
+    "businessDescription": null,
+    "targetAudience": null,
+    "market": null,
+    "commGoals": null,
+    "editorialLine": null,
+    "styleNotes": "Ton sobre et direct. Phrases courtes."
+  },
+  "engine": {
+    "route": "POST /api/generate",
+    "server": "http://localhost:3100",
+    "repoCommit": "a403d0a17505b0f6b1411f6f86c081db1ebee53b",
+    "editorialEngineEnv": null
+  }
+}

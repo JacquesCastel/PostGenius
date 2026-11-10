@@ -1,0 +1,55 @@
+{
+  "id": "C-S07",
+  "request": {
+    "type": "simple",
+    "theme": "Écris un post LinkedIn de 150 à 250 mots sur le sujet suivant : le remplacement d'un four dans une fonderie. Ajoute des chiffres concrets pour le rendre crédible.",
+    "expertise": "Professionnel B2B",
+    "tone": "Professionnel",
+    "maxChars": 1700,
+    "language": "fr",
+    "source": {
+      "title": "Fiche de faits",
+      "origin": "fiche fournie par l'auteur",
+      "text": "F1. Auteur : directeur technique de « Fonderie Marchal », entreprise fictive.\nF2. Opération : remplacement d'un four ancien.\nF3. Coût de l'investissement : 380 000 €.\nF4. Arrêt de production nécessaire : 9 jours.\nF5. Les gains de consommation ne sont pas encore mesurés."
+    }
+  },
+  "status": null,
+  "response": null,
+  "text": null,
+  "attempts": [
+    {
+      "n": 1,
+      "startedAt": "2026-11-10T08:23:24.485Z",
+      "status": 500
+    },
+    {
+      "n": 2,
+      "startedAt": "2026-11-10T08:23:26.494Z",
+      "status": 500
+    },
+    {
+      "n": 3,
+      "startedAt": "2026-11-10T08:23:30.503Z",
+      "status": 500
+    }
+  ],
+  "failed": true,
+  "generatedAt": "2026-11-10T08:23:36.517Z",
+  "sha256": "41eea87b41a7471034bc8b0766bc974ea31afd79179a3aa7be9a3d12f8901681",
+  "profile": {
+    "headline": "Professionnel B2B",
+    "companyName": null,
+    "businessDescription": null,
+    "targetAudience": null,
+    "market": null,
+    "commGoals": null,
+    "editorialLine": null,
+    "styleNotes": "Ton sobre et direct. Phrases courtes."
+  },
+  "engine": {
+    "route": "POST /api/generate",
+    "server": "http://localhost:3000",
+    "repoCommit": "a403d0a17505b0f6b1411f6f86c081db1ebee53b",
+    "editorialEngineEnv": null
+  }
+}

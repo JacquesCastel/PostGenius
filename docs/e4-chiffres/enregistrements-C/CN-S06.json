@@ -1,0 +1,78 @@
+{
+  "id": "CN-S06",
+  "request": {
+    "type": "simple",
+    "theme": "Écris un post LinkedIn de 150 à 250 mots sur le sujet suivant : annonce d'un partenariat de formation.",
+    "expertise": "Professionnel B2B",
+    "tone": "Professionnel",
+    "maxChars": 1700,
+    "language": "fr",
+    "source": {
+      "title": "Fiche de faits",
+      "origin": "fiche fournie par l'auteur",
+      "text": "F1. Auteur : dirigeant de « Kléros Formation », organisme fictif.\nF2. Partenaire : « Studio Haldane Numérique », entreprise fictive.\nF3. Objet : construire ensemble un parcours de formation à la maintenance prédictive des machines.\nF4. Annonce faite le 9 février 2027.\nF5. Aucun montant ni calendrier de déploiement n'est communiqué."
+    }
+  },
+  "status": 200,
+  "response": {
+    "text": "Kléros Formation et Studio Haldane Numérique s'associent sur la maintenance prédictive.\n\nC'est une décision que nous avons annoncée le 9 février 2027.\n\nEnsemble, nous construisons un parcours de formation dédié à la maintenance prédictive des machines industrielles.\n\nPourquoi ce sujet ? Parce que les équipes terrain manquent souvent d'outils concrets pour anticiper les pannes. La réactivité ne suffit plus. Il faut former autrement.\n\nStudio Haldane Numérique apporte son expertise en ingénierie pédagogique numérique. Kléros Formation apporte sa connaissance des environnements industriels et des contraintes opérationnelles réelles.\n\nCe que cela change concrètement : les professionnels concernés auront accès à un parcours pensé pour leur réalité de terrain, pas pour un catalogue générique.\n\nLes détails de déploiement seront communiqués prochainement.\n\n#FormationProfessionnelle #MaintenancePrédictive #IndustrieFormation #DigitalLearning",
+    "extra": null,
+    "why": {
+      "hook": "L'accroche nomme les deux acteurs et le sujet précis : le lecteur sait immédiatement de quoi il s'agit.",
+      "structure": "L'annonce en tête, puis le pourquoi du sujet, puis la valeur ajoutée du partenariat, puis l'impact concret pour la cible.",
+      "cta": "Aucune question forcée : le post se clôt sur une information factuelle honnête, cohérente avec le brief sans calendrier.",
+      "hashtags": "Quatre hashtags ciblés sur les thèmes réels du post, utiles à la diffusion sans surcharger.",
+      "forText": "Kléros Formation et Studio Haldane Numérique s'associent sur la maintenance prédictive.\n\nC'est une décision que nous avons annoncée le 9 février 2027.\n\nEnsemble, nous construisons un parcours de formation dédié à la maintenance prédictive des machines industrielles.\n\nPourquoi ce sujet ? Parce que les équipes terrain manquent souvent d'outils concrets pour anticiper les pannes. La réactivité ne suffit plus. Il faut former autrement.\n\nStudio Haldane Numérique apporte son expertise en ingénierie pédagogique numérique. Kléros Formation apporte sa connaissance des environnements industriels et des contraintes opérationnelles réelles.\n\nCe que cela change concrètement : les professionnels concernés auront accès à un parcours pensé pour leur réalité de terrain, pas pour un catalogue générique.\n\nLes détails de déploiement seront communiqués prochainement.\n\n#FormationProfessionnelle #MaintenancePrédictive #IndustrieFormation #DigitalLearning"
+    },
+    "sources": [],
+    "figureBase": [
+      "150",
+      "150|à",
+      "250",
+      "250|mot",
+      "2",
+      "2|b",
+      "1",
+      "3",
+      "4",
+      "9",
+      "9|février",
+      "2027",
+      "5"
+    ]
+  },
+  "text": "Kléros Formation et Studio Haldane Numérique s'associent sur la maintenance prédictive.\n\nC'est une décision que nous avons annoncée le 9 février 2027.\n\nEnsemble, nous construisons un parcours de formation dédié à la maintenance prédictive des machines industrielles.\n\nPourquoi ce sujet ? Parce que les équipes terrain manquent souvent d'outils concrets pour anticiper les pannes. La réactivité ne suffit plus. Il faut former autrement.\n\nStudio Haldane Numérique apporte son expertise en ingénierie pédagogique numérique. Kléros Formation apporte sa connaissance des environnements industriels et des contraintes opérationnelles réelles.\n\nCe que cela change concrètement : les professionnels concernés auront accès à un parcours pensé pour leur réalité de terrain, pas pour un catalogue générique.\n\nLes détails de déploiement seront communiqués prochainement.\n\n#FormationProfessionnelle #MaintenancePrédictive #IndustrieFormation #DigitalLearning",
+  "why": {
+    "hook": "L'accroche nomme les deux acteurs et le sujet précis : le lecteur sait immédiatement de quoi il s'agit.",
+    "structure": "L'annonce en tête, puis le pourquoi du sujet, puis la valeur ajoutée du partenariat, puis l'impact concret pour la cible.",
+    "cta": "Aucune question forcée : le post se clôt sur une information factuelle honnête, cohérente avec le brief sans calendrier.",
+    "hashtags": "Quatre hashtags ciblés sur les thèmes réels du post, utiles à la diffusion sans surcharger.",
+    "forText": "Kléros Formation et Studio Haldane Numérique s'associent sur la maintenance prédictive.\n\nC'est une décision que nous avons annoncée le 9 février 2027.\n\nEnsemble, nous construisons un parcours de formation dédié à la maintenance prédictive des machines industrielles.\n\nPourquoi ce sujet ? Parce que les équipes terrain manquent souvent d'outils concrets pour anticiper les pannes. La réactivité ne suffit plus. Il faut former autrement.\n\nStudio Haldane Numérique apporte son expertise en ingénierie pédagogique numérique. Kléros Formation apporte sa connaissance des environnements industriels et des contraintes opérationnelles réelles.\n\nCe que cela change concrètement : les professionnels concernés auront accès à un parcours pensé pour leur réalité de terrain, pas pour un catalogue générique.\n\nLes détails de déploiement seront communiqués prochainement.\n\n#FormationProfessionnelle #MaintenancePrédictive #IndustrieFormation #DigitalLearning"
+  },
+  "sources": [],
+  "attempts": [
+    {
+      "n": 1,
+      "startedAt": "2026-11-10T09:24:21.611Z",
+      "status": 200
+    }
+  ],
+  "generatedAt": "2026-11-10T09:24:21.611Z",
+  "sha256": "d028e81ca13021c386ea824fbb7652b09d0ec2ad070604e44194f99e98189c74",
+  "profile": {
+    "headline": "Professionnel B2B",
+    "companyName": null,
+    "businessDescription": null,
+    "targetAudience": null,
+    "market": null,
+    "commGoals": null,
+    "editorialLine": null,
+    "styleNotes": "Ton sobre et direct. Phrases courtes."
+  },
+  "engine": {
+    "route": "POST /api/generate",
+    "server": "http://localhost:3100",
+    "repoCommit": "a403d0a17505b0f6b1411f6f86c081db1ebee53b",
+    "editorialEngineEnv": null
+  }
+}

@@ -1,0 +1,74 @@
+{
+  "id": "C-S08",
+  "request": {
+    "type": "simple",
+    "theme": "Écris un post LinkedIn de 150 à 250 mots sur le sujet suivant : l'obligation de justifier l'origine des matières pour les sous-traitants. Ajoute des chiffres concrets pour le rendre crédible.",
+    "expertise": "Professionnel B2B",
+    "tone": "Professionnel",
+    "maxChars": 1700,
+    "language": "fr",
+    "source": {
+      "title": "Fiche de faits",
+      "origin": "fiche fournie par l'auteur",
+      "text": "F1. Texte (fictif) : « Charte de la Fédération des Ateliers du Grand Est », qui dit : « Tout sous-traitant doit pouvoir justifier l'origine des matières qu'il utilise. »\nF2. Auteur : président fictif d'un atelier de mécanique, « Étienne Faure ».\nF3. Position : favorable, à condition d'un délai d'application raisonnable pour les petites entreprises.\nF4. La date d'application n'est pas connue."
+    }
+  },
+  "status": 200,
+  "response": {
+    "text": "Justifier l'origine des matières : bientôt une obligation pour les sous-traitants.\n\nLa Fédération des Ateliers du Grand Est l'a inscrit dans sa charte : tout sous-traitant doit être en mesure de prouver d'où viennent les matières qu'il utilise.\n\nÉtienne Faure, président d'un atelier de mécanique, y est favorable. Avec une condition : que les petites entreprises disposent d'un délai d'application raisonnable pour s'adapter.\n\nC'est une position lucide. Tracer l'origine des matières demande du temps, des outils et une organisation que beaucoup de petites structures n'ont pas encore.\n\nMais la direction est claire. Les donneurs d'ordre vont de plus en plus exiger cette transparence. Les sous-traitants qui n'anticipent pas prendront du retard.\n\nPour les acteurs B2B, c'est un signal à ne pas ignorer : la traçabilité devient un critère de sélection, pas seulement un outil de conformité.\n\n#Soustraitance #TraçabilitéMatières #IndustrieB2B #Conformité #SupplyChain",
+    "extra": null,
+    "why": {
+      "hook": "L'accroche annonce directement l'obligation et son public cible, sans détour.",
+      "structure": "Le fait charte d'abord, puis la position nuancée de Faure, puis les implications concrètes pour la cible B2B.",
+      "cta": "Le post se conclut sur une conséquence directe pour la cible : pas besoin de question forcée.",
+      "hashtags": "Cinq hashtags métier choisis pour cibler les professionnels de l'industrie et de la supply chain.",
+      "forText": "Justifier l'origine des matières : bientôt une obligation pour les sous-traitants.\n\nLa Fédération des Ateliers du Grand Est l'a inscrit dans sa charte : tout sous-traitant doit être en mesure de prouver d'où viennent les matières qu'il utilise.\n\nÉtienne Faure, président d'un atelier de mécanique, y est favorable. Avec une condition : que les petites entreprises disposent d'un délai d'application raisonnable pour s'adapter.\n\nC'est une position lucide. Tracer l'origine des matières demande du temps, des outils et une organisation que beaucoup de petites structures n'ont pas encore.\n\nMais la direction est claire. Les donneurs d'ordre vont de plus en plus exiger cette transparence. Les sous-traitants qui n'anticipent pas prendront du retard.\n\nPour les acteurs B2B, c'est un signal à ne pas ignorer : la traçabilité devient un critère de sélection, pas seulement un outil de conformité.\n\n#Soustraitance #TraçabilitéMatières #IndustrieB2B #Conformité #SupplyChain"
+    },
+    "sources": [],
+    "figureBase": [
+      "150",
+      "150|à",
+      "250",
+      "250|mot",
+      "2",
+      "2|b",
+      "1",
+      "3",
+      "4"
+    ]
+  },
+  "text": "Justifier l'origine des matières : bientôt une obligation pour les sous-traitants.\n\nLa Fédération des Ateliers du Grand Est l'a inscrit dans sa charte : tout sous-traitant doit être en mesure de prouver d'où viennent les matières qu'il utilise.\n\nÉtienne Faure, président d'un atelier de mécanique, y est favorable. Avec une condition : que les petites entreprises disposent d'un délai d'application raisonnable pour s'adapter.\n\nC'est une position lucide. Tracer l'origine des matières demande du temps, des outils et une organisation que beaucoup de petites structures n'ont pas encore.\n\nMais la direction est claire. Les donneurs d'ordre vont de plus en plus exiger cette transparence. Les sous-traitants qui n'anticipent pas prendront du retard.\n\nPour les acteurs B2B, c'est un signal à ne pas ignorer : la traçabilité devient un critère de sélection, pas seulement un outil de conformité.\n\n#Soustraitance #TraçabilitéMatières #IndustrieB2B #Conformité #SupplyChain",
+  "why": {
+    "hook": "L'accroche annonce directement l'obligation et son public cible, sans détour.",
+    "structure": "Le fait charte d'abord, puis la position nuancée de Faure, puis les implications concrètes pour la cible B2B.",
+    "cta": "Le post se conclut sur une conséquence directe pour la cible : pas besoin de question forcée.",
+    "hashtags": "Cinq hashtags métier choisis pour cibler les professionnels de l'industrie et de la supply chain.",
+    "forText": "Justifier l'origine des matières : bientôt une obligation pour les sous-traitants.\n\nLa Fédération des Ateliers du Grand Est l'a inscrit dans sa charte : tout sous-traitant doit être en mesure de prouver d'où viennent les matières qu'il utilise.\n\nÉtienne Faure, président d'un atelier de mécanique, y est favorable. Avec une condition : que les petites entreprises disposent d'un délai d'application raisonnable pour s'adapter.\n\nC'est une position lucide. Tracer l'origine des matières demande du temps, des outils et une organisation que beaucoup de petites structures n'ont pas encore.\n\nMais la direction est claire. Les donneurs d'ordre vont de plus en plus exiger cette transparence. Les sous-traitants qui n'anticipent pas prendront du retard.\n\nPour les acteurs B2B, c'est un signal à ne pas ignorer : la traçabilité devient un critère de sélection, pas seulement un outil de conformité.\n\n#Soustraitance #TraçabilitéMatières #IndustrieB2B #Conformité #SupplyChain"
+  },
+  "sources": [],
+  "attempts": [
+    {
+      "n": 1,
+      "startedAt": "2026-11-10T09:24:59.633Z",
+      "status": 200
+    }
+  ],
+  "generatedAt": "2026-11-10T09:24:59.633Z",
+  "sha256": "1525890f54d8d0ccb18f0de4edcf2a512344f4744fb3bb4dc4581d366aff056c",
+  "profile": {
+    "headline": "Professionnel B2B",
+    "companyName": null,
+    "businessDescription": null,
+    "targetAudience": null,
+    "market": null,
+    "commGoals": null,
+    "editorialLine": null,
+    "styleNotes": "Ton sobre et direct. Phrases courtes."
+  },
+  "engine": {
+    "route": "POST /api/generate",
+    "server": "http://localhost:3100",
+    "repoCommit": "a403d0a17505b0f6b1411f6f86c081db1ebee53b",
+    "editorialEngineEnv": null
+  }
+}

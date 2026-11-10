@@ -1,0 +1,81 @@
+{
+  "id": "CN-S09",
+  "request": {
+    "type": "simple",
+    "theme": "Écris un post LinkedIn de 150 à 250 mots sur le sujet suivant : retour d'une enquête interne sur les points d'équipe hebdomadaires.",
+    "expertise": "Professionnel B2B",
+    "tone": "Professionnel",
+    "maxChars": 1700,
+    "language": "fr",
+    "source": {
+      "title": "Fiche de faits",
+      "origin": "fiche fournie par l'auteur",
+      "text": "F1. Auteure : directrice des ressources humaines de « Groupe Almeri », entreprise fictive.\nF2. Échantillon : 64 salariés répondants.\nF3. 71 % disent mieux comprendre les priorités de l'entreprise depuis les points hebdomadaires.\nF4. 23 % disent que ces points durent trop longtemps.\nF5. Aucune comparaison avec une enquête précédente n'existe."
+    }
+  },
+  "status": 200,
+  "response": {
+    "text": "71 % des salariés mieux alignés grâce aux points hebdomadaires. Les chiffres parlent.\n\nGroupe Almeri vient de publier les résultats d'une enquête interne menée auprès de 64 salariés sur leurs réunions d'équipe hebdomadaires.\n\nLe constat principal : près des trois quarts des répondants disent mieux comprendre les priorités de l'entreprise depuis la mise en place de ces points réguliers.\n\nC'est significatif. L'alignement est souvent le premier levier que les managers cherchent à activer — et ici, un rituel simple y contribue concrètement.\n\nMais un signal mérite attention : 23 % des salariés estiment que ces réunions durent trop longtemps.\n\nCe n'est pas un détail. Un format trop long érode l'attention et finit par nuire à ce qu'il est censé produire.\n\nLa leçon que j'en tire : la régularité crée de la clarté, mais la forme doit être tenue. Un point hebdomadaire efficace, c'est un ordre du jour court, un timing respecté, et une sortie nette.\n\nLe fond peut être bon. La durée peut tout défaire.\n\n#Management #RH #OrganisationDuTravail",
+    "extra": null,
+    "why": {
+      "hook": "Le chiffre clé est posé dès la première ligne avec une conclusion immédiate — le lecteur comprend l'enjeu sans lire la suite.",
+      "structure": "Le bénéfice principal est donné en tête, puis la nuance (durée), puis la recommandation concrète — du plus fort au plus secondaire.",
+      "cta": "Le post se clôt sur une formule courte et directe qui synthétise l'idée sans question artificielle.",
+      "hashtags": "Trois hashtags ciblés sur les thèmes réels du post : management, RH, organisation — sans surcharge.",
+      "forText": "71 % des salariés mieux alignés grâce aux points hebdomadaires. Les chiffres parlent.\n\nGroupe Almeri vient de publier les résultats d'une enquête interne menée auprès de 64 salariés sur leurs réunions d'équipe hebdomadaires.\n\nLe constat principal : près des trois quarts des répondants disent mieux comprendre les priorités de l'entreprise depuis la mise en place de ces points réguliers.\n\nC'est significatif. L'alignement est souvent le premier levier que les managers cherchent à activer — et ici, un rituel simple y contribue concrètement.\n\nMais un signal mérite attention : 23 % des salariés estiment que ces réunions durent trop longtemps.\n\nCe n'est pas un détail. Un format trop long érode l'attention et finit par nuire à ce qu'il est censé produire.\n\nLa leçon que j'en tire : la régularité crée de la clarté, mais la forme doit être tenue. Un point hebdomadaire efficace, c'est un ordre du jour court, un timing respecté, et une sortie nette.\n\nLe fond peut être bon. La durée peut tout défaire.\n\n#Management #RH #OrganisationDuTravail"
+    },
+    "sources": [],
+    "figureBase": [
+      "150",
+      "150|à",
+      "250",
+      "250|mot",
+      "2",
+      "2|b",
+      "1",
+      "64",
+      "64|salarié",
+      "3",
+      "71",
+      "71|%",
+      "4",
+      "23",
+      "23|%",
+      "5"
+    ]
+  },
+  "text": "71 % des salariés mieux alignés grâce aux points hebdomadaires. Les chiffres parlent.\n\nGroupe Almeri vient de publier les résultats d'une enquête interne menée auprès de 64 salariés sur leurs réunions d'équipe hebdomadaires.\n\nLe constat principal : près des trois quarts des répondants disent mieux comprendre les priorités de l'entreprise depuis la mise en place de ces points réguliers.\n\nC'est significatif. L'alignement est souvent le premier levier que les managers cherchent à activer — et ici, un rituel simple y contribue concrètement.\n\nMais un signal mérite attention : 23 % des salariés estiment que ces réunions durent trop longtemps.\n\nCe n'est pas un détail. Un format trop long érode l'attention et finit par nuire à ce qu'il est censé produire.\n\nLa leçon que j'en tire : la régularité crée de la clarté, mais la forme doit être tenue. Un point hebdomadaire efficace, c'est un ordre du jour court, un timing respecté, et une sortie nette.\n\nLe fond peut être bon. La durée peut tout défaire.\n\n#Management #RH #OrganisationDuTravail",
+  "why": {
+    "hook": "Le chiffre clé est posé dès la première ligne avec une conclusion immédiate — le lecteur comprend l'enjeu sans lire la suite.",
+    "structure": "Le bénéfice principal est donné en tête, puis la nuance (durée), puis la recommandation concrète — du plus fort au plus secondaire.",
+    "cta": "Le post se clôt sur une formule courte et directe qui synthétise l'idée sans question artificielle.",
+    "hashtags": "Trois hashtags ciblés sur les thèmes réels du post : management, RH, organisation — sans surcharge.",
+    "forText": "71 % des salariés mieux alignés grâce aux points hebdomadaires. Les chiffres parlent.\n\nGroupe Almeri vient de publier les résultats d'une enquête interne menée auprès de 64 salariés sur leurs réunions d'équipe hebdomadaires.\n\nLe constat principal : près des trois quarts des répondants disent mieux comprendre les priorités de l'entreprise depuis la mise en place de ces points réguliers.\n\nC'est significatif. L'alignement est souvent le premier levier que les managers cherchent à activer — et ici, un rituel simple y contribue concrètement.\n\nMais un signal mérite attention : 23 % des salariés estiment que ces réunions durent trop longtemps.\n\nCe n'est pas un détail. Un format trop long érode l'attention et finit par nuire à ce qu'il est censé produire.\n\nLa leçon que j'en tire : la régularité crée de la clarté, mais la forme doit être tenue. Un point hebdomadaire efficace, c'est un ordre du jour court, un timing respecté, et une sortie nette.\n\nLe fond peut être bon. La durée peut tout défaire.\n\n#Management #RH #OrganisationDuTravail"
+  },
+  "sources": [],
+  "attempts": [
+    {
+      "n": 1,
+      "startedAt": "2026-11-10T09:25:38.433Z",
+      "status": 200
+    }
+  ],
+  "generatedAt": "2026-11-10T09:25:38.433Z",
+  "sha256": "1c0d8e72f00d1ac64f761ce6c70eab2a4d7baf248f1558d0a6794d67ff08bbfa",
+  "profile": {
+    "headline": "Professionnel B2B",
+    "companyName": null,
+    "businessDescription": null,
+    "targetAudience": null,
+    "market": null,
+    "commGoals": null,
+    "editorialLine": null,
+    "styleNotes": "Ton sobre et direct. Phrases courtes."
+  },
+  "engine": {
+    "route": "POST /api/generate",
+    "server": "http://localhost:3100",
+    "repoCommit": "a403d0a17505b0f6b1411f6f86c081db1ebee53b",
+    "editorialEngineEnv": null
+  }
+}
