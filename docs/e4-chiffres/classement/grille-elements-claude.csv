@@ -116,3 +116,29 @@ T-983B;3;2,4 millions d’euros de chiffre d’affaires;chiffre;F;F2;;;
 T-983B;4;hausse de 6 %;chiffre;F;F3;;;
 T-983B;5;équipe de 17 personnes;chiffre;F;F4;;;
 T-983B;6;en 2025;date;I;;"Absent de la fiche (l’année n’y est pas donnée) ; entreprise fictive, rien à vérifier ailleurs (5 min)";;
+T-QN8E;1;200 candidatures;chiffre;I;;"Absent de la fiche (F4 : aucune donnée chiffrée) ; auteure fictive";;EXEMPLE : scénario hypothétique dans une question d’accroche
+T-QN8E;2;Dans 80 % des annonces que j’analyse avec mes clients;chiffre;I;;"Recherche 5 min : aucune source ; contredit F4 (aucune donnée chiffrée)";;STATISTIQUE présentée comme un fait de l’auteure
+T-QN8E;3;5 à 7 situations concrètes;chiffre;I;;"Absent de la fiche (F4 : aucune donnée chiffrée) ; auteure fictive";;CONSEIL : paramètre de recommandation
+T-QN8E;4;6 premiers mois;chiffre;I;;"Absent de la fiche (F4 : aucune donnée chiffrée) ; auteure fictive";;CONSEIL : paramètre de recommandation
+T-QN8E;5;3 urgences simultanées;chiffre;I;;"Absent de la fiche (F4 : aucune donnée chiffrée) ; auteure fictive";;EXEMPLE : cas illustratif
+T-QN8E;6;Nadia Sorel;nom;F;F1;;;
+T-AWD8;1;Nadia Sorel;nom;F;F1;;;
+T-HP4N;1;5 à 7 situations concrètes;chiffre;I;;"Absent de la fiche (F4 : aucune donnée chiffrée) ; auteure fictive";;CONSEIL
+T-HP4N;2;3 premiers mois;chiffre;I;;"Absent de la fiche (F4 : aucune donnée chiffrée) ; auteure fictive";;CONSEIL
+T-HP4N;3;répondre à 40 demandes clients par jour;chiffre;I;;"Absent de la fiche (F4 : aucune donnée chiffrée) ; auteure fictive";;EXEMPLE
+T-HP4N;4;relancer 15 factures en retard chaque semaine;chiffre;I;;"Absent de la fiche (F4 : aucune donnée chiffrée) ; auteure fictive";;EXEMPLE
+T-HP4N;5;1 réunion d’équipe de 30 minutes le lundi;chiffre;I;;"Absent de la fiche (F4 : aucune donnée chiffrée) ; auteure fictive";;EXEMPLE
+T-HP4N;6;2 priorités urgentes;chiffre;I;;"Absent de la fiche (F4 : aucune donnée chiffrée) ; auteure fictive";;EXEMPLE
+T-HP4N;7;avant le 5 du mois;date;I;;"Absent de la fiche (F4 : aucune donnée chiffrée) ; auteure fictive";;EXEMPLE
+T-HP4N;8;Nadia Sorel;nom;F;F1;;;
+T-KVD3;1;six mois plus tard;chiffre;I;;"Absent de la fiche (F4 : aucune donnée chiffrée) ; auteure fictive";;EXEMPLE : narration hypothétique
+T-KVD3;2;deux priorités contradictoires;chiffre;I;;"Absent de la fiche (F4 : aucune donnée chiffrée) ; auteure fictive";;EXEMPLE
+T-KVD3;3;Nadia Sorel;nom;F;F1;;;
+T-MFFJ;1;Nadia Sorel;nom;F;F1;;;
+T-XQY4;1;15 compétences / 5 indispensables;chiffre;I;;"Absent de la fiche (F4 : aucune donnée chiffrée) ; auteure fictive";;EXEMPLE : illustration d’un conseil
+T-58SN;1;12 compétences exigées, 8 missions, 0 personnalité;chiffre;I;;"Absent de la fiche (F4 : aucune donnée chiffrée) ; auteure fictive";;EXEMPLE : trait d’esprit chiffré
+T-58SN;2;un titre précis peut augmenter le taux de clic de 20 à 30 %;chiffre;I;;Recherche 5 min : aucune étude trouvée (APEC, France Travail recommandent un titre précis sans ce chiffre);;STATISTIQUE
+T-58SN;3;6 premiers mois;chiffre;I;;"Absent de la fiche (F4 : aucune donnée chiffrée) ; auteure fictive";;CONSEIL
+T-58SN;4;passer de 300 à 500 leads qualifiés par mois;chiffre;I;;"Absent de la fiche (F4 : aucune donnée chiffrée) ; auteure fictive";;EXEMPLE
+T-58SN;5;Une étude LinkedIn indique que les femmes postulent à ~100 % des critères contre 60 % pour les hommes;chiffre;X;;"Recherche 5 min : le « 100 % / 60 % » vient d’une remarque orale d’un cadre de Hewlett-Packard, pas d’une étude LinkedIn ; l’étude LinkedIn (2019) dit autre chose (les femmes postulent à 20 % d’offres de moins)";"bi.team ; goodmorningamerica.com (LinkedIn Gender Insights)";attribution et chiffre non fondés
+T-58SN;6;Les annonces avec fourchette salariale reçoivent jusqu’à 30 % de candidatures qualifiées en plus;chiffre;I;;"Recherche 5 min : aucune étude avec ce chiffre ; le 30 % trouvé (HelloWork 2022) concerne la part de recruteurs qui indiquent le salaire";;STATISTIQUE
