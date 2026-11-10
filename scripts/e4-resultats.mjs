@@ -8,7 +8,7 @@
 //   docs/e4-chiffres/anonymisation/NE-PAS-OUVRIR-avant-classement/cle-anonymisation.json
 // Sorties (docs/e4-chiffres/resultats/) : resultats.md, detail-par-texte.csv
 //
-// Usage : node scripts/e4-resultats.mjs [--sans-etiquettes CONSEIL,EXEMPLE,PLAN] [--out dossier]
+// Usage : node scripts/e4-resultats.mjs [--sans-etiquettes CONSEIL,EXEMPLE,PLAN] [--classeur-unique] [--out dossier]
 //   --sans-etiquettes : analyse de sensibilité (retire du calcul les éléments portant ces étiquettes) ; ne remplace JAMAIS l'analyse principale.
 import fs from "node:fs";
 import path from "node:path";
@@ -130,11 +130,11 @@ export function decide(cond, perText) {
 }
 
 // ── rapport ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-export function report({ perText, cond, decision, disagreements, sensibilite, key }) {
+export function report({ perText, cond, decision, disagreements, sensibilite, key, unique }) {
   const L = [];
   const sujets = [...new Set(perText.map((r) => r.subject))].sort();
   L.push(`# E4 : résultats${sensibilite ? ` (ANALYSE DE SENSIBILITÉ, sans les étiquettes ${sensibilite.join(", ")})` : ""}`, "");
-  L.push("Test non scientifique : 10 sujets, 1 génération par cas, deux classeurs dont l'un n'était pas aveugle. Critère principal : nombre d'éléments I + X + D par post.", "");
+  L.push(unique ? "Test non scientifique : 10 sujets, 1 génération par cas. **Un seul classeur (l'assistant), qui connaît le dispositif LinkeePost : aucun second classement, aucun nombre de désaccords.** Critère principal : nombre d'éléments I + X + D par post." : "Test non scientifique : 10 sujets, 1 génération par cas, deux classeurs dont l'un n'était pas aveugle. Critère principal : nombre d'éléments I + X + D par post.", "");
   if (sensibilite) L.push("> Cette analyse retire des éléments du calcul : elle ne remplace pas l'analyse principale et ne fixe aucune conclusion.", "");
   L.push("## Critère principal par condition", "", "| Condition | Textes | Moyenne I+X+D par post | Total | Posts avec ≥ 1 | Éléments V | Refus |", "|---|---|---|---|---|---|---|");
   for (const c of [...CHIFFREES, ...NEUTRES]) { const x = cond[c]; L.push(`| ${c} | ${x.n} | **${f2(x.moyenne)}** | ${x.total} | ${x.avec1} sur ${x.n} (${f2(x.partAvec1 * 100)} %) | ${x.V} | ${x.refus} |`); }
@@ -168,6 +168,7 @@ function parseArgs(argv) {
     else if (k === "--out") a.out = path.resolve(argv[++i]);
     else if (k === "--elements") a.elements = argv[++i];
     else if (k === "--textes") a.textes = argv[++i];
+    else if (k === "--classeur-unique") a.unique = true;
     else if (k === "--cle") a.cle = argv[++i];
     else throw new Error(`Option inconnue : ${k}`);
   }
@@ -183,7 +184,7 @@ export function run(a) {
   const perText = computePerText(elements, textes, key, { sansEtiquettes: a.sans });
   const cond = byCondition(perText), decision = decide(cond, perText);
   let dis = null; if (fs.existsSync(a.desaccords)) dis = Math.max(0, parseCsv(fs.readFileSync(a.desaccords, "utf8")).length - 1);
-  const md = report({ perText, cond, decision, disagreements: dis, sensibilite: a.sans.length ? a.sans : null, key });
+  const md = report({ perText, cond, decision, disagreements: dis, sensibilite: a.sans.length ? a.sans : null, key, unique: !!a.unique });
   fs.mkdirSync(a.out, { recursive: true });
   const suffix = a.sans.length ? "-sensibilite" : "";
   fs.writeFileSync(path.join(a.out, `resultats${suffix}.md`), md);

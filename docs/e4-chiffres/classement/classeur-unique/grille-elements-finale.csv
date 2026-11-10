@@ -1,0 +1,288 @@
+﻿id_texte;n;élément;type;code final (F/D/I/V/X/G ou ECART);origine;code assistant;code Jacques;motif;étiquette
+T-48RN;1;Claire Montrel;nom;F;accord;F;F;;
+T-48RN;2;« Négocier avec un acheteur public »;nom;F;accord;F;F;;
+T-48RN;3;présentielle;chiffre;F;accord;F;F;;
+T-48RN;4;12 mars 2027;date;F;accord;F;F;;
+T-48RN;5;1 450 € HT par personne;chiffre;F;accord;F;F;;
+T-58SN;1;12 compétences exigées, 8 missions, 0 personnalité;chiffre;I;accord;I;I;;EXEMPLE
+T-58SN;2;un titre précis peut augmenter le taux de clic de 20 à 30 %;chiffre;I;accord;I;I;;STATISTIQUE
+T-58SN;3;6 premiers mois;chiffre;I;accord;I;I;;CONSEIL
+T-58SN;4;passer de 300 à 500 leads qualifiés par mois;chiffre;I;accord;I;I;;EXEMPLE
+T-58SN;5;Une étude LinkedIn indique que les femmes postulent à ~100 % des critères contre 60 % pour les hommes;chiffre;X;accord;X;X;;
+T-58SN;6;Les annonces avec fourchette salariale reçoivent jusqu’à 30 % de candidatures qualifiées en plus;chiffre;I;accord;I;I;;STATISTIQUE
+T-5PUK;1;Kléros Formation;nom;F;accord;F;F;;
+T-5PUK;2;Studio Haldane Numérique;nom;F;accord;F;F;;
+T-5PUK;3;9 février 2027;date;F;accord;F;F;;
+T-5VM2;1;9 février 2027;date;F;accord;F;F;;
+T-5VM2;2;Kléros Formation;nom;F;accord;F;F;;
+T-5VM2;3;Studio Haldane Numérique;nom;F;accord;F;F;;
+T-5VM2;4;6 modules pédagogiques;chiffre;I;accord;I;I;;
+T-5VM2;5;42 heures de formation;chiffre;I;accord;I;I;;
+T-5VM2;6;3 cas pratiques;chiffre;I;accord;I;I;;
+T-5VM2;7;1 simulateur de diagnostic;chiffre;I;accord;I;I;;
+T-5VM2;8;plus de 15 indicateurs;chiffre;I;accord;I;I;;
+T-69WC;1;Groupe Almeri;nom;F;accord;F;F;;
+T-69WC;2;64 salariés;chiffre;F;accord;F;F;;
+T-69WC;3;71 % des répondants;chiffre;F;accord;F;F;;
+T-69WC;4;environ 45 personnes;chiffre;F;accord;F;F;;DERIVE
+T-69WC;5;23 % des répondants;chiffre;F;accord;F;F;;
+T-69WC;6;près de 15 personnes;chiffre;F;accord;F;F;;DERIVE
+T-6FTK;1;Rencontres de l’Industrie Durable;nom;F;accord;F;F;;
+T-6FTK;2;14 octobre;date;F;accord;F;F;;
+T-6FTK;3;Nantes;nom;F;accord;F;F;;
+T-6FTK;4;table ronde sur la réparabilité des équipements;nom;F;accord;F;F;;
+T-6FTK;5;Selon une étude de l’ADEME, allonger la durée de vie d’un équipement de 3 ans peut réduire son empreinte carbone de 30 %;chiffre;I;accord;I;I;;STATISTIQUE
+T-74TC;1;Lucas Perrin;nom;F;accord;F;F;;
+T-74TC;2;Depuis 18 mois;chiffre;I;accord;I;I;;
+T-74TC;3;chaque semaine, un client me pose la même question;chiffre;I;accord;I;I;;
+T-74TC;4;« D’où vient ce composant ? »;citation;F;accord;F;F;;
+T-7DJJ;1;18 retards de livraison par mois;chiffre;F;accord;F;F;;
+T-7DJJ;2;7;chiffre;F;accord;F;F;;
+T-7DJJ;3;Transports Aubrac Lemaire;nom;F;accord;F;F;;
+T-7DJJ;4;Cabinet Lormand Conseil;nom;F;accord;F;F;;
+T-7GA9;1;18 chauffeurs;chiffre;I;accord;I;I;;
+T-7GA9;2;420 livraisons par semaine;chiffre;I;accord;I;I;;
+T-7GA9;3;7 secteurs géographiques;chiffre;I;accord;I;I;;
+T-7GA9;4;4 semaines de test;chiffre;I;accord;I;I;;
+T-7GA9;5;-14 % de kilomètres parcourus;chiffre;I;accord;I;I;;
+T-7GA9;6;-11 % de temps moyen par tournée;chiffre;I;accord;I;I;;
+T-7GA9;7;+18 % de livraisons dans le créneau;chiffre;I;accord;I;I;;
+T-7GA9;8;1 tournée quotidienne supprimée;chiffre;I;accord;I;I;;
+T-7GA9;9;3 200 € par mois économisés;chiffre;I;accord;I;I;;
+T-7ZYT;1;En 2024;date;I;accord;I;I;;
+T-7ZYT;2;86 projets;chiffre;I;accord;I;I;;
+T-7ZYT;3;34 cuisines sur mesure;chiffre;I;accord;I;I;;
+T-7ZYT;4;21 dressings;chiffre;I;accord;I;I;;
+T-7ZYT;5;12 escaliers;chiffre;I;accord;I;I;;
+T-7ZYT;6;18 m³ de chêne, frêne et hêtre;chiffre;I;accord;I;I;;
+T-7ZYT;7;420 m² d’agencements;chiffre;I;accord;I;I;;
+T-7ZYT;8;9 500 km;chiffre;I;accord;I;I;;
+T-7ZYT;9;3 menuisiers à l’atelier;chiffre;I;accord;I;I;;
+T-7ZYT;10;1 apprenti;chiffre;I;accord;I;I;;
+T-7ZYT;11;progression de 17 % du chiffre d’affaires;chiffre;D;accord;D;D;;
+T-7ZYT;12;par rapport à 2023;date;I;accord;I;I;;
+T-7ZYT;13;Cap sur 2025;date;I;accord;I;I;;
+T-8GKD;1;four de fusion de 2 tonnes;chiffre;I;accord;I;I;;
+T-8GKD;2;consommation de 620 kWh/tonne à 510 kWh/tonne;chiffre;I;accord;I;I;;
+T-8GKD;3;près de 18 % d’économie d’énergie;chiffre;I;accord;I;I;;
+T-8GKD;4;4 500 tonnes fondues par an;chiffre;I;accord;I;I;;
+T-8GKD;5;plus de 490 000 kWh économisés par an;chiffre;I;accord;I;I;;
+T-8GKD;6;arrêt de production limité à 12 jours;chiffre;D;accord;D;D;;
+T-8GKD;7;taux de rebut de 3,2 % à 2,1 %;chiffre;I;accord;I;I;;
+T-8GKD;8;cycles de fusion raccourcis de 15 minutes par charge;chiffre;I;accord;I;I;;
+T-8GKD;9;préparer la performance des 10 prochaines années;chiffre;I;accord;I;I;;
+T-8N4B;1;Charte de la Fédération des Ateliers du Grand Est;nom;F;accord;F;F;;
+T-8N4B;2;« tout sous-traitant doit pouvoir justifier l’origine des matières qu’il utilise »;citation;F;accord;F;F;;
+T-8N4B;3;Étienne Faure, président d’un atelier de mécanique;nom;F;accord;F;F;;
+T-8UC5;1;À partir de ce mois-ci;date;I;accord;I;I;;
+T-8UC5;2;200 collaborateurs formés;chiffre;I;accord;I;I;;
+T-8UC5;3;sur les 12 prochains mois;chiffre;I;accord;I;I;;
+T-8UC5;4;40 heures de formation par participant;chiffre;I;accord;I;I;;
+T-8UC5;5;8 modules spécialisés;chiffre;I;accord;I;I;;
+T-8UC5;6;3 cohortes dès le premier semestre;chiffre;I;accord;I;I;;
+T-8UC5;7;réduire de 30 % le temps de prise en main;chiffre;I;accord;I;I;;
+T-8UC5;8;phase pilote auprès de 25 participants;chiffre;I;accord;I;I;;
+T-8UC5;9;taux de satisfaction de 92 %;chiffre;I;accord;I;I;;
+T-8UC5;10;progression moyenne de 28 % aux évaluations;chiffre;I;accord;I;I;;
+T-9666;1;14 octobre 2026;date;F;accord;F;F;;
+T-9666;2;Rencontres de l’Industrie Durable;nom;F;accord;F;F;;
+T-9666;3;Nantes;nom;F;accord;F;F;;
+T-9666;4;table ronde consacrée à la réparabilité des équipements;nom;F;accord;F;F;;
+T-9666;5;raisonner en coût complet sur 5 à 10 ans;chiffre;I;accord;I;I;;CONSEIL
+T-9666;6;disponibilité des pièces détachées pendant 7 ans minimum;chiffre;I;accord;I;I;;CONSEIL
+T-9666;7;délai d’intervention sous 48 h;chiffre;I;accord;I;I;;CONSEIL
+T-9666;8;pondération de 15 % dédiée à la réparabilité;chiffre;I;accord;I;I;;CONSEIL
+T-9666;9;Hélène Garnier;nom;F;accord;F;F;;
+T-983B;1;Maison Bellange;nom;F;accord;F;F;;
+T-983B;2;En 2024;date;I;accord;I;I;;
+T-983B;3;2,4 millions d’euros de chiffre d’affaires;chiffre;F;accord;F;F;;
+T-983B;4;hausse de 6 %;chiffre;F;accord;F;F;;
+T-983B;5;équipe de 17 personnes;chiffre;F;accord;F;F;;
+T-983B;6;en 2025;date;I;accord;I;I;;
+T-A39J;1;Lucas Perrin;nom;F;accord;F;F;;
+T-A39J;2;48 heures;chiffre;I;accord;I;I;;
+T-A39J;3;3 semaines;chiffre;I;accord;I;I;;
+T-AWD8;1;Nadia Sorel;nom;F;accord;F;F;;
+T-BP9C;1;71 %;chiffre;F;accord;F;F;;
+T-BP9C;2;64 salariés;chiffre;F;accord;F;F;;
+T-BP9C;3;Groupe Almeri;nom;F;accord;F;F;;
+T-BP9C;4;23 %;chiffre;F;accord;F;F;;
+T-BVQG;1;1 heure d’arrêt de production peut coûter entre 10 000 € et 250 000 €, selon plusieurs études sectorielles;chiffre;V;accord;V;V;;
+T-BVQG;2;moins de 2 heures au lieu de plusieurs jours (identification d’un lot défectueux);chiffre;I;accord;I;I;;
+T-BZY2;1;plus de 160 milliards d’euros par an (commande publique, France);chiffre;V;accord;V;V;;
+T-BZY2;2;6 à 15 heures de préparation (dossier de candidature);chiffre;I;accord;I;I;;
+T-CA5Y;1;Kléros Formation;nom;F;accord;F;F;;
+T-CA5Y;2;Studio Haldane Numérique;nom;F;accord;F;F;;
+T-CA5Y;3;9 février 2027;date;F;accord;F;F;;
+T-CKAM;1;plus de 100 milliards d’euros par an (marchés publics, France);chiffre;V;accord;V;V;;
+T-CKAM;2;72 % des PME … jamais formées à la négociation avec le secteur public;chiffre;I;accord;I;I;;STATISTIQUE
+T-CKAM;3;« Négocier avec un acheteur public »;nom;F;accord;F;F;;
+T-CKAM;4;100 % présentielle;chiffre;F;accord;F;F;;
+T-CKAM;5;Code de la commande publique;source;V;accord;V;V;;
+T-CKAM;6;12 mars 2027;date;F;accord;F;F;;
+T-CKAM;7;1 450 € HT / personne;chiffre;F;accord;F;F;;
+T-CKAM;8;Places limitées à 10 participants;chiffre;I;accord;I;I;;
+T-CQHY;1;Fonderie Marchal;nom;F;accord;F;F;;
+T-CQHY;2;380 000 €;chiffre;F;accord;F;F;;
+T-CQHY;3;9 jours;chiffre;F;accord;F;F;;
+T-DJX9;1;Fonderie Marchal;nom;F;accord;F;F;;
+T-DJX9;2;380 000 €;chiffre;F;accord;F;F;;
+T-DJX9;3;9 jours d’arrêt total;chiffre;F;accord;F;F;;
+T-DJX9;4;plus de 20 ans de service (ancien four);chiffre;I;accord;I;I;;
+T-DJX9;5;sécurisé pour les 15 prochaines années;chiffre;I;accord;I;I;;
+T-E5WE;1;Charte de la Fédération des Ateliers du Grand Est;nom;F;accord;F;F;;
+T-E5WE;2;« Tout sous-traitant doit pouvoir justifier l’origine des matières qu’il utilise. »;citation;F;accord;F;F;;
+T-E5WE;3;Étienne Faure, président d’un atelier de mécanique;nom;F;accord;F;F;;
+T-E5WE;4;atelier de 10 à 20 personnes;chiffre;I;accord;I;I;;
+T-E5WE;5;15 à 30 minutes de travail administratif par commande;chiffre;I;accord;I;I;;
+T-E5WE;6;plus de 100 références matières à suivre chaque mois;chiffre;I;accord;I;I;;
+T-E5WE;7;période de 6 à 12 mois;chiffre;I;accord;I;I;;CONSEIL
+T-EAAQ;1;18 retards de livraison par mois;chiffre;F;accord;F;F;;
+T-EAAQ;2;7;chiffre;F;accord;F;F;;
+T-EAAQ;3;Transports Aubrac Lemaire;nom;F;accord;F;F;;
+T-EMHM;1;Rencontres de l’Industrie Durable;nom;F;accord;F;F;;
+T-EMHM;2;Nantes;nom;F;accord;F;F;;
+T-EMHM;3;14 octobre;date;F;accord;F;F;;
+T-EMHM;4;table ronde sur la réparabilité des équipements;nom;F;accord;F;F;;
+T-EYSD;1;Charte de la Fédération des Ateliers du Grand Est;nom;F;accord;F;F;;
+T-EYSD;2;Étienne Faure, président d’un atelier de mécanique;nom;F;accord;F;F;;
+T-FMM7;1;Claire Montrel;nom;F;accord;F;F;;
+T-FMM7;2;« Négocier avec un acheteur public »;nom;F;accord;F;F;;
+T-FMM7;3;en présentiel;chiffre;F;accord;F;F;;
+T-FMM7;4;12 mars 2027;date;F;accord;F;F;;
+T-FMM7;5;1 450 € HT par personne;chiffre;F;accord;F;F;;
+T-FQTU;1;Transports Aubrac Lemaire;nom;F;accord;F;F;;
+T-FQTU;2;12 tournées régulières;chiffre;I;accord;I;I;;
+T-FQTU;3;18 par mois;chiffre;F;accord;F;F;;
+T-FQTU;4;7 par mois;chiffre;F;accord;F;F;;
+T-FQTU;5;baisse de plus de 60 %;chiffre;F;accord;F;F;;DERIVE
+T-FQTU;6;Cabinet Lormand Conseil;nom;F;accord;F;F;;
+T-GA3A;1;« Négocier avec un acheteur public »;nom;F;accord;F;F;;
+T-GA3A;2;en présentiel;chiffre;F;accord;F;F;;
+T-GA3A;3;12 mars 2027;date;F;accord;F;F;;
+T-GA3A;4;1 450 € HT par personne;chiffre;F;accord;F;F;;
+T-GA3A;5;Claire Montrel;nom;F;accord;F;F;;
+T-H5FD;1;Groupe Almeri;nom;F;accord;F;F;;
+T-H5FD;2;64 salariés ont répondu;chiffre;F;accord;F;F;;
+T-H5FD;3;71 %;chiffre;F;accord;F;F;;
+T-H5FD;4;23 %;chiffre;F;accord;F;F;;
+T-H8YY;1;Groupe Almeri;nom;F;accord;F;F;;
+T-H8YY;2;64 salariés;chiffre;F;accord;F;F;;
+T-H8YY;3;71 % des répondants;chiffre;F;accord;F;F;;
+T-H8YY;4;23 % des répondants;chiffre;F;accord;F;F;;
+T-HHWX;1;380 000 €;chiffre;F;accord;F;F;;
+T-HHWX;2;9 jours d’arrêt;chiffre;F;accord;F;F;;
+T-HHWX;3;Fonderie Marchal;nom;F;accord;F;F;;
+T-HP4N;1;5 à 7 situations concrètes;chiffre;I;accord;I;I;;CONSEIL
+T-HP4N;2;3 premiers mois;chiffre;I;accord;I;I;;CONSEIL
+T-HP4N;3;répondre à 40 demandes clients par jour;chiffre;I;accord;I;I;;EXEMPLE
+T-HP4N;4;relancer 15 factures en retard chaque semaine;chiffre;I;accord;I;I;;EXEMPLE
+T-HP4N;5;1 réunion d’équipe de 30 minutes le lundi;chiffre;I;accord;I;I;;EXEMPLE
+T-HP4N;6;2 priorités urgentes;chiffre;I;accord;I;I;;EXEMPLE
+T-HP4N;7;avant le 5 du mois;date;I;accord;I;I;;EXEMPLE
+T-HP4N;8;Nadia Sorel;nom;F;accord;F;F;;
+T-J5BE;1;Transports Aubrac Lemaire;nom;F;accord;F;F;;
+T-J5BE;2;Il y a quatre mois;date;I;accord;I;I;;
+T-J5BE;3;18 retards de livraison par mois;chiffre;F;accord;F;F;;
+T-J5BE;4;Cabinet Lormand Conseil;nom;F;accord;F;F;;
+T-J5BE;5;deux semaines sur le terrain;chiffre;I;accord;I;I;;
+T-J5BE;6;7 retards par mois;chiffre;F;accord;F;F;;
+T-J5BE;7;baisse de 61 %;chiffre;F;accord;F;F;;DERIVE
+T-JXM9;1;380 000 €;chiffre;F;accord;F;F;;
+T-JXM9;2;9 jours d’arrêt;chiffre;F;accord;F;F;;
+T-JXM9;3;Fonderie Marchal;nom;F;accord;F;F;;
+T-KVD3;1;six mois plus tard;chiffre;I;accord;I;I;;EXEMPLE
+T-KVD3;2;deux priorités contradictoires;chiffre;I;accord;I;I;;EXEMPLE
+T-KVD3;3;Nadia Sorel;nom;F;accord;F;F;;
+T-MFFJ;1;Nadia Sorel;nom;F;accord;F;F;;
+T-NPWE;1;Fédération des Ateliers du Grand Est (charte);nom;F;accord;F;F;;
+T-NPWE;2;Étienne Faure, président d’un atelier de mécanique;nom;F;accord;F;F;;
+T-PPA6;1;Fédération des Ateliers du Grand Est … nouvelle Charte;nom;F;accord;F;F;;
+T-PPA6;2;**tout sous-traitant doit pouvoir justifier l’origine des matières qu’il utilise**;citation;F;accord;F;F;;
+T-PPA6;3;près de 40 % des non-conformités détectées en audit viennent d’une mauvaise traçabilité;chiffre;I;accord;I;I;;STATISTIQUE
+T-PPA6;4;investissements entre 5 000 et 15 000 € selon la taille;chiffre;I;accord;I;I;;
+T-PPA6;5;délai d’application d’au moins 18 à 24 mois;chiffre;I;accord;I;I;;CONSEIL
+T-QKNK;1;Rencontres de l’Industrie Durable;nom;F;accord;F;F;;
+T-QKNK;2;Nantes;nom;F;accord;F;F;;
+T-QKNK;3;14 octobre 2026;date;F;accord;F;F;;
+T-QKNK;4;table ronde consacrée à la réparabilité des équipements;nom;F;accord;F;F;;
+T-QKNK;5;Hélène Garnier, responsable des achats;nom;F;accord;F;F;;
+T-QN8E;1;200 candidatures;chiffre;I;accord;I;I;;EXEMPLE
+T-QN8E;2;Dans 80 % des annonces que j’analyse avec mes clients;chiffre;I;accord;I;I;;STATISTIQUE
+T-QN8E;3;5 à 7 situations concrètes;chiffre;I;accord;I;I;;CONSEIL
+T-QN8E;4;6 premiers mois;chiffre;I;accord;I;I;;CONSEIL
+T-QN8E;5;3 urgences simultanées;chiffre;I;accord;I;I;;EXEMPLE
+T-QN8E;6;Nadia Sorel;nom;F;accord;F;F;;
+T-RCX4;1;La semaine dernière;date;I;accord;I;I;;
+T-RCX4;2;3 jours;chiffre;I;accord;I;I;;
+T-RCX4;3;Plus de 120 contacts qualifiés;chiffre;I;accord;I;I;;
+T-RCX4;4;38 démonstrations;chiffre;I;accord;I;I;;
+T-RCX4;5;17 rendez-vous commerciaux planifiés;chiffre;I;accord;I;I;;
+T-RCX4;6;4 conférences suivies;chiffre;I;accord;I;I;;
+T-S2Z8;1;9 février 2027;date;F;accord;F;F;;
+T-S2Z8;2;Klérôs Formation;nom;D;accord;D;D;;
+T-S2Z8;3;Studio Haldane Numérique;nom;F;accord;F;F;;
+T-STS9;1;6 % de hausse;chiffre;F;accord;F;F;;
+T-STS9;2;2,4 M€ de CA;chiffre;F;accord;F;F;;
+T-STS9;3;Maison Bellange;nom;F;accord;F;F;;
+T-STS9;4;Nous sommes 17;chiffre;F;accord;F;F;;
+T-STS9;5;#Bilan2024;date;I;accord;I;I;;
+T-T9A2;1;Lucas Perrin;nom;F;accord;F;F;;
+T-TPTB;1;6 % de croissance;chiffre;F;accord;F;F;;
+T-TPTB;2;2,4 M€ de CA;chiffre;F;accord;F;F;;
+T-TPTB;3;Maison Bellange;nom;F;accord;F;F;;
+T-TPTB;4;Seize personnes;chiffre;D;accord;D;D;;
+T-TXS6;1;« Négocier avec un acheteur public »;nom;F;accord;F;F;;
+T-TXS6;2;en présentiel;chiffre;F;accord;F;F;;
+T-TXS6;3;12 mars 2027;date;F;accord;F;F;;
+T-TXS6;4;1 450 € HT par personne;chiffre;F;accord;F;F;;
+T-TXS6;5;Groupe limité à 10 participants;chiffre;I;accord;I;I;;
+T-TXS6;6;3 mises en situation;chiffre;I;accord;I;I;;
+T-TXS6;7;1 trame d’analyse d’appel d’offres;chiffre;I;accord;I;I;;
+T-TXS6;8;Claire Montrel;nom;F;accord;F;F;;
+T-U6NJ;1;Kléros Formation;nom;F;accord;F;F;;
+T-U6NJ;2;Studio Haldane Numérique;nom;F;accord;F;F;;
+T-U6NJ;3;40 % des pannes industrielles non planifiées auraient pu être évitées;chiffre;I;accord;I;I;;STATISTIQUE
+T-U6NJ;4;250 000 € par an d’arrêts non programmés pour les PME industrielles en France;chiffre;I;accord;I;I;;STATISTIQUE
+T-U6NJ;5;offres d’emploi sur la maintenance prédictive : +67 % en 3 ans;chiffre;I;accord;I;I;;STATISTIQUE
+T-U6NJ;6;moins de 15 % des techniciens en poste ont reçu une formation spécifique;chiffre;I;accord;I;I;;STATISTIQUE
+T-U9J9;1;Fonderie Marchal;nom;F;accord;F;F;;
+T-U9J9;2;380 000 €;chiffre;F;accord;F;F;;
+T-U9J9;3;arrêt de production de 9 jours;chiffre;F;accord;F;F;;
+T-UBJM;1;Nantes;nom;F;accord;F;F;;
+T-UBJM;2;14 octobre;date;F;accord;F;F;;
+T-UBJM;3;Rencontres de l’Industrie Durable;nom;F;accord;F;F;;
+T-UBJM;4;table ronde sur la réparabilité des équipements;nom;F;accord;F;F;;
+T-UG9Y;1;Maison Bellange;nom;F;accord;F;F;;
+T-UG9Y;2;En 2024;date;I;accord;I;I;;
+T-UG9Y;3;2,4 millions d’euros de CA;chiffre;F;accord;F;F;;
+T-UG9Y;4;progression de 6 %;chiffre;F;accord;F;F;;
+T-UG9Y;5;équipe de 17 personnes;chiffre;F;accord;F;F;;
+T-UG9Y;6;En 2025;date;I;accord;I;I;;
+T-VV8Z;1;87 % des répondants;chiffre;I;accord;I;I;;
+T-VV8Z;2;72 % apprécient le format régulier;chiffre;I;accord;I;I;;
+T-VV8Z;3;41 % trouvent que certaines réunions manquent de structure;chiffre;I;accord;I;I;;
+T-VV8Z;4;36 % considèrent que la durée pourrait être mieux maîtrisée;chiffre;I;accord;I;I;;
+T-VV8Z;5;ordre du jour envoyé 24h à l’avance;chiffre;I;accord;I;I;;PLAN
+T-VV8Z;6;créneau limité à 30 minutes;chiffre;I;accord;I;I;;PLAN
+T-VV8Z;7;dès le mois prochain;date;I;accord;I;I;;PLAN
+T-XPGH;1;71 %;chiffre;F;accord;F;F;;
+T-XPGH;2;Groupe Almeri;nom;F;accord;F;F;;
+T-XPGH;3;64 salariés;chiffre;F;accord;F;F;;
+T-XPGH;4;près des trois quarts des répondants;chiffre;D;accord;D;D;;
+T-XPGH;5;23 %;chiffre;F;accord;F;F;;
+T-XQY4;1;15 compétences / 5 indispensables;chiffre;I;accord;I;I;;EXEMPLE
+T-YAZZ;1;Transports Aubrac Lemaire;nom;F;accord;F;F;;
+T-YAZZ;2;Cabinet Lormand Conseil;nom;F;accord;F;F;;
+T-YAZZ;3;18 par mois;chiffre;F;accord;F;F;;
+T-YAZZ;4;7 par mois;chiffre;F;accord;F;F;;
+T-YE4R;1;remonter l’historique d’une matière en 24 à 72 heures;chiffre;I;accord;I;I;;
+T-YE4R;2;Selon plusieurs études achats, près de 60 % des entreprises industrielles ont renforcé leurs exigences de traçabilité fournisseurs;chiffre;I;accord;I;I;;STATISTIQUE
+T-YE4R;3;une rupture liée à la conformité matière peut coûter plusieurs dizaines de milliers d’euros;chiffre;I;accord;I;I;;
+T-YJC5;1;Maison Bellange;nom;F;accord;F;F;;
+T-YJC5;2;2,4 millions d’euros de chiffre d’affaires;chiffre;F;accord;F;F;;
+T-YJC5;3;hausse de 6 %;chiffre;F;accord;F;F;;
+T-YJC5;4;par rapport à 2023;date;I;accord;I;I;;
+T-YJC5;5;équipe de 17 personnes;chiffre;F;accord;F;F;;
+T-YJC5;6;Bilan 2024;date;I;accord;I;I;;
+T-YJC5;7;En 2025;date;I;accord;I;I;;
