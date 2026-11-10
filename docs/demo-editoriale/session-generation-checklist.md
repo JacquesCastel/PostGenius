@@ -7,13 +7,13 @@ La session ne sert **plus qu'à une chose** : les **quatre générations** de la
 ## A. Avant la session (par Jacques)
 - [ ] Profil de l'expert relu et validé (`lib/demoEditorialCore.mjs`, identité `expert`), noms vérifiés (`verification-noms-fictifs.md` ; facultatif : registres Infogreffe / INPI).
 - [ ] Protocole de test relu (`protocole-test.md`, section « Décisions du 10 novembre 2026 ») : les seuils s'appliquent à trois profils, aucun changement.
-- [ ] **Gel publié** : `sha256sum` des trois fichiers de `gel-demo-empreintes.md`, gist public daté, adresse et heure notées dans `journal-generation.md`.
+- [ ] **Gel publié** : gist public daté contenant les fichiers et le tableau d'empreintes de `gel-demo-empreintes.md` ; adresse et heure notées dans `journal-generation.md`.
 - [ ] La clé `ANTHROPIC_API_KEY` ajoutée **par vous** dans les paramètres de l'environnement (menu de l'environnement, Edit, variables d'environnement) : le nom est réservé aux outils de session, qui ne peuvent pas la poser. **Jamais dans le chat.** Une nouvelle session est nécessaire pour qu'elle soit prise en compte.
 
 ## B. Au début de la session (par l'assistant, avec vérifications affichées)
 - [ ] La variable existe, sans l'afficher : `test -n "$ANTHROPIC_API_KEY" && echo présente`.
-- [ ] **Le gel est respecté** : `sha256sum` des trois fichiers identiques à ceux du gist public.
-- [ ] **Moteur intact** : `git diff <commit de référence> -- app/api/generate lib/linkedinRules.js` vide ; commit noté ; `EDITORIAL_ENGINE` non défini (moteur A par défaut).
+- [ ] **Le gel est respecté** : `node scripts/demo-gel-check.mjs` affiche « Gel respecté » (les quatre fichiers du gist et les fichiers du moteur ont exactement les empreintes publiées). En cas d'écart, **ne rien générer**.
+- [ ] **Moteur intact** : couvert par le script ci-dessus (route de génération et modules importés) ; commit de référence du gel noté ; `EDITORIAL_ENGINE` non défini (moteur A par défaut) ; `ANTHROPIC_MODEL` non défini ou égal à `claude-sonnet-4-6`.
 - [ ] Aucun simulateur, aucune variable `DEMO_EDITORIALE_FIXTURE`.
 - [ ] **Base isolée** : PostgreSQL local jetable (jamais Neon de production ni la base de l'application) ; `DEMO_EDITORIALE_DB_OK=1` ; l'hôte affiché par le script est `localhost`.
 
