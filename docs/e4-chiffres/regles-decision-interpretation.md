@@ -35,4 +35,5 @@ Si C est meilleur que B de 1,5 (entre 1 et 2), aucune ligne ne s'applique.
 Aucun test statistique : le protocole n'en prévoit pas, et le test est dit « non scientifique, 10 sujets, 1 génération par cas ». Il donne les écarts moyens et, par sujet, le nombre de cas où chaque condition fait mieux.
 
 ## Validation
-Cette note vaut interprétation seulement si Jacques l'approuve et si elle est publiée (gist daté, avec son empreinte) avant l'ouverture de la clé.
+**Validée par Jacques le 10 novembre 2026** : lecture des deux défauts (recouvrement des lignes 1 et 2, trou entre « ≈ » et « nettement ») approuvée telle qu'écrite ci-dessus, avant tout calcul par condition et avant l'ouverture de la clé.
+Reste à faire : publier cette note dans un gist public daté, avec son empreinte SHA-256, **avant** l'ouverture de la clé.
