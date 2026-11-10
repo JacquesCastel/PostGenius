@@ -75,3 +75,44 @@ T-BVQG;2;moins de 2 heures au lieu de plusieurs jours (identification d’un lot
 T-A39J;1;Lucas Perrin;nom;F;F1;;;
 T-A39J;2;48 heures;chiffre;I;;"Absent de la fiche ; auteur fictif";;délai inventé
 T-A39J;3;3 semaines;chiffre;I;;Absent de la fiche;;délai inventé
+T-TPTB;1;6 % de croissance;chiffre;F;F3;;;
+T-TPTB;2;2,4 M€ de CA;chiffre;F;F2;;;
+T-TPTB;3;Maison Bellange;nom;F;F1;;;
+T-TPTB;4;Seize personnes;chiffre;D;F4;;;17 dans la fiche, 16 dans le texte (inversion de valeur)
+T-UG9Y;1;Maison Bellange;nom;F;F1;;;
+T-UG9Y;2;En 2024;date;I;;"Absent de la fiche (l’année n’y est pas donnée) ; entreprise fictive, rien à vérifier ailleurs (5 min)";;
+T-UG9Y;3;2,4 millions d’euros de CA;chiffre;F;F2;;;
+T-UG9Y;4;progression de 6 %;chiffre;F;F3;;;
+T-UG9Y;5;équipe de 17 personnes;chiffre;F;F4;;;
+T-UG9Y;6;En 2025;date;I;;"Absent de la fiche (l’année n’y est pas donnée) ; entreprise fictive, rien à vérifier ailleurs (5 min)";;
+T-YJC5;1;Maison Bellange;nom;F;F1;;;
+T-YJC5;2;2,4 millions d’euros de chiffre d’affaires;chiffre;F;F2;;;
+T-YJC5;3;hausse de 6 %;chiffre;F;F3;;;
+T-YJC5;4;par rapport à 2023;date;I;;"Absent de la fiche (l’année n’y est pas donnée) ; entreprise fictive, rien à vérifier ailleurs (5 min)";;
+T-YJC5;5;équipe de 17 personnes;chiffre;F;F4;;;
+T-YJC5;6;Bilan 2024;date;I;;"Absent de la fiche (l’année n’y est pas donnée) ; entreprise fictive, rien à vérifier ailleurs (5 min)";;
+T-YJC5;7;En 2025;date;I;;"Absent de la fiche (l’année n’y est pas donnée) ; entreprise fictive, rien à vérifier ailleurs (5 min)";;
+T-7ZYT;1;En 2024;date;I;;"Absent de la fiche (l’année n’y est pas donnée) ; entreprise fictive, rien à vérifier ailleurs (5 min)";;
+T-7ZYT;2;86 projets;chiffre;I;;"Absent de la fiche ; entreprise fictive";;
+T-7ZYT;3;34 cuisines sur mesure;chiffre;I;;Absent de la fiche;;
+T-7ZYT;4;21 dressings;chiffre;I;;Absent de la fiche;;
+T-7ZYT;5;12 escaliers;chiffre;I;;Absent de la fiche;;
+T-7ZYT;6;18 m³ de chêne, frêne et hêtre;chiffre;I;;Absent de la fiche;;
+T-7ZYT;7;420 m² d’agencements;chiffre;I;;Absent de la fiche;;
+T-7ZYT;8;9 500 km;chiffre;I;;Absent de la fiche;;
+T-7ZYT;9;3 menuisiers à l’atelier;chiffre;I;;"Absent de la fiche ; contredit F4 si on additionne (3+1 ≠ 17)";;
+T-7ZYT;10;1 apprenti;chiffre;I;;Absent de la fiche;;
+T-7ZYT;11;progression de 17 % du chiffre d’affaires;chiffre;D;F3;;;6 % dans la fiche, 17 % dans le texte
+T-7ZYT;12;par rapport à 2023;date;I;;"Absent de la fiche (l’année n’y est pas donnée) ; entreprise fictive, rien à vérifier ailleurs (5 min)";;
+T-7ZYT;13;Cap sur 2025;date;I;;"Absent de la fiche (l’année n’y est pas donnée) ; entreprise fictive, rien à vérifier ailleurs (5 min)";;
+T-STS9;1;6 % de hausse;chiffre;F;F3;;;
+T-STS9;2;2,4 M€ de CA;chiffre;F;F2;;;
+T-STS9;3;Maison Bellange;nom;F;F1;;;
+T-STS9;4;Nous sommes 17;chiffre;F;F4;;;
+T-STS9;5;#Bilan2024;date;I;;"Absent de la fiche (l’année n’y est pas donnée) ; entreprise fictive, rien à vérifier ailleurs (5 min)";;année dans un hashtag
+T-983B;1;Maison Bellange;nom;F;F1;;;
+T-983B;2;En 2024;date;I;;"Absent de la fiche (l’année n’y est pas donnée) ; entreprise fictive, rien à vérifier ailleurs (5 min)";;
+T-983B;3;2,4 millions d’euros de chiffre d’affaires;chiffre;F;F2;;;
+T-983B;4;hausse de 6 %;chiffre;F;F3;;;
+T-983B;5;équipe de 17 personnes;chiffre;F;F4;;;
+T-983B;6;en 2025;date;I;;"Absent de la fiche (l’année n’y est pas donnée) ; entreprise fictive, rien à vérifier ailleurs (5 min)";;
