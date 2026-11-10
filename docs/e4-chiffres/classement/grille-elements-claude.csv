@@ -175,3 +175,29 @@ T-5VM2;8;plus de 15 indicateurs;chiffre;I;;"Absent de la fiche (F5 : aucun monta
 T-S2Z8;1;9 février 2027;date;F;F4;;;
 T-S2Z8;2;Klérôs Formation;nom;D;F1;;;nom déformé (« Klérôs » au lieu de « Kléros »), deux occurrences
 T-S2Z8;3;Studio Haldane Numérique;nom;F;F2;;;
+T-HHWX;1;380 000 €;chiffre;F;F3;;;
+T-HHWX;2;9 jours d’arrêt;chiffre;F;F4;;;
+T-HHWX;3;Fonderie Marchal;nom;F;F1;;;
+T-JXM9;1;380 000 €;chiffre;F;F3;;;
+T-JXM9;2;9 jours d’arrêt;chiffre;F;F4;;;
+T-JXM9;3;Fonderie Marchal;nom;F;F1;;;
+T-DJX9;1;Fonderie Marchal;nom;F;F1;;;
+T-DJX9;2;380 000 €;chiffre;F;F3;;;
+T-DJX9;3;9 jours d’arrêt total;chiffre;F;F4;;;
+T-DJX9;4;plus de 20 ans de service (ancien four);chiffre;I;;"Absent de la fiche ; entreprise fictive, rien à vérifier ailleurs (5 min)";;
+T-DJX9;5;sécurisé pour les 15 prochaines années;chiffre;I;;"Absent de la fiche ; entreprise fictive, rien à vérifier ailleurs (5 min)";;
+T-8GKD;1;four de fusion de 2 tonnes;chiffre;I;;"Absent de la fiche ; entreprise fictive, rien à vérifier ailleurs (5 min)";;
+T-8GKD;2;consommation de 620 kWh/tonne à 510 kWh/tonne;chiffre;I;;"Absent de la fiche ; entreprise fictive, rien à vérifier ailleurs (5 min)";;contredit F5 (gains non mesurés)
+T-8GKD;3;près de 18 % d’économie d’énergie;chiffre;I;;"Absent de la fiche ; entreprise fictive, rien à vérifier ailleurs (5 min)";;contredit F5
+T-8GKD;4;4 500 tonnes fondues par an;chiffre;I;;"Absent de la fiche ; entreprise fictive, rien à vérifier ailleurs (5 min)";;
+T-8GKD;5;plus de 490 000 kWh économisés par an;chiffre;I;;"Absent de la fiche ; entreprise fictive, rien à vérifier ailleurs (5 min)";;contredit F5
+T-8GKD;6;arrêt de production limité à 12 jours;chiffre;D;F4;;;"9 jours dans la fiche ; « projet récent » non nommé : si c’est un autre projet, I (sans effet sur I+D+X)"
+T-8GKD;7;taux de rebut de 3,2 % à 2,1 %;chiffre;I;;"Absent de la fiche ; entreprise fictive, rien à vérifier ailleurs (5 min)";;
+T-8GKD;8;cycles de fusion raccourcis de 15 minutes par charge;chiffre;I;;"Absent de la fiche ; entreprise fictive, rien à vérifier ailleurs (5 min)";;
+T-8GKD;9;préparer la performance des 10 prochaines années;chiffre;I;;"Absent de la fiche ; entreprise fictive, rien à vérifier ailleurs (5 min)";;
+T-U9J9;1;Fonderie Marchal;nom;F;F1;;;
+T-U9J9;2;380 000 €;chiffre;F;F3;;;
+T-U9J9;3;arrêt de production de 9 jours;chiffre;F;F4;;;
+T-CQHY;1;Fonderie Marchal;nom;F;F1;;;
+T-CQHY;2;380 000 €;chiffre;F;F3;;;
+T-CQHY;3;9 jours;chiffre;F;F4;;;
