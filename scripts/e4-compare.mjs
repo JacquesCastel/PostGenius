@@ -104,6 +104,7 @@ export function kappa(pairs) {
   return exp === 1 ? 1 : (obs - exp) / (1 - exp);
 }
 
+export const tagOf = (c) => (String(c ?? "").match(/^\s*(CONSEIL|EXEMPLE|PLAN|DERIVE|STATISTIQUE)\b/i)?.[1] ?? "").toUpperCase();
 const countUnsupported = (els) => els.filter((e) => UNSUPPORTED.includes(e.code)).length;
 
 // ── comparaison complète ────────────────────────────────────────────────────────────────────────────────────────────────────
@@ -119,11 +120,11 @@ export function compare({ elA, elB, txA, txB, seuil = 0.6 }) {
     for (const m of matched) {
       n++;
       const same = m.a.code === m.b.code;
-      finalEls.push({ id, n, element: m.a.element, type: m.a.type || m.b.type, code: same ? m.a.code : "", origine: same ? "accord" : "désaccord de code", claude: m.a.code, jacques: m.b.code, motif: "" });
+      finalEls.push({ id, n, element: m.a.element, type: m.a.type || m.b.type, code: same ? m.a.code : "", origine: same ? "accord" : "désaccord de code", claude: m.a.code, jacques: m.b.code, motif: "", etiquette: tagOf(m.a.comment) || tagOf(m.b.comment) });
       if (!same) disagreements.push({ id, type: "code différent", claude: m.a, jacques: m.b });
     }
-    for (const e of onlyA) { n++; finalEls.push({ id, n, element: e.element, type: e.type, code: "", origine: "relevé par l'assistant seul", claude: e.code, jacques: "", motif: "" }); disagreements.push({ id, type: "relevé par l'assistant seul", claude: e, jacques: null }); }
-    for (const e of onlyB) { n++; finalEls.push({ id, n, element: e.element, type: e.type, code: "", origine: "relevé par Jacques seul", claude: "", jacques: e.code, motif: "" }); disagreements.push({ id, type: "relevé par Jacques seul", claude: null, jacques: e }); }
+    for (const e of onlyA) { n++; finalEls.push({ id, n, element: e.element, type: e.type, code: "", origine: "relevé par l'assistant seul", claude: e.code, jacques: "", motif: "", etiquette: tagOf(e.comment) }); disagreements.push({ id, type: "relevé par l'assistant seul", claude: e, jacques: null }); }
+    for (const e of onlyB) { n++; finalEls.push({ id, n, element: e.element, type: e.type, code: "", origine: "relevé par Jacques seul", claude: "", jacques: e.code, motif: "", etiquette: tagOf(e.comment) }); disagreements.push({ id, type: "relevé par Jacques seul", claude: null, jacques: e }); }
     const ta = txA[id], tb = txB[id];
     const fin = { id, sujet: (ta ?? tb)?.sujet ?? "", refus: "", absent: "", origine: [] };
     if (!ta || !tb) fin.origine.push("ligne absente d'une des deux grilles");
@@ -199,8 +200,8 @@ export function run(a) {
     ...res.disagreements.map((d) => [d.id, d.type, d.claude?.element ?? "", d.claude?.code ?? "", [d.claude?.recherche, d.claude?.source].filter(Boolean).join(" | "), d.jacques?.element ?? "", d.jacques?.code ?? "", [d.jacques?.recherche, d.jacques?.source].filter(Boolean).join(" | "), "", "", ""]),
   ]));
   fs.writeFileSync(path.join(a.out, "grille-elements-finale.csv"), toCsv([
-    ["id_texte", "n", "élément", "type", "code final (F/D/I/V/X/G ou ECART)", "origine", "code assistant", "code Jacques", "motif"],
-    ...res.finalEls.map((e) => [e.id, e.n, e.element, e.type, e.code, e.origine, e.claude, e.jacques, e.motif]),
+    ["id_texte", "n", "élément", "type", "code final (F/D/I/V/X/G ou ECART)", "origine", "code assistant", "code Jacques", "motif", "étiquette"],
+    ...res.finalEls.map((e) => [e.id, e.n, e.element, e.type, e.code, e.origine, e.claude, e.jacques, e.motif, e.etiquette]),
   ]));
   fs.writeFileSync(path.join(a.out, "grille-textes-finale.csv"), toCsv([
     ["id_texte", "sujet", "refus_ou_pas_de_donnee (oui/non)", "chiffre_absent_de_la_fiche (oui/non/sans objet)", "origine"],
