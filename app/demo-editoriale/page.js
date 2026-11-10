@@ -4,11 +4,11 @@ import DemoEditoriale from "@/components/DemoEditoriale";
 import { loadDemo } from "@/lib/demoEditorial";
 import { JOIN_HREF, pick } from "@/lib/access";
 
-// Prototype isolé : « un même sujet, trois entreprises, trois prises de parole ». Non indexé, non relié au site : on y arrive par son adresse.
+// Prototype isolé : « un même sujet, trois profils, trois prises de parole ». Non indexé, non relié au site : on y arrive par son adresse.
 // Les textes sont des générations réelles du moteur, lues dans content/demo-editoriale.json : aucun appel IA à la visite.
 export const metadata = {
   title: "Démonstration éditoriale — LinkeePost",
-  description: "Un même sujet, trois entreprises, trois prises de parole : LinkeePost interprète un sujet à travers l'identité de celui qui parle.",
+  description: "Un même sujet, trois profils, trois prises de parole : LinkeePost interprète un sujet à travers l'identité de celui qui parle.",
   robots: { index: false, follow: false },
   alternates: { canonical: "/demo-editoriale" },
 };

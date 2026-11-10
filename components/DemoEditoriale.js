@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { ChevronRight, FlaskConical, ArrowRight } from "lucide-react";
 
-// Démonstration de l'intelligence éditoriale : une même information, trois entreprises, trois prises de parole.
+// Démonstration de l'intelligence éditoriale : une même information, trois profils, trois prises de parole.
 // Au centre : les trois publications COMPLÈTES, côte à côte. Autour : le strict nécessaire.
 //
 // Règles d'honnêteté (chacune est vérifiée par un test) :
@@ -17,6 +17,7 @@ const ACCENTS = {
   rose: { card: "border-rose-200 bg-rose-50/70", bar: "bg-[#ff5a5f]", text: "text-[#c93a40]", chip: "bg-rose-100 text-rose-800", post: "border-rose-200" },
   teal: { card: "border-teal-200 bg-teal-50/70", bar: "bg-teal-500", text: "text-teal-700", chip: "bg-teal-100 text-teal-800", post: "border-teal-200" },
   violet: { card: "border-violet-200 bg-violet-50/70", bar: "bg-violet-500", text: "text-violet-700", chip: "bg-violet-100 text-violet-800", post: "border-violet-200" },
+  amber: { card: "border-amber-200 bg-amber-50/70", bar: "bg-amber-500", text: "text-amber-800", chip: "bg-amber-100 text-amber-900", post: "border-amber-200" },
   slate: { card: "border-slate-200 bg-slate-50/70", bar: "bg-slate-500", text: "text-slate-700", chip: "bg-slate-200 text-slate-800", post: "border-slate-200" },
 };
 
@@ -83,8 +84,8 @@ export default function DemoEditoriale({ subject, identities, derived, compariso
 
       <header className="max-w-6xl mx-auto px-5 sm:px-6 pt-10 sm:pt-14">
         <p className="text-xs font-semibold tracking-widest uppercase text-[#ff5a5f]">Démonstration</p>
-        <h1 className="text-3xl sm:text-5xl font-extrabold leading-tight mt-2">Une information.<br className="sm:hidden" /> Trois entreprises. <span className="text-[#ff5a5f]">Trois prises de parole.</span></h1>
-        <p className="text-lg text-[#5a6b85] mt-4 max-w-2xl">Le sujet est identique. Seul change le profil de l&apos;entreprise qui parle. Lisez ce que LinkeePost écrit.</p>
+        <h1 className="text-3xl sm:text-5xl font-extrabold leading-tight mt-2">Une information.<br className="sm:hidden" /> Trois profils. <span className="text-[#ff5a5f]">Trois prises de parole.</span></h1>
+        <p className="text-lg text-[#5a6b85] mt-4 max-w-2xl">Le sujet est identique. Seul change le profil de celui qui parle. Lisez ce que LinkeePost écrit.</p>
       </header>
 
       {/* 1. La même information */}
@@ -92,13 +93,13 @@ export default function DemoEditoriale({ subject, identities, derived, compariso
         <div className="rounded-3xl bg-white border border-white shadow-lg shadow-rose-100/40 p-6 sm:p-7">
           <p className="text-lg sm:text-xl leading-relaxed" data-testid="demo-subject">{subject.text}</p>
           <p className="text-sm text-[#5a6b85] mt-3" data-testid="demo-subject-note">
-            {allAuthentic ? "Ce texte, mot pour mot, a été donné au moteur pour chacune des trois entreprises." : "Sujet commun de la démonstration : le même texte est destiné aux trois entreprises."}
+            {allAuthentic ? "Ce texte, mot pour mot, a été donné au moteur pour chacun des trois profils." : "Sujet commun de la démonstration : le même texte est destiné aux trois profils."}
           </p>
         </div>
       </Section>
 
-      {/* 2. Trois entreprises (cartes courtes) */}
-      <Section eyebrow="Étape 2" title="Trois entreprises" id="demo-entreprises">
+      {/* 2. Trois profils (cartes courtes) */}
+      <Section eyebrow="Étape 2" title="Trois profils" id="demo-entreprises">
         <ul className="grid md:grid-cols-3 gap-4">
           {companies.map((c) => {
             const a = ACCENTS[c.accent];
@@ -108,7 +109,7 @@ export default function DemoEditoriale({ subject, identities, derived, compariso
                   <span className={`w-9 h-9 shrink-0 rounded-full ${a.bar} text-white text-xs font-bold flex items-center justify-center`} aria-hidden>{initials(c.name)}</span>
                   <div className="min-w-0"><p className="font-extrabold leading-tight">{c.name}</p><p className="text-xs text-[#5a6b85]">{c.kind}</p></div>
                 </div>
-                {c.fictional && <span className={`inline-block mt-2 text-[11px] font-semibold px-2 py-0.5 rounded-full ${a.chip}`}>Entreprise fictive</span>}
+                {c.fictional && <span className={`inline-block mt-2 text-[11px] font-semibold px-2 py-0.5 rounded-full ${a.chip}`}>{c.id === "expert" ? "Expert fictif" : "Entreprise fictive"}</span>}
                 <dl className="mt-3 space-y-2 text-[13.5px] leading-snug">
                   <div><dt className={`inline font-bold ${a.text}`}>Positionnement. </dt><dd className="inline text-[#34445f]">{c.display.positioning}</dd></div>
                   <div><dt className={`inline font-bold ${a.text}`}>Conviction. </dt><dd className="inline text-[#34445f]">{c.display.conviction}</dd></div>
@@ -216,7 +217,7 @@ export default function DemoEditoriale({ subject, identities, derived, compariso
             )}
 
             <ul className="list-disc pl-5 space-y-1 text-[#34445f]">
-              <li>ASTER INDUSTRIE et AXIOME Conseil sont des entreprises fictives. Rien n&apos;est publié sur LinkedIn.</li>
+              <li>ASTER INDUSTRIE, AXIOME Conseil et Mathis Garlandier (Garlandier Conseil) sont fictifs : deux entreprises et un expert indépendant inventés pour la démonstration. Rien n&apos;est publié sur LinkedIn.</li>
               <li>Les profils sont des données que nous avons saisies : la démonstration montre des textes cohérents avec une identité, pas un angle que le moteur aurait découvert seul.</li>
             </ul>
           </div>
