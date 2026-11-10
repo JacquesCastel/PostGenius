@@ -1,37 +1,4 @@
 ﻿id_texte;n;element (citation exacte du texte);type (chiffre/date/nom/citation/source);code (F/D/I/V/X/G);ligne_de_la_fiche (F1, F2… si F ou D);recherche_faite (si I, V ou X);source_consultee (si V ou X);commentaire
-T-TXS6;1;« Négocier avec un acheteur public »;nom;F;F2;;;
-T-TXS6;2;en présentiel;chiffre;F;F6;;;format
-T-TXS6;3;12 mars 2027;date;F;F4;;;
-T-TXS6;4;1 450 € HT par personne;chiffre;F;F5;;;
-T-TXS6;5;Groupe limité à 10 participants;chiffre;I;;"Absent de la fiche ; formation fictive";;chiffre inventé
-T-TXS6;6;3 mises en situation;chiffre;I;;Absent de la fiche;;
-T-TXS6;7;1 trame d’analyse d’appel d’offres;chiffre;I;;Absent de la fiche;;
-T-TXS6;8;Claire Montrel;nom;F;F1;;;
-T-GA3A;1;« Négocier avec un acheteur public »;nom;F;F2;;;
-T-GA3A;2;en présentiel;chiffre;F;F6;;;
-T-GA3A;3;12 mars 2027;date;F;F4;;;
-T-GA3A;4;1 450 € HT par personne;chiffre;F;F5;;;
-T-GA3A;5;Claire Montrel;nom;F;F1;;;
-T-CKAM;1;plus de 100 milliards d’euros par an (marchés publics, France);chiffre;V;;Recherche : recensement OECP/DAJ;OECP/DAJ : 170 Md€ en 2023 et 233 Md€ en 2024 (acteurspublics.fr, economie.gouv.fr/daj, senat.fr);minorant exact
-T-CKAM;2;72 % des PME … jamais formées à la négociation avec le secteur public;chiffre;I;;"Recherche 5 min : aucune source ; le seul 72 % trouvé (baromètre Syntec 2016) concerne l’intention de répondre davantage aux appels d’offres, autre sujet";;statistique attribuée à une enquête non citée
-T-CKAM;3;« Négocier avec un acheteur public »;nom;F;F2;;;
-T-CKAM;4;100 % présentielle;chiffre;F;F6;;;« 100 % » sans écart avec F6
-T-CKAM;5;Code de la commande publique;source;V;;Recherche : texte existant, encadre les procédures avec négociation;Légifrance, Code de la commande publique;la fiche ne le mentionne pas
-T-CKAM;6;12 mars 2027;date;F;F4;;;
-T-CKAM;7;1 450 € HT / personne;chiffre;F;F5;;;
-T-CKAM;8;Places limitées à 10 participants;chiffre;I;;"Absent de la fiche ; formation fictive";;
-T-BZY2;1;plus de 160 milliards d’euros par an (commande publique, France);chiffre;V;;"Recherche 5 min : aucune source ne donne exactement 160 ; recensements supérieurs";OECP/DAJ : 170 Md€ en 2023, 233 Md€ en 2024 (senat.fr, acteurspublics.fr);"minorant exact ; « chaque année » vrai pour 2023-2024 seulement (≈83 Md€ en 2014)"
-T-BZY2;2;6 à 15 heures de préparation (dossier de candidature);chiffre;I;;"Recherche 5 min : aucune source primaire ; seules des estimations d’éditeurs (8 à 15 h, tensoria.fr) qui ne correspondent pas";;« En moyenne » présenté comme un fait
-T-FMM7;1;Claire Montrel;nom;F;F1;;;
-T-FMM7;2;« Négocier avec un acheteur public »;nom;F;F2;;;
-T-FMM7;3;en présentiel;chiffre;F;F6;;;
-T-FMM7;4;12 mars 2027;date;F;F4;;;
-T-FMM7;5;1 450 € HT par personne;chiffre;F;F5;;;
-T-48RN;1;Claire Montrel;nom;F;F1;;;
-T-48RN;2;« Négocier avec un acheteur public »;nom;F;F2;;;
-T-48RN;3;présentielle;chiffre;F;F6;;;
-T-48RN;4;12 mars 2027;date;F;F4;;;
-T-48RN;5;1 450 € HT par personne;chiffre;F;F5;;;
 T-J5BE;1;Transports Aubrac Lemaire;nom;F;F2;;;
 T-J5BE;2;Il y a quatre mois;date;I;;"Absent de la fiche ; entité fictive, rien à vérifier ailleurs (5 min)";;durée inventée
 T-J5BE;3;18 retards de livraison par mois;chiffre;F;F4;;;
@@ -65,6 +32,39 @@ T-YAZZ;1;Transports Aubrac Lemaire;nom;F;F2;;;
 T-YAZZ;2;Cabinet Lormand Conseil;nom;F;F1;;;
 T-YAZZ;3;18 par mois;chiffre;F;F4;;;
 T-YAZZ;4;7 par mois;chiffre;F;F4;;;
+T-TXS6;1;« Négocier avec un acheteur public »;nom;F;F2;;;
+T-TXS6;2;en présentiel;chiffre;F;F6;;;format
+T-TXS6;3;12 mars 2027;date;F;F4;;;
+T-TXS6;4;1 450 € HT par personne;chiffre;F;F5;;;
+T-TXS6;5;Groupe limité à 10 participants;chiffre;I;;"Absent de la fiche ; formation fictive";;chiffre inventé
+T-TXS6;6;3 mises en situation;chiffre;I;;Absent de la fiche;;
+T-TXS6;7;1 trame d’analyse d’appel d’offres;chiffre;I;;Absent de la fiche;;
+T-TXS6;8;Claire Montrel;nom;F;F1;;;
+T-GA3A;1;« Négocier avec un acheteur public »;nom;F;F2;;;
+T-GA3A;2;en présentiel;chiffre;F;F6;;;
+T-GA3A;3;12 mars 2027;date;F;F4;;;
+T-GA3A;4;1 450 € HT par personne;chiffre;F;F5;;;
+T-GA3A;5;Claire Montrel;nom;F;F1;;;
+T-CKAM;1;plus de 100 milliards d’euros par an (marchés publics, France);chiffre;V;;Recherche : recensement OECP/DAJ;OECP/DAJ : 170 Md€ en 2023 et 233 Md€ en 2024 (acteurspublics.fr, economie.gouv.fr/daj, senat.fr);minorant exact
+T-CKAM;2;72 % des PME … jamais formées à la négociation avec le secteur public;chiffre;I;;"Recherche 5 min : aucune source ; le seul 72 % trouvé (baromètre Syntec 2016) concerne l’intention de répondre davantage aux appels d’offres, autre sujet";;statistique attribuée à une enquête non citée
+T-CKAM;3;« Négocier avec un acheteur public »;nom;F;F2;;;
+T-CKAM;4;100 % présentielle;chiffre;F;F6;;;« 100 % » sans écart avec F6
+T-CKAM;5;Code de la commande publique;source;V;;Recherche : texte existant, encadre les procédures avec négociation;Légifrance, Code de la commande publique;la fiche ne le mentionne pas
+T-CKAM;6;12 mars 2027;date;F;F4;;;
+T-CKAM;7;1 450 € HT / personne;chiffre;F;F5;;;
+T-CKAM;8;Places limitées à 10 participants;chiffre;I;;"Absent de la fiche ; formation fictive";;
+T-BZY2;1;plus de 160 milliards d’euros par an (commande publique, France);chiffre;V;;"Recherche 5 min : aucune source ne donne exactement 160 ; recensements supérieurs";OECP/DAJ : 170 Md€ en 2023, 233 Md€ en 2024 (senat.fr, acteurspublics.fr);"minorant exact ; « chaque année » vrai pour 2023-2024 seulement (≈83 Md€ en 2014)"
+T-BZY2;2;6 à 15 heures de préparation (dossier de candidature);chiffre;I;;"Recherche 5 min : aucune source primaire ; seules des estimations d’éditeurs (8 à 15 h, tensoria.fr) qui ne correspondent pas";;« En moyenne » présenté comme un fait
+T-FMM7;1;Claire Montrel;nom;F;F1;;;
+T-FMM7;2;« Négocier avec un acheteur public »;nom;F;F2;;;
+T-FMM7;3;en présentiel;chiffre;F;F6;;;
+T-FMM7;4;12 mars 2027;date;F;F4;;;
+T-FMM7;5;1 450 € HT par personne;chiffre;F;F5;;;
+T-48RN;1;Claire Montrel;nom;F;F1;;;
+T-48RN;2;« Négocier avec un acheteur public »;nom;F;F2;;;
+T-48RN;3;présentielle;chiffre;F;F6;;;
+T-48RN;4;12 mars 2027;date;F;F4;;;
+T-48RN;5;1 450 € HT par personne;chiffre;F;F5;;;
 T-74TC;1;Lucas Perrin;nom;F;F1;;;
 T-74TC;2;Depuis 18 mois;chiffre;I;;"Absent de la fiche ; auteur fictif, rien à vérifier ailleurs";;durée inventée, dans le « post honnête » proposé en remplacement
 T-74TC;3;chaque semaine, un client me pose la même question;chiffre;I;;Absent de la fiche;;fréquence inventée
@@ -253,3 +253,36 @@ T-VV8Z;4;36 % considèrent que la durée pourrait être mieux maîtrisée;chiffr
 T-VV8Z;5;ordre du jour envoyé 24h à l’avance;chiffre;I;;"Absent de la fiche ; entreprise fictive, rien à vérifier ailleurs (5 min)";;PLAN
 T-VV8Z;6;créneau limité à 30 minutes;chiffre;I;;"Absent de la fiche ; entreprise fictive, rien à vérifier ailleurs (5 min)";;PLAN
 T-VV8Z;7;dès le mois prochain;date;I;;"Absent de la fiche ; entreprise fictive, rien à vérifier ailleurs (5 min)";;PLAN
+T-6FTK;1;Rencontres de l’Industrie Durable;nom;F;F2;;;
+T-6FTK;2;14 octobre;date;F;F3;;;
+T-6FTK;3;Nantes;nom;F;F3;;;
+T-6FTK;4;table ronde sur la réparabilité des équipements;nom;F;F4;;;
+T-6FTK;5;Selon une étude de l’ADEME, allonger la durée de vie d’un équipement de 3 ans peut réduire son empreinte carbone de 30 %;chiffre;I;;"Recherche 5 min : aucun rapport ADEME avec ce chiffre trouvé ; le plus proche (ADEME 2018, ordinateurs portables, 2,5 à 3,5 ans) donne 37 % pour un parc de terminaux, autre périmètre";"agirpourlatransition.ademe.fr ; presse.ademe.fr";STATISTIQUE attribuée à l’ADEME, non retrouvée telle quelle
+T-EMHM;1;Rencontres de l’Industrie Durable;nom;F;F2;;;
+T-EMHM;2;Nantes;nom;F;F3;;;
+T-EMHM;3;14 octobre;date;F;F3;;;
+T-EMHM;4;table ronde sur la réparabilité des équipements;nom;F;F4;;;
+T-UBJM;1;Nantes;nom;F;F3;;;
+T-UBJM;2;14 octobre;date;F;F3;;;
+T-UBJM;3;Rencontres de l’Industrie Durable;nom;F;F2;;;
+T-UBJM;4;table ronde sur la réparabilité des équipements;nom;F;F4;;;
+T-RCX4;1;La semaine dernière;date;I;;"Absent de la fiche (F6 : aucune donnée de fréquentation) ; auteure fictive, rien à vérifier ailleurs (5 min)";;
+T-RCX4;2;3 jours;chiffre;I;;"Absent de la fiche (F6 : aucune donnée de fréquentation) ; auteure fictive, rien à vérifier ailleurs (5 min)";;
+T-RCX4;3;Plus de 120 contacts qualifiés;chiffre;I;;"Absent de la fiche (F6 : aucune donnée de fréquentation) ; auteure fictive, rien à vérifier ailleurs (5 min)";;
+T-RCX4;4;38 démonstrations;chiffre;I;;"Absent de la fiche (F6 : aucune donnée de fréquentation) ; auteure fictive, rien à vérifier ailleurs (5 min)";;
+T-RCX4;5;17 rendez-vous commerciaux planifiés;chiffre;I;;"Absent de la fiche (F6 : aucune donnée de fréquentation) ; auteure fictive, rien à vérifier ailleurs (5 min)";;
+T-RCX4;6;4 conférences suivies;chiffre;I;;"Absent de la fiche (F6 : aucune donnée de fréquentation) ; auteure fictive, rien à vérifier ailleurs (5 min)";;
+T-9666;1;14 octobre 2026;date;F;F3;;;
+T-9666;2;Rencontres de l’Industrie Durable;nom;F;F2;;;
+T-9666;3;Nantes;nom;F;F3;;;
+T-9666;4;table ronde consacrée à la réparabilité des équipements;nom;F;F4;;;
+T-9666;5;raisonner en coût complet sur 5 à 10 ans;chiffre;I;;"Absent de la fiche (F6 : aucune donnée de fréquentation) ; auteure fictive, rien à vérifier ailleurs (5 min)";;CONSEIL
+T-9666;6;disponibilité des pièces détachées pendant 7 ans minimum;chiffre;I;;"Absent de la fiche (F6 : aucune donnée de fréquentation) ; auteure fictive, rien à vérifier ailleurs (5 min)";;CONSEIL
+T-9666;7;délai d’intervention sous 48 h;chiffre;I;;"Absent de la fiche (F6 : aucune donnée de fréquentation) ; auteure fictive, rien à vérifier ailleurs (5 min)";;CONSEIL
+T-9666;8;pondération de 15 % dédiée à la réparabilité;chiffre;I;;"Absent de la fiche (F6 : aucune donnée de fréquentation) ; auteure fictive, rien à vérifier ailleurs (5 min)";;CONSEIL
+T-9666;9;Hélène Garnier;nom;F;F1;;;
+T-QKNK;1;Rencontres de l’Industrie Durable;nom;F;F2;;;
+T-QKNK;2;Nantes;nom;F;F3;;;
+T-QKNK;3;14 octobre 2026;date;F;F3;;;
+T-QKNK;4;table ronde consacrée à la réparabilité des équipements;nom;F;F4;;;
+T-QKNK;5;Hélène Garnier, responsable des achats;nom;F;F1;;;
