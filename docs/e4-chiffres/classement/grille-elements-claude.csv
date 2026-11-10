@@ -142,3 +142,36 @@ T-58SN;3;6 premiers mois;chiffre;I;;"Absent de la fiche (F4 : aucune donnée chi
 T-58SN;4;passer de 300 à 500 leads qualifiés par mois;chiffre;I;;"Absent de la fiche (F4 : aucune donnée chiffrée) ; auteure fictive";;EXEMPLE
 T-58SN;5;Une étude LinkedIn indique que les femmes postulent à ~100 % des critères contre 60 % pour les hommes;chiffre;X;;"Recherche 5 min : le « 100 % / 60 % » vient d’une remarque orale d’un cadre de Hewlett-Packard, pas d’une étude LinkedIn ; l’étude LinkedIn (2019) dit autre chose (les femmes postulent à 20 % d’offres de moins)";"bi.team ; goodmorningamerica.com (LinkedIn Gender Insights)";attribution et chiffre non fondés
 T-58SN;6;Les annonces avec fourchette salariale reçoivent jusqu’à 30 % de candidatures qualifiées en plus;chiffre;I;;"Recherche 5 min : aucune étude avec ce chiffre ; le 30 % trouvé (HelloWork 2022) concerne la part de recruteurs qui indiquent le salaire";;STATISTIQUE
+T-CA5Y;1;Kléros Formation;nom;F;F1;;;
+T-CA5Y;2;Studio Haldane Numérique;nom;F;F2;;;
+T-CA5Y;3;9 février 2027;date;F;F4;;;
+T-5PUK;1;Kléros Formation;nom;F;F1;;;
+T-5PUK;2;Studio Haldane Numérique;nom;F;F2;;;
+T-5PUK;3;9 février 2027;date;F;F4;;;
+T-8UC5;1;À partir de ce mois-ci;date;I;;"Absent de la fiche (F5 : aucun montant ni calendrier) ; entités fictives, rien à vérifier ailleurs (5 min)";;
+T-8UC5;2;200 collaborateurs formés;chiffre;I;;"Absent de la fiche (F5 : aucun montant ni calendrier) ; entités fictives, rien à vérifier ailleurs (5 min)";;
+T-8UC5;3;sur les 12 prochains mois;chiffre;I;;"Absent de la fiche (F5 : aucun montant ni calendrier) ; entités fictives, rien à vérifier ailleurs (5 min)";;
+T-8UC5;4;40 heures de formation par participant;chiffre;I;;"Absent de la fiche (F5 : aucun montant ni calendrier) ; entités fictives, rien à vérifier ailleurs (5 min)";;
+T-8UC5;5;8 modules spécialisés;chiffre;I;;"Absent de la fiche (F5 : aucun montant ni calendrier) ; entités fictives, rien à vérifier ailleurs (5 min)";;
+T-8UC5;6;3 cohortes dès le premier semestre;chiffre;I;;"Absent de la fiche (F5 : aucun montant ni calendrier) ; entités fictives, rien à vérifier ailleurs (5 min)";;
+T-8UC5;7;réduire de 30 % le temps de prise en main;chiffre;I;;"Absent de la fiche (F5 : aucun montant ni calendrier) ; entités fictives, rien à vérifier ailleurs (5 min)";;
+T-8UC5;8;phase pilote auprès de 25 participants;chiffre;I;;"Absent de la fiche (F5 : aucun montant ni calendrier) ; entités fictives, rien à vérifier ailleurs (5 min)";;
+T-8UC5;9;taux de satisfaction de 92 %;chiffre;I;;"Absent de la fiche (F5 : aucun montant ni calendrier) ; entités fictives, rien à vérifier ailleurs (5 min)";;
+T-8UC5;10;progression moyenne de 28 % aux évaluations;chiffre;I;;"Absent de la fiche (F5 : aucun montant ni calendrier) ; entités fictives, rien à vérifier ailleurs (5 min)";;
+T-U6NJ;1;Kléros Formation;nom;F;F1;;;
+T-U6NJ;2;Studio Haldane Numérique;nom;F;F2;;;
+T-U6NJ;3;40 % des pannes industrielles non planifiées auraient pu être évitées;chiffre;I;;Recherche 5 min : aucune source (seuls des chiffres d’éditeurs, 20-30 % de pannes en moins avec la maintenance prédictive, teeptrak.com);;STATISTIQUE
+T-U6NJ;4;250 000 € par an d’arrêts non programmés pour les PME industrielles en France;chiffre;I;;Recherche 5 min : aucune source;;STATISTIQUE
+T-U6NJ;5;offres d’emploi sur la maintenance prédictive : +67 % en 3 ans;chiffre;I;;Recherche 5 min : aucune source;;STATISTIQUE
+T-U6NJ;6;moins de 15 % des techniciens en poste ont reçu une formation spécifique;chiffre;I;;Recherche 5 min : aucune source;;STATISTIQUE
+T-5VM2;1;9 février 2027;date;F;F4;;;
+T-5VM2;2;Kléros Formation;nom;F;F1;;;
+T-5VM2;3;Studio Haldane Numérique;nom;F;F2;;;
+T-5VM2;4;6 modules pédagogiques;chiffre;I;;"Absent de la fiche (F5 : aucun montant ni calendrier) ; entités fictives, rien à vérifier ailleurs (5 min)";;
+T-5VM2;5;42 heures de formation;chiffre;I;;"Absent de la fiche (F5 : aucun montant ni calendrier) ; entités fictives, rien à vérifier ailleurs (5 min)";;
+T-5VM2;6;3 cas pratiques;chiffre;I;;"Absent de la fiche (F5 : aucun montant ni calendrier) ; entités fictives, rien à vérifier ailleurs (5 min)";;
+T-5VM2;7;1 simulateur de diagnostic;chiffre;I;;"Absent de la fiche (F5 : aucun montant ni calendrier) ; entités fictives, rien à vérifier ailleurs (5 min)";;
+T-5VM2;8;plus de 15 indicateurs;chiffre;I;;"Absent de la fiche (F5 : aucun montant ni calendrier) ; entités fictives, rien à vérifier ailleurs (5 min)";;
+T-S2Z8;1;9 février 2027;date;F;F4;;;
+T-S2Z8;2;Klérôs Formation;nom;D;F1;;;nom déformé (« Klérôs » au lieu de « Kléros »), deux occurrences
+T-S2Z8;3;Studio Haldane Numérique;nom;F;F2;;;
