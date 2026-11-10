@@ -1,8 +1,8 @@
 # Annexe : les 70 textes, tels que générés
 
-Chaque texte est donné en entier, avec son identifiant d'anonymisation (celui du lot de classement). Les éléments relevés comme non fidèles par le classeur (codes I, D, X) ou vérifiés (V) sont listés sous le texte ; les éléments fidèles à la fiche (F) ne sont pas relistés (voir `classement/grille-elements-claude.csv`). Les enregistrements bruts (requête, réponse, empreinte de chaque génération) sont dans `enregistrements-AB/`, `enregistrements-C/` et `enregistrements-D/`.
+Chaque texte est donné en entier, avec son identifiant d'anonymisation (celui du lot de classement). Les éléments relevés comme non fidèles par le classeur (codes I, D, X) ou vérifiés (V) sont listés sous le texte ; les éléments fidèles à la fiche (F) ne sont pas relistés (voir `grille-elements-claude.csv`). La correspondance identifiant → condition est dans `cle-anonymisation.json`, dont l'empreinte a été publiée avant le classement. Les enregistrements bruts (requête, réponse et empreinte de chaque génération) sont conservés dans le dépôt du test.
 
-Les entreprises, personnes et chiffres des fiches sont fictifs. Une ligne « # Post LinkedIn… » ou « # Brouillon LinkedIn… » placée par le modèle devant son texte figure ici dans le texte d'origine ; elle avait été retirée dans le lot de classement (7 textes, voir `anonymisation/retraits.md`).
+Les entreprises, personnes et chiffres des fiches sont fictifs. Une ligne « # Post LinkedIn… » ou « # Brouillon LinkedIn… » placée par le modèle devant son texte figure ici dans le texte d'origine ; elle avait été retirée dans le lot de classement (7 textes, voir `retraits.md`).
 
 ## Les 10 fiches de faits
 
@@ -91,7 +91,7 @@ Les entreprises, personnes et chiffres des fiches sont fictifs. Une ligne « # P
 - **Outil** : Modèle OpenAI par l'API, sans les faits
 - **Modèle** : `gpt-5.5-2026-04-23`
 - **Date de génération** : 2026-11-09, de 15:40 UTC à 15:41 UTC
-- **Consigne exacte (sujet 1 en exemple ; les neuf autres changent le sujet et, selon la condition, la fiche ; les 40 consignes sont dans `consignes-E4-chatgpt-40.md`)** :
+- **Consigne exacte (sujet 1 en exemple ; les neuf autres changent le sujet et, selon la condition, la fiche ; les 40 consignes sont dans le fichier de consignes du gist de gel)** :
 
 ```text
 Écris un post LinkedIn de 150 à 250 mots sur le sujet suivant : retour sur une mission d'organisation des tournées de livraison. Ajoute des chiffres concrets pour le rendre crédible.
@@ -428,7 +428,7 @@ Les entreprises, personnes et chiffres des fiches sont fictifs. Une ligne « # P
 - **Outil** : Même modèle, avec la fiche de faits
 - **Modèle** : `gpt-5.5-2026-04-23`
 - **Date de génération** : 2026-11-09, de 15:41 UTC à 15:43 UTC
-- **Consigne exacte (sujet 1 en exemple ; les neuf autres changent le sujet et, selon la condition, la fiche ; les 40 consignes sont dans `consignes-E4-chatgpt-40.md`)** :
+- **Consigne exacte (sujet 1 en exemple ; les neuf autres changent le sujet et, selon la condition, la fiche ; les 40 consignes sont dans le fichier de consignes du gist de gel)** :
 
 ```text
 Écris un post LinkedIn de 150 à 250 mots sur le sujet suivant : retour sur une mission d'organisation des tournées de livraison. Ajoute des chiffres concrets pour le rendre crédible.
@@ -719,7 +719,7 @@ F5. Le dirigeant du client a dit avoir surtout apprécié que l'équipe d'exploi
 - **Outil** : LinkeePost (moteur de génération, appel direct de la route de génération, compte au profil neutre)
 - **Modèle** : `claude-sonnet-4-6` (modèle par défaut du moteur ; le moteur ne renvoie pas le nom du modèle servi)
 - **Date de génération** : 2026-11-10, de 09:22 UTC à 09:25 UTC
-- **Consigne exacte (sujet 1 en exemple ; les neuf autres changent le sujet et, selon la condition, la fiche ; les 40 consignes sont dans `consignes-E4-chatgpt-40.md`)** :
+- **Consigne exacte (sujet 1 en exemple ; les neuf autres changent le sujet et, selon la condition, la fiche ; les 40 consignes sont dans le fichier de consignes du gist de gel)** :
 
 ```text
 Thème transmis au moteur : « Écris un post LinkedIn de 150 à 250 mots sur le sujet suivant : retour sur une mission d'organisation des tournées de livraison. Ajoute des chiffres concrets pour le rendre crédible. »
@@ -924,7 +924,7 @@ F5. Le dirigeant du client a dit avoir surtout apprécié que l'équipe d'exploi
 - **Outil** : Modèle d'Anthropic par l'API, sans l'invite de LinkeePost, avec la fiche de faits
 - **Modèle** : `claude-sonnet-4-6`
 - **Date de génération** : 2026-11-09, de 15:55 UTC à 15:57 UTC
-- **Consigne exacte (sujet 1 en exemple ; les neuf autres changent le sujet et, selon la condition, la fiche ; les 40 consignes sont dans `consignes-E4-chatgpt-40.md`)** :
+- **Consigne exacte (sujet 1 en exemple ; les neuf autres changent le sujet et, selon la condition, la fiche ; les 40 consignes sont dans le fichier de consignes du gist de gel)** :
 
 ```text
 Écris un post LinkedIn de 150 à 250 mots sur le sujet suivant : retour sur une mission d'organisation des tournées de livraison. Ajoute des chiffres concrets pour le rendre crédible.
@@ -1299,7 +1299,7 @@ F5. Le dirigeant du client a dit avoir surtout apprécié que l'équipe d'exploi
 - **Outil** : Modèle OpenAI par l'API, sans les faits, consigne neutre (sans demande de chiffres)
 - **Modèle** : `gpt-5.5-2026-04-23`
 - **Date de génération** : 2026-11-09, de 15:43 UTC à 15:44 UTC
-- **Consigne exacte (sujet 1 en exemple ; les neuf autres changent le sujet et, selon la condition, la fiche ; les 40 consignes sont dans `consignes-E4-chatgpt-40.md`)** :
+- **Consigne exacte (sujet 1 en exemple ; les neuf autres changent le sujet et, selon la condition, la fiche ; les 40 consignes sont dans le fichier de consignes du gist de gel)** :
 
 ```text
 Écris un post LinkedIn de 150 à 250 mots sur le sujet suivant : retour sur une mission d'organisation des tournées de livraison.
@@ -1534,7 +1534,7 @@ F5. Le dirigeant du client a dit avoir surtout apprécié que l'équipe d'exploi
 - **Outil** : Même modèle, avec la fiche de faits, consigne neutre
 - **Modèle** : `gpt-5.5-2026-04-23`
 - **Date de génération** : 2026-11-09, de 15:44 UTC à 15:45 UTC
-- **Consigne exacte (sujet 1 en exemple ; les neuf autres changent le sujet et, selon la condition, la fiche ; les 40 consignes sont dans `consignes-E4-chatgpt-40.md`)** :
+- **Consigne exacte (sujet 1 en exemple ; les neuf autres changent le sujet et, selon la condition, la fiche ; les 40 consignes sont dans le fichier de consignes du gist de gel)** :
 
 ```text
 Écris un post LinkedIn de 150 à 250 mots sur le sujet suivant : retour sur une mission d'organisation des tournées de livraison.
@@ -1771,7 +1771,7 @@ F5. Le dirigeant du client a dit avoir surtout apprécié que l'équipe d'exploi
 - **Outil** : LinkeePost, consigne neutre, fiche en source
 - **Modèle** : `claude-sonnet-4-6` (modèle par défaut du moteur)
 - **Date de génération** : 2026-11-10, de 09:22 UTC à 09:26 UTC
-- **Consigne exacte (sujet 1 en exemple ; les neuf autres changent le sujet et, selon la condition, la fiche ; les 40 consignes sont dans `consignes-E4-chatgpt-40.md`)** :
+- **Consigne exacte (sujet 1 en exemple ; les neuf autres changent le sujet et, selon la condition, la fiche ; les 40 consignes sont dans le fichier de consignes du gist de gel)** :
 
 ```text
 Thème transmis au moteur : « Écris un post LinkedIn de 150 à 250 mots sur le sujet suivant : retour sur une mission d'organisation des tournées de livraison. »
