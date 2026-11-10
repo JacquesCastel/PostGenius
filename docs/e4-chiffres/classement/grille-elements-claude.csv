@@ -201,3 +201,25 @@ T-U9J9;3;arrêt de production de 9 jours;chiffre;F;F4;;;
 T-CQHY;1;Fonderie Marchal;nom;F;F1;;;
 T-CQHY;2;380 000 €;chiffre;F;F3;;;
 T-CQHY;3;9 jours;chiffre;F;F4;;;
+T-E5WE;1;Charte de la Fédération des Ateliers du Grand Est;nom;F;F1;;;
+T-E5WE;2;« Tout sous-traitant doit pouvoir justifier l’origine des matières qu’il utilise. »;citation;F;F1;;;identique
+T-E5WE;3;Étienne Faure, président d’un atelier de mécanique;nom;F;F2;;;
+T-E5WE;4;atelier de 10 à 20 personnes;chiffre;I;;"Absent de la fiche ; auteur et atelier fictifs, rien à vérifier ailleurs (5 min)";;
+T-E5WE;5;15 à 30 minutes de travail administratif par commande;chiffre;I;;"Absent de la fiche ; auteur et atelier fictifs, rien à vérifier ailleurs (5 min)";;
+T-E5WE;6;plus de 100 références matières à suivre chaque mois;chiffre;I;;"Absent de la fiche ; auteur et atelier fictifs, rien à vérifier ailleurs (5 min)";;
+T-E5WE;7;période de 6 à 12 mois;chiffre;I;;"Absent de la fiche ; auteur et atelier fictifs, rien à vérifier ailleurs (5 min)";;CONSEIL : durée proposée pour le délai « raisonnable » (F3 ne chiffre pas)
+T-8N4B;1;Charte de la Fédération des Ateliers du Grand Est;nom;F;F1;;;
+T-8N4B;2;« tout sous-traitant doit pouvoir justifier l’origine des matières qu’il utilise »;citation;F;F1;;;identique, sans majuscule initiale
+T-8N4B;3;Étienne Faure, président d’un atelier de mécanique;nom;F;F2;;;
+T-YE4R;1;remonter l’historique d’une matière en 24 à 72 heures;chiffre;I;;Recherche 5 min : aucune source;;présenté comme un fait sectoriel
+T-YE4R;2;Selon plusieurs études achats, près de 60 % des entreprises industrielles ont renforcé leurs exigences de traçabilité fournisseurs;chiffre;I;;Recherche 5 min : aucune étude trouvée avec ce chiffre;;STATISTIQUE attribuée à des études non citées
+T-YE4R;3;une rupture liée à la conformité matière peut coûter plusieurs dizaines de milliers d’euros;chiffre;I;;Recherche 5 min : aucune source;;montant approximatif
+T-NPWE;1;Fédération des Ateliers du Grand Est (charte);nom;F;F1;;;
+T-NPWE;2;Étienne Faure, président d’un atelier de mécanique;nom;F;F2;;;
+T-PPA6;1;Fédération des Ateliers du Grand Est … nouvelle Charte;nom;F;F1;;;
+T-PPA6;2;**tout sous-traitant doit pouvoir justifier l’origine des matières qu’il utilise**;citation;F;F1;;;identique
+T-PPA6;3;près de 40 % des non-conformités détectées en audit viennent d’une mauvaise traçabilité;chiffre;I;;"Recherche 5 min : aucune source ; autre chiffre trouvé (68 % de non-conformités récurrentes dues à un défaut de suivi, formation ISO 19011) sans rapport";;STATISTIQUE
+T-PPA6;4;investissements entre 5 000 et 15 000 € selon la taille;chiffre;I;;"Absent de la fiche ; auteur et atelier fictifs, rien à vérifier ailleurs (5 min)";;
+T-PPA6;5;délai d’application d’au moins 18 à 24 mois;chiffre;I;;"Absent de la fiche ; auteur et atelier fictifs, rien à vérifier ailleurs (5 min)";;CONSEIL : durée proposée pour le délai « raisonnable » (F3 ne chiffre pas)
+T-EYSD;1;Charte de la Fédération des Ateliers du Grand Est;nom;F;F1;;;
+T-EYSD;2;Étienne Faure, président d’un atelier de mécanique;nom;F;F2;;;
