@@ -8,7 +8,7 @@
 
 ## Décisions du 10 novembre 2026 (documentées avant toute génération et avant tout entretien)
 
-- **Composition.** Les trois profils du test d'appariement sont ASTER INDUSTRIE, AXIOME Conseil et Mathis Garlandier (expert indépendant fictif). Wharf est exclu. Le témoin reste une variante (quatre textes, trois descriptions).
+- **Composition.** Les trois profils du test d'appariement sont BELVANTE INDUSTRIE, CANTEVEL Conseil et Mathis Garlandier (expert indépendant fictif). Wharf est exclu. Le témoin reste une variante (quatre textes, trois descriptions).
 - **Les seuils ne changent pas.** L'appariement porte sur **trois** textes et trois descriptions, comme avant : 3 ! = 6 appariements possibles, donc **1 chance sur 6 (17 %)** de tout réussir au hasard. Les seuils de **40 %** (en dessous : la différence n'est pas perceptible) et de **60 %** (contre 17 % au hasard), la note de cohérence (deux profils sur trois) et les autres critères sont inchangés. Aucun ajustement n'est nécessaire.
 - **À ne pas faire sans le documenter avant le test** : ajouter un quatrième profil à l'appariement. Avec quatre textes à apparier, le hasard tomberait à 1 chance sur 24 (4 %), « trois bons sur quatre » serait impossible (le quatrième serait forcément bon) et le seuil de 60 % deviendrait plus dur à atteindre pour une même perception : il faudrait alors le redéfinir **avant** le premier entretien.
 - **Risque de lecture propre à cette composition, à noter dans les entretiens.** Un expert indépendant peut s'exprimer à la première personne du singulier, des entreprises à la première du pluriel : une personne peut apparier sur cet indice de forme plutôt que sur le fond. C'est une donnée à relever (« ne voit que la forme » = 1 à la différence spontanée), pas à corriger après coup. De même, les experts indépendants recrutés (3 des 8 à 10 personnes) peuvent s'identifier au profil de l'expert : consigner le profil de chaque participant et ne pas fusionner les résultats sans le dire.
@@ -31,7 +31,7 @@
 
 ## Grille (une ligne par personne)
 
-| # | Profil | **Compréhension** (0-2) | **Appariement** (0-3 bons) | **Cohérence** A / X / E (1-5) (ASTER, AXIOME, expert) | **Différence spontanée** (0-2) | **Vs assistant** (0-2) | **Intention** (1-5) | **Action réelle** (oui/non) | Objections |
+| # | Profil | **Compréhension** (0-2) | **Appariement** (0-3 bons) | **Cohérence** A / X / E (1-5) (BELVANTE, CANTEVEL, expert) | **Différence spontanée** (0-2) | **Vs assistant** (0-2) | **Intention** (1-5) | **Action réelle** (oui/non) | Objections |
 |---|---|---|---|---|---|---|---|---|---|
 | 1 | | | | | | | | | |
 

@@ -8,10 +8,10 @@
 //
 // Commandes (voir docs/demo-editoriale/README.md) :
 //   seed      crée ou met à jour les comptes de démonstration           (exige DEMO_EDITORIALE_DB_OK=1)
-//   generate  génère N candidats par identité avec le vrai moteur         (--base http://localhost:3000 --runs 1 [--only aster])
+//   generate  génère N candidats par identité avec le vrai moteur         (--base http://localhost:3000 --runs 1 [--only belvante])
 //   list      liste les candidats conservés
 //   publish   publie les candidats choisis dans content/demo-editoriale.json
-//             --aster <id> --axiome <id> --expert <id> [--temoin <id>] [--comparison fichier.json]
+//             --belvante <id> --cantevel <id> --expert <id> [--temoin <id>] [--comparison fichier.json]
 //   verify    recalcule les empreintes de content/demo-editoriale.json
 //
 // Variables : DATABASE_URL (base des comptes de démonstration : de préférence une COPIE, par exemple une branche Neon, jamais la production),
@@ -141,7 +141,7 @@ function publish() {
   const cf = flag("comparison");
   if (cf) {
     comparison = cleanComparison(readJson(cf, null));
-    if (!comparison) fail("Comparaison invalide : attendu { authoredBy, note?, rows: [{ label, aster?, axiome?, expert? }] }.");
+    if (!comparison) fail("Comparaison invalide : attendu { authoredBy, note?, rows: [{ label, belvante?, cantevel?, expert? }] }.");
   }
   writeJson(OUT, { version: 1, publishedAt: new Date().toISOString(), entries, ...(comparison ? { comparison } : {}) });
   console.log(`✓ Publié dans ${OUT} : ${Object.keys(entries).join(", ")}${comparison ? " + lecture comparative" : ""}.`);

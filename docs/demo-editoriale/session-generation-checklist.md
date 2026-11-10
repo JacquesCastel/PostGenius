@@ -1,6 +1,6 @@
 # Check-list de la session de génération (démonstration éditoriale)
 
-La session ne sert **plus qu'à une chose** : les **quatre générations** de la démonstration (ASTER INDUSTRIE, AXIOME Conseil, Mathis Garlandier, témoin), E4 étant terminé. Si autre chose doit être regroupé dans cette session, le dire **avant** de commencer.
+La session ne sert **plus qu'à une chose** : les **quatre générations** de la démonstration (BELVANTE INDUSTRIE, CANTEVEL Conseil, Mathis Garlandier, témoin), E4 étant terminé. Si autre chose doit être regroupé dans cette session, le dire **avant** de commencer.
 
 **Ordre impératif : profils figés et publiés, puis session.** Si un profil change après le gel, les empreintes sont à refaire.
 
@@ -23,7 +23,7 @@ La session ne sert **plus qu'à une chose** : les **quatre générations** de la
 3. `node --env-file=.env scripts/demo-editorial.mjs generate --base http://localhost:<port> --runs 1` : **une seule génération par identité**, aucune sélection.
 4. Chaque enregistrement contient la **requête**, le **profil lu en base au moment de l'appel**, le **contexte rapporté par le moteur** et la **réponse brute**, avec une **empreinte SHA-256** (`candidates.json`).
 5. En cas d'échec **sans réponse** (réseau, 429, 5xx) : relancer **seulement** cette identité, **consigner** l'échec et la relance. Une réponse reçue est conservée telle quelle ; **jamais** de régénération pour obtenir un texte plus flatteur.
-6. `list` (lecture), puis `publish --aster <id> --axiome <id> --expert <id> --temoin <id>` : avec `--runs 1`, **il n'y a aucun choix à faire**. Puis `verify`.
+6. `list` (lecture), puis `publish --belvante <id> --cantevel <id> --expert <id> --temoin <id>` : avec `--runs 1`, **il n'y a aucun choix à faire**. Puis `verify`.
 7. Copier `data/demo-editoriale/candidates.json` dans le dépôt (le dossier `data/` est ignoré par git) pour conserver les enregistrements bruts ; vérifier qu'aucune clé n'y figure (`grep -l "sk-ant"`).
 8. Ne jamais éditer `content/demo-editoriale.json` à la main. Ne pas déployer sans validation de Jacques.
 

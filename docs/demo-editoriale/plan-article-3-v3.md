@@ -6,7 +6,7 @@
 
 | Passage de la v2 | Dans la v3 | Pourquoi |
 |---|---|---|
-| « cinq textes », « trois identités industrielles + une identité experte + un témoin » | **quatre textes** : deux entreprises industrielles fictives (ASTER INDUSTRIE, AXIOME Conseil), un expert indépendant fictif (Mathis Garlandier), un témoin | Wharf, l'une des trois « industrielles » de la v2, est exclue ; décision de Jacques du 10 novembre de ne pas créer de troisième entreprise |
+| « cinq textes », « trois identités industrielles + une identité experte + un témoin » | **quatre textes** : deux entreprises industrielles fictives (BELVANTE INDUSTRIE, CANTEVEL Conseil), un expert indépendant fictif (Mathis Garlandier), un témoin | Wharf, l'une des trois « industrielles » de la v2, est exclue ; décision de Jacques du 10 novembre de ne pas créer de troisième entreprise |
 | « quatre identités », « quatre points de vue », « quatre profils » | **trois profils** (et un témoin) | idem |
 | « validé pour un appariement à quatre identités » | **validé pour trois profils, protocole inchangé** : hasard 1 sur 6, seuils 40 % et 60 % | `protocole-test.md`, section du 10 novembre. Avec quatre textes à apparier, le hasard tomberait à 1 sur 24 et le seuil de 60 % serait à redéfinir avant le test |
 | Titre « Même sujet, quatre points de vue » et variante « Quatre entreprises… » | titre en **trois** ; variante « Deux entreprises, un expert, un sujet… » | l'expert n'est pas une entreprise |
@@ -52,7 +52,7 @@ Ouvrir sur les premières lignes des trois posts des profils, côte à côte, sa
 ### 2. Voix ou point de vue ? (la distinction)
 - Ce que beaucoup d'outils vendent : imiter la **forme** (votre voix, votre style).
 - Ce que la démonstration cherche à montrer : appliquer un **positionnement** (qui parle, à qui, avec quelle conviction) à un sujet donné.
-- Lien avec l'article 2 : la définition de LinkedIn du contenu vide est « polished… but lacks substance… doesn't have any particular experience, perspective, or insight » (Sam Corrao Clannon, Social Media Today, 20 août 2026, dossier de preuves, entrée 7 : *citation reprise de la v2, non revérifiée ici*). Un texte avec un point de vue n'est pas pour autant un texte que LinkedIn épargne : on ne dit pas l'inverse.
+- Lien avec l'article 2 : la définition de LinkedIn du contenu vide est « polished… but lacks substance… doesn't have any particular experience, perspective, or insight » (Sam Corrao Clannon, Social Media Today, 20 août 2026, dossier de preuves, entrée 7 : *citation vérifiée au dossier de preuves, entrée 7 : Social Media Today lu en intégralité le 5 novembre 2026*). Un texte avec un point de vue n'est pas pour autant un texte que LinkedIn épargne : on ne dit pas l'inverse.
 - *À sourcer* : l'affirmation « le marché vend déjà "votre voix" » vient de l'analyse de marché de l'audit stratégique ; la reprendre avec les pages tarifs/produits relevées (dates), ou l'écrire comme observation.
 
 ### 3. La méthode, sans artifice

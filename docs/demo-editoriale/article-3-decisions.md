@@ -7,7 +7,7 @@
 |---|---|
 | Wharf exclu | retiré de `lib/demoEditorialCore.mjs` ; note de transparence datée dans `README.md` |
 | Expert indépendant ajouté (Mathis Garlandier, Garlandier Conseil) | `lib/demoEditorialCore.mjs` (profil complet, déclaré fictif) ; libellés de la page (« Trois profils », « Expert fictif ») ; `verification-noms-fictifs.md` |
-| **Composition : trois profils + le témoin = quatre textes** (choix de Jacques, 10 novembre) | ASTER INDUSTRIE, AXIOME Conseil, Mathis Garlandier, témoin |
+| **Composition : trois profils + le témoin = quatre textes** (choix de Jacques, 10 novembre) | BELVANTE INDUSTRIE, CANTEVEL Conseil, Mathis Garlandier, témoin |
 | Seuils du protocole de test | **inchangés** : l'appariement reste sur trois profils (hasard 1 sur 6, seuils 40 % et 60 %), documenté dans `protocole-test.md` avant tout entretien |
 | Profil figé avant la session | `gel-demo-empreintes.md` (à publier avant la génération) |
 | Session de génération | `session-generation-checklist.md` : base isolée, enregistrement complet, empreinte par enregistrement, `--runs 1`, révocation de la clé |

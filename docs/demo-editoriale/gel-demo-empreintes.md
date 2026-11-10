@@ -4,7 +4,7 @@
 
 | Document | Ce qu'il fige | SHA-256 |
 |---|---|---|
-| `lib/demoEditorialCore.mjs` | le sujet commun, les trois profils (ASTER INDUSTRIE, AXIOME Conseil, Mathis Garlandier), le témoin, les consignes de style, la validation | *à calculer au gel* |
+| `lib/demoEditorialCore.mjs` | le sujet commun, les trois profils (BELVANTE INDUSTRIE, CANTEVEL Conseil, Mathis Garlandier), le témoin, les consignes de style, la validation | *à calculer au gel* |
 | `scripts/demo-editorial.mjs` | le dispositif de génération, d'enregistrement et de publication | *à calculer au gel* |
 | `docs/demo-editoriale/protocole-test.md` | le protocole du test d'appariement et ses seuils (40 %, 60 %) | *à calculer au gel* |
 

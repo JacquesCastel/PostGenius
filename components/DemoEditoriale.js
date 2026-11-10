@@ -21,7 +21,7 @@ const ACCENTS = {
   slate: { card: "border-slate-200 bg-slate-50/70", bar: "bg-slate-500", text: "text-slate-700", chip: "bg-slate-200 text-slate-800", post: "border-slate-200" },
 };
 
-const initials = (name) => name.split(/\s+/)[0].slice(0, 2).toUpperCase(); // évite « AI » pour ASTER INDUSTRIE
+const initials = (name) => name.split(/\s+/)[0].slice(0, 2).toUpperCase(); // évite « AI » pour BELVANTE INDUSTRIE
 const dateFr = (iso) => { try { return new Date(iso).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" }); } catch { return ""; } };
 const splitPost = (text) => { const lines = String(text).split("\n"); const i = lines.findIndex((l) => l.trim()); return i < 0 ? ["", ""] : [lines[i].trim(), lines.slice(i + 1).join("\n").replace(/^\n+/, "")]; };
 
@@ -217,7 +217,7 @@ export default function DemoEditoriale({ subject, identities, derived, compariso
             )}
 
             <ul className="list-disc pl-5 space-y-1 text-[#34445f]">
-              <li>ASTER INDUSTRIE, AXIOME Conseil et Mathis Garlandier (Garlandier Conseil) sont fictifs : deux entreprises et un expert indépendant inventés pour la démonstration. Rien n&apos;est publié sur LinkedIn.</li>
+              <li>BELVANTE INDUSTRIE, CANTEVEL Conseil et Mathis Garlandier (Garlandier Conseil) sont fictifs : deux entreprises et un expert indépendant inventés pour la démonstration. Rien n&apos;est publié sur LinkedIn.</li>
               <li>Les profils sont des données que nous avons saisies : la démonstration montre des textes cohérents avec une identité, pas un angle que le moteur aurait découvert seul.</li>
             </ul>
           </div>

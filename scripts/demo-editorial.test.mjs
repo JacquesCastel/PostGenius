@@ -4,9 +4,9 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { IDENTITIES, COMPANY_IDS, PROFILE_FIELDS, SUBJECT, identityOf, recordHash, validateEntry, cleanComparison, displayOf } from "../lib/demoEditorialCore.mjs";
 
-test("composition : ASTER, AXIOME, l'expert, puis le témoin ; Wharf n'y figure plus", () => {
-  assert.deepEqual(IDENTITIES.map((i) => i.id), ["aster", "axiome", "expert", "temoin"]);
-  assert.deepEqual(COMPANY_IDS, ["aster", "axiome", "expert"]);
+test("composition : BELVANTE, CANTEVEL, l'expert, puis le témoin ; Wharf n'y figure plus", () => {
+  assert.deepEqual(IDENTITIES.map((i) => i.id), ["belvante", "cantevel", "expert", "temoin"]);
+  assert.deepEqual(COMPANY_IDS, ["belvante", "cantevel", "expert"]);
   assert.equal(IDENTITIES.filter((i) => i.control).length, 1);
   assert.ok(!/wharf/i.test(JSON.stringify(IDENTITIES)));
 });
@@ -49,13 +49,13 @@ test("un enregistrement valide est accepté pour chaque identité ; un profil mo
   for (const i of IDENTITIES) assert.deepEqual(validateEntry(fakeEntry(i.id), i.id), { ok: true, reasons: [] }, i.id);
   const e = identityOf("expert"), altered = fakeEntry("expert", { profile: { ...e.profile, editorialLine: "Autre conviction." } });
   assert.match(validateEntry(altered, "expert").reasons.join(), /profil différent \(editorialLine\)/);
-  assert.match(validateEntry(fakeEntry("aster", { request: { theme: "autre sujet" } }), "aster").reasons.join(), /sujet/);
+  assert.match(validateEntry(fakeEntry("belvante", { request: { theme: "autre sujet" } }), "belvante").reasons.join(), /sujet/);
   assert.equal(validateEntry(fakeEntry("expert"), "wharf").ok, false, "identité inconnue");
 });
 
-test("lecture comparative : colonnes aster, axiome, expert", () => {
-  const c = cleanComparison({ authoredBy: "Jacques", rows: [{ label: "Problème retenu", aster: "a", axiome: "b", expert: "c", wharf: "ignoré" }, { label: "vide" }] });
-  assert.deepEqual(c.rows, [{ label: "Problème retenu", aster: "a", axiome: "b", expert: "c" }]);
+test("lecture comparative : colonnes belvante, cantevel, expert", () => {
+  const c = cleanComparison({ authoredBy: "Jacques", rows: [{ label: "Problème retenu", belvante: "a", cantevel: "b", expert: "c", wharf: "ignoré" }, { label: "vide" }] });
+  assert.deepEqual(c.rows, [{ label: "Problème retenu", belvante: "a", cantevel: "b", expert: "c" }]);
 });
 
 import fs from "node:fs";
