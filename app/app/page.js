@@ -3096,14 +3096,24 @@ function MentionTool({ draftId, local, text, onInsert, mentions, onMentions, get
 
 // Contrôle des consignes d'un post libre : les règles (zéro émoji, hashtags, mots à éviter, longueur, tutoiement) sont lues dans les consignes
 // de l'utilisateur par /api/consignes, puis appliquées au texte affiché. Un écart est montré, jamais corrigé en silence.
+// Les règles sont partagées entre tous les contrôles affichés (une série en montre un par post) : une seule requête par jeu de paramètres, renouvelée toutes les 30 s.
+const consigneRulesCache = new Map();
+function loadConsigneRules(body) {
+  const key = JSON.stringify(body);
+  const hit = consigneRulesCache.get(key);
+  if (hit && Date.now() - hit.at < 30000) return hit.promise;
+  const promise = fetch("/api/consignes", { method: "POST", headers: { "Content-Type": "application/json" }, body: key })
+    .then((r) => (r.ok ? r.json() : { rules: [] }))
+    .then((d) => (Array.isArray(d.rules) ? d.rules : []))
+    .catch(() => []);
+  consigneRulesCache.set(key, { at: Date.now(), promise });
+  return promise;
+}
 function ConsignesCheck({ text, contextId, language, maxChars, voiceKind }) {
   const [rules, setRules] = useState([]);
   useEffect(() => {
     let alive = true;
-    fetch("/api/consignes", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ contextId: contextId || undefined, language: language || undefined, maxChars, publishAs: { kind: voiceKind === "org" ? "org" : "person" } }) })
-      .then((r) => (r.ok ? r.json() : { rules: [] }))
-      .then((d) => { if (alive) setRules(Array.isArray(d.rules) ? d.rules : []); })
-      .catch(() => { if (alive) setRules([]); });
+    loadConsigneRules({ contextId: contextId || undefined, language: language || undefined, maxChars, publishAs: { kind: voiceKind === "org" ? "org" : "person" } }).then((r) => { if (alive) setRules(r); });
     return () => { alive = false; };
   }, [contextId, language, maxChars, voiceKind]);
   if (!rules.length) return null;
@@ -23228,6 +23238,8 @@ export default function Home() {
                       </div>
                     </div>
                     <pre dir="auto" className="whitespace-pre-wrap text-sm font-sans leading-relaxed">{p.text}</pre>
+                    {/* Même contrôle des consignes que pour un post seul, un par post de la série */}
+                    <ConsignesCheck text={p.text} contextId={activeContextId} language={form.language} maxChars={form.maxChars} voiceKind={voiceFor(target).kind} />
                   </div>
                 ))}
 

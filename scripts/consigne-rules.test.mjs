@@ -191,3 +191,13 @@ test("question finale : une signature après la question ne la masque pas", () =
   assert.equal(checkConsignes("Un constat.\n\nEt vous ?\n\n- Marie Dupont, directrice\n\n#rh", rules).length, 0);
   assert.equal(checkConsignes("Un constat sans question.\n\n— Marie", rules).length, 1, "sans question, l'écart reste signalé");
 });
+
+test("interface : le contrôle des consignes couvre le post seul, la variante affichée et chaque post d'une série, avec une seule requête de règles (lecture du code)", () => {
+  const page = fs.readFileSync(new URL("../app/app/page.js", import.meta.url), "utf8");
+  assert.equal((page.match(/<ConsignesCheck /g) ?? []).length, 2, "un contrôle sous l'aperçu (post seul ou variante affichée), un par carte de série");
+  assert.ok(page.includes("<ConsignesCheck text={p.text}"), "série : un contrôle par post");
+  assert.ok(page.includes("setResult(variants[i])"), "variantes : la variante choisie devient le post affiché, donc contrôlé");
+  assert.ok(page.includes("consigneRulesCache") && page.includes("loadConsigneRules("), "règles partagées : une requête par jeu de paramètres");
+  const comp = page.slice(page.indexOf("function ConsignesCheck"), page.indexOf("function PlanText"));
+  assert.ok(!comp.includes("setResult") && !comp.includes("setSeriesResult"), "aucune écriture dans les textes");
+});
