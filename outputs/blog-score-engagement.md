@@ -1,8 +1,8 @@
 TITRE :
-Le score d'engagement : savez-vous si votre post LinkedIn va marcher, avant de le publier ?
+Le contrôle de forme : ce que la note de votre post LinkedIn mesure, et ce qu'elle ne mesure pas
 
 RÉSUMÉ (méta description / carte) :
-LinkeePost note le potentiel de chaque post sur 100, vous explique quoi améliorer critère par critère, et réécrit pour vous l'accroche, le corps ou la signature. Voici comment fonctionne notre score d'engagement.
+LinkeePost note la mise en forme de chaque post sur 100, avec sept critères à règles fixes, et vous explique quoi améliorer critère par critère. Ce que cette note mesure, et ce qu'elle ne dit pas.
 
 IMAGE DE COUVERTURE (optionnel) :
 (laisser vide ou coller une URL)
@@ -11,62 +11,56 @@ IMAGE DE COUVERTURE (optionnel) :
 CONTENU (à coller dans le champ « Contenu », Markdown) :
 ──────────────────────────────────────────
 
-La plupart des gens publient sur LinkedIn à l'aveugle. On écrit un post, on relit deux fois, on appuie sur « Publier »… et on croise les doigts. Quelques heures plus tard, le verdict tombe : trois likes et un silence poli. Sans savoir, vraiment, ce qui aurait pu changer la donne.
+Avant de publier un post sur LinkedIn, on le relit deux fois et on se demande si la forme tient : l'accroche, la longueur, l'aération. Difficile de le savoir autrement qu'à l'instinct.
 
-Chez LinkeePost, on a voulu supprimer cette part de hasard. Chaque post que vous générez reçoit un **score d'engagement sur 100**, accompagné d'une explication claire, critère par critère, de ce qui fonctionne et de ce qui peut être amélioré. Voici comment ça marche.
+Chez LinkeePost, chaque post reçoit une **note de forme sur 100**, accompagnée d'une explication, critère par critère, de ce qui est déjà bien construit et de ce qui peut être amélioré. C'est le **contrôle de forme**. Il dit si un post est bien construit ; il ne dit pas combien de vues il aura. Voici ce qu'il mesure, et ce qu'il ne mesure pas.
 
 ## Une note, mais surtout une explication
 
 Un chiffre seul ne sert à rien. « Votre post vaut 64/100 » : et ensuite ?
 
-C'est pourquoi le score n'est jamais affiché tout seul. À côté de la jauge, LinkeePost détaille **chaque critère** : ce qui est déjà réussi (et pourquoi le garder), et ce qui mérite un coup de pouce (avec un conseil concret pour y arriver). L'objectif n'est pas de vous juger, mais de vous apprendre, post après post, ce qui rend un contenu plus engageant.
+C'est pourquoi la note n'est jamais affichée toute seule. À côté de la jauge, LinkeePost détaille **chaque critère** : ce qui est déjà réussi, et ce qui mérite un coup de pouce, avec un conseil concret. L'objectif n'est pas de vous juger, mais de vous montrer ce qui, dans la forme, peut être amélioré.
 
-## Notre méthode : la vitesse de l'automatique, la finesse de l'IA
+## Notre méthode : une grille fixe, et des conseils de l'IA en plus
 
-Le score repose sur une approche **hybride**, en deux temps.
+La note repose sur deux éléments distincts.
 
-**1. Une analyse instantanée.** Dès qu'un post est généré, LinkeePost l'évalue en temps réel sur sept critères mesurables, issus des bonnes pratiques observées sur LinkedIn. C'est immédiat, déterministe, et ça ne dépend d'aucun appel externe : la note s'affiche aussitôt.
+**1. Une grille de règles fixes.** Dès qu'un post est rédigé, LinkeePost l'évalue sur sept critères de mise en forme que nous avons fixés. C'est immédiat et déterministe : le même texte obtient toujours la même note.
 
-**2. Des conseils personnalisés par l'IA.** En parallèle, un modèle d'intelligence artificielle lit réellement votre post et ajoute deux à trois recommandations propres à votre contenu — celles qu'une simple grille de critères ne peut pas deviner.
+**2. Des conseils de l'IA, en plus.** Un modèle d'intelligence artificielle lit votre post et ajoute deux à trois recommandations propres à son contenu. Ces conseils n'entrent pas dans la note.
 
-Vous obtenez ainsi le meilleur des deux mondes : la rigueur d'un barème objectif, et l'intelligence d'une relecture sur mesure.
+## Les 7 critères et leurs poids
 
-## Les 7 critères qui composent votre score
+La note sur 100 se répartit entre sept critères :
 
-Le score sur 100 se répartit entre sept critères, chacun avec son poids :
+- **Accroche (25 points)** : la première ligne, celle qu'on lit avant le « voir plus ». Elle doit porter à elle seule l'idée du post, en moins de 90 caractères. Une question ou un « : » peut aider, sans jamais être obligatoire.
+- **Longueur et aération (25 points)** : entre 400 et 1 600 caractères, découpé en courts paragraphes. Un pavé compact décourage la lecture, quelle que soit sa longueur.
+- **Question ou interaction (10 points)** : un bonus, pas une fin imposée. Une question ouverte qui vient naturellement invite aux commentaires ; un post qui conclut sur sa propre idée fonctionne aussi bien.
+- **Hashtags (10 points)** : aucun minimum, zéro hashtag est un choix valable. Au-delà de 5, le texte commence à paraître chargé.
+- **Format (10 points)** : le texte seul est déjà un format efficace quand il est bien écrit. Carrousel ou vidéo restent une option si le sujet s'y prête.
+- **Émojis (10 points)** : de 0 à 6 pour rythmer le texte sans l'alourdir. Zéro émoji obtient la note pleine.
+- **Appel à l'action (10 points)** : si ça vient naturellement, une invitation explicite (« Dites-moi en commentaire… ») peut aider. Un post qui se suffit à lui-même n'en a pas besoin.
 
-- **Accroche (20 points)** — La première ligne, celle qu'on lit avant le « voir plus ». Courte et porteuse d'une tension (question, chiffre, promesse), c'est elle qui décide si on clique.
-- **Longueur & aération (20 points)** — Un texte entre 600 et 1 600 caractères, découpé en courts paragraphes. Un pavé compact décourage ; un texte aéré se lit d'un trait.
-- **Question / interaction (15 points)** — Une question ouverte qui invite à réagir. C'est le levier numéro un pour déclencher des commentaires — et l'algorithme adore les commentaires.
-- **Hashtags (15 points)** — 2 à 5 hashtags vraiment pertinents : ni zéro, ni une avalanche qui fait spammy.
-- **Format (10 points)** — Carrousels et vidéos engagent en moyenne bien plus que le texte seul. On vous le signale quand le sujet s'y prête.
-- **Émojis (10 points)** — 1 à 6 émojis pour rythmer et guider l'œil, sans en abuser.
-- **Appel à l'action (10 points)** — Une incitation claire en fin de post (« Dites-moi en commentaire… », « Partagez si ça vous parle »).
-
-À chaque critère, vous savez exactement où vous en êtes et comment progresser.
+À chaque critère, vous savez où vous en êtes et ce que vous pouvez changer.
 
 ## De la note à l'action : la réécriture ciblée
 
-C'est là que LinkeePost va plus loin qu'un simple « score ». Une fois la note affichée, vous pouvez **appliquer les conseils en un clic** — sans tout réécrire à la main.
+Une fois la note affichée, vous pouvez **appliquer les conseils en un clic**, sans tout réécrire à la main.
 
-Mieux : vous choisissez le **périmètre** de la réécriture. Tout le post, ou seulement l'**accroche**, le **corps** ou la **signature**. L'IA réécrit la partie concernée en gardant votre sujet, votre langue et votre ton, et laisse le reste intact.
-
-Et à chaque modification, **le score se recalcule sous vos yeux** : la jauge s'anime, les critères se mettent à jour, vous voyez immédiatement l'effet de votre changement. Vous pouvez enchaîner les améliorations et regarder la note grimper.
+Vous choisissez le **périmètre** de la réécriture : tout le post, ou seulement l'**accroche**, le **corps** ou la **signature**. L'IA réécrit la partie concernée en gardant votre sujet, votre langue et votre ton, et laisse le reste intact. À chaque modification, la note se recalcule et vous voyez l'effet de votre changement sur la forme.
 
 ## Rien ne se perd : l'historique des versions
 
-Vous avez préféré l'accroche d'avant ? Aucun souci. Chaque réécriture et chaque édition manuelle sont conservées dans un **historique de versions**, avec leur score respectif. Un clic suffit pour **restaurer** n'importe quelle version. Vous expérimentez sans jamais rien perdre.
+Vous avez préféré l'accroche d'avant ? Chaque réécriture et chaque édition manuelle sont conservées dans un **historique de versions**, avec leur note. Un clic suffit pour **restaurer** n'importe quelle version.
 
-## Un indicateur de qualité, pas une boule de cristal
+## Un indicateur de mise en forme, pas une boule de cristal
 
-Soyons honnêtes : aucun outil ne peut prédire le nombre exact de vues ou de likes d'un post. La performance réelle dépend aussi de votre réseau, du sujet, du moment de publication.
+Aucun outil ne peut prédire le nombre de vues ou de réactions d'un post : la performance réelle dépend aussi de votre réseau, du sujet et du moment de publication. La note de forme ne prétend pas deviner l'avenir. Elle mesure le respect de règles de mise en forme que nous avons fixées.
 
-Le score LinkeePost ne prétend pas deviner l'avenir. Il mesure le **respect des bonnes pratiques** qui, statistiquement, favorisent l'engagement. C'est un copilote : il vous évite les erreurs classiques et vous oriente vers vos meilleurs posts. La décision finale, elle, reste toujours la vôtre.
+Elle ne dit rien non plus du **fond** : un post très bien construit peut contenir un chiffre inventé et obtenir 100 sur 100. Pour cela, LinkeePost propose un autre contrôle, distinct, « Chiffres à vérifier », qui signale les nombres absents des informations que vous avez fournies. La décision finale reste toujours la vôtre.
 
-## Essayez par vous-même
+## Essayer sur vos propres posts
 
-La prochaine fois que vous publierez, vous saurez où vous mettez les pieds — et comment faire mieux.
-
-Pour comprendre notre procédé en détail, découvrez la [page dédiée au score d'engagement](/scoring). Et pour l'essayer sur vos propres posts, [créez votre compte LinkeePost](/app) : 14 jours d'essai gratuit, sans carte bancaire.
+Le contrôle de forme est inclus à partir de l'offre Pro. Pour en savoir plus sur les critères, voyez la [page dédiée au contrôle de forme](/scoring). Pour l'essayer sur vos propres posts, [demandez une invitation à la bêta](/beta).
 
 *Envie de voir comment tout s'enchaîne, du brief à la publication ? Jetez un œil à [notre fonctionnement étape par étape](/comment-ca-marche).*
