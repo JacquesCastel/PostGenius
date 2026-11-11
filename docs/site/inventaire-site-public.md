@@ -1,72 +1,119 @@
-# Inventaire du site public, avant refonte de l'arborescence (11 novembre 2026)
+# Inventaire du site public, avant refonte de l'arborescence (11 novembre 2026, version 2)
 
-**Aucune page n'a été modifiée, déplacée ni supprimée.** Ce document liste l'existant et propose un sort pour chaque page ; rien ne se fait avant validation de la liste par Jacques.
+**Aucune page n'a été modifiée, déplacée ni supprimée.** Ce document liste l'existant et propose un sort pour chaque page ; rien ne se fait avant validation par Jacques.
 
-**Niveau de lecture, dit honnêtement.** Lus en entier : `/scoring`, `/securite` (et son contenu, dans `lib/footer-pages.js`), la logique de `/privacy` et de `lib/access.js`. Lus par sections, titres et recherche de mots à risque (viral, garanti, jamais, portée, copilote, inventé…) : l'accueil, `/fonctionnalites` (747 lignes), `/comment-ca-marche` (186), `/tarifs`, `/beta`, `/contact`, `/motion`. Non lus en entier : le détail de ces pages, `/privacy-policy`, le contenu **en base** des pages légales et du blog (le dépôt n'en contient que les valeurs par défaut).
+**Niveau de lecture, dit honnêtement.** Lus **en entier** : l'accueil (`app/page.js`, 474 lignes), `/fonctionnalites` (747 lignes), `/privacy-policy`, `/scoring`, `/securite` (et son contenu dans `lib/footer-pages.js`), `/privacy`, `lib/access.js`, `lib/markdown.js`. Chiffres des offres recontrôlés dans `lib/plans.js`. Lus **par sections seulement** : `/comment-ca-marche` (186 lignes), `/tarifs`, `/beta`, `/contact`, `/motion`. **Non lisibles depuis le dépôt** : le contenu en base (pages légales, sécurité, blog) et la production.
 
-## 1. Les pages publiques
+## 1. Les quatre décisions de Jacques (actées)
 
-| URL | Source du contenu | Ce que c'est | Constats | Sort proposé |
+1. **`/scoring`** : garder, déplacer, corriger. Nom unique retenu : **« Chiffres à vérifier »**… avec la correction ci-dessous (point 4 de la section 3) : ce nom désigne **une autre fonction** que la page `/scoring`.
+2. **`/securite`** : garder.
+3. **Confidentialité** : d'abord repérer les déclarations chez des tiers, puis regrouper sous `/legal` avec redirections permanentes, sans jamais toucher une adresse déclarée.
+4. **`/beta`** : ajoutée à l'arborescence.
+
+Arborescence cible : `/`, `/produit` (+2 sous-pages), `/preuves` (+`test-e4`, `demo` à venir), `/scoring` (déplacée, renommée), `/blog`, `/tarifs`, `/beta`, `/a-propos`, `/contact`, `/legal`.
+
+Ordre de travail validé : `/preuves/test-e4` (E4 seulement) → `/produit` → accueil en dernier (seulement des cartes de preuve réelles) → `/a-propos` → redirection de `/demo-editoriale` seulement quand `/preuves/demo` existe. Vercéa : une note minimale, aucun code. Vérifier `APP_URL` avant tout travail de référencement.
+
+## 2. Les pages publiques
+
+| URL | Source | Ce que c'est | Constats | Sort proposé |
 |---|---|---|---|---|
-| `/` | `app/page.js` | Accueil : de l'idée au contact, « D'où vient chaque post », outils autour du texte, comment ça marche, tarifs, FAQ, CTA | Hero à réécrire ; « Copilote éditorial » est un nom de fonction | **Réécrire en dernier**, avec les seules preuves qui existent |
-| `/fonctionnalites` | `app/fonctionnalites/page.js` (747 l.) | 20 sections : ADN, matière, dictée, copilote, génération, contrôle de forme, campagnes, veille, visuels, vidéo, leads, mesure, coach, validation client, assistants IA, équipe, événements… | Ton prudent et précis (« il ne dit rien plutôt que d'inventer »), niveaux d'offre indiqués | **Déplacer vers `/produit`**, en découpant ; redirection permanente |
-| `/comment-ca-marche` | `app/comment-ca-marche/page.js` | Parcours en 9 étapes (de l'inscription au suivi des résultats) | C'est le parcours complet, pas seulement les sources | **Déplacer** vers `/produit` (parcours) ; `/produit/sources` n'en couvrirait qu'une partie |
-| `/scoring` | `app/scoring/page.js` (215 l.) | « Le contrôle de forme » : 7 critères, poids, niveaux de note | **Voir la décision 1** | **Garder, sous `/produit`, avec corrections de texte** |
-| `/securite` | `lib/footer-pages.js` (+ base) | Page de sécurité détaillée | **Voir la décision 2** : ce n'est pas une page vide | **Garder** |
-| `/tarifs` | `app/tarifs/page.js`, `lib/plans.js` | Trois offres : Essentiel 19 €, Pro 49 €, Agence 129 € | Le brief parle d'un ou deux plans : **décision commerciale**, liée à Stripe | **Garder** ; retouche de libellés seulement, sauf décision |
-| `/blog`, `/blog/[slug]` | base (`Article`) | Articles | 11 articles préparés dans `outputs/` ; lesquels sont publiés : **inconnu depuis le dépôt**. Deux titres à risque : « …sans rien inventer » (n°7) et « …va marcher, avant de le publier ? » (score d'engagement) | **Garder** ; auditer les titres |
-| `/contact` | `app/contact/page.js` | Formulaire et motifs de contact | Adresse `contact@linkeepost.app` (voir T1) | **Garder** |
-| `/beta` | `app/beta/page.js` | Bêta fermée : ce que vous recevez, comment ça se passe | **Absent de l'arborescence cible**, alors que c'est la cible de tous les boutons d'inscription tant que `ACCESS_MODE = "beta"` | **Garder** (à ajouter au plan) |
-| `/mentions-legales`, `/cgu`, `/confidentialite` | `lib/footer-pages.js` + base | Pages légales en français, éditables depuis l'administration | Trois marqueurs « À COMPLÉTER » dans les valeurs par défaut (raison sociale, forme juridique, ville du tribunal) : voir T4 | **Regrouper sous `/legal`**, avec redirections, après vérification du contenu en base |
-| `/privacy-policy` | `app/privacy-policy/page.js` (62 l.) | Politique de confidentialité **en anglais**, codée en dur | Lien du pied de page | **Ne pas toucher avant vérification** (décision 3) |
-| `/privacy` | `app/privacy/page.js` (6 l.) | **Redirection** vers `/privacy-policy` | Pas un doublon de contenu : un alias | **Garder l'alias** (décision 3) |
-| `/motion` | `app/motion/page.js` (18 l.) | « LinkeePost en 40 secondes », animation de marque | Non lié dans la navigation ; textes déjà assouplis (commit « Chiffres à vérifier signalés ») | À lire avant décision |
-| `/demo-editoriale` | `app/demo-editoriale/` | Démonstration éditoriale | Non indexée, non liée, **aucun texte authentique** | **Rediriger plus tard**, quand `/preuves/demo` existe |
+| `/` | `app/page.js` | Accueil : hero, animation, bandeau de 4 chiffres, 3 piliers, « D'où vient chaque post », outils, contrôle de forme, parcours, tarifs, FAQ (en base), CTA | Voir section 4 | **Réécrire en dernier** |
+| `/fonctionnalites` | `app/fonctionnalites/page.js` | 20 sections détaillées | Ton prudent et précis ; deux phrases absolues à vérifier (section 4) | **Déplacer vers `/produit`**, en découpant ; 308 |
+| `/comment-ca-marche` | `app/comment-ca-marche/page.js` | Parcours en 9 étapes | Parcours complet, pas seulement les sources | **Déplacer** vers `/produit` |
+| `/scoring` | `app/scoring/page.js` | « Le contrôle de forme » : 7 critères | Voir section 3 | **Garder, déplacer, corriger** |
+| `/securite` | `lib/footer-pages.js` (+ base) | Sécurité détaillée | Contenu dense et vérifiable | **Garder** |
+| `/tarifs` | `app/tarifs/page.js`, `lib/plans.js` | Essentiel 19 €, Pro 49 €, Agence 129 € | Le brief parle de 1 à 2 plans : décision commerciale liée à Stripe | **Garder** |
+| `/blog`, `/blog/[slug]` | base (`Article`) | Articles | Lesquels sont publiés : inconnu ; deux titres à risque (n°7 « …sans rien inventer » ; « …va marcher, avant de le publier ? ») | **Garder**, auditer les titres |
+| `/contact` | `app/contact/page.js` | Formulaire | Adresse `contact@linkeepost.app` (T1) | **Garder** |
+| `/beta` | `app/beta/page.js` | Bêta fermée | Cible de tous les boutons d'inscription tant que `ACCESS_MODE = "beta"` | **Garder** |
+| `/mentions-legales`, `/cgu`, `/confidentialite` | `lib/footer-pages.js` + base | Légal en français, éditable en base | Trois marqueurs « À COMPLÉTER » (T4) | **Regrouper sous `/legal`** après vérification de la base |
+| `/privacy-policy` | `app/privacy-policy/page.js` | Politique **en anglais**, codée en dur | **Adresse déclarée à LinkedIn** (commentaire du code). Voir section 5 | **Ne jamais déplacer ni rediriger** |
+| `/privacy` | `app/privacy/page.js` | Redirection vers `/privacy-policy` | Alias | **Garder** |
+| `/motion` | `app/motion/page.js` | Animation de marque | Non liée | À décider |
+| `/demo-editoriale` | `app/demo-editoriale/` | Démonstration | Non indexée, aucun texte authentique | **Rediriger plus tard** |
 
-## 2. Pages fonctionnelles : ne pas toucher, jamais casser
+## 3. Correction importante : deux fonctions, deux noms
 
-`/oauth/authorize` (écran d'autorisation des assistants connectés), `/reset-password`, `/valider/[token]` (validation client), `/rapport/[token]` (rapport client), `/app` et tout `/app/*` (espace connecté), `/api/*`. Les liens à jeton ont déjà été envoyés par e-mail : leurs adresses doivent rester valides indéfiniment.
+Le dépôt contient **deux fonctions distinctes**, que « Chiffres à vérifier » et « Contrôle de forme » ne doivent pas confondre :
 
-## 3. Constats transversaux
+| | Contrôle de forme | Chiffres à vérifier |
+|---|---|---|
+| Code | `lib/score.js`, `lib/linkedinRules.js` | `lib/figureCheck.js` |
+| Ce qu'il fait | Note sur 100, 7 critères fixes (accroche, longueur, aération, hashtags, émojis, appel à l'action…), déterministe | Signale, sous le post, les chiffres **absents des informations fournies** |
+| Page publique | `/scoring` | **aucune** (une phrase dans `/fonctionnalites`, « Votre matière ») |
+| Lien avec E4 | aucun | **c'est la fonction que le test E4 éclaire** |
 
-- **T1. Domaine : le dépôt et la réalité divergent.** Le `Caddyfile`, `deploy.sh`, `.env.example`, la valeur par défaut du plan du site et neuf adresses `contact@linkeepost.app` supposent que **`linkeepost.app` est l'adresse principale** et que `postgenius.network` redirige vers elle. Vos constats du 10 novembre sont l'inverse : `linkeepost.app` ne mène pas à votre serveur, et le site répond sur `postgenius.network`. Conséquences possibles à vérifier : adresses canoniques et plan du site pointant vers un nom qui ne répond pas, **e-mails de contact et d'envoi sur un domaine dont la messagerie n'est peut-être pas configurée**. À vérifier sur le serveur : `docker exec postgenius-app-1 printenv APP_URL`, le `Caddyfile` réellement chargé, et les enregistrements MX de `linkeepost.app`. **Aucun travail de référencement avant cette vérification.**
-- **T2. Deux modes d'accès.** `lib/access.js` : `ACCESS_MODE = "beta"` ; tous les textes publics passent par `pick(beta, open)`. La refonte doit respecter ce mécanisme.
-- **T3. Trois noms pour une même fonction.** Page publique, pied de page et libellés d'offres : « Contrôle de forme ». Code, message de blocage de l'API, article de blog : « score d'engagement », « potentiel d'engagement ». Le blog promet « savez-vous si votre post va marcher » alors que le corps de l'article et la page `/scoring` disent le contraire.
-- **T4. Pages légales avec marqueurs « À COMPLÉTER »** dans les valeurs par défaut. Si la base contient les mêmes textes, ils sont publiés tels quels. Les mentions légales doivent être complètes : **à vérifier en production avant toute refonte**.
-- **T5. Contenu en base.** Pages légales, sécurité et blog sont éditables depuis l'administration (`SiteContent`, `Article`) : le dépôt ne donne que les valeurs par défaut. Pour lister le réel, une lecture seule suffit (à exécuter par Jacques, sans coller de secret) : `SELECT slug, title, published FROM "Article" ORDER BY "createdAt";` et `SELECT key, length(value) FROM "SiteContent" WHERE key LIKE 'page-%';`.
-- **T6. « Copilote ».** Nom de fonction très présent (accueil, fonctionnalités, parcours, animation). La recommandation marketing déconseille le mot **dans la promesse** ; renommer la fonction est une décision produit distincte.
+**Recommandation.** Garder « **Contrôle de forme** » pour la page `/scoring` (c'est déjà son nom public) et réserver « **Chiffres à vérifier** » à une page distincte, `/produit/chiffres-a-verifier`, qui décrit ce que fait réellement `figureCheck.js` (indicatif, ne remplace pas la relecture). Si Jacques préfère le nom unique pour le score, il faut alors renommer la page score **et** créer l'autre page sous un autre nom : le même nom ne peut pas désigner les deux.
 
-## 4. Les décisions
+**Corrections de texte de `/scoring`** (chiffres exacts : poids 25/25/10/10/10/10/10 ; 400 à 1 600 caractères ; 5 hashtags ; 6 émojis) : « un copilote… qui vous **pousse vers vos meilleurs posts** » (laisse entendre un résultat) ; bouton « **Faites grimper le score** » (gamification) ; jauge « 82 / Excellent » non signalée comme **exemple illustratif**.
 
-### Décision 1 : `/scoring`
-**Constat (corrige une hypothèse du brief).** Ce n'est **pas** un score de viralité. La page présente un contrôle de forme à **règles fixes** (même texte, même note), avec sept critères, et dit elle-même : « un indicateur de qualité, pas une boule de cristal », « elle ne prédit pas un nombre de vues ou de likes ». **Ses chiffres sont exacts** : poids 25, 25, 10, 10, 10, 10, 10 ; longueur 400 à 1 600 caractères ; 5 hashtags au plus ; 6 émojis au plus (`lib/score.js` et `lib/linkedinRules.js`). Le code le qualifie en en-tête de « potentiel d'engagement » mais précise « ce n'est PAS une prédiction ».
-**À corriger dans le texte** : « C'est un copilote qui vous évite les erreurs classiques et vous **pousse vers vos meilleurs posts** » (laisse entendre un résultat) ; le bouton « **Faites grimper le score** de votre prochain post » (gamification de la note) ; la jauge « 82 / Excellent » présentée comme une capture sans mention d'**exemple illustratif** (le brief demande de montrer le parcours, pas des captures fantaisistes).
-**Recommandation** : ne pas supprimer, **déplacer** sous `/produit` (par exemple `/produit/controle-de-forme`), corriger ces trois passages, et trancher le nom unique de la fonction (T3), ainsi que le titre de l'article de blog.
+**Page `/produit/verification` (si elle est prévue)** : elle ne doit décrire que ce qui existe. Il n'y a **pas d'empreintes de génération dans le produit** ; seul le contrôle des chiffres existe, et il est indicatif.
 
-### Décision 2 : `/securite`
-**Constat (corrige une première impression).** Les 31 lignes du fichier ne sont que le gabarit : le contenu est dans `lib/footer-pages.js`. Il est **dense, concret et vérifiable** : hébergement (Hetzner, Allemagne ; base Neon, Francfort), chiffrement des jetons (AES-256), hachage des mots de passe (bcrypt), durées de conservation (24 à 48 heures, 30 jours), accès en lecture seule pour le support (2 heures), sous-traitants nommés, sauvegardes, et une section **« Ce que nous n'avons pas »** (pas de SOC 2 ni de certification ISO 27001). C'est exactement le type de page que la règle « pas de page sans contenu vérifiable » veut garder : elle la satisfait, et elle sert le positionnement.
-**Recommandation** : **ne pas supprimer**. La conserver (sous `/produit/securite` ou à sa place actuelle) et ajouter à la liste de vérification que chaque affirmation chiffrée soit contrôlée dans le code, comme pour E4. Le contenu en base peut différer des valeurs par défaut : le lire avant de décider de la déplacer.
+## 4. Lecture intégrale de l'accueil et de `/fonctionnalites` : ce qui est à reprendre
 
-### Décision 3 : pages de confidentialité
-**Constat.** Il n'y a pas de doublon de contenu : `/privacy` est une **redirection** vers `/privacy-policy`, qui est une politique **en anglais**, en plus de `/confidentialite` en français. Ce sont donc deux politiques, dans deux langues, qui peuvent diverger. `/privacy-policy` est lié dans le pied de page, et l'adresse est probablement déclarée chez des tiers (applications LinkedIn, Stripe, consentements) : le dépôt ne le dit pas.
-**Recommandation** : conserver ces trois adresses fonctionnelles. Les regrouper sous `/legal` avec des **redirections permanentes**, mais seulement après avoir vérifié où `/privacy-policy` et `/privacy` sont déclarés, et rapproché le texte anglais du texte français.
+**Chiffres vérifiés dans le code (exacts)** : dictée 10 / 60 / 60 minutes par mois ; vidéo et audio 120 (Pro) et 300 par client (Agence) ; 5 utilisateurs et 25 clients (Agence) ; 9 langues ; 24 h / 48 h de conservation des données de commentateurs (cohérent avec `/privacy-policy`).
 
-### Décision 4 : inventaire complet
-C'est ce document. Il reste à lire en entier, avant tout déplacement : le détail de `/fonctionnalites` et de l'accueil, `/privacy-policy`, `/motion`, et surtout le **contenu réel en base** (T5).
+**À reprendre sur l'accueil**
+- **Cartes flottantes du hero** : « Sources déposées **14** », « Sources utilisées **2 sur ce post** » : maquette présentée comme un état réel, sans mention « exemple ». Idem la campagne « Accessibilité 2026 », la jauge « 82 », et l'« inspiration du jour ». Règle du brief : **seulement des cartes de preuve réelles** → étiqueter « exemple » ou retirer.
+- **Bandeau de 4 chiffres** : « **100 %** API officielle LinkedIn » est une affirmation sur la conformité, que le brief interdit de promettre ; « 0 € sans carte bancaire » et « 9 langues » sont factuels.
+- **Hero** à réécrire selon la formule validée : « les chiffres absents de vos documents sont signalés avant publication ».
+- **« Ce qui nous distingue / D'où vient chaque post »** : « Un générateur ordinaire repart de zéro à chaque fois » compare à une catégorie sans la nommer ; acceptable, mais c'est une affirmation non étayée par une preuve publique.
+- **Section contrôle de forme** : déjà prudente (« pas une prévision de vues ou de réactions »), mais jauge illustrative non étiquetée.
+- **« Prêt à automatiser votre LinkedIn ? »**, **« Votre prochaine campagne commence aujourd'hui »** : promesse d'automatisation à garder bornée (rien ne se publie sans validation si elle est activée).
+- **Tarifs** : `BETA ? "/beta" : "/app?plan=…"` ; textes `pick(...)` à conserver.
 
-## 5. Redirections à prévoir si l'arborescence est adoptée (propositions)
+**À vérifier sur `/fonctionnalites`**
+- « **Chaque chiffre repris doit se retrouver dans une source, citée dans le post** » et « chaque chiffre doit se retrouver dans le contenu d'origine » : formulation **absolue**. Le produit **signale** les chiffres absents ; il ne **garantit** pas. À reformuler : « les chiffres absents de vos documents sont signalés avant publication ».
+- « **Il ne dit rien plutôt que d'inventer** » (coach) : exact pour le coach (seuil de 8 posts), mais le mot « inventer » ne doit pas déborder sur la génération de texte.
+- « **Comment on calcule votre score** » (lien vers `/scoring`) : le mot « score » est le troisième nom de la fonction (T3).
+- « **Claude, ChatGPT ou Cursor** » (assistants IA) : noms d'outils **partenaires d'intégration**, pas de concurrents ; la règle « aucun concurrent nommé » ne s'y applique pas, mais le dire dans la validation.
+- « **Transcription par OpenAI** » : sous-traitant nommé ; à rapprocher de la liste de `/securite` et de `/privacy-policy`.
+- « **Conformément aux règles de LinkedIn** » (leads) : renvoie à la conformité LinkedIn ; à relire avec la règle « ne rien promettre sur LinkedIn ».
+- Maquettes : « 18/30 sources », « Confiance 88 », « 2,5× votre médiane », « +40 % de candidatures », « 6 à 4 semaines » : toutes illustratives, aucune n'est étiquetée.
+
+## 5. `/privacy-policy` : lu en entier
+
+- C'est la politique **anglaise**, codée en dur ; le commentaire du code précise que c'est **l'adresse donnée à LinkedIn** pour l'application développeur. **Elle ne bouge pas et ne se redirige pas.**
+- Le bloc « Data controller and contact » est lu dans la section 0 de la version française (`confidentialite`). Si la base contient la valeur par défaut, il affiche **« [À COMPLÉTER : raison sociale] »**, en anglais, sur l'adresse déclarée à LinkedIn. **Priorité de vérification.**
+- Sections détaillées et cohérentes avec `/securite` (conservation 24 h / 48 h, assistants IA, vidéo/audio, sous-traitants, Do-Not-Track, mineurs de moins de 16 ans).
+- `/privacy` est un alias (`redirect`) : le garder.
+
+## 6. Constats transversaux
+
+- **T1. Domaine.** `Caddyfile`, `deploy.sh`, `.env.example`, valeur par défaut du plan du site et neuf adresses `contact@linkeepost.app` supposent que `linkeepost.app` est le domaine principal, avec `postgenius.network` redirigé. Vos constats du 10 novembre sont l'inverse. **Aucun travail de référencement avant résolution.**
+- **T2. Deux modes d'accès** (`lib/access.js`, `ACCESS_MODE = "beta"`, `pick(beta, open)`). La refonte doit respecter ce mécanisme.
+- **T3. Trois noms pour le score** : « Contrôle de forme » (public), « score d'engagement » (code, message d'API, article de blog), « note de forme » (maquettes).
+- **T4. Légal avec marqueurs « À COMPLÉTER »** (raison sociale, forme juridique, ville du tribunal), éventuellement publiés tels quels.
+- **T5. Contenu en base** (pages légales, sécurité, blog, FAQ et hero de l'accueil via `getLanding()`) : le dépôt ne donne que les valeurs par défaut. Une réécriture de l'accueil dans le code peut être **écrasée ou contredite par la base** : à vérifier avant de toucher le hero.
+- **T6. « Copilote »** : nom de fonction, très présent ; le retirer de la promesse est un choix distinct du renommage.
+
+## 7. Redirections proposées
 
 | Ancienne adresse | Nouvelle adresse | Quand |
 |---|---|---|
-| `/fonctionnalites` | `/produit` | avec la page produit |
-| `/comment-ca-marche` | `/produit` (parcours) | avec la page produit |
-| `/scoring` | `/produit/controle-de-forme` | avec la page produit |
-| `/securite` | `/produit/securite` ou inchangée | décision 2 |
+| `/fonctionnalites` | `/produit` | avec `/produit` |
+| `/comment-ca-marche` | `/produit` | avec `/produit` |
+| `/scoring` | `/produit/controle-de-forme` (ou nom retenu) | avec `/produit` |
+| `/securite` | inchangée ou `/produit/securite` | décision 2 : garder |
 | `/mentions-legales`, `/cgu`, `/confidentialite` | `/legal` (ancres) | après vérification de la base |
-| `/privacy-policy`, `/privacy` | inchangées tant que non vérifiées | décision 3 |
-| `/demo-editoriale` | `/preuves/demo` | **seulement** quand la page existe |
+| `/privacy-policy`, `/privacy` | **inchangées** | jamais sans accord écrit |
+| `/demo-editoriale` | `/preuves/demo` | seulement quand elle existe |
 
-Toutes en redirection **permanente** (308). Le plan du site (`app/sitemap.js`) et les liens du pied de page sont à mettre à jour dans le même changement.
+Toutes en 308. Plan du site (`app/sitemap.js`) et pied de page mis à jour dans le même changement. Les liens à jeton (`/valider/…`, `/rapport/…`, `/oauth/authorize`, `/reset-password`) ne changent jamais.
 
-## 6. Ce que je n'ai pas pu vérifier
-La production (réseau de la session restreint) : valeur de `APP_URL`, Caddyfile chargé, MX de `linkeepost.app`, contenu réel des pages en base, articles publiés, déclarations de `/privacy-policy` chez des tiers. Les chiffres de `/securite` et de `/fonctionnalites` ne sont pas recontrôlés dans le code.
+## 8. Vérifications à faire par Jacques sur le serveur (lecture seule, sans secret)
+
+Je n'ai pas accès à la production (réseau de la session restreint). Commandes à lancer sur le serveur, puis coller seulement les résultats :
+
+1. `docker exec postgenius-app-1 printenv APP_URL`
+2. `docker exec postgenius-app-1 sh -c 'cat /etc/caddy/Caddyfile 2>/dev/null'` (ou `cat Caddyfile` dans le dossier du projet) : le fichier réellement chargé
+3. `dig +short MX linkeepost.app`
+4. En base : `SELECT slug, title, published FROM "Article" ORDER BY "createdAt";`
+5. En base : `SELECT key, length(value) FROM "SiteContent" WHERE key LIKE 'page-%' OR key LIKE 'landing%';`
+6. Dans les consoles tierces : où est déclaré `/privacy-policy` (LinkedIn certainement ; Stripe, autres) ?
+
+## 9. Ce qui n'est pas vérifié
+
+Production, contenu en base, articles publiés, déclarations chez des tiers, détail de `/comment-ca-marche`, `/tarifs`, `/beta`, `/contact`, `/motion`. Les chiffres de `/securite` ne sont pas recontrôlés dans le code.
