@@ -79,6 +79,16 @@ test("vouvoiement et tutoiement : sens, négation, conditionnel, langue", () => 
   assert.match(checkConsignes("Vous pouvez le faire.", tu)[0].text, /tutoiement/);
 });
 
+test("mesure du 11 novembre : une consigne limitée à une partie du post ou assortie d'une exception ne produit aucune règle ; chaque consigne est lue dans sa proposition", () => {
+  assert.deepEqual(deriveConsigneRules({ sources: src("Pas de hashtag dans le corps du texte") }), [], "faux positif relevé par la mesure");
+  assert.deepEqual(deriveConsigneRules({ sources: src("Pas d'émojis dans le titre") }), []);
+  assert.deepEqual(deriveConsigneRules({ sources: src("Pas d'émoji, sauf pour les annonces") }), []);
+  assert.deepEqual(kinds(deriveConsigneRules({ sources: src("Pas d'émojis, tutoiement seulement sur les posts personnels") })), ["noEmoji"]);
+  // exemple affiché par l'application : « ouverture » appartient à une autre proposition que « pas d'émojis »
+  assert.deepEqual(kinds(deriveConsigneRules({ sources: src("je tutoie mon audience, pas d'emojis,\nphrases courtes, une anecdote en ouverture") })), ["address", "noEmoji"]);
+  assert.deepEqual(kinds(deriveConsigneRules({ sources: src("Pas plus de 3 hashtags, pas d'émojis, vouvoiement") })), ["address", "maxHashtags", "noEmoji"]);
+});
+
 test("« ton » (le ton d'un texte) ne déclenche pas le contrôle du vouvoiement", () => {
   const vous = deriveConsigneRules({ sources: src("Vouvoiement") });
   assert.equal(checkConsignes("Le ton est direct et sobre.", vous).length, 0);

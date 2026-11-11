@@ -1,0 +1,45 @@
+﻿id;source;attendu;obtenu;retrouvé;manquant;en_trop;texte
+R01;reel-demo;;;;;;Phrases courtes et concrètes. Aucun jargon. Pas d'exagération. Aucun chiffre inventé : si un chiffre n'est pas fourni, n'en donne pas.
+R02;reel-e4;;;;;;Ton sobre et direct. Phrases courtes.
+R03;reel-eval;;;;;;Phrases courtes et concrètes. Aucun jargon. Pas d'exagération.
+R04;ui-exemple;address:tu|noEmoji|endsWithQuestion;noEmoji|address:tu;address:tu|noEmoji;endsWithQuestion;;Je tutoie mon audience, phrases courtes, pas d'émojis, une question pour finir
+R05;ui-exemple;address:tu|noEmoji;noEmoji|address:tu;address:tu|noEmoji;;;je tutoie mon audience, pas d'emojis, phrases courtes
+R06;ui-exemple;address:tu|noEmoji;noEmoji|address:tu;address:tu|noEmoji;;;je tutoie mon audience, pas d'emojis, phrases courtes, une anecdote en ouverture
+R07;ui-exemple-voix-marque;address:tu;address:tu;address:tu;;;nous tutoyons, phrases courtes, jamais de jargon
+R08;reel-demo-ligne;;;;;;La qualité industrielle se construit en dialogue avec le client, dès la conception, pas à la réception des pièces.
+R09;reel-demo-ligne;;;;;;La performance d'un achat se joue en amont, dans la façon dont le besoin est défini, avant toute négociation avec le fournisseur.
+R10;reel-demo-ligne;;;;;;Une tolérance est un choix qu'il faut pouvoir justifier par la fonction de la pièce : sinon elle ne protège rien et elle complique la fabrication.
+S01;synthetique;noEmoji;noEmoji;noEmoji;;;Zéro émoji.
+S02;synthetique;noEmoji;noEmoji;noEmoji;;;N'utilise pas d'émojis.
+S03;synthetique;noEmoji;;;noEmoji;;Évite les émojis.
+S04;synthetique;maxHashtags:2;maxHashtags:2;maxHashtags:2;;;Max 2 hashtags.
+S05;synthetique;maxHashtags:3;maxHashtags:3;maxHashtags:3;;;Pas plus de trois hashtags
+S06;synthetique;maxHashtags:0;maxHashtags:0;maxHashtags:0;;;Pas de hashtags
+S07;synthetique;;;;;;Au moins 3 hashtags
+S08;synthetique;address:vous;address:vous;address:vous;;;Vouvoiement obligatoire
+S09;synthetique;address:vous;address:vous;address:vous;;;Je vouvoie mes lecteurs.
+S10;synthetique;address:vous;address:vous;address:vous;;;Pas de tutoiement.
+S11;synthetique;address:tu;address:tu;address:tu;;;Nous tutoyons nos lecteurs
+S12;synthetique;address:tu;;;address:tu;;Tu t'adresses directement au lecteur
+S13;synthetique;;;;;;Tutoiement seulement sur les posts personnels
+S14;synthetique;;;;;;Pas d'émoji sauf pour les annonces
+S15;synthetique;noEmoji;;;noEmoji;;Pas d'émojis, tutoiement seulement sur les posts personnels
+S16;synthetique;maxHashtags:3;;;maxHashtags:3;;Ne dépasse jamais 3 hashtags
+S17;synthetique;endsWithQuestion;;;endsWithQuestion;;Termine toujours par une question.
+S18;synthetique;terms;;;terms;;Jamais le mot « leader ».
+S19;synthetique;;;;;;Phrases courtes, ton direct, pas de jargon.
+S20;synthetique;noEmoji|maxHashtags:0;noEmoji|maxHashtags:0;noEmoji|maxHashtags:0;;;Aucun émoji, aucun hashtag.
+S21;synthetique;address:tu|noEmoji|maxHashtags:2;noEmoji|maxHashtags:2|address:tu;address:tu|noEmoji|maxHashtags:2;;;Tutoie le lecteur. Pas d'émoji. Maximum 2 hashtags.
+S22;synthetique;noEmoji;noEmoji;noEmoji;;;Je n'utilise jamais d'émojis
+S23;synthetique;noEmoji;noEmoji;noEmoji;;;Sans emoji
+S24;synthetique;;;;;;Une anecdote en ouverture
+S25;synthetique;;;;;;Utilise des émojis avec parcimonie
+S26;synthetique;address:vous;address:vous;address:vous;;;Aucun tutoiement, jamais
+S27;synthetique;maxHashtags:2;maxHashtags:2;maxHashtags:2;;;2 hashtags maximum
+S28;synthetique;;maxHashtags:0;;;maxHashtags:0;Pas de hashtag dans le corps du texte
+S29;synthetique;maxHashtags:3;;;maxHashtags:3;;Limite-toi à 3 hashtags
+S30;synthetique;address:vous;address:vous;address:vous;;;Vouvoie. Jamais de tu.
+S31;synthetique;;;;;;3 hashtags
+S32;synthetique;address:vous;address:vous;address:vous;;;Ne tutoie pas les lecteurs
+S33;synthetique;address:tu;address:tu;address:tu;;;Évite le vouvoiement
+S34;synthetique;maxHashtags:3|noEmoji|address:vous;noEmoji|maxHashtags:3|address:vous;maxHashtags:3|noEmoji|address:vous;;;Pas plus de 3 hashtags, pas d'émojis, vouvoiement
