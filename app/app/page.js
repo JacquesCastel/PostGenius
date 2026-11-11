@@ -19568,6 +19568,7 @@ export default function Home() {
   const [history, setHistory] = useState([]); // versions précédentes du post
   const [thread, setThread] = useState([]); // conversation de retouche : { role, text, remember? }
   const [seriesResult, setSeriesResult] = useState(null);
+  const [seriesFigures, setSeriesFigures] = useState(null); // { key, base | null, failed } : base de nombres de la série affichée (contrôle des chiffres)
   const [savingSeries, setSavingSeries] = useState(false);
   const [seriesStart, setSeriesStart] = useState(() => {
     const d = new Date();
@@ -19996,6 +19997,13 @@ export default function Home() {
       const data = await call(target);
       if (data.posts) {
         setSeriesResult(data.posts);
+        // La génération d'une série ne renvoie pas la base de nombres : elle est recalculée à part (/api/figures), puis chaque post est contrôlé
+        const seriesKey = data.posts[0]?.text ?? "";
+        setSeriesFigures({ key: seriesKey, base: null, failed: false });
+        fetch("/api/figures", { method: "POST", headers: { "Content-Type": "application/json" }, body: body(target) })
+          .then((r) => (r.ok ? r.json() : null))
+          .then((d) => setSeriesFigures({ key: seriesKey, base: Array.isArray(d?.figureBase) ? d.figureBase : null, failed: !Array.isArray(d?.figureBase) }))
+          .catch(() => setSeriesFigures({ key: seriesKey, base: null, failed: true }));
       } else if (data.variants) {
         setVariants(data.variants);
         setActiveVariant(0);
@@ -23238,6 +23246,20 @@ export default function Home() {
                       </div>
                     </div>
                     <pre dir="auto" className="whitespace-pre-wrap text-sm font-sans leading-relaxed">{p.text}</pre>
+                    {/* Chiffres à vérifier, comme pour un post seul ; si le contrôle est indisponible, c'est dit (l'absence d'alerte ne veut pas dire « aucun écart ») */}
+                    {(() => {
+                      const sf = seriesFigures && seriesFigures.key === (seriesResult[0]?.text ?? "") ? seriesFigures : null;
+                      if (!sf) return null;
+                      if (sf.failed) return <p data-testid="series-figures-unavailable" className="mt-3 text-[11px] text-amber-800">Contrôle des chiffres indisponible : relisez vous-même les chiffres de ce post.</p>;
+                      if (!sf.base) return <p className="mt-3 text-[11px] text-gray-400">Contrôle des chiffres en cours…</p>;
+                      const figs = figuresToCheck(p.text, sf.base);
+                      return figs.length > 0 ? (
+                        <div data-testid="series-figures-check" className="mt-3 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                          <p className="font-semibold">Chiffres à vérifier avant de publier : {figs.join(", ")}</p>
+                          <p className="text-xs mt-1 leading-snug">Ces chiffres ne figurent pas dans les informations fournies (thématique, profil, sources). S&apos;ils viennent de votre expérience, gardez-les ; sinon retirez-les ou remplacez-les par une formulation qualitative.</p>
+                        </div>
+                      ) : null;
+                    })()}
                     {/* Même contrôle des consignes que pour un post seul, un par post de la série */}
                     <ConsignesCheck text={p.text} contextId={activeContextId} language={form.language} maxChars={form.maxChars} voiceKind={voiceFor(target).kind} />
                   </div>
