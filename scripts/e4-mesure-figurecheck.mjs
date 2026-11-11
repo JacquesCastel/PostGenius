@@ -8,7 +8,10 @@ import { numberBase, figuresToCheck } from "../lib/figureCheck.js";
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const E4 = path.join(ROOT, "docs/e4-chiffres");
-const OUT = path.join(E4, "mesure-figurecheck");
+// Sensibilité : --sans S04 exclut un sujet (résultats écrits dans un sous-dossier distinct)
+const sansIdx = process.argv.indexOf("--sans");
+const EXCLUDE = sansIdx > -1 ? process.argv.slice(sansIdx + 1) : [];
+const OUT = path.join(E4, "mesure-figurecheck", EXCLUDE.length ? `sensibilite-sans-${EXCLUDE.join("-")}` : "");
 
 const NUMBER_RE = /\d+(?:(?:[   ]\d{3}(?!\d))|(?:[.,]\d+))*/g;
 const keyOf = (t) => t.replace(/\D/g, "");
@@ -67,6 +70,7 @@ let notLocated = 0;
 
 for (const id of Object.keys(texts)) {
   const t = texts[id], c = cond[id], subj = t.subject;
+  if (EXCLUDE.includes(subj)) continue;
   const base = numberBase([fiches[subj].join("\n")]);
   const baseKeys = new Set(base.filter((k) => !String(k).includes("|")));
   const body = norm(t.text);

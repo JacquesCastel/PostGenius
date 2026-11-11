@@ -1,0 +1,114 @@
+{
+  "meta": {
+    "date": "2026-11-11T09:05:37.790Z",
+    "figureCheck_sha256": "0558e89c16b1ae6cf9d6a01013283e2c5d5e29602d12d12eae9c3c6a997e221a",
+    "script_sha256": "694deca02bff5635d69c6c3cac4de999d26f07003d476516bdb1bc6f6b9fc221",
+    "grille_elements_sha256": "c069d7fbfe346c66121c262c682c48b8fdda2d186663b2462a45aede4c748848",
+    "textes_sha256": "081c81bd90952830eb6ff638c790be4771eadfa7950ab92bc657a7827aad82b2"
+  },
+  "stats": {
+    "D": {
+      "textes": 9,
+      "textes_probleme_chiffre": 7,
+      "textes_probleme_chiffre_alerte": 7,
+      "signalements_total": 22,
+      "chiffre_F": 12,
+      "chiffre_I": 18,
+      "chiffre_I_signale": 15,
+      "FN_IX_ignore_par_regle": 3,
+      "invisibles_I": 3,
+      "chiffre_F_signale": 2,
+      "textes_sans_probleme": 1,
+      "chiffre_V": 1,
+      "chiffre_V_signale": 1,
+      "citations_non_localisees": 6
+    },
+    "TOUT": {
+      "textes": 63,
+      "textes_probleme_chiffre": 24,
+      "textes_probleme_chiffre_alerte": 24,
+      "signalements_total": 93,
+      "chiffre_F": 59,
+      "chiffre_I": 91,
+      "chiffre_I_signale": 70,
+      "textes_sans_probleme": 35,
+      "FN_IX_ignore_par_regle": 19,
+      "invisibles_I": 9,
+      "chiffre_F_signale": 5,
+      "textes_sans_probleme_alerte": 1,
+      "FN_IX_coincide_avec_la_fiche": 2,
+      "citations_non_localisees": 12,
+      "invisibles_D": 2,
+      "chiffre_V": 3,
+      "chiffre_V_signale": 3,
+      "textes_plus_de_6_signalements": 3,
+      "chiffre_D": 1,
+      "chiffre_D_signale": 1,
+      "chiffre_X": 1,
+      "chiffre_X_signale": 1
+    },
+    "CN": {
+      "textes": 9,
+      "textes_sans_probleme": 8,
+      "signalements_total": 0,
+      "chiffre_F": 11,
+      "invisibles_D": 1
+    },
+    "C": {
+      "textes": 9,
+      "textes_sans_probleme": 8,
+      "signalements_total": 0,
+      "chiffre_F": 11,
+      "invisibles_I": 2
+    },
+    "AN": {
+      "textes": 9,
+      "textes_sans_probleme": 8,
+      "signalements_total": 1,
+      "textes_probleme_chiffre": 1,
+      "textes_probleme_chiffre_alerte": 1,
+      "citations_non_localisees": 1,
+      "chiffre_I": 1,
+      "chiffre_I_signale": 1
+    },
+    "BN": {
+      "textes": 9,
+      "textes_sans_probleme": 8,
+      "signalements_total": 0,
+      "chiffre_F": 11,
+      "invisibles_D": 1
+    },
+    "B": {
+      "textes": 9,
+      "textes_probleme_chiffre": 7,
+      "textes_probleme_chiffre_alerte": 7,
+      "signalements_total": 22,
+      "chiffre_I": 26,
+      "FN_IX_ignore_par_regle": 9,
+      "chiffre_I_signale": 17,
+      "chiffre_F": 14,
+      "chiffre_F_signale": 3,
+      "textes_sans_probleme": 2,
+      "textes_sans_probleme_alerte": 1
+    },
+    "A": {
+      "textes": 9,
+      "textes_probleme_chiffre": 9,
+      "textes_probleme_chiffre_alerte": 9,
+      "signalements_total": 48,
+      "chiffre_I": 46,
+      "FN_IX_coincide_avec_la_fiche": 2,
+      "chiffre_I_signale": 37,
+      "citations_non_localisees": 5,
+      "FN_IX_ignore_par_regle": 7,
+      "invisibles_I": 4,
+      "textes_plus_de_6_signalements": 3,
+      "chiffre_V": 2,
+      "chiffre_V_signale": 2,
+      "chiffre_D": 1,
+      "chiffre_D_signale": 1,
+      "chiffre_X": 1,
+      "chiffre_X_signale": 1
+    }
+  }
+}

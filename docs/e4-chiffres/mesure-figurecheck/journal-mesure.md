@@ -29,5 +29,21 @@ Aucune autre valeur ne change. Le résultat de l'exécution 2 est celui à reten
 ## Limites
 Un seul classeur, qui connaît le dispositif ; 70 textes fictifs, 10 sujets ; une génération par cas ; 14 citations de la grille ne se retrouvent pas mot pour mot dans le texte (citation abrégée par le classeur) et ont été évaluées sur la citation seule ; le contrôle n'avait pas été conçu à partir de ces textes (dernière modification le 6 novembre, génération le 9), mais cela ne remplace pas un second jeu de textes.
 
-## Phrase publiable, bornée (proposition)
+## Chronologie du « jeu non vu » (vérifiée dans git, 11 novembre)
+| Date | Événement |
+|---|---|
+| 5 novembre | Fiches E4 en version de travail (date inscrite dans le fichier ; premier commit le 9) |
+| 6 novembre | `lib/figureCheck.js` et ses tests, dernière modification (commits `c6d6641`, `28ffe04`) |
+| 9 et 10 novembre | Génération des 70 textes de E4 |
+| 10 et 11 novembre | Classement (un seul classeur), puis cette mesure |
+
+- **Les textes générés n'ont pas pu inspirer le contrôle** : ils n'existaient pas le 6 novembre.
+- **Mais les données d'entrée n'étaient pas inconnues** : le test unitaire du 6 novembre utilise « 2,4 millions d'euros », « hausse de 6 % » et « 17 personnes », qui sont les valeurs de la fiche S4 (« Maison Bellange »). Le sujet S04 n'est donc pas propre.
+- **Le classeur est aussi celui qui a écrit le contrôle** : même assistant, un seul classement, pas de second avis. C'est une limite plus lourde que la chronologie.
+- **Verdict** : holdout **partiel**. La mesure est **exploratoire** et ne doit pas être publiée comme mesure sur données non vues avant un second jeu : textes de la démonstration éditoriale (générés après, classés avec la grille E4) ou petit jeu frais étiqueté par une autre personne.
+
+## Sensibilité : sans le sujet S04 (écart motivé par la chronologie, non prévu au protocole initial)
+Dossier `sensibilite-sans-S04/`. Résultat : **71 chiffres I+X signalés sur 92 (77,2 %)** au lieu de 78 sur 112 ; fidèles signalés à tort 5 sur 59 (8,5 %) ; non signalés : 2 coïncidences et 19 ignorés par règle (contre 32). Le retrait de S04 **améliore** le résultat : S04 est le sujet où des années inventées (« En 2024 », « par rapport à 2023 ») sont ignorées par conception. La contamination par la fiche S4 n'a donc pas flatté la mesure, mais l'écart ne se publie pas comme preuve de généralisation. Les deux résultats sont à publier ensemble, ou aucun.
+
+## Phrase publiable (conditionnelle : seulement après un second jeu non vu)
 « Dans notre test (70 textes fictifs, un seul classeur), le contrôle a signalé 78 des 112 chiffres classés inventés ou faux. Il ignore par construction les années et les nombres à un chiffre, qui font 32 des 34 oublis ; il a signalé à tort 7 des 73 chiffres fidèles, le plus souvent des chiffres calculés à partir des informations fournies ; il ne voit pas les 12 problèmes écrits sans chiffre. Il est indicatif. »
