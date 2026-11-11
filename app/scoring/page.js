@@ -81,6 +81,7 @@ export default function ScoringPage() {
 
           {/* Aperçu de la jauge */}
           <div className="bg-white rounded-3xl p-6 shadow-2xl shadow-rose-200/40 border border-white">
+            <p className="text-[11px] font-semibold text-[#7a2342] bg-[#fff1f1] rounded-full px-3 py-1 w-fit mb-4">Exemple de mise en forme · valeurs fictives</p>
             <div className="flex items-center gap-5">
               <div className="text-center shrink-0">
                 <p className="text-5xl font-extrabold text-[#16a34a] leading-none">82</p>
@@ -184,8 +185,8 @@ export default function ScoringPage() {
               <h3 className="font-bold mb-1.5">Un indicateur de qualité, pas une boule de cristal</h3>
               <p className="text-sm text-[#5a6b85] leading-relaxed">
                 La note reflète le respect de bonnes pratiques de mise en forme — elle ne prédit pas un nombre de vues ou de likes,
-                car la performance réelle dépend aussi de votre réseau, du sujet et du moment. C'est un copilote qui vous évite les erreurs
-                classiques et vous pousse vers vos meilleurs posts. La décision finale reste la vôtre.
+                car la performance réelle dépend aussi de votre réseau, du sujet et du moment. Elle signale les erreurs de mise en forme
+                les plus courantes ; elle ne dit rien du fond ni de l'exactitude des chiffres. La décision finale reste la vôtre.
               </p>
             </div>
           </div>
@@ -195,7 +196,7 @@ export default function ScoringPage() {
         <section className="max-w-4xl mx-auto px-6 py-16">
           <div className="rounded-[2.5rem] bg-gradient-to-br from-[#ff5a5f] to-pink-500 text-white text-center p-12 shadow-2xl shadow-rose-300/50 relative overflow-hidden">
             <div className="pointer-events-none absolute -top-10 -right-10 w-40 h-40 bg-white/15 rounded-full blur-2xl" />
-            <h2 className="text-3xl md:text-4xl font-extrabold">Faites grimper le score de votre prochain post</h2>
+            <h2 className="text-3xl md:text-4xl font-extrabold">Vérifiez la forme de votre prochain post</h2>
             <p className="text-white/85 mt-3">{pick("Accès offert aux testeurs de la bêta fermée, sans carte bancaire.", "14 jours d'essai gratuit, sans carte bancaire.")}</p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-7">
               <Link href={JOIN_HREF} className="inline-flex items-center gap-2 bg-white text-[#ff5a5f] font-bold px-7 py-3.5 rounded-full hover:bg-rose-50 transition-colors">
