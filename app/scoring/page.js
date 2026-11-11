@@ -182,7 +182,7 @@ export default function ScoringPage() {
               <ShieldCheck size={22} />
             </div>
             <div>
-              <h3 className="font-bold mb-1.5">Un indicateur de qualité, pas une boule de cristal</h3>
+              <h3 className="font-bold mb-1.5">Un indicateur de mise en forme, pas une boule de cristal</h3>
               <p className="text-sm text-[#5a6b85] leading-relaxed">
                 La note reflète le respect de bonnes pratiques de mise en forme — elle ne prédit pas un nombre de vues ou de likes,
                 car la performance réelle dépend aussi de votre réseau, du sujet et du moment. Elle signale les erreurs de mise en forme
