@@ -2,6 +2,7 @@
 
 import { pick } from "@/lib/access";
 import { figuresToCheck } from "@/lib/figureCheck";
+import { checkConsignes, CONSIGNES_CHECKED } from "@/lib/consigneRules";
 import { useState, useEffect, useRef, createContext, useContext, useMemo } from "react";
 import { NotificationBell, AgencyPlanning } from "@/components/AgencyExtras";
 import {
@@ -3090,6 +3091,33 @@ function MentionTool({ draftId, local, text, onInsert, mentions, onMentions, get
         </div>
       )}
     </div>
+  );
+}
+
+// Contrôle des consignes d'un post libre : les règles (zéro émoji, hashtags, mots à éviter, longueur, tutoiement) sont lues dans les consignes
+// de l'utilisateur par /api/consignes, puis appliquées au texte affiché. Un écart est montré, jamais corrigé en silence.
+function ConsignesCheck({ text, contextId, language, maxChars }) {
+  const [rules, setRules] = useState([]);
+  useEffect(() => {
+    let alive = true;
+    fetch("/api/consignes", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ contextId: contextId || undefined, language: language || undefined, maxChars }) })
+      .then((r) => (r.ok ? r.json() : { rules: [] }))
+      .then((d) => { if (alive) setRules(Array.isArray(d.rules) ? d.rules : []); })
+      .catch(() => { if (alive) setRules([]); });
+    return () => { alive = false; };
+  }, [contextId, language, maxChars]);
+  if (!rules.length) return null;
+  const issues = checkConsignes(text, rules);
+  return issues.length > 0 ? (
+    <div data-testid="consignes-check" className="mt-3 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+      <p className="font-semibold">Consignes à vérifier avant de publier</p>
+      <ul className="mt-1 list-disc pl-5 space-y-0.5 text-xs leading-snug">
+        {issues.map((i) => <li key={i.id}>{i.text}</li>)}
+      </ul>
+      <p className="text-[11px] mt-2 leading-snug text-amber-800">{CONSIGNES_CHECKED} Le texte n&apos;a pas été modifié : à vous de décider.</p>
+    </div>
+  ) : (
+    <p data-testid="consignes-ok" className="mt-3 text-[11px] text-gray-500">Consignes contrôlées : aucun écart. {CONSIGNES_CHECKED}</p>
   );
 }
 
@@ -22243,6 +22271,8 @@ export default function Home() {
                           </div>
                         ) : null;
                       })()}
+                      {/* Consignes de l'utilisateur que le code sait contrôler, appliquées au texte affiché */}
+                      <ConsignesCheck text={optimizeText ? optimizeText.text : result.text} contextId={activeContextId} language={form.language} maxChars={form.maxChars} />
                       {result.sources?.length > 0 && (
                         <p className="text-[11px] text-gray-400 mt-3 border-t border-gray-100 pt-2">
                           Sources utilisées : {result.sources.map((x) => x.title).join(" · ")}

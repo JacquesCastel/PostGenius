@@ -38,12 +38,13 @@
 | Après l'écriture | **Chiffres à vérifier** : signale les nombres absents des informations fournies. Indicatif, tient compte de l'unité | code seul | `lib/figureCheck.js` | A |
 | Après l'écriture | **Contrôle de forme** : note à règles fixes, sept critères | code seul | `lib/score.js` | A, offre Pro |
 | Après l'écriture, à la demande | **Relecture factuelle indépendante** : un second modèle reçoit le brief, le profil, les sources et le texte, sans le raisonnement de rédaction. Alertes « Ajout du rédacteur » et « À confirmer », passage exact cité. Mention dans le code : « Ce n'est pas une preuve : c'est à vous de décider » | second modèle (Sonnet) | `lib/advisorVerify.js` | I |
+| Après l'écriture | **Consignes de l'utilisateur** : zéro émoji, hashtags au maximum, mots à éviter, longueur maximale, tutoiement ou vouvoiement ; écart montré, jamais corrigé | code seul | `lib/consigneRules.js` | A |
 | Campagnes | **Règles du brief** : zéro émoji, nombre maximal de hashtags, termes interdits, appel « commentez OUI » proscrit, lien exact de la publication, un seul lien utile ; avertissements : longueur, chiffre absent du brief, voix « nous » sur une page, ressemblance entre comptes, accroche trop proche d'une précédente | code seul | `lib/campaignChecks.js` | A |
 | Campagnes | Écart à une règle du brief → **correction automatique sûre** (émojis retirés si zéro émoji demandé, hashtags ramenés au maximum), puis **une seule relance** de rédaction avec les corrections obligatoires ; la meilleure des deux versions est gardée | code + IA | `lib/campaignChecks.js` (`autoFix`), `lib/campaignPlanStore.js` | A |
 
 **Conséquence pour les mots du site :** il n'y a pas de « contrôle continu pendant la génération » d'un post libre. Il y a des contrôles **à chaque étape** : avant (brief, si activé), à l'écriture (instructions), après (chiffres, forme, relecture si activée). Pour une campagne, le contrôle des règles du brief se fait **après chaque texte**.
 
-**Le contrôle des consignes n'est vérifié par le code que dans les campagnes.** Pour un post libre, les consignes de style et les remarques sont transmises à l'IA ; rien ne les contrôle ensuite.
+**Le contrôle des consignes (ajouté le 11 novembre 2026).** Pour un post libre, le code lit les consignes de l'utilisateur (consignes de style, ligne éditoriale, remarques, mots « à éviter », longueur maximale du formulaire) et contrôle cinq types de consignes **explicites** sur le texte affiché : zéro émoji, nombre maximal de hashtags, mots à éviter, longueur maximale, tutoiement ou vouvoiement (en français). Une consigne ambiguë ou conditionnelle (« 3 hashtags », « tutoiement seulement sur les posts personnels ») ne produit aucune règle. Un écart est **montré sous le post**, jamais corrigé ni régénéré : l'utilisateur décide. Les autres consignes (ton, angle, style) sont transmises à l'IA, sans contrôle ensuite. Code : `lib/consigneRules.js`, `app/api/consignes/route.js`, composant `ConsignesCheck` (`app/app/page.js`). Route de génération non modifiée (moteur figé pour la démonstration).
 
 ## 4. Quand il y a un doute : c'est l'utilisateur qui tranche
 | Situation | Ce qui se passe | Source | État |
@@ -72,7 +73,7 @@
 ## 6. Ce que l'outil ne fait pas (à publier)
 - Il ne garantit pas qu'un chiffre est exact. Il signale ceux qui sont absents de vos informations.
 - Il ne contrôle ni les noms propres, ni les citations, ni les études citées (`figureCheck.js`).
-- Il ne vérifie pas par code que le texte d'un post libre respecte vos consignes.
+- Il ne contrôle par code que cinq types de consignes explicites (émojis, hashtags, mots à éviter, longueur, tutoiement ou vouvoiement) ; les consignes de ton, d'angle et de style sont transmises à l'IA sans contrôle ensuite.
 - Il ne cite pas ses sources dans le texte du post.
 - La relecture indépendante est un avis d'un second modèle, pas une preuve.
 - Il ne prédit ni vues ni réactions.
