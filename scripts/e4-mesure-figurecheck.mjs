@@ -46,7 +46,8 @@ const fiches = {};
     const m = l.match(/^## S(\d+)\./);
     if (m) { cur = "S" + String(m[1]).padStart(2, "0"); fiches[cur] = []; continue; }
     if (l.startsWith("## ") || l.trim() === "---") { cur = null; continue; }
-    if (cur && l.trim()) fiches[cur].push(l);
+    // l'étiquette « - F1. » est un repère de la fiche, pas une information : elle ne doit pas entrer dans la base de nombres
+    if (cur && l.trim()) fiches[cur].push(l.replace(/^\s*-\s*F\d+\.\s*/, ""));
   }
 }
 
