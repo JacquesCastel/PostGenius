@@ -1,4 +1,4 @@
-# Combien de chiffres inventés dans un post LinkedIn généré par IA ? Notre test, ses résultats et ses limites
+# Une IA qui écrit un post LinkedIn invente-t-elle des faits ? Notre test, ses résultats et ses limites
 
 *Test non scientifique : 10 sujets, 1 génération par cas, un seul classeur, qui connaît l'outil évalué. Résultats du 10 novembre 2026.*
 
@@ -100,6 +100,21 @@ La condition AN produit presque aucun élément à contrôler (1 sur 10 textes) 
 | 10 Salon (sans chiffre) | 6 | 4 | 0 | 1 | 0 | 0 | 0 |
 
 Écarts par sujet, sur dix sujets : C a moins d'éléments non supportés que B dans 8 sujets, autant dans 2, jamais plus (écart moyen −2,5). Entre D et B, D a moins dans 5 sujets, autant dans 2, plus dans 3 (écart moyen −0,4). C a moins que D dans 9 sujets sur 10.
+
+### Quels types de faits ?
+
+Nous avons relevé tout fait contrôlable, quel qu'en soit le type, et pas seulement les chiffres. Répartition sur les 70 textes (tableau généré par `scripts/e4-types.mjs`, par condition dans `resultats/types-de-faits.md`) :
+
+| Type de fait | Relevés | Inventés ou déformés |
+|---|---|---|
+| Chiffres, pourcentages, montants | 175 | 109 |
+| Dates et durées | 30 | 16 |
+| Noms propres | 77 | 1 |
+| Citations | 4 | 0 |
+| Études et sources citées | 1 | 0 |
+| **Total** | **287** | **126** |
+
+Dans ce test, l'invention a porté sur des chiffres et des dates. Presque aucun nom propre n'a été inventé, et il n'y a eu ni citation ni étude inventée. **Mais les citations et les sources sont rares dans ces textes (5 faits sur 287) : ce test ne permet presque rien de dire sur l'invention d'une citation ou d'une étude.**
 
 ### Ce que disent les règles de décision
 

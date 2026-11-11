@@ -1,10 +1,10 @@
 # Article 10 — à coller dans Contenu du site → Blog → Nouvel article
 
 ## TITRE
-Chiffres inventés dans les posts LinkedIn générés par IA : notre test et ses limites
+Une IA qui écrit votre post LinkedIn invente-t-elle des faits ? Notre test et ses limites
 
 ## RÉSUMÉ (méta description)
-Nous avons relevé les chiffres inventés dans 70 posts LinkedIn générés par IA, avec et sans les faits. Résultats, textes complets et limites du test.
+Nous avons relevé les faits contrôlables (chiffres, dates, noms, sources) de 70 posts LinkedIn générés par IA. Résultats, textes et limites du test.
 
 ## CONTENU (Markdown)
 *Test non scientifique : 10 sujets, 1 génération par cas, un seul classeur, qui connaît l'outil évalué. Résultats du 10 novembre 2026.*
@@ -104,6 +104,19 @@ La condition AN produit presque aucun élément à contrôler : sans faits ni de
 - **Sujet 10 (salon, sans chiffre dans la fiche)** : A 6, B 4, C 0, D 1, AN 0, BN 0, CN 0
 
 Sujet par sujet, LinkeePost a moins d'éléments non supportés que B dans 8 sujets, autant dans 2, jamais plus (écart moyen de 2,5). D a moins que B dans 5 sujets, autant dans 2, plus dans 3 (écart moyen de 0,4). LinkeePost a moins que D dans 9 sujets sur 10.
+
+### Quels types de faits ?
+
+Nous avons relevé tout fait contrôlable, quel qu'en soit le type, et pas seulement les chiffres. Sur les 70 textes (répartition générée par `scripts/e4-types.mjs`) :
+
+- **Chiffres, pourcentages, montants :** 175 relevés, 109 inventés ou déformés.
+- **Dates et durées :** 30 relevées, 16 inventées ou déformées.
+- **Noms propres :** 77 relevés, 1 inventé ou déformé.
+- **Citations :** 4 relevées, aucune inventée.
+- **Études et sources citées :** 1 relevée, aucune inventée.
+- **Total :** 287 faits relevés, 126 inventés ou déformés.
+
+Dans ce test, l'invention a porté sur des chiffres et des dates. Presque aucun nom propre n'a été inventé, et il n'y a eu ni citation ni étude inventée. **Mais les citations et les sources sont rares dans ces textes (5 faits sur 287) : ce test ne permet presque rien de dire sur l'invention d'une citation ou d'une étude.**
 
 ### Ce que disent les règles de décision
 
