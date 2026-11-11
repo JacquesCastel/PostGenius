@@ -27,7 +27,7 @@ function parseCsv(txt) {
   return rows.filter((r) => r.length > 1 || r[0]);
 }
 const sha = (f) => crypto.createHash("sha256").update(fs.readFileSync(f)).digest("hex");
-const tokensOf = (rules) => rules.filter((r) => ["noEmoji", "maxHashtags", "address"].includes(r.kind)).map((r) => (r.kind === "maxHashtags" ? `maxHashtags:${r.value}` : r.kind === "address" ? `address:${r.side}` : r.kind));
+const tokensOf = (rules) => rules.filter((r) => ["noEmoji", "maxHashtags", "address", "endsWithQuestion"].includes(r.kind)).map((r) => (r.kind === "maxHashtags" ? `maxHashtags:${r.value}` : r.kind === "address" ? `address:${r.side}` : r.kind));
 const derive = (text, lang = "fr") => tokensOf(deriveConsigneRules({ sources: [{ origin: "Consignes", text }], language: lang }));
 
 const exportIdx = process.argv.indexOf("--export");
@@ -45,7 +45,7 @@ if (exportIdx > -1) {
 }
 
 const corpus = parseCsv(fs.readFileSync(path.join(DIR, "corpus.csv"), "utf8")).slice(1).map(([id, source, texte, attendu, note]) => ({ id, source, texte, attendu: (attendu || "").split("|").filter(Boolean), note: note || "" }));
-const UNSUPPORTED = new Set(["endsWithQuestion", "terms"]);
+const UNSUPPORTED = new Set(["terms"]); // « terminer par une question » est pris en charge depuis l'exécution 3
 const groups = { reel: (r) => !r.id.startsWith("S"), synthetique: (r) => r.id.startsWith("S") };
 const detail = [["id", "source", "attendu", "obtenu", "retrouvé", "manquant", "en_trop", "texte"]];
 const agg = {};
@@ -72,11 +72,11 @@ let md = `# Mesure du contrôle des consignes : résultats\n\n**Brouillon.** Pro
 for (const [name, a] of Object.entries(agg)) {
   const prises = a.attendues - a.non_prises_en_charge.length;
   md += `## ${name === "reel" ? "Consignes réelles du dépôt (R01 à R10)" : "Formulations synthétiques (S01 à S34)"}\n\n`;
-  md += `- Consignes : ${a.consignes}\n- Règles attendues retrouvées : ${pct(a.retrouvees, a.attendues)}\n- Dont règles du type pris en charge (émoji, hashtags, tutoiement/vouvoiement) : ${pct(a.retrouvees, prises)}\n`;
-  md += `- Manquantes, type pris en charge : ${a.manquantes_prises_en_charge.length ? a.manquantes_prises_en_charge.join(" ; ") : "aucune"}\n- Type non pris en charge (terminer par une question, mot interdit en texte libre) : ${a.non_prises_en_charge.length ? a.non_prises_en_charge.join(" ; ") : "aucune"}\n`;
+  md += `- Consignes : ${a.consignes}\n- Règles attendues retrouvées : ${pct(a.retrouvees, a.attendues)}\n- Dont règles du type pris en charge (émoji, hashtags, tutoiement/vouvoiement, question finale) : ${pct(a.retrouvees, prises)}\n`;
+  md += `- Manquantes, type pris en charge : ${a.manquantes_prises_en_charge.length ? a.manquantes_prises_en_charge.join(" ; ") : "aucune"}\n- Type non pris en charge (mot interdit en texte libre) : ${a.non_prises_en_charge.length ? a.non_prises_en_charge.join(" ; ") : "aucune"}\n`;
   md += `- **Fausses règles** (produites sans être attendues) : ${a.en_trop.length ? a.en_trop.join(" ; ") : "aucune"}\n- Consignes sans règle attendue, et aucune règle produite : ${pct(a.sans_regle_ok, a.sans_regle_total)}\n\n`;
 }
-md += `## Reproductibilité\n\n\`\`\`json\n${JSON.stringify(meta, null, 2)}\n\`\`\`\n\nDétail : \`detail.csv\`. Relancer : \`node scripts/consignes-mesure.mjs\`.\n\n## Limites\n- Un seul étiqueteur, auteur du contrôle ; corpus réel minuscule (10 consignes, toutes du dépôt) ; formulations synthétiques écrites par le même auteur.\n- Aucune consigne d'un vrai compte : voir \`export-consignes.sql\`.\n- Le contrôle ne lit que \`styleNotes\`, la ligne éditoriale, les remarques et les mots à éviter ; **pas** la « voix de la marque » (\`brandVoice\`) des posts de page.\n`;
+md += `## Reproductibilité\n\n\`\`\`json\n${JSON.stringify(meta, null, 2)}\n\`\`\`\n\nDétail : \`detail.csv\`. Relancer : \`node scripts/consignes-mesure.mjs\`.\n\n## Limites\n- Un seul étiqueteur, auteur du contrôle ; corpus réel minuscule (10 consignes, toutes du dépôt) ; formulations synthétiques écrites par le même auteur.\n- Aucune consigne d'un vrai compte : voir \`export-consignes.sql\`.\n- La « voix de la marque » (\`brandVoice\`) est lue par la route \`/api/consignes\` pour un post de page ; ce corpus ne la teste que sur le texte (R07), pas la lecture du champ.\n`;
 fs.writeFileSync(path.join(DIR, "resultats.md"), md);
 fs.writeFileSync(path.join(DIR, "detail.csv"), "﻿" + detail.map((r) => r.map((x) => (/[;"\n]/.test(String(x)) ? `"${String(x).replace(/"/g, '""')}"` : x)).join(";")).join("\n") + "\n");
 console.log(md);

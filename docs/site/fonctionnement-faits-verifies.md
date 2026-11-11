@@ -44,7 +44,7 @@
 
 **Conséquence pour les mots du site :** il n'y a pas de « contrôle continu pendant la génération » d'un post libre. Il y a des contrôles **à chaque étape** : avant (brief, si activé), à l'écriture (instructions), après (chiffres, forme, relecture si activée). Pour une campagne, le contrôle des règles du brief se fait **après chaque texte**.
 
-**Le contrôle des consignes (ajouté le 11 novembre 2026).** Pour un post libre, le code lit les consignes de l'utilisateur (consignes de style, ligne éditoriale, remarques, mots « à éviter », longueur maximale du formulaire) et contrôle cinq types de consignes **explicites** sur le texte affiché : zéro émoji, nombre maximal de hashtags, mots à éviter, longueur maximale, tutoiement ou vouvoiement (en français). Une consigne ambiguë ou conditionnelle (« 3 hashtags », « tutoiement seulement sur les posts personnels ») ne produit aucune règle. Un écart est **montré sous le post**, jamais corrigé ni régénéré : l'utilisateur décide. Les autres consignes (ton, angle, style) sont transmises à l'IA, sans contrôle ensuite. Code : `lib/consigneRules.js`, `app/api/consignes/route.js`, composant `ConsignesCheck` (`app/app/page.js`). Route de génération non modifiée (moteur figé pour la démonstration).
+**Le contrôle des consignes (ajouté le 11 novembre 2026).** Pour un post libre, le code lit les consignes de l'utilisateur (consignes de style, ligne éditoriale, remarques, mots « à éviter », longueur maximale du formulaire) et contrôle six types de consignes **explicites** sur le texte affiché : zéro émoji, nombre maximal de hashtags, mots à éviter, longueur maximale, tutoiement ou vouvoiement (en français) et, ajouté le même jour, **terminer par une question**. Pour un post publié sur une page, la **voix de la marque** est lue en premier : elle l'emporte sur les consignes personnelles pour le tutoiement ou le vouvoiement, et le texte doit parler en « nous » (première personne du singulier signalée). Une consigne ambiguë ou conditionnelle (« 3 hashtags », « tutoiement seulement sur les posts personnels ») ne produit aucune règle. Un écart est **montré sous le post**, jamais corrigé ni régénéré : l'utilisateur décide. Les autres consignes (ton, angle, style) sont transmises à l'IA, sans contrôle ensuite. Code : `lib/consigneRules.js`, `app/api/consignes/route.js`, composant `ConsignesCheck` (`app/app/page.js`). Route de génération non modifiée (moteur figé pour la démonstration).
 
 ## 4. Quand il y a un doute : c'est l'utilisateur qui tranche
 | Situation | Ce qui se passe | Source | État |
@@ -73,7 +73,7 @@
 ## 6. Ce que l'outil ne fait pas (à publier)
 - Il ne garantit pas qu'un chiffre est exact. Il signale ceux qui sont absents de vos informations.
 - Il ne contrôle ni les noms propres, ni les citations, ni les études citées (`figureCheck.js`).
-- Il ne contrôle par code que cinq types de consignes explicites (émojis, hashtags, mots à éviter, longueur, tutoiement ou vouvoiement) ; les consignes de ton, d'angle et de style sont transmises à l'IA sans contrôle ensuite.
+- Il ne contrôle par code que six types de consignes explicites (émojis, hashtags, mots à éviter, longueur, tutoiement ou vouvoiement, question finale) et la voix « nous » d'une page ; les consignes de ton, d'angle et de style sont transmises à l'IA sans contrôle ensuite.
 - Il ne cite pas ses sources dans le texte du post.
 - La relecture indépendante est un avis d'un second modèle, pas une preuve.
 - Il ne prédit ni vues ni réactions.

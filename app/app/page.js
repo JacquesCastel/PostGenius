@@ -3096,16 +3096,16 @@ function MentionTool({ draftId, local, text, onInsert, mentions, onMentions, get
 
 // Contrôle des consignes d'un post libre : les règles (zéro émoji, hashtags, mots à éviter, longueur, tutoiement) sont lues dans les consignes
 // de l'utilisateur par /api/consignes, puis appliquées au texte affiché. Un écart est montré, jamais corrigé en silence.
-function ConsignesCheck({ text, contextId, language, maxChars }) {
+function ConsignesCheck({ text, contextId, language, maxChars, voiceKind }) {
   const [rules, setRules] = useState([]);
   useEffect(() => {
     let alive = true;
-    fetch("/api/consignes", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ contextId: contextId || undefined, language: language || undefined, maxChars }) })
+    fetch("/api/consignes", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ contextId: contextId || undefined, language: language || undefined, maxChars, publishAs: { kind: voiceKind === "org" ? "org" : "person" } }) })
       .then((r) => (r.ok ? r.json() : { rules: [] }))
       .then((d) => { if (alive) setRules(Array.isArray(d.rules) ? d.rules : []); })
       .catch(() => { if (alive) setRules([]); });
     return () => { alive = false; };
-  }, [contextId, language, maxChars]);
+  }, [contextId, language, maxChars, voiceKind]);
   if (!rules.length) return null;
   const issues = checkConsignes(text, rules);
   return issues.length > 0 ? (
@@ -22272,7 +22272,7 @@ export default function Home() {
                         ) : null;
                       })()}
                       {/* Consignes de l'utilisateur que le code sait contrôler, appliquées au texte affiché */}
-                      <ConsignesCheck text={optimizeText ? optimizeText.text : result.text} contextId={activeContextId} language={form.language} maxChars={form.maxChars} />
+                      <ConsignesCheck text={optimizeText ? optimizeText.text : result.text} contextId={activeContextId} language={form.language} maxChars={form.maxChars} voiceKind={pair ? (pairTab === 1 ? "org" : "person") : voiceFor(target).kind} />
                       {result.sources?.length > 0 && (
                         <p className="text-[11px] text-gray-400 mt-3 border-t border-gray-100 pt-2">
                           Sources utilisées : {result.sources.map((x) => x.title).join(" · ")}

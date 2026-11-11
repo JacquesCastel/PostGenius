@@ -2,7 +2,7 @@
 R01;reel-demo;;;;;;Phrases courtes et concrètes. Aucun jargon. Pas d'exagération. Aucun chiffre inventé : si un chiffre n'est pas fourni, n'en donne pas.
 R02;reel-e4;;;;;;Ton sobre et direct. Phrases courtes.
 R03;reel-eval;;;;;;Phrases courtes et concrètes. Aucun jargon. Pas d'exagération.
-R04;ui-exemple;address:tu|noEmoji|endsWithQuestion;noEmoji|address:tu;address:tu|noEmoji;endsWithQuestion;;Je tutoie mon audience, phrases courtes, pas d'émojis, une question pour finir
+R04;ui-exemple;address:tu|noEmoji|endsWithQuestion;noEmoji|address:tu|endsWithQuestion;address:tu|noEmoji|endsWithQuestion;;;Je tutoie mon audience, phrases courtes, pas d'émojis, une question pour finir
 R05;ui-exemple;address:tu|noEmoji;noEmoji|address:tu;address:tu|noEmoji;;;je tutoie mon audience, pas d'emojis, phrases courtes
 R06;ui-exemple;address:tu|noEmoji;noEmoji|address:tu;address:tu|noEmoji;;;je tutoie mon audience, pas d'emojis, phrases courtes, une anecdote en ouverture
 R07;ui-exemple-voix-marque;address:tu;address:tu;address:tu;;;nous tutoyons, phrases courtes, jamais de jargon
@@ -25,7 +25,7 @@ S13;synthetique;;;;;;Tutoiement seulement sur les posts personnels
 S14;synthetique;;;;;;Pas d'émoji sauf pour les annonces
 S15;synthetique;noEmoji;noEmoji;noEmoji;;;Pas d'émojis, tutoiement seulement sur les posts personnels
 S16;synthetique;maxHashtags:3;;;maxHashtags:3;;Ne dépasse jamais 3 hashtags
-S17;synthetique;endsWithQuestion;;;endsWithQuestion;;Termine toujours par une question.
+S17;synthetique;endsWithQuestion;endsWithQuestion;endsWithQuestion;;;Termine toujours par une question.
 S18;synthetique;terms;;;terms;;Jamais le mot « leader ».
 S19;synthetique;;;;;;Phrases courtes, ton direct, pas de jargon.
 S20;synthetique;noEmoji|maxHashtags:0;noEmoji|maxHashtags:0;noEmoji|maxHashtags:0;;;Aucun émoji, aucun hashtag.

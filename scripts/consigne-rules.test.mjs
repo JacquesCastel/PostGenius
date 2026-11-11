@@ -126,3 +126,54 @@ test("interface : le contrôle s'applique au texte affiché et ne le modifie pas
   const comp = page.slice(page.indexOf("function ConsignesCheck"), page.indexOf("function PlanText"));
   assert.ok(comp.includes("checkConsignes(text, rules)") && !comp.includes("setResult") && !comp.includes("onChange"), "aucune écriture dans le texte");
 });
+
+test("terminer par une question : consigne reconnue (y compris l'exemple de l'application), contrôle de la dernière ligne", () => {
+  for (const t of ["Je tutoie mon audience, phrases courtes, pas d'émojis, une question pour finir", "Termine toujours par une question.", "Finis par une question", "Question finale obligatoire", "Conclus par une question ouverte"]) {
+    assert.ok(kinds(deriveConsigneRules({ sources: src(t) })).includes("endsWithQuestion"), t);
+  }
+  for (const t of ["Pas de question finale", "Évite de finir par une question", "Une question pour finir, sauf pour les annonces", "Ne termine pas par une question"]) {
+    assert.ok(!kinds(deriveConsigneRules({ sources: src(t) })).includes("endsWithQuestion"), t);
+  }
+  const rules = deriveConsigneRules({ sources: src("Une question pour finir") });
+  assert.equal(checkConsignes("Un constat.\n\nEt vous, que faites-vous ?", rules).length, 0);
+  assert.equal(checkConsignes("Un constat.\n\nEt vous, que faites-vous ? 🙂", rules).length, 0, "un émoji final ne cache pas la question");
+  assert.equal(checkConsignes("Un constat.\n\nEt vous, que faites-vous ?\n\n#qualité #industrie", rules).length, 0, "les hashtags finaux sont ignorés");
+  const issues = checkConsignes("Un constat sans question.\n\n#qualité", rules);
+  assert.equal(issues.length, 1);
+  assert.equal(issues[0].severity, "warn");
+  assert.match(issues[0].text, /terminer par une question/);
+});
+
+test("voix de la marque : lue en priorité pour un post de page, l'emporte sur les consignes personnelles, absente d'un post de profil", () => {
+  const sources = [
+    { origin: "Voix de la marque", text: "nous vouvoyons, phrases courtes, jamais de jargon", authority: true },
+    { origin: "Consignes de style", text: "Je tutoie mon audience, pas d'émojis" },
+  ];
+  const page = deriveConsigneRules({ sources, orgVoice: true });
+  const address = page.find((r) => r.kind === "address");
+  assert.equal(address.side, "vous", "la voix de la marque l'emporte sur le tutoiement personnel");
+  assert.equal(address.origin, "Voix de la marque");
+  assert.ok(page.some((r) => r.kind === "noEmoji"), "les autres consignes restent contrôlées");
+  assert.ok(page.some((r) => r.kind === "noFirstPersonSingular"));
+  // Sans autorité (post de profil) : les deux consignes se contredisent, aucune règle de tutoiement n'est devinée
+  const profile = deriveConsigneRules({ sources: sources.map(({ authority, ...s }) => s) });
+  assert.ok(!profile.some((r) => r.kind === "address"));
+  assert.ok(!profile.some((r) => r.kind === "noFirstPersonSingular"));
+});
+
+test("page entreprise : la première personne du singulier est signalée, « nous » et « notre » non ; hors français, aucun contrôle", () => {
+  const rules = deriveConsigneRules({ orgVoice: true });
+  assert.equal(checkConsignes("Nous accompagnons nos clients, notre équipe aussi.", rules).length, 0);
+  assert.match(checkConsignes("J'ai rencontré un client.", rules)[0].text, /« j' »/);
+  assert.match(checkConsignes("Mon équipe est fière.", rules)[0].text, /« mon »/);
+  assert.equal(checkConsignes("Le mode d'emploi est simple.", rules).length, 0, "« mode » ne contient pas « mon »");
+  assert.deepEqual(deriveConsigneRules({ orgVoice: true, language: "en" }), []);
+});
+
+test("route /api/consignes lit la voix de la marque avant les consignes de style, pour une page seulement (lecture du code)", () => {
+  const route = fs.readFileSync(new URL("../app/api/consignes/route.js", import.meta.url), "utf8");
+  assert.ok(route.includes("profile?.brandVoice") && route.includes("authority: true") && route.includes("orgVoice: org"));
+  assert.ok(route.indexOf("Voix de la marque") < route.indexOf("Consignes de style"), "la voix de la marque est lue en premier");
+  const page = fs.readFileSync(new URL("../app/app/page.js", import.meta.url), "utf8");
+  assert.ok(page.includes("voiceKind={pair ?"));
+});
