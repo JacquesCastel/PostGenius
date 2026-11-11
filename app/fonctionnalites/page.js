@@ -148,7 +148,7 @@ export default function FonctionnalitesPage() {
           points={[
             "Résumé de ce que le moteur a appris : positions, voix, preuves, zones d'ombre",
             "Échange avec le moteur pour affiner : ce qu'il propose de retenir attend votre accord",
-            "Chaque chiffre repris doit se retrouver dans une source, citée dans le post",
+            "Les chiffres du post absents de vos informations sont signalés sous le post, avant publication ; les sources utilisées sont indiquées à côté du post",
             "Partager vers LinkeePost : commenter, écrire un post ou garder un lien dans la base",
             "Dictée vocale : parlez au lieu d'écrire, relisez le texte, gardez-le comme note ou faites-en un post",
           ]}
@@ -380,7 +380,7 @@ export default function FonctionnalitesPage() {
           text="Déposez un contenu qui vous a déjà demandé du travail : LinkeePost en tire les faits, vous propose des angles, puis écrit un post par angle choisi, à partir des seuls faits que vous avez cochés. Vous relisez, puis la série est programmée sur votre rythme de publication."
           points={[
             "Un lien, un PDF ou un document Word, un texte collé, ou une vidéo ou un enregistrement audio",
-            "Les faits utilisables sont listés : vous cochez, corrigez, ajoutez ; chaque chiffre doit se retrouver dans le contenu d'origine",
+            "Les faits utilisables sont listés : le code ne garde un fait que si tous ses chiffres figurent dans le contenu d'origine ; vous cochez, corrigez, ajoutez",
             "Jusqu'à 10 angles (chiffre, histoire, erreur, coulisses, question…), un post par angle, et par destination si vous publiez sur votre profil et sur votre page",
             "Droits d'auteur : vous indiquez si le contenu est le vôtre ; s'il est d'un tiers, les posts sont reformulés avec vos mots et la source est citée en premier commentaire",
             "Vidéo ou audio : 60 minutes au plus, transcription relue avant l'analyse, repère dans la vidéo pour chaque fait, citations reprises mot pour mot ; le fichier n'est jamais conservé",

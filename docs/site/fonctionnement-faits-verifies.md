@@ -79,8 +79,8 @@
 - Il ne prédit ni vues ni réactions.
 
 ## 7. Corrections nécessaires sur le site actuel
-1. `/fonctionnalites`, « Votre matière » : « Chaque chiffre repris doit se retrouver dans une source, **citée dans le post** » est faux : les sources sont montrées à côté du post, pas dans son texte. Même phrase absolue que pour « Seconde vie d'un contenu ».
-2. Deux contrôles de chiffres coexistent : `figureCheck.js` (posts libres) et la règle « Chiffre à confirmer » de `campaignChecks.js` (campagnes), dont l'algorithme diffère (liste d'unités et recherche par texte). La page doit décrire l'effet, pas un algorithme unique ; l'unification est une décision de produit.
+1. ~~`/fonctionnalites`, « Votre matière »~~ **Corrigé dans le code le 11 novembre 2026** (reste à déployer). Ancien texte : « Chaque chiffre repris doit se retrouver dans une source, **citée dans le post** », faux : les sources sont montrées à côté du post, pas dans son texte. Même phrase absolue que pour « Seconde vie d'un contenu ».
+2. ~~Deux contrôles de chiffres coexistent~~ **Corrigé le 11 novembre 2026** : `campaignChecks.js` utilise désormais `figureCheck.js` (un seul algorithme, test `scripts/campaign-figures.test.mjs`). Les informations comparées restent celles de la publication et du brief de campagne.
 3. La mesure publiée sur E4 (`docs/e4-chiffres/mesure-figurecheck/`) ne concerne que `figureCheck.js`.
 
 ## 8. À confirmer en production avant toute mention publique
