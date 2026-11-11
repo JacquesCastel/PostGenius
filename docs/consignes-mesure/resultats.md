@@ -15,9 +15,9 @@
 ## Formulations synthétiques (S01 à S34)
 
 - Consignes : 34
-- Règles attendues retrouvées : 26 sur 31 (83.9 %)
-- Dont règles du type pris en charge (émoji, hashtags, tutoiement/vouvoiement, question finale) : 26 sur 30 (86.7 %)
-- Manquantes, type pris en charge : S03 noEmoji ; S12 address:tu ; S16 maxHashtags:3 ; S29 maxHashtags:3
+- Règles attendues retrouvées : 28 sur 31 (90.3 %)
+- Dont règles du type pris en charge (émoji, hashtags, tutoiement/vouvoiement, question finale) : 28 sur 30 (93.3 %)
+- Manquantes, type pris en charge : S03 noEmoji ; S12 address:tu
 - Type non pris en charge (mot interdit en texte libre) : S18 terms
 - **Fausses règles** (produites sans être attendues) : aucune
 - Consignes sans règle attendue, et aucune règle produite : 8 sur 8 (100.0 %)
@@ -26,8 +26,8 @@
 
 ```json
 {
-  "date": "2026-11-11T09:42:42.097Z",
-  "consigneRules_sha256": "4d53321e849792d98413d5db951793a7d981ffc771bf03cbe92dcb93b32ecca4",
+  "date": "2026-11-11T09:47:38.808Z",
+  "consigneRules_sha256": "9af06db0657b459eb1d6421094bc92aebdc1d298312b9fbb937b7f65f906cbc6",
   "corpus_sha256": "974a841b8d51f6001af6277aae91b73695623329f4cc26ba29e32008375cc573",
   "script_sha256": "e3c5eb232d0863557505394032bf73f4ccc71686d1398554637a2d95c58ae3f2"
 }

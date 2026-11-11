@@ -24,7 +24,7 @@ S12;synthetique;address:tu;;;address:tu;;Tu t'adresses directement au lecteur
 S13;synthetique;;;;;;Tutoiement seulement sur les posts personnels
 S14;synthetique;;;;;;Pas d'émoji sauf pour les annonces
 S15;synthetique;noEmoji;noEmoji;noEmoji;;;Pas d'émojis, tutoiement seulement sur les posts personnels
-S16;synthetique;maxHashtags:3;;;maxHashtags:3;;Ne dépasse jamais 3 hashtags
+S16;synthetique;maxHashtags:3;maxHashtags:3;maxHashtags:3;;;Ne dépasse jamais 3 hashtags
 S17;synthetique;endsWithQuestion;endsWithQuestion;endsWithQuestion;;;Termine toujours par une question.
 S18;synthetique;terms;;;terms;;Jamais le mot « leader ».
 S19;synthetique;;;;;;Phrases courtes, ton direct, pas de jargon.
@@ -37,7 +37,7 @@ S25;synthetique;;;;;;Utilise des émojis avec parcimonie
 S26;synthetique;address:vous;address:vous;address:vous;;;Aucun tutoiement, jamais
 S27;synthetique;maxHashtags:2;maxHashtags:2;maxHashtags:2;;;2 hashtags maximum
 S28;synthetique;;;;;;Pas de hashtag dans le corps du texte
-S29;synthetique;maxHashtags:3;;;maxHashtags:3;;Limite-toi à 3 hashtags
+S29;synthetique;maxHashtags:3;maxHashtags:3;maxHashtags:3;;;Limite-toi à 3 hashtags
 S30;synthetique;address:vous;address:vous;address:vous;;;Vouvoie. Jamais de tu.
 S31;synthetique;;;;;;3 hashtags
 S32;synthetique;address:vous;address:vous;address:vous;;;Ne tutoie pas les lecteurs

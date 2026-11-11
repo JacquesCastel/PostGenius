@@ -177,3 +177,17 @@ test("route /api/consignes lit la voix de la marque avant les consignes de style
   const page = fs.readFileSync(new URL("../app/app/page.js", import.meta.url), "utf8");
   assert.ok(page.includes("voiceKind={pair ?"));
 });
+
+test("formulations ajoutées : « ne dépasse jamais N hashtags » et « limite-toi à N hashtags »", () => {
+  assert.equal(deriveConsigneRules({ sources: src("Ne dépasse jamais 3 hashtags") })[0].value, 3);
+  assert.equal(deriveConsigneRules({ sources: src("Limite-toi à 3 hashtags") })[0].value, 3);
+  assert.equal(deriveConsigneRules({ sources: src("Ne dépasse pas deux hashtags") })[0].value, 2);
+  assert.deepEqual(deriveConsigneRules({ sources: src("Ne dépasse jamais 3 000 caractères") }), [], "sans le mot hashtag, aucune règle");
+});
+
+test("question finale : une signature après la question ne la masque pas", () => {
+  const rules = deriveConsigneRules({ sources: src("Une question pour finir") });
+  assert.equal(checkConsignes("Un constat.\n\nEt vous ?\n\n— Marie", rules).length, 0);
+  assert.equal(checkConsignes("Un constat.\n\nEt vous ?\n\n- Marie Dupont, directrice\n\n#rh", rules).length, 0);
+  assert.equal(checkConsignes("Un constat sans question.\n\n— Marie", rules).length, 1, "sans question, l'écart reste signalé");
+});

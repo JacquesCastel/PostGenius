@@ -29,9 +29,12 @@ Jacques a demandé de lire la voix de la marque avant les consignes et d'ajouter
 
 L'étiquette `endsWithQuestion` du corpus, jusque-là « non prise en charge », devient prise en charge : le script a été modifié en conséquence. Les deux manques étaient connus avant ; ce n'est pas une mesure indépendante.
 
+## Exécution 4 : formulations et signature (11 novembre 2026)
+Deux manques signalés à Jacques sont comblés : « Ne dépasse jamais N hashtags » et « Limite-toi à N hashtags » sont reconnues ; une signature (« — Marie ») après la question finale ne la masque plus. Résultat : synthétique **28 sur 31** (26 avant) ; réel 8 sur 8 ; aucune fausse règle. Ces formulations étaient connues avant : ce n'est pas une mesure indépendante, et le corpus ne mesure pas la signature (testée à part).
+
 ## Ce que montre la mesure
 - **Sur les consignes que l'application propose elle-même** (« je tutoie mon audience, pas d'émojis, phrases courtes… »), le contrôle retrouve le tutoiement et le zéro émoji, sans fausse règle.
-- **Manques de formulation (synthétique)** : « Évite les émojis » (formulation douce, choix de prudence), « Tu t'adresses directement au lecteur » (sans le mot tutoiement), « Ne dépasse jamais 3 hashtags » et « Limite-toi à 3 hashtags » (formulations claires, non reconnues).
+- **Manques de formulation (synthétique)** : « Évite les émojis » (formulation douce, choix de prudence) et « Tu t'adresses directement au lecteur » (sans le mot tutoiement).
 - **Le mot interdit en texte libre** (« Jamais le mot « leader » ») n'est pas contrôlé ; seuls les mots validés dans « À éviter » le sont.
 
 ## Limites
