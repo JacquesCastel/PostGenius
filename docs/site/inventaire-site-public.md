@@ -117,3 +117,18 @@ Je n'ai pas accès à la production (réseau de la session restreint). Commandes
 ## 9. Ce qui n'est pas vérifié
 
 Production, contenu en base, articles publiés, déclarations chez des tiers, détail de `/comment-ca-marche`, `/tarifs`, `/beta`, `/contact`, `/motion`. Les chiffres de `/securite` ne sont pas recontrôlés dans le code.
+
+## 10. Arborescence précisée par Jacques (11 novembre 2026)
+
+| Adresse | Contenu | Règle |
+|---|---|---|
+| `/preuves` | uniquement l'externe et le vérifiable : test E4 (gists datés), démonstration éditoriale, résultats défavorables publiés, empreintes | une entrée n'existe que si sa page existe : **pas de carte « à venir »** |
+| `/produit/methode` | comment le contenu est créé : documents → brouillon → signalement des chiffres absents → validation par l'auteur | décrit le parcours réel, étape par étape |
+| `/produit/verification` | le contrôle interne : « Chiffres à vérifier », ce que les empreintes prouvent et ne prouvent pas | voir les trois précisions ci-dessous |
+
+**Précisions à garder en tête**
+1. **Le produit n'a pas d'empreintes.** Les empreintes (SHA-256) sont celles des **protocoles de test** (E4, démonstration), pas d'une fonction du produit. `/produit/verification` peut expliquer ce qu'une empreinte prouve (le texte n'a pas changé depuis la date de publication) et ne prouve pas (que le contenu est exact), mais doit décrire `lib/figureCheck.js` seul pour la fonction, et renvoyer vers `/preuves` pour les empreintes elles-mêmes.
+2. **« Résultats défavorables publiés »** : la rubrique n'est remplie que de ce qui existe. Aucun résultat défavorable n'est déclaré ici tant qu'il n'est pas tiré du compte rendu publié.
+3. **`/scoring` reste au premier niveau** (arborescence validée le 11 novembre), nommé « Contrôle de forme ». Les maquettes qui le plaçaient sous `/produit/controle-de-forme` sont à corriger : le lien pointe vers `/scoring`.
+
+Redirections : celles de la section 7 restent valables, sauf `/scoring`, qui est renommée sans changer de niveau (redirection de l'ancienne adresse seulement si le chemin change).
