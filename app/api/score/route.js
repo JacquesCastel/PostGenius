@@ -4,12 +4,12 @@ import { logUsage } from "@/lib/usage";
 import { scorePost } from "@/lib/score";
 import { checkFeature, limitBody } from "@/lib/gating";
 
-// Score de potentiel d'engagement (heuristique) + conseils IA courts.
+// Contrôle de forme (note heuristique de mise en forme) + conseils IA courts.
 export async function POST(req) {
   const userId = await getUserId(req);
   if (!userId) return NextResponse.json({ error: "Non connecté." }, { status: 401 });
 
-  const gate = await checkFeature(userId, "scoring", "Le score d'engagement");
+  const gate = await checkFeature(userId, "scoring", "Le contrôle de forme");
   if (!gate.ok) return NextResponse.json(limitBody(gate), { status: 403 });
 
   const { text, type } = await req.json();

@@ -2219,7 +2219,7 @@ const POST_COLUMNS = [
   { id: "publié", title: "Publiés", dot: "bg-green-500", hint: "En ligne sur LinkedIn." },
   { id: "erreur", title: "Erreurs", dot: "bg-red-500", hint: "La publication a échoué : la carte explique pourquoi." },
 ];
-// Score d'engagement : même palette que l'écran d'optimisation
+// Contrôle de forme : même palette que l'écran d'optimisation
 const scoreTone = (n) => (n >= 80 ? "bg-green-50 text-green-700" : n >= 60 ? "bg-[#fff1f1] text-[#f63d44]" : n >= 40 ? "bg-amber-50 text-amber-700" : "bg-red-50 text-red-700");
 
 // Relecture en série des posts « à valider » : un post à la fois, en entier, avec Valider / Modifier / Passer.
@@ -8721,7 +8721,7 @@ function PostWhy({ text, why, onReanalyze, reanalyzing }) {
 }
 
 // ----------------------------------------------------------------
-// Score de potentiel d'engagement (heuristique instantanée + conseils IA)
+// Contrôle de forme (note heuristique instantanée + conseils IA)
 // ----------------------------------------------------------------
 function ScorePanel({ text, type, recomputing, onTips }) {
   const heur = scorePost({ text, type });
@@ -11938,18 +11938,18 @@ function DashboardView({ drafts, canVeille = true, canEvents = false, canScore =
     { label: "Erreurs", value: errors.length, color: "#ef4444" },
   ];
 
-  // Score d'engagement moyen des posts rédigés
+  // Note de forme moyenne des posts rédigés (contrôle de forme)
   const scoredPosts = drafts.filter((d) => d.text && d.text.trim());
   const scores = scoredPosts.map((d) => scorePost({ text: d.text, type: d.type }).score);
   const avgScore = scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : null;
   const avgColor =
     avgScore == null ? "#94a3b8" : avgScore >= 80 ? "#16a34a" : avgScore >= 60 ? "#ff5a5f" : avgScore >= 40 ? "#f59e0b" : "#ef4444";
   const avgLevel =
-    avgScore == null ? "" : avgScore >= 80 ? "Excellent" : avgScore >= 60 ? "Bon" : avgScore >= 40 ? "Moyen" : "À retravailler";
+    avgScore == null ? "" : avgScore >= 80 ? "Bien construit" : avgScore >= 60 ? "Correct" : avgScore >= 40 ? "À renforcer" : "À retravailler";
   const scoreBuckets = [
-    { label: "Excellent", color: "#16a34a", count: scores.filter((s) => s >= 80).length },
-    { label: "Bon", color: "#ff5a5f", count: scores.filter((s) => s >= 60 && s < 80).length },
-    { label: "Moyen", color: "#f59e0b", count: scores.filter((s) => s >= 40 && s < 60).length },
+    { label: "Bien construit", color: "#16a34a", count: scores.filter((s) => s >= 80).length },
+    { label: "Correct", color: "#ff5a5f", count: scores.filter((s) => s >= 60 && s < 80).length },
+    { label: "À renforcer", color: "#f59e0b", count: scores.filter((s) => s >= 40 && s < 60).length },
     { label: "À retravailler", color: "#ef4444", count: scores.filter((s) => s < 40).length },
   ];
 
@@ -20965,7 +20965,7 @@ export default function Home() {
 
   const plan = planOf(user);
   const canImages = plan.imagesPerMonth !== 0; // Essentiel = 0 → pas d'images
-  const canScore = planAllows(user, "scoring"); // score d'engagement : Pro/Agence
+  const canScore = planAllows(user, "scoring"); // contrôle de forme : Pro/Agence
   // Compteur de posts du mois (limite null = illimité)
   const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
   const postsThisMonth = drafts.filter((d) => new Date(d.createdAt) >= monthStart).length;

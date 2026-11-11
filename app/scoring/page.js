@@ -89,7 +89,7 @@ export default function ScoringPage() {
               <div className="flex-1">
                 <div className="flex items-center justify-between mb-1.5">
                   <p className="text-sm font-semibold">Note de forme</p>
-                  <span className="text-sm font-bold text-[#16a34a]">Excellent</span>
+                  <span className="text-sm font-bold text-[#16a34a]">Bien construit</span>
                 </div>
                 <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
                   <div className="h-full rounded-full bg-[#16a34a]" style={{ width: "82%" }} />
@@ -158,12 +158,12 @@ export default function ScoringPage() {
 
         {/* Niveaux de score */}
         <section className="max-w-5xl mx-auto px-6 py-10">
-          <h2 className="text-3xl md:text-4xl font-extrabold text-center mb-10">Lire votre score</h2>
+          <h2 className="text-3xl md:text-4xl font-extrabold text-center mb-10">Lire votre note de forme</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
-              { range: "80–100", label: "Excellent", color: "#16a34a", bg: "bg-green-50" },
-              { range: "60–79", label: "Bon", color: "#ff5a5f", bg: "bg-[#fff1f1]" },
-              { range: "40–59", label: "Moyen", color: "#f59e0b", bg: "bg-amber-50" },
+              { range: "80–100", label: "Bien construit", color: "#16a34a", bg: "bg-green-50" },
+              { range: "60–79", label: "Correct", color: "#ff5a5f", bg: "bg-[#fff1f1]" },
+              { range: "40–59", label: "À renforcer", color: "#f59e0b", bg: "bg-amber-50" },
               { range: "0–39", label: "À retravailler", color: "#ef4444", bg: "bg-red-50" },
             ].map((l) => (
               <div key={l.label} className={`${l.bg} rounded-2xl p-5 text-center`}>
