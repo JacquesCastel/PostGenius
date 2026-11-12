@@ -6,8 +6,6 @@ import { UserRound, LogOut, Menu, X } from "lucide-react";
 import LpMark from "./LpMark";
 import GoodbyeDialog from "./GoodbyeDialog";
 import { JOIN_HREF, pick } from "@/lib/access";
-import BrandMark, { BrandName } from "./v2/BrandMark";
-import { BRAND_NAME } from "@/lib/brand";
 
 // En-tête public partagé (landing, blog, contact, pages légales). Aussi rendu
 // depuis app/app/page.js (client) sur l'écran de connexion/inscription — d'où
@@ -22,17 +20,7 @@ const NAV = [
   ["/contact", "Contact"],
 ];
 
-// Navigation du nouveau style (variante « v2 ») : seulement des pages qui existent. À remplacer par Produit, Preuves, Tarifs, Blog, À propos
-// quand ces pages seront en ligne (docs/site/inventaire-site-public.md).
-const NAV_V2 = [
-  ["/fonctionnalites", "Fonctionnalités"],
-  ["/tarifs", "Tarifs"],
-  ["/blog", "Blog"],
-  ["/contact", "Contact"],
-];
-
-// variant : "classic" (style actuel) ou "v2" (nouveau style). La logique de session est la même pour les deux.
-export default function SiteHeader({ variant = "classic" } = {}) {
+export default function SiteHeader() {
   const [loggedIn, setLoggedIn] = useState(false);
   const [userName, setUserName] = useState("");
   const [goodbye, setGoodbye] = useState(false); // fenêtre d'au revoir après la déconnexion
@@ -74,52 +62,6 @@ export default function SiteHeader({ variant = "classic" } = {}) {
   };
 
   if (goodbye) return <GoodbyeDialog name={userName} />;
-
-  if (variant === "v2") {
-    const cta = "bg-[#C2456F] hover:bg-[#9E3157] text-white text-sm font-semibold px-4 sm:px-5 py-2.5 rounded-full transition-colors whitespace-nowrap";
-    const ring = "w-10 h-10 rounded-full border border-[#E8DCD8] bg-white flex items-center justify-center text-[#2E1F33] hover:border-[#C2456F] hover:text-[#9E3157] transition-colors";
-    return (
-      <header className="w-full max-w-[1200px] mx-auto px-4 sm:px-8 py-5 font-body-v2">
-        <div className="flex items-center justify-between gap-3">
-          <Link href={loggedIn ? "/app" : "/"} className="flex items-center gap-2.5 shrink-0" aria-label={loggedIn ? `${BRAND_NAME} : tableau de bord` : `${BRAND_NAME} : accueil`}>
-            <BrandMark size={36} />
-            <BrandName className="font-display text-[26px] font-medium text-[#2E1F33]" />
-          </Link>
-          <nav className="hidden lg:flex items-center gap-7 text-[15px] font-medium text-[#4A3A50] mx-auto" aria-label="Navigation principale">
-            {NAV_V2.map(([href, label]) => (
-              <Link key={href} href={href} className="hover:text-[#9E3157] transition-colors">{label}</Link>
-            ))}
-          </nav>
-          <div className="flex items-center gap-2 shrink-0">
-            <Link href={loggedIn ? "/app" : JOIN_HREF} data-testid="site-cta" className={cta}>
-              {loggedIn ? <><span className="sm:hidden">Mon espace</span><span className="hidden sm:inline">Tableau de bord</span></> : <><span className="sm:hidden">{pick("Bêta", "Essai")}</span><span className="hidden sm:inline">{pick("Rejoindre la bêta", "Essai gratuit")}</span></>}
-            </Link>
-            {loggedIn ? (
-              <button onClick={logout} title="Se déconnecter" aria-label="Se déconnecter" className={`hidden sm:flex ${ring}`}><LogOut size={17} /></button>
-            ) : (
-              <Link href="/app?mode=login" title="Se connecter" aria-label="Se connecter" data-testid="site-login" className={`flex ${ring}`}><UserRound size={17} /></Link>
-            )}
-            <button type="button" onClick={() => setOpen((o) => !o)} aria-label={open ? "Fermer le menu" : "Ouvrir le menu"} aria-expanded={open} data-testid="site-menu-toggle" className={`lg:hidden ${ring}`}>
-              {open ? <X size={18} /> : <Menu size={18} />}
-            </button>
-          </div>
-        </div>
-        {open && (
-          <nav className="lg:hidden mt-3 bg-white rounded-3xl border border-[#EFE4E0] p-2 flex flex-col" data-testid="site-menu" aria-label="Menu">
-            {NAV_V2.map(([href, label]) => (
-              <Link key={href} href={href} onClick={() => setOpen(false)} className="px-4 py-3 rounded-2xl text-[15px] font-medium text-[#2E1F33] hover:bg-[#F6E3E0]">{label}</Link>
-            ))}
-            {loggedIn && <Link href="/app" onClick={() => setOpen(false)} className="px-4 py-3 rounded-2xl text-[15px] font-semibold text-[#9E3157] hover:bg-[#F6E3E0]">Tableau de bord</Link>}
-            {loggedIn ? (
-              <button type="button" onClick={logout} className="sm:hidden text-left px-4 py-3 rounded-2xl text-[15px] font-medium text-[#2E1F33] hover:bg-[#F6E3E0]">Se déconnecter</button>
-            ) : (
-              <Link href="/app?mode=login" onClick={() => setOpen(false)} className="sm:hidden px-4 py-3 rounded-2xl text-[15px] font-medium text-[#2E1F33] hover:bg-[#F6E3E0]">Se connecter</Link>
-            )}
-          </nav>
-        )}
-      </header>
-    );
-  }
 
   return (
     <header className="max-w-6xl mx-auto px-4 sm:px-6 pt-5">

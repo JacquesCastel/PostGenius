@@ -11,21 +11,3 @@ html {
     min-width: 0;
   }
 }
-
-/* Nouveau site (pages « v2 ») : polices et texte d'article. Polices locales (@fontsource), pas de chargement externe. */
-.font-display { font-family: "Fraunces", Georgia, serif; }
-.font-body-v2 { font-family: "DM Sans", system-ui, sans-serif; }
-
-/* Texte d'un article de blog (rendu Markdown de lib/markdown.js) dans le nouveau style */
-.prose-v2 { font-size: 1.125rem; line-height: 1.8; color: #3a2b40; }
-.prose-v2 p { margin: 0 0 1.25rem 0; color: #3a2b40; line-height: 1.8; }
-.prose-v2 h1, .prose-v2 h2, .prose-v2 h3 { font-family: "Fraunces", Georgia, serif; font-weight: 400; color: #2e1f33; letter-spacing: -0.01em; line-height: 1.15; }
-.prose-v2 h1 { font-size: 2.4rem; margin: 2.5rem 0 1rem 0; }
-.prose-v2 h2 { font-size: 2rem; margin: 2.75rem 0 0.9rem 0; }
-.prose-v2 h3 { font-size: 1.5rem; margin: 2rem 0 0.7rem 0; }
-.prose-v2 ul, .prose-v2 ol { margin: 0 0 1.25rem 0; padding-left: 1.5rem; }
-.prose-v2 li { margin: 0.45rem 0; }
-.prose-v2 a { color: #9e3157; font-weight: 600; text-decoration: underline; }
-.prose-v2 strong { color: #2e1f33; }
-.prose-v2 blockquote { margin: 1.75rem 0; padding: 0.25rem 0 0.25rem 1.5rem; border-left: 4px solid #f6e3e0; font-family: "Fraunces", Georgia, serif; font-style: italic; font-size: 1.5rem; line-height: 1.4; color: #7a2342; }
-.prose-v2 code { background: #f6e3e0; border-radius: 6px; padding: 0 6px; font-size: 0.9em; color: #7a2342; }

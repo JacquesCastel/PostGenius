@@ -2,50 +2,9 @@ import Link from "next/link";
 import ChatWidget from "./ChatWidget";
 import LpMark from "./LpMark";
 import { pick } from "@/lib/access";
-import BrandMark, { BrandName } from "./v2/BrandMark";
-import { BRAND_NAME } from "@/lib/brand";
 
 // Pied de page public partagé (landing, blog, contact, pages légales)
-export default function SiteFooter({ variant = "classic" } = {}) {
-  if (variant === "v2") {
-    const link = "text-[#6B5A70] hover:text-[#9E3157] transition-colors";
-    return (
-      <>
-        <footer className="mt-10 bg-white border-t border-[#EFE4E0] font-body-v2">
-          <div className="max-w-[1200px] mx-auto px-4 sm:px-8 py-12 flex flex-wrap gap-12 justify-between">
-            <div className="flex-1 min-w-[240px]">
-              <div className="flex items-center gap-2.5"><BrandMark size={32} /><BrandName className="font-display text-2xl font-medium text-[#2E1F33]" /></div>
-              <p className="mt-3 max-w-xs text-sm leading-relaxed text-[#6B5A70]">Votre expertise, vos mots, vos posts : des publications LinkedIn écrites à partir de ce que vous savez.</p>
-            </div>
-            <nav aria-label="Produit" className="flex flex-col gap-2 text-sm">
-              <p className="font-semibold text-[#2E1F33]">Produit</p>
-              <Link href="/fonctionnalites" className={link}>Fonctionnalités</Link>
-              <Link href="/comment-ca-marche" className={link}>Comment ça marche</Link>
-              <Link href="/scoring" className={link}>Contrôle de forme</Link>
-              <Link href="/tarifs" className={link}>Tarifs</Link>
-            </nav>
-            <nav aria-label="Ressources" className="flex flex-col gap-2 text-sm">
-              <p className="font-semibold text-[#2E1F33]">Ressources</p>
-              <Link href="/blog" className={link}>Blog</Link>
-              <Link href="/contact" className={link}>Contact</Link>
-            </nav>
-            <nav aria-label="Informations légales" className="flex flex-col gap-2 text-sm">
-              <p className="font-semibold text-[#2E1F33]">Informations légales</p>
-              <Link href="/mentions-legales" className={link}>Mentions légales</Link>
-              <Link href="/cgu" className={link}>CGU</Link>
-              <Link href="/confidentialite" className={link}>Confidentialité</Link>
-              <Link href="/securite" className={link}>Sécurité</Link>
-              <Link href="/privacy-policy" className={link}>Privacy Policy</Link>
-            </nav>
-          </div>
-          <div className="max-w-[1200px] mx-auto px-4 sm:px-8 pb-8 text-xs text-[#6B5A70]">
-            {pick("Bêta fermée : accès sur invitation.", "Essai gratuit 14 jours, sans carte bancaire.")} © {new Date().getFullYear()} {BRAND_NAME}
-          </div>
-        </footer>
-        <ChatWidget />
-      </>
-    );
-  }
+export default function SiteFooter() {
   return (
     <>
     <footer className="mt-10 border-t border-rose-100/70 pt-10 pb-8">

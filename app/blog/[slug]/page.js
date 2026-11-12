@@ -3,8 +3,8 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { memo, MEMO_TTL } from "@/lib/memoCache";
 import { markdownToHtml } from "@/lib/markdown";
-import Shell from "@/components/v2/Shell";
-import { BRAND_NAME } from "@/lib/brand";
+import SiteHeader from "@/components/SiteHeader";
+import SiteFooter from "@/components/SiteFooter";
 import { JOIN_HREF, pick } from "@/lib/access";
 
 export const dynamic = "force-dynamic";
@@ -20,9 +20,9 @@ function getArticle(slug) {
 export async function generateMetadata({ params }) {
   const { slug } = await params;
   const a = await getArticle(slug);
-  if (!a || !a.published) return { title: `Article — ${BRAND_NAME}` };
+  if (!a || !a.published) return { title: "Article — LinkeePost" };
   return {
-    title: `${a.title} — ${BRAND_NAME}`,
+    title: `${a.title} — LinkeePost`,
     description: a.excerpt || undefined,
     alternates: { canonical: `/blog/${a.slug}` },
     openGraph: {
@@ -43,7 +43,9 @@ export default async function ArticlePage({ params }) {
   const html = markdownToHtml(a.content);
 
   return (
-    <Shell>
+    <div className="min-h-screen bg-gradient-to-b from-rose-50/60 via-white to-white text-[#1b2a4a]">
+      <SiteHeader />
+
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
@@ -56,33 +58,35 @@ export default async function ArticlePage({ params }) {
             dateModified: new Date(a.updatedAt).toISOString(),
             image: a.coverImage || undefined,
             inLanguage: "fr",
-            author: { "@type": "Organization", name: BRAND_NAME },
-            publisher: { "@type": "Organization", name: BRAND_NAME },
+            author: { "@type": "Organization", name: "LinkeePost" },
+            publisher: { "@type": "Organization", name: "LinkeePost" },
           }).replace(/</g, "\\u003c"),
         }}
       />
-      <article className="max-w-[760px] mx-auto px-4 sm:px-8 pt-8 pb-24">
-        <Link href="/blog" className="text-sm font-semibold text-[#9E3157] hover:underline">
+      <article className="max-w-4xl mx-auto px-6 py-12">
+        <Link href="/blog" className="text-sm text-[#ff5a5f] font-medium hover:underline">
           ← Tous les articles
         </Link>
-        <h1 className="font-display text-[34px] sm:text-[46px] leading-[1.1] tracking-[-0.02em] mt-5">{a.title}</h1>
-        {a.publishedAt && <p className="text-sm text-[#6B5A70] mt-4">{fmtDate(a.publishedAt)}</p>}
+        <h1 className="text-4xl font-bold mt-4 leading-tight">{a.title}</h1>
+        <p className="text-sm text-gray-400 mt-3">{a.publishedAt && fmtDate(a.publishedAt)}</p>
         {a.coverImage && (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={a.coverImage} alt="" className="w-full rounded-3xl mt-7" />
+          <img src={a.coverImage} alt="" className="w-full rounded-2xl mt-6 mb-2" />
         )}
-        <div className="prose-v2 mt-9" dangerouslySetInnerHTML={{ __html: html }} />
+        <div className="mt-6" dangerouslySetInnerHTML={{ __html: html }} />
 
-        <div className="mt-14 border-t border-[#EFE4E0] pt-10 text-center">
-          <p className="font-display text-[28px] leading-tight">Prêt à passer à l&apos;action sur LinkedIn ?</p>
+        <div className="mt-12 border-t border-rose-100 pt-8 text-center">
+          <p className="font-bold text-lg">Prêt à passer à l'action sur LinkedIn ?</p>
           <Link
             href={JOIN_HREF}
-            className="inline-block mt-5 bg-[#C2456F] hover:bg-[#9E3157] text-white font-semibold px-8 py-3.5 rounded-full transition-colors"
+            className="inline-block mt-3 bg-[#ff5a5f] text-white font-semibold px-7 py-3 rounded-full hover:bg-[#f63d44] shadow-lg shadow-rose-300/40"
           >
             {pick("Rejoindre la bêta", "Démarrer l'essai gratuit")}
           </Link>
         </div>
       </article>
-    </Shell>
+
+      <SiteFooter />
+    </div>
   );
 }
