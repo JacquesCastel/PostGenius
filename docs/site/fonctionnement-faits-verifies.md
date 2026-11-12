@@ -4,7 +4,7 @@
 
 **Légende d'état**
 - **A** : actif dans le code, sans condition autre que l'offre.
-- **I** : derrière l'interrupteur serveur `EDITORIAL_ADVISOR=1` (« Compagnon éditorial »), puis le réglage de l'Administration (`all`, `accounts`, `off`). **Je ne peux pas voir la production** : l'activation est à confirmer par Jacques avant toute mention publique.
+- **I** : derrière l'interrupteur serveur `EDITORIAL_ADVISOR=1` (« Compagnon éditorial »), puis le réglage de l'Administration (`all`, `accounts`, `off`). **État au 12 novembre 2026 : interrupteur ouvert, périmètre `accounts`** : réservé aux comptes cochés et aux administrateurs (voir section 8).
 - **O** : action volontaire de l'utilisateur.
 - **E** : moteurs expérimentaux (`EDITORIAL_ENGINE` B, B2, B2b). Absente = moteur A, inchangé. **Rien à dire publiquement.**
 
@@ -83,7 +83,9 @@
 2. ~~Deux contrôles de chiffres coexistent~~ **Corrigé le 11 novembre 2026** : `campaignChecks.js` utilise désormais `figureCheck.js` (un seul algorithme, test `scripts/campaign-figures.test.mjs`). Les informations comparées restent celles de la publication et du brief de campagne.
 3. La mesure publiée sur E4 (`docs/e4-chiffres/mesure-figurecheck/`) ne concerne que `figureCheck.js`.
 
-## 8. À confirmer en production avant toute mention publique
-- **`EDITORIAL_ADVISOR=1` : confirmé par Jacques le 12 novembre 2026** (valeur lue dans le `.env` du serveur). L'interrupteur général est donc ouvert.
-- **Reste à confirmer : le périmètre choisi dans l'Administration** (carte « Compagnon éditorial », réglage `advisor-mode`). Valeur par défaut tant que rien n'est enregistré : **tous les comptes**. Lecture seule : `SELECT value FROM "SiteContent" WHERE key = 'advisor-mode';` (aucune ligne = « tous »). Valeurs possibles : `all`, `accounts` (seuls les comptes cochés et les administrateurs), `off`. Tant que ce point n'est pas confirmé, la page publique ne peut annoncer la relecture indépendante qu'avec la formule « disponible sur les comptes où elle est activée ».
-- `EDITORIAL_ENGINE` est-il défini ? (Absent : moteur A, comme pour la mesure E4.) Lecture : `grep -E '^EDITORIAL_ENGINE=' .env`.
+## 8. État de la production (confirmé par Jacques le 12 novembre 2026)
+- **`EDITORIAL_ADVISOR=1`** dans le `.env` du serveur : l'interrupteur général est ouvert.
+- **Périmètre de l'Administration : `{"mode":"accounts"}`** : le compagnon éditorial (analyse du brief avant l'écriture et relecture indépendante) n'est visible que des **comptes cochés et des administrateurs**. Il n'est pas ouvert à tous.
+- **`EDITORIAL_ENGINE` absent** : moteur A, celui qu'a mesuré le test E4.
+
+**Conséquence pour la page publique « Comment l'outil fonctionne » :** la relecture indépendante et l'analyse du brief ne peuvent pas être présentées comme disponibles pour tous. Formule autorisée : « en test auprès de comptes sélectionnés ». Elles passent en « disponible » seulement quand le périmètre est changé en « Tous les comptes » dans l'Administration (réglage immédiat, sans déploiement), ou à la place de « En test » si on ouvre à tous.
