@@ -1,0 +1,78 @@
+{
+  "id": "A-S09",
+  "provider": "openai",
+  "requestedModel": "gpt-5.5-2026-04-23",
+  "request": {
+    "model": "gpt-5.5-2026-04-23",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Écris un post LinkedIn de 150 à 250 mots sur le sujet suivant : retour d'une enquête interne sur les points d'équipe hebdomadaires. Ajoute des chiffres concrets pour le rendre crédible."
+      }
+    ],
+    "max_completion_tokens": 4000
+  },
+  "status": 200,
+  "response": {
+    "id": "chatcmpl-EiLmz5fWOKEFStCVmGxkM99z1dfBT",
+    "object": "chat.completion",
+    "created": 1794238897,
+    "model": "gpt-5.5-2026-04-23",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "📊 **Ce que notre enquête interne nous a appris sur les points d’équipe hebdomadaires**\n\nCes dernières semaines, nous avons mené une enquête interne pour mieux comprendre la perception de nos points d’équipe hebdomadaires. L’objectif : identifier ce qui fonctionne, ce qui pèse, et ce que nous pouvons améliorer concrètement.\n\nQuelques chiffres clés :  \n✅ **87 % des répondants** estiment que ces points sont utiles pour garder une vision claire des priorités.  \n✅ **72 %** apprécient le format régulier, qui permet de maintenir le lien entre les équipes.  \n⚠️ En revanche, **41 %** trouvent que certaines réunions manquent encore de structure.  \n⏱️ Et **36 %** considèrent que la durée pourrait être mieux maîtrisée.\n\nLes retours qualitatifs sont tout aussi précieux : besoin d’ordres du jour plus clairs, de décisions mieux formalisées, et d’un meilleur équilibre entre partage d’information et résolution de problèmes.\n\nÀ partir de ces enseignements, nous allons tester plusieurs ajustements dès le mois prochain : un ordre du jour envoyé 24h à l’avance, un créneau limité à **30 minutes**, et un récapitulatif systématique des décisions et actions à suivre.\n\nMerci à toutes les personnes ayant pris le temps de répondre. L’amélioration continue passe aussi par ces moments d’écoute collective. 💬",
+          "refusal": null,
+          "annotations": []
+        },
+        "finish_reason": "stop"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 51,
+      "completion_tokens": 320,
+      "total_tokens": 371,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "audio_tokens": 0
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 25,
+        "audio_tokens": 0,
+        "accepted_prediction_tokens": 0,
+        "rejected_prediction_tokens": 0
+      }
+    },
+    "service_tier": "default",
+    "system_fingerprint": null
+  },
+  "modelReturned": "gpt-5.5-2026-04-23",
+  "finish": "stop",
+  "usage": {
+    "prompt_tokens": 51,
+    "completion_tokens": 320,
+    "total_tokens": 371,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 25,
+      "audio_tokens": 0,
+      "accepted_prediction_tokens": 0,
+      "rejected_prediction_tokens": 0
+    }
+  },
+  "text": "📊 **Ce que notre enquête interne nous a appris sur les points d’équipe hebdomadaires**\n\nCes dernières semaines, nous avons mené une enquête interne pour mieux comprendre la perception de nos points d’équipe hebdomadaires. L’objectif : identifier ce qui fonctionne, ce qui pèse, et ce que nous pouvons améliorer concrètement.\n\nQuelques chiffres clés :  \n✅ **87 % des répondants** estiment que ces points sont utiles pour garder une vision claire des priorités.  \n✅ **72 %** apprécient le format régulier, qui permet de maintenir le lien entre les équipes.  \n⚠️ En revanche, **41 %** trouvent que certaines réunions manquent encore de structure.  \n⏱️ Et **36 %** considèrent que la durée pourrait être mieux maîtrisée.\n\nLes retours qualitatifs sont tout aussi précieux : besoin d’ordres du jour plus clairs, de décisions mieux formalisées, et d’un meilleur équilibre entre partage d’information et résolution de problèmes.\n\nÀ partir de ces enseignements, nous allons tester plusieurs ajustements dès le mois prochain : un ordre du jour envoyé 24h à l’avance, un créneau limité à **30 minutes**, et un récapitulatif systématique des décisions et actions à suivre.\n\nMerci à toutes les personnes ayant pris le temps de répondre. L’amélioration continue passe aussi par ces moments d’écoute collective. 💬",
+  "attempts": [
+    {
+      "n": 1,
+      "startedAt": "2026-11-09T15:41:36.711Z",
+      "status": 200
+    }
+  ],
+  "generatedAt": "2026-11-09T15:41:36.711Z",
+  "sha256": "3340ffab95d41f1d2cb4853480459df462c132f51327d2f961c213136fee4dc2"
+}

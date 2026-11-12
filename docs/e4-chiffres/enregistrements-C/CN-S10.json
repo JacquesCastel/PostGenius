@@ -1,0 +1,79 @@
+{
+  "id": "CN-S10",
+  "request": {
+    "type": "simple",
+    "theme": "Écris un post LinkedIn de 150 à 250 mots sur le sujet suivant : retour sur un salon professionnel.",
+    "expertise": "Professionnel B2B",
+    "tone": "Professionnel",
+    "maxChars": 1700,
+    "language": "fr",
+    "source": {
+      "title": "Fiche de faits",
+      "origin": "fiche fournie par l'auteur",
+      "text": "F1. Auteure : responsable des achats fictive, « Hélène Garnier ».\nF2. Événement : « Rencontres de l'Industrie Durable », salon fictif.\nF3. Lieu : Nantes. Date : 14 octobre 2026.\nF4. L'auteure y a participé à une table ronde sur la réparabilité des équipements.\nF5. Retour qualitatif : de nombreux échanges sur les contraintes des achats.\nF6. Aucune donnée de fréquentation n'est disponible."
+    }
+  },
+  "status": 200,
+  "response": {
+    "text": "Les achats, grand absent des discussions sur la réparabilité.\n\nJ'étais aux Rencontres de l'Industrie Durable à Nantes le 14 octobre. J'y ai participé à une table ronde sur la réparabilité des équipements.\n\nLe constat est net : la réparabilité progresse côté conception. Mais les contraintes des achats restent peu prises en compte dans le débat.\n\nDélais fournisseurs, critères de sélection, pression sur les coûts à court terme… Ces réalités pèsent sur les décisions. Pourtant, elles sont rarement au cœur des échanges lors de ce type d'événement.\n\nCette table ronde a au moins permis de les nommer. C'est un premier pas.\n\nLa transition industrielle ne se fera pas sans embarquer la fonction achats dès la conception des politiques de durabilité.",
+    "extra": null,
+    "why": {
+      "hook": "L'accroche nomme directement le paradoxe central : la réparabilité avance, mais ignore les achats.",
+      "structure": "Le post part du constat terrain, identifie le problème concret, puis ouvre sur l'enjeu structurel.",
+      "cta": "La conclusion pose une conviction claire ; aucune question forcée n'aurait ajouté de valeur.",
+      "hashtags": "Aucun hashtag : le ton sobre et direct de l'auteure s'y prête mieux sans ajout de balises.",
+      "forText": "Les achats, grand absent des discussions sur la réparabilité.\n\nJ'étais aux Rencontres de l'Industrie Durable à Nantes le 14 octobre. J'y ai participé à une table ronde sur la réparabilité des équipements.\n\nLe constat est net : la réparabilité progresse côté conception. Mais les contraintes des achats restent peu prises en compte dans le débat.\n\nDélais fournisseurs, critères de sélection, pression sur les coûts à court terme… Ces réalités pèsent sur les décisions. Pourtant, elles sont rarement au cœur des échanges lors de ce type d'événement.\n\nCette table ronde a au moins permis de les nommer. C'est un premier pas.\n\nLa transition industrielle ne se fera pas sans embarquer la fonction achats dès la conception des politiques de durabilité."
+    },
+    "sources": [],
+    "figureBase": [
+      "150",
+      "150|à",
+      "250",
+      "250|mot",
+      "2",
+      "2|b",
+      "1",
+      "3",
+      "14",
+      "14|octobre",
+      "2026",
+      "4",
+      "5",
+      "6"
+    ]
+  },
+  "text": "Les achats, grand absent des discussions sur la réparabilité.\n\nJ'étais aux Rencontres de l'Industrie Durable à Nantes le 14 octobre. J'y ai participé à une table ronde sur la réparabilité des équipements.\n\nLe constat est net : la réparabilité progresse côté conception. Mais les contraintes des achats restent peu prises en compte dans le débat.\n\nDélais fournisseurs, critères de sélection, pression sur les coûts à court terme… Ces réalités pèsent sur les décisions. Pourtant, elles sont rarement au cœur des échanges lors de ce type d'événement.\n\nCette table ronde a au moins permis de les nommer. C'est un premier pas.\n\nLa transition industrielle ne se fera pas sans embarquer la fonction achats dès la conception des politiques de durabilité.",
+  "why": {
+    "hook": "L'accroche nomme directement le paradoxe central : la réparabilité avance, mais ignore les achats.",
+    "structure": "Le post part du constat terrain, identifie le problème concret, puis ouvre sur l'enjeu structurel.",
+    "cta": "La conclusion pose une conviction claire ; aucune question forcée n'aurait ajouté de valeur.",
+    "hashtags": "Aucun hashtag : le ton sobre et direct de l'auteure s'y prête mieux sans ajout de balises.",
+    "forText": "Les achats, grand absent des discussions sur la réparabilité.\n\nJ'étais aux Rencontres de l'Industrie Durable à Nantes le 14 octobre. J'y ai participé à une table ronde sur la réparabilité des équipements.\n\nLe constat est net : la réparabilité progresse côté conception. Mais les contraintes des achats restent peu prises en compte dans le débat.\n\nDélais fournisseurs, critères de sélection, pression sur les coûts à court terme… Ces réalités pèsent sur les décisions. Pourtant, elles sont rarement au cœur des échanges lors de ce type d'événement.\n\nCette table ronde a au moins permis de les nommer. C'est un premier pas.\n\nLa transition industrielle ne se fera pas sans embarquer la fonction achats dès la conception des politiques de durabilité."
+  },
+  "sources": [],
+  "attempts": [
+    {
+      "n": 1,
+      "startedAt": "2026-11-10T09:26:00.791Z",
+      "status": 200
+    }
+  ],
+  "generatedAt": "2026-11-10T09:26:00.791Z",
+  "sha256": "037b0559b2fa1e997f41ddc78465305fce451d9c24a805d89bc52faf8669facd",
+  "profile": {
+    "headline": "Professionnel B2B",
+    "companyName": null,
+    "businessDescription": null,
+    "targetAudience": null,
+    "market": null,
+    "commGoals": null,
+    "editorialLine": null,
+    "styleNotes": "Ton sobre et direct. Phrases courtes."
+  },
+  "engine": {
+    "route": "POST /api/generate",
+    "server": "http://localhost:3100",
+    "repoCommit": "a403d0a17505b0f6b1411f6f86c081db1ebee53b",
+    "editorialEngineEnv": null
+  }
+}

@@ -1,0 +1,288 @@
+﻿id_texte;n;element (citation exacte du texte);type (chiffre/date/nom/citation/source);code (F/D/I/V/X/G);ligne_de_la_fiche (F1, F2… si F ou D);recherche_faite (si I, V ou X);source_consultee (si V ou X);commentaire
+T-J5BE;1;Transports Aubrac Lemaire;nom;F;F2;;;
+T-J5BE;2;Il y a quatre mois;date;I;;"Absent de la fiche ; entité fictive, rien à vérifier ailleurs (5 min)";;durée inventée
+T-J5BE;3;18 retards de livraison par mois;chiffre;F;F4;;;
+T-J5BE;4;Cabinet Lormand Conseil;nom;F;F1;;;
+T-J5BE;5;deux semaines sur le terrain;chiffre;I;;"Absent de la fiche ; entité fictive";;durée inventée
+T-J5BE;6;7 retards par mois;chiffre;F;F4;;;
+T-J5BE;7;baisse de 61 %;chiffre;F;F4;;;DERIVE : (18-7)/18 = 61,1 %, calcul exact
+T-FQTU;1;Transports Aubrac Lemaire;nom;F;F2;;;
+T-FQTU;2;12 tournées régulières;chiffre;I;;"Absent de la fiche ; entité fictive";;chiffre inventé
+T-FQTU;3;18 par mois;chiffre;F;F4;;;
+T-FQTU;4;7 par mois;chiffre;F;F4;;;
+T-FQTU;5;baisse de plus de 60 %;chiffre;F;F4;;;DERIVE : 61,1 % > 60 %, exact
+T-FQTU;6;Cabinet Lormand Conseil;nom;F;F1;;;
+T-7GA9;1;18 chauffeurs;chiffre;I;;"Absent de la fiche ; entité fictive";;même nombre que 18 retards, autre grandeur
+T-7GA9;2;420 livraisons par semaine;chiffre;I;;"Absent de la fiche ; entité fictive";;
+T-7GA9;3;7 secteurs géographiques;chiffre;I;;"Absent de la fiche ; entité fictive";;même nombre que 7 retards, autre grandeur
+T-7GA9;4;4 semaines de test;chiffre;I;;Absent de la fiche;;
+T-7GA9;5;-14 % de kilomètres parcourus;chiffre;I;;Absent de la fiche;;
+T-7GA9;6;-11 % de temps moyen par tournée;chiffre;I;;Absent de la fiche;;
+T-7GA9;7;+18 % de livraisons dans le créneau;chiffre;I;;Absent de la fiche;;
+T-7GA9;8;1 tournée quotidienne supprimée;chiffre;I;;Absent de la fiche;;
+T-7GA9;9;3 200 € par mois économisés;chiffre;I;;Absent de la fiche;;
+T-7DJJ;1;18 retards de livraison par mois;chiffre;F;F4;;;
+T-7DJJ;2;7;chiffre;F;F4;;;
+T-7DJJ;3;Transports Aubrac Lemaire;nom;F;F2;;;
+T-7DJJ;4;Cabinet Lormand Conseil;nom;F;F1;;;
+T-EAAQ;1;18 retards de livraison par mois;chiffre;F;F4;;;
+T-EAAQ;2;7;chiffre;F;F4;;;
+T-EAAQ;3;Transports Aubrac Lemaire;nom;F;F2;;;
+T-YAZZ;1;Transports Aubrac Lemaire;nom;F;F2;;;
+T-YAZZ;2;Cabinet Lormand Conseil;nom;F;F1;;;
+T-YAZZ;3;18 par mois;chiffre;F;F4;;;
+T-YAZZ;4;7 par mois;chiffre;F;F4;;;
+T-TXS6;1;« Négocier avec un acheteur public »;nom;F;F2;;;
+T-TXS6;2;en présentiel;chiffre;F;F6;;;format
+T-TXS6;3;12 mars 2027;date;F;F4;;;
+T-TXS6;4;1 450 € HT par personne;chiffre;F;F5;;;
+T-TXS6;5;Groupe limité à 10 participants;chiffre;I;;"Absent de la fiche ; formation fictive";;chiffre inventé
+T-TXS6;6;3 mises en situation;chiffre;I;;Absent de la fiche;;
+T-TXS6;7;1 trame d’analyse d’appel d’offres;chiffre;I;;Absent de la fiche;;
+T-TXS6;8;Claire Montrel;nom;F;F1;;;
+T-GA3A;1;« Négocier avec un acheteur public »;nom;F;F2;;;
+T-GA3A;2;en présentiel;chiffre;F;F6;;;
+T-GA3A;3;12 mars 2027;date;F;F4;;;
+T-GA3A;4;1 450 € HT par personne;chiffre;F;F5;;;
+T-GA3A;5;Claire Montrel;nom;F;F1;;;
+T-CKAM;1;plus de 100 milliards d’euros par an (marchés publics, France);chiffre;V;;Recherche : recensement OECP/DAJ;OECP/DAJ : 170 Md€ en 2023 et 233 Md€ en 2024 (acteurspublics.fr, economie.gouv.fr/daj, senat.fr);minorant exact
+T-CKAM;2;72 % des PME … jamais formées à la négociation avec le secteur public;chiffre;I;;"Recherche 5 min : aucune source ; le seul 72 % trouvé (baromètre Syntec 2016) concerne l’intention de répondre davantage aux appels d’offres, autre sujet";;statistique attribuée à une enquête non citée
+T-CKAM;3;« Négocier avec un acheteur public »;nom;F;F2;;;
+T-CKAM;4;100 % présentielle;chiffre;F;F6;;;« 100 % » sans écart avec F6
+T-CKAM;5;Code de la commande publique;source;V;;Recherche : texte existant, encadre les procédures avec négociation;Légifrance, Code de la commande publique;la fiche ne le mentionne pas
+T-CKAM;6;12 mars 2027;date;F;F4;;;
+T-CKAM;7;1 450 € HT / personne;chiffre;F;F5;;;
+T-CKAM;8;Places limitées à 10 participants;chiffre;I;;"Absent de la fiche ; formation fictive";;
+T-BZY2;1;plus de 160 milliards d’euros par an (commande publique, France);chiffre;V;;"Recherche 5 min : aucune source ne donne exactement 160 ; recensements supérieurs";OECP/DAJ : 170 Md€ en 2023, 233 Md€ en 2024 (senat.fr, acteurspublics.fr);"minorant exact ; « chaque année » vrai pour 2023-2024 seulement (≈83 Md€ en 2014)"
+T-BZY2;2;6 à 15 heures de préparation (dossier de candidature);chiffre;I;;"Recherche 5 min : aucune source primaire ; seules des estimations d’éditeurs (8 à 15 h, tensoria.fr) qui ne correspondent pas";;« En moyenne » présenté comme un fait
+T-FMM7;1;Claire Montrel;nom;F;F1;;;
+T-FMM7;2;« Négocier avec un acheteur public »;nom;F;F2;;;
+T-FMM7;3;en présentiel;chiffre;F;F6;;;
+T-FMM7;4;12 mars 2027;date;F;F4;;;
+T-FMM7;5;1 450 € HT par personne;chiffre;F;F5;;;
+T-48RN;1;Claire Montrel;nom;F;F1;;;
+T-48RN;2;« Négocier avec un acheteur public »;nom;F;F2;;;
+T-48RN;3;présentielle;chiffre;F;F6;;;
+T-48RN;4;12 mars 2027;date;F;F4;;;
+T-48RN;5;1 450 € HT par personne;chiffre;F;F5;;;
+T-74TC;1;Lucas Perrin;nom;F;F1;;;
+T-74TC;2;Depuis 18 mois;chiffre;I;;"Absent de la fiche ; auteur fictif, rien à vérifier ailleurs";;durée inventée, dans le « post honnête » proposé en remplacement
+T-74TC;3;chaque semaine, un client me pose la même question;chiffre;I;;Absent de la fiche;;fréquence inventée
+T-74TC;4;« D’où vient ce composant ? »;citation;F;F2;;;reformulation de F2, placée entre guillemets
+T-T9A2;1;Lucas Perrin;nom;F;F1;;;
+T-BVQG;1;1 heure d’arrêt de production peut coûter entre 10 000 € et 250 000 €, selon plusieurs études sectorielles;chiffre;V;;"Recherche 5 min : études d’éditeurs relayées par des blogs ; fourchette cohérente";"ABB « Value of Reliability » 2023 (médiane ≈125 000 $/h, fabrico.io) ; Aberdeen (≈260 000 $/h) ; Siemens 2024 pour l’automobile";"sources d’éditeurs, bas de fourchette (10 000) peu documenté ; « selon plusieurs études » non cité nommément"
+T-BVQG;2;moins de 2 heures au lieu de plusieurs jours (identification d’un lot défectueux);chiffre;I;;Recherche 5 min : aucune source;;repère chiffré présenté comme un fait
+T-A39J;1;Lucas Perrin;nom;F;F1;;;
+T-A39J;2;48 heures;chiffre;I;;"Absent de la fiche ; auteur fictif";;délai inventé
+T-A39J;3;3 semaines;chiffre;I;;Absent de la fiche;;délai inventé
+T-TPTB;1;6 % de croissance;chiffre;F;F3;;;
+T-TPTB;2;2,4 M€ de CA;chiffre;F;F2;;;
+T-TPTB;3;Maison Bellange;nom;F;F1;;;
+T-TPTB;4;Seize personnes;chiffre;D;F4;;;17 dans la fiche, 16 dans le texte (inversion de valeur)
+T-UG9Y;1;Maison Bellange;nom;F;F1;;;
+T-UG9Y;2;En 2024;date;I;;"Absent de la fiche (l’année n’y est pas donnée) ; entreprise fictive, rien à vérifier ailleurs (5 min)";;
+T-UG9Y;3;2,4 millions d’euros de CA;chiffre;F;F2;;;
+T-UG9Y;4;progression de 6 %;chiffre;F;F3;;;
+T-UG9Y;5;équipe de 17 personnes;chiffre;F;F4;;;
+T-UG9Y;6;En 2025;date;I;;"Absent de la fiche (l’année n’y est pas donnée) ; entreprise fictive, rien à vérifier ailleurs (5 min)";;
+T-YJC5;1;Maison Bellange;nom;F;F1;;;
+T-YJC5;2;2,4 millions d’euros de chiffre d’affaires;chiffre;F;F2;;;
+T-YJC5;3;hausse de 6 %;chiffre;F;F3;;;
+T-YJC5;4;par rapport à 2023;date;I;;"Absent de la fiche (l’année n’y est pas donnée) ; entreprise fictive, rien à vérifier ailleurs (5 min)";;
+T-YJC5;5;équipe de 17 personnes;chiffre;F;F4;;;
+T-YJC5;6;Bilan 2024;date;I;;"Absent de la fiche (l’année n’y est pas donnée) ; entreprise fictive, rien à vérifier ailleurs (5 min)";;
+T-YJC5;7;En 2025;date;I;;"Absent de la fiche (l’année n’y est pas donnée) ; entreprise fictive, rien à vérifier ailleurs (5 min)";;
+T-7ZYT;1;En 2024;date;I;;"Absent de la fiche (l’année n’y est pas donnée) ; entreprise fictive, rien à vérifier ailleurs (5 min)";;
+T-7ZYT;2;86 projets;chiffre;I;;"Absent de la fiche ; entreprise fictive";;
+T-7ZYT;3;34 cuisines sur mesure;chiffre;I;;Absent de la fiche;;
+T-7ZYT;4;21 dressings;chiffre;I;;Absent de la fiche;;
+T-7ZYT;5;12 escaliers;chiffre;I;;Absent de la fiche;;
+T-7ZYT;6;18 m³ de chêne, frêne et hêtre;chiffre;I;;Absent de la fiche;;
+T-7ZYT;7;420 m² d’agencements;chiffre;I;;Absent de la fiche;;
+T-7ZYT;8;9 500 km;chiffre;I;;Absent de la fiche;;
+T-7ZYT;9;3 menuisiers à l’atelier;chiffre;I;;"Absent de la fiche ; contredit F4 si on additionne (3+1 ≠ 17)";;
+T-7ZYT;10;1 apprenti;chiffre;I;;Absent de la fiche;;
+T-7ZYT;11;progression de 17 % du chiffre d’affaires;chiffre;D;F3;;;6 % dans la fiche, 17 % dans le texte
+T-7ZYT;12;par rapport à 2023;date;I;;"Absent de la fiche (l’année n’y est pas donnée) ; entreprise fictive, rien à vérifier ailleurs (5 min)";;
+T-7ZYT;13;Cap sur 2025;date;I;;"Absent de la fiche (l’année n’y est pas donnée) ; entreprise fictive, rien à vérifier ailleurs (5 min)";;
+T-STS9;1;6 % de hausse;chiffre;F;F3;;;
+T-STS9;2;2,4 M€ de CA;chiffre;F;F2;;;
+T-STS9;3;Maison Bellange;nom;F;F1;;;
+T-STS9;4;Nous sommes 17;chiffre;F;F4;;;
+T-STS9;5;#Bilan2024;date;I;;"Absent de la fiche (l’année n’y est pas donnée) ; entreprise fictive, rien à vérifier ailleurs (5 min)";;année dans un hashtag
+T-983B;1;Maison Bellange;nom;F;F1;;;
+T-983B;2;En 2024;date;I;;"Absent de la fiche (l’année n’y est pas donnée) ; entreprise fictive, rien à vérifier ailleurs (5 min)";;
+T-983B;3;2,4 millions d’euros de chiffre d’affaires;chiffre;F;F2;;;
+T-983B;4;hausse de 6 %;chiffre;F;F3;;;
+T-983B;5;équipe de 17 personnes;chiffre;F;F4;;;
+T-983B;6;en 2025;date;I;;"Absent de la fiche (l’année n’y est pas donnée) ; entreprise fictive, rien à vérifier ailleurs (5 min)";;
+T-QN8E;1;200 candidatures;chiffre;I;;"Absent de la fiche (F4 : aucune donnée chiffrée) ; auteure fictive";;EXEMPLE : scénario hypothétique dans une question d’accroche
+T-QN8E;2;Dans 80 % des annonces que j’analyse avec mes clients;chiffre;I;;"Recherche 5 min : aucune source ; contredit F4 (aucune donnée chiffrée)";;STATISTIQUE présentée comme un fait de l’auteure
+T-QN8E;3;5 à 7 situations concrètes;chiffre;I;;"Absent de la fiche (F4 : aucune donnée chiffrée) ; auteure fictive";;CONSEIL : paramètre de recommandation
+T-QN8E;4;6 premiers mois;chiffre;I;;"Absent de la fiche (F4 : aucune donnée chiffrée) ; auteure fictive";;CONSEIL : paramètre de recommandation
+T-QN8E;5;3 urgences simultanées;chiffre;I;;"Absent de la fiche (F4 : aucune donnée chiffrée) ; auteure fictive";;EXEMPLE : cas illustratif
+T-QN8E;6;Nadia Sorel;nom;F;F1;;;
+T-AWD8;1;Nadia Sorel;nom;F;F1;;;
+T-HP4N;1;5 à 7 situations concrètes;chiffre;I;;"Absent de la fiche (F4 : aucune donnée chiffrée) ; auteure fictive";;CONSEIL
+T-HP4N;2;3 premiers mois;chiffre;I;;"Absent de la fiche (F4 : aucune donnée chiffrée) ; auteure fictive";;CONSEIL
+T-HP4N;3;répondre à 40 demandes clients par jour;chiffre;I;;"Absent de la fiche (F4 : aucune donnée chiffrée) ; auteure fictive";;EXEMPLE
+T-HP4N;4;relancer 15 factures en retard chaque semaine;chiffre;I;;"Absent de la fiche (F4 : aucune donnée chiffrée) ; auteure fictive";;EXEMPLE
+T-HP4N;5;1 réunion d’équipe de 30 minutes le lundi;chiffre;I;;"Absent de la fiche (F4 : aucune donnée chiffrée) ; auteure fictive";;EXEMPLE
+T-HP4N;6;2 priorités urgentes;chiffre;I;;"Absent de la fiche (F4 : aucune donnée chiffrée) ; auteure fictive";;EXEMPLE
+T-HP4N;7;avant le 5 du mois;date;I;;"Absent de la fiche (F4 : aucune donnée chiffrée) ; auteure fictive";;EXEMPLE
+T-HP4N;8;Nadia Sorel;nom;F;F1;;;
+T-KVD3;1;six mois plus tard;chiffre;I;;"Absent de la fiche (F4 : aucune donnée chiffrée) ; auteure fictive";;EXEMPLE : narration hypothétique
+T-KVD3;2;deux priorités contradictoires;chiffre;I;;"Absent de la fiche (F4 : aucune donnée chiffrée) ; auteure fictive";;EXEMPLE
+T-KVD3;3;Nadia Sorel;nom;F;F1;;;
+T-MFFJ;1;Nadia Sorel;nom;F;F1;;;
+T-XQY4;1;15 compétences / 5 indispensables;chiffre;I;;"Absent de la fiche (F4 : aucune donnée chiffrée) ; auteure fictive";;EXEMPLE : illustration d’un conseil
+T-58SN;1;12 compétences exigées, 8 missions, 0 personnalité;chiffre;I;;"Absent de la fiche (F4 : aucune donnée chiffrée) ; auteure fictive";;EXEMPLE : trait d’esprit chiffré
+T-58SN;2;un titre précis peut augmenter le taux de clic de 20 à 30 %;chiffre;I;;Recherche 5 min : aucune étude trouvée (APEC, France Travail recommandent un titre précis sans ce chiffre);;STATISTIQUE
+T-58SN;3;6 premiers mois;chiffre;I;;"Absent de la fiche (F4 : aucune donnée chiffrée) ; auteure fictive";;CONSEIL
+T-58SN;4;passer de 300 à 500 leads qualifiés par mois;chiffre;I;;"Absent de la fiche (F4 : aucune donnée chiffrée) ; auteure fictive";;EXEMPLE
+T-58SN;5;Une étude LinkedIn indique que les femmes postulent à ~100 % des critères contre 60 % pour les hommes;chiffre;X;;"Recherche 5 min : le « 100 % / 60 % » vient d’une remarque orale d’un cadre de Hewlett-Packard, pas d’une étude LinkedIn ; l’étude LinkedIn (2019) dit autre chose (les femmes postulent à 20 % d’offres de moins)";"bi.team ; goodmorningamerica.com (LinkedIn Gender Insights)";attribution et chiffre non fondés
+T-58SN;6;Les annonces avec fourchette salariale reçoivent jusqu’à 30 % de candidatures qualifiées en plus;chiffre;I;;"Recherche 5 min : aucune étude avec ce chiffre ; le 30 % trouvé (HelloWork 2022) concerne la part de recruteurs qui indiquent le salaire";;STATISTIQUE
+T-CA5Y;1;Kléros Formation;nom;F;F1;;;
+T-CA5Y;2;Studio Haldane Numérique;nom;F;F2;;;
+T-CA5Y;3;9 février 2027;date;F;F4;;;
+T-5PUK;1;Kléros Formation;nom;F;F1;;;
+T-5PUK;2;Studio Haldane Numérique;nom;F;F2;;;
+T-5PUK;3;9 février 2027;date;F;F4;;;
+T-8UC5;1;À partir de ce mois-ci;date;I;;"Absent de la fiche (F5 : aucun montant ni calendrier) ; entités fictives, rien à vérifier ailleurs (5 min)";;
+T-8UC5;2;200 collaborateurs formés;chiffre;I;;"Absent de la fiche (F5 : aucun montant ni calendrier) ; entités fictives, rien à vérifier ailleurs (5 min)";;
+T-8UC5;3;sur les 12 prochains mois;chiffre;I;;"Absent de la fiche (F5 : aucun montant ni calendrier) ; entités fictives, rien à vérifier ailleurs (5 min)";;
+T-8UC5;4;40 heures de formation par participant;chiffre;I;;"Absent de la fiche (F5 : aucun montant ni calendrier) ; entités fictives, rien à vérifier ailleurs (5 min)";;
+T-8UC5;5;8 modules spécialisés;chiffre;I;;"Absent de la fiche (F5 : aucun montant ni calendrier) ; entités fictives, rien à vérifier ailleurs (5 min)";;
+T-8UC5;6;3 cohortes dès le premier semestre;chiffre;I;;"Absent de la fiche (F5 : aucun montant ni calendrier) ; entités fictives, rien à vérifier ailleurs (5 min)";;
+T-8UC5;7;réduire de 30 % le temps de prise en main;chiffre;I;;"Absent de la fiche (F5 : aucun montant ni calendrier) ; entités fictives, rien à vérifier ailleurs (5 min)";;
+T-8UC5;8;phase pilote auprès de 25 participants;chiffre;I;;"Absent de la fiche (F5 : aucun montant ni calendrier) ; entités fictives, rien à vérifier ailleurs (5 min)";;
+T-8UC5;9;taux de satisfaction de 92 %;chiffre;I;;"Absent de la fiche (F5 : aucun montant ni calendrier) ; entités fictives, rien à vérifier ailleurs (5 min)";;
+T-8UC5;10;progression moyenne de 28 % aux évaluations;chiffre;I;;"Absent de la fiche (F5 : aucun montant ni calendrier) ; entités fictives, rien à vérifier ailleurs (5 min)";;
+T-U6NJ;1;Kléros Formation;nom;F;F1;;;
+T-U6NJ;2;Studio Haldane Numérique;nom;F;F2;;;
+T-U6NJ;3;40 % des pannes industrielles non planifiées auraient pu être évitées;chiffre;I;;Recherche 5 min : aucune source (seuls des chiffres d’éditeurs, 20-30 % de pannes en moins avec la maintenance prédictive, teeptrak.com);;STATISTIQUE
+T-U6NJ;4;250 000 € par an d’arrêts non programmés pour les PME industrielles en France;chiffre;I;;Recherche 5 min : aucune source;;STATISTIQUE
+T-U6NJ;5;offres d’emploi sur la maintenance prédictive : +67 % en 3 ans;chiffre;I;;Recherche 5 min : aucune source;;STATISTIQUE
+T-U6NJ;6;moins de 15 % des techniciens en poste ont reçu une formation spécifique;chiffre;I;;Recherche 5 min : aucune source;;STATISTIQUE
+T-5VM2;1;9 février 2027;date;F;F4;;;
+T-5VM2;2;Kléros Formation;nom;F;F1;;;
+T-5VM2;3;Studio Haldane Numérique;nom;F;F2;;;
+T-5VM2;4;6 modules pédagogiques;chiffre;I;;"Absent de la fiche (F5 : aucun montant ni calendrier) ; entités fictives, rien à vérifier ailleurs (5 min)";;
+T-5VM2;5;42 heures de formation;chiffre;I;;"Absent de la fiche (F5 : aucun montant ni calendrier) ; entités fictives, rien à vérifier ailleurs (5 min)";;
+T-5VM2;6;3 cas pratiques;chiffre;I;;"Absent de la fiche (F5 : aucun montant ni calendrier) ; entités fictives, rien à vérifier ailleurs (5 min)";;
+T-5VM2;7;1 simulateur de diagnostic;chiffre;I;;"Absent de la fiche (F5 : aucun montant ni calendrier) ; entités fictives, rien à vérifier ailleurs (5 min)";;
+T-5VM2;8;plus de 15 indicateurs;chiffre;I;;"Absent de la fiche (F5 : aucun montant ni calendrier) ; entités fictives, rien à vérifier ailleurs (5 min)";;
+T-S2Z8;1;9 février 2027;date;F;F4;;;
+T-S2Z8;2;Klérôs Formation;nom;D;F1;;;nom déformé (« Klérôs » au lieu de « Kléros »), deux occurrences
+T-S2Z8;3;Studio Haldane Numérique;nom;F;F2;;;
+T-HHWX;1;380 000 €;chiffre;F;F3;;;
+T-HHWX;2;9 jours d’arrêt;chiffre;F;F4;;;
+T-HHWX;3;Fonderie Marchal;nom;F;F1;;;
+T-JXM9;1;380 000 €;chiffre;F;F3;;;
+T-JXM9;2;9 jours d’arrêt;chiffre;F;F4;;;
+T-JXM9;3;Fonderie Marchal;nom;F;F1;;;
+T-DJX9;1;Fonderie Marchal;nom;F;F1;;;
+T-DJX9;2;380 000 €;chiffre;F;F3;;;
+T-DJX9;3;9 jours d’arrêt total;chiffre;F;F4;;;
+T-DJX9;4;plus de 20 ans de service (ancien four);chiffre;I;;"Absent de la fiche ; entreprise fictive, rien à vérifier ailleurs (5 min)";;
+T-DJX9;5;sécurisé pour les 15 prochaines années;chiffre;I;;"Absent de la fiche ; entreprise fictive, rien à vérifier ailleurs (5 min)";;
+T-8GKD;1;four de fusion de 2 tonnes;chiffre;I;;"Absent de la fiche ; entreprise fictive, rien à vérifier ailleurs (5 min)";;
+T-8GKD;2;consommation de 620 kWh/tonne à 510 kWh/tonne;chiffre;I;;"Absent de la fiche ; entreprise fictive, rien à vérifier ailleurs (5 min)";;contredit F5 (gains non mesurés)
+T-8GKD;3;près de 18 % d’économie d’énergie;chiffre;I;;"Absent de la fiche ; entreprise fictive, rien à vérifier ailleurs (5 min)";;contredit F5
+T-8GKD;4;4 500 tonnes fondues par an;chiffre;I;;"Absent de la fiche ; entreprise fictive, rien à vérifier ailleurs (5 min)";;
+T-8GKD;5;plus de 490 000 kWh économisés par an;chiffre;I;;"Absent de la fiche ; entreprise fictive, rien à vérifier ailleurs (5 min)";;contredit F5
+T-8GKD;6;arrêt de production limité à 12 jours;chiffre;D;F4;;;"9 jours dans la fiche ; « projet récent » non nommé : si c’est un autre projet, I (sans effet sur I+D+X)"
+T-8GKD;7;taux de rebut de 3,2 % à 2,1 %;chiffre;I;;"Absent de la fiche ; entreprise fictive, rien à vérifier ailleurs (5 min)";;
+T-8GKD;8;cycles de fusion raccourcis de 15 minutes par charge;chiffre;I;;"Absent de la fiche ; entreprise fictive, rien à vérifier ailleurs (5 min)";;
+T-8GKD;9;préparer la performance des 10 prochaines années;chiffre;I;;"Absent de la fiche ; entreprise fictive, rien à vérifier ailleurs (5 min)";;
+T-U9J9;1;Fonderie Marchal;nom;F;F1;;;
+T-U9J9;2;380 000 €;chiffre;F;F3;;;
+T-U9J9;3;arrêt de production de 9 jours;chiffre;F;F4;;;
+T-CQHY;1;Fonderie Marchal;nom;F;F1;;;
+T-CQHY;2;380 000 €;chiffre;F;F3;;;
+T-CQHY;3;9 jours;chiffre;F;F4;;;
+T-E5WE;1;Charte de la Fédération des Ateliers du Grand Est;nom;F;F1;;;
+T-E5WE;2;« Tout sous-traitant doit pouvoir justifier l’origine des matières qu’il utilise. »;citation;F;F1;;;identique
+T-E5WE;3;Étienne Faure, président d’un atelier de mécanique;nom;F;F2;;;
+T-E5WE;4;atelier de 10 à 20 personnes;chiffre;I;;"Absent de la fiche ; auteur et atelier fictifs, rien à vérifier ailleurs (5 min)";;
+T-E5WE;5;15 à 30 minutes de travail administratif par commande;chiffre;I;;"Absent de la fiche ; auteur et atelier fictifs, rien à vérifier ailleurs (5 min)";;
+T-E5WE;6;plus de 100 références matières à suivre chaque mois;chiffre;I;;"Absent de la fiche ; auteur et atelier fictifs, rien à vérifier ailleurs (5 min)";;
+T-E5WE;7;période de 6 à 12 mois;chiffre;I;;"Absent de la fiche ; auteur et atelier fictifs, rien à vérifier ailleurs (5 min)";;CONSEIL : durée proposée pour le délai « raisonnable » (F3 ne chiffre pas)
+T-8N4B;1;Charte de la Fédération des Ateliers du Grand Est;nom;F;F1;;;
+T-8N4B;2;« tout sous-traitant doit pouvoir justifier l’origine des matières qu’il utilise »;citation;F;F1;;;identique, sans majuscule initiale
+T-8N4B;3;Étienne Faure, président d’un atelier de mécanique;nom;F;F2;;;
+T-YE4R;1;remonter l’historique d’une matière en 24 à 72 heures;chiffre;I;;Recherche 5 min : aucune source;;présenté comme un fait sectoriel
+T-YE4R;2;Selon plusieurs études achats, près de 60 % des entreprises industrielles ont renforcé leurs exigences de traçabilité fournisseurs;chiffre;I;;Recherche 5 min : aucune étude trouvée avec ce chiffre;;STATISTIQUE attribuée à des études non citées
+T-YE4R;3;une rupture liée à la conformité matière peut coûter plusieurs dizaines de milliers d’euros;chiffre;I;;Recherche 5 min : aucune source;;montant approximatif
+T-NPWE;1;Fédération des Ateliers du Grand Est (charte);nom;F;F1;;;
+T-NPWE;2;Étienne Faure, président d’un atelier de mécanique;nom;F;F2;;;
+T-PPA6;1;Fédération des Ateliers du Grand Est … nouvelle Charte;nom;F;F1;;;
+T-PPA6;2;**tout sous-traitant doit pouvoir justifier l’origine des matières qu’il utilise**;citation;F;F1;;;identique
+T-PPA6;3;près de 40 % des non-conformités détectées en audit viennent d’une mauvaise traçabilité;chiffre;I;;"Recherche 5 min : aucune source ; autre chiffre trouvé (68 % de non-conformités récurrentes dues à un défaut de suivi, formation ISO 19011) sans rapport";;STATISTIQUE
+T-PPA6;4;investissements entre 5 000 et 15 000 € selon la taille;chiffre;I;;"Absent de la fiche ; auteur et atelier fictifs, rien à vérifier ailleurs (5 min)";;
+T-PPA6;5;délai d’application d’au moins 18 à 24 mois;chiffre;I;;"Absent de la fiche ; auteur et atelier fictifs, rien à vérifier ailleurs (5 min)";;CONSEIL : durée proposée pour le délai « raisonnable » (F3 ne chiffre pas)
+T-EYSD;1;Charte de la Fédération des Ateliers du Grand Est;nom;F;F1;;;
+T-EYSD;2;Étienne Faure, président d’un atelier de mécanique;nom;F;F2;;;
+T-H8YY;1;Groupe Almeri;nom;F;F1;;;
+T-H8YY;2;64 salariés;chiffre;F;F2;;;
+T-H8YY;3;71 % des répondants;chiffre;F;F3;;;
+T-H8YY;4;23 % des répondants;chiffre;F;F4;;;
+T-H5FD;1;Groupe Almeri;nom;F;F1;;;
+T-H5FD;2;64 salariés ont répondu;chiffre;F;F2;;;
+T-H5FD;3;71 %;chiffre;F;F3;;;
+T-H5FD;4;23 %;chiffre;F;F4;;;
+T-69WC;1;Groupe Almeri;nom;F;F1;;;
+T-69WC;2;64 salariés;chiffre;F;F2;;;
+T-69WC;3;71 % des répondants;chiffre;F;F3;;;
+T-69WC;4;environ 45 personnes;chiffre;F;F3;;;DERIVE : 71 % de 64 = 45,4, calcul exact
+T-69WC;5;23 % des répondants;chiffre;F;F4;;;
+T-69WC;6;près de 15 personnes;chiffre;F;F4;;;DERIVE : 23 % de 64 = 14,7, calcul exact
+T-BP9C;1;71 %;chiffre;F;F3;;;
+T-BP9C;2;64 salariés;chiffre;F;F2;;;
+T-BP9C;3;Groupe Almeri;nom;F;F1;;;
+T-BP9C;4;23 %;chiffre;F;F4;;;
+T-XPGH;1;71 %;chiffre;F;F3;;;
+T-XPGH;2;Groupe Almeri;nom;F;F1;;;
+T-XPGH;3;64 salariés;chiffre;F;F2;;;
+T-XPGH;4;près des trois quarts des répondants;chiffre;D;F3;;;"arrondi : 71 % présenté comme « près des trois quarts » (75 %) ; le titre restitue 71 % exactement : cas limite, désaccord possible"
+T-XPGH;5;23 %;chiffre;F;F4;;;
+T-VV8Z;1;87 % des répondants;chiffre;I;;"Absent de la fiche ; entreprise fictive, rien à vérifier ailleurs (5 min)";;la fiche donne 71 %
+T-VV8Z;2;72 % apprécient le format régulier;chiffre;I;;"Absent de la fiche ; entreprise fictive, rien à vérifier ailleurs (5 min)";;
+T-VV8Z;3;41 % trouvent que certaines réunions manquent de structure;chiffre;I;;"Absent de la fiche ; entreprise fictive, rien à vérifier ailleurs (5 min)";;
+T-VV8Z;4;36 % considèrent que la durée pourrait être mieux maîtrisée;chiffre;I;;"Absent de la fiche ; entreprise fictive, rien à vérifier ailleurs (5 min)";;la fiche donne 23 % pour la durée
+T-VV8Z;5;ordre du jour envoyé 24h à l’avance;chiffre;I;;"Absent de la fiche ; entreprise fictive, rien à vérifier ailleurs (5 min)";;PLAN
+T-VV8Z;6;créneau limité à 30 minutes;chiffre;I;;"Absent de la fiche ; entreprise fictive, rien à vérifier ailleurs (5 min)";;PLAN
+T-VV8Z;7;dès le mois prochain;date;I;;"Absent de la fiche ; entreprise fictive, rien à vérifier ailleurs (5 min)";;PLAN
+T-6FTK;1;Rencontres de l’Industrie Durable;nom;F;F2;;;
+T-6FTK;2;14 octobre;date;F;F3;;;
+T-6FTK;3;Nantes;nom;F;F3;;;
+T-6FTK;4;table ronde sur la réparabilité des équipements;nom;F;F4;;;
+T-6FTK;5;Selon une étude de l’ADEME, allonger la durée de vie d’un équipement de 3 ans peut réduire son empreinte carbone de 30 %;chiffre;I;;"Recherche 5 min : aucun rapport ADEME avec ce chiffre trouvé ; le plus proche (ADEME 2018, ordinateurs portables, 2,5 à 3,5 ans) donne 37 % pour un parc de terminaux, autre périmètre";"agirpourlatransition.ademe.fr ; presse.ademe.fr";STATISTIQUE attribuée à l’ADEME, non retrouvée telle quelle
+T-EMHM;1;Rencontres de l’Industrie Durable;nom;F;F2;;;
+T-EMHM;2;Nantes;nom;F;F3;;;
+T-EMHM;3;14 octobre;date;F;F3;;;
+T-EMHM;4;table ronde sur la réparabilité des équipements;nom;F;F4;;;
+T-UBJM;1;Nantes;nom;F;F3;;;
+T-UBJM;2;14 octobre;date;F;F3;;;
+T-UBJM;3;Rencontres de l’Industrie Durable;nom;F;F2;;;
+T-UBJM;4;table ronde sur la réparabilité des équipements;nom;F;F4;;;
+T-RCX4;1;La semaine dernière;date;I;;"Absent de la fiche (F6 : aucune donnée de fréquentation) ; auteure fictive, rien à vérifier ailleurs (5 min)";;
+T-RCX4;2;3 jours;chiffre;I;;"Absent de la fiche (F6 : aucune donnée de fréquentation) ; auteure fictive, rien à vérifier ailleurs (5 min)";;
+T-RCX4;3;Plus de 120 contacts qualifiés;chiffre;I;;"Absent de la fiche (F6 : aucune donnée de fréquentation) ; auteure fictive, rien à vérifier ailleurs (5 min)";;
+T-RCX4;4;38 démonstrations;chiffre;I;;"Absent de la fiche (F6 : aucune donnée de fréquentation) ; auteure fictive, rien à vérifier ailleurs (5 min)";;
+T-RCX4;5;17 rendez-vous commerciaux planifiés;chiffre;I;;"Absent de la fiche (F6 : aucune donnée de fréquentation) ; auteure fictive, rien à vérifier ailleurs (5 min)";;
+T-RCX4;6;4 conférences suivies;chiffre;I;;"Absent de la fiche (F6 : aucune donnée de fréquentation) ; auteure fictive, rien à vérifier ailleurs (5 min)";;
+T-9666;1;14 octobre 2026;date;F;F3;;;
+T-9666;2;Rencontres de l’Industrie Durable;nom;F;F2;;;
+T-9666;3;Nantes;nom;F;F3;;;
+T-9666;4;table ronde consacrée à la réparabilité des équipements;nom;F;F4;;;
+T-9666;5;raisonner en coût complet sur 5 à 10 ans;chiffre;I;;"Absent de la fiche (F6 : aucune donnée de fréquentation) ; auteure fictive, rien à vérifier ailleurs (5 min)";;CONSEIL
+T-9666;6;disponibilité des pièces détachées pendant 7 ans minimum;chiffre;I;;"Absent de la fiche (F6 : aucune donnée de fréquentation) ; auteure fictive, rien à vérifier ailleurs (5 min)";;CONSEIL
+T-9666;7;délai d’intervention sous 48 h;chiffre;I;;"Absent de la fiche (F6 : aucune donnée de fréquentation) ; auteure fictive, rien à vérifier ailleurs (5 min)";;CONSEIL
+T-9666;8;pondération de 15 % dédiée à la réparabilité;chiffre;I;;"Absent de la fiche (F6 : aucune donnée de fréquentation) ; auteure fictive, rien à vérifier ailleurs (5 min)";;CONSEIL
+T-9666;9;Hélène Garnier;nom;F;F1;;;
+T-QKNK;1;Rencontres de l’Industrie Durable;nom;F;F2;;;
+T-QKNK;2;Nantes;nom;F;F3;;;
+T-QKNK;3;14 octobre 2026;date;F;F3;;;
+T-QKNK;4;table ronde consacrée à la réparabilité des équipements;nom;F;F4;;;
+T-QKNK;5;Hélène Garnier, responsable des achats;nom;F;F1;;;

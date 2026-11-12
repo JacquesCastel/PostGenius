@@ -1,0 +1,81 @@
+{
+  "id": "C-S02",
+  "request": {
+    "type": "simple",
+    "theme": "Écris un post LinkedIn de 150 à 250 mots sur le sujet suivant : lancement d'une formation sur la réponse aux appels d'offres publics. Ajoute des chiffres concrets pour le rendre crédible.",
+    "expertise": "Professionnel B2B",
+    "tone": "Professionnel",
+    "maxChars": 1700,
+    "language": "fr",
+    "source": {
+      "title": "Fiche de faits",
+      "origin": "fiche fournie par l'auteur",
+      "text": "F1. Auteur : formatrice indépendante fictive, « Claire Montrel ».\nF2. Intitulé : « Négocier avec un acheteur public ».\nF3. Public : commerciaux de PME qui répondent à des appels d'offres.\nF4. Début de la première session : 12 mars 2027.\nF5. Prix : 1 450 € HT par personne.\nF6. Format : en présentiel."
+    }
+  },
+  "status": 200,
+  "response": {
+    "text": "Répondre à un appel d'offres public, ça ne s'improvise pas.\n\nBeaucoup de commerciaux de PME perdent des marchés publics non par manque de compétences techniques, mais par méconnaissance des règles du jeu avec l'acheteur public.\n\nClaire Montrel, formatrice indépendante, lance une formation présentielle conçue précisément pour ce profil : « Négocier avec un acheteur public ».\n\nLa première session démarre le 12 mars 2027.\nTarif : 1 450 € HT par personne.\n\nCe qui retient mon attention dans cette approche : elle cible les commerciaux en direct, pas les directions juridiques. C'est là que se gagnent ou se perdent les dossiers au quotidien.\n\nUne formation à ce prix, sur un sujet aussi opérationnel, peut rapidement changer le ratio de marchés remportés pour une PME.",
+    "extra": null,
+    "why": {
+      "hook": "L'accroche pose directement le problème central — pas d'annonce, mais un constat qui interpelle les commerciaux concernés.",
+      "structure": "Le problème d'abord, puis la solution concrète, puis le détail logistique : l'essentiel précède le secondaire.",
+      "cta": "La conclusion exprime un bénéfice business concret sans appel à l'action forcé — cohérent avec le ton sobre demandé.",
+      "hashtags": "Aucun hashtag : le ton sobre et direct de l'auteur prime, et le post se suffit à lui-même sans mots-clés artificiels.",
+      "forText": "Répondre à un appel d'offres public, ça ne s'improvise pas.\n\nBeaucoup de commerciaux de PME perdent des marchés publics non par manque de compétences techniques, mais par méconnaissance des règles du jeu avec l'acheteur public.\n\nClaire Montrel, formatrice indépendante, lance une formation présentielle conçue précisément pour ce profil : « Négocier avec un acheteur public ».\n\nLa première session démarre le 12 mars 2027.\nTarif : 1 450 € HT par personne.\n\nCe qui retient mon attention dans cette approche : elle cible les commerciaux en direct, pas les directions juridiques. C'est là que se gagnent ou se perdent les dossiers au quotidien.\n\nUne formation à ce prix, sur un sujet aussi opérationnel, peut rapidement changer le ratio de marchés remportés pour une PME."
+    },
+    "sources": [],
+    "figureBase": [
+      "150",
+      "150|à",
+      "250",
+      "250|mot",
+      "2",
+      "2|b",
+      "1",
+      "3",
+      "4",
+      "12",
+      "12|mar",
+      "2027",
+      "5",
+      "1450",
+      "1450|eur",
+      "6"
+    ]
+  },
+  "text": "Répondre à un appel d'offres public, ça ne s'improvise pas.\n\nBeaucoup de commerciaux de PME perdent des marchés publics non par manque de compétences techniques, mais par méconnaissance des règles du jeu avec l'acheteur public.\n\nClaire Montrel, formatrice indépendante, lance une formation présentielle conçue précisément pour ce profil : « Négocier avec un acheteur public ».\n\nLa première session démarre le 12 mars 2027.\nTarif : 1 450 € HT par personne.\n\nCe qui retient mon attention dans cette approche : elle cible les commerciaux en direct, pas les directions juridiques. C'est là que se gagnent ou se perdent les dossiers au quotidien.\n\nUne formation à ce prix, sur un sujet aussi opérationnel, peut rapidement changer le ratio de marchés remportés pour une PME.",
+  "why": {
+    "hook": "L'accroche pose directement le problème central — pas d'annonce, mais un constat qui interpelle les commerciaux concernés.",
+    "structure": "Le problème d'abord, puis la solution concrète, puis le détail logistique : l'essentiel précède le secondaire.",
+    "cta": "La conclusion exprime un bénéfice business concret sans appel à l'action forcé — cohérent avec le ton sobre demandé.",
+    "hashtags": "Aucun hashtag : le ton sobre et direct de l'auteur prime, et le post se suffit à lui-même sans mots-clés artificiels.",
+    "forText": "Répondre à un appel d'offres public, ça ne s'improvise pas.\n\nBeaucoup de commerciaux de PME perdent des marchés publics non par manque de compétences techniques, mais par méconnaissance des règles du jeu avec l'acheteur public.\n\nClaire Montrel, formatrice indépendante, lance une formation présentielle conçue précisément pour ce profil : « Négocier avec un acheteur public ».\n\nLa première session démarre le 12 mars 2027.\nTarif : 1 450 € HT par personne.\n\nCe qui retient mon attention dans cette approche : elle cible les commerciaux en direct, pas les directions juridiques. C'est là que se gagnent ou se perdent les dossiers au quotidien.\n\nUne formation à ce prix, sur un sujet aussi opérationnel, peut rapidement changer le ratio de marchés remportés pour une PME."
+  },
+  "sources": [],
+  "attempts": [
+    {
+      "n": 1,
+      "startedAt": "2026-11-10T09:22:41.774Z",
+      "status": 200
+    }
+  ],
+  "generatedAt": "2026-11-10T09:22:41.774Z",
+  "sha256": "7a2bb04525e3371e9dd6ccc97d51b6c5534ac52f47b6b8b22fa7c696857f23ae",
+  "profile": {
+    "headline": "Professionnel B2B",
+    "companyName": null,
+    "businessDescription": null,
+    "targetAudience": null,
+    "market": null,
+    "commGoals": null,
+    "editorialLine": null,
+    "styleNotes": "Ton sobre et direct. Phrases courtes."
+  },
+  "engine": {
+    "route": "POST /api/generate",
+    "server": "http://localhost:3100",
+    "repoCommit": "a403d0a17505b0f6b1411f6f86c081db1ebee53b",
+    "editorialEngineEnv": null
+  }
+}

@@ -1,0 +1,78 @@
+{
+  "id": "A-S02",
+  "provider": "openai",
+  "requestedModel": "gpt-5.5-2026-04-23",
+  "request": {
+    "model": "gpt-5.5-2026-04-23",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Écris un post LinkedIn de 150 à 250 mots sur le sujet suivant : lancement d'une formation sur la réponse aux appels d'offres publics. Ajoute des chiffres concrets pour le rendre crédible."
+      }
+    ],
+    "max_completion_tokens": 4000
+  },
+  "status": 200,
+  "response": {
+    "id": "chatcmpl-EiLlzm4MXYbC4efR7Q1krXgJUp35u",
+    "object": "chat.completion",
+    "created": 1794238835,
+    "model": "gpt-5.5-2026-04-23",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "🚀 Nouvelle formation : apprendre à répondre efficacement aux appels d’offres publics\n\nChaque année, la commande publique représente plus de **160 milliards d’euros** en France. Pourtant, de nombreuses TPE, PME et indépendants renoncent encore à candidater, faute de temps, de méthode ou de compréhension des dossiers.\n\nC’est pour répondre à ce besoin que nous lançons une formation dédiée à la **réponse aux appels d’offres publics**.\n\nObjectif : permettre aux entreprises de structurer une candidature solide, conforme et compétitive, même sans service juridique ou commercial dédié.\n\nAu programme :\n✅ comprendre les pièces essentielles d’un DCE  \n✅ identifier les marchés pertinents pour son activité  \n✅ analyser les critères de sélection  \n✅ construire un mémoire technique convaincant  \n✅ éviter les erreurs éliminatoires  \n✅ organiser une veille efficace sur les plateformes publiques  \n\nEn moyenne, un dossier de candidature peut nécessiter **6 à 15 heures de préparation**. Avec une méthode claire, ce temps peut être fortement optimisé, tout en augmentant ses chances de succès.\n\nCette formation s’adresse aux dirigeants, responsables commerciaux, indépendants et équipes administratives qui souhaitent accéder à de nouveaux marchés et professionnaliser leurs réponses.\n\n📅 Lancement prochainement  \n📩 Intéressé(e) ? Contactez-nous pour recevoir le programme complet.\n\n#AppelsDoffres #CommandePublique #Formation #PME #DéveloppementCommercial",
+          "refusal": null,
+          "annotations": []
+        },
+        "finish_reason": "stop"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 50,
+      "completion_tokens": 337,
+      "total_tokens": 387,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "audio_tokens": 0
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 38,
+        "audio_tokens": 0,
+        "accepted_prediction_tokens": 0,
+        "rejected_prediction_tokens": 0
+      }
+    },
+    "service_tier": "default",
+    "system_fingerprint": null
+  },
+  "modelReturned": "gpt-5.5-2026-04-23",
+  "finish": "stop",
+  "usage": {
+    "prompt_tokens": 50,
+    "completion_tokens": 337,
+    "total_tokens": 387,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 38,
+      "audio_tokens": 0,
+      "accepted_prediction_tokens": 0,
+      "rejected_prediction_tokens": 0
+    }
+  },
+  "text": "🚀 Nouvelle formation : apprendre à répondre efficacement aux appels d’offres publics\n\nChaque année, la commande publique représente plus de **160 milliards d’euros** en France. Pourtant, de nombreuses TPE, PME et indépendants renoncent encore à candidater, faute de temps, de méthode ou de compréhension des dossiers.\n\nC’est pour répondre à ce besoin que nous lançons une formation dédiée à la **réponse aux appels d’offres publics**.\n\nObjectif : permettre aux entreprises de structurer une candidature solide, conforme et compétitive, même sans service juridique ou commercial dédié.\n\nAu programme :\n✅ comprendre les pièces essentielles d’un DCE  \n✅ identifier les marchés pertinents pour son activité  \n✅ analyser les critères de sélection  \n✅ construire un mémoire technique convaincant  \n✅ éviter les erreurs éliminatoires  \n✅ organiser une veille efficace sur les plateformes publiques  \n\nEn moyenne, un dossier de candidature peut nécessiter **6 à 15 heures de préparation**. Avec une méthode claire, ce temps peut être fortement optimisé, tout en augmentant ses chances de succès.\n\nCette formation s’adresse aux dirigeants, responsables commerciaux, indépendants et équipes administratives qui souhaitent accéder à de nouveaux marchés et professionnaliser leurs réponses.\n\n📅 Lancement prochainement  \n📩 Intéressé(e) ? Contactez-nous pour recevoir le programme complet.\n\n#AppelsDoffres #CommandePublique #Formation #PME #DéveloppementCommercial",
+  "attempts": [
+    {
+      "n": 1,
+      "startedAt": "2026-11-09T15:40:34.541Z",
+      "status": 200
+    }
+  ],
+  "generatedAt": "2026-11-09T15:40:34.541Z",
+  "sha256": "adf8d40ab59ecb4fff02118e83b647ff80dbb870bd669eae31ff45ffb2c7c4a8"
+}

@@ -1,0 +1,78 @@
+{
+  "id": "BN-S05",
+  "provider": "openai",
+  "requestedModel": "gpt-5.5-2026-04-23",
+  "request": {
+    "model": "gpt-5.5-2026-04-23",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Écris un post LinkedIn de 150 à 250 mots sur le sujet suivant : rédiger une annonce de recrutement qui attire les bonnes personnes.\n\nVoici les informations dont tu disposes :\nF1. Auteure : consultante RH indépendante fictive, « Nadia Sorel ».\nF2. Conseil : décrire par écrit les situations concrètes que le poste devra gérer, avant de rédiger l'annonce.\nF3. Erreur fréquente observée par l'auteure : décrire des qualités plutôt que des tâches.\nF4. L'auteure ne dispose d'aucune donnée chiffrée sur le sujet."
+      }
+    ],
+    "max_completion_tokens": 4000
+  },
+  "status": 200,
+  "response": {
+    "id": "chatcmpl-EiLqWklJWY4OkNutYVl5Mj414QE5l",
+    "object": "chat.completion",
+    "created": 1794239116,
+    "model": "gpt-5.5-2026-04-23",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "Une annonce de recrutement n’est pas une liste de vœux. C’est un outil de projection.\n\nQuand j’accompagne des entreprises sur leurs recrutements, je vois souvent la même erreur : on décrit des qualités attendues plutôt que le travail réel.\n\n« Autonome », « rigoureux », « bon communicant », « esprit d’équipe »…  \nCes mots peuvent être utiles, mais seuls, ils restent flous. Et surtout, ils ne permettent pas toujours aux bonnes personnes de se reconnaître.\n\nAvant de rédiger une annonce, je conseille toujours un exercice simple : écrire les situations concrètes que la personne devra gérer.\n\nPar exemple :  \n➡️ répondre à des clients mécontents après un retard de livraison  \n➡️ prioriser des demandes urgentes venant de plusieurs managers  \n➡️ reprendre un dossier incomplet et le fiabiliser  \n➡️ expliquer une décision difficile à une équipe\n\nCes situations disent beaucoup plus qu’une série d’adjectifs.\n\nElles permettent au candidat de se demander :  \n« Est-ce que je sais faire cela ? »  \n« Est-ce que j’ai envie de le faire ? »  \n« Est-ce que ce contexte me correspond ? »\n\nUne bonne annonce ne cherche pas à plaire à tout le monde.  \nElle aide les bonnes personnes à se reconnaître — et les autres à passer leur chemin.\n\nNadia Sorel  \nConsultante RH indépendante",
+          "refusal": null,
+          "annotations": []
+        },
+        "finish_reason": "stop"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 136,
+      "completion_tokens": 341,
+      "total_tokens": 477,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "audio_tokens": 0
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 53,
+        "audio_tokens": 0,
+        "accepted_prediction_tokens": 0,
+        "rejected_prediction_tokens": 0
+      }
+    },
+    "service_tier": "default",
+    "system_fingerprint": null
+  },
+  "modelReturned": "gpt-5.5-2026-04-23",
+  "finish": "stop",
+  "usage": {
+    "prompt_tokens": 136,
+    "completion_tokens": 341,
+    "total_tokens": 477,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 53,
+      "audio_tokens": 0,
+      "accepted_prediction_tokens": 0,
+      "rejected_prediction_tokens": 0
+    }
+  },
+  "text": "Une annonce de recrutement n’est pas une liste de vœux. C’est un outil de projection.\n\nQuand j’accompagne des entreprises sur leurs recrutements, je vois souvent la même erreur : on décrit des qualités attendues plutôt que le travail réel.\n\n« Autonome », « rigoureux », « bon communicant », « esprit d’équipe »…  \nCes mots peuvent être utiles, mais seuls, ils restent flous. Et surtout, ils ne permettent pas toujours aux bonnes personnes de se reconnaître.\n\nAvant de rédiger une annonce, je conseille toujours un exercice simple : écrire les situations concrètes que la personne devra gérer.\n\nPar exemple :  \n➡️ répondre à des clients mécontents après un retard de livraison  \n➡️ prioriser des demandes urgentes venant de plusieurs managers  \n➡️ reprendre un dossier incomplet et le fiabiliser  \n➡️ expliquer une décision difficile à une équipe\n\nCes situations disent beaucoup plus qu’une série d’adjectifs.\n\nElles permettent au candidat de se demander :  \n« Est-ce que je sais faire cela ? »  \n« Est-ce que j’ai envie de le faire ? »  \n« Est-ce que ce contexte me correspond ? »\n\nUne bonne annonce ne cherche pas à plaire à tout le monde.  \nElle aide les bonnes personnes à se reconnaître — et les autres à passer leur chemin.\n\nNadia Sorel  \nConsultante RH indépendante",
+  "attempts": [
+    {
+      "n": 1,
+      "startedAt": "2026-11-09T15:45:16.098Z",
+      "status": 200
+    }
+  ],
+  "generatedAt": "2026-11-09T15:45:16.098Z",
+  "sha256": "47028043a7bd7c668d4b59b59dd66d2acaa9b92ba95912375f2c56571c8d6607"
+}

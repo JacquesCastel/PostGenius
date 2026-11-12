@@ -1,0 +1,78 @@
+{
+  "id": "A-S07",
+  "provider": "openai",
+  "requestedModel": "gpt-5.5-2026-04-23",
+  "request": {
+    "model": "gpt-5.5-2026-04-23",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Écris un post LinkedIn de 150 à 250 mots sur le sujet suivant : le remplacement d'un four dans une fonderie. Ajoute des chiffres concrets pour le rendre crédible."
+      }
+    ],
+    "max_completion_tokens": 4000
+  },
+  "status": 200,
+  "response": {
+    "id": "chatcmpl-EiLmhbXKn9QwwT2F6i4Fo3yiFThU1",
+    "object": "chat.completion",
+    "created": 1794238879,
+    "model": "gpt-5.5-2026-04-23",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "🔧 **Remplacer un four en fonderie : un projet technique, mais surtout stratégique**\n\nDans une fonderie, le remplacement d’un four ne se résume pas à “changer une machine”. C’est une opération qui impacte directement la production, la consommation énergétique, la qualité métal et la sécurité des équipes.\n\nSur un projet récent, le remplacement d’un four de fusion de **2 tonnes** par un équipement plus performant a permis de réduire la consommation électrique de **620 kWh/tonne à 510 kWh/tonne**, soit près de **18 % d’économie d’énergie**. À raison de **4 500 tonnes fondues par an**, cela représente plus de **490 000 kWh économisés** chaque année.\n\nMais le vrai défi reste l’intégration : démontage, génie civil, raccordements électriques, essais à vide, montée en température, validation qualité… Le tout avec un arrêt de production limité à **12 jours** grâce à une préparation détaillée en amont.\n\nRésultat :  \n✅ une meilleure stabilité thermique  \n✅ une baisse du taux de rebut de **3,2 % à 2,1 %**  \n✅ des cycles de fusion raccourcis de **15 minutes** par charge  \n✅ un environnement de travail plus sûr pour les opérateurs\n\nCe type d’investissement demande du temps, de la méthode et une vraie coordination entre maintenance, production, fournisseurs et qualité.\n\nDans l’industrie, moderniser n’est pas seulement remplacer : c’est préparer la performance des 10 prochaines années.",
+          "refusal": null,
+          "annotations": []
+        },
+        "finish_reason": "stop"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 47,
+      "completion_tokens": 365,
+      "total_tokens": 412,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "audio_tokens": 0
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 42,
+        "audio_tokens": 0,
+        "accepted_prediction_tokens": 0,
+        "rejected_prediction_tokens": 0
+      }
+    },
+    "service_tier": "default",
+    "system_fingerprint": null
+  },
+  "modelReturned": "gpt-5.5-2026-04-23",
+  "finish": "stop",
+  "usage": {
+    "prompt_tokens": 47,
+    "completion_tokens": 365,
+    "total_tokens": 412,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 42,
+      "audio_tokens": 0,
+      "accepted_prediction_tokens": 0,
+      "rejected_prediction_tokens": 0
+    }
+  },
+  "text": "🔧 **Remplacer un four en fonderie : un projet technique, mais surtout stratégique**\n\nDans une fonderie, le remplacement d’un four ne se résume pas à “changer une machine”. C’est une opération qui impacte directement la production, la consommation énergétique, la qualité métal et la sécurité des équipes.\n\nSur un projet récent, le remplacement d’un four de fusion de **2 tonnes** par un équipement plus performant a permis de réduire la consommation électrique de **620 kWh/tonne à 510 kWh/tonne**, soit près de **18 % d’économie d’énergie**. À raison de **4 500 tonnes fondues par an**, cela représente plus de **490 000 kWh économisés** chaque année.\n\nMais le vrai défi reste l’intégration : démontage, génie civil, raccordements électriques, essais à vide, montée en température, validation qualité… Le tout avec un arrêt de production limité à **12 jours** grâce à une préparation détaillée en amont.\n\nRésultat :  \n✅ une meilleure stabilité thermique  \n✅ une baisse du taux de rebut de **3,2 % à 2,1 %**  \n✅ des cycles de fusion raccourcis de **15 minutes** par charge  \n✅ un environnement de travail plus sûr pour les opérateurs\n\nCe type d’investissement demande du temps, de la méthode et une vraie coordination entre maintenance, production, fournisseurs et qualité.\n\nDans l’industrie, moderniser n’est pas seulement remplacer : c’est préparer la performance des 10 prochaines années.",
+  "attempts": [
+    {
+      "n": 1,
+      "startedAt": "2026-11-09T15:41:18.795Z",
+      "status": 200
+    }
+  ],
+  "generatedAt": "2026-11-09T15:41:18.795Z",
+  "sha256": "812f2ef5dedd11224c77e0fec12ffeef952724721cb0fba13df7ffe9181c55f5"
+}

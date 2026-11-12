@@ -1,0 +1,55 @@
+{
+  "id": "C-S01",
+  "request": {
+    "type": "simple",
+    "theme": "Écris un post LinkedIn de 150 à 250 mots sur le sujet suivant : retour sur une mission d'organisation des tournées de livraison. Ajoute des chiffres concrets pour le rendre crédible.",
+    "expertise": "Professionnel B2B",
+    "tone": "Professionnel",
+    "maxChars": 1700,
+    "language": "fr",
+    "source": {
+      "title": "Fiche de faits",
+      "origin": "fiche fournie par l'auteur",
+      "text": "F1. Auteur : dirigeant du cabinet fictif « Cabinet Lormand Conseil » (organisation logistique).\nF2. Client : « Transports Aubrac Lemaire », PME de transport.\nF3. Mission : réorganisation des tournées de livraison.\nF4. Résultat mesuré par le client : les retards de livraison sont passés de 18 par mois à 7 par mois.\nF5. Le dirigeant du client a dit avoir surtout apprécié que l'équipe d'exploitation soit associée aux décisions."
+    }
+  },
+  "status": null,
+  "response": null,
+  "text": null,
+  "attempts": [
+    {
+      "n": 1,
+      "startedAt": "2026-11-10T08:21:00.032Z",
+      "status": 500
+    },
+    {
+      "n": 2,
+      "startedAt": "2026-11-10T08:21:02.053Z",
+      "status": 500
+    },
+    {
+      "n": 3,
+      "startedAt": "2026-11-10T08:21:06.070Z",
+      "status": 500
+    }
+  ],
+  "failed": true,
+  "generatedAt": "2026-11-10T08:21:12.084Z",
+  "sha256": "290f548f4131a3e91898662dddd6e63083d4da9f9ed7454a96e7520e140b8bab",
+  "profile": {
+    "headline": "Professionnel B2B",
+    "companyName": null,
+    "businessDescription": null,
+    "targetAudience": null,
+    "market": null,
+    "commGoals": null,
+    "editorialLine": null,
+    "styleNotes": "Ton sobre et direct. Phrases courtes."
+  },
+  "engine": {
+    "route": "POST /api/generate",
+    "server": "http://localhost:3000",
+    "repoCommit": "a403d0a17505b0f6b1411f6f86c081db1ebee53b",
+    "editorialEngineEnv": null
+  }
+}

@@ -1,0 +1,78 @@
+{
+  "id": "B-S02",
+  "provider": "openai",
+  "requestedModel": "gpt-5.5-2026-04-23",
+  "request": {
+    "model": "gpt-5.5-2026-04-23",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Écris un post LinkedIn de 150 à 250 mots sur le sujet suivant : lancement d'une formation sur la réponse aux appels d'offres publics. Ajoute des chiffres concrets pour le rendre crédible.\n\nVoici les informations dont tu disposes :\nF1. Auteur : formatrice indépendante fictive, « Claire Montrel ».\nF2. Intitulé : « Négocier avec un acheteur public ».\nF3. Public : commerciaux de PME qui répondent à des appels d'offres.\nF4. Début de la première session : 12 mars 2027.\nF5. Prix : 1 450 € HT par personne.\nF6. Format : en présentiel."
+      }
+    ],
+    "max_completion_tokens": 4000
+  },
+  "status": 200,
+  "response": {
+    "id": "chatcmpl-EiLnLDodmCK4RtYHq3V7qLcODtXpA",
+    "object": "chat.completion",
+    "created": 1794238919,
+    "model": "gpt-5.5-2026-04-23",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "🚀 Nouvelle formation : « Négocier avec un acheteur public »\n\nRépondre à un appel d’offres public, ce n’est pas seulement remplir un dossier. C’est aussi comprendre les attentes de l’acheteur, sécuriser son offre… et savoir défendre sa valeur dans un cadre très réglementé.\n\nC’est pour accompagner les commerciaux de PME que je lance ma nouvelle formation en présentiel :  \n👉 « Négocier avec un acheteur public »\n\n📅 Première session : 12 mars 2027  \n📍 Format : présentiel  \n💶 Tarif : 1 450 € HT par personne  \n👥 Groupe limité à 10 participants pour favoriser les échanges et les cas pratiques\n\nAu programme :  \n✅ comprendre les règles clés de la commande publique  \n✅ analyser un DCE plus efficacement  \n✅ identifier les marges de manœuvre avant, pendant et après la consultation  \n✅ structurer un argumentaire commercial adapté  \n✅ éviter les erreurs qui peuvent coûter des points… ou éliminer une offre\n\nLa formation inclut 3 mises en situation, 1 trame d’analyse d’appel d’offres et des exemples concrets issus de dossiers publics.\n\nObjectif : permettre à chaque participant de repartir avec une méthode claire pour améliorer ses réponses et mieux défendre ses offres.\n\n📩 Intéressé(e) ? Contactez-moi pour recevoir le programme détaillé.\n\nClaire Montrel  \nFormatrice indépendante  \n#AppelsDOffres #CommandePublique #PME #Formation #VenteB2B",
+          "refusal": null,
+          "annotations": []
+        },
+        "finish_reason": "stop"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 151,
+      "completion_tokens": 561,
+      "total_tokens": 712,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "audio_tokens": 0
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 242,
+        "audio_tokens": 0,
+        "accepted_prediction_tokens": 0,
+        "rejected_prediction_tokens": 0
+      }
+    },
+    "service_tier": "default",
+    "system_fingerprint": null
+  },
+  "modelReturned": "gpt-5.5-2026-04-23",
+  "finish": "stop",
+  "usage": {
+    "prompt_tokens": 151,
+    "completion_tokens": 561,
+    "total_tokens": 712,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 242,
+      "audio_tokens": 0,
+      "accepted_prediction_tokens": 0,
+      "rejected_prediction_tokens": 0
+    }
+  },
+  "text": "🚀 Nouvelle formation : « Négocier avec un acheteur public »\n\nRépondre à un appel d’offres public, ce n’est pas seulement remplir un dossier. C’est aussi comprendre les attentes de l’acheteur, sécuriser son offre… et savoir défendre sa valeur dans un cadre très réglementé.\n\nC’est pour accompagner les commerciaux de PME que je lance ma nouvelle formation en présentiel :  \n👉 « Négocier avec un acheteur public »\n\n📅 Première session : 12 mars 2027  \n📍 Format : présentiel  \n💶 Tarif : 1 450 € HT par personne  \n👥 Groupe limité à 10 participants pour favoriser les échanges et les cas pratiques\n\nAu programme :  \n✅ comprendre les règles clés de la commande publique  \n✅ analyser un DCE plus efficacement  \n✅ identifier les marges de manœuvre avant, pendant et après la consultation  \n✅ structurer un argumentaire commercial adapté  \n✅ éviter les erreurs qui peuvent coûter des points… ou éliminer une offre\n\nLa formation inclut 3 mises en situation, 1 trame d’analyse d’appel d’offres et des exemples concrets issus de dossiers publics.\n\nObjectif : permettre à chaque participant de repartir avec une méthode claire pour améliorer ses réponses et mieux défendre ses offres.\n\n📩 Intéressé(e) ? Contactez-moi pour recevoir le programme détaillé.\n\nClaire Montrel  \nFormatrice indépendante  \n#AppelsDOffres #CommandePublique #PME #Formation #VenteB2B",
+  "attempts": [
+    {
+      "n": 1,
+      "startedAt": "2026-11-09T15:41:59.241Z",
+      "status": 200
+    }
+  ],
+  "generatedAt": "2026-11-09T15:41:59.241Z",
+  "sha256": "2036891041b8f1ad8e3d10216b8cb3a46ebb27ce0c691167d22fdfd832af0eb0"
+}

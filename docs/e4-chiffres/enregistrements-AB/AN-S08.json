@@ -1,0 +1,78 @@
+{
+  "id": "AN-S08",
+  "provider": "openai",
+  "requestedModel": "gpt-5.5-2026-04-23",
+  "request": {
+    "model": "gpt-5.5-2026-04-23",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Écris un post LinkedIn de 150 à 250 mots sur le sujet suivant : l'obligation de justifier l'origine des matières pour les sous-traitants."
+      }
+    ],
+    "max_completion_tokens": 4000
+  },
+  "status": 200,
+  "response": {
+    "id": "chatcmpl-EiLphWgWJnAwgO3gPrsA2nrnZ1gxd",
+    "object": "chat.completion",
+    "created": 1794239065,
+    "model": "gpt-5.5-2026-04-23",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "🔎 **Sous-traitants : justifier l’origine des matières n’est plus une option**\n\nDans un contexte de renforcement des exigences de traçabilité, les sous-traitants doivent être en mesure de démontrer l’origine des matières utilisées dans leurs prestations.\n\nCette obligation répond à plusieurs enjeux : conformité réglementaire, maîtrise des risques fournisseurs, respect des engagements RSE, lutte contre la fraude, mais aussi sécurisation des chaînes d’approvisionnement.\n\nConcrètement, cela suppose de pouvoir fournir des éléments fiables : certificats d’origine, factures fournisseurs, bons de livraison, fiches matières, attestations, documents douaniers ou tout autre justificatif pertinent.\n\nPour les donneurs d’ordre, cette exigence devient un critère de confiance. Pour les sous-traitants, elle implique une organisation rigoureuse : collecte des documents, archivage, mise à jour des informations et transparence en cas de contrôle ou d’audit.\n\nNe pas pouvoir justifier l’origine d’une matière peut entraîner des conséquences importantes : blocage de production, refus de livraison, litige contractuel, perte de marché, voire sanctions selon les secteurs concernés.\n\n✅ La traçabilité n’est donc pas seulement une contrainte administrative : c’est un levier de crédibilité, de conformité et de compétitivité.\n\nAnticiper, documenter et sécuriser ses approvisionnements devient aujourd’hui indispensable.",
+          "refusal": null,
+          "annotations": []
+        },
+        "finish_reason": "stop"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 41,
+      "completion_tokens": 400,
+      "total_tokens": 441,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "audio_tokens": 0
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 110,
+        "audio_tokens": 0,
+        "accepted_prediction_tokens": 0,
+        "rejected_prediction_tokens": 0
+      }
+    },
+    "service_tier": "default",
+    "system_fingerprint": null
+  },
+  "modelReturned": "gpt-5.5-2026-04-23",
+  "finish": "stop",
+  "usage": {
+    "prompt_tokens": 41,
+    "completion_tokens": 400,
+    "total_tokens": 441,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 110,
+      "audio_tokens": 0,
+      "accepted_prediction_tokens": 0,
+      "rejected_prediction_tokens": 0
+    }
+  },
+  "text": "🔎 **Sous-traitants : justifier l’origine des matières n’est plus une option**\n\nDans un contexte de renforcement des exigences de traçabilité, les sous-traitants doivent être en mesure de démontrer l’origine des matières utilisées dans leurs prestations.\n\nCette obligation répond à plusieurs enjeux : conformité réglementaire, maîtrise des risques fournisseurs, respect des engagements RSE, lutte contre la fraude, mais aussi sécurisation des chaînes d’approvisionnement.\n\nConcrètement, cela suppose de pouvoir fournir des éléments fiables : certificats d’origine, factures fournisseurs, bons de livraison, fiches matières, attestations, documents douaniers ou tout autre justificatif pertinent.\n\nPour les donneurs d’ordre, cette exigence devient un critère de confiance. Pour les sous-traitants, elle implique une organisation rigoureuse : collecte des documents, archivage, mise à jour des informations et transparence en cas de contrôle ou d’audit.\n\nNe pas pouvoir justifier l’origine d’une matière peut entraîner des conséquences importantes : blocage de production, refus de livraison, litige contractuel, perte de marché, voire sanctions selon les secteurs concernés.\n\n✅ La traçabilité n’est donc pas seulement une contrainte administrative : c’est un levier de crédibilité, de conformité et de compétitivité.\n\nAnticiper, documenter et sécuriser ses approvisionnements devient aujourd’hui indispensable.",
+  "attempts": [
+    {
+      "n": 1,
+      "startedAt": "2026-11-09T15:44:25.202Z",
+      "status": 200
+    }
+  ],
+  "generatedAt": "2026-11-09T15:44:25.202Z",
+  "sha256": "de7111c34cd5df6f1b264174f8b866b1696384831780caa983f7683ee263fb91"
+}

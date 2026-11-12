@@ -1,0 +1,78 @@
+{
+  "id": "BN-S09",
+  "provider": "openai",
+  "requestedModel": "gpt-5.5-2026-04-23",
+  "request": {
+    "model": "gpt-5.5-2026-04-23",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Écris un post LinkedIn de 150 à 250 mots sur le sujet suivant : retour d'une enquête interne sur les points d'équipe hebdomadaires.\n\nVoici les informations dont tu disposes :\nF1. Auteure : directrice des ressources humaines de « Groupe Almeri », entreprise fictive.\nF2. Échantillon : 64 salariés répondants.\nF3. 71 % disent mieux comprendre les priorités de l'entreprise depuis les points hebdomadaires.\nF4. 23 % disent que ces points durent trop longtemps.\nF5. Aucune comparaison avec une enquête précédente n'existe."
+      }
+    ],
+    "max_completion_tokens": 4000
+  },
+  "status": 200,
+  "response": {
+    "id": "chatcmpl-EiLqztc6MacQwuxxTd33QQ0hSd3b2",
+    "object": "chat.completion",
+    "created": 1794239145,
+    "model": "gpt-5.5-2026-04-23",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "📊 Retour d’enquête interne : nos points d’équipe hebdomadaires\n\nChez Groupe Almeri, nous avons récemment interrogé nos équipes afin de mieux comprendre l’impact de nos points hebdomadaires sur l’organisation du travail et la circulation de l’information.\n\nMerci aux 64 salariés qui ont pris le temps de répondre à cette enquête interne.\n\nPremier enseignement encourageant : 71 % des répondants indiquent mieux comprendre les priorités de l’entreprise depuis la mise en place de ces rendez-vous réguliers. C’est un signal positif : ces temps collectifs jouent bien leur rôle de clarification, d’alignement et de partage.\n\nMais l’enquête met aussi en lumière un point d’attention important : 23 % des répondants estiment que ces points durent trop longtemps. Un rendez-vous utile doit rester efficace, ciblé et respectueux du temps de chacun.\n\nNotre prochaine étape sera donc de travailler avec les managers sur des formats plus simples et plus rythmés : objectifs clairs, ordre du jour partagé, temps limité, décisions et actions identifiées en fin de réunion.\n\nL’enjeu n’est pas de multiplier les réunions, mais de créer les bons espaces d’échange.\n\nEn tant que DRH, je suis convaincue qu’une culture du feedback régulier nous aide à progresser collectivement.\n\n#RessourcesHumaines #Management #CommunicationInterne #EngagementCollaborateur #Feedback",
+          "refusal": null,
+          "annotations": []
+        },
+        "finish_reason": "stop"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 134,
+      "completion_tokens": 371,
+      "total_tokens": 505,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "audio_tokens": 0
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 76,
+        "audio_tokens": 0,
+        "accepted_prediction_tokens": 0,
+        "rejected_prediction_tokens": 0
+      }
+    },
+    "service_tier": "default",
+    "system_fingerprint": null
+  },
+  "modelReturned": "gpt-5.5-2026-04-23",
+  "finish": "stop",
+  "usage": {
+    "prompt_tokens": 134,
+    "completion_tokens": 371,
+    "total_tokens": 505,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 76,
+      "audio_tokens": 0,
+      "accepted_prediction_tokens": 0,
+      "rejected_prediction_tokens": 0
+    }
+  },
+  "text": "📊 Retour d’enquête interne : nos points d’équipe hebdomadaires\n\nChez Groupe Almeri, nous avons récemment interrogé nos équipes afin de mieux comprendre l’impact de nos points hebdomadaires sur l’organisation du travail et la circulation de l’information.\n\nMerci aux 64 salariés qui ont pris le temps de répondre à cette enquête interne.\n\nPremier enseignement encourageant : 71 % des répondants indiquent mieux comprendre les priorités de l’entreprise depuis la mise en place de ces rendez-vous réguliers. C’est un signal positif : ces temps collectifs jouent bien leur rôle de clarification, d’alignement et de partage.\n\nMais l’enquête met aussi en lumière un point d’attention important : 23 % des répondants estiment que ces points durent trop longtemps. Un rendez-vous utile doit rester efficace, ciblé et respectueux du temps de chacun.\n\nNotre prochaine étape sera donc de travailler avec les managers sur des formats plus simples et plus rythmés : objectifs clairs, ordre du jour partagé, temps limité, décisions et actions identifiées en fin de réunion.\n\nL’enjeu n’est pas de multiplier les réunions, mais de créer les bons espaces d’échange.\n\nEn tant que DRH, je suis convaincue qu’une culture du feedback régulier nous aide à progresser collectivement.\n\n#RessourcesHumaines #Management #CommunicationInterne #EngagementCollaborateur #Feedback",
+  "attempts": [
+    {
+      "n": 1,
+      "startedAt": "2026-11-09T15:45:45.371Z",
+      "status": 200
+    }
+  ],
+  "generatedAt": "2026-11-09T15:45:45.371Z",
+  "sha256": "56fa64b2857cdd491fa3b4bfda382400f4894ced0f0e60ee2b0c39debe6e0f5f"
+}

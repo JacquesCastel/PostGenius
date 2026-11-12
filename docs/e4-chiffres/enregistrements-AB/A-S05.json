@@ -1,0 +1,78 @@
+{
+  "id": "A-S05",
+  "provider": "openai",
+  "requestedModel": "gpt-5.5-2026-04-23",
+  "request": {
+    "model": "gpt-5.5-2026-04-23",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Écris un post LinkedIn de 150 à 250 mots sur le sujet suivant : rédiger une annonce de recrutement qui attire les bonnes personnes. Ajoute des chiffres concrets pour le rendre crédible."
+      }
+    ],
+    "max_completion_tokens": 4000
+  },
+  "status": 200,
+  "response": {
+    "id": "chatcmpl-EiLmPzUDTaJaLdJQoMa8UW6VNtpMF",
+    "object": "chat.completion",
+    "created": 1794238861,
+    "model": "gpt-5.5-2026-04-23",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "🎯 Une annonce de recrutement ne doit pas attirer “le plus de candidats possible”. Elle doit attirer les bonnes personnes.\n\nTrop souvent, les offres d’emploi ressemblent à une liste de courses : 12 compétences exigées, 8 missions, 0 personnalité. Résultat : beaucoup de candidatures, mais peu de profils vraiment alignés.\n\nPour rédiger une annonce efficace, je recommande de travailler 4 points :\n\n✅ **Un titre clair**  \nÉvitez les intitulés flous comme “Ninja du marketing” ou “Rockstar sales”. Un titre précis peut augmenter le taux de clic de 20 à 30 %.\n\n✅ **Une mission concrète**  \nExpliquez ce que la personne devra accomplir dans les 6 premiers mois. Exemple : “Structurer notre acquisition B2B pour passer de 300 à 500 leads qualifiés par mois.”\n\n✅ **Les critères vraiment indispensables**  \nUne étude LinkedIn indique que les femmes postulent lorsqu’elles remplissent environ 100 % des critères, contre 60 % pour les hommes. Réduire la liste des prérequis peut donc élargir et diversifier le vivier.\n\n✅ **La transparence sur le salaire et le cadre de travail**  \nLes annonces avec fourchette salariale reçoivent jusqu’à 30 % de candidatures qualifiées en plus.\n\nUne bonne annonce ne vend pas du rêve.  \nElle crée une rencontre honnête entre un besoin, une culture et une ambition commune.\n\n#Recrutement #RH #TalentAcquisition #MarqueEmployeur",
+          "refusal": null,
+          "annotations": []
+        },
+        "finish_reason": "stop"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 48,
+      "completion_tokens": 363,
+      "total_tokens": 411,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "audio_tokens": 0
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 35,
+        "audio_tokens": 0,
+        "accepted_prediction_tokens": 0,
+        "rejected_prediction_tokens": 0
+      }
+    },
+    "service_tier": "default",
+    "system_fingerprint": null
+  },
+  "modelReturned": "gpt-5.5-2026-04-23",
+  "finish": "stop",
+  "usage": {
+    "prompt_tokens": 48,
+    "completion_tokens": 363,
+    "total_tokens": 411,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 35,
+      "audio_tokens": 0,
+      "accepted_prediction_tokens": 0,
+      "rejected_prediction_tokens": 0
+    }
+  },
+  "text": "🎯 Une annonce de recrutement ne doit pas attirer “le plus de candidats possible”. Elle doit attirer les bonnes personnes.\n\nTrop souvent, les offres d’emploi ressemblent à une liste de courses : 12 compétences exigées, 8 missions, 0 personnalité. Résultat : beaucoup de candidatures, mais peu de profils vraiment alignés.\n\nPour rédiger une annonce efficace, je recommande de travailler 4 points :\n\n✅ **Un titre clair**  \nÉvitez les intitulés flous comme “Ninja du marketing” ou “Rockstar sales”. Un titre précis peut augmenter le taux de clic de 20 à 30 %.\n\n✅ **Une mission concrète**  \nExpliquez ce que la personne devra accomplir dans les 6 premiers mois. Exemple : “Structurer notre acquisition B2B pour passer de 300 à 500 leads qualifiés par mois.”\n\n✅ **Les critères vraiment indispensables**  \nUne étude LinkedIn indique que les femmes postulent lorsqu’elles remplissent environ 100 % des critères, contre 60 % pour les hommes. Réduire la liste des prérequis peut donc élargir et diversifier le vivier.\n\n✅ **La transparence sur le salaire et le cadre de travail**  \nLes annonces avec fourchette salariale reçoivent jusqu’à 30 % de candidatures qualifiées en plus.\n\nUne bonne annonce ne vend pas du rêve.  \nElle crée une rencontre honnête entre un besoin, une culture et une ambition commune.\n\n#Recrutement #RH #TalentAcquisition #MarqueEmployeur",
+  "attempts": [
+    {
+      "n": 1,
+      "startedAt": "2026-11-09T15:41:01.006Z",
+      "status": 200
+    }
+  ],
+  "generatedAt": "2026-11-09T15:41:01.006Z",
+  "sha256": "44b7c43a6b9bde10499c8704ee0f80a72bec038c065246e5132df1c391035eac"
+}

@@ -1,0 +1,288 @@
+﻿id_texte;condition;sujet;n;code;type;citation;chiffre;signale;cause_si_non_signale;localise
+T-6FTK;D;S10;1;F;nom;Rencontres de l’Industrie Durable;non;;;
+T-6FTK;D;S10;2;F;date;14 octobre;oui;non;;oui
+T-6FTK;D;S10;3;F;nom;Nantes;non;;;
+T-6FTK;D;S10;4;F;nom;table ronde sur la réparabilité des équipements;non;;;
+T-6FTK;D;S10;5;I;chiffre;Selon une étude de l’ADEME, allonger la durée de vie d’un équipement de 3 ans peut réduire son empreinte carbone de 30 %;oui;oui;;oui
+T-CA5Y;CN;S06;1;F;nom;Kléros Formation;non;;;
+T-CA5Y;CN;S06;2;F;nom;Studio Haldane Numérique;non;;;
+T-CA5Y;CN;S06;3;F;date;9 février 2027;oui;non;;oui
+T-5PUK;C;S06;1;F;nom;Kléros Formation;non;;;
+T-5PUK;C;S06;2;F;nom;Studio Haldane Numérique;non;;;
+T-5PUK;C;S06;3;F;date;9 février 2027;oui;non;;oui
+T-EMHM;CN;S10;1;F;nom;Rencontres de l’Industrie Durable;non;;;
+T-EMHM;CN;S10;2;F;nom;Nantes;non;;;
+T-EMHM;CN;S10;3;F;date;14 octobre;oui;non;;oui
+T-EMHM;CN;S10;4;F;nom;table ronde sur la réparabilité des équipements;non;;;
+T-QN8E;D;S05;1;I;chiffre;200 candidatures;oui;oui;;oui
+T-QN8E;D;S05;2;I;chiffre;Dans 80 % des annonces que j’analyse avec mes clients;oui;oui;;oui
+T-QN8E;D;S05;3;I;chiffre;5 à 7 situations concrètes;oui;non;ignore_par_regle;oui
+T-QN8E;D;S05;4;I;chiffre;6 premiers mois;oui;non;ignore_par_regle;oui
+T-QN8E;D;S05;5;I;chiffre;3 urgences simultanées;oui;non;ignore_par_regle;oui
+T-QN8E;D;S05;6;F;nom;Nadia Sorel;non;;;
+T-HHWX;C;S07;1;F;chiffre;380 000 €;oui;non;;oui
+T-HHWX;C;S07;2;F;chiffre;9 jours d’arrêt;oui;non;;oui
+T-HHWX;C;S07;3;F;nom;Fonderie Marchal;non;;;
+T-UBJM;C;S10;1;F;nom;Nantes;non;;;
+T-UBJM;C;S10;2;F;date;14 octobre;oui;non;;oui
+T-UBJM;C;S10;3;F;nom;Rencontres de l’Industrie Durable;non;;;
+T-UBJM;C;S10;4;F;nom;table ronde sur la réparabilité des équipements;non;;;
+T-AWD8;BN;S05;1;F;nom;Nadia Sorel;non;;;
+T-H8YY;BN;S09;1;F;nom;Groupe Almeri;non;;;
+T-H8YY;BN;S09;2;F;chiffre;64 salariés;oui;non;;oui
+T-H8YY;BN;S09;3;F;chiffre;71 % des répondants;oui;non;;oui
+T-H8YY;BN;S09;4;F;chiffre;23 % des répondants;oui;non;;oui
+T-HP4N;B;S05;1;I;chiffre;5 à 7 situations concrètes;oui;non;ignore_par_regle;oui
+T-HP4N;B;S05;2;I;chiffre;3 premiers mois;oui;non;ignore_par_regle;oui
+T-HP4N;B;S05;3;I;chiffre;répondre à 40 demandes clients par jour;oui;oui;;oui
+T-HP4N;B;S05;4;I;chiffre;relancer 15 factures en retard chaque semaine;oui;oui;;oui
+T-HP4N;B;S05;5;I;chiffre;1 réunion d’équipe de 30 minutes le lundi;oui;oui;;oui
+T-HP4N;B;S05;6;I;chiffre;2 priorités urgentes;oui;non;ignore_par_regle;oui
+T-HP4N;B;S05;7;I;date;avant le 5 du mois;oui;non;ignore_par_regle;oui
+T-HP4N;B;S05;8;F;nom;Nadia Sorel;non;;;
+T-KVD3;C;S05;1;I;chiffre;six mois plus tard;non;;;
+T-KVD3;C;S05;2;I;chiffre;deux priorités contradictoires;non;;;
+T-KVD3;C;S05;3;F;nom;Nadia Sorel;non;;;
+T-MFFJ;CN;S05;1;F;nom;Nadia Sorel;non;;;
+T-TXS6;B;S02;1;F;nom;« Négocier avec un acheteur public »;non;;;
+T-TXS6;B;S02;2;F;chiffre;en présentiel;non;;;
+T-TXS6;B;S02;3;F;date;12 mars 2027;oui;non;;oui
+T-TXS6;B;S02;4;F;chiffre;1 450 € HT par personne;oui;non;;oui
+T-TXS6;B;S02;5;I;chiffre;Groupe limité à 10 participants;oui;oui;;oui
+T-TXS6;B;S02;6;I;chiffre;3 mises en situation;oui;non;ignore_par_regle;oui
+T-TXS6;B;S02;7;I;chiffre;1 trame d’analyse d’appel d’offres;oui;non;ignore_par_regle;oui
+T-TXS6;B;S02;8;F;nom;Claire Montrel;non;;;
+T-TPTB;CN;S04;1;F;chiffre;6 % de croissance;oui;non;;oui
+T-TPTB;CN;S04;2;F;chiffre;2,4 M€ de CA;oui;oui;;oui
+T-TPTB;CN;S04;3;F;nom;Maison Bellange;non;;;
+T-TPTB;CN;S04;4;D;chiffre;Seize personnes;non;;;
+T-E5WE;B;S08;1;F;nom;Charte de la Fédération des Ateliers du Grand Est;non;;;
+T-E5WE;B;S08;2;F;citation;« Tout sous-traitant doit pouvoir justifier l’origine des matières qu’il utilise. »;non;;;
+T-E5WE;B;S08;3;F;nom;Étienne Faure, président d’un atelier de mécanique;non;;;
+T-E5WE;B;S08;4;I;chiffre;atelier de 10 à 20 personnes;oui;oui;;oui
+T-E5WE;B;S08;5;I;chiffre;15 à 30 minutes de travail administratif par commande;oui;oui;;oui
+T-E5WE;B;S08;6;I;chiffre;plus de 100 références matières à suivre chaque mois;oui;oui;;oui
+T-E5WE;B;S08;7;I;chiffre;période de 6 à 12 mois;oui;oui;;oui
+T-J5BE;D;S01;1;F;nom;Transports Aubrac Lemaire;non;;;
+T-J5BE;D;S01;2;I;date;Il y a quatre mois;non;;;
+T-J5BE;D;S01;3;F;chiffre;18 retards de livraison par mois;oui;non;;oui
+T-J5BE;D;S01;4;F;nom;Cabinet Lormand Conseil;non;;;
+T-J5BE;D;S01;5;I;chiffre;deux semaines sur le terrain;non;;;
+T-J5BE;D;S01;6;F;chiffre;7 retards par mois;oui;non;;oui
+T-J5BE;D;S01;7;F;chiffre;baisse de 61 %;oui;oui;;oui
+T-8N4B;BN;S08;1;F;nom;Charte de la Fédération des Ateliers du Grand Est;non;;;
+T-8N4B;BN;S08;2;F;citation;« tout sous-traitant doit pouvoir justifier l’origine des matières qu’il utilise »;non;;;
+T-8N4B;BN;S08;3;F;nom;Étienne Faure, président d’un atelier de mécanique;non;;;
+T-H5FD;D;S09;1;F;nom;Groupe Almeri;non;;;
+T-H5FD;D;S09;2;F;chiffre;64 salariés ont répondu;oui;non;;oui
+T-H5FD;D;S09;3;F;chiffre;71 %;oui;non;;oui
+T-H5FD;D;S09;4;F;chiffre;23 %;oui;non;;oui
+T-UG9Y;BN;S04;1;F;nom;Maison Bellange;non;;;
+T-UG9Y;BN;S04;2;I;date;En 2024;oui;non;ignore_par_regle;oui
+T-UG9Y;BN;S04;3;F;chiffre;2,4 millions d’euros de CA;oui;non;;oui
+T-UG9Y;BN;S04;4;F;chiffre;progression de 6 %;oui;non;;oui
+T-UG9Y;BN;S04;5;F;chiffre;équipe de 17 personnes;oui;non;;oui
+T-UG9Y;BN;S04;6;I;date;En 2025;oui;non;ignore_par_regle;oui
+T-YJC5;D;S04;1;F;nom;Maison Bellange;non;;;
+T-YJC5;D;S04;2;F;chiffre;2,4 millions d’euros de chiffre d’affaires;oui;non;;oui
+T-YJC5;D;S04;3;F;chiffre;hausse de 6 %;oui;non;;oui
+T-YJC5;D;S04;4;I;date;par rapport à 2023;oui;non;ignore_par_regle;oui
+T-YJC5;D;S04;5;F;chiffre;équipe de 17 personnes;oui;non;;oui
+T-YJC5;D;S04;6;I;date;Bilan 2024;oui;non;ignore_par_regle;oui
+T-YJC5;D;S04;7;I;date;En 2025;oui;non;ignore_par_regle;oui
+T-FQTU;B;S01;1;F;nom;Transports Aubrac Lemaire;non;;;
+T-FQTU;B;S01;2;I;chiffre;12 tournées régulières;oui;oui;;oui
+T-FQTU;B;S01;3;F;chiffre;18 par mois;oui;non;;oui
+T-FQTU;B;S01;4;F;chiffre;7 par mois;oui;non;;oui
+T-FQTU;B;S01;5;F;chiffre;baisse de plus de 60 %;oui;oui;;oui
+T-FQTU;B;S01;6;F;nom;Cabinet Lormand Conseil;non;;;
+T-69WC;B;S09;1;F;nom;Groupe Almeri;non;;;
+T-69WC;B;S09;2;F;chiffre;64 salariés;oui;non;;oui
+T-69WC;B;S09;3;F;chiffre;71 % des répondants;oui;non;;oui
+T-69WC;B;S09;4;F;chiffre;environ 45 personnes;oui;oui;;oui
+T-69WC;B;S09;5;F;chiffre;23 % des répondants;oui;non;;oui
+T-69WC;B;S09;6;F;chiffre;près de 15 personnes;oui;oui;;oui
+T-7ZYT;A;S04;1;I;date;En 2024;oui;non;ignore_par_regle;oui
+T-7ZYT;A;S04;2;I;chiffre;86 projets;oui;oui;;oui
+T-7ZYT;A;S04;3;I;chiffre;34 cuisines sur mesure;oui;oui;;oui
+T-7ZYT;A;S04;4;I;chiffre;21 dressings;oui;oui;;oui
+T-7ZYT;A;S04;5;I;chiffre;12 escaliers;oui;oui;;oui
+T-7ZYT;A;S04;6;I;chiffre;18 m³ de chêne, frêne et hêtre;oui;oui;;oui
+T-7ZYT;A;S04;7;I;chiffre;420 m² d’agencements;oui;oui;;oui
+T-7ZYT;A;S04;8;I;chiffre;9 500 km;oui;oui;;oui
+T-7ZYT;A;S04;9;I;chiffre;3 menuisiers à l’atelier;oui;non;ignore_par_regle;oui
+T-7ZYT;A;S04;10;I;chiffre;1 apprenti;oui;non;ignore_par_regle;oui
+T-7ZYT;A;S04;11;D;chiffre;progression de 17 % du chiffre d’affaires;oui;oui;;non
+T-7ZYT;A;S04;12;I;date;par rapport à 2023;oui;non;ignore_par_regle;oui
+T-7ZYT;A;S04;13;I;date;Cap sur 2025;oui;non;ignore_par_regle;non
+T-7GA9;A;S01;1;I;chiffre;18 chauffeurs;oui;non;coincide_avec_la_fiche;oui
+T-7GA9;A;S01;2;I;chiffre;420 livraisons par semaine;oui;oui;;oui
+T-7GA9;A;S01;3;I;chiffre;7 secteurs géographiques;oui;non;coincide_avec_la_fiche;oui
+T-7GA9;A;S01;4;I;chiffre;4 semaines de test;oui;oui;;oui
+T-7GA9;A;S01;5;I;chiffre;-14 % de kilomètres parcourus;oui;oui;;oui
+T-7GA9;A;S01;6;I;chiffre;-11 % de temps moyen par tournée;oui;oui;;oui
+T-7GA9;A;S01;7;I;chiffre;+18 % de livraisons dans le créneau;oui;oui;;non
+T-7GA9;A;S01;8;I;chiffre;1 tournée quotidienne supprimée;oui;non;ignore_par_regle;oui
+T-7GA9;A;S01;9;I;chiffre;3 200 € par mois économisés;oui;oui;;non
+T-JXM9;CN;S07;1;F;chiffre;380 000 €;oui;non;;oui
+T-JXM9;CN;S07;2;F;chiffre;9 jours d’arrêt;oui;non;;oui
+T-JXM9;CN;S07;3;F;nom;Fonderie Marchal;non;;;
+T-BP9C;C;S09;1;F;chiffre;71 %;oui;non;;oui
+T-BP9C;C;S09;2;F;chiffre;64 salariés;oui;non;;oui
+T-BP9C;C;S09;3;F;nom;Groupe Almeri;non;;;
+T-BP9C;C;S09;4;F;chiffre;23 %;oui;non;;oui
+T-7DJJ;C;S01;1;F;chiffre;18 retards de livraison par mois;oui;non;;oui
+T-7DJJ;C;S01;2;F;chiffre;7;oui;non;;oui
+T-7DJJ;C;S01;3;F;nom;Transports Aubrac Lemaire;non;;;
+T-7DJJ;C;S01;4;F;nom;Cabinet Lormand Conseil;non;;;
+T-GA3A;BN;S02;1;F;nom;« Négocier avec un acheteur public »;non;;;
+T-GA3A;BN;S02;2;F;chiffre;en présentiel;non;;;
+T-GA3A;BN;S02;3;F;date;12 mars 2027;oui;non;;oui
+T-GA3A;BN;S02;4;F;chiffre;1 450 € HT par personne;oui;non;;oui
+T-GA3A;BN;S02;5;F;nom;Claire Montrel;non;;;
+T-XQY4;AN;S05;1;I;chiffre;15 compétences / 5 indispensables;oui;oui;;non
+T-74TC;D;S03;1;F;nom;Lucas Perrin;non;;;
+T-74TC;D;S03;2;I;chiffre;Depuis 18 mois;oui;oui;;oui
+T-74TC;D;S03;3;I;chiffre;chaque semaine, un client me pose la même question;non;;;
+T-74TC;D;S03;4;F;citation;« D’où vient ce composant ? »;non;;;
+T-XPGH;CN;S09;1;F;chiffre;71 %;oui;non;;oui
+T-XPGH;CN;S09;2;F;nom;Groupe Almeri;non;;;
+T-XPGH;CN;S09;3;F;chiffre;64 salariés;oui;non;;oui
+T-XPGH;CN;S09;4;D;chiffre;près des trois quarts des répondants;non;;;
+T-XPGH;CN;S09;5;F;chiffre;23 %;oui;non;;oui
+T-RCX4;A;S10;1;I;date;La semaine dernière;non;;;
+T-RCX4;A;S10;2;I;chiffre;3 jours;oui;oui;;oui
+T-RCX4;A;S10;3;I;chiffre;Plus de 120 contacts qualifiés;oui;oui;;oui
+T-RCX4;A;S10;4;I;chiffre;38 démonstrations;oui;oui;;oui
+T-RCX4;A;S10;5;I;chiffre;17 rendez-vous commerciaux planifiés;oui;oui;;oui
+T-RCX4;A;S10;6;I;chiffre;4 conférences suivies;oui;non;ignore_par_regle;oui
+T-YE4R;A;S08;1;I;chiffre;remonter l’historique d’une matière en 24 à 72 heures;oui;oui;;oui
+T-YE4R;A;S08;2;I;chiffre;Selon plusieurs études achats, près de 60 % des entreprises industrielles ont renforcé leurs exigences de traçabilité fournisseurs;oui;oui;;oui
+T-YE4R;A;S08;3;I;chiffre;une rupture liée à la conformité matière peut coûter plusieurs dizaines de milliers d’euros;non;;;
+T-CKAM;D;S02;1;V;chiffre;plus de 100 milliards d’euros par an (marchés publics, France);oui;oui;;oui
+T-CKAM;D;S02;2;I;chiffre;72 % des PME … jamais formées à la négociation avec le secteur public;oui;oui;;non
+T-CKAM;D;S02;3;F;nom;« Négocier avec un acheteur public »;non;;;
+T-CKAM;D;S02;4;F;chiffre;100 % présentielle;oui;oui;;oui
+T-CKAM;D;S02;5;V;source;Code de la commande publique;non;;;
+T-CKAM;D;S02;6;F;date;12 mars 2027;oui;non;;oui
+T-CKAM;D;S02;7;F;chiffre;1 450 € HT / personne;oui;non;;oui
+T-CKAM;D;S02;8;I;chiffre;Places limitées à 10 participants;oui;oui;;oui
+T-DJX9;D;S07;1;F;nom;Fonderie Marchal;non;;;
+T-DJX9;D;S07;2;F;chiffre;380 000 €;oui;non;;oui
+T-DJX9;D;S07;3;F;chiffre;9 jours d’arrêt total;oui;non;;oui
+T-DJX9;D;S07;4;I;chiffre;plus de 20 ans de service (ancien four);oui;oui;;oui
+T-DJX9;D;S07;5;I;chiffre;sécurisé pour les 15 prochaines années;oui;oui;;non
+T-8UC5;A;S06;1;I;date;À partir de ce mois-ci;non;;;
+T-8UC5;A;S06;2;I;chiffre;200 collaborateurs formés;oui;oui;;oui
+T-8UC5;A;S06;3;I;chiffre;sur les 12 prochains mois;oui;oui;;oui
+T-8UC5;A;S06;4;I;chiffre;40 heures de formation par participant;oui;oui;;oui
+T-8UC5;A;S06;5;I;chiffre;8 modules spécialisés;oui;non;ignore_par_regle;oui
+T-8UC5;A;S06;6;I;chiffre;3 cohortes dès le premier semestre;oui;non;ignore_par_regle;oui
+T-8UC5;A;S06;7;I;chiffre;réduire de 30 % le temps de prise en main;oui;oui;;oui
+T-8UC5;A;S06;8;I;chiffre;phase pilote auprès de 25 participants;oui;oui;;non
+T-8UC5;A;S06;9;I;chiffre;taux de satisfaction de 92 %;oui;oui;;non
+T-8UC5;A;S06;10;I;chiffre;progression moyenne de 28 % aux évaluations;oui;oui;;oui
+T-BZY2;A;S02;1;V;chiffre;plus de 160 milliards d’euros par an (commande publique, France);oui;oui;;oui
+T-BZY2;A;S02;2;I;chiffre;6 à 15 heures de préparation (dossier de candidature);oui;oui;;oui
+T-U6NJ;D;S06;1;F;nom;Kléros Formation;non;;;
+T-U6NJ;D;S06;2;F;nom;Studio Haldane Numérique;non;;;
+T-U6NJ;D;S06;3;I;chiffre;40 % des pannes industrielles non planifiées auraient pu être évitées;oui;oui;;oui
+T-U6NJ;D;S06;4;I;chiffre;250 000 € par an d’arrêts non programmés pour les PME industrielles en France;oui;oui;;non
+T-U6NJ;D;S06;5;I;chiffre;offres d’emploi sur la maintenance prédictive : +67 % en 3 ans;oui;oui;;non
+T-U6NJ;D;S06;6;I;chiffre;moins de 15 % des techniciens en poste ont reçu une formation spécifique;oui;oui;;oui
+T-STS9;C;S04;1;F;chiffre;6 % de hausse;oui;non;;oui
+T-STS9;C;S04;2;F;chiffre;2,4 M€ de CA;oui;oui;;oui
+T-STS9;C;S04;3;F;nom;Maison Bellange;non;;;
+T-STS9;C;S04;4;F;chiffre;Nous sommes 17;oui;non;;oui
+T-STS9;C;S04;5;I;date;#Bilan2024;oui;non;ignore_par_regle;oui
+T-8GKD;A;S07;1;I;chiffre;four de fusion de 2 tonnes;oui;non;ignore_par_regle;oui
+T-8GKD;A;S07;2;I;chiffre;consommation de 620 kWh/tonne à 510 kWh/tonne;oui;oui;;non
+T-8GKD;A;S07;3;I;chiffre;près de 18 % d’économie d’énergie;oui;oui;;oui
+T-8GKD;A;S07;4;I;chiffre;4 500 tonnes fondues par an;oui;oui;;oui
+T-8GKD;A;S07;5;I;chiffre;plus de 490 000 kWh économisés par an;oui;oui;;oui
+T-8GKD;A;S07;6;D;chiffre;arrêt de production limité à 12 jours;oui;oui;;oui
+T-8GKD;A;S07;7;I;chiffre;taux de rebut de 3,2 % à 2,1 %;oui;oui;;oui
+T-8GKD;A;S07;8;I;chiffre;cycles de fusion raccourcis de 15 minutes par charge;oui;oui;;oui
+T-8GKD;A;S07;9;I;chiffre;préparer la performance des 10 prochaines années;oui;oui;;oui
+T-T9A2;BN;S03;1;F;nom;Lucas Perrin;non;;;
+T-58SN;A;S05;1;I;chiffre;12 compétences exigées, 8 missions, 0 personnalité;oui;oui;;oui
+T-58SN;A;S05;2;I;chiffre;un titre précis peut augmenter le taux de clic de 20 à 30 %;oui;oui;;oui
+T-58SN;A;S05;3;I;chiffre;6 premiers mois;oui;non;ignore_par_regle;oui
+T-58SN;A;S05;4;I;chiffre;passer de 300 à 500 leads qualifiés par mois;oui;oui;;oui
+T-58SN;A;S05;5;X;chiffre;Une étude LinkedIn indique que les femmes postulent à ~100 % des critères contre 60 % pour les hommes;oui;oui;;oui
+T-58SN;A;S05;6;I;chiffre;Les annonces avec fourchette salariale reçoivent jusqu’à 30 % de candidatures qualifiées en plus;oui;oui;;oui
+T-NPWE;C;S08;1;F;nom;Fédération des Ateliers du Grand Est (charte);non;;;
+T-NPWE;C;S08;2;F;nom;Étienne Faure, président d’un atelier de mécanique;non;;;
+T-FMM7;CN;S02;1;F;nom;Claire Montrel;non;;;
+T-FMM7;CN;S02;2;F;nom;« Négocier avec un acheteur public »;non;;;
+T-FMM7;CN;S02;3;F;chiffre;en présentiel;non;;;
+T-FMM7;CN;S02;4;F;date;12 mars 2027;oui;non;;oui
+T-FMM7;CN;S02;5;F;chiffre;1 450 € HT par personne;oui;non;;oui
+T-U9J9;BN;S07;1;F;nom;Fonderie Marchal;non;;;
+T-U9J9;BN;S07;2;F;chiffre;380 000 €;oui;non;;oui
+T-U9J9;BN;S07;3;F;chiffre;arrêt de production de 9 jours;oui;non;;oui
+T-PPA6;D;S08;1;F;nom;Fédération des Ateliers du Grand Est … nouvelle Charte;non;;;
+T-PPA6;D;S08;2;F;citation;**tout sous-traitant doit pouvoir justifier l’origine des matières qu’il utilise**;non;;;
+T-PPA6;D;S08;3;I;chiffre;près de 40 % des non-conformités détectées en audit viennent d’une mauvaise traçabilité;oui;oui;;oui
+T-PPA6;D;S08;4;I;chiffre;investissements entre 5 000 et 15 000 € selon la taille;oui;oui;;non
+T-PPA6;D;S08;5;I;chiffre;délai d’application d’au moins 18 à 24 mois;oui;oui;;non
+T-CQHY;B;S07;1;F;nom;Fonderie Marchal;non;;;
+T-CQHY;B;S07;2;F;chiffre;380 000 €;oui;non;;oui
+T-CQHY;B;S07;3;F;chiffre;9 jours;oui;non;;oui
+T-5VM2;B;S06;1;F;date;9 février 2027;oui;non;;oui
+T-5VM2;B;S06;2;F;nom;Kléros Formation;non;;;
+T-5VM2;B;S06;3;F;nom;Studio Haldane Numérique;non;;;
+T-5VM2;B;S06;4;I;chiffre;6 modules pédagogiques;oui;non;ignore_par_regle;oui
+T-5VM2;B;S06;5;I;chiffre;42 heures de formation;oui;oui;;oui
+T-5VM2;B;S06;6;I;chiffre;3 cas pratiques;oui;non;ignore_par_regle;oui
+T-5VM2;B;S06;7;I;chiffre;1 simulateur de diagnostic;oui;non;ignore_par_regle;oui
+T-5VM2;B;S06;8;I;chiffre;plus de 15 indicateurs;oui;oui;;oui
+T-983B;B;S04;1;F;nom;Maison Bellange;non;;;
+T-983B;B;S04;2;I;date;En 2024;oui;non;ignore_par_regle;oui
+T-983B;B;S04;3;F;chiffre;2,4 millions d’euros de chiffre d’affaires;oui;non;;oui
+T-983B;B;S04;4;F;chiffre;hausse de 6 %;oui;non;;oui
+T-983B;B;S04;5;F;chiffre;équipe de 17 personnes;oui;non;;oui
+T-983B;B;S04;6;I;date;en 2025;oui;non;ignore_par_regle;oui
+T-EAAQ;CN;S01;1;F;chiffre;18 retards de livraison par mois;oui;non;;oui
+T-EAAQ;CN;S01;2;F;chiffre;7;oui;non;;oui
+T-EAAQ;CN;S01;3;F;nom;Transports Aubrac Lemaire;non;;;
+T-9666;B;S10;1;F;date;14 octobre 2026;oui;non;;oui
+T-9666;B;S10;2;F;nom;Rencontres de l’Industrie Durable;non;;;
+T-9666;B;S10;3;F;nom;Nantes;non;;;
+T-9666;B;S10;4;F;nom;table ronde consacrée à la réparabilité des équipements;non;;;
+T-9666;B;S10;5;I;chiffre;raisonner en coût complet sur 5 à 10 ans;oui;oui;;oui
+T-9666;B;S10;6;I;chiffre;disponibilité des pièces détachées pendant 7 ans minimum;oui;oui;;oui
+T-9666;B;S10;7;I;chiffre;délai d’intervention sous 48 h;oui;oui;;oui
+T-9666;B;S10;8;I;chiffre;pondération de 15 % dédiée à la réparabilité;oui;oui;;oui
+T-9666;B;S10;9;F;nom;Hélène Garnier;non;;;
+T-BVQG;A;S03;1;V;chiffre;1 heure d’arrêt de production peut coûter entre 10 000 € et 250 000 €, selon plusieurs études sectorielles;oui;oui;;oui
+T-BVQG;A;S03;2;I;chiffre;moins de 2 heures au lieu de plusieurs jours (identification d’un lot défectueux);oui;non;ignore_par_regle;oui
+T-VV8Z;A;S09;1;I;chiffre;87 % des répondants;oui;oui;;oui
+T-VV8Z;A;S09;2;I;chiffre;72 % apprécient le format régulier;oui;oui;;oui
+T-VV8Z;A;S09;3;I;chiffre;41 % trouvent que certaines réunions manquent de structure;oui;oui;;oui
+T-VV8Z;A;S09;4;I;chiffre;36 % considèrent que la durée pourrait être mieux maîtrisée;oui;oui;;oui
+T-VV8Z;A;S09;5;I;chiffre;ordre du jour envoyé 24h à l’avance;oui;oui;;oui
+T-VV8Z;A;S09;6;I;chiffre;créneau limité à 30 minutes;oui;oui;;oui
+T-VV8Z;A;S09;7;I;date;dès le mois prochain;non;;;
+T-EYSD;CN;S08;1;F;nom;Charte de la Fédération des Ateliers du Grand Est;non;;;
+T-EYSD;CN;S08;2;F;nom;Étienne Faure, président d’un atelier de mécanique;non;;;
+T-YAZZ;BN;S01;1;F;nom;Transports Aubrac Lemaire;non;;;
+T-YAZZ;BN;S01;2;F;nom;Cabinet Lormand Conseil;non;;;
+T-YAZZ;BN;S01;3;F;chiffre;18 par mois;oui;non;;oui
+T-YAZZ;BN;S01;4;F;chiffre;7 par mois;oui;non;;oui
+T-S2Z8;BN;S06;1;F;date;9 février 2027;oui;non;;oui
+T-S2Z8;BN;S06;2;D;nom;Klérôs Formation;non;;;
+T-S2Z8;BN;S06;3;F;nom;Studio Haldane Numérique;non;;;
+T-A39J;B;S03;1;F;nom;Lucas Perrin;non;;;
+T-A39J;B;S03;2;I;chiffre;48 heures;oui;oui;;oui
+T-A39J;B;S03;3;I;chiffre;3 semaines;oui;oui;;oui
+T-QKNK;BN;S10;1;F;nom;Rencontres de l’Industrie Durable;non;;;
+T-QKNK;BN;S10;2;F;nom;Nantes;non;;;
+T-QKNK;BN;S10;3;F;date;14 octobre 2026;oui;non;;oui
+T-QKNK;BN;S10;4;F;nom;table ronde consacrée à la réparabilité des équipements;non;;;
+T-QKNK;BN;S10;5;F;nom;Hélène Garnier, responsable des achats;non;;;
+T-48RN;C;S02;1;F;nom;Claire Montrel;non;;;
+T-48RN;C;S02;2;F;nom;« Négocier avec un acheteur public »;non;;;
+T-48RN;C;S02;3;F;chiffre;présentielle;non;;;
+T-48RN;C;S02;4;F;date;12 mars 2027;oui;non;;oui
+T-48RN;C;S02;5;F;chiffre;1 450 € HT par personne;oui;non;;oui

@@ -1,0 +1,74 @@
+{
+  "id": "CN-S03",
+  "request": {
+    "type": "simple",
+    "theme": "Écris un post LinkedIn de 150 à 250 mots sur le sujet suivant : la traçabilité des composants dans les achats industriels.",
+    "expertise": "Professionnel B2B",
+    "tone": "Professionnel",
+    "maxChars": 1700,
+    "language": "fr",
+    "source": {
+      "title": "Fiche de faits",
+      "origin": "fiche fournie par l'auteur",
+      "text": "F1. Auteur : consultant fictif en achats industriels, « Lucas Perrin ».\nF2. Observation qualitative : dans ses échanges avec ses clients, les acheteurs posent de plus en plus de questions sur l'origine des composants.\nF3. L'auteur n'a aucune statistique à citer et ne dispose d'aucune étude.\nF4. Son opinion : la traçabilité deviendra un critère de choix aussi important que le prix, sans qu'il puisse le chiffrer."
+    }
+  },
+  "status": 200,
+  "response": {
+    "text": "La traçabilité des composants devient un critère d'achat, pas un détail.\n\nDans mes échanges avec des acheteurs industriels, le changement est net. Ils posent de plus en plus de questions sur l'origine des composants. Pas seulement sur le prix ou le délai.\n\nOù ce composant a-t-il été fabriqué ? Qui l'a fourni en amont ? Quelle est la chaîne de sous-traitance ?\n\nCes questions n'étaient pas systématiques il y a quelques années. Elles le deviennent.\n\nMon opinion : la traçabilité prendra une place aussi importante que le prix dans les critères de sélection des fournisseurs. Je ne peux pas le chiffrer. Mais le signal est là, et il est répété.\n\nPour les fournisseurs industriels, cela change quelque chose de concret. Documenter l'origine des composants ne sera plus un avantage différenciateur. Ce sera une exigence de base.\n\nCeux qui anticipent auront une longueur d'avance. Les autres répondront dans l'urgence.",
+    "extra": null,
+    "why": {
+      "hook": "Elle affirme directement la thèse sans l'annoncer, ce qui force la lecture.",
+      "structure": "L'observation terrain d'abord, l'opinion ensuite, les implications pour la cible en dernier.",
+      "cta": "La conclusion s'impose d'elle-même sans question forcée : l'idée est complète.",
+      "hashtags": "Aucun hashtag : le ton sobre de l'auteur se prête mieux à une conclusion nette qu'à un balisage.",
+      "forText": "La traçabilité des composants devient un critère d'achat, pas un détail.\n\nDans mes échanges avec des acheteurs industriels, le changement est net. Ils posent de plus en plus de questions sur l'origine des composants. Pas seulement sur le prix ou le délai.\n\nOù ce composant a-t-il été fabriqué ? Qui l'a fourni en amont ? Quelle est la chaîne de sous-traitance ?\n\nCes questions n'étaient pas systématiques il y a quelques années. Elles le deviennent.\n\nMon opinion : la traçabilité prendra une place aussi importante que le prix dans les critères de sélection des fournisseurs. Je ne peux pas le chiffrer. Mais le signal est là, et il est répété.\n\nPour les fournisseurs industriels, cela change quelque chose de concret. Documenter l'origine des composants ne sera plus un avantage différenciateur. Ce sera une exigence de base.\n\nCeux qui anticipent auront une longueur d'avance. Les autres répondront dans l'urgence."
+    },
+    "sources": [],
+    "figureBase": [
+      "150",
+      "150|à",
+      "250",
+      "250|mot",
+      "2",
+      "2|b",
+      "1",
+      "3",
+      "4"
+    ]
+  },
+  "text": "La traçabilité des composants devient un critère d'achat, pas un détail.\n\nDans mes échanges avec des acheteurs industriels, le changement est net. Ils posent de plus en plus de questions sur l'origine des composants. Pas seulement sur le prix ou le délai.\n\nOù ce composant a-t-il été fabriqué ? Qui l'a fourni en amont ? Quelle est la chaîne de sous-traitance ?\n\nCes questions n'étaient pas systématiques il y a quelques années. Elles le deviennent.\n\nMon opinion : la traçabilité prendra une place aussi importante que le prix dans les critères de sélection des fournisseurs. Je ne peux pas le chiffrer. Mais le signal est là, et il est répété.\n\nPour les fournisseurs industriels, cela change quelque chose de concret. Documenter l'origine des composants ne sera plus un avantage différenciateur. Ce sera une exigence de base.\n\nCeux qui anticipent auront une longueur d'avance. Les autres répondront dans l'urgence.",
+  "why": {
+    "hook": "Elle affirme directement la thèse sans l'annoncer, ce qui force la lecture.",
+    "structure": "L'observation terrain d'abord, l'opinion ensuite, les implications pour la cible en dernier.",
+    "cta": "La conclusion s'impose d'elle-même sans question forcée : l'idée est complète.",
+    "hashtags": "Aucun hashtag : le ton sobre de l'auteur se prête mieux à une conclusion nette qu'à un balisage.",
+    "forText": "La traçabilité des composants devient un critère d'achat, pas un détail.\n\nDans mes échanges avec des acheteurs industriels, le changement est net. Ils posent de plus en plus de questions sur l'origine des composants. Pas seulement sur le prix ou le délai.\n\nOù ce composant a-t-il été fabriqué ? Qui l'a fourni en amont ? Quelle est la chaîne de sous-traitance ?\n\nCes questions n'étaient pas systématiques il y a quelques années. Elles le deviennent.\n\nMon opinion : la traçabilité prendra une place aussi importante que le prix dans les critères de sélection des fournisseurs. Je ne peux pas le chiffrer. Mais le signal est là, et il est répété.\n\nPour les fournisseurs industriels, cela change quelque chose de concret. Documenter l'origine des composants ne sera plus un avantage différenciateur. Ce sera une exigence de base.\n\nCeux qui anticipent auront une longueur d'avance. Les autres répondront dans l'urgence."
+  },
+  "sources": [],
+  "attempts": [
+    {
+      "n": 1,
+      "startedAt": "2026-11-10T09:23:14.558Z",
+      "status": 200
+    }
+  ],
+  "generatedAt": "2026-11-10T09:23:14.558Z",
+  "sha256": "a96f911e95bc34ac53ba53d065a3bc0f0b2a86016b5d8a96c839a1b762261a08",
+  "profile": {
+    "headline": "Professionnel B2B",
+    "companyName": null,
+    "businessDescription": null,
+    "targetAudience": null,
+    "market": null,
+    "commGoals": null,
+    "editorialLine": null,
+    "styleNotes": "Ton sobre et direct. Phrases courtes."
+  },
+  "engine": {
+    "route": "POST /api/generate",
+    "server": "http://localhost:3100",
+    "repoCommit": "a403d0a17505b0f6b1411f6f86c081db1ebee53b",
+    "editorialEngineEnv": null
+  }
+}

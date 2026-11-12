@@ -2,6 +2,7 @@
 
 import { pick } from "@/lib/access";
 import { figuresToCheck } from "@/lib/figureCheck";
+import { checkConsignes, CONSIGNES_CHECKED } from "@/lib/consigneRules";
 import { useState, useEffect, useRef, createContext, useContext, useMemo } from "react";
 import { NotificationBell, AgencyPlanning } from "@/components/AgencyExtras";
 import {
@@ -2219,7 +2220,7 @@ const POST_COLUMNS = [
   { id: "publié", title: "Publiés", dot: "bg-green-500", hint: "En ligne sur LinkedIn." },
   { id: "erreur", title: "Erreurs", dot: "bg-red-500", hint: "La publication a échoué : la carte explique pourquoi." },
 ];
-// Score d'engagement : même palette que l'écran d'optimisation
+// Contrôle de forme : même palette que l'écran d'optimisation
 const scoreTone = (n) => (n >= 80 ? "bg-green-50 text-green-700" : n >= 60 ? "bg-[#fff1f1] text-[#f63d44]" : n >= 40 ? "bg-amber-50 text-amber-700" : "bg-red-50 text-red-700");
 
 // Relecture en série des posts « à valider » : un post à la fois, en entier, avec Valider / Modifier / Passer.
@@ -3090,6 +3091,43 @@ function MentionTool({ draftId, local, text, onInsert, mentions, onMentions, get
         </div>
       )}
     </div>
+  );
+}
+
+// Contrôle des consignes d'un post libre : les règles (zéro émoji, hashtags, mots à éviter, longueur, tutoiement) sont lues dans les consignes
+// de l'utilisateur par /api/consignes, puis appliquées au texte affiché. Un écart est montré, jamais corrigé en silence.
+// Les règles sont partagées entre tous les contrôles affichés (une série en montre un par post) : une seule requête par jeu de paramètres, renouvelée toutes les 30 s.
+const consigneRulesCache = new Map();
+function loadConsigneRules(body) {
+  const key = JSON.stringify(body);
+  const hit = consigneRulesCache.get(key);
+  if (hit && Date.now() - hit.at < 30000) return hit.promise;
+  const promise = fetch("/api/consignes", { method: "POST", headers: { "Content-Type": "application/json" }, body: key })
+    .then((r) => (r.ok ? r.json() : { rules: [] }))
+    .then((d) => (Array.isArray(d.rules) ? d.rules : []))
+    .catch(() => []);
+  consigneRulesCache.set(key, { at: Date.now(), promise });
+  return promise;
+}
+function ConsignesCheck({ text, contextId, language, maxChars, voiceKind }) {
+  const [rules, setRules] = useState([]);
+  useEffect(() => {
+    let alive = true;
+    loadConsigneRules({ contextId: contextId || undefined, language: language || undefined, maxChars, publishAs: { kind: voiceKind === "org" ? "org" : "person" } }).then((r) => { if (alive) setRules(r); });
+    return () => { alive = false; };
+  }, [contextId, language, maxChars, voiceKind]);
+  if (!rules.length) return null;
+  const issues = checkConsignes(text, rules);
+  return issues.length > 0 ? (
+    <div data-testid="consignes-check" className="mt-3 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+      <p className="font-semibold">Consignes à vérifier avant de publier</p>
+      <ul className="mt-1 list-disc pl-5 space-y-0.5 text-xs leading-snug">
+        {issues.map((i) => <li key={i.id}>{i.text}</li>)}
+      </ul>
+      <p className="text-[11px] mt-2 leading-snug text-amber-800">{CONSIGNES_CHECKED} Le texte n&apos;a pas été modifié : à vous de décider.</p>
+    </div>
+  ) : (
+    <p data-testid="consignes-ok" className="mt-3 text-[11px] text-gray-500">Consignes contrôlées : aucun écart. {CONSIGNES_CHECKED}</p>
   );
 }
 
@@ -8721,7 +8759,7 @@ function PostWhy({ text, why, onReanalyze, reanalyzing }) {
 }
 
 // ----------------------------------------------------------------
-// Score de potentiel d'engagement (heuristique instantanée + conseils IA)
+// Contrôle de forme (note heuristique instantanée + conseils IA)
 // ----------------------------------------------------------------
 function ScorePanel({ text, type, recomputing, onTips }) {
   const heur = scorePost({ text, type });
@@ -11938,18 +11976,18 @@ function DashboardView({ drafts, canVeille = true, canEvents = false, canScore =
     { label: "Erreurs", value: errors.length, color: "#ef4444" },
   ];
 
-  // Score d'engagement moyen des posts rédigés
+  // Note de forme moyenne des posts rédigés (contrôle de forme)
   const scoredPosts = drafts.filter((d) => d.text && d.text.trim());
   const scores = scoredPosts.map((d) => scorePost({ text: d.text, type: d.type }).score);
   const avgScore = scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : null;
   const avgColor =
     avgScore == null ? "#94a3b8" : avgScore >= 80 ? "#16a34a" : avgScore >= 60 ? "#ff5a5f" : avgScore >= 40 ? "#f59e0b" : "#ef4444";
   const avgLevel =
-    avgScore == null ? "" : avgScore >= 80 ? "Excellent" : avgScore >= 60 ? "Bon" : avgScore >= 40 ? "Moyen" : "À retravailler";
+    avgScore == null ? "" : avgScore >= 80 ? "Bien construit" : avgScore >= 60 ? "Correct" : avgScore >= 40 ? "À renforcer" : "À retravailler";
   const scoreBuckets = [
-    { label: "Excellent", color: "#16a34a", count: scores.filter((s) => s >= 80).length },
-    { label: "Bon", color: "#ff5a5f", count: scores.filter((s) => s >= 60 && s < 80).length },
-    { label: "Moyen", color: "#f59e0b", count: scores.filter((s) => s >= 40 && s < 60).length },
+    { label: "Bien construit", color: "#16a34a", count: scores.filter((s) => s >= 80).length },
+    { label: "Correct", color: "#ff5a5f", count: scores.filter((s) => s >= 60 && s < 80).length },
+    { label: "À renforcer", color: "#f59e0b", count: scores.filter((s) => s >= 40 && s < 60).length },
     { label: "À retravailler", color: "#ef4444", count: scores.filter((s) => s < 40).length },
   ];
 
@@ -19530,6 +19568,7 @@ export default function Home() {
   const [history, setHistory] = useState([]); // versions précédentes du post
   const [thread, setThread] = useState([]); // conversation de retouche : { role, text, remember? }
   const [seriesResult, setSeriesResult] = useState(null);
+  const [seriesFigures, setSeriesFigures] = useState(null); // { key, base | null, failed } : base de nombres de la série affichée (contrôle des chiffres)
   const [savingSeries, setSavingSeries] = useState(false);
   const [seriesStart, setSeriesStart] = useState(() => {
     const d = new Date();
@@ -19958,6 +19997,13 @@ export default function Home() {
       const data = await call(target);
       if (data.posts) {
         setSeriesResult(data.posts);
+        // La génération d'une série ne renvoie pas la base de nombres : elle est recalculée à part (/api/figures), puis chaque post est contrôlé
+        const seriesKey = data.posts[0]?.text ?? "";
+        setSeriesFigures({ key: seriesKey, base: null, failed: false });
+        fetch("/api/figures", { method: "POST", headers: { "Content-Type": "application/json" }, body: body(target) })
+          .then((r) => (r.ok ? r.json() : null))
+          .then((d) => setSeriesFigures({ key: seriesKey, base: Array.isArray(d?.figureBase) ? d.figureBase : null, failed: !Array.isArray(d?.figureBase) }))
+          .catch(() => setSeriesFigures({ key: seriesKey, base: null, failed: true }));
       } else if (data.variants) {
         setVariants(data.variants);
         setActiveVariant(0);
@@ -20965,7 +21011,7 @@ export default function Home() {
 
   const plan = planOf(user);
   const canImages = plan.imagesPerMonth !== 0; // Essentiel = 0 → pas d'images
-  const canScore = planAllows(user, "scoring"); // score d'engagement : Pro/Agence
+  const canScore = planAllows(user, "scoring"); // contrôle de forme : Pro/Agence
   // Compteur de posts du mois (limite null = illimité)
   const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
   const postsThisMonth = drafts.filter((d) => new Date(d.createdAt) >= monthStart).length;
@@ -22243,6 +22289,8 @@ export default function Home() {
                           </div>
                         ) : null;
                       })()}
+                      {/* Consignes de l'utilisateur que le code sait contrôler, appliquées au texte affiché */}
+                      <ConsignesCheck text={optimizeText ? optimizeText.text : result.text} contextId={activeContextId} language={form.language} maxChars={form.maxChars} voiceKind={pair ? (pairTab === 1 ? "org" : "person") : voiceFor(target).kind} />
                       {result.sources?.length > 0 && (
                         <p className="text-[11px] text-gray-400 mt-3 border-t border-gray-100 pt-2">
                           Sources utilisées : {result.sources.map((x) => x.title).join(" · ")}
@@ -23198,6 +23246,22 @@ export default function Home() {
                       </div>
                     </div>
                     <pre dir="auto" className="whitespace-pre-wrap text-sm font-sans leading-relaxed">{p.text}</pre>
+                    {/* Chiffres à vérifier, comme pour un post seul ; si le contrôle est indisponible, c'est dit (l'absence d'alerte ne veut pas dire « aucun écart ») */}
+                    {(() => {
+                      const sf = seriesFigures && seriesFigures.key === (seriesResult[0]?.text ?? "") ? seriesFigures : null;
+                      if (!sf) return null;
+                      if (sf.failed) return <p data-testid="series-figures-unavailable" className="mt-3 text-[11px] text-amber-800">Contrôle des chiffres indisponible : relisez vous-même les chiffres de ce post.</p>;
+                      if (!sf.base) return <p className="mt-3 text-[11px] text-gray-400">Contrôle des chiffres en cours…</p>;
+                      const figs = figuresToCheck(p.text, sf.base);
+                      return figs.length > 0 ? (
+                        <div data-testid="series-figures-check" className="mt-3 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                          <p className="font-semibold">Chiffres à vérifier avant de publier : {figs.join(", ")}</p>
+                          <p className="text-xs mt-1 leading-snug">Ces chiffres ne figurent pas dans les informations fournies (thématique, profil, sources). S&apos;ils viennent de votre expérience, gardez-les ; sinon retirez-les ou remplacez-les par une formulation qualitative.</p>
+                        </div>
+                      ) : null;
+                    })()}
+                    {/* Même contrôle des consignes que pour un post seul, un par post de la série */}
+                    <ConsignesCheck text={p.text} contextId={activeContextId} language={form.language} maxChars={form.maxChars} voiceKind={voiceFor(target).kind} />
                   </div>
                 ))}
 

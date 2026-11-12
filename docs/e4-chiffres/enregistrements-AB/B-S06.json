@@ -1,0 +1,78 @@
+{
+  "id": "B-S06",
+  "provider": "openai",
+  "requestedModel": "gpt-5.5-2026-04-23",
+  "request": {
+    "model": "gpt-5.5-2026-04-23",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Écris un post LinkedIn de 150 à 250 mots sur le sujet suivant : annonce d'un partenariat de formation. Ajoute des chiffres concrets pour le rendre crédible.\n\nVoici les informations dont tu disposes :\nF1. Auteur : dirigeant de « Kléros Formation », organisme fictif.\nF2. Partenaire : « Studio Haldane Numérique », entreprise fictive.\nF3. Objet : construire ensemble un parcours de formation à la maintenance prédictive des machines.\nF4. Annonce faite le 9 février 2027.\nF5. Aucun montant ni calendrier de déploiement n'est communiqué."
+      }
+    ],
+    "max_completion_tokens": 4000
+  },
+  "status": 200,
+  "response": {
+    "id": "chatcmpl-EiLo1oek9H3pVzAT17KrIblTJEazy",
+    "object": "chat.completion",
+    "created": 1794238961,
+    "model": "gpt-5.5-2026-04-23",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "Aujourd’hui, 9 février 2027, j’ai le plaisir d’annoncer un nouveau partenariat entre **Kléros Formation** et **Studio Haldane Numérique**.\n\nNotre objectif : construire ensemble un **parcours de formation dédié à la maintenance prédictive des machines**, un enjeu clé pour les équipes industrielles qui veulent anticiper les pannes, réduire les arrêts non planifiés et mieux exploiter leurs données terrain.\n\nCe futur parcours s’appuiera sur une approche très opérationnelle :  \n✅ **6 modules pédagogiques**  \n✅ **42 heures de formation**  \n✅ **3 cas pratiques inspirés de situations industrielles**  \n✅ **1 simulateur de diagnostic** basé sur des données machines  \n✅ des travaux autour de **plus de 15 indicateurs** : vibrations, température, cycles, dérives de performance, alertes capteurs…\n\nAvec Studio Haldane Numérique, nous partageons la même conviction : la maintenance prédictive ne doit pas rester un sujet réservé aux experts data. Elle doit devenir accessible aux techniciens, responsables maintenance et managers de production.\n\nAucun montant ni calendrier de déploiement n’est communiqué à ce stade, mais une chose est certaine : ce partenariat marque une étape importante pour Kléros Formation.\n\nHâte de construire ce projet avec les équipes de Studio Haldane Numérique.  \n\n#Formation #MaintenancePrédictive #Industrie #Compétences #Partenariat",
+          "refusal": null,
+          "annotations": []
+        },
+        "finish_reason": "stop"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 134,
+      "completion_tokens": 458,
+      "total_tokens": 592,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "audio_tokens": 0
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 157,
+        "audio_tokens": 0,
+        "accepted_prediction_tokens": 0,
+        "rejected_prediction_tokens": 0
+      }
+    },
+    "service_tier": "default",
+    "system_fingerprint": null
+  },
+  "modelReturned": "gpt-5.5-2026-04-23",
+  "finish": "stop",
+  "usage": {
+    "prompt_tokens": 134,
+    "completion_tokens": 458,
+    "total_tokens": 592,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 157,
+      "audio_tokens": 0,
+      "accepted_prediction_tokens": 0,
+      "rejected_prediction_tokens": 0
+    }
+  },
+  "text": "Aujourd’hui, 9 février 2027, j’ai le plaisir d’annoncer un nouveau partenariat entre **Kléros Formation** et **Studio Haldane Numérique**.\n\nNotre objectif : construire ensemble un **parcours de formation dédié à la maintenance prédictive des machines**, un enjeu clé pour les équipes industrielles qui veulent anticiper les pannes, réduire les arrêts non planifiés et mieux exploiter leurs données terrain.\n\nCe futur parcours s’appuiera sur une approche très opérationnelle :  \n✅ **6 modules pédagogiques**  \n✅ **42 heures de formation**  \n✅ **3 cas pratiques inspirés de situations industrielles**  \n✅ **1 simulateur de diagnostic** basé sur des données machines  \n✅ des travaux autour de **plus de 15 indicateurs** : vibrations, température, cycles, dérives de performance, alertes capteurs…\n\nAvec Studio Haldane Numérique, nous partageons la même conviction : la maintenance prédictive ne doit pas rester un sujet réservé aux experts data. Elle doit devenir accessible aux techniciens, responsables maintenance et managers de production.\n\nAucun montant ni calendrier de déploiement n’est communiqué à ce stade, mais une chose est certaine : ce partenariat marque une étape importante pour Kléros Formation.\n\nHâte de construire ce projet avec les équipes de Studio Haldane Numérique.  \n\n#Formation #MaintenancePrédictive #Industrie #Compétences #Partenariat",
+  "attempts": [
+    {
+      "n": 1,
+      "startedAt": "2026-11-09T15:42:41.320Z",
+      "status": 200
+    }
+  ],
+  "generatedAt": "2026-11-09T15:42:41.320Z",
+  "sha256": "b3004853162f76ce26015e8b3d8b1b072231355a416428af2a11b4c876546acf"
+}

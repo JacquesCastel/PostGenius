@@ -1,0 +1,74 @@
+{
+  "id": "C-S03",
+  "request": {
+    "type": "simple",
+    "theme": "Écris un post LinkedIn de 150 à 250 mots sur le sujet suivant : la traçabilité des composants dans les achats industriels. Ajoute des chiffres concrets pour le rendre crédible.",
+    "expertise": "Professionnel B2B",
+    "tone": "Professionnel",
+    "maxChars": 1700,
+    "language": "fr",
+    "source": {
+      "title": "Fiche de faits",
+      "origin": "fiche fournie par l'auteur",
+      "text": "F1. Auteur : consultant fictif en achats industriels, « Lucas Perrin ».\nF2. Observation qualitative : dans ses échanges avec ses clients, les acheteurs posent de plus en plus de questions sur l'origine des composants.\nF3. L'auteur n'a aucune statistique à citer et ne dispose d'aucune étude.\nF4. Son opinion : la traçabilité deviendra un critère de choix aussi important que le prix, sans qu'il puisse le chiffrer."
+    }
+  },
+  "status": 200,
+  "response": {
+    "text": "La traçabilité des composants devient un critère d'achat, pas un détail.\n\nDans mes échanges avec des acheteurs industriels, le changement est net. Avant, les questions portaient sur le prix, les délais, la qualité. Aujourd'hui, ils veulent savoir d'où viennent les composants. Qui les fabrique. Dans quelles conditions.\n\nCe n'est pas encore systématique. Mais la tendance est claire et elle s'accélère.\n\nMon opinion : dans les années à venir, la traçabilité pèsera autant que le prix dans une décision d'achat. Les fournisseurs qui ne peuvent pas répondre à ces questions seront écartés. Pas sanctionnés. Juste ignorés.\n\nPour les acheteurs, cela change quelque chose de concret : il faut anticiper. Intégrer ces exigences dès la rédaction des cahiers des charges. Ne pas attendre que la question vienne du client final ou d'une réglementation.\n\nLa traçabilité n'est plus un avantage différenciant. Elle devient un ticket d'entrée.",
+    "extra": null,
+    "why": {
+      "hook": "Affirme directement la thèse sans l'annoncer : le lecteur comprend l'enjeu sans lire la suite.",
+      "structure": "L'observation terrain d'abord, puis l'opinion de l'auteur, puis l'implication concrète pour sa cible — du général au pratique.",
+      "cta": "Pas de question forcée : la conclusion sur le 'ticket d'entrée' frappe seule et suffit à laisser réfléchir.",
+      "hashtags": "Aucun hashtag : le ton sobre et direct de l'auteur ne les appelle pas, et ils n'ajouteraient pas de portée ici.",
+      "forText": "La traçabilité des composants devient un critère d'achat, pas un détail.\n\nDans mes échanges avec des acheteurs industriels, le changement est net. Avant, les questions portaient sur le prix, les délais, la qualité. Aujourd'hui, ils veulent savoir d'où viennent les composants. Qui les fabrique. Dans quelles conditions.\n\nCe n'est pas encore systématique. Mais la tendance est claire et elle s'accélère.\n\nMon opinion : dans les années à venir, la traçabilité pèsera autant que le prix dans une décision d'achat. Les fournisseurs qui ne peuvent pas répondre à ces questions seront écartés. Pas sanctionnés. Juste ignorés.\n\nPour les acheteurs, cela change quelque chose de concret : il faut anticiper. Intégrer ces exigences dès la rédaction des cahiers des charges. Ne pas attendre que la question vienne du client final ou d'une réglementation.\n\nLa traçabilité n'est plus un avantage différenciant. Elle devient un ticket d'entrée."
+    },
+    "sources": [],
+    "figureBase": [
+      "150",
+      "150|à",
+      "250",
+      "250|mot",
+      "2",
+      "2|b",
+      "1",
+      "3",
+      "4"
+    ]
+  },
+  "text": "La traçabilité des composants devient un critère d'achat, pas un détail.\n\nDans mes échanges avec des acheteurs industriels, le changement est net. Avant, les questions portaient sur le prix, les délais, la qualité. Aujourd'hui, ils veulent savoir d'où viennent les composants. Qui les fabrique. Dans quelles conditions.\n\nCe n'est pas encore systématique. Mais la tendance est claire et elle s'accélère.\n\nMon opinion : dans les années à venir, la traçabilité pèsera autant que le prix dans une décision d'achat. Les fournisseurs qui ne peuvent pas répondre à ces questions seront écartés. Pas sanctionnés. Juste ignorés.\n\nPour les acheteurs, cela change quelque chose de concret : il faut anticiper. Intégrer ces exigences dès la rédaction des cahiers des charges. Ne pas attendre que la question vienne du client final ou d'une réglementation.\n\nLa traçabilité n'est plus un avantage différenciant. Elle devient un ticket d'entrée.",
+  "why": {
+    "hook": "Affirme directement la thèse sans l'annoncer : le lecteur comprend l'enjeu sans lire la suite.",
+    "structure": "L'observation terrain d'abord, puis l'opinion de l'auteur, puis l'implication concrète pour sa cible — du général au pratique.",
+    "cta": "Pas de question forcée : la conclusion sur le 'ticket d'entrée' frappe seule et suffit à laisser réfléchir.",
+    "hashtags": "Aucun hashtag : le ton sobre et direct de l'auteur ne les appelle pas, et ils n'ajouteraient pas de portée ici.",
+    "forText": "La traçabilité des composants devient un critère d'achat, pas un détail.\n\nDans mes échanges avec des acheteurs industriels, le changement est net. Avant, les questions portaient sur le prix, les délais, la qualité. Aujourd'hui, ils veulent savoir d'où viennent les composants. Qui les fabrique. Dans quelles conditions.\n\nCe n'est pas encore systématique. Mais la tendance est claire et elle s'accélère.\n\nMon opinion : dans les années à venir, la traçabilité pèsera autant que le prix dans une décision d'achat. Les fournisseurs qui ne peuvent pas répondre à ces questions seront écartés. Pas sanctionnés. Juste ignorés.\n\nPour les acheteurs, cela change quelque chose de concret : il faut anticiper. Intégrer ces exigences dès la rédaction des cahiers des charges. Ne pas attendre que la question vienne du client final ou d'une réglementation.\n\nLa traçabilité n'est plus un avantage différenciant. Elle devient un ticket d'entrée."
+  },
+  "sources": [],
+  "attempts": [
+    {
+      "n": 1,
+      "startedAt": "2026-11-10T09:23:02.902Z",
+      "status": 200
+    }
+  ],
+  "generatedAt": "2026-11-10T09:23:02.902Z",
+  "sha256": "b1e949c74a32654a6c0c11a444e4df26b9f0dae9faa31f716025059d452b89a3",
+  "profile": {
+    "headline": "Professionnel B2B",
+    "companyName": null,
+    "businessDescription": null,
+    "targetAudience": null,
+    "market": null,
+    "commGoals": null,
+    "editorialLine": null,
+    "styleNotes": "Ton sobre et direct. Phrases courtes."
+  },
+  "engine": {
+    "route": "POST /api/generate",
+    "server": "http://localhost:3100",
+    "repoCommit": "a403d0a17505b0f6b1411f6f86c081db1ebee53b",
+    "editorialEngineEnv": null
+  }
+}

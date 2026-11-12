@@ -1,0 +1,78 @@
+{
+  "id": "BN-S01",
+  "provider": "openai",
+  "requestedModel": "gpt-5.5-2026-04-23",
+  "request": {
+    "model": "gpt-5.5-2026-04-23",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Écris un post LinkedIn de 150 à 250 mots sur le sujet suivant : retour sur une mission d'organisation des tournées de livraison.\n\nVoici les informations dont tu disposes :\nF1. Auteur : dirigeant du cabinet fictif « Cabinet Lormand Conseil » (organisation logistique).\nF2. Client : « Transports Aubrac Lemaire », PME de transport.\nF3. Mission : réorganisation des tournées de livraison.\nF4. Résultat mesuré par le client : les retards de livraison sont passés de 18 par mois à 7 par mois.\nF5. Le dirigeant du client a dit avoir surtout apprécié que l'équipe d'exploitation soit associée aux décisions."
+      }
+    ],
+    "max_completion_tokens": 4000
+  },
+  "status": 200,
+  "response": {
+    "id": "chatcmpl-EiLq4WVgmGQ2YzfKg0XcbncnY2WaX",
+    "object": "chat.completion",
+    "created": 1794239088,
+    "model": "gpt-5.5-2026-04-23",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "Retour sur une mission menée récemment auprès de **Transports Aubrac Lemaire**, PME de transport, autour d’un enjeu très concret : **réorganiser les tournées de livraison** pour gagner en fiabilité.\n\nAu départ, le constat était clair : certaines tournées étaient trop contraintes, les aléas insuffisamment absorbés, et les retards pesaient sur la satisfaction client comme sur les équipes.\n\nAvec l’équipe de **Cabinet Lormand Conseil**, nous avons travaillé au plus près du terrain : analyse des flux, observation des pratiques, échanges avec l’exploitation, prise en compte des contraintes chauffeurs, clients et horaires. L’objectif n’était pas de produire un “beau schéma” théorique, mais une organisation réellement applicable.\n\nLe résultat mesuré par le client est encourageant : les retards de livraison sont passés de **18 par mois à 7 par mois**.\n\nMais ce que je retiens surtout, c’est le retour du dirigeant de Transports Aubrac Lemaire : il a particulièrement apprécié que **l’équipe d’exploitation soit associée aux décisions**.\n\nC’est, à mon sens, une condition essentielle de réussite. Une organisation logistique performante ne se décrète pas depuis un tableur : elle se construit avec celles et ceux qui la font vivre chaque jour.\n\n#Logistique #Transport #Organisation #PerformanceOpérationnelle",
+          "refusal": null,
+          "annotations": []
+        },
+        "finish_reason": "stop"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 152,
+      "completion_tokens": 344,
+      "total_tokens": 496,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "audio_tokens": 0
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 55,
+        "audio_tokens": 0,
+        "accepted_prediction_tokens": 0,
+        "rejected_prediction_tokens": 0
+      }
+    },
+    "service_tier": "default",
+    "system_fingerprint": null
+  },
+  "modelReturned": "gpt-5.5-2026-04-23",
+  "finish": "stop",
+  "usage": {
+    "prompt_tokens": 152,
+    "completion_tokens": 344,
+    "total_tokens": 496,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 55,
+      "audio_tokens": 0,
+      "accepted_prediction_tokens": 0,
+      "rejected_prediction_tokens": 0
+    }
+  },
+  "text": "Retour sur une mission menée récemment auprès de **Transports Aubrac Lemaire**, PME de transport, autour d’un enjeu très concret : **réorganiser les tournées de livraison** pour gagner en fiabilité.\n\nAu départ, le constat était clair : certaines tournées étaient trop contraintes, les aléas insuffisamment absorbés, et les retards pesaient sur la satisfaction client comme sur les équipes.\n\nAvec l’équipe de **Cabinet Lormand Conseil**, nous avons travaillé au plus près du terrain : analyse des flux, observation des pratiques, échanges avec l’exploitation, prise en compte des contraintes chauffeurs, clients et horaires. L’objectif n’était pas de produire un “beau schéma” théorique, mais une organisation réellement applicable.\n\nLe résultat mesuré par le client est encourageant : les retards de livraison sont passés de **18 par mois à 7 par mois**.\n\nMais ce que je retiens surtout, c’est le retour du dirigeant de Transports Aubrac Lemaire : il a particulièrement apprécié que **l’équipe d’exploitation soit associée aux décisions**.\n\nC’est, à mon sens, une condition essentielle de réussite. Une organisation logistique performante ne se décrète pas depuis un tableur : elle se construit avec celles et ceux qui la font vivre chaque jour.\n\n#Logistique #Transport #Organisation #PerformanceOpérationnelle",
+  "attempts": [
+    {
+      "n": 1,
+      "startedAt": "2026-11-09T15:44:47.908Z",
+      "status": 200
+    }
+  ],
+  "generatedAt": "2026-11-09T15:44:47.908Z",
+  "sha256": "5455f661ffd0ba3b36b46f2b2f3f0cb1570e9930e3e68275cb21f42c28d190d4"
+}

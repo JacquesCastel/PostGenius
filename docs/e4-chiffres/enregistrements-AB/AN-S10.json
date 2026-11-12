@@ -1,0 +1,78 @@
+{
+  "id": "AN-S10",
+  "provider": "openai",
+  "requestedModel": "gpt-5.5-2026-04-23",
+  "request": {
+    "model": "gpt-5.5-2026-04-23",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Écris un post LinkedIn de 150 à 250 mots sur le sujet suivant : retour sur un salon professionnel."
+      }
+    ],
+    "max_completion_tokens": 4000
+  },
+  "status": 200,
+  "response": {
+    "id": "chatcmpl-EiLpwdS8Dg3qgaY0SjQMWoH7d02uA",
+    "object": "chat.completion",
+    "created": 1794239080,
+    "model": "gpt-5.5-2026-04-23",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "Retour sur un salon professionnel riche en rencontres et en inspiration ✨\n\nCes derniers jours, j’ai eu l’opportunité de participer à un salon professionnel particulièrement stimulant. Au-delà des stands, des conférences et des démonstrations, ce que je retiens surtout, ce sont les échanges humains : des conversations concrètes, des retours d’expérience précieux et de nouvelles perspectives sur les enjeux de notre secteur.\n\nCe type d’événement rappelle à quel point il est essentiel de sortir de son quotidien pour prendre du recul, observer les tendances, découvrir des innovations et confronter ses idées à celles d’autres professionnels. Les discussions avec les exposants, partenaires, clients et experts ont permis d’identifier de nouvelles opportunités, mais aussi de mieux comprendre les attentes du marché.\n\nUn grand merci à toutes les personnes rencontrées sur place pour la qualité des échanges et l’énergie partagée. Ces moments nourrissent la réflexion, renforcent les liens et donnent envie d’aller plus loin.\n\nJe repars avec de nouvelles idées, des contacts prometteurs et une motivation renouvelée pour les projets à venir.\n\nHâte de transformer ces échanges en actions concrètes !\n\n#SalonProfessionnel #Networking #Innovation #Business #RetourExperience",
+          "refusal": null,
+          "annotations": []
+        },
+        "finish_reason": "stop"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 30,
+      "completion_tokens": 295,
+      "total_tokens": 325,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "audio_tokens": 0
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 43,
+        "audio_tokens": 0,
+        "accepted_prediction_tokens": 0,
+        "rejected_prediction_tokens": 0
+      }
+    },
+    "service_tier": "default",
+    "system_fingerprint": null
+  },
+  "modelReturned": "gpt-5.5-2026-04-23",
+  "finish": "stop",
+  "usage": {
+    "prompt_tokens": 30,
+    "completion_tokens": 295,
+    "total_tokens": 325,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 43,
+      "audio_tokens": 0,
+      "accepted_prediction_tokens": 0,
+      "rejected_prediction_tokens": 0
+    }
+  },
+  "text": "Retour sur un salon professionnel riche en rencontres et en inspiration ✨\n\nCes derniers jours, j’ai eu l’opportunité de participer à un salon professionnel particulièrement stimulant. Au-delà des stands, des conférences et des démonstrations, ce que je retiens surtout, ce sont les échanges humains : des conversations concrètes, des retours d’expérience précieux et de nouvelles perspectives sur les enjeux de notre secteur.\n\nCe type d’événement rappelle à quel point il est essentiel de sortir de son quotidien pour prendre du recul, observer les tendances, découvrir des innovations et confronter ses idées à celles d’autres professionnels. Les discussions avec les exposants, partenaires, clients et experts ont permis d’identifier de nouvelles opportunités, mais aussi de mieux comprendre les attentes du marché.\n\nUn grand merci à toutes les personnes rencontrées sur place pour la qualité des échanges et l’énergie partagée. Ces moments nourrissent la réflexion, renforcent les liens et donnent envie d’aller plus loin.\n\nJe repars avec de nouvelles idées, des contacts prometteurs et une motivation renouvelée pour les projets à venir.\n\nHâte de transformer ces échanges en actions concrètes !\n\n#SalonProfessionnel #Networking #Innovation #Business #RetourExperience",
+  "attempts": [
+    {
+      "n": 1,
+      "startedAt": "2026-11-09T15:44:40.520Z",
+      "status": 200
+    }
+  ],
+  "generatedAt": "2026-11-09T15:44:40.520Z",
+  "sha256": "eea7ace5a5fbff0110a7a3b5d9f269c4c23285011d7b6398ed48fb64b0348c0a"
+}

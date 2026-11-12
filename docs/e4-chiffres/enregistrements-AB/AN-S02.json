@@ -1,0 +1,78 @@
+{
+  "id": "AN-S02",
+  "provider": "openai",
+  "requestedModel": "gpt-5.5-2026-04-23",
+  "request": {
+    "model": "gpt-5.5-2026-04-23",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Écris un post LinkedIn de 150 à 250 mots sur le sujet suivant : lancement d'une formation sur la réponse aux appels d'offres publics."
+      }
+    ],
+    "max_completion_tokens": 4000
+  },
+  "status": 200,
+  "response": {
+    "id": "chatcmpl-EiLozPcp0sCMeRYniJmEOGcwdrNPx",
+    "object": "chat.completion",
+    "created": 1794239021,
+    "model": "gpt-5.5-2026-04-23",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "🚀 Nouvelle formation : maîtriser la réponse aux appels d’offres publics\n\nRépondre à un appel d’offres public peut sembler complexe : documents administratifs, mémoire technique, critères de sélection, délais stricts… Pourtant, avec la bonne méthode, c’est une réelle opportunité de développement pour les entreprises.\n\nC’est pourquoi nous lançons une formation dédiée à la réponse aux appels d’offres publics, conçue pour aider les dirigeants, commerciaux, responsables administratifs et chargés de développement à structurer une candidature solide et compétitive.\n\nAu programme :\n✅ Comprendre le fonctionnement des marchés publics  \n✅ Identifier les opportunités pertinentes  \n✅ Décrypter un DCE et les attentes de l’acheteur  \n✅ Construire un dossier de candidature complet  \n✅ Rédiger un mémoire technique convaincant  \n✅ Éviter les erreurs fréquentes qui peuvent coûter cher  \n\nL’objectif : vous donner des outils concrets, une méthode claire et des réflexes professionnels pour gagner en efficacité… et augmenter vos chances de remporter des marchés.\n\nQue vous soyez novice ou déjà familier avec les appels d’offres, cette formation vous permettra de gagner en confiance et en performance.\n\n📩 Intéressé(e) ? Contactez-nous pour recevoir le programme complet et les prochaines dates de session.",
+          "refusal": null,
+          "annotations": []
+        },
+        "finish_reason": "stop"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 38,
+      "completion_tokens": 300,
+      "total_tokens": 338,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "audio_tokens": 0
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 29,
+        "audio_tokens": 0,
+        "accepted_prediction_tokens": 0,
+        "rejected_prediction_tokens": 0
+      }
+    },
+    "service_tier": "default",
+    "system_fingerprint": null
+  },
+  "modelReturned": "gpt-5.5-2026-04-23",
+  "finish": "stop",
+  "usage": {
+    "prompt_tokens": 38,
+    "completion_tokens": 300,
+    "total_tokens": 338,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 29,
+      "audio_tokens": 0,
+      "accepted_prediction_tokens": 0,
+      "rejected_prediction_tokens": 0
+    }
+  },
+  "text": "🚀 Nouvelle formation : maîtriser la réponse aux appels d’offres publics\n\nRépondre à un appel d’offres public peut sembler complexe : documents administratifs, mémoire technique, critères de sélection, délais stricts… Pourtant, avec la bonne méthode, c’est une réelle opportunité de développement pour les entreprises.\n\nC’est pourquoi nous lançons une formation dédiée à la réponse aux appels d’offres publics, conçue pour aider les dirigeants, commerciaux, responsables administratifs et chargés de développement à structurer une candidature solide et compétitive.\n\nAu programme :\n✅ Comprendre le fonctionnement des marchés publics  \n✅ Identifier les opportunités pertinentes  \n✅ Décrypter un DCE et les attentes de l’acheteur  \n✅ Construire un dossier de candidature complet  \n✅ Rédiger un mémoire technique convaincant  \n✅ Éviter les erreurs fréquentes qui peuvent coûter cher  \n\nL’objectif : vous donner des outils concrets, une méthode claire et des réflexes professionnels pour gagner en efficacité… et augmenter vos chances de remporter des marchés.\n\nQue vous soyez novice ou déjà familier avec les appels d’offres, cette formation vous permettra de gagner en confiance et en performance.\n\n📩 Intéressé(e) ? Contactez-nous pour recevoir le programme complet et les prochaines dates de session.",
+  "attempts": [
+    {
+      "n": 1,
+      "startedAt": "2026-11-09T15:43:40.913Z",
+      "status": 200
+    }
+  ],
+  "generatedAt": "2026-11-09T15:43:40.913Z",
+  "sha256": "abc8c66e699562eaefed0bb3c5572c3c897d21ff9ad014f8ea9c1cabacaa5088"
+}

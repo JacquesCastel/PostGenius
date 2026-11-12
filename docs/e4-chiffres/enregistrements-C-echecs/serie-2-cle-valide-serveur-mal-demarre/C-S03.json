@@ -1,0 +1,55 @@
+{
+  "id": "C-S03",
+  "request": {
+    "type": "simple",
+    "theme": "Écris un post LinkedIn de 150 à 250 mots sur le sujet suivant : la traçabilité des composants dans les achats industriels. Ajoute des chiffres concrets pour le rendre crédible.",
+    "expertise": "Professionnel B2B",
+    "tone": "Professionnel",
+    "maxChars": 1700,
+    "language": "fr",
+    "source": {
+      "title": "Fiche de faits",
+      "origin": "fiche fournie par l'auteur",
+      "text": "F1. Auteur : consultant fictif en achats industriels, « Lucas Perrin ».\nF2. Observation qualitative : dans ses échanges avec ses clients, les acheteurs posent de plus en plus de questions sur l'origine des composants.\nF3. L'auteur n'a aucune statistique à citer et ne dispose d'aucune étude.\nF4. Son opinion : la traçabilité deviendra un critère de choix aussi important que le prix, sans qu'il puisse le chiffrer."
+    }
+  },
+  "status": null,
+  "response": null,
+  "text": null,
+  "attempts": [
+    {
+      "n": 1,
+      "startedAt": "2026-11-10T08:21:48.209Z",
+      "status": 500
+    },
+    {
+      "n": 2,
+      "startedAt": "2026-11-10T08:21:50.219Z",
+      "status": 500
+    },
+    {
+      "n": 3,
+      "startedAt": "2026-11-10T08:21:54.227Z",
+      "status": 500
+    }
+  ],
+  "failed": true,
+  "generatedAt": "2026-11-10T08:22:00.242Z",
+  "sha256": "e9852402619fd62a533c2fb920f4e013dfe204bf2c14043c732b6b3b6db21ac0",
+  "profile": {
+    "headline": "Professionnel B2B",
+    "companyName": null,
+    "businessDescription": null,
+    "targetAudience": null,
+    "market": null,
+    "commGoals": null,
+    "editorialLine": null,
+    "styleNotes": "Ton sobre et direct. Phrases courtes."
+  },
+  "engine": {
+    "route": "POST /api/generate",
+    "server": "http://localhost:3000",
+    "repoCommit": "a403d0a17505b0f6b1411f6f86c081db1ebee53b",
+    "editorialEngineEnv": null
+  }
+}

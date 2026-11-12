@@ -1,0 +1,78 @@
+{
+  "id": "A-S10",
+  "provider": "openai",
+  "requestedModel": "gpt-5.5-2026-04-23",
+  "request": {
+    "model": "gpt-5.5-2026-04-23",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Écris un post LinkedIn de 150 à 250 mots sur le sujet suivant : retour sur un salon professionnel. Ajoute des chiffres concrets pour le rendre crédible."
+      }
+    ],
+    "max_completion_tokens": 4000
+  },
+  "status": 200,
+  "response": {
+    "id": "chatcmpl-EiLn60YhKCLu0KM2Sxi6G7abSop5H",
+    "object": "chat.completion",
+    "created": 1794238904,
+    "model": "gpt-5.5-2026-04-23",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "Retour sur 3 jours intenses au salon professionnel 🚀\n\nLa semaine dernière, notre équipe a participé au salon [Nom du salon], un rendez-vous incontournable pour échanger avec les acteurs du secteur, découvrir les tendances du marché et présenter nos solutions.\n\nQuelques chiffres qui résument cette édition :  \n✅ 3 jours de présence sur place  \n✅ Plus de 120 contacts qualifiés rencontrés  \n✅ 38 démonstrations réalisées sur notre stand  \n✅ 17 rendez-vous commerciaux déjà planifiés pour les prochaines semaines  \n✅ 4 conférences suivies autour de l’innovation, de la transition digitale et des nouveaux usages clients\n\nAu-delà des chiffres, ce salon a surtout été l’occasion de confirmer une tendance forte : les entreprises recherchent aujourd’hui des solutions plus simples, plus mesurables et plus rapidement déployables. Les échanges que nous avons eus montrent un vrai besoin d’accompagnement concret, avec des résultats visibles à court terme.\n\nUn grand merci à toutes les personnes venues nous rencontrer, à nos partenaires pour leur présence, et aux organisateurs pour la qualité de l’événement.\n\nNous repartons avec beaucoup d’idées, de nouvelles opportunités et une motivation renforcée pour la suite.\n\nRendez-vous l’année prochaine ! 👏\n\n#SalonProfessionnel #Innovation #Business #Networking #RetourExperience",
+          "refusal": null,
+          "annotations": []
+        },
+        "finish_reason": "stop"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 42,
+      "completion_tokens": 309,
+      "total_tokens": 351,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "audio_tokens": 0
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 36,
+        "audio_tokens": 0,
+        "accepted_prediction_tokens": 0,
+        "rejected_prediction_tokens": 0
+      }
+    },
+    "service_tier": "default",
+    "system_fingerprint": null
+  },
+  "modelReturned": "gpt-5.5-2026-04-23",
+  "finish": "stop",
+  "usage": {
+    "prompt_tokens": 42,
+    "completion_tokens": 309,
+    "total_tokens": 351,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 36,
+      "audio_tokens": 0,
+      "accepted_prediction_tokens": 0,
+      "rejected_prediction_tokens": 0
+    }
+  },
+  "text": "Retour sur 3 jours intenses au salon professionnel 🚀\n\nLa semaine dernière, notre équipe a participé au salon [Nom du salon], un rendez-vous incontournable pour échanger avec les acteurs du secteur, découvrir les tendances du marché et présenter nos solutions.\n\nQuelques chiffres qui résument cette édition :  \n✅ 3 jours de présence sur place  \n✅ Plus de 120 contacts qualifiés rencontrés  \n✅ 38 démonstrations réalisées sur notre stand  \n✅ 17 rendez-vous commerciaux déjà planifiés pour les prochaines semaines  \n✅ 4 conférences suivies autour de l’innovation, de la transition digitale et des nouveaux usages clients\n\nAu-delà des chiffres, ce salon a surtout été l’occasion de confirmer une tendance forte : les entreprises recherchent aujourd’hui des solutions plus simples, plus mesurables et plus rapidement déployables. Les échanges que nous avons eus montrent un vrai besoin d’accompagnement concret, avec des résultats visibles à court terme.\n\nUn grand merci à toutes les personnes venues nous rencontrer, à nos partenaires pour leur présence, et aux organisateurs pour la qualité de l’événement.\n\nNous repartons avec beaucoup d’idées, de nouvelles opportunités et une motivation renforcée pour la suite.\n\nRendez-vous l’année prochaine ! 👏\n\n#SalonProfessionnel #Innovation #Business #Networking #RetourExperience",
+  "attempts": [
+    {
+      "n": 1,
+      "startedAt": "2026-11-09T15:41:44.225Z",
+      "status": 200
+    }
+  ],
+  "generatedAt": "2026-11-09T15:41:44.225Z",
+  "sha256": "eb58d8b6c2db47974d5b71878d1b2c7286d51f852ca8539c96b0a8c5edfa7871"
+}

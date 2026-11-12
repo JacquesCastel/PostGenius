@@ -1,0 +1,74 @@
+{
+  "id": "CN-S05",
+  "request": {
+    "type": "simple",
+    "theme": "Écris un post LinkedIn de 150 à 250 mots sur le sujet suivant : rédiger une annonce de recrutement qui attire les bonnes personnes.",
+    "expertise": "Professionnel B2B",
+    "tone": "Professionnel",
+    "maxChars": 1700,
+    "language": "fr",
+    "source": {
+      "title": "Fiche de faits",
+      "origin": "fiche fournie par l'auteur",
+      "text": "F1. Auteure : consultante RH indépendante fictive, « Nadia Sorel ».\nF2. Conseil : décrire par écrit les situations concrètes que le poste devra gérer, avant de rédiger l'annonce.\nF3. Erreur fréquente observée par l'auteure : décrire des qualités plutôt que des tâches.\nF4. L'auteure ne dispose d'aucune donnée chiffrée sur le sujet."
+    }
+  },
+  "status": 200,
+  "response": {
+    "text": "Une annonce de recrutement qui décrit des qualités ne recrute personne.\n\nBeaucoup d'annonces listent des mots comme « rigoureux », « autonome », « bon communicant ».\nCes qualités ne disent rien du poste réel.\n\nNadia Sorel, consultante RH, observe cette erreur régulièrement.\nSon conseil est simple : avant d'écrire une ligne, décrire par écrit les situations concrètes que le poste devra gérer.\n\nQuel problème la personne devra-t-elle résoudre en priorité ?\nDans quel contexte travaillera-t-elle ?\nQuelles décisions prendra-t-elle seule ?\n\nCes questions changent tout.\nUne fois les situations identifiées, l'annonce s'écrit différemment.\nElle parle de tâches, de contextes, de réalités.\nElle attire des candidats qui se reconnaissent dans le poste — pas dans une liste d'adjectifs.\n\nLe bon candidat ne cherche pas à cocher des cases.\nIl cherche à comprendre ce qu'on attend vraiment de lui.\n\nDonnez-lui cette information dès l'annonce.",
+    "extra": null,
+    "why": {
+      "hook": "L'accroche formule directement la conclusion : décrire des qualités est inefficace — le lecteur comprend tout sans lire la suite.",
+      "structure": "L'erreur fréquente est posée en premier, puis la source crédibilise le conseil, puis les questions concrètes montrent comment appliquer.",
+      "cta": "La conclusion reformule l'enjeu côté candidat, ce qui ancre le message sans question artificielle.",
+      "hashtags": "Aucun hashtag : le ton sobre et direct de l'auteur ne les appelle pas, ils auraient alourdi la fin.",
+      "forText": "Une annonce de recrutement qui décrit des qualités ne recrute personne.\n\nBeaucoup d'annonces listent des mots comme « rigoureux », « autonome », « bon communicant ».\nCes qualités ne disent rien du poste réel.\n\nNadia Sorel, consultante RH, observe cette erreur régulièrement.\nSon conseil est simple : avant d'écrire une ligne, décrire par écrit les situations concrètes que le poste devra gérer.\n\nQuel problème la personne devra-t-elle résoudre en priorité ?\nDans quel contexte travaillera-t-elle ?\nQuelles décisions prendra-t-elle seule ?\n\nCes questions changent tout.\nUne fois les situations identifiées, l'annonce s'écrit différemment.\nElle parle de tâches, de contextes, de réalités.\nElle attire des candidats qui se reconnaissent dans le poste — pas dans une liste d'adjectifs.\n\nLe bon candidat ne cherche pas à cocher des cases.\nIl cherche à comprendre ce qu'on attend vraiment de lui.\n\nDonnez-lui cette information dès l'annonce."
+    },
+    "sources": [],
+    "figureBase": [
+      "150",
+      "150|à",
+      "250",
+      "250|mot",
+      "2",
+      "2|b",
+      "1",
+      "3",
+      "4"
+    ]
+  },
+  "text": "Une annonce de recrutement qui décrit des qualités ne recrute personne.\n\nBeaucoup d'annonces listent des mots comme « rigoureux », « autonome », « bon communicant ».\nCes qualités ne disent rien du poste réel.\n\nNadia Sorel, consultante RH, observe cette erreur régulièrement.\nSon conseil est simple : avant d'écrire une ligne, décrire par écrit les situations concrètes que le poste devra gérer.\n\nQuel problème la personne devra-t-elle résoudre en priorité ?\nDans quel contexte travaillera-t-elle ?\nQuelles décisions prendra-t-elle seule ?\n\nCes questions changent tout.\nUne fois les situations identifiées, l'annonce s'écrit différemment.\nElle parle de tâches, de contextes, de réalités.\nElle attire des candidats qui se reconnaissent dans le poste — pas dans une liste d'adjectifs.\n\nLe bon candidat ne cherche pas à cocher des cases.\nIl cherche à comprendre ce qu'on attend vraiment de lui.\n\nDonnez-lui cette information dès l'annonce.",
+  "why": {
+    "hook": "L'accroche formule directement la conclusion : décrire des qualités est inefficace — le lecteur comprend tout sans lire la suite.",
+    "structure": "L'erreur fréquente est posée en premier, puis la source crédibilise le conseil, puis les questions concrètes montrent comment appliquer.",
+    "cta": "La conclusion reformule l'enjeu côté candidat, ce qui ancre le message sans question artificielle.",
+    "hashtags": "Aucun hashtag : le ton sobre et direct de l'auteur ne les appelle pas, ils auraient alourdi la fin.",
+    "forText": "Une annonce de recrutement qui décrit des qualités ne recrute personne.\n\nBeaucoup d'annonces listent des mots comme « rigoureux », « autonome », « bon communicant ».\nCes qualités ne disent rien du poste réel.\n\nNadia Sorel, consultante RH, observe cette erreur régulièrement.\nSon conseil est simple : avant d'écrire une ligne, décrire par écrit les situations concrètes que le poste devra gérer.\n\nQuel problème la personne devra-t-elle résoudre en priorité ?\nDans quel contexte travaillera-t-elle ?\nQuelles décisions prendra-t-elle seule ?\n\nCes questions changent tout.\nUne fois les situations identifiées, l'annonce s'écrit différemment.\nElle parle de tâches, de contextes, de réalités.\nElle attire des candidats qui se reconnaissent dans le poste — pas dans une liste d'adjectifs.\n\nLe bon candidat ne cherche pas à cocher des cases.\nIl cherche à comprendre ce qu'on attend vraiment de lui.\n\nDonnez-lui cette information dès l'annonce."
+  },
+  "sources": [],
+  "attempts": [
+    {
+      "n": 1,
+      "startedAt": "2026-11-10T09:23:58.391Z",
+      "status": 200
+    }
+  ],
+  "generatedAt": "2026-11-10T09:23:58.391Z",
+  "sha256": "97891fa025e8e4dc690e47572e3fe64454c76e031016c9defd84fd1610f2003e",
+  "profile": {
+    "headline": "Professionnel B2B",
+    "companyName": null,
+    "businessDescription": null,
+    "targetAudience": null,
+    "market": null,
+    "commGoals": null,
+    "editorialLine": null,
+    "styleNotes": "Ton sobre et direct. Phrases courtes."
+  },
+  "engine": {
+    "route": "POST /api/generate",
+    "server": "http://localhost:3100",
+    "repoCommit": "a403d0a17505b0f6b1411f6f86c081db1ebee53b",
+    "editorialEngineEnv": null
+  }
+}

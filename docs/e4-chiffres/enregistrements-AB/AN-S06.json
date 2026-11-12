@@ -1,0 +1,78 @@
+{
+  "id": "AN-S06",
+  "provider": "openai",
+  "requestedModel": "gpt-5.5-2026-04-23",
+  "request": {
+    "model": "gpt-5.5-2026-04-23",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Écris un post LinkedIn de 150 à 250 mots sur le sujet suivant : annonce d'un partenariat de formation."
+      }
+    ],
+    "max_completion_tokens": 4000
+  },
+  "status": 200,
+  "response": {
+    "id": "chatcmpl-EiLpSzBeUctmbH7eokSCjgEPSiNBJ",
+    "object": "chat.completion",
+    "created": 1794239050,
+    "model": "gpt-5.5-2026-04-23",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "🚀 Nous sommes ravis d’annoncer notre nouveau partenariat de formation avec **[Nom du partenaire]** !\n\nCette collaboration marque une étape importante dans notre volonté de proposer des parcours toujours plus concrets, innovants et adaptés aux besoins du terrain. Ensemble, nous allons développer des formations conçues pour accompagner les professionnels dans la montée en compétences, l’évolution de leurs pratiques et la réussite de leurs projets.\n\nGrâce à l’expertise complémentaire de nos deux structures, ce partenariat permettra de proposer des contenus pédagogiques de qualité, animés par des intervenants expérimentés, avec une approche orientée pratique, échange et impact.\n\nNotre objectif est clair : offrir aux apprenants des expériences de formation utiles, engageantes et directement applicables dans leur environnement professionnel.\n\nNous remercions chaleureusement les équipes de **[Nom du partenaire]** pour leur confiance et leur engagement. Nous avons hâte de construire ensemble de belles initiatives au service du développement des compétences.\n\n📅 Plus d’informations sur les premières sessions seront partagées très prochainement.\n\n#Formation #Partenariat #DéveloppementDesCompétences #Apprentissage #Innovation #RH",
+          "refusal": null,
+          "annotations": []
+        },
+        "finish_reason": "stop"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 31,
+      "completion_tokens": 298,
+      "total_tokens": 329,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "audio_tokens": 0
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 61,
+        "audio_tokens": 0,
+        "accepted_prediction_tokens": 0,
+        "rejected_prediction_tokens": 0
+      }
+    },
+    "service_tier": "default",
+    "system_fingerprint": null
+  },
+  "modelReturned": "gpt-5.5-2026-04-23",
+  "finish": "stop",
+  "usage": {
+    "prompt_tokens": 31,
+    "completion_tokens": 298,
+    "total_tokens": 329,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 61,
+      "audio_tokens": 0,
+      "accepted_prediction_tokens": 0,
+      "rejected_prediction_tokens": 0
+    }
+  },
+  "text": "🚀 Nous sommes ravis d’annoncer notre nouveau partenariat de formation avec **[Nom du partenaire]** !\n\nCette collaboration marque une étape importante dans notre volonté de proposer des parcours toujours plus concrets, innovants et adaptés aux besoins du terrain. Ensemble, nous allons développer des formations conçues pour accompagner les professionnels dans la montée en compétences, l’évolution de leurs pratiques et la réussite de leurs projets.\n\nGrâce à l’expertise complémentaire de nos deux structures, ce partenariat permettra de proposer des contenus pédagogiques de qualité, animés par des intervenants expérimentés, avec une approche orientée pratique, échange et impact.\n\nNotre objectif est clair : offrir aux apprenants des expériences de formation utiles, engageantes et directement applicables dans leur environnement professionnel.\n\nNous remercions chaleureusement les équipes de **[Nom du partenaire]** pour leur confiance et leur engagement. Nous avons hâte de construire ensemble de belles initiatives au service du développement des compétences.\n\n📅 Plus d’informations sur les premières sessions seront partagées très prochainement.\n\n#Formation #Partenariat #DéveloppementDesCompétences #Apprentissage #Innovation #RH",
+  "attempts": [
+    {
+      "n": 1,
+      "startedAt": "2026-11-09T15:44:10.204Z",
+      "status": 200
+    }
+  ],
+  "generatedAt": "2026-11-09T15:44:10.204Z",
+  "sha256": "f7c170427dde04aa4eabc29a4190a3fb69b5a3e2d2cb97ba7b92cc62f22f5298"
+}

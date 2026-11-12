@@ -30,7 +30,7 @@
 
 ## 3. Comment présenter la démonstration
 
-- **Une minute, pas plus.** Sujet, trois identités, trois textes, ce qui change. C'est la structure déjà construite ; ne pas l'allonger.
+- **Une minute, pas plus.** Sujet, trois profils, trois textes, ce qui change. C'est la structure déjà construite ; ne pas l'allonger.
 - **Montrer d'abord, expliquer après.** L'accroche vient du texte, pas d'un slogan.
 - **Annoncer la méthode.** « Textes générés par le moteur, non retouchés, choisis parmi N générations » : la transparence est un argument de confiance, pas une faiblesse. Le témoin sans profil est le meilleur argument : il montre ce que le moteur écrit quand il ne connaît pas l'entreprise.
 - **Ne pas prétendre que LinkeePost écrit mieux.** Prétendre qu'il écrit **pour quelqu'un**.
@@ -46,7 +46,7 @@
 - **Qu'elle écrit mieux** que ChatGPT ou Claude : elle montre une cohérence avec un profil, pas une supériorité.
 - **Que le moteur découvre l'angle** : il applique des convictions que nous avons saisies (voir `README.md`, réserve de méthode).
 - **Que les cibles voudront payer** : seul le test d'achat le dira.
-- **Qu'elle convient à vos cibles réelles** : les trois entreprises sont industrielles ; si l'audit stratégique se confirme (les experts qui vendent leur expertise), la version suivante devra présenter **des experts**, pas des industriels.
+- **Qu'elle convient à vos cibles réelles** : les trois profils sont deux entreprises industrielles et un expert indépendant, tous fictifs ; si l'audit stratégique se confirme (les experts qui vendent leur expertise), la version suivante devra présenter **des experts**, pas des industriels.
 
 ## 6. Lien avec l'audit stratégique
 

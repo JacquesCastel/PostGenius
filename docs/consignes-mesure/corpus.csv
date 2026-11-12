@@ -1,0 +1,46 @@
+id;source;texte;attendu;note
+R01;reel-demo;"Phrases courtes et concrètes. Aucun jargon. Pas d'exagération. Aucun chiffre inventé : si un chiffre n'est pas fourni, n'en donne pas.";;consignes de style des profils de la démonstration
+R02;reel-e4;"Ton sobre et direct. Phrases courtes.";;profil neutre de E4
+R03;reel-eval;"Phrases courtes et concrètes. Aucun jargon. Pas d'exagération.";;profil d'évaluation du moteur
+R04;ui-exemple;"Je tutoie mon audience, phrases courtes, pas d'émojis, une question pour finir";address:tu|noEmoji|endsWithQuestion;exemple affiché dans l'application (« Mon mode d'écriture »)
+R05;ui-exemple;"je tutoie mon audience, pas d'emojis, phrases courtes";address:tu|noEmoji;placeholder du champ de consignes
+R06;ui-exemple;"je tutoie mon audience, pas d'emojis,
+phrases courtes, une anecdote en ouverture";address:tu|noEmoji;placeholder du champ de consignes (autre écran)
+R07;ui-exemple-voix-marque;"nous tutoyons, phrases courtes, jamais de jargon";address:tu;champ « voix de la marque » (brandVoice), non lu par le contrôle
+R08;reel-demo-ligne;"La qualité industrielle se construit en dialogue avec le client, dès la conception, pas à la réception des pièces.";;ligne éditoriale (conviction), aucune règle
+R09;reel-demo-ligne;"La performance d'un achat se joue en amont, dans la façon dont le besoin est défini, avant toute négociation avec le fournisseur.";;ligne éditoriale (conviction), aucune règle
+R10;reel-demo-ligne;"Une tolérance est un choix qu'il faut pouvoir justifier par la fonction de la pièce : sinon elle ne protège rien et elle complique la fabrication.";;ligne éditoriale (conviction), aucune règle
+S01;synthetique;"Zéro émoji.";noEmoji;
+S02;synthetique;"N'utilise pas d'émojis.";noEmoji;
+S03;synthetique;"Évite les émojis.";noEmoji;formulation douce
+S04;synthetique;"Max 2 hashtags.";maxHashtags:2;
+S05;synthetique;"Pas plus de trois hashtags";maxHashtags:3;
+S06;synthetique;"Pas de hashtags";maxHashtags:0;
+S07;synthetique;"Au moins 3 hashtags";;minimum : le contrôle n'en tire aucune règle
+S08;synthetique;"Vouvoiement obligatoire";address:vous;
+S09;synthetique;"Je vouvoie mes lecteurs.";address:vous;
+S10;synthetique;"Pas de tutoiement.";address:vous;
+S11;synthetique;"Nous tutoyons nos lecteurs";address:tu;
+S12;synthetique;"Tu t'adresses directement au lecteur";address:tu;sans le mot « tutoiement »
+S13;synthetique;"Tutoiement seulement sur les posts personnels";;conditionnel : aucune règle attendue
+S14;synthetique;"Pas d'émoji sauf pour les annonces";;conditionnel : aucune règle attendue
+S15;synthetique;"Pas d'émojis, tutoiement seulement sur les posts personnels";noEmoji;deux consignes, la seconde conditionnelle
+S16;synthetique;"Ne dépasse jamais 3 hashtags";maxHashtags:3;
+S17;synthetique;"Termine toujours par une question.";endsWithQuestion;règle non prise en charge
+S18;synthetique;"Jamais le mot « leader ».";terms;règle non prise en charge depuis un texte libre
+S19;synthetique;"Phrases courtes, ton direct, pas de jargon.";;
+S20;synthetique;"Aucun émoji, aucun hashtag.";noEmoji|maxHashtags:0;
+S21;synthetique;"Tutoie le lecteur. Pas d'émoji. Maximum 2 hashtags.";address:tu|noEmoji|maxHashtags:2;
+S22;synthetique;"Je n'utilise jamais d'émojis";noEmoji;
+S23;synthetique;"Sans emoji";noEmoji;
+S24;synthetique;"Une anecdote en ouverture";;
+S25;synthetique;"Utilise des émojis avec parcimonie";;pas une règle contrôlable
+S26;synthetique;"Aucun tutoiement, jamais";address:vous;
+S27;synthetique;"2 hashtags maximum";maxHashtags:2;
+S28;synthetique;"Pas de hashtag dans le corps du texte";;ambigu : aucune règle attendue
+S29;synthetique;"Limite-toi à 3 hashtags";maxHashtags:3;
+S30;synthetique;"Vouvoie. Jamais de tu.";address:vous;
+S31;synthetique;"3 hashtags";;ambigu : maximum ou nombre exact ? aucune règle attendue
+S32;synthetique;"Ne tutoie pas les lecteurs";address:vous;
+S33;synthetique;"Évite le vouvoiement";address:tu;
+S34;synthetique;"Pas plus de 3 hashtags, pas d'émojis, vouvoiement";maxHashtags:3|noEmoji|address:vous;trois consignes dans une phrase

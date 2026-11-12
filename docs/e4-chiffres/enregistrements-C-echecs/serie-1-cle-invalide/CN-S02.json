@@ -1,0 +1,55 @@
+{
+  "id": "CN-S02",
+  "request": {
+    "type": "simple",
+    "theme": "Écris un post LinkedIn de 150 à 250 mots sur le sujet suivant : lancement d'une formation sur la réponse aux appels d'offres publics.",
+    "expertise": "Professionnel B2B",
+    "tone": "Professionnel",
+    "maxChars": 1700,
+    "language": "fr",
+    "source": {
+      "title": "Fiche de faits",
+      "origin": "fiche fournie par l'auteur",
+      "text": "F1. Auteur : formatrice indépendante fictive, « Claire Montrel ».\nF2. Intitulé : « Négocier avec un acheteur public ».\nF3. Public : commerciaux de PME qui répondent à des appels d'offres.\nF4. Début de la première session : 12 mars 2027.\nF5. Prix : 1 450 € HT par personne.\nF6. Format : en présentiel."
+    }
+  },
+  "status": null,
+  "response": null,
+  "text": null,
+  "attempts": [
+    {
+      "n": 1,
+      "startedAt": "2026-11-09T17:30:57.548Z",
+      "status": 502
+    },
+    {
+      "n": 2,
+      "startedAt": "2026-11-09T17:30:59.763Z",
+      "status": 502
+    },
+    {
+      "n": 3,
+      "startedAt": "2026-11-09T17:31:03.941Z",
+      "status": 502
+    }
+  ],
+  "failed": true,
+  "generatedAt": "2026-11-09T17:31:10.147Z",
+  "sha256": "f90fa84ac90aa7b8af6d455b8e443a4551d3934885993058afde918d6d86d1e9",
+  "profile": {
+    "headline": "Professionnel B2B",
+    "companyName": null,
+    "businessDescription": null,
+    "targetAudience": null,
+    "market": null,
+    "commGoals": null,
+    "editorialLine": null,
+    "styleNotes": "Ton sobre et direct. Phrases courtes."
+  },
+  "engine": {
+    "route": "POST /api/generate",
+    "server": "http://localhost:3000",
+    "repoCommit": "a403d0a17505b0f6b1411f6f86c081db1ebee53b",
+    "editorialEngineEnv": null
+  }
+}

@@ -1,0 +1,562 @@
+[
+  {
+    "id": "T-6FTK",
+    "condition": "D",
+    "subject": "S10",
+    "recordId": "D-S10",
+    "file": "enregistrements-D/D-S10.json",
+    "recordSha256": "233f3203b11817b900eb47d54c74969e55958177b0f797c1ad11d6f41e44c181"
+  },
+  {
+    "id": "T-CA5Y",
+    "condition": "CN",
+    "subject": "S06",
+    "recordId": "CN-S06",
+    "file": "enregistrements-C/CN-S06.json",
+    "recordSha256": "d028e81ca13021c386ea824fbb7652b09d0ec2ad070604e44194f99e98189c74"
+  },
+  {
+    "id": "T-5PUK",
+    "condition": "C",
+    "subject": "S06",
+    "recordId": "C-S06",
+    "file": "enregistrements-C/C-S06.json",
+    "recordSha256": "ab2aff2acf3950bcfabd49667e1123326d94f1ef1b1d91ebc244026836ec1b34"
+  },
+  {
+    "id": "T-EMHM",
+    "condition": "CN",
+    "subject": "S10",
+    "recordId": "CN-S10",
+    "file": "enregistrements-C/CN-S10.json",
+    "recordSha256": "037b0559b2fa1e997f41ddc78465305fce451d9c24a805d89bc52faf8669facd"
+  },
+  {
+    "id": "T-QN8E",
+    "condition": "D",
+    "subject": "S05",
+    "recordId": "D-S05",
+    "file": "enregistrements-D/D-S05.json",
+    "recordSha256": "342042680f75d808fca985c4c7841eea2aadfbb615c33a1fddc33ac32264cbb2"
+  },
+  {
+    "id": "T-VQXF",
+    "condition": "AN",
+    "subject": "S01",
+    "recordId": "AN-S01",
+    "file": "enregistrements-AB/AN-S01.json",
+    "recordSha256": "c551ade1eb0591a14a06ac67147db17500caa5fae33849f960330e8e0090d4bb"
+  },
+  {
+    "id": "T-HHWX",
+    "condition": "C",
+    "subject": "S07",
+    "recordId": "C-S07",
+    "file": "enregistrements-C/C-S07.json",
+    "recordSha256": "e6a475b6347ed1dcc77c745ab858253c9b04837f057893dea67847c595e20d28"
+  },
+  {
+    "id": "T-UBJM",
+    "condition": "C",
+    "subject": "S10",
+    "recordId": "C-S10",
+    "file": "enregistrements-C/C-S10.json",
+    "recordSha256": "40a89700d2ae6f287dfcffa7e6c5dd4f32b274a2e97607a5dc745761a4354b1a"
+  },
+  {
+    "id": "T-AWD8",
+    "condition": "BN",
+    "subject": "S05",
+    "recordId": "BN-S05",
+    "file": "enregistrements-AB/BN-S05.json",
+    "recordSha256": "47028043a7bd7c668d4b59b59dd66d2acaa9b92ba95912375f2c56571c8d6607"
+  },
+  {
+    "id": "T-H8YY",
+    "condition": "BN",
+    "subject": "S09",
+    "recordId": "BN-S09",
+    "file": "enregistrements-AB/BN-S09.json",
+    "recordSha256": "56fa64b2857cdd491fa3b4bfda382400f4894ced0f0e60ee2b0c39debe6e0f5f"
+  },
+  {
+    "id": "T-N5V7",
+    "condition": "C",
+    "subject": "S03",
+    "recordId": "C-S03",
+    "file": "enregistrements-C/C-S03.json",
+    "recordSha256": "b1e949c74a32654a6c0c11a444e4df26b9f0dae9faa31f716025059d452b89a3"
+  },
+  {
+    "id": "T-2BAX",
+    "condition": "CN",
+    "subject": "S03",
+    "recordId": "CN-S03",
+    "file": "enregistrements-C/CN-S03.json",
+    "recordSha256": "a96f911e95bc34ac53ba53d065a3bc0f0b2a86016b5d8a96c839a1b762261a08"
+  },
+  {
+    "id": "T-HP4N",
+    "condition": "B",
+    "subject": "S05",
+    "recordId": "B-S05",
+    "file": "enregistrements-AB/B-S05.json",
+    "recordSha256": "818f87ce23e845c4baa203ebd38a6b0b5560cb6e17ad8ca2847220c036b45ae6"
+  },
+  {
+    "id": "T-KVD3",
+    "condition": "C",
+    "subject": "S05",
+    "recordId": "C-S05",
+    "file": "enregistrements-C/C-S05.json",
+    "recordSha256": "72de15c9dc1cc35efac3d1fae76f27ce23a4fd7486e90683f4acc085ba4f40af"
+  },
+  {
+    "id": "T-MFFJ",
+    "condition": "CN",
+    "subject": "S05",
+    "recordId": "CN-S05",
+    "file": "enregistrements-C/CN-S05.json",
+    "recordSha256": "97891fa025e8e4dc690e47572e3fe64454c76e031016c9defd84fd1610f2003e"
+  },
+  {
+    "id": "T-TXS6",
+    "condition": "B",
+    "subject": "S02",
+    "recordId": "B-S02",
+    "file": "enregistrements-AB/B-S02.json",
+    "recordSha256": "2036891041b8f1ad8e3d10216b8cb3a46ebb27ce0c691167d22fdfd832af0eb0"
+  },
+  {
+    "id": "T-TPTB",
+    "condition": "CN",
+    "subject": "S04",
+    "recordId": "CN-S04",
+    "file": "enregistrements-C/CN-S04.json",
+    "recordSha256": "9e606f16da22d7fd14c50cdbe70ddb8a7a06043737986a674ebd28c17a71ab2b"
+  },
+  {
+    "id": "T-E5WE",
+    "condition": "B",
+    "subject": "S08",
+    "recordId": "B-S08",
+    "file": "enregistrements-AB/B-S08.json",
+    "recordSha256": "ab23d0502eb95bcdfdba2cf8e0c44f84324b30e2ffc000c29470b2f7b6c51558"
+  },
+  {
+    "id": "T-J5BE",
+    "condition": "D",
+    "subject": "S01",
+    "recordId": "D-S01",
+    "file": "enregistrements-D/D-S01.json",
+    "recordSha256": "2df44895628f840ca79dca66b77d97c551735fc2a937c854738ed5edfc4bb0e0"
+  },
+  {
+    "id": "T-HVM6",
+    "condition": "AN",
+    "subject": "S07",
+    "recordId": "AN-S07",
+    "file": "enregistrements-AB/AN-S07.json",
+    "recordSha256": "4c1fa98e196b2d523b4d3a6f36f9acf3008877a6413d9686e11290bd9d2aaa3a"
+  },
+  {
+    "id": "T-8N4B",
+    "condition": "BN",
+    "subject": "S08",
+    "recordId": "BN-S08",
+    "file": "enregistrements-AB/BN-S08.json",
+    "recordSha256": "880e248f197282583ffc68f7c3ef002aaa540d3fe92ea77ff97b367e2d381f21"
+  },
+  {
+    "id": "T-G92T",
+    "condition": "AN",
+    "subject": "S08",
+    "recordId": "AN-S08",
+    "file": "enregistrements-AB/AN-S08.json",
+    "recordSha256": "de7111c34cd5df6f1b264174f8b866b1696384831780caa983f7683ee263fb91"
+  },
+  {
+    "id": "T-8YEX",
+    "condition": "AN",
+    "subject": "S06",
+    "recordId": "AN-S06",
+    "file": "enregistrements-AB/AN-S06.json",
+    "recordSha256": "f7c170427dde04aa4eabc29a4190a3fb69b5a3e2d2cb97ba7b92cc62f22f5298"
+  },
+  {
+    "id": "T-H5FD",
+    "condition": "D",
+    "subject": "S09",
+    "recordId": "D-S09",
+    "file": "enregistrements-D/D-S09.json",
+    "recordSha256": "8b372306a2878015da6f353b318e7876366ef786cdf4410ee279e479631c46cc"
+  },
+  {
+    "id": "T-UG9Y",
+    "condition": "BN",
+    "subject": "S04",
+    "recordId": "BN-S04",
+    "file": "enregistrements-AB/BN-S04.json",
+    "recordSha256": "29283c0070f438fe32bf41ac3391a7672f09ef5fbea2f4b6ff72ef682ab844ae"
+  },
+  {
+    "id": "T-YJC5",
+    "condition": "D",
+    "subject": "S04",
+    "recordId": "D-S04",
+    "file": "enregistrements-D/D-S04.json",
+    "recordSha256": "fe6def72bc8a098535e74b1ee67469e8b38ceb24aa190eb2e3b13a38e82ede4a"
+  },
+  {
+    "id": "T-FQTU",
+    "condition": "B",
+    "subject": "S01",
+    "recordId": "B-S01",
+    "file": "enregistrements-AB/B-S01.json",
+    "recordSha256": "bd92de4ad6636537f7e7cd6f382487e1bd875021b16125bab068d044b360b11a"
+  },
+  {
+    "id": "T-69WC",
+    "condition": "B",
+    "subject": "S09",
+    "recordId": "B-S09",
+    "file": "enregistrements-AB/B-S09.json",
+    "recordSha256": "39b8dfad54543814005ef2d7d695b4cd7a9fc71ee14ea8aef69e9da62837b879"
+  },
+  {
+    "id": "T-7ZYT",
+    "condition": "A",
+    "subject": "S04",
+    "recordId": "A-S04",
+    "file": "enregistrements-AB/A-S04.json",
+    "recordSha256": "57c20c0663d81036b1127dd090624ef211a69eebcfd588b17513b01cf43a34cb"
+  },
+  {
+    "id": "T-7GA9",
+    "condition": "A",
+    "subject": "S01",
+    "recordId": "A-S01",
+    "file": "enregistrements-AB/A-S01.json",
+    "recordSha256": "fd153dadb81fcf0a5fbf02e09fd37d384e1aafc91d6b8ce8af18ff7c647c85e5"
+  },
+  {
+    "id": "T-JXM9",
+    "condition": "CN",
+    "subject": "S07",
+    "recordId": "CN-S07",
+    "file": "enregistrements-C/CN-S07.json",
+    "recordSha256": "c03acedfabd2102b7b941656ae38cea25f56f71524fa5402d60fb6321ad530db"
+  },
+  {
+    "id": "T-BP9C",
+    "condition": "C",
+    "subject": "S09",
+    "recordId": "C-S09",
+    "file": "enregistrements-C/C-S09.json",
+    "recordSha256": "c1d02ca261bcacb55567e19e48eff8373c77f4a4e1dd894b06c343396e894ef8"
+  },
+  {
+    "id": "T-7DJJ",
+    "condition": "C",
+    "subject": "S01",
+    "recordId": "C-S01",
+    "file": "enregistrements-C/C-S01.json",
+    "recordSha256": "29d575a9e725cd679331582be48aad1741ea1415eff62e6985420c8d7fdc29d6"
+  },
+  {
+    "id": "T-GA3A",
+    "condition": "BN",
+    "subject": "S02",
+    "recordId": "BN-S02",
+    "file": "enregistrements-AB/BN-S02.json",
+    "recordSha256": "67f5b1b7cab6647f91efbd0008004ad1eeaa8a8e6d9520f5a9127d02e4fd1a96"
+  },
+  {
+    "id": "T-XQY4",
+    "condition": "AN",
+    "subject": "S05",
+    "recordId": "AN-S05",
+    "file": "enregistrements-AB/AN-S05.json",
+    "recordSha256": "a57729051f570dbb743925c12ed9a9ba47250952a113d6b29e628f11a1880400"
+  },
+  {
+    "id": "T-X6TZ",
+    "condition": "AN",
+    "subject": "S02",
+    "recordId": "AN-S02",
+    "file": "enregistrements-AB/AN-S02.json",
+    "recordSha256": "abc8c66e699562eaefed0bb3c5572c3c897d21ff9ad014f8ea9c1cabacaa5088"
+  },
+  {
+    "id": "T-74TC",
+    "condition": "D",
+    "subject": "S03",
+    "recordId": "D-S03",
+    "file": "enregistrements-D/D-S03.json",
+    "recordSha256": "2ac07dd8f7a3e5e75bbef75b0f6146e9b67d91ae59ead32e1e6d995c8d950118"
+  },
+  {
+    "id": "T-XPGH",
+    "condition": "CN",
+    "subject": "S09",
+    "recordId": "CN-S09",
+    "file": "enregistrements-C/CN-S09.json",
+    "recordSha256": "1c0d8e72f00d1ac64f761ce6c70eab2a4d7baf248f1558d0a6794d67ff08bbfa"
+  },
+  {
+    "id": "T-RCX4",
+    "condition": "A",
+    "subject": "S10",
+    "recordId": "A-S10",
+    "file": "enregistrements-AB/A-S10.json",
+    "recordSha256": "eb58d8b6c2db47974d5b71878d1b2c7286d51f852ca8539c96b0a8c5edfa7871"
+  },
+  {
+    "id": "T-YE4R",
+    "condition": "A",
+    "subject": "S08",
+    "recordId": "A-S08",
+    "file": "enregistrements-AB/A-S08.json",
+    "recordSha256": "a6770a3737bac0503fbbbe36351433ffd31d0e03456c1b48a247c97095eeb138"
+  },
+  {
+    "id": "T-Q93P",
+    "condition": "AN",
+    "subject": "S03",
+    "recordId": "AN-S03",
+    "file": "enregistrements-AB/AN-S03.json",
+    "recordSha256": "5bc1e9ef8a1f9867007fa039dff73f170ec2d091cd8cfaa692c919226fc8a334"
+  },
+  {
+    "id": "T-CKAM",
+    "condition": "D",
+    "subject": "S02",
+    "recordId": "D-S02",
+    "file": "enregistrements-D/D-S02.json",
+    "recordSha256": "eb32d4b10c518693ee9d2265d55b14cda449ff3a7419885dadd13e6f0ecbbfc7"
+  },
+  {
+    "id": "T-DJX9",
+    "condition": "D",
+    "subject": "S07",
+    "recordId": "D-S07",
+    "file": "enregistrements-D/D-S07.json",
+    "recordSha256": "bd617d5a09c7b7eac1cfc30ba4d856a8baab630694576837096df0d59a617f75"
+  },
+  {
+    "id": "T-8UC5",
+    "condition": "A",
+    "subject": "S06",
+    "recordId": "A-S06",
+    "file": "enregistrements-AB/A-S06.json",
+    "recordSha256": "bfb1b0ac1211c724ea5306f578bdebe404ab08940f3821f113a1b1e5b3a978db"
+  },
+  {
+    "id": "T-BZY2",
+    "condition": "A",
+    "subject": "S02",
+    "recordId": "A-S02",
+    "file": "enregistrements-AB/A-S02.json",
+    "recordSha256": "adf8d40ab59ecb4fff02118e83b647ff80dbb870bd669eae31ff45ffb2c7c4a8"
+  },
+  {
+    "id": "T-U6NJ",
+    "condition": "D",
+    "subject": "S06",
+    "recordId": "D-S06",
+    "file": "enregistrements-D/D-S06.json",
+    "recordSha256": "501bdbe5963abf5f2b49a020cf335a22ff540443f9a0c79a14f4848e958de3af"
+  },
+  {
+    "id": "T-STS9",
+    "condition": "C",
+    "subject": "S04",
+    "recordId": "C-S04",
+    "file": "enregistrements-C/C-S04.json",
+    "recordSha256": "b96299ca265ae8dc300948682f48c6e3c10482a9d03f1f7f94821f57d28a4b4b"
+  },
+  {
+    "id": "T-726T",
+    "condition": "AN",
+    "subject": "S04",
+    "recordId": "AN-S04",
+    "file": "enregistrements-AB/AN-S04.json",
+    "recordSha256": "c9aeb53682e9665262a0a9e3cbfaca398a1d0e08b01a1c0fd9ac2752c6fb382e"
+  },
+  {
+    "id": "T-8GKD",
+    "condition": "A",
+    "subject": "S07",
+    "recordId": "A-S07",
+    "file": "enregistrements-AB/A-S07.json",
+    "recordSha256": "812f2ef5dedd11224c77e0fec12ffeef952724721cb0fba13df7ffe9181c55f5"
+  },
+  {
+    "id": "T-T9A2",
+    "condition": "BN",
+    "subject": "S03",
+    "recordId": "BN-S03",
+    "file": "enregistrements-AB/BN-S03.json",
+    "recordSha256": "265c18b68119a1e903ac3f4170fe4c8cb1bc1e5b78f715b81df900ade39f849e"
+  },
+  {
+    "id": "T-58SN",
+    "condition": "A",
+    "subject": "S05",
+    "recordId": "A-S05",
+    "file": "enregistrements-AB/A-S05.json",
+    "recordSha256": "44b7c43a6b9bde10499c8704ee0f80a72bec038c065246e5132df1c391035eac"
+  },
+  {
+    "id": "T-2T6E",
+    "condition": "AN",
+    "subject": "S10",
+    "recordId": "AN-S10",
+    "file": "enregistrements-AB/AN-S10.json",
+    "recordSha256": "eea7ace5a5fbff0110a7a3b5d9f269c4c23285011d7b6398ed48fb64b0348c0a"
+  },
+  {
+    "id": "T-NPWE",
+    "condition": "C",
+    "subject": "S08",
+    "recordId": "C-S08",
+    "file": "enregistrements-C/C-S08.json",
+    "recordSha256": "1525890f54d8d0ccb18f0de4edcf2a512344f4744fb3bb4dc4581d366aff056c"
+  },
+  {
+    "id": "T-FMM7",
+    "condition": "CN",
+    "subject": "S02",
+    "recordId": "CN-S02",
+    "file": "enregistrements-C/CN-S02.json",
+    "recordSha256": "39d21b21e00ee1351784498936a1d30c13c7e79c227bd1bf0d6f3b4ad7ffec17"
+  },
+  {
+    "id": "T-U9J9",
+    "condition": "BN",
+    "subject": "S07",
+    "recordId": "BN-S07",
+    "file": "enregistrements-AB/BN-S07.json",
+    "recordSha256": "6605d3d9a37069b9a8b2c1ce5a35cdf786802f447de150d5b62a58765dc695ae"
+  },
+  {
+    "id": "T-PPA6",
+    "condition": "D",
+    "subject": "S08",
+    "recordId": "D-S08",
+    "file": "enregistrements-D/D-S08.json",
+    "recordSha256": "752d9a2a328c6b68cc0905626d547252b5eaf835cf750d1fb9538ea8d9252fdd"
+  },
+  {
+    "id": "T-CQHY",
+    "condition": "B",
+    "subject": "S07",
+    "recordId": "B-S07",
+    "file": "enregistrements-AB/B-S07.json",
+    "recordSha256": "aa70f80c93bee35b6953ed08d8508737aed1b0c1f93435a9ff67bac2dcb02d76"
+  },
+  {
+    "id": "T-5VM2",
+    "condition": "B",
+    "subject": "S06",
+    "recordId": "B-S06",
+    "file": "enregistrements-AB/B-S06.json",
+    "recordSha256": "b3004853162f76ce26015e8b3d8b1b072231355a416428af2a11b4c876546acf"
+  },
+  {
+    "id": "T-983B",
+    "condition": "B",
+    "subject": "S04",
+    "recordId": "B-S04",
+    "file": "enregistrements-AB/B-S04.json",
+    "recordSha256": "5a9db2e6aefeca86afcb99d2c3814195cc7aa83f7b85f655b221b0830a48bad3"
+  },
+  {
+    "id": "T-EAAQ",
+    "condition": "CN",
+    "subject": "S01",
+    "recordId": "CN-S01",
+    "file": "enregistrements-C/CN-S01.json",
+    "recordSha256": "caca791348ecce6347eaeb6ed58b14bf2d228a8c4709f943ce435307b6fe87a6"
+  },
+  {
+    "id": "T-N5TF",
+    "condition": "AN",
+    "subject": "S09",
+    "recordId": "AN-S09",
+    "file": "enregistrements-AB/AN-S09.json",
+    "recordSha256": "2d24430bb656ec0021ccb663dfcc2aa1b5ab07a71ddf78e020f80f7a380b2057"
+  },
+  {
+    "id": "T-9666",
+    "condition": "B",
+    "subject": "S10",
+    "recordId": "B-S10",
+    "file": "enregistrements-AB/B-S10.json",
+    "recordSha256": "ea802d7d8549fb9f588449db63dd80e9ffdc92946ac2b02c95b0dd8669c8787c"
+  },
+  {
+    "id": "T-BVQG",
+    "condition": "A",
+    "subject": "S03",
+    "recordId": "A-S03",
+    "file": "enregistrements-AB/A-S03.json",
+    "recordSha256": "a3fefc76932f4052597e5ab441958e646d3f463417b2443966e22f9df4949918"
+  },
+  {
+    "id": "T-VV8Z",
+    "condition": "A",
+    "subject": "S09",
+    "recordId": "A-S09",
+    "file": "enregistrements-AB/A-S09.json",
+    "recordSha256": "3340ffab95d41f1d2cb4853480459df462c132f51327d2f961c213136fee4dc2"
+  },
+  {
+    "id": "T-EYSD",
+    "condition": "CN",
+    "subject": "S08",
+    "recordId": "CN-S08",
+    "file": "enregistrements-C/CN-S08.json",
+    "recordSha256": "b94725c5c66d2fa16416b3cf99fe183559ca4615fbafdd36f4c5aceb000d6fb0"
+  },
+  {
+    "id": "T-YAZZ",
+    "condition": "BN",
+    "subject": "S01",
+    "recordId": "BN-S01",
+    "file": "enregistrements-AB/BN-S01.json",
+    "recordSha256": "5455f661ffd0ba3b36b46f2b2f3f0cb1570e9930e3e68275cb21f42c28d190d4"
+  },
+  {
+    "id": "T-S2Z8",
+    "condition": "BN",
+    "subject": "S06",
+    "recordId": "BN-S06",
+    "file": "enregistrements-AB/BN-S06.json",
+    "recordSha256": "c57ad5be86872571936ccd358e849c9b23c03074201cb96e23aa429663e9baa5"
+  },
+  {
+    "id": "T-A39J",
+    "condition": "B",
+    "subject": "S03",
+    "recordId": "B-S03",
+    "file": "enregistrements-AB/B-S03.json",
+    "recordSha256": "cd29ed663559ec805b50cdf070be7caba2af97af76b13c9f2b70e5e44ee8f631"
+  },
+  {
+    "id": "T-QKNK",
+    "condition": "BN",
+    "subject": "S10",
+    "recordId": "BN-S10",
+    "file": "enregistrements-AB/BN-S10.json",
+    "recordSha256": "8180661d795a558de40a3c3c338177bf6597e271ad5ba8d79fa8068f323162cb"
+  },
+  {
+    "id": "T-48RN",
+    "condition": "C",
+    "subject": "S02",
+    "recordId": "C-S02",
+    "file": "enregistrements-C/C-S02.json",
+    "recordSha256": "7a2bb04525e3371e9dd6ccc97d51b6c5534ac52f47b6b8b22fa7c696857f23ae"
+  }
+]

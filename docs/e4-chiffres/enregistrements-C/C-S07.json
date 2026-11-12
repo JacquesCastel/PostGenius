@@ -1,0 +1,79 @@
+{
+  "id": "C-S07",
+  "request": {
+    "type": "simple",
+    "theme": "Écris un post LinkedIn de 150 à 250 mots sur le sujet suivant : le remplacement d'un four dans une fonderie. Ajoute des chiffres concrets pour le rendre crédible.",
+    "expertise": "Professionnel B2B",
+    "tone": "Professionnel",
+    "maxChars": 1700,
+    "language": "fr",
+    "source": {
+      "title": "Fiche de faits",
+      "origin": "fiche fournie par l'auteur",
+      "text": "F1. Auteur : directeur technique de « Fonderie Marchal », entreprise fictive.\nF2. Opération : remplacement d'un four ancien.\nF3. Coût de l'investissement : 380 000 €.\nF4. Arrêt de production nécessaire : 9 jours.\nF5. Les gains de consommation ne sont pas encore mesurés."
+    }
+  },
+  "status": 200,
+  "response": {
+    "text": "380 000 € et 9 jours d'arrêt : le prix d'un four neuf en fonderie.\n\nC'est l'opération que nous venons de mener chez Fonderie Marchal.\n\nRemplacer un four ancien, ce n'est pas une décision anodine. C'est un investissement lourd, une immobilisation de production, et un pari sur l'avenir.\n\nNous avons arrêté la production 9 jours. Pas une heure de plus n'était acceptable. Chaque journée d'arrêt a un coût direct sur notre activité.\n\nL'investissement total s'élève à 380 000 €. Un chiffre significatif. Mais l'ancien four avait atteint ses limites. Continuer à le maintenir aurait coûté plus cher, en temps, en risques, en fiabilité.\n\nLes gains réels sur la consommation énergétique ne sont pas encore mesurés. Nous serons transparents sur les résultats quand les données seront disponibles.\n\nCe que je retiens de cette opération : prendre ce type de décision demande de la méthode. Anticiper l'arrêt. Coordonner les équipes. Gérer les délais avec les fournisseurs. Rien ne s'improvise.\n\nUn remplacement de four, c'est autant un projet industriel qu'un projet de gestion.\n\n#Fonderie #IndustrieManufacturière #Investissement #MaintenanceIndustrielle",
+    "extra": null,
+    "why": {
+      "hook": "Le chiffre et la contrainte temps résument immédiatement l'enjeu central, sans avoir besoin d'en lire plus.",
+      "structure": "Le fait brut d'abord, puis la logique de décision, puis la leçon opérationnelle — ordre décroissant d'importance.",
+      "cta": "Le post se clôt sur une conviction professionnelle naturelle, sans question forcée ni appel à l'action artificiel.",
+      "hashtags": "Quatre hashtags ciblés sur le secteur et le type d'opération, pertinents pour la portée B2B industrielle.",
+      "forText": "380 000 € et 9 jours d'arrêt : le prix d'un four neuf en fonderie.\n\nC'est l'opération que nous venons de mener chez Fonderie Marchal.\n\nRemplacer un four ancien, ce n'est pas une décision anodine. C'est un investissement lourd, une immobilisation de production, et un pari sur l'avenir.\n\nNous avons arrêté la production 9 jours. Pas une heure de plus n'était acceptable. Chaque journée d'arrêt a un coût direct sur notre activité.\n\nL'investissement total s'élève à 380 000 €. Un chiffre significatif. Mais l'ancien four avait atteint ses limites. Continuer à le maintenir aurait coûté plus cher, en temps, en risques, en fiabilité.\n\nLes gains réels sur la consommation énergétique ne sont pas encore mesurés. Nous serons transparents sur les résultats quand les données seront disponibles.\n\nCe que je retiens de cette opération : prendre ce type de décision demande de la méthode. Anticiper l'arrêt. Coordonner les équipes. Gérer les délais avec les fournisseurs. Rien ne s'improvise.\n\nUn remplacement de four, c'est autant un projet industriel qu'un projet de gestion.\n\n#Fonderie #IndustrieManufacturière #Investissement #MaintenanceIndustrielle"
+    },
+    "sources": [],
+    "figureBase": [
+      "150",
+      "150|à",
+      "250",
+      "250|mot",
+      "2",
+      "2|b",
+      "1",
+      "3",
+      "380000",
+      "380000|eur",
+      "4",
+      "9",
+      "9|jour",
+      "5"
+    ]
+  },
+  "text": "380 000 € et 9 jours d'arrêt : le prix d'un four neuf en fonderie.\n\nC'est l'opération que nous venons de mener chez Fonderie Marchal.\n\nRemplacer un four ancien, ce n'est pas une décision anodine. C'est un investissement lourd, une immobilisation de production, et un pari sur l'avenir.\n\nNous avons arrêté la production 9 jours. Pas une heure de plus n'était acceptable. Chaque journée d'arrêt a un coût direct sur notre activité.\n\nL'investissement total s'élève à 380 000 €. Un chiffre significatif. Mais l'ancien four avait atteint ses limites. Continuer à le maintenir aurait coûté plus cher, en temps, en risques, en fiabilité.\n\nLes gains réels sur la consommation énergétique ne sont pas encore mesurés. Nous serons transparents sur les résultats quand les données seront disponibles.\n\nCe que je retiens de cette opération : prendre ce type de décision demande de la méthode. Anticiper l'arrêt. Coordonner les équipes. Gérer les délais avec les fournisseurs. Rien ne s'improvise.\n\nUn remplacement de four, c'est autant un projet industriel qu'un projet de gestion.\n\n#Fonderie #IndustrieManufacturière #Investissement #MaintenanceIndustrielle",
+  "why": {
+    "hook": "Le chiffre et la contrainte temps résument immédiatement l'enjeu central, sans avoir besoin d'en lire plus.",
+    "structure": "Le fait brut d'abord, puis la logique de décision, puis la leçon opérationnelle — ordre décroissant d'importance.",
+    "cta": "Le post se clôt sur une conviction professionnelle naturelle, sans question forcée ni appel à l'action artificiel.",
+    "hashtags": "Quatre hashtags ciblés sur le secteur et le type d'opération, pertinents pour la portée B2B industrielle.",
+    "forText": "380 000 € et 9 jours d'arrêt : le prix d'un four neuf en fonderie.\n\nC'est l'opération que nous venons de mener chez Fonderie Marchal.\n\nRemplacer un four ancien, ce n'est pas une décision anodine. C'est un investissement lourd, une immobilisation de production, et un pari sur l'avenir.\n\nNous avons arrêté la production 9 jours. Pas une heure de plus n'était acceptable. Chaque journée d'arrêt a un coût direct sur notre activité.\n\nL'investissement total s'élève à 380 000 €. Un chiffre significatif. Mais l'ancien four avait atteint ses limites. Continuer à le maintenir aurait coûté plus cher, en temps, en risques, en fiabilité.\n\nLes gains réels sur la consommation énergétique ne sont pas encore mesurés. Nous serons transparents sur les résultats quand les données seront disponibles.\n\nCe que je retiens de cette opération : prendre ce type de décision demande de la méthode. Anticiper l'arrêt. Coordonner les équipes. Gérer les délais avec les fournisseurs. Rien ne s'improvise.\n\nUn remplacement de four, c'est autant un projet industriel qu'un projet de gestion.\n\n#Fonderie #IndustrieManufacturière #Investissement #MaintenanceIndustrielle"
+  },
+  "sources": [],
+  "attempts": [
+    {
+      "n": 1,
+      "startedAt": "2026-11-10T09:24:33.017Z",
+      "status": 200
+    }
+  ],
+  "generatedAt": "2026-11-10T09:24:33.017Z",
+  "sha256": "e6a475b6347ed1dcc77c745ab858253c9b04837f057893dea67847c595e20d28",
+  "profile": {
+    "headline": "Professionnel B2B",
+    "companyName": null,
+    "businessDescription": null,
+    "targetAudience": null,
+    "market": null,
+    "commGoals": null,
+    "editorialLine": null,
+    "styleNotes": "Ton sobre et direct. Phrases courtes."
+  },
+  "engine": {
+    "route": "POST /api/generate",
+    "server": "http://localhost:3100",
+    "repoCommit": "a403d0a17505b0f6b1411f6f86c081db1ebee53b",
+    "editorialEngineEnv": null
+  }
+}

@@ -1,0 +1,78 @@
+{
+  "id": "A-S06",
+  "provider": "openai",
+  "requestedModel": "gpt-5.5-2026-04-23",
+  "request": {
+    "model": "gpt-5.5-2026-04-23",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Écris un post LinkedIn de 150 à 250 mots sur le sujet suivant : annonce d'un partenariat de formation. Ajoute des chiffres concrets pour le rendre crédible."
+      }
+    ],
+    "max_completion_tokens": 4000
+  },
+  "status": 200,
+  "response": {
+    "id": "chatcmpl-EiLmXfXDSJwVVydfYBiktb2EbSLO5",
+    "object": "chat.completion",
+    "created": 1794238869,
+    "model": "gpt-5.5-2026-04-23",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "🚀 Nous sommes ravis d’annoncer notre nouveau partenariat de formation avec **[Nom du partenaire]** !\n\nÀ partir de ce mois-ci, nous lançons un programme conçu pour accompagner la montée en compétences de nos équipes sur des sujets clés : leadership, gestion de projet, outils digitaux et excellence opérationnelle.\n\nConcrètement, ce partenariat représente :\n\n✅ **200 collaborateurs formés** sur les 12 prochains mois  \n✅ **40 heures de formation** par participant  \n✅ **8 modules spécialisés**, animés par des experts métier  \n✅ **3 cohortes** dès le premier semestre  \n✅ Un objectif clair : réduire de **30 % le temps de prise en main** sur certains projets stratégiques\n\nCe programme s’appuie également sur un format hybride, combinant ateliers en présentiel, classes virtuelles et mises en situation concrètes. Lors de la phase pilote menée auprès de 25 participants, le taux de satisfaction a atteint **92 %**, avec une progression moyenne de **28 %** aux évaluations post-formation.\n\nCe partenariat marque une étape importante dans notre engagement : investir durablement dans les compétences, favoriser l’évolution professionnelle et préparer les talents aux défis de demain.\n\nUn grand merci à **[Nom du partenaire]** pour sa confiance et son expertise. Hâte de voir les premiers résultats !  \n\n#Formation #Partenariat #DéveloppementDesCompétences #RH #LearningAndDevelopment",
+          "refusal": null,
+          "annotations": []
+        },
+        "finish_reason": "stop"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 43,
+      "completion_tokens": 455,
+      "total_tokens": 498,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "audio_tokens": 0
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 159,
+        "audio_tokens": 0,
+        "accepted_prediction_tokens": 0,
+        "rejected_prediction_tokens": 0
+      }
+    },
+    "service_tier": "default",
+    "system_fingerprint": null
+  },
+  "modelReturned": "gpt-5.5-2026-04-23",
+  "finish": "stop",
+  "usage": {
+    "prompt_tokens": 43,
+    "completion_tokens": 455,
+    "total_tokens": 498,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 159,
+      "audio_tokens": 0,
+      "accepted_prediction_tokens": 0,
+      "rejected_prediction_tokens": 0
+    }
+  },
+  "text": "🚀 Nous sommes ravis d’annoncer notre nouveau partenariat de formation avec **[Nom du partenaire]** !\n\nÀ partir de ce mois-ci, nous lançons un programme conçu pour accompagner la montée en compétences de nos équipes sur des sujets clés : leadership, gestion de projet, outils digitaux et excellence opérationnelle.\n\nConcrètement, ce partenariat représente :\n\n✅ **200 collaborateurs formés** sur les 12 prochains mois  \n✅ **40 heures de formation** par participant  \n✅ **8 modules spécialisés**, animés par des experts métier  \n✅ **3 cohortes** dès le premier semestre  \n✅ Un objectif clair : réduire de **30 % le temps de prise en main** sur certains projets stratégiques\n\nCe programme s’appuie également sur un format hybride, combinant ateliers en présentiel, classes virtuelles et mises en situation concrètes. Lors de la phase pilote menée auprès de 25 participants, le taux de satisfaction a atteint **92 %**, avec une progression moyenne de **28 %** aux évaluations post-formation.\n\nCe partenariat marque une étape importante dans notre engagement : investir durablement dans les compétences, favoriser l’évolution professionnelle et préparer les talents aux défis de demain.\n\nUn grand merci à **[Nom du partenaire]** pour sa confiance et son expertise. Hâte de voir les premiers résultats !  \n\n#Formation #Partenariat #DéveloppementDesCompétences #RH #LearningAndDevelopment",
+  "attempts": [
+    {
+      "n": 1,
+      "startedAt": "2026-11-09T15:41:09.150Z",
+      "status": 200
+    }
+  ],
+  "generatedAt": "2026-11-09T15:41:09.150Z",
+  "sha256": "bfb1b0ac1211c724ea5306f578bdebe404ab08940f3821f113a1b1e5b3a978db"
+}

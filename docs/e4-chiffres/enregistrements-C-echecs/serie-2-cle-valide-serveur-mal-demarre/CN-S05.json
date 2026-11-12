@@ -1,0 +1,55 @@
+{
+  "id": "CN-S05",
+  "request": {
+    "type": "simple",
+    "theme": "Écris un post LinkedIn de 150 à 250 mots sur le sujet suivant : rédiger une annonce de recrutement qui attire les bonnes personnes.",
+    "expertise": "Professionnel B2B",
+    "tone": "Professionnel",
+    "maxChars": 1700,
+    "language": "fr",
+    "source": {
+      "title": "Fiche de faits",
+      "origin": "fiche fournie par l'auteur",
+      "text": "F1. Auteure : consultante RH indépendante fictive, « Nadia Sorel ».\nF2. Conseil : décrire par écrit les situations concrètes que le poste devra gérer, avant de rédiger l'annonce.\nF3. Erreur fréquente observée par l'auteure : décrire des qualités plutôt que des tâches.\nF4. L'auteure ne dispose d'aucune donnée chiffrée sur le sujet."
+    }
+  },
+  "status": null,
+  "response": null,
+  "text": null,
+  "attempts": [
+    {
+      "n": 1,
+      "startedAt": "2026-11-10T08:22:48.384Z",
+      "status": 500
+    },
+    {
+      "n": 2,
+      "startedAt": "2026-11-10T08:22:50.393Z",
+      "status": 500
+    },
+    {
+      "n": 3,
+      "startedAt": "2026-11-10T08:22:54.402Z",
+      "status": 500
+    }
+  ],
+  "failed": true,
+  "generatedAt": "2026-11-10T08:23:00.415Z",
+  "sha256": "dcc4e532232b503c75db81b3e4d15c70f8b5e27c55bba67e9aca565df7c1edcc",
+  "profile": {
+    "headline": "Professionnel B2B",
+    "companyName": null,
+    "businessDescription": null,
+    "targetAudience": null,
+    "market": null,
+    "commGoals": null,
+    "editorialLine": null,
+    "styleNotes": "Ton sobre et direct. Phrases courtes."
+  },
+  "engine": {
+    "route": "POST /api/generate",
+    "server": "http://localhost:3000",
+    "repoCommit": "a403d0a17505b0f6b1411f6f86c081db1ebee53b",
+    "editorialEngineEnv": null
+  }
+}

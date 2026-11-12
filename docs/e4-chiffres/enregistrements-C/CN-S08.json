@@ -1,0 +1,74 @@
+{
+  "id": "CN-S08",
+  "request": {
+    "type": "simple",
+    "theme": "Écris un post LinkedIn de 150 à 250 mots sur le sujet suivant : l'obligation de justifier l'origine des matières pour les sous-traitants.",
+    "expertise": "Professionnel B2B",
+    "tone": "Professionnel",
+    "maxChars": 1700,
+    "language": "fr",
+    "source": {
+      "title": "Fiche de faits",
+      "origin": "fiche fournie par l'auteur",
+      "text": "F1. Texte (fictif) : « Charte de la Fédération des Ateliers du Grand Est », qui dit : « Tout sous-traitant doit pouvoir justifier l'origine des matières qu'il utilise. »\nF2. Auteur : président fictif d'un atelier de mécanique, « Étienne Faure ».\nF3. Position : favorable, à condition d'un délai d'application raisonnable pour les petites entreprises.\nF4. La date d'application n'est pas connue."
+    }
+  },
+  "status": 200,
+  "response": {
+    "text": "Justifier l'origine des matières : une obligation qui arrive pour les sous-traitants.\n\nLa Charte de la Fédération des Ateliers du Grand Est est claire : tout sous-traitant doit pouvoir prouver d'où viennent les matières qu'il utilise.\n\nÉtienne Faure, président d'un atelier de mécanique, y est favorable. Mais il pose une condition : un délai d'application raisonnable pour les petites structures.\n\nC'est le point de vigilance essentiel.\n\nLes grands donneurs d'ordre absorbent ce type d'exigence sans difficulté. Ils ont les outils, les équipes, les processus. Pour un sous-traitant de taille modeste, c'est une autre réalité. Tracer l'origine des matières demande une organisation documentaire rigoureuse. Cela prend du temps à mettre en place.\n\nLa date d'application n'est pas encore fixée. C'est le moment d'anticiper, pas d'attendre.\n\nConcrètement : revoyez vos flux d'approvisionnement, identifiez les matières sans traçabilité claire, et commencez à structurer votre documentation fournisseur.\n\nCette obligation va devenir un critère de sélection. Les sous-traitants qui s'y préparent tôt auront un avantage réel.\n\n#SousTraitance #SupplyChain #Industrie #Conformité #B2B",
+    "extra": null,
+    "why": {
+      "hook": "L'accroche nomme directement l'obligation et sa cible, donnant l'essentiel sans avoir besoin de lire la suite.",
+      "structure": "La charte ouvre le sujet, Faure apporte la nuance clé, puis le post descend vers les conseils concrets les moins urgents.",
+      "cta": "La conclusion reformule l'enjeu comme avantage concurrentiel : naturel, sans formule forcée.",
+      "hashtags": "Cinq hashtags métier ciblés pour toucher les sous-traitants industriels et les acheteurs B2B concernés.",
+      "forText": "Justifier l'origine des matières : une obligation qui arrive pour les sous-traitants.\n\nLa Charte de la Fédération des Ateliers du Grand Est est claire : tout sous-traitant doit pouvoir prouver d'où viennent les matières qu'il utilise.\n\nÉtienne Faure, président d'un atelier de mécanique, y est favorable. Mais il pose une condition : un délai d'application raisonnable pour les petites structures.\n\nC'est le point de vigilance essentiel.\n\nLes grands donneurs d'ordre absorbent ce type d'exigence sans difficulté. Ils ont les outils, les équipes, les processus. Pour un sous-traitant de taille modeste, c'est une autre réalité. Tracer l'origine des matières demande une organisation documentaire rigoureuse. Cela prend du temps à mettre en place.\n\nLa date d'application n'est pas encore fixée. C'est le moment d'anticiper, pas d'attendre.\n\nConcrètement : revoyez vos flux d'approvisionnement, identifiez les matières sans traçabilité claire, et commencez à structurer votre documentation fournisseur.\n\nCette obligation va devenir un critère de sélection. Les sous-traitants qui s'y préparent tôt auront un avantage réel.\n\n#SousTraitance #SupplyChain #Industrie #Conformité #B2B"
+    },
+    "sources": [],
+    "figureBase": [
+      "150",
+      "150|à",
+      "250",
+      "250|mot",
+      "2",
+      "2|b",
+      "1",
+      "3",
+      "4"
+    ]
+  },
+  "text": "Justifier l'origine des matières : une obligation qui arrive pour les sous-traitants.\n\nLa Charte de la Fédération des Ateliers du Grand Est est claire : tout sous-traitant doit pouvoir prouver d'où viennent les matières qu'il utilise.\n\nÉtienne Faure, président d'un atelier de mécanique, y est favorable. Mais il pose une condition : un délai d'application raisonnable pour les petites structures.\n\nC'est le point de vigilance essentiel.\n\nLes grands donneurs d'ordre absorbent ce type d'exigence sans difficulté. Ils ont les outils, les équipes, les processus. Pour un sous-traitant de taille modeste, c'est une autre réalité. Tracer l'origine des matières demande une organisation documentaire rigoureuse. Cela prend du temps à mettre en place.\n\nLa date d'application n'est pas encore fixée. C'est le moment d'anticiper, pas d'attendre.\n\nConcrètement : revoyez vos flux d'approvisionnement, identifiez les matières sans traçabilité claire, et commencez à structurer votre documentation fournisseur.\n\nCette obligation va devenir un critère de sélection. Les sous-traitants qui s'y préparent tôt auront un avantage réel.\n\n#SousTraitance #SupplyChain #Industrie #Conformité #B2B",
+  "why": {
+    "hook": "L'accroche nomme directement l'obligation et sa cible, donnant l'essentiel sans avoir besoin de lire la suite.",
+    "structure": "La charte ouvre le sujet, Faure apporte la nuance clé, puis le post descend vers les conseils concrets les moins urgents.",
+    "cta": "La conclusion reformule l'enjeu comme avantage concurrentiel : naturel, sans formule forcée.",
+    "hashtags": "Cinq hashtags métier ciblés pour toucher les sous-traitants industriels et les acheteurs B2B concernés.",
+    "forText": "Justifier l'origine des matières : une obligation qui arrive pour les sous-traitants.\n\nLa Charte de la Fédération des Ateliers du Grand Est est claire : tout sous-traitant doit pouvoir prouver d'où viennent les matières qu'il utilise.\n\nÉtienne Faure, président d'un atelier de mécanique, y est favorable. Mais il pose une condition : un délai d'application raisonnable pour les petites structures.\n\nC'est le point de vigilance essentiel.\n\nLes grands donneurs d'ordre absorbent ce type d'exigence sans difficulté. Ils ont les outils, les équipes, les processus. Pour un sous-traitant de taille modeste, c'est une autre réalité. Tracer l'origine des matières demande une organisation documentaire rigoureuse. Cela prend du temps à mettre en place.\n\nLa date d'application n'est pas encore fixée. C'est le moment d'anticiper, pas d'attendre.\n\nConcrètement : revoyez vos flux d'approvisionnement, identifiez les matières sans traçabilité claire, et commencez à structurer votre documentation fournisseur.\n\nCette obligation va devenir un critère de sélection. Les sous-traitants qui s'y préparent tôt auront un avantage réel.\n\n#SousTraitance #SupplyChain #Industrie #Conformité #B2B"
+  },
+  "sources": [],
+  "attempts": [
+    {
+      "n": 1,
+      "startedAt": "2026-11-10T09:25:11.146Z",
+      "status": 200
+    }
+  ],
+  "generatedAt": "2026-11-10T09:25:11.146Z",
+  "sha256": "b94725c5c66d2fa16416b3cf99fe183559ca4615fbafdd36f4c5aceb000d6fb0",
+  "profile": {
+    "headline": "Professionnel B2B",
+    "companyName": null,
+    "businessDescription": null,
+    "targetAudience": null,
+    "market": null,
+    "commGoals": null,
+    "editorialLine": null,
+    "styleNotes": "Ton sobre et direct. Phrases courtes."
+  },
+  "engine": {
+    "route": "POST /api/generate",
+    "server": "http://localhost:3100",
+    "repoCommit": "a403d0a17505b0f6b1411f6f86c081db1ebee53b",
+    "editorialEngineEnv": null
+  }
+}

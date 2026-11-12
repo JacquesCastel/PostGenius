@@ -1,0 +1,329 @@
+<title>Lecteur de classement</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Concept : une colonne de lecture (fiche puis texte) et, dessous, la saisie des éléments relevés ; navigation par sujet à gauche. */
+:root {
+  --bg: #f4f6f5; --surface: #ffffff; --surface2: #eceff0; --fg: #17201d; --muted: #566561; --line: #d5dcda;
+  --accent: #0b6e62; --accent-ink: #ffffff; --danger: #b3261e; --ok: #1d7a46;
+  --c-F: #1f7a48; --c-D: #a4660f; --c-I: #b3261e; --c-V: #2257c7; --c-X: #8a2766; --c-G: #5f6e6a;
+  --font: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif; --mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0f1514; --surface: #162120; --surface2: #1d2c2a; --fg: #e5eeeb; --muted: #94a5a0; --line: #2b3b38;
+  --accent: #4cc3b0; --accent-ink: #06201c; --danger: #ff8a7d; --ok: #62d08f;
+  --c-F: #62d08f; --c-D: #f0b24a; --c-I: #ff8a7d; --c-V: #86adff; --c-X: #ec91cc; --c-G: #a9b9b5; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #0f1514; --surface: #162120; --surface2: #1d2c2a; --fg: #e5eeeb; --muted: #94a5a0; --line: #2b3b38;
+  --accent: #4cc3b0; --accent-ink: #06201c; --danger: #ff8a7d; --ok: #62d08f;
+  --c-F: #62d08f; --c-D: #f0b24a; --c-I: #ff8a7d; --c-V: #86adff; --c-X: #ec91cc; --c-G: #a9b9b5; color-scheme: dark; }
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { background: var(--bg); color: var(--fg); font: 15px/1.5 var(--font); }
+.wrap { max-width: 1180px; margin: 0 auto; padding-block: 16px 64px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.top { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; justify-content: space-between; padding-bottom: 14px; border-bottom: 1px solid var(--line); margin-bottom: 16px; }
+h1 { font-size: 18px; font-weight: 600; margin: 0; letter-spacing: -0.01em; }
+.sub { color: var(--muted); font-size: 13px; margin: 2px 0 0; }
+.progress { display: flex; align-items: center; gap: 10px; font-variant-numeric: tabular-nums; font-size: 13px; color: var(--muted); }
+.bar { width: 140px; height: 6px; border-radius: 3px; background: var(--surface2); overflow: hidden; }
+.bar > i { display: block; height: 100%; background: var(--accent); width: 0; }
+.btn { border: 1px solid var(--line); background: var(--surface); border-radius: 6px; padding: 7px 12px; font-size: 14px; }
+.btn:hover { border-color: var(--accent); }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 500; }
+.btn.ghost { background: transparent; }
+.btn[disabled] { opacity: .5; cursor: not-allowed; }
+.layout { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 24px; align-items: start; }
+nav.subjects { position: sticky; top: env(safe-area-inset-top, 0px); display: flex; flex-direction: column; gap: 14px; max-height: 100vh; overflow: auto; padding-block: 4px; }
+.sgroup h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 600; margin: 0 0 6px; display: flex; justify-content: space-between; }
+.chips { display: flex; flex-wrap: wrap; gap: 5px; }
+.chip { font: 500 12px var(--mono); border: 1px solid var(--line); background: var(--surface); border-radius: 5px; padding: 3px 6px; display: inline-flex; align-items: center; gap: 5px; }
+.chip i { width: 7px; height: 7px; border-radius: 50%; background: var(--line); }
+.chip[data-st="partial"] i { background: var(--c-D); }
+.chip[data-st="done"] i { background: var(--ok); }
+.chip[aria-current="true"] { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, var(--surface)); }
+main { min-width: 0; display: flex; flex-direction: column; gap: 16px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 16px; }
+.card h3 { margin: 0 0 8px; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 600; }
+.fiche .subject { font-weight: 600; margin: 0 0 8px; }
+.fiche ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; }
+.fiche li { display: grid; grid-template-columns: 34px 1fr; gap: 8px; }
+.fiche li b { font: 500 13px var(--mono); color: var(--accent); }
+.post-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 8px; }
+.post-id { font: 500 15px var(--mono); }
+.post-count { font-size: 12px; color: var(--muted); }
+.post { font-size: 16px; line-height: 1.65; max-width: 68ch; white-space: pre-line; overflow-wrap: anywhere; }
+.post p { margin: 0 0 12px; }
+.tools { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.rows { display: flex; flex-direction: column; gap: 10px; }
+.row { border: 1px solid var(--line); border-radius: 8px; padding: 10px; background: var(--surface); display: grid; gap: 8px; border-left: 4px solid var(--c-G); }
+.row[data-code="F"] { border-left-color: var(--c-F); } .row[data-code="D"] { border-left-color: var(--c-D); } .row[data-code="I"] { border-left-color: var(--c-I); }
+.row[data-code="V"] { border-left-color: var(--c-V); } .row[data-code="X"] { border-left-color: var(--c-X); } .row[data-code=""] { border-left-color: var(--line); }
+.row.bad { outline: 2px solid var(--danger); }
+.line1 { display: grid; grid-template-columns: minmax(0, 1fr) 130px 110px auto; gap: 8px; align-items: start; }
+.line2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 8px; }
+label.f { display: grid; gap: 3px; font-size: 12px; color: var(--muted); min-width: 0; }
+input[type=text], select, textarea { width: 100%; border: 1px solid var(--line); background: var(--bg); border-radius: 6px; padding: 7px 9px; color: var(--fg); min-width: 0; }
+textarea { resize: vertical; min-height: 38px; }
+select.code { font-weight: 600; }
+.x { border: 0; background: transparent; color: var(--muted); font-size: 20px; line-height: 1; padding: 6px; border-radius: 6px; }
+.x:hover { color: var(--danger); }
+.qs { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; }
+.foot { display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between; align-items: center; }
+.msg { font-size: 13px; color: var(--danger); min-height: 18px; }
+.legend { display: grid; gap: 6px; font-size: 13px; }
+.legend div { display: grid; grid-template-columns: 26px 1fr; gap: 8px; }
+.legend b { font: 600 13px var(--mono); }
+details > summary { cursor: pointer; font-weight: 500; }
+.export textarea { min-height: 120px; font: 12px/1.4 var(--mono); }
+.notice { background: color-mix(in srgb, var(--c-D) 12%, var(--surface)); border: 1px solid color-mix(in srgb, var(--c-D) 40%, var(--line)); border-radius: 8px; padding: 10px 12px; font-size: 13px; }
+.toast { position: fixed; left: max(16px, env(safe-area-inset-left, 0px)); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); background: var(--fg); color: var(--bg); padding: 8px 12px; border-radius: 6px; font-size: 13px; z-index: 20; }
+@media (max-width: 820px) {
+  .layout { grid-template-columns: minmax(0, 1fr); }
+  nav.subjects { position: static; max-height: none; flex-direction: row; overflow-x: auto; gap: 14px; padding-bottom: 8px; }
+  .sgroup { flex: 0 0 auto; }
+  .chips { flex-wrap: nowrap; }
+  .line1 { grid-template-columns: minmax(0, 1fr) 1fr 1fr; }
+  .line1 .x { grid-column: 3; justify-self: end; grid-row: 1; }
+  .line1 label:first-child { grid-column: 1 / -1; }
+}
+@media (prefers-reduced-motion: no-preference) { .bar > i { transition: width .25s; } }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>Lecteur de classement</h1>
+      <p class="sub">70 textes anonymisés, groupés par sujet. La condition n'est indiquée nulle part.</p>
+    </div>
+    <div class="progress"><span id="progtxt">0 sur 70 classés</span><div class="bar"><i id="progbar"></i></div><button class="btn primary" id="btn-export-top" type="button">Exporter</button></div>
+  </header>
+
+  <div class="layout">
+    <nav class="subjects" id="nav" aria-label="Sujets et textes"></nav>
+    <main>
+      <div class="card fiche" id="fiche"></div>
+      <div class="card" id="postcard"></div>
+      <div class="card" id="elcard">
+        <h3>Éléments relevés dans ce texte</h3>
+        <div class="rows" id="rows"></div>
+        <div class="tools">
+          <button class="btn" type="button" id="btn-add">Ajouter un élément</button>
+          <button class="btn" type="button" id="btn-sel">Ajouter la sélection du texte</button>
+        </div>
+      </div>
+      <div class="card" id="txcard">
+        <h3>Ce texte</h3>
+        <div class="qs">
+          <label class="f">Refus ou « je n'ai pas cette donnée »
+            <select id="q-refus"><option value="non">non</option><option value="oui">oui</option></select></label>
+          <label class="f" id="q-absent-wrap">Contient un chiffre absent de la fiche (sujets 3, 5 et 10)
+            <select id="q-absent"><option value="">à choisir</option><option value="non">non</option><option value="oui">oui</option></select></label>
+          <label class="f" style="grid-column:1/-1">Remarques (heure de début et de fin au premier et au dernier texte)
+            <textarea id="q-rem" rows="2"></textarea></label>
+        </div>
+        <div class="foot" style="margin-top:12px">
+          <div><button class="btn" type="button" id="btn-prev">← Précédent</button> <button class="btn" type="button" id="btn-next">Suivant →</button></div>
+          <div><span class="msg" id="msg" role="status"></span> <button class="btn primary" type="button" id="btn-done">Marquer comme classé</button></div>
+        </div>
+      </div>
+
+      <details class="card">
+        <summary>Rappel : codes et règles du protocole</summary>
+        <div class="legend" style="margin-top:10px">
+          <div><b style="color:var(--c-F)">F</b><span>Fidèle : présent dans la fiche, restitué à l'identique.</span></div>
+          <div><b style="color:var(--c-D)">D</b><span>Déformé : présent dans la fiche mais modifié (arrondi, unité, inversion, périmètre).</span></div>
+          <div><b style="color:var(--c-I)">I</b><span>Inventé et invérifiable : absent de la fiche, aucune source trouvée en 5 minutes de recherche.</span></div>
+          <div><b style="color:var(--c-V)">V</b><span>Externe vérifié : absent de la fiche, confirmé par une source primaire trouvée dans la même limite (noter la source).</span></div>
+          <div><b style="color:var(--c-X)">X</b><span>Externe faux : absent de la fiche et contredit par une source.</span></div>
+          <div><b style="color:var(--c-G)">G</b><span>Général : évidence non chiffrée. Compté à part.</span></div>
+        </div>
+        <p class="sub" style="margin-top:10px">On relève tout chiffre, pourcentage, montant, date, nom propre, étude ou source citée, citation entre guillemets et affirmation du type « selon… ». Les opinions et les formules qualitatives ne comptent pas. Critère principal : I + X + D par texte.</p>
+      </details>
+
+      <section class="card export" id="export">
+        <h3>Sauvegarde et export</h3>
+        <div class="notice" id="notice" hidden></div>
+        <p class="sub" style="margin:8px 0">Votre saisie est gardée dans ce navigateur seulement. Exportez régulièrement : un nettoyage du navigateur l'effacerait. Les deux fichiers portent les noms attendus par le script de comparaison.</p>
+        <div class="tools">
+          <button class="btn primary" type="button" id="btn-dl-el">Enregistrer grille-elements-jacques.csv</button>
+          <button class="btn primary" type="button" id="btn-dl-tx">Enregistrer grille-textes-jacques.csv</button>
+        </div>
+        <div id="fallback" hidden style="margin-top:10px">
+          <p class="sub" id="fb-title" style="margin:0 0 6px"></p>
+          <textarea id="fb-text" readonly></textarea>
+          <div class="tools"><button class="btn" type="button" id="btn-copy">Copier</button></div>
+        </div>
+        <details style="margin-top:14px"><summary>Reprendre depuis des fichiers exportés</summary>
+          <div class="qs" style="margin-top:10px">
+            <label class="f">grille-elements-jacques.csv<input type="file" id="imp-el" accept=".csv,text/csv"></label>
+            <label class="f">grille-textes-jacques.csv<input type="file" id="imp-tx" accept=".csv,text/csv"></label>
+          </div>
+          <p class="msg" id="imp-msg" role="status"></p>
+        </details>
+        <details style="margin-top:10px"><summary>Tout effacer</summary>
+          <p class="sub">Efface toute la saisie de ce navigateur. Exportez avant.</p>
+          <button class="btn" type="button" id="btn-wipe">Effacer toute la saisie</button>
+          <span id="wipe-c" hidden> <span class="msg">Confirmer ?</span> <button class="btn" type="button" id="btn-wipe-yes">Oui, tout effacer</button> <button class="btn ghost" type="button" id="btn-wipe-no">Non</button></span>
+        </details>
+      </section>
+    </main>
+  </div>
+  <div class="toast" id="toast" hidden></div>
+</div>
+
+<script type="application/json" id="data">/*__DATA__*/</script>
+<script>
+(function () {
+  var DATA = JSON.parse(document.getElementById("data").textContent);
+  var SUBJ = {}; DATA.subjects.forEach(function (s) { SUBJ[s.id] = s; });
+  var TEXTS = DATA.texts, BYID = {}; TEXTS.forEach(function (t, i) { t.i = i; BYID[t.id] = t; });
+  var NOABS = { S03: 1, S05: 1, S10: 1 };
+  var KEY = "e4-lecteur-jacques-v1";
+  var CODES = ["F", "D", "I", "V", "X", "G"], TYPES = ["chiffre", "date", "nom", "citation", "source"];
+  var $ = function (id) { return document.getElementById(id); };
+  var S = load(), storageOk = true, dl = null, toastT;
+
+  function blank() { return { done: {}, tx: {}, els: {}, cur: TEXTS[0].id, since: 0 }; }
+  function load() { try { var r = localStorage.getItem(KEY); if (r) { var o = JSON.parse(r); return Object.assign(blank(), o); } } catch (e) { storageOk = false; } return blank(); }
+  var saveT; function flush() { clearTimeout(saveT); try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { storageOk = false; } }
+  function save(keep) { if (!keep) S.since++; clearTimeout(saveT); saveT = setTimeout(function () { flush(); updateChrome(); }, 250); }
+  window.addEventListener("pagehide", flush); document.addEventListener("visibilitychange", function () { if (document.visibilityState === "hidden") flush(); });
+  function tx(id) { return S.tx[id] || (S.tx[id] = { refus: "non", absent: "", rem: "" }); }
+  function els(id) { return S.els[id] || (S.els[id] = []); }
+  function status(id) { if (S.done[id]) return "done"; var e = S.els[id] || [], t = S.tx[id]; return (e.length || (t && (t.absent || t.rem || t.refus === "oui"))) ? "partial" : "none"; }
+  function toast(m) { var t = $("toast"); t.textContent = m; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(function () { t.hidden = true; }, 2600); }
+
+  function renderNav() {
+    var nav = $("nav"); nav.textContent = "";
+    DATA.subjects.forEach(function (s) {
+      var g = document.createElement("div"); g.className = "sgroup";
+      var ids = TEXTS.filter(function (t) { return t.subject === s.id; });
+      var done = ids.filter(function (t) { return S.done[t.id]; }).length;
+      var h = document.createElement("h2"); h.innerHTML = "<span></span><span></span>"; h.children[0].textContent = s.id; h.children[1].textContent = done + "/" + ids.length; g.appendChild(h);
+      var c = document.createElement("div"); c.className = "chips";
+      ids.forEach(function (t) {
+        var b = document.createElement("button"); b.type = "button"; b.className = "chip"; b.dataset.st = status(t.id); b.dataset.id = t.id;
+        if (t.id === S.cur) b.setAttribute("aria-current", "true");
+        var i = document.createElement("i"), sp = document.createElement("span"); sp.textContent = t.id.slice(2); b.title = t.id; b.appendChild(i); b.appendChild(sp);
+        b.addEventListener("click", function () { go(t.id); }); c.appendChild(b);
+      });
+      g.appendChild(c); nav.appendChild(g);
+    });
+  }
+  function updateChrome() {
+    var n = TEXTS.filter(function (t) { return S.done[t.id]; }).length;
+    $("progtxt").textContent = n + " sur " + TEXTS.length + " classés"; $("progbar").style.width = (n / TEXTS.length * 100) + "%";
+    var nt = $("notice"), msgs = [];
+    if (!storageOk) msgs.push("Ce navigateur ne garde pas la saisie : exportez avant de fermer la page.");
+    if (S.since >= 10) msgs.push(S.since + " modification(s) depuis le dernier export : pensez à exporter.");
+    nt.hidden = !msgs.length; nt.textContent = msgs.join(" ");
+    document.querySelectorAll(".chip").forEach(function (b) { b.dataset.st = status(b.dataset.id); });
+  }
+  function renderText() {
+    var t = BYID[S.cur], s = SUBJ[t.subject];
+    var f = $("fiche"); f.textContent = "";
+    var h = document.createElement("h3"); h.textContent = "Fiche de faits · " + s.id; f.appendChild(h);
+    var p = document.createElement("p"); p.className = "subject"; p.textContent = s.subject; f.appendChild(p);
+    var ul = document.createElement("ul"); s.facts.forEach(function (x) { var m = x.match(/^(F\d+)\.\s*(.*)$/); var li = document.createElement("li"); var b = document.createElement("b"); b.textContent = m ? m[1] : ""; var sp = document.createElement("span"); sp.textContent = m ? m[2] : x; li.appendChild(b); li.appendChild(sp); ul.appendChild(li); }); f.appendChild(ul);
+    var pc = $("postcard"); pc.textContent = "";
+    var hd = document.createElement("div"); hd.className = "post-head";
+    var id = document.createElement("span"); id.className = "post-id"; id.textContent = t.id; var ct = document.createElement("span"); ct.className = "post-count"; ct.textContent = (t.i + 1) + " sur " + TEXTS.length; hd.appendChild(id); hd.appendChild(ct); pc.appendChild(hd);
+    var post = document.createElement("div"); post.className = "post"; post.id = "post";
+    t.text.split(/\n\s*\n/).forEach(function (para) { var q = document.createElement("p"); q.textContent = para.trim(); post.appendChild(q); }); pc.appendChild(post);
+    renderRows();
+    var q = tx(t.id); $("q-refus").value = q.refus || "non"; $("q-absent").value = q.absent || ""; $("q-rem").value = q.rem || "";
+    $("q-absent-wrap").hidden = !NOABS[t.subject]; $("msg").textContent = "";
+    $("btn-done").textContent = S.done[t.id] ? "Rouvrir ce texte" : "Marquer comme classé";
+  }
+  function renderRows() {
+    var host = $("rows"); host.textContent = ""; var list = els(S.cur);
+    if (!list.length) { var e = document.createElement("p"); e.className = "sub"; e.textContent = "Aucun élément relevé. Sélectionnez un passage dans le texte puis « Ajouter la sélection », ou ajoutez une ligne. Un texte sans élément se classe quand même."; host.appendChild(e); }
+    list.forEach(function (r, idx) { host.appendChild(rowEl(r, idx)); });
+  }
+  function fld(label, ctrl) { var l = document.createElement("label"); l.className = "f"; l.appendChild(document.createTextNode(label)); l.appendChild(ctrl); return l; }
+  function inp(val, cb, ph) { var i = document.createElement("input"); i.type = "text"; i.value = val || ""; if (ph) i.placeholder = ph; i.addEventListener("input", function () { cb(i.value); save(); }); return i; }
+  function sel(opts, val, cb, cls) { var s = document.createElement("select"); if (cls) s.className = cls; opts.forEach(function (o) { var op = document.createElement("option"); op.value = o[0]; op.textContent = o[1]; s.appendChild(op); }); s.value = val || ""; s.addEventListener("change", function () { cb(s.value); save(); }); return s; }
+  function rowEl(r, idx) {
+    var d = document.createElement("div"); d.className = "row"; d.dataset.code = r.code || "";
+    var l1 = document.createElement("div"); l1.className = "line1";
+    var ta = document.createElement("textarea"); ta.rows = 2; ta.value = r.element || ""; ta.placeholder = "Citation exacte du texte"; ta.addEventListener("input", function () { r.element = ta.value; d.classList.remove("bad"); save(); });
+    l1.appendChild(fld("Élément (citation exacte)", ta));
+    l1.appendChild(fld("Type", sel(TYPES.map(function (t) { return [t, t]; }), r.type || "chiffre", function (v) { r.type = v; })));
+    var sc = sel([["", "code"]].concat(CODES.map(function (c) { return [c, c]; })), r.code, function (v) { r.code = v; d.dataset.code = v; d.classList.remove("bad"); vis(); }, "code");
+    l1.appendChild(fld("Code", sc));
+    var x = document.createElement("button"); x.type = "button"; x.className = "x"; x.setAttribute("aria-label", "Supprimer cet élément"); x.textContent = "×";
+    x.addEventListener("click", function () { els(S.cur).splice(idx, 1); save(); renderRows(); }); l1.appendChild(x); d.appendChild(l1);
+    var l2 = document.createElement("div"); l2.className = "line2";
+    var a = fld("Ligne de la fiche (F, D)", inp(r.ligne, function (v) { r.ligne = v; }, "F4")), b = fld("Recherche faite (I, V, X)", inp(r.recherche, function (v) { r.recherche = v; }, "mots-clés, 5 min")), c = fld("Source consultée (V, X)", inp(r.source, function (v) { r.source = v; }, "adresse ou titre")), e = fld("Commentaire", inp(r.comment, function (v) { r.comment = v; }));
+    [a, b, c, e].forEach(function (n) { l2.appendChild(n); }); d.appendChild(l2);
+    function vis() { var k = r.code; a.hidden = !(k === "F" || k === "D"); b.hidden = !(k === "I" || k === "V" || k === "X"); c.hidden = !(k === "V" || k === "X"); }
+    vis(); return d;
+  }
+  function go(id) { S.cur = id; try { history.replaceState(null, "", "#" + id); } catch (e) {} save(); renderNav(); renderText(); window.scrollTo({ top: 0 }); }
+  function addRow(txt) { els(S.cur).push({ element: txt || "", type: "chiffre", code: "", ligne: "", recherche: "", source: "", comment: "" }); save(); renderRows(); var tas = $("rows").querySelectorAll("textarea"); if (tas.length) tas[tas.length - 1].focus(); }
+
+  function csv(rows) { var esc = function (v) { var s = String(v == null ? "" : v).replace(/\r?\n/g, " "); return /[;"]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }; return "﻿" + rows.map(function (r) { return r.map(esc).join(";"); }).join("\n") + "\n"; }
+  function elementsCsv() {
+    var rows = [["id_texte", "n", "element (citation exacte du texte)", "type (chiffre/date/nom/citation/source)", "code (F/D/I/V/X/G)", "ligne_de_la_fiche (F1, F2… si F ou D)", "recherche_faite (si I, V ou X)", "source_consultee (si V ou X)", "commentaire"]];
+    TEXTS.forEach(function (t) { var n = 0; (S.els[t.id] || []).forEach(function (r) { if (!(r.element || "").trim() || !r.code) return; n++; rows.push([t.id, n, r.element.trim(), r.type || "chiffre", r.code, r.ligne || "", r.recherche || "", r.source || "", r.comment || ""]); }); });
+    return csv(rows);
+  }
+  function textesCsv() {
+    var rows = [["id_texte", "sujet", "refus_ou_pas_de_donnee (oui/non)", "chiffre_absent_de_la_fiche (oui/non ; sujets S03 S05 S10 seulement)", "nb_elements_releves", "remarques"]];
+    TEXTS.forEach(function (t) { var q = S.tx[t.id] || {}, d = S.done[t.id]; var n = (S.els[t.id] || []).filter(function (r) { return (r.element || "").trim() && r.code; }).length;
+      rows.push([t.id, t.subject, d ? (q.refus || "non") : "", NOABS[t.subject] ? (d ? q.absent : "") : "sans objet", d ? n : "", q.rem || ""]); });
+    return csv(rows);
+  }
+  function exportFile(name, text, title) {
+    var undone = TEXTS.filter(function (t) { return !S.done[t.id]; }).length;
+    var exported = function () { S.since = 0; save(true); };
+    if (dl) { dl.save({ filename: name, data: text }).then(function () { exported(); toast(undone ? "Enregistré (" + undone + " texte(s) pas encore classé(s))" : "Enregistré"); }).catch(function (e) { if (e && e.code === "declined") { toast("Annulé"); return; } showFallback(title, text); }); }
+    else showFallback(title, text);
+  }
+  function showFallback(title, text) { $("fb-title").textContent = title + " : copiez ce contenu dans un fichier texte enregistré sous ce nom (UTF-8)."; $("fb-text").value = text; $("fallback").hidden = false; $("fb-text").focus(); $("fb-text").select(); }
+
+  function parseCsv(text) { var src = text.replace(/^﻿/, "").replace(/\r\n?/g, "\n"), rows = [], row = [], f = "", q = false; for (var i = 0; i < src.length; i++) { var c = src[i]; if (q) { if (c === '"') { if (src[i + 1] === '"') { f += '"'; i++; } else q = false; } else f += c; } else if (c === '"') q = true; else if (c === ";") { row.push(f); f = ""; } else if (c === "\n") { row.push(f); rows.push(row); row = []; f = ""; } else f += c; } if (f !== "" || row.length) { row.push(f); rows.push(row); } return rows.filter(function (r) { return r.some(function (x) { return x.trim(); }); }); }
+  function readFile(inp, cb) { var f = inp.files && inp.files[0]; if (!f) return; var r = new FileReader(); r.onload = function () { cb(String(r.result)); inp.value = ""; }; r.readAsText(f, "utf-8"); }
+
+  $("btn-add").addEventListener("click", function () { addRow(""); });
+  $("btn-sel").addEventListener("mousedown", function (e) { e.preventDefault(); });
+  $("btn-sel").addEventListener("click", function () { var sl = window.getSelection(), t = sl ? sl.toString().trim() : ""; var post = $("post"); if (!t || !post || !sl.anchorNode || !post.contains(sl.anchorNode)) { toast("Sélectionnez d'abord un passage dans le texte."); return; } addRow(t.replace(/\s+/g, " ")); });
+  $("q-refus").addEventListener("change", function () { tx(S.cur).refus = $("q-refus").value; save(); });
+  $("q-absent").addEventListener("change", function () { tx(S.cur).absent = $("q-absent").value; save(); });
+  $("q-rem").addEventListener("input", function () { tx(S.cur).rem = $("q-rem").value; save(); });
+  $("btn-prev").addEventListener("click", function () { var i = BYID[S.cur].i; if (i > 0) go(TEXTS[i - 1].id); });
+  $("btn-next").addEventListener("click", function () { var i = BYID[S.cur].i; if (i < TEXTS.length - 1) go(TEXTS[i + 1].id); });
+  $("btn-done").addEventListener("click", function () {
+    var id = S.cur, t = BYID[id];
+    if (S.done[id]) { delete S.done[id]; save(); renderNav(); renderText(); return; }
+    var bad = false; els(id).forEach(function (r, i) { var ok = (r.element || "").trim() && r.code; if (!ok) bad = true; var d = $("rows").children[i]; if (d && d.classList) d.classList.toggle("bad", !ok); });
+    if (bad) { $("msg").textContent = "Chaque ligne doit avoir une citation et un code (ou être supprimée)."; return; }
+    if (NOABS[t.subject] && !tx(id).absent) { $("msg").textContent = "Indiquez si le texte contient un chiffre absent de la fiche."; return; }
+    tx(id).refus = tx(id).refus || "non"; S.done[id] = true; save(); renderNav(); updateChrome();
+    var i = t.i, nxt = TEXTS.slice(i + 1).find(function (x) { return !S.done[x.id]; }) || TEXTS.find(function (x) { return !S.done[x.id]; });
+    if (nxt) go(nxt.id); else { renderText(); toast("Les 70 textes sont classés. Pensez à exporter."); }
+  });
+  function doExport(which) { if (which === "el") exportFile("grille-elements-jacques.csv", elementsCsv(), "grille-elements-jacques.csv"); else exportFile("grille-textes-jacques.csv", textesCsv(), "grille-textes-jacques.csv"); }
+  $("btn-dl-el").addEventListener("click", function () { doExport("el"); });
+  $("btn-dl-tx").addEventListener("click", function () { doExport("tx"); });
+  $("btn-export-top").addEventListener("click", function () { $("export").scrollIntoView({ behavior: "smooth", block: "start" }); });
+  $("btn-copy").addEventListener("click", function () { var ta = $("fb-text"); var ok = function () { toast("Copié"); }; var fail = function () { ta.focus(); ta.select(); toast("Copie impossible : sélectionnez et copiez à la main."); };
+    try { navigator.clipboard.writeText(ta.value).then(ok, fail); } catch (e) { fail(); } });
+  $("imp-el").addEventListener("change", function () { readFile($("imp-el"), function (txt) { var rows = parseCsv(txt).slice(1), n = 0; var by = {}; rows.forEach(function (r) { var id = (r[0] || "").trim(); if (!BYID[id]) return; (by[id] = by[id] || []).push({ element: r[2] || "", type: r[3] || "chiffre", code: (r[4] || "").trim().toUpperCase(), ligne: r[5] || "", recherche: r[6] || "", source: r[7] || "", comment: r[8] || "" }); n++; });
+    Object.keys(by).forEach(function (id) { S.els[id] = by[id]; }); save(); renderNav(); renderText(); $("imp-msg").textContent = n + " élément(s) repris."; $("imp-msg").style.color = "var(--ok)"; }); });
+  $("imp-tx").addEventListener("change", function () { readFile($("imp-tx"), function (txt) { var rows = parseCsv(txt).slice(1), n = 0; rows.forEach(function (r) { var id = (r[0] || "").trim(); if (!BYID[id]) return; var refus = (r[2] || "").trim().toLowerCase(); var q = tx(id); q.refus = refus === "oui" ? "oui" : "non"; q.absent = NOABS[BYID[id].subject] ? (r[3] || "").trim().toLowerCase() : ""; q.rem = r[5] || ""; if (refus) { S.done[id] = true; n++; } });
+    save(); renderNav(); renderText(); updateChrome(); $("imp-msg").textContent = n + " texte(s) classé(s) repris."; $("imp-msg").style.color = "var(--ok)"; }); });
+  $("btn-wipe").addEventListener("click", function () { $("wipe-c").hidden = false; });
+  $("btn-wipe-no").addEventListener("click", function () { $("wipe-c").hidden = true; });
+  $("btn-wipe-yes").addEventListener("click", function () { S = blank(); try { localStorage.removeItem(KEY); } catch (e) {} $("wipe-c").hidden = true; renderNav(); renderText(); updateChrome(); toast("Saisie effacée"); });
+  window.addEventListener("hashchange", function () { var id = location.hash.slice(1); if (BYID[id] && id !== S.cur) { S.cur = id; save(); renderNav(); renderText(); } });
+
+  if (location.hash && BYID[location.hash.slice(1)]) S.cur = location.hash.slice(1);
+  if (!BYID[S.cur]) S.cur = TEXTS[0].id;
+  renderNav(); renderText(); updateChrome();
+  if (window.claude && window.claude.use) window.claude.use("downloads").then(function (d) { dl = d; }).catch(function () {});
+})();
+</script>
