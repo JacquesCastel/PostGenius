@@ -84,5 +84,6 @@
 3. La mesure publiée sur E4 (`docs/e4-chiffres/mesure-figurecheck/`) ne concerne que `figureCheck.js`.
 
 ## 8. À confirmer en production avant toute mention publique
-- `EDITORIAL_ADVISOR` vaut-il `1` sur le serveur ? Quel périmètre dans l'Administration (carte « Compagnon éditorial ») : tous, comptes choisis, personne ?
-- `EDITORIAL_ENGINE` est-il défini ? (Absent : moteur A, comme pour la mesure E4.)
+- **`EDITORIAL_ADVISOR=1` : confirmé par Jacques le 12 novembre 2026** (valeur lue dans le `.env` du serveur). L'interrupteur général est donc ouvert.
+- **Reste à confirmer : le périmètre choisi dans l'Administration** (carte « Compagnon éditorial », réglage `advisor-mode`). Valeur par défaut tant que rien n'est enregistré : **tous les comptes**. Lecture seule : `SELECT value FROM "SiteContent" WHERE key = 'advisor-mode';` (aucune ligne = « tous »). Valeurs possibles : `all`, `accounts` (seuls les comptes cochés et les administrateurs), `off`. Tant que ce point n'est pas confirmé, la page publique ne peut annoncer la relecture indépendante qu'avec la formule « disponible sur les comptes où elle est activée ».
+- `EDITORIAL_ENGINE` est-il défini ? (Absent : moteur A, comme pour la mesure E4.) Lecture : `grep -E '^EDITORIAL_ENGINE=' .env`.
