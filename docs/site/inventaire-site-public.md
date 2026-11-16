@@ -132,3 +132,15 @@ Production, contenu en base, articles publiés, déclarations chez des tiers, d�
 3. **`/scoring` reste au premier niveau** (arborescence validée le 11 novembre), nommé « Contrôle de forme ». Les maquettes qui le plaçaient sous `/produit/controle-de-forme` sont à corriger : le lien pointe vers `/scoring`.
 
 Redirections : celles de la section 7 restent valables, sauf `/scoring`, qui est renommée sans changer de niveau (redirection de l'ancienne adresse seulement si le chemin change).
+
+## 11. Suivi des corrections publiques (mis à jour le 16 novembre 2026)
+
+| Élément | État |
+|---|---|
+| Correction datée sur le contrôle des chiffres (article de blog) | **Publiée** |
+| Article « Le contrôle de forme : ce que la note… mesure, et ce qu'elle ne mesure pas » (remplace l'ancien, chiffres faux) | **En ligne** |
+| `/fonctionnalites` : deux phrases fausses | **Corrigées et déployées** (déploiement `08cbf1d`, 12 novembre) |
+| Contrôle des chiffres : un seul algorithme (posts libres, séries, campagnes) | **Déployé** |
+| Article du test E4 (nouveau titre « …invente-t-elle des faits ? ») | À publier après relecture finale du compte rendu |
+| Les trois articles de blog 1 à 3 (données de marché 2026) | Gardés tels quels, décision du 11 novembre ; non relus |
+| Retour de Jacques sur les six contrôles à l'écran du déploiement | En attente |
