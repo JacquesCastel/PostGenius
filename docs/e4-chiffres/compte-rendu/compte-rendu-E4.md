@@ -175,7 +175,7 @@ L'ordre des conditions ne change pas, mais l'écart entre C et B tombe à 1,5. I
 
 ## Reproduire et vérifier
 
-- Les consignes, fiches, protocole, scripts de génération et leurs empreintes sont publiés dans les gists datés ; les scripts d'anonymisation, de classement et de calcul sont dans le dépôt du test ; chaque génération est enregistrée avec sa requête, sa réponse et son empreinte.
+- Les consignes, fiches, protocole, scripts de génération et leurs empreintes sont publiés dans les gists datés ; les scripts d'anonymisation, de classement et de calcul sont dans le [dépôt public du site](https://github.com/JacquesCastel/PostGenius/tree/main/docs/e4-chiffres), dossier docs/e4-chiffres et scripts e4-* ; chaque génération y est enregistrée avec sa requête, sa réponse et son empreinte.
 - Les 70 textes complets sont en annexe, avec la consigne exacte, le modèle et la date de génération de chaque condition.
 - La grille de classement (287 éléments) et les résultats par texte sont publiés.
 
