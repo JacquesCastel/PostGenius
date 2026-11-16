@@ -16,6 +16,6 @@
 > **Correction du 11 novembre 2026.** Notre page Fonctionnalités laissait entendre que chaque chiffre d'un post était retrouvé dans une source citée dans le texte. C'est inexact. Vercéa signale, sous le post, les chiffres qui ne figurent pas dans vos informations ; les sources utilisées sont indiquées à côté du post, pas dans son texte. Ce contrôle est indicatif et vous laisse décider. Nous avons corrigé la page et aligné le contrôle des campagnes sur celui des posts libres.
 
 ## Qui alerter : décisions de Jacques
-- **Publier la correction** (blog ou rubrique de corrections, avec la date) : brouillon ci-dessus. Cohérent avec l'engagement, resté entre crochets sur la page À propos, de publier toute correction avec sa date.
-- **Prévenir les testeurs de la bêta par e-mail** : seulement si la phrase était réellement en ligne dans l'application ou sur le site pendant leur essai. Je ne peux pas l'établir depuis le dépôt et je n'envoie rien.
-- Ne pas parler de « correction » sur le site tant que la version corrigée n'est pas déployée.
+- **Publier la correction** (article de blog, avec sa date) : demandé le 16 novembre 2026. Texte prêt dans `outputs/blog-correction-controle-des-chiffres.md`.
+- **Prévenir les testeurs de la bêta par e-mail : non** (décision du 16 novembre 2026). Aucun envoi.
+- Ne pas parler de « correction » ailleurs sur le site que dans cet article.
