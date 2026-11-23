@@ -10,7 +10,8 @@ export const NextResponse = { json: (body, init = {}) => ({ status: init.status 
 export async function loadModule(rel, { stubs = {}, prisma = null } = {}) {
   let src = fs.readFileSync(path.resolve(rel), "utf8");
   const names = [];
-  src = src.replace(/^import\s+([\s\S]*?)\s+from\s+["'][^"']+["'];?[ \t]*$/gm, (_m, spec) => {
+  src = src.replace(/^import\s+([\s\S]*?)\s+from\s+["']([^"']+)["'];?[ \t]*$/gm, (m, spec, from) => {
+    if (from.startsWith("node:")) return m; // modules du noyau de Node : conservés tels quels
     const s = spec.trim();
     const named = s.match(/\{([\s\S]*)\}/);
     if (named) for (const part of named[1].split(",")) { const p = part.trim(); if (!p) continue; const [orig, alias] = p.split(/\s+as\s+/); names.push([(alias ?? orig).trim(), orig.trim()]); }

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getEffectiveUserId as getUserId } from "@/lib/session";
 import { checkAccess } from "@/lib/gating";
 import { rateLimit } from "@/lib/ratelimit";
-import { fetchPageText } from "@/lib/knowledge";
+import { fetchPageTextSafe } from "@/lib/safePage";
 import { extractDocumentText, DocError, MAX_FILE_BYTES } from "@/lib/docExtract";
 import { sourceMaterial, MIN_SOURCE_CHARS } from "@/lib/generationSource";
 
@@ -53,7 +53,7 @@ export async function POST(req) {
       if (typeof url !== "string" || !/^https?:\/\//i.test(url.trim())) {
         return NextResponse.json({ error: "Collez l'adresse complète de l'article (https://…)." }, { status: 400 });
       }
-      const page = await fetchPageText(url.trim());
+      const page = await fetchPageTextSafe(url.trim());
       title = page.title;
       origin = new URL(url.trim()).hostname.replace(/^www\./, "");
       text = page.text;

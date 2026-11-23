@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getEffectiveUserId as getUserId } from "@/lib/session";
-import { createKnowledgeSource, guardKnowledgeAdd, fetchPageText, KnowledgeError } from "@/lib/knowledge";
+import { createKnowledgeSource, guardKnowledgeAdd, KnowledgeError } from "@/lib/knowledge";
+import { fetchPageTextSafe } from "@/lib/safePage";
 import { cleanText, sourceView } from "@/lib/knowledgeText";
 import { knowledgeLimit, planOf, upgradeTarget } from "@/lib/plans";
 import { resolveSourceTargets } from "@/lib/contexts";
@@ -38,7 +39,7 @@ export async function POST(req) {
     if (body.kind === "link") {
       const url = String(body.url ?? "").trim();
       if (!/^https?:\/\//i.test(url)) return NextResponse.json({ error: "Collez l'adresse complète d'une page (https://…)." }, { status: 400 });
-      const page = await fetchPageText(url);
+      const page = await fetchPageTextSafe(url);
       kind = "link"; origin = url; title = String(body.title ?? "").trim() || page.title; text = page.text;
     } else if (body.kind === "note") {
       text = cleanText(body.text);
