@@ -2,6 +2,7 @@
 
 import { pick } from "@/lib/access";
 import { figuresToCheck } from "@/lib/figureCheck";
+import { maturityName } from "@/lib/measures";
 import { checkConsignes, CONSIGNES_CHECKED } from "@/lib/consigneRules";
 import { useState, useEffect, useRef, createContext, useContext, useMemo } from "react";
 import { NotificationBell, AgencyPlanning } from "@/components/AgencyExtras";
@@ -11099,7 +11100,7 @@ function DashCoach({ scope, orgUrn, onGoCreate, onTab }) {
     <div className={card} data-testid="dash-coach">
       <div className="flex items-baseline gap-3 flex-wrap mb-2.5">
         <span className="text-xs font-bold tracking-wider uppercase text-[#5a6b85]">Le coach</span>
-        <span className="text-xs text-[#5a6b85]">d&apos;après vos {d.measured} post{d.measured > 1 ? "s" : ""} mesuré{d.measured > 1 ? "s" : ""} sur {scope === "page" ? "cette page" : "votre profil"}</span>
+        <span className="text-xs text-[#5a6b85]">d&apos;après vos {d.measured} post{d.measured > 1 ? "s" : ""} mesuré{d.measured > 1 ? "s" : ""}{maturityName(d.maturity) ? ` à ${maturityName(d.maturity)}` : ""} sur {scope === "page" ? "cette page" : "votre profil"}</span>
       </div>
       {d.needed > 0 ? (
         <div data-testid="dash-coach-wait">
@@ -12531,7 +12532,7 @@ function InsightsPanel() {
           {table("Par thématique", d.byTheme)}
         </div>
       )}
-      <p className="text-xs text-gray-400 mt-2">Mesures de LinkedIn prises 24 heures puis 7 jours après la publication ; l&apos;engagement est le total des réactions, commentaires et partages divisé par les impressions.</p>
+      <p className="text-xs text-gray-400 mt-2" data-testid="insights-maturity-note">{maturityName(d.maturity) ? `Mesures de LinkedIn comparées à la même ancienneté : ${maturityName(d.maturity)} après la publication${d.maturity === "J+1" ? " (moins de 8 posts ont une mesure à 7 jours : comparaison plus rapide, moins stable)" : ""}` : "Mesures de LinkedIn prises 24 heures puis 7 jours après la publication"} ; l&apos;engagement est le total des réactions, commentaires et partages divisé par les impressions.</p>
     </section>
   );
 }
