@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import sharp from "sharp";
 import { getEffectiveUserId as getUserId } from "@/lib/session";
 import { saveImage } from "@/lib/image";
+import { safeGet } from "@/lib/safeFetch";
 
 // Analyse le lien d'un événement : récupère le titre, l'image (og:image)
 // et une description pour nourrir la génération des posts.
@@ -11,12 +12,10 @@ import { saveImage } from "@/lib/image";
 // Resource-Policy: same-site, ex. snowflake.com) -- on la rapatrie donc sur
 // notre propre stockage plutôt que de la référencer telle quelle.
 async function rehostImage(sourceUrl) {
-  const res = await fetch(sourceUrl, {
-    headers: { "User-Agent": "LinkeePost/1.0 (analyse evenement)" },
-    signal: AbortSignal.timeout(15000),
-  });
+  // Téléchargement sécurisé (lib/safeFetch.js) : l'adresse de l'image vient d'une page tierce, jamais d'une adresse interne
+  const res = await safeGet(sourceUrl, { maxBytes: 8_000_000, timeoutMs: 15000, headers: { "User-Agent": "LinkeePost/1.0 (analyse evenement)" } });
   if (!res.ok) throw new Error(`code ${res.status}`);
-  const buf = Buffer.from(await res.arrayBuffer());
+  const buf = res.body;
   const png = await sharp(buf).png().toBuffer();
   const saved = await saveImage(png.toString("base64"));
   return saved.url;
@@ -57,13 +56,9 @@ export async function POST(req) {
 
   let html = "";
   try {
-    const res = await fetch(url, {
-      headers: { "User-Agent": "LinkeePost/1.0 (analyse evenement)" },
-      signal: AbortSignal.timeout(15000),
-      redirect: "follow",
-    });
+    const res = await safeGet(url, { maxBytes: 2_000_000, timeoutMs: 15000, headers: { "User-Agent": "LinkeePost/1.0 (analyse evenement)" } });
     if (!res.ok) throw new Error(`code ${res.status}`);
-    html = await res.text();
+    html = res.body.toString("utf8");
   } catch (e) {
     return NextResponse.json({ error: `Impossible de lire le lien (${e.message}).` }, { status: 502 });
   }
@@ -91,13 +86,9 @@ export async function POST(req) {
     try {
       const origin = new URL(url).origin;
       if (origin + "/" !== url) {
-        const homeRes = await fetch(origin, {
-          headers: { "User-Agent": "LinkeePost/1.0 (analyse evenement)" },
-          signal: AbortSignal.timeout(10000),
-          redirect: "follow",
-        });
+        const homeRes = await safeGet(origin, { maxBytes: 2_000_000, timeoutMs: 10000, headers: { "User-Agent": "LinkeePost/1.0 (analyse evenement)" } });
         if (homeRes.ok) {
-          const homeHtml = await homeRes.text();
+          const homeHtml = homeRes.body.toString("utf8");
           let siteImageUrl = meta(homeHtml, [
             /<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i,
             /<meta[^>]+name=["']twitter:image["'][^>]+content=["']([^"']+)["']/i,
