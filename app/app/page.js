@@ -11147,6 +11147,12 @@ function DashCoach({ scope, orgUrn, onGoCreate, onTab }) {
         </ul>
       )}
       <p className="text-[11px] text-[#5a6b85] mt-3" data-testid="dash-coach-note">Des repères tirés de vos propres posts, pas des règles de LinkedIn : son algorithme n&apos;est pas public. Plus vous publiez, plus ils sont fiables.</p>
+      {d.notes?.length > 0 && (
+        <details className="mt-1.5 text-[11px] text-[#5a6b85]" data-testid="dash-coach-why-notes">
+          <summary className="cursor-pointer select-none hover:underline">Quels posts sont comparés ?</summary>
+          <ul className="mt-1.5 space-y-1 list-disc pl-4">{d.notes.map((n) => (<li key={n}>{n}</li>))}</ul>
+        </details>
+      )}
     </div>
   );
 }

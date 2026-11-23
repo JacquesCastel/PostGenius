@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getEffectiveUserId as getUserId } from "@/lib/session";
 import { MOODS } from "@/lib/moods";
+import { selectComparable, WINDOWS } from "@/lib/measures";
 
 // Ce qui ressort des mesures déjà enregistrées (jamais d'appel à LinkedIn ici) :
 //  - series : relevés quotidiens des totaux du profil (cumul « à vie » à chaque date) ;
@@ -44,7 +45,7 @@ export async function GET(req) {
   const [snaps, drafts, contexts, user] = await Promise.all([
     prisma.statSnapshot.findMany({ where: { userId, createdAt: { gte: since } }, orderBy: { day: "asc" }, select: { day: true, impressions: true, reactions: true, comments: true, shares: true, clicks: true, reached: true } }),
     prisma.draft.findMany({
-      where: { userId, status: "publié", performance: { some: {} } },
+      where: { userId, status: "publié", target: "person", performance: { some: {} } }, // profil seul : la série ci-dessus est celle du profil, une page n'a pas la même audience
       orderBy: { publishedAt: "desc" },
       take: 200,
       select: { id: true, mood: true, contextId: true, publishedAt: true, performance: { select: { offsetHours: true, capturedAt: true, impressions: true, likes: true, comments: true, shares: true, clicks: true } } },
@@ -53,14 +54,14 @@ export async function GET(req) {
     prisma.user.findUnique({ where: { id: userId }, select: { companyName: true } }),
   ]);
 
-  const posts = drafts.map((d) => {
-    const latest = [...d.performance].sort((a, b) => b.offsetHours - a.offsetHours)[0];
-    return { id: d.id, mood: d.mood ?? null, contextId: d.contextId ?? null, publishedAt: d.publishedAt, offsetHours: latest.offsetHours, capturedAt: latest.capturedAt, impressions: latest.impressions, likes: latest.likes, comments: latest.comments, shares: latest.shares, clicks: latest.clicks };
-  });
+  // Une seule maturité de mesure pour tous les posts comparés (J+7 si assez de posts y sont mesurés, sinon J+1), la mesure dont l'âge réel est le plus proche
+  // de l'âge visé : voir lib/measures.js. Avant : « la mesure la plus tardive de chaque post », qui mélangeait des posts à 1 jour et à 7 jours.
+  const { summary, items } = selectComparable(drafts);
+  const posts = items.map(({ draft: d, measure: m }) => ({ id: d.id, mood: d.mood ?? null, contextId: d.contextId ?? null, publishedAt: d.publishedAt, offsetHours: m.offsetHours, capturedAt: m.capturedAt, impressions: m.impressions, likes: m.likes, comments: m.comments, shares: m.shares, clicks: m.clicks }));
 
   const themeName = new Map(contexts.map((c) => [c.id, c.name]));
   const byMood = group(posts, (p) => p.mood ?? "none", (k) => (k === "none" ? "Sans humeur choisie" : MOODS.find((m) => m.code === k)?.label ?? k));
   const byTheme = group(posts, (p) => p.contextId ?? "main", (k) => (k === "main" ? user?.companyName || "Mon activité" : themeName.get(k) ?? "Thématique supprimée"));
 
-  return NextResponse.json({ series: snaps, posts, byMood, byTheme, measured: posts.length });
+  return NextResponse.json({ series: snaps, posts, byMood, byTheme, measured: posts.length, maturity: WINDOWS[summary.maturity].label, excluded: summary.excluded });
 }
