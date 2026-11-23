@@ -242,7 +242,7 @@ La politique de confidentialité (anglais dans le code, français dans l'Adminis
 5. **mise en place** : l'ancien build est gardé dans `.prev/` ;
 6. redémarrage ;
 7. **contrôle automatique** (`scripts/smoke.sh`) : santé et base, page d'accueil non vide, pages publiques, métadonnées OAuth, et connexion réelle
-   si un compte de contrôle est défini. **S'il échoue, retour arrière automatique** à la version précédente.
+   si un compte de contrôle est défini. **S'il échoue, retour arrière automatique** à la version précédente. Avant tout changement, `scripts/smoke-preflight.sh` vérifie que le site répond : sinon le déploiement est arrêté.
 
 ### Changement de schéma destructif
 
@@ -267,7 +267,7 @@ Un seul retour arrière est possible (la version précédente est gardée une se
 | `NEON_API_KEY`, `NEON_PROJECT_ID` | Copie de la base avant chaque changement de schéma. Clé : console.neon.tech → Account settings → API keys. Identifiant du projet : Settings du projet. |
 | `NEON_KEEP_BRANCHES=5` | Garde les 5 dernières copies `avant-deploy-…` et supprime les plus anciennes (jamais une autre branche). |
 | `SMOKE_EMAIL`, `SMOKE_PASSWORD` | Compte de contrôle : un compte ordinaire (jamais administrateur), pour tester la vraie connexion après chaque déploiement. |
-| `SMOKE_URL` | Adresse contrôlée (par défaut `https://linkeepost.app`). À changer si le serveur ne peut pas joindre sa propre adresse publique : sinon le contrôle automatique est désactivé avec un avertissement. |
+| `SMOKE_URL` | Adresse contrôlée (par défaut `https://postgenius.network`, le site en production). Modifiable ponctuellement (`SMOKE_URL=https://… ./deploy.sh`) ou dans le `.env`. Si le serveur ne joint pas cette adresse, le déploiement **s'arrête avant tout changement** avec un message explicite ; `SKIP_SMOKE=1` permet de déployer quand même (contrôle à la main ensuite). |
 
 Sans réglage Neon, le déploiement fonctionne mais affiche « SANS-SNAPSHOT » quand le schéma change : le seul filet est alors la sauvegarde
 automatique de Neon.
