@@ -5,7 +5,7 @@
 # Usage : sur le serveur,  cd /opt/postgenius && ./deploy.sh
 #   FORCE=1            ne demande pas confirmation s'une publication est proche ou une transcription en cours
 #   ALLOW_DATA_LOSS=1  autorise un changement de schéma qui supprime ou transforme des données (à n'utiliser qu'après avoir lu .schema-diff.sql)
-#   SMOKE_URL=…        adresse contrôlée après déploiement (défaut : https://linkeepost.app)
+#   SMOKE_URL=…        adresse contrôlée après déploiement (défaut : https://postgenius.network, le site en production ; peut aussi se définir dans le .env)
 #   SKIP_SMOKE=1       désactive le contrôle automatique et le retour arrière automatique (à éviter)
 # Retour arrière : ./rollback.sh   (la version précédente est conservée dans .prev/). Journal : deploys.log
 # En cas de défaut de ce script lui-même : ./deploy.legacy.sh (ancienne version).
@@ -106,16 +106,14 @@ fi
 export NEON_API_KEY="${NEON_API_KEY:-$(getenv NEON_API_KEY)}" NEON_PROJECT_ID="${NEON_PROJECT_ID:-$(getenv NEON_PROJECT_ID)}" NEON_KEEP_BRANCHES="${NEON_KEEP_BRANCHES:-$(getenv NEON_KEEP_BRANCHES)}"
 export SMOKE_URL="${SMOKE_URL:-$(getenv SMOKE_URL)}" SMOKE_EMAIL="${SMOKE_EMAIL:-$(getenv SMOKE_EMAIL)}" SMOKE_PASSWORD="${SMOKE_PASSWORD:-$(getenv SMOKE_PASSWORD)}"
 
-# Le contrôle automatique appelle l'adresse publique depuis ce serveur. Si le serveur ne peut pas la joindre (résolution du nom, pare-feu),
-# le contrôle échouerait à chaque fois et déclencherait un retour arrière pour rien : on le désactive alors, avec un avertissement.
-SMOKE_BASE="${SMOKE_URL:-https://linkeepost.app}"
+# Le contrôle automatique appelle l'adresse publique depuis ce serveur. Si le serveur ne la joint pas, le contrôle ne pourrait rien confirmer : on s'arrête
+# ICI, avant tout changement, avec un message explicite (scripts/smoke-preflight.sh). Pour déployer malgré tout : SKIP_SMOKE=1 (contrôle à la main ensuite).
+SMOKE_URL="${SMOKE_URL:-https://postgenius.network}"
+export SMOKE_URL
 if [ "${SKIP_SMOKE:-0}" != "1" ]; then
-  REACH=$(curl -sk --max-time 10 -o /dev/null -w '%{http_code}' "${SMOKE_BASE%/}/" 2>/dev/null || true)
-  if [ "$REACH" != "200" ]; then
-    echo "    ⚠ ce serveur ne joint pas ${SMOKE_BASE} (code ${REACH:-000}) : le contrôle automatique après déploiement est DÉSACTIVÉ cette fois."
-    echo "      Vérifiez à la main après le déploiement, ou définissez SMOKE_URL dans le .env."
-    log "contrôle automatique désactivé (site injoignable depuis le serveur : ${REACH:-000})"
-    SKIP_SMOKE=1
+  if ! "$APP_DIR/scripts/smoke-preflight.sh" "$SMOKE_URL"; then
+    log "déploiement arrêté avant tout changement : le site ${SMOKE_URL} ne répond pas depuis ce serveur"
+    exit 1
   fi
 fi
 
