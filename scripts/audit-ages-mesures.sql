@@ -59,8 +59,18 @@ unmeasured AS (
          ELSE '3 ancien (plus de 10 jours), non mesuré' END AS age_class,
     CASE WHEN p.dest = 'profil' AND EXISTS (SELECT 1 FROM "LinkedInAccount" l WHERE l."userId" = p."userId" AND l."statsToken" IS NOT NULL) THEN 'canal de mesure connecté'
          WHEN p.dest = 'page' AND EXISTS (SELECT 1 FROM "LinkedInAccount" l WHERE l."userId" = p."userId" AND l."orgToken" IS NOT NULL) THEN 'canal de mesure connecté'
-         ELSE 'canal de mesure NON connecté' END AS channel
+         ELSE 'canal de mesure NON connecté' END AS channel,
+    -- avant la première lecture du canal pour ce compte, le post n'était pas mesurable ; après, une mesure manque vraiment
+    CASE WHEN fr.first_read IS NULL THEN 'aucune lecture du canal pour ce compte'
+         WHEN p."publishedAt" < fr.first_read - interval '1 day' THEN 'publié avant la première lecture du canal (non mesurable)'
+         ELSE 'publié après la première lecture du canal (mesure manquante)' END AS phase
   FROM posts p
+  LEFT JOIN LATERAL (
+    SELECT CASE WHEN p.dest = 'profil'
+                THEN (SELECT min(sn."createdAt") FROM "StatSnapshot" sn WHERE sn."userId" = p."userId")
+                ELSE (SELECT min(pp2."capturedAt") FROM "PostPerformance" pp2 JOIN "Draft" d3 ON d3.id = pp2."draftId"
+                      WHERE d3."userId" = p."userId" AND d3.target LIKE 'urn:li:organization:%') END AS first_read
+  ) fr ON true
   WHERE p.dest IN ('profil', 'page') AND NOT EXISTS (SELECT 1 FROM "PostPerformance" pp WHERE pp."draftId" = p.id)
 ),
 -- 4. « Que publier ? » : propositions, brouillons liés, provenance probable par le thème
@@ -89,6 +99,8 @@ out AS (
   SELECT 210, 'Fenêtres candidates : comptes à 8 posts ou plus', dest || ' · ' || v, count(*) FILTER (WHERE n >= 8), count(*) FROM acc_variant GROUP BY dest, v
   UNION ALL
   SELECT 300, 'Posts publiés sans aucune mesure', dest || ' · ' || age_class || ' · ' || channel, count(*), NULL FROM unmeasured GROUP BY dest, age_class, channel
+  UNION ALL
+  SELECT 310, 'Posts publiés sans aucune mesure : avant ou après la première lecture du canal', dest || ' · ' || phase, count(*), NULL FROM unmeasured GROUP BY dest, phase
   UNION ALL
   SELECT 400, '« Que publier ? » : propositions', 'propositions créées (comptes non suspendus)', count(*), NULL FROM recos
   UNION ALL SELECT 401, '« Que publier ? » : propositions', 'passées au statut « générée » (clic sur Générer)', count(*), NULL FROM recos WHERE status = 'générée'

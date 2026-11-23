@@ -118,6 +118,7 @@ test("audit n° 2, base de test : âges réels, posts sans mesure, traçabilité
       return d;
     };
     const conn = await mkUser("conn"); await prisma.linkedInAccount.create({ data: { userId: conn.id, statsToken: "enc:x" } });
+    await prisma.statSnapshot.create({ data: { userId: conn.id, day: "2026-01-01", createdAt: new Date(now - 20 * DAY) } }); // premier relevé il y a 20 jours
     const noconn = await mkUser("noconn");
     // posts sans aucune mesure : 3 trop récents (5 h), 3 d'âge normal (100 h), 3 anciens (30 jours), compte connecté ; 3 d'âge normal, compte non connecté
     for (let i = 0; i < 3; i++) { await mkPost(conn, 5); await mkPost(conn, 100); await mkPost(conn, 30 * 24); await mkPost(noconn, 100); }
@@ -155,6 +156,10 @@ test("audit n° 2, base de test : âges réels, posts sans mesure, traçabilité
     assert.equal(get(U, "profil · 2 âge normal (20 h à 10 jours), non mesuré · canal de mesure connecté"), "3");
     assert.equal(get(U, "profil · 3 ancien (plus de 10 jours), non mesuré · canal de mesure connecté"), "3");
     assert.equal(get(U, "profil · 2 âge normal (20 h à 10 jours), non mesuré · canal de mesure NON connecté"), "3");
+    const F = "Posts publiés sans aucune mesure : avant ou après la première lecture du canal";
+    assert.equal(get(F, "profil · publié avant la première lecture du canal (non mesurable)"), "3", "les 3 posts de 30 jours précèdent le premier relevé");
+    assert.equal(get(F, "profil · publié après la première lecture du canal (mesure manquante)"), "6", "5 h et 100 h : après le premier relevé");
+    assert.equal(get(F, "profil · aucune lecture du canal pour ce compte"), "3", "compte sans relevé");
     const Q = "« Que publier ? » : propositions";
     assert.equal(get(Q, "passées au statut « générée » (clic sur Générer)"), "5");
     assert.equal(get(Q, "avec un brouillon relié (recommendation.draftId renseigné)"), "0", "aucune liaison technique");
