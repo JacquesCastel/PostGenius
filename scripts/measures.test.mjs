@@ -61,7 +61,8 @@ test("résumé : chaque post compte une fois, quelles que soient ses mesures", (
 
 test("explications : discrètes, en français, avec les nombres exacts", () => {
   const notes = explain({ maturity: "j7", fallback: false, used: 5, excluded: { pending: 3, missing: 1, outOfWindow: 2, noMeasure: 0 }, available: { j1: 9, j7: 5 } });
-  assert.ok(notes.some((n) => n.startsWith("3 posts sont trop récents")));
+  assert.ok(notes.some((n) => n === "3 posts sont trop récents : ils seront comparés dès leur mesure à 7 jours."), "accord au pluriel");
+  assert.ok(explain({ maturity: "j7", fallback: false, used: 9, excluded: { pending: 1, missing: 0, outOfWindow: 0, noMeasure: 0 }, available: { j1: 9, j7: 9 } }).includes("1 post est trop récent : il sera comparé dès sa mesure à 7 jours."), "accord au singulier");
   assert.ok(notes.some((n) => n.startsWith("1 post n'a pas de mesure à 7 jours")));
   assert.ok(notes.some((n) => n.startsWith("2 posts ont une mesure prise trop tôt ou trop tard (hors de 6 à 10 jours)")));
   assert.ok(notes.some((n) => n === "Il faut 8 posts mesurés à 7 jours pour proposer des conseils : 5 pour l'instant."));

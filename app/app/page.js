@@ -20196,6 +20196,7 @@ export default function Home() {
           videoUrl: postVideo?.url ?? null,
           youtubeUrl: postYoutube?.url ?? null,
           pillarId: activeReco?.pillarId ?? null,
+          recoId: activeReco?.id ?? undefined, // la proposition d'origine : le serveur la relie au brouillon créé (traçabilité)
           mentions: resultMentions.filter((m) => r.text.includes(`@${m.name}`)),
           poll: resultPoll,
           documentSlides: resultSlides?.length ? resultSlides : null,

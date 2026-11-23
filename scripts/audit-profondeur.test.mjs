@@ -9,7 +9,7 @@ import path from "node:path";
 import os from "node:os";
 import { execFileSync } from "node:child_process";
 
-const FILES = ["audit-profondeur-mesures.sql", "audit-ages-mesures.sql"].map((f) => new URL(`./${f}`, import.meta.url));
+const FILES = ["audit-profondeur-mesures.sql", "audit-ages-mesures.sql", "audit-pilote-auto.sql"].map((f) => new URL(`./${f}`, import.meta.url));
 const SQL_PATH = FILES[0];
 const read = (u) => fs.readFileSync(u, "utf8");
 const codeOf = (u) => read(u).split("\n").filter((l) => !l.trim().startsWith("--")).join("\n").replace(/--.*$/gm, "");
@@ -118,6 +118,7 @@ test("audit n° 2, base de test : âges réels, posts sans mesure, traçabilité
       return d;
     };
     const conn = await mkUser("conn"); await prisma.linkedInAccount.create({ data: { userId: conn.id, statsToken: "enc:x" } });
+    await prisma.statSnapshot.create({ data: { userId: conn.id, day: "2026-01-01", createdAt: new Date(now - 20 * DAY) } }); // premier relevé il y a 20 jours
     const noconn = await mkUser("noconn");
     // posts sans aucune mesure : 3 trop récents (5 h), 3 d'âge normal (100 h), 3 anciens (30 jours), compte connecté ; 3 d'âge normal, compte non connecté
     for (let i = 0; i < 3; i++) { await mkPost(conn, 5); await mkPost(conn, 100); await mkPost(conn, 30 * 24); await mkPost(noconn, 100); }
@@ -155,6 +156,10 @@ test("audit n° 2, base de test : âges réels, posts sans mesure, traçabilité
     assert.equal(get(U, "profil · 2 âge normal (20 h à 10 jours), non mesuré · canal de mesure connecté"), "3");
     assert.equal(get(U, "profil · 3 ancien (plus de 10 jours), non mesuré · canal de mesure connecté"), "3");
     assert.equal(get(U, "profil · 2 âge normal (20 h à 10 jours), non mesuré · canal de mesure NON connecté"), "3");
+    const F = "Posts publiés sans aucune mesure : avant ou après la première lecture du canal";
+    assert.equal(get(F, "profil · publié avant la première lecture du canal (non mesurable)"), "3", "les 3 posts de 30 jours précèdent le premier relevé");
+    assert.equal(get(F, "profil · publié après la première lecture du canal (mesure manquante)"), "6", "5 h et 100 h : après le premier relevé");
+    assert.equal(get(F, "profil · aucune lecture du canal pour ce compte"), "3", "compte sans relevé");
     const Q = "« Que publier ? » : propositions";
     assert.equal(get(Q, "passées au statut « générée » (clic sur Générer)"), "5");
     assert.equal(get(Q, "avec un brouillon relié (recommendation.draftId renseigné)"), "0", "aucune liaison technique");
@@ -182,7 +187,7 @@ const SH = new URL("./audit-profondeur.sh", import.meta.url);
 test("script de relance : syntaxe valide, deux audits, n'affiche jamais l'adresse de la base, aucun ordre d'écriture", () => {
   execFileSync("bash", ["-n", SH.pathname]);
   const sh = fs.readFileSync(SH, "utf8");
-  assert.ok(sh.includes("audit-profondeur-mesures.sql") && sh.includes("audit-ages-mesures.sql"));
+  assert.ok(sh.includes("audit-profondeur-mesures.sql") && sh.includes("audit-ages-mesures.sql") && sh.includes("audit-pilote-auto.sql"));
   assert.ok(!/echo[^\n]*\$DATABASE_URL|echo[^\n]*\$\{DATABASE_URL/.test(sh), "l'adresse de la base n'est jamais affichée");
   assert.ok(!/\b(INSERT|UPDATE|DELETE|DROP|ALTER|TRUNCATE)\b/.test(sh.replace(/^#.*$/gm, "")));
   assert.ok(fs.statSync(SH).mode & 0o111, "exécutable");
@@ -196,4 +201,52 @@ test("script de relance, base de test : produit un fichier daté, sans modifier 
   assert.match(body, /=== 1\. Profondeur/);
   assert.match(body, /=== 2\. Âges réels/);
   assert.ok(!body.includes(DB) && !out.includes("audit:audit@"), "aucune adresse de base dans la sortie");
+});
+
+test("audit n° 3, base de test : pilote automatique — brouillons retrouvés, délais, comptes, traces de suppression", { skip: !DB && "AUDIT_TEST_DATABASE_URL non défini" }, async () => {
+  assert.ok(!/neon\.tech|linkeepost|hetzner/i.test(DB), "refus : ressemble à la production");
+  process.env.DATABASE_URL = DB;
+  const { PrismaClient } = await import("@prisma/client");
+  const prisma = new PrismaClient();
+  try {
+    for (const m of ["postPerformance", "editorialRecommendation", "draft", "activityEvent", "user"]) await prisma[m].deleteMany();
+    const now = Date.now(); let seq = 0;
+    const mk = (tag, extra = {}) => prisma.user.create({ data: { email: `${tag}${seq++}@test.invalid`, password: "x", name: tag, ...extra } });
+    const accounts = [];
+    for (let i = 0; i < 3; i++) accounts.push(await mk("auto", { autoPublishThreshold: 70, expertise: "e", publishDays: "1,3" }));
+    await mk("plain");
+    // 3 comptes × 2 propositions « planifiées » (créées puis traitées dans la même minute) : 6 au total, aucune reliée
+    for (const u of accounts) for (let i = 0; i < 2; i++) {
+      await prisma.editorialRecommendation.create({ data: { userId: u.id, topic: `Sujet ${u.id}-${i}`, angle: "a", rationale: "r", status: "planifiée", createdAt: new Date(now - 90 * 60000), respondedAt: new Date(now - 89 * 60000) } });
+    }
+    // 3 d'entre elles ont encore un brouillon « pilote automatique » (thème = sujet) mais le lien est perdu : 2 programmés, 1 publié
+    const survivors = [["programmé"], ["programmé"], ["publié"]];
+    for (let i = 0; i < 3; i++) await prisma.draft.create({ data: { userId: accounts[i].id, type: "simple", theme: `Sujet ${accounts[i].id}-0`, expertise: "e", tone: "t", maxChars: 1300, text: "x", status: survivors[i][0], auto: true, publishedAt: survivors[i][0] === "publié" ? new Date() : null } });
+    // signature d'un échec partiel : une proposition encore « proposée » dont le sujet est déjà porté par un brouillon automatique, et un sujet porté deux fois
+    for (let i = 0; i < 3; i++) {
+      await prisma.editorialRecommendation.create({ data: { userId: accounts[i].id, topic: `Bloquée ${i}`, angle: "a", rationale: "r", status: "proposée" } });
+      for (let k = 0; k < 2; k++) await prisma.draft.create({ data: { userId: accounts[i].id, type: "simple", theme: `Bloquée ${i}`, expertise: "e", tone: "t", maxChars: 1300, text: "x", status: "programmé", auto: true } });
+    }
+    // 3 traces de suppression (deux du pilote automatique, une publiée)
+    for (const meta of [{ auto: true, published: false }, { auto: true, published: false }, { auto: false, published: true }]) await prisma.activityEvent.create({ data: { userId: accounts[0].id, kind: "reco_draft_deleted", meta } });
+
+    const out = execFileSync("psql", [DB, "-At", "-F", "|", "-f", FILES[2].pathname], { encoding: "utf8" });
+    const rows = out.split("\n").filter((l) => l.split("|").length === 4).map((l) => l.split("|"));
+    const get = (section, label) => rows.find((r) => r[0] === section && r[1] === label)?.[2];
+    assert.equal(get("Comptes avec la publication autonome activée", "seuil de confiance renseigné (comptes non suspendus)"), "3");
+    assert.equal(get("Propositions « planifiées »", "au total (comptes non suspendus)"), "6");
+    assert.equal(get("Propositions « planifiées »", "sans brouillon relié"), "6");
+    assert.equal(get("Propositions « planifiées »", "avec un brouillon encore relié"), "0");
+    assert.equal(get("Propositions « planifiées »", "comptes concernés"), "3");
+    assert.equal(get("Délai entre création et réponse (indice d'origine)", "moins de 10 minutes"), "6");
+    assert.equal(get("Brouillons « pilote automatique » retrouvés par leur thème", "brouillons existants (auto, thème = sujet d'une proposition planifiée)"), "3");
+    assert.equal(get("Brouillons « pilote automatique » retrouvés par leur thème", "dont publiés"), "<3", "1 publié : masqué");
+    assert.equal(get("Brouillons « pilote automatique » retrouvés par leur thème", "dont programmés ou à valider"), "<3", "2 : masqué");
+    assert.equal(get("Doublons éventuels du pilote automatique", "propositions encore « proposées » alors qu'un brouillon automatique porte déjà leur sujet (échec après création)"), "3");
+    assert.equal(get("Doublons éventuels du pilote automatique", "sujets portés par 2 brouillons automatiques ou plus (même compte)"), "3");
+    assert.equal(get("Doublons éventuels du pilote automatique", "brouillons automatiques concernés"), "6");
+    assert.equal(get("Suppressions tracées d'un brouillon relié à une proposition", "au total"), "3");
+    assert.equal(get("Suppressions tracées d'un brouillon relié à une proposition", "dont brouillons créés par le pilote automatique"), "<3");
+    assert.ok(!out.includes("@test.invalid") && !/Sujet /.test(out), "aucun texte ni adresse en sortie");
+  } finally { await prisma.$disconnect(); }
 });
