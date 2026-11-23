@@ -111,6 +111,16 @@ test("POST /api/drafts : sans recoId ni pilier, comportement historique (aucune 
   assert.equal(reads, 0);
 });
 
+test("POST /api/drafts : un pilier inconnu est refusé", async () => {
+  assert.equal((await post(draftBody({ pillarId: "nulle-part" }))).res.status, 400);
+});
+test("POST /api/drafts : sans pilier ni proposition, aucune lecture de pilier (comportement historique)", async () => {
+  const { prisma } = makeDb(); let reads = 0; const f = prisma.editorialPillar.findFirst; prisma.editorialPillar.findFirst = async (q) => { reads++; return f(q); };
+  const m = await loadModule("app/api/drafts/route.js", { prisma, stubs: await routeStubs(prisma) });
+  assert.equal((await m.POST(fakeReq(draftBody()))).status, 200);
+  assert.equal(reads, 0);
+});
+
 // --- PATCH /api/editorial/recommendations/[id] ---
 // la route appelle lib/editorial/recommendations.js : on charge la vraie fonction avec la même base simulée
 async function patch(id, body) {
