@@ -222,6 +222,11 @@ test("audit n° 3, base de test : pilote automatique — brouillons retrouvés, 
     // 3 d'entre elles ont encore un brouillon « pilote automatique » (thème = sujet) mais le lien est perdu : 2 programmés, 1 publié
     const survivors = [["programmé"], ["programmé"], ["publié"]];
     for (let i = 0; i < 3; i++) await prisma.draft.create({ data: { userId: accounts[i].id, type: "simple", theme: `Sujet ${accounts[i].id}-0`, expertise: "e", tone: "t", maxChars: 1300, text: "x", status: survivors[i][0], auto: true, publishedAt: survivors[i][0] === "publié" ? new Date() : null } });
+    // signature d'un échec partiel : une proposition encore « proposée » dont le sujet est déjà porté par un brouillon automatique, et un sujet porté deux fois
+    for (let i = 0; i < 3; i++) {
+      await prisma.editorialRecommendation.create({ data: { userId: accounts[i].id, topic: `Bloquée ${i}`, angle: "a", rationale: "r", status: "proposée" } });
+      for (let k = 0; k < 2; k++) await prisma.draft.create({ data: { userId: accounts[i].id, type: "simple", theme: `Bloquée ${i}`, expertise: "e", tone: "t", maxChars: 1300, text: "x", status: "programmé", auto: true } });
+    }
     // 3 traces de suppression (deux du pilote automatique, une publiée)
     for (const meta of [{ auto: true, published: false }, { auto: true, published: false }, { auto: false, published: true }]) await prisma.activityEvent.create({ data: { userId: accounts[0].id, kind: "reco_draft_deleted", meta } });
 
@@ -237,6 +242,9 @@ test("audit n° 3, base de test : pilote automatique — brouillons retrouvés, 
     assert.equal(get("Brouillons « pilote automatique » retrouvés par leur thème", "brouillons existants (auto, thème = sujet d'une proposition planifiée)"), "3");
     assert.equal(get("Brouillons « pilote automatique » retrouvés par leur thème", "dont publiés"), "<3", "1 publié : masqué");
     assert.equal(get("Brouillons « pilote automatique » retrouvés par leur thème", "dont programmés ou à valider"), "<3", "2 : masqué");
+    assert.equal(get("Doublons éventuels du pilote automatique", "propositions encore « proposées » alors qu'un brouillon automatique porte déjà leur sujet (échec après création)"), "3");
+    assert.equal(get("Doublons éventuels du pilote automatique", "sujets portés par 2 brouillons automatiques ou plus (même compte)"), "3");
+    assert.equal(get("Doublons éventuels du pilote automatique", "brouillons automatiques concernés"), "6");
     assert.equal(get("Suppressions tracées d'un brouillon relié à une proposition", "au total"), "3");
     assert.equal(get("Suppressions tracées d'un brouillon relié à une proposition", "dont brouillons créés par le pilote automatique"), "<3");
     assert.ok(!out.includes("@test.invalid") && !/Sujet /.test(out), "aucun texte ni adresse en sortie");

@@ -27,6 +27,19 @@ auto_like AS (
   WHERE d.auto = true
 ),
 events AS (SELECT id, "createdAt", meta FROM "ActivityEvent" WHERE kind = 'reco_draft_deleted'),
+-- risque de doublons : signature d'un échec après la création du brouillon (la proposition reste « proposée » alors qu'un brouillon automatique porte déjà son sujet)
+stuck AS (
+  SELECT DISTINCT r.id
+  FROM "EditorialRecommendation" r JOIN users u ON u.id = r."userId"
+  JOIN "Draft" d ON d."userId" = r."userId" AND d.auto = true AND d."campaignId" IS NULL AND d.theme = left(r.topic, 200)
+  WHERE r.status = 'proposée' AND r."draftId" IS NULL
+),
+dups AS (
+  SELECT d."userId", d.theme, count(*) AS c
+  FROM "Draft" d JOIN users u ON u.id = d."userId"
+  WHERE d.auto = true AND d."campaignId" IS NULL
+  GROUP BY d."userId", d.theme HAVING count(*) >= 2
+),
 out AS (
   SELECT 10 AS ord, 'Comptes avec la publication autonome activée' AS section, 'seuil de confiance renseigné (comptes non suspendus)' AS label, count(*)::bigint AS n, NULL::bigint AS total
     FROM users WHERE "autoPublishThreshold" IS NOT NULL
@@ -46,6 +59,9 @@ out AS (
   UNION ALL SELECT 52, 'Brouillons « pilote automatique » retrouvés par leur thème', 'dont en erreur', count(DISTINCT id), NULL FROM auto_like WHERE status = 'erreur'
   UNION ALL SELECT 53, 'Brouillons « pilote automatique » retrouvés par leur thème', 'dont programmés ou à valider', count(DISTINCT id), NULL FROM auto_like WHERE status IN ('programmé', 'à valider')
   UNION ALL SELECT 54, 'Brouillons « pilote automatique » retrouvés par leur thème', 'dont avec pilier', count(DISTINCT id), NULL FROM auto_like WHERE "pillarId" IS NOT NULL
+  UNION ALL SELECT 55, 'Doublons éventuels du pilote automatique', 'propositions encore « proposées » alors qu''un brouillon automatique porte déjà leur sujet (échec après création)', count(*), NULL FROM stuck
+  UNION ALL SELECT 56, 'Doublons éventuels du pilote automatique', 'sujets portés par 2 brouillons automatiques ou plus (même compte)', count(*), NULL FROM dups
+  UNION ALL SELECT 57, 'Doublons éventuels du pilote automatique', 'brouillons automatiques concernés', coalesce(sum(c), 0)::bigint, NULL FROM dups
   UNION ALL SELECT 60, 'Brouillons créés par automatisme (auto = true) encore en base', 'hors campagne', count(*), NULL
     FROM "Draft" d JOIN users u ON u.id = d."userId" WHERE d.auto = true AND d."campaignId" IS NULL
   -- traces de suppression d'un brouillon relié (enregistrées depuis la correction de traçabilité ; vides tant qu'elle n'est pas déployée)
