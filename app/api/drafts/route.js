@@ -11,6 +11,7 @@ import { isOrgUrn } from "@/lib/publishVoice";
 import { findKit } from "@/lib/brandKitStore";
 import { sanitizeMentions, parseMentions } from "@/lib/mentions";
 import { cleanPoll, cleanSlides } from "@/lib/postExtras";
+import { resolveDraftAssociations, linkRecoToDraft } from "@/lib/editorial/recoTrace";
 
 const DEFAULT_KIT = {
   primaryColor:   "#0a66c2",
@@ -70,7 +71,7 @@ export async function POST(req) {
   const userId = await getUserId(req);
   if (!userId) return NextResponse.json({ error: "Non connecté." }, { status: 401 });
 
-  const { type, theme, expertise, tone, maxChars, text, generatedText, extra, inspirationUrl, imageUrl, imagePrompt, videoUrl, youtubeUrl, pillarId, target, contextId, momentId, mood, mentions, poll, documentSlides, firstComment } =
+  const { type, theme, expertise, tone, maxChars, text, generatedText, extra, inspirationUrl, imageUrl, imagePrompt, videoUrl, youtubeUrl, pillarId, recoId, target, contextId, momentId, mood, mentions, poll, documentSlides, firstComment } =
     await req.json();
   if (!text?.trim()) return NextResponse.json({ error: "Texte requis." }, { status: 400 });
 
@@ -107,6 +108,10 @@ export async function POST(req) {
     draftMomentId = m.id;
   }
 
+  // Pilier et proposition « Que publier ? » : chacun doit appartenir au compte (jamais l'identifiant d'un autre compte) ; le pilier de la proposition est lu côté serveur
+  const assoc = await resolveDraftAssociations(userId, { pillarId, recoId });
+  if (assoc.error) return NextResponse.json({ error: assoc.error }, { status: 400 });
+
   const access = await checkAccess(userId);
   if (!access.ok) return NextResponse.json({ error: access.error, code: access.code }, { status: 403 });
 
@@ -130,7 +135,7 @@ export async function POST(req) {
       imagePrompt: imagePrompt || null,
       videoUrl: videoUrl || null,
       youtubeUrl: youtubeUrl ? youtubeWatchUrl(parseYouTubeId(youtubeUrl)) : null,
-      pillarId: pillarId || null,
+      pillarId: assoc.pillarId,
       ...(target ? { target } : {}),
       contextId: draftContextId,
       momentId: draftMomentId,
@@ -142,6 +147,9 @@ export async function POST(req) {
       mentions: (() => { const m = sanitizeMentions(typeof mentions === "string" ? parseMentions(mentions) : mentions); return m.length ? JSON.stringify(m) : null; })(),
     },
   });
+
+  // Lien proposition → brouillon : jamais bloquant pour la création du post (voir lib/editorial/recoTrace.js)
+  if (assoc.recoId) await linkRecoToDraft(userId, assoc.recoId, draft.id).catch((e) => console.error("[reco-trace] lien non écrit :", e?.message));
 
   // Génération auto du visuel de gabarit (fire & forget — uniquement si imageUrl non fournie et BrandKit existe)
   if (!imageUrl && (type === "simple" || !type)) {

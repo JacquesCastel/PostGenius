@@ -6,6 +6,7 @@ import { parseYouTubeId, youtubeWatchUrl } from "@/lib/youtube";
 import { parisDay } from "@/lib/campaignPlan";
 import { sanitizeMentions } from "@/lib/mentions";
 import { cleanPoll, cleanSlides } from "@/lib/postExtras";
+import { recordRecoDraftDeletion } from "@/lib/editorial/recoTrace";
 
 // PATCH : modifier texte/statut — DELETE : supprimer
 // La clause where inclut toujours userId : un client ne touche que SES brouillons.
@@ -76,6 +77,8 @@ export async function DELETE(req, { params }) {
   if (!userId) return NextResponse.json({ error: "Non connecté." }, { status: 401 });
 
   const { id } = await params;
+  // Brouillon relié à une proposition : on garde la trace de la suppression (journal d'exploitation) avant que le lien ne passe à « null »
+  await recordRecoDraftDeletion(userId, id);
   const { count } = await prisma.draft.deleteMany({ where: { id, userId } });
   if (count === 0) return NextResponse.json({ error: "Brouillon introuvable." }, { status: 404 });
   return NextResponse.json({ ok: true });

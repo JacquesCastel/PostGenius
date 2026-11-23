@@ -38,6 +38,9 @@ OUT="$OUT_DIR/audit-$STAMP.txt"
   echo
   echo "=== 2. Âges réels des mesures, posts sans mesure, traçabilité, campagnes ==="
   run_sql "$ROOT/scripts/audit-ages-mesures.sql"
+  echo
+  echo "=== 3. Pilote automatique : propositions planifiées sans brouillon relié ==="
+  run_sql "$ROOT/scripts/audit-pilote-auto.sql"
 } 2>&1 | tee "$OUT"
 echo
 echo "Résultat gardé dans : $OUT"
