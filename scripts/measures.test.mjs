@@ -1,7 +1,8 @@
 // Mesures de performance (lib/measures.js) : âge réel, maturité comparable, exclusions expliquées, posts à relire. Lancer : node --test scripts/measures.test.mjs
 import test from "node:test";
 import assert from "node:assert/strict";
-import { measureAge, classify, bestMeasure, chooseMaturity, exclusionReason, summarize, explain, dueOffset, selectPostsToRead, HOUR, WINDOWS } from "../lib/measures.js";
+import fs from "node:fs";
+import { maturityName, measureAge, classify, bestMeasure, chooseMaturity, exclusionReason, summarize, explain, dueOffset, selectPostsToRead, HOUR, WINDOWS } from "../lib/measures.js";
 
 const PUB = "2026-10-06T06:00:00Z";
 const at = (hours, extra = {}) => ({ offsetHours: 24, capturedAt: new Date(Date.parse(PUB) + hours * HOUR), impressions: 100, ...extra });
@@ -104,4 +105,16 @@ test("selectComparable : une seule maturité, la mesure la plus proche de la cib
   assert.equal(summary.maturity, "j7");
   assert.deepEqual(items.map((x) => [x.draft.id, Math.round(x.measure.ageHours)]), [["a", 171], ["b", 169]]);
   assert.equal(summary.excluded.missing + summary.excluded.outOfWindow, 2);
+});
+
+test("affichage de la maturité : « 7 jours » / « 1 jour », rien si inconnue", () => {
+  assert.equal(maturityName("J+7"), "7 jours");
+  assert.equal(maturityName("J+1"), "1 jour");
+  for (const v of [undefined, null, "", "J+3", "j+7"]) assert.equal(maturityName(v), null);
+});
+test("l'écran affiche la maturité dans le coach et dans les statistiques, avec repli si l'API ne la renvoie pas", () => {
+  const src = fs.readFileSync("app/app/page.js", "utf8");
+  assert.ok(src.includes("maturityName(d.maturity)"), "coach et statistiques");
+  assert.ok(src.includes("insights-maturity-note"));
+  assert.ok(src.includes("Mesures de LinkedIn prises 24 heures puis 7 jours après la publication"), "repli si la maturité est absente");
 });
