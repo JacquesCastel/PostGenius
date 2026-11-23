@@ -89,8 +89,9 @@ export async function POST(req) {
 
     // Met à jour le draft si draftId fourni
     if (draftId && urls.length > 0) {
-      await prisma.draft.update({
-        where: { id: draftId },
+      // Uniquement un brouillon du compte : un identifiant d'un autre compte ne modifie rien
+      await prisma.draft.updateMany({
+        where: { id: String(draftId), userId },
         data: { imageUrl: urls[0] },
       }).catch(() => {}); // Non bloquant
     }
