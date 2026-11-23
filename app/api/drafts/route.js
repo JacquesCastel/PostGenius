@@ -107,6 +107,12 @@ export async function POST(req) {
     draftMomentId = m.id;
   }
 
+  // Pilier : il doit appartenir au compte (jamais l'identifiant d'un pilier d'un autre compte)
+  if (pillarId) {
+    const ownPillar = await prisma.editorialPillar.findFirst({ where: { id: String(pillarId), userId }, select: { id: true } });
+    if (!ownPillar) return NextResponse.json({ error: "Pilier introuvable." }, { status: 400 });
+  }
+
   const access = await checkAccess(userId);
   if (!access.ok) return NextResponse.json({ error: access.error, code: access.code }, { status: 403 });
 
