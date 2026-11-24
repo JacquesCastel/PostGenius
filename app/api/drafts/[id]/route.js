@@ -7,6 +7,7 @@ import { parisDay } from "@/lib/campaignPlan";
 import { sanitizeMentions } from "@/lib/mentions";
 import { cleanPoll, cleanSlides } from "@/lib/postExtras";
 import { recordRecoDraftDeletion } from "@/lib/editorial/recoTrace";
+import { userOwnsTarget } from "@/lib/targetOwnership";
 
 // PATCH : modifier texte/statut — DELETE : supprimer
 // La clause where inclut toujours userId : un client ne touche que SES brouillons.
@@ -39,6 +40,10 @@ export async function PATCH(req, { params }) {
   }
   if (target !== undefined && target !== "person" && !/^urn:li:organization:\d+$/.test(target)) {
     return NextResponse.json({ error: "Compte de publication invalide." }, { status: 400 });
+  }
+
+  if (target !== undefined && !(await userOwnsTarget(userId, target))) {
+    return NextResponse.json({ error: "Cette page n'est pas connectée à votre compte." }, { status: 400 });
   }
 
   const { count } = await prisma.draft.updateMany({

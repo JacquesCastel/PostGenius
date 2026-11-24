@@ -6038,7 +6038,7 @@ function TechAdminView({ showToast, currentEmail }) {
     ["Comptes", data.accounts?.total], ["Nouveaux (7 j)", data.accounts?.newWeek], ["Actifs aujourd'hui", act ? todayActive : null],
     ["En essai", data.accounts?.trial], ["Abonnés", data.accounts?.paying], ["Suspendus", data.accounts?.disabled],
   ];
-  const KIND_LABEL = { login: "Connexions", active: "Jours actifs", coach: "Coach consulté", repurpose: "Séries Seconde vie", mcp: "Usage assistants", assistant_connected: "Assistants connectés" };
+  const KIND_LABEL = { login: "Connexions", active: "Jours actifs", coach: "Coach consulté", repurpose: "Séries Seconde vie", mcp: "Usage assistants", assistant_connected: "Assistants connectés", reco_draft_deleted: "Brouillons liés supprimés" };
   const kinds = act ? Object.entries(act.kinds7).sort((a, b) => b[1] - a[1]) : [];
   const maxKind = Math.max(1, ...kinds.map(([, n]) => n));
   const R = 52, C = 2 * Math.PI * R;

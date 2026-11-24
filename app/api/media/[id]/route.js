@@ -15,7 +15,7 @@ export async function DELETE(req, { params }) {
   }
 
   await deleteMediaFile(asset.fileName);
-  await prisma.mediaAsset.delete({ where: { id } });
+  await prisma.mediaAsset.delete({ where: { id, userId } });
 
   return NextResponse.json({ ok: true });
 }
@@ -33,7 +33,7 @@ export async function PATCH(req, { params }) {
 
   const { category } = await req.json();
   const updated = await prisma.mediaAsset.update({
-    where: { id },
+    where: { id, userId },
     data: { ...(category ? { category } : {}) },
   });
 

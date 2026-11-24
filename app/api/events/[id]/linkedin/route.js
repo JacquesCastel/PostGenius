@@ -137,7 +137,7 @@ export async function POST(req, { params }) {
       postUrn = await postEvent(token, { author: opts.organizer, eventId, commentary: body.commentary });
     } catch (e) {
       await prisma.event.update({
-        where: { id: event.id },
+        where: { id: event.id, userId },
         data: { linkedinEventId: eventId, linkedinEventType: opts.type, linkedinOrganizer: opts.organizer, linkedinAt: new Date() },
       });
       e.message = `${e.message} L'événement est créé sur LinkedIn mais pas encore visible : réessayez la publication.`;
@@ -145,7 +145,7 @@ export async function POST(req, { params }) {
     }
 
     const updated = await prisma.event.update({
-      where: { id: event.id },
+      where: { id: event.id, userId },
       data: {
         linkedinEventId: eventId,
         linkedinPostUrn: postUrn,
@@ -206,7 +206,7 @@ export async function DELETE(req, { params }) {
     );
   }
   const updated = await prisma.event.update({
-    where: { id: event.id },
+    where: { id: event.id, userId },
     data: { linkedinEventId: null, linkedinPostUrn: null, linkedinEventType: null, linkedinOrganizer: null, linkedinAt: null },
   });
   return NextResponse.json({ ok: true, event: publicFields(updated) });
