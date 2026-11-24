@@ -23,7 +23,7 @@ export async function PATCH(req, { params }) {
   if (body.startDate) data.startDate = new Date(body.startDate);
   if (body.endDate) data.endDate = new Date(body.endDate);
 
-  const event = await prisma.event.update({ where: { id }, data });
+  const event = await prisma.event.update({ where: { id, userId }, data });
   return NextResponse.json({ event });
 }
 
@@ -33,6 +33,6 @@ export async function DELETE(req, { params }) {
   const { id } = await params;
   if (!(await owned(userId, id))) return NextResponse.json({ error: "Introuvable." }, { status: 404 });
 
-  await prisma.event.delete({ where: { id } });
+  await prisma.event.delete({ where: { id, userId } });
   return NextResponse.json({ ok: true });
 }

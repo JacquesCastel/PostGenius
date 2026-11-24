@@ -12,6 +12,7 @@ import { findKit } from "@/lib/brandKitStore";
 import { sanitizeMentions, parseMentions } from "@/lib/mentions";
 import { cleanPoll, cleanSlides } from "@/lib/postExtras";
 import { resolveDraftAssociations, linkRecoToDraft } from "@/lib/editorial/recoTrace";
+import { userOwnsTarget } from "@/lib/targetOwnership";
 
 const DEFAULT_KIT = {
   primaryColor:   "#0a66c2",
@@ -89,6 +90,10 @@ export async function POST(req) {
   // Compte de publication prévu à la création : profil ("person", défaut) ou page entreprise
   if (target !== undefined && target !== "person" && !isOrgUrn(target)) {
     return NextResponse.json({ error: "Compte de publication invalide." }, { status: 400 });
+  }
+
+  if (target !== undefined && !(await userOwnsTarget(userId, target))) {
+    return NextResponse.json({ error: "Cette page n'est pas connectée à votre compte." }, { status: 400 });
   }
 
   // Entreprise pour laquelle le post est écrit (facultatif ; nul = entreprise principale)

@@ -44,6 +44,6 @@ export async function DELETE(req, { params }) {
     const r = await prisma.draft.deleteMany({ where: { campaignId: id, userId, status: { not: "publié" }, postId: null } });
     deletedPosts = r.count;
   }
-  await prisma.campaign.delete({ where: { id } });
+  await prisma.campaign.delete({ where: { id, userId } });
   return NextResponse.json({ ok: true, deletedPosts });
 }

@@ -38,7 +38,8 @@ export async function POST(req) {
 
   await fs.mkdir(BG_DIR, { recursive: true });
   const ext = file.type === "image/webp" ? "webp" : file.type === "image/jpeg" ? "jpg" : "png";
-  const fileName = `${userId}-${crypto.randomBytes(4).toString("hex")}.${ext}`;
+  // Nom public et aléatoire : il ne contient jamais l'identifiant du compte
+  const fileName = `${crypto.randomBytes(8).toString("hex")}.${ext}`;
   await fs.writeFile(path.join(BG_DIR, fileName), buffer);
 
   const backgroundUrl = `/api/images/backgrounds/${fileName}`;

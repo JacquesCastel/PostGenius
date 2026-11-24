@@ -1,6 +1,7 @@
 // Outil de test (pas un test) : charge un module ou une route de l'application SANS Next.js ni base, en remplaçant ses imports par des doublures.
 // Les imports du fichier sont retirés ; chaque nom importé est lu dans `stubs` (sinon : fonction vide). `prisma` et `NextResponse` ont une doublure à part.
 import fs from "node:fs";
+import { builtinModules } from "node:module";
 import os from "node:os";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
@@ -11,7 +12,7 @@ export async function loadModule(rel, { stubs = {}, prisma = null } = {}) {
   let src = fs.readFileSync(path.resolve(rel), "utf8");
   const names = [];
   src = src.replace(/^import\s+([\s\S]*?)\s+from\s+["']([^"']+)["'];?[ \t]*$/gm, (m, spec, from) => {
-    if (from.startsWith("node:")) return m; // modules du noyau de Node : conservés tels quels
+    if (from.startsWith("node:") || builtinModules.includes(from)) return m; // modules du noyau de Node (avec ou sans « node: ») : conservés tels quels
     const s = spec.trim();
     const named = s.match(/\{([\s\S]*)\}/);
     if (named) for (const part of named[1].split(",")) { const p = part.trim(); if (!p) continue; const [orig, alias] = p.split(/\s+as\s+/); names.push([(alias ?? orig).trim(), orig.trim()]); }

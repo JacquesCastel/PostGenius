@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getEffectiveUserId as getUserId } from "@/lib/session";
+import { isOwnAsset } from "@/lib/assetUrl";
 import { getContextFor } from "@/lib/contexts";
 import { findKit, saveKit } from "@/lib/brandKitStore";
 
@@ -39,8 +40,9 @@ export async function POST(req) {
     ...(primaryColor   !== undefined && { primaryColor }),
     ...(secondaryColor !== undefined && { secondaryColor }),
     ...(accentColor    !== undefined && { accentColor }),
-    ...(logoUrl        !== undefined && { logoUrl }),
-    ...(backgroundUrl  !== undefined && { backgroundUrl }),
+    // Images : seulement celles de LinkeePost (envoi de fichier) ; une adresse externe est retirée (voir lib/assetUrl.js)
+    ...(logoUrl        !== undefined && { logoUrl: logoUrl === null || isOwnAsset(logoUrl) ? logoUrl : null }),
+    ...(backgroundUrl  !== undefined && { backgroundUrl: backgroundUrl === null || isOwnAsset(backgroundUrl) ? backgroundUrl : null }),
     ...(fontFamily     !== undefined && { fontFamily }),
     ...(bgStyle        !== undefined && { bgStyle }),
     ...(tagline        !== undefined && { tagline }),

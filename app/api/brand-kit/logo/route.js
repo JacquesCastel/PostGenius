@@ -40,7 +40,8 @@ export async function POST(req) {
     : file.type === "image/webp" ? "webp"
     : file.type === "image/jpeg" ? "jpg"
     : "png";
-  const fileName = `${userId}-${crypto.randomBytes(4).toString("hex")}.${ext}`;
+  // Nom public et aléatoire : il ne contient jamais l'identifiant du compte
+  const fileName = `${crypto.randomBytes(8).toString("hex")}.${ext}`;
   await fs.writeFile(path.join(LOGO_DIR, fileName), buffer);
 
   const logoUrl = `/api/images/logos/${fileName}`;
