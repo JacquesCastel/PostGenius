@@ -2,6 +2,10 @@ node_modules/
 .next/
 .env
 .env.local
+# Copies et variantes du fichier de configuration (secrets), et réglages de la sauvegarde hors serveur : jamais dans le dépôt
+.env.*
+!.env.example
+backup.env
 *.log
 data/
 .DS_Store

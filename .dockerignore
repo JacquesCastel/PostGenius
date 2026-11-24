@@ -1,6 +1,9 @@
 # Secrets / divers
 .env
 .env.local
+.env.*
+!.env.example
+backup.env
 *.db
 *.log
 .git
