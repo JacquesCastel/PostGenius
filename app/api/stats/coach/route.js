@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getEffectiveUserId as getUserId } from "@/lib/session";
 import { coachFor } from "@/lib/coachData";
+import { performanceAccessFor } from "@/lib/performanceAccess";
 import { logActiveOncePerDay } from "@/lib/activity";
 
 // « Le coach » : ce qui marche le mieux chez vous, d'après les mesures déjà enregistrées de vos posts (aucun appel à LinkedIn, aucune IA).
@@ -14,5 +15,7 @@ export async function GET(req) {
   const org = searchParams.get("org");
   if (scope === "page" && !/^urn:li:organization:\d+$/.test(org ?? "")) return NextResponse.json({ error: "Paramètre org invalide." }, { status: 400 });
   void logActiveOncePerDay(userId, "coach");
-  return NextResponse.json(await coachFor(userId, { scope, org }));
+  // Constats de performance (version d'essai) : seulement pour les administrateurs et les comptes autorisés sur le serveur (voir lib/performanceAccess.js)
+  const performanceInsights = await performanceAccessFor(userId);
+  return NextResponse.json(await coachFor(userId, { scope, org, performanceInsights }));
 }

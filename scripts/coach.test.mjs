@@ -99,7 +99,8 @@ async function coachWith(drafts, opts = { scope: "profile" }) {
   const f = path.join(tmp, `cd-${Math.random().toString(36).slice(2)}.mjs`);
   const url = (rel) => pathToFileURL(path.resolve(rel)).href;
   fs.writeFileSync(f, SRC.replace('import { prisma } from "./db";', "const prisma = globalThis.__P;")
-    .replace('from "./coach"', `from "${url("lib/coach.js")}"`).replace('from "./measures"', `from "${url("lib/measures.js")}"`));
+    .replace('from "./coach"', `from "${url("lib/coach.js")}"`).replace('from "./measures"', `from "${url("lib/measures.js")}"`)
+    .replace('from "./performanceInsights"', `from "${url("lib/performanceInsights.js")}"`).replace('from "./qualification"', `from "${url("lib/qualification.js")}"`));
   let seenWhere = null;
   globalThis.__P = {
     draft: { findMany: async (q) => { seenWhere = q.where; return drafts.filter((d) => (q.where.target === "person" ? d.target === "person" : d.target === q.where.target)); } },

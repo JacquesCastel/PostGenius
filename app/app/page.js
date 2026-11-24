@@ -11147,6 +11147,39 @@ function DashCoach({ scope, orgUrn, onGoCreate, onTab }) {
           })}
         </ul>
       )}
+      {d.performanceInsights && (
+        <div className="mt-3 rounded-xl border border-dashed border-[#d9e0ec] px-3.5 py-3" data-testid="dash-perf-insights">
+          <div className="flex items-baseline gap-2 flex-wrap">
+            <span className="text-[11px] font-bold tracking-wider uppercase text-[#5a6b85]">Constats détaillés</span>
+            <span className="text-[11px] text-[#5a6b85]">version d&apos;essai{maturityName(d.performanceInsights.maturity) ? ` · mesures à ${maturityName(d.performanceInsights.maturity)}` : ""}</span>
+          </div>
+          {d.performanceInsights.insights.length === 0 ? (
+            <p className="text-[12px] text-[#33415c] mt-1.5" data-testid="dash-perf-none">Aucun constat assez solide pour l&apos;instant : il faut au moins 8 posts mesurés, 3 posts par groupe et un écart net. Une « tendance » demande 5 posts et un effet confirmé sur deux périodes.</p>
+          ) : (
+            <ul className="mt-2 space-y-2">
+              {d.performanceInsights.insights.map((i) => {
+                const fmtD = (iso) => new Date(`${iso}T12:00:00Z`).toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
+                return (
+                  <li key={i.id + i.direction} className="text-[12px] text-[#33415c]" data-testid="dash-perf-insight">
+                    <span className={`font-bold ${i.direction === "up" ? "text-[#166534]" : "text-[#b42318]"}`} aria-hidden="true">{i.direction === "up" ? "▲" : "▼"}</span>{" "}
+                    <b>Vos posts {i.label} : {fmtX(i.lift)} votre médiane</b> (impressions)
+                    <div className="text-[11px] text-[#5a6b85]">
+                      <span className="font-semibold">{i.level === "tendance" ? "Tendance" : "Observation"}</span> · {i.n} posts · du {fmtD(i.periodFrom)} au {fmtD(i.periodTo)} · confiance {i.confidence}
+                    </div>
+                    <details className="text-[11px] text-[#5a6b85]">
+                      <summary className="cursor-pointer select-none hover:underline">Limites</summary>
+                      <ul className="mt-1 space-y-0.5 list-disc pl-4">{i.caveats.map((c) => (<li key={c}>{c}</li>))}</ul>
+                    </details>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+          {d.performanceInsights.ignoredDimensions?.length > 0 && (
+            <p className="text-[11px] text-[#5a6b85] mt-2" data-testid="dash-perf-ignored">{d.performanceInsights.ignoredDimensions.map((x) => (x.id === "objective" ? `Objectif non comparé : ${x.reason}.` : x.reason)).join(" ")}</p>
+          )}
+        </div>
+      )}
       <p className="text-[11px] text-[#5a6b85] mt-3" data-testid="dash-coach-note">Des repères tirés de vos propres posts, pas des règles de LinkedIn : son algorithme n&apos;est pas public. Plus vous publiez, plus ils sont fiables.</p>
       {d.notes?.length > 0 && (
         <details className="mt-1.5 text-[11px] text-[#5a6b85]" data-testid="dash-coach-why-notes">
