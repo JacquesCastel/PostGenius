@@ -3,6 +3,7 @@
 import { pick } from "@/lib/access";
 import { figuresToCheck } from "@/lib/figureCheck";
 import { maturityName } from "@/lib/measures";
+import { adviceFor, isTentative, actionLabel } from "@/lib/coachAdvice";
 import { checkConsignes, CONSIGNES_CHECKED } from "@/lib/consigneRules";
 import { useState, useEffect, useRef, createContext, useContext, useMemo } from "react";
 import { NotificationBell, AgencyPlanning } from "@/components/AgencyExtras";
@@ -11090,11 +11091,6 @@ function DashCoach({ scope, orgUrn, onGoCreate, onTab }) {
   }, [scope, orgUrn]);
   if (!d || d.failed) return null;
   const card = "bg-white border border-[#e8ecf2] rounded-[18px] px-5 py-4";
-  const advice = (i) => {
-    if (i.action === "firstcomment") return i.key === "yes" && i.direction === "up" ? "Chez vous, un lien dans le texte ne freine pas la portée." : i.key === "yes" ? "Mettez plutôt le lien en premier commentaire : la portée est meilleure sans lien dans le texte." : i.direction === "up" ? "Gardez le lien pour le premier commentaire." : "Un post sans lien fait moins bien chez vous : testez avec le lien dans le texte.";
-    if (i.action === "slot") return i.direction === "up" ? "Programmez vos prochains posts à ce moment." : "Évitez ce moment pour vos posts importants.";
-    return i.direction === "up" ? "Écrivez-en davantage." : "À retravailler, ou à espacer.";
-  };
   const go = (i) => (i.action === "slot" ? onTab?.("planning") : onGoCreate?.());
   return (
     <div className={card} data-testid="dash-coach">
@@ -11120,9 +11116,9 @@ function DashCoach({ scope, orgUrn, onGoCreate, onTab }) {
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-bold text-[#1b2a4a] leading-snug">Vos posts {i.label} : {fmtX(i.lift)} votre médiane</p>
                     <p className="text-xs text-[#5a6b85] mt-0.5">{i.n} posts · confiance {i.confidence}{i.confidence === "faible" ? " : à confirmer avec les prochains posts" : ""}</p>
-                    <p className="text-[13px] text-[#33415c] mt-1">{advice(i)}</p>
+                    <p className="text-[13px] text-[#33415c] mt-1">{adviceFor(i)}</p>
                     <div className="flex items-center gap-3 flex-wrap mt-1.5">
-                      <button type="button" onClick={() => go(i)} data-testid="dash-coach-action" className="text-[13px] font-semibold text-[#0a66c2] hover:underline">{i.action === "slot" ? "Voir le planning" : "Créer un post"}</button>
+                      {!isTentative(i) && <button type="button" onClick={() => go(i)} data-testid="dash-coach-action" className="text-[13px] font-semibold text-[#0a66c2] hover:underline">{actionLabel(i)}</button>}
                       <button type="button" onClick={() => setOpen(open === k ? null : k)} aria-expanded={open === k} data-testid="dash-coach-why" className="text-[13px] font-semibold text-[#5a6b85] hover:underline">{open === k ? "Masquer" : "Pourquoi ?"}</button>
                     </div>
                     {open === k && (
