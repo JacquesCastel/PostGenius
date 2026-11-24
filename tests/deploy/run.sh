@@ -14,6 +14,7 @@ new_sandbox() {
   APP=$(mktemp -d)
   mkdir -p "$APP/scripts" "$APP/bin" "$APP/.next" "$APP/node_modules/.prisma" "$APP/prisma"
   cp "$REPO/deploy.sh" "$REPO/rollback.sh" "$REPO/scripts/build-in-container.sh" "$APP/scripts/" 2>/dev/null
+  cp "$REPO/scripts/smoke-preflight.sh" "$APP/scripts/"
   cp "$REPO/deploy.sh" "$REPO/rollback.sh" "$APP/"
   echo "DATABASE_URL=\"postgresql://x:y@localhost/db\"" > "$APP/.env"
   echo old > "$APP/.next/VERSION"; echo old > "$APP/node_modules/.prisma/VERSION"; echo aaa1111 > "$APP/.deployed-sha"
@@ -181,12 +182,12 @@ new_sandbox; rm -f "$APP/.deployed-sha"; export STUB_GATE=AJOUT STUB_SCHEMA_CHAN
 RC=$(run_deploy)
 check "réussit et tente la copie de la base" '[ "$RC" = 0 ] && grep -q snapshot $STUB_ORDER'
 
-echo "== 11. Le serveur ne joint pas son adresse publique : contrôle désactivé, pas de retour arrière pour rien"
+echo "== 11. Le serveur ne joint pas son adresse publique : arrêt avant tout changement"
 new_sandbox; export STUB_GATE=AJOUT STUB_CURL_CODE=000 STUB_SMOKE=fail
 RC=$(run_deploy)
-check "le déploiement réussit malgré un contrôle qui échouerait" '[ "$RC" = 0 ] && [ "$(ver)" = new ]'
-check "le contrôle n'est pas lancé et l'avertissement est affiché" '! grep -q smoke $STUB_ORDER && grep -q "DÉSACTIVÉ" $APP/out.log'
-check "la version est notée et le journal le précise" '[ "$(cat $APP/.deployed-sha)" = bbb2222 ] && grep -q "sans contrôle automatique" $APP/deploys.log'
+check "le déploiement est arrêté avant le build" '[ "$RC" = 1 ] && ! grep -qE "build|push|up|smoke" $STUB_ORDER'
+check "le message explique l'absence de contrôle possible" 'grep -q "ne joint pas" $APP/out.log && grep -q "ARRÊTÉ" $APP/out.log'
+check "la version en ligne reste intacte et l'arrêt est journalisé" '[ "$(ver)" = old ] && [ "$(cat $APP/.deployed-sha)" = aaa1111 ] && grep -q "arrêté avant tout changement" $APP/deploys.log'
 
 echo "== 12. Le build ne copie pas les dossiers de retour arrière"
 new_sandbox; export STUB_GATE=AJOUT
