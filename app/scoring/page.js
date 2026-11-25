@@ -1,216 +1,105 @@
 import Link from "next/link";
-import {
-  Gauge, Sparkles, Check, ChevronRight, PenLine, History, Wand2,
-  Zap, Brain, ShieldCheck,
-} from "lucide-react";
-import SiteHeader from "@/components/SiteHeader";
-import SiteFooter from "@/components/SiteFooter";
+import Shell from "@/components/v2/Shell";
 import { JOIN_HREF, pick } from "@/lib/access";
+import { produitOuvert } from "@/lib/siteProduit";
+import { BRAND_NAME } from "@/lib/brand";
+import { liaisons, liaisonsEm } from "@/lib/typo";
+
+// Page « Contrôle de forme » (nouveau style v2, texte de la maquette « /scoring »).
+// Les nombres affichés (points par critère, seuils) sont contrôlés contre lib/score.js par scripts/scoring-page.test.mjs.
+export const dynamic = "force-dynamic"; // l'interrupteur du lien « Chiffres à vérifier » se lit à chaque requête
 
 export const metadata = {
-  title: "Le contrôle de forme — LinkeePost",
+  title: `Le contrôle de forme — ${BRAND_NAME}`,
   description:
-    "Comment LinkeePost contrôle la forme de vos posts LinkedIn : une grille de 7 critères à règles fixes, des conseils de fond de l'IA et une réécriture ciblée. Un indicateur de qualité, pas une prévision de résultats.",
+    `Comment ${BRAND_NAME} contrôle la forme de vos posts LinkedIn : une note sur 100, sept critères à règles fixes, le même texte obtenant toujours la même note. Un indicateur de mise en forme, pas une prévision de vues.`,
   alternates: { canonical: "/scoring" },
 };
 
-const CRITERIA = [
-  { label: "Accroche", weight: 25, text: "La première ligne, seule visible avant le « voir plus » : elle doit porter à elle seule l'idée du post, pas juste l'annoncer. Une tension (question, « : ») peut l'aider à percuter, mais ce n'est jamais une obligation — une ligne courte et claire obtient déjà la meilleure note." },
-  { label: "Longueur & aération", weight: 25, text: "Entre 400 et 1 600 caractères, découpé en courts paragraphes. Un pavé compact décourage la lecture, quelle que soit sa longueur." },
-  { label: "Question / interaction", weight: 10, text: "Un bonus, pas une fin imposée : si une question ouverte vient naturellement, elle invite aux commentaires. Un post qui conclut sur sa propre idée fonctionne tout aussi bien." },
-  { label: "Hashtags", weight: 10, text: "Aucun minimum : zéro hashtag est un choix tout aussi valable. Au-delà de 5, ça commence à paraître spammy." },
-  { label: "Format", weight: 10, text: "Le texte seul est déjà un format efficace quand il est bien écrit. Carrousel ou vidéo restent une option si le sujet s'y prête, jamais une obligation." },
-  { label: "Émojis", weight: 10, text: "0 à 6 émojis pour rythmer le texte sans l'alourdir. Zéro émoji obtient la note pleine : ce n'est pas une obligation." },
-  { label: "Appel à l'action", weight: 10, text: "Si ça vient naturellement, un CTA explicite (« Dites-moi en commentaire… ») peut aider — mais un post qui se suffit à lui-même n'en a pas besoin." },
+const CRITERES = [
+  { label: "Accroche", points: 25, texte: "La première ligne, seule visible avant le « voir plus » : elle doit porter à elle seule l'idée du post, pas juste l'annoncer. Moins de 90 caractères. Une question ou un « : » peut aider, sans jamais être obligatoire." },
+  { label: "Longueur et aération", points: 25, texte: "Entre 400 et 1 600 caractères, découpé en courts paragraphes. Un pavé compact décourage la lecture, quelle que soit sa longueur." },
+  { label: "Question ou interaction", points: 10, texte: "Un bonus, pas une fin imposée : une question ouverte qui vient naturellement invite aux commentaires. Un post qui conclut sur sa propre idée fonctionne aussi bien." },
+  { label: "Hashtags", points: 10, texte: "Aucun minimum : zéro hashtag est un choix valable. Au-delà de 5, le texte commence à paraître chargé." },
+  { label: "Format", points: 10, texte: "Le texte seul est déjà un format efficace quand il est bien écrit. Carrousel ou vidéo restent une option si le sujet s'y prête." },
+  { label: "Émojis", points: 10, texte: "De 0 à 6 émojis pour rythmer le texte sans l'alourdir. Zéro émoji obtient la note pleine." },
+  { label: "Appel à l'action", points: 10, texte: "Si ça vient naturellement, une invitation explicite (« Dites-moi en commentaire… ») peut aider. Un post qui se suffit à lui-même n'en a pas besoin." },
 ];
 
-const STEPS = [
-  {
-    icon: Zap,
-    title: "1 · Analyse instantanée",
-    text: "Dès qu'un post est généré, LinkeePost l'évalue en temps réel sur 7 critères mesurables — construits autour du principe de la pyramide inversée plutôt que d'une formule imposée — et en tire une note sur 100. Aucun délai, aucun appel externe : c'est immédiat.",
-  },
-  {
-    icon: Brain,
-    title: "2 · Conseils personnalisés par l'IA",
-    text: "En parallèle, l'IA lit votre post et ajoute 2 à 3 conseils concrets et actionnables, propres à votre contenu — au-delà de ce que les critères automatiques détectent.",
-  },
-  {
-    icon: Wand2,
-    title: "3 · Réécriture ciblée",
-    text: "D'un clic, appliquez les conseils. Vous choisissez le périmètre : tout le post, ou seulement l'accroche, le corps ou la signature. L'IA réécrit en gardant votre sujet, votre langue et votre ton.",
-  },
-  {
-    icon: History,
-    title: "4 · Score en direct + historique",
-    text: "À chaque modification, le score se recalcule sous vos yeux et la jauge s'anime. Chaque version est conservée dans un historique, restaurable à tout moment.",
-  },
+const EXEMPLE = [
+  ["Accroche", "25 / 25"],
+  ["Longueur et aération", "20 / 25"],
+  ["Question ou interaction", "0 / 10"],
+  ["Hashtags, format, émojis, appel à l'action", "40 / 40"],
+];
+
+const LIMITES = [
+  "Elle ne prévoit ni vues, ni likes, ni commentaires. Un post très bien construit peut ne rien donner, un post imparfait peut bien marcher.",
+  "Elle ne juge ni le fond, ni l'exactitude : un chiffre inventé peut très bien obtenir 100 sur 100.",
+  "Ses seuils sont des règles de mise en forme que nous avons fixées, pas des lois de LinkedIn.",
 ];
 
 export default function ScoringPage() {
+  const titre = liaisonsEm("Une note de mise en forme,", "pas une prédiction.");
   return (
-    <div className="relative overflow-hidden text-[#1b2a4a] bg-gradient-to-b from-rose-50 via-orange-50/40 to-sky-50">
-      <div className="pointer-events-none absolute -top-32 -left-32 w-[28rem] h-[28rem] rounded-full bg-rose-200/40 blur-3xl" />
-      <div className="pointer-events-none absolute top-[40rem] -right-24 w-[24rem] h-[24rem] rounded-full bg-sky-200/40 blur-3xl" />
+    <Shell>
+      <div className="max-w-[1100px] mx-auto px-4 sm:px-8 pt-8 pb-24">
+        <span className="inline-block text-xs font-semibold uppercase tracking-[0.06em] bg-[#DCE9DF] text-[#2B5340] px-3.5 py-1.5 rounded-full">Contrôle de forme · offres Pro et Agence</span>
 
-      <div className="relative">
-        <SiteHeader />
-
-        {/* Hero */}
-        <section className="max-w-5xl mx-auto px-6 pt-12 pb-10 grid lg:grid-cols-2 gap-10 items-center">
-          <div>
-            <p className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#ff5a5f] bg-[#fff1f1] px-3 py-1.5 rounded-full mb-5">
-              <Gauge size={13} /> Contrôle de forme
-            </p>
-            <h1 className="text-4xl md:text-5xl font-extrabold leading-tight">
-              Votre post est-il <span className="text-[#ff5a5f]">bien construit</span> avant de le publier ?
-            </h1>
-            <p className="text-lg text-[#5a6b85] mt-5">
-              LinkeePost contrôle la forme de chaque post avec une grille de règles fixes, note sur 100, vous montre quoi améliorer
-              et réécrit ce qui doit l'être. Ce n'est pas une prévision de résultats : voici ce qu'il mesure, et ce qu'il ne mesure pas.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-3 mt-7">
-              <Link href={JOIN_HREF} className="bg-[#ff5a5f] hover:bg-[#f63d44] text-white font-semibold px-7 py-3.5 rounded-full shadow-lg shadow-rose-300/50 inline-flex items-center justify-center gap-2 transition-colors">
-                {pick("Rejoindre la bêta", "Tester gratuitement")} <ChevronRight size={17} />
-              </Link>
-              <Link href="/fonctionnalites" className="border-2 border-[#ffd5d6] hover:border-[#ff5a5f] text-[#1b2a4a] font-semibold px-7 py-3.5 rounded-full text-center transition-colors">
-                Toutes les fonctionnalités
-              </Link>
-            </div>
+        <div className="mt-8 flex flex-wrap gap-10 lg:gap-14 items-center">
+          <div className="flex-[1_1_420px] min-w-0">
+            <h1 className="font-display text-[38px] sm:text-[54px] leading-[1.06] tracking-[-0.02em]">{titre[0]}<em className="text-[#C2456F]">{titre[1]}</em></h1>
+            <p className="text-[19px] leading-relaxed text-[#4A3A50] mt-6 max-w-[560px]">Sept critères à règles fixes : le même texte obtient toujours la même note. Elle dit si un post est bien construit, jamais combien de vues ou de réactions il aura.</p>
           </div>
-
-          {/* Aperçu de la jauge */}
-          <div className="bg-white rounded-3xl p-6 shadow-2xl shadow-rose-200/40 border border-white">
-            <p className="text-[11px] font-semibold text-[#7a2342] bg-[#fff1f1] rounded-full px-3 py-1 w-fit mb-4">Exemple de mise en forme · valeurs fictives</p>
-            <div className="flex items-center gap-5">
-              <div className="text-center shrink-0">
-                <p className="text-5xl font-extrabold text-[#16a34a] leading-none">82</p>
-                <p className="text-xs text-gray-400 mt-1">/ 100</p>
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center justify-between mb-1.5">
-                  <p className="text-sm font-semibold">Note de forme</p>
-                  <span className="text-sm font-bold text-[#16a34a]">Bien construit</span>
-                </div>
-                <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
-                  <div className="h-full rounded-full bg-[#16a34a]" style={{ width: "82%" }} />
-                </div>
-              </div>
+          <div className="flex-[1_1_400px] min-w-0 bg-white border border-[#EFE4E0] rounded-[28px] p-6 sm:p-8 shadow-[0_18px_40px_rgba(46,31,51,0.08)]" data-testid="scoring-exemple">
+            <div className="flex justify-between items-center gap-3">
+              <span className="text-xs font-semibold uppercase tracking-[0.06em] text-[#6B5A70]">Note de forme</span>
+              <span className="text-xs font-semibold bg-[#F6E3E0] text-[#7A2342] px-3 py-1 rounded-full">Exemple de mise en forme · fictif</span>
             </div>
-            <div className="mt-5 space-y-2">
-              {[
-                { label: "Accroche qui tient avant « voir plus »", ok: true },
-                { label: "Question pour engager", ok: true },
-                { label: "Texte à aérer davantage", ok: false },
-                { label: "Appel à l'action clair", ok: true },
-              ].map((f) => (
-                <div key={f.label} className={`flex items-center gap-2 rounded-xl px-3 py-2 text-sm ${f.ok ? "bg-green-50 text-green-700" : "bg-[#fff1f1] text-[#ff5a5f]"}`}>
-                  {f.ok ? <Check size={15} /> : <PenLine size={15} />} {f.label}
-                </div>
-              ))}
+            <div className="flex items-baseline gap-3 mt-4">
+              <span className="font-display text-[64px] leading-none text-[#2B5340]">85</span>
+              <span className="text-[#6B5A70]">/ 100</span>
+              <span className="ml-auto text-sm font-semibold bg-[#DCE9DF] text-[#1F4030] px-3 py-1 rounded-full">Bien construit</span>
             </div>
+            <div className="h-2.5 bg-[#F1E8E4] rounded-full overflow-hidden mt-4" role="img" aria-label="85 sur 100"><div className="h-full bg-[#2B5340] rounded-full" style={{ width: "85%" }} /></div>
+            <ul className="mt-5 flex flex-col gap-2 text-[15px]">
+              {EXEMPLE.map(([nom, valeur]) => <li key={nom} className="flex justify-between gap-4"><span>{nom}</span><span className="font-semibold whitespace-nowrap">{valeur}</span></li>)}
+            </ul>
+            <p className="text-[13px] leading-relaxed text-[#6B5A70] mt-5">Valeurs inventées pour montrer la forme d&apos;une note. Elle ne prévoit aucune vue ni aucune réaction.</p>
           </div>
-        </section>
+        </div>
 
-        {/* Procédé en 4 temps */}
-        <section className="max-w-5xl mx-auto px-6 py-14">
-          <p className="text-center text-sm font-semibold text-[#ff5a5f]">Notre procédé</p>
-          <h2 className="text-3xl md:text-4xl font-extrabold text-center mt-2">Une méthode hybride : la vitesse de l'automatique, la finesse de l'IA</h2>
-          <p className="text-[#5a6b85] text-center mt-3 max-w-2xl mx-auto">
-            On combine une analyse instantanée et déterministe avec l'intelligence d'un modèle qui lit vraiment votre post.
+        <h2 className="font-display text-[30px] sm:text-[40px] tracking-[-0.015em] mt-20">{liaisons("Les sept critères")}</h2>
+        <p className="text-[17px] leading-relaxed text-[#4A3A50] mt-3 max-w-[720px]">Chaque critère rapporte des points selon des seuils écrits. Les deux premiers pèsent la moitié de la note.</p>
+        <div className="mt-8 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+          {CRITERES.map((c) => (
+            <div key={c.label} className="bg-white border border-[#EFE4E0] rounded-3xl p-6">
+              <div className="flex justify-between items-baseline gap-3">
+                <h3 className="font-semibold text-[18px]">{liaisons(c.label)}</h3>
+                <span className="text-sm font-bold text-[#9E3157] whitespace-nowrap">{c.points} points</span>
+              </div>
+              <div className="h-2 bg-[#F1E8E4] rounded-full overflow-hidden my-3"><div className="h-full bg-[#C2456F] rounded-full" style={{ width: `${c.points * 4}%` }} /></div>
+              <p className="text-[15px] leading-relaxed text-[#4A3A50]">{c.texte}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-14 bg-[#FCE6D6] rounded-[28px] p-7 sm:p-9">
+          <h2 className="font-display text-[28px] mb-4">{liaisons("Ce que la note ne dit pas")}</h2>
+          <ul className="list-disc pl-5 flex flex-col gap-2.5 text-[16px] leading-relaxed text-[#6E2E0E]">{LIMITES.map((l) => <li key={l}>{l}</li>)}</ul>
+          <p className="mt-5 text-[16px] leading-relaxed text-[#6E2E0E]">
+            Pour le fond, c&apos;est un autre contrôle :{" "}
+            {produitOuvert() ? <Link href="/produit/verification" className="font-semibold underline">Chiffres à vérifier</Link> : <strong>Chiffres à vérifier</strong>}.
           </p>
-          <div className="grid md:grid-cols-2 gap-6 mt-12">
-            {STEPS.map((s) => (
-              <div key={s.title} className="bg-white rounded-3xl border border-white shadow-lg shadow-rose-100/40 p-6">
-                <div className="p-3 rounded-2xl bg-[#fff1f1] text-[#ff5a5f] w-fit mb-4">
-                  <s.icon size={22} />
-                </div>
-                <h3 className="font-bold mb-2">{s.title}</h3>
-                <p className="text-sm text-[#5a6b85] leading-relaxed">{s.text}</p>
-              </div>
-            ))}
-          </div>
-        </section>
+        </div>
 
-        {/* Les 7 critères */}
-        <section className="max-w-5xl mx-auto px-6 py-14">
-          <h2 className="text-3xl md:text-4xl font-extrabold text-center">Les 7 critères, et leur poids</h2>
-          <p className="text-[#5a6b85] text-center mt-3 max-w-2xl mx-auto">
-            La note sur 100 se répartit entre sept critères, calculés par des règles fixes (le même texte obtient toujours la même note). L'IA n'intervient que pour proposer des conseils de fond, en plus. Pour chacun, LinkeePost vous dit où vous en êtes et comment progresser.
+        <div className="mt-10 flex flex-wrap items-center justify-between gap-5 bg-white border border-[#EFE4E0] rounded-3xl px-7 py-6">
+          <p className="text-[16px] leading-relaxed text-[#4A3A50] max-w-[640px]">
+            Le contrôle de forme est inclus à partir de l&apos;offre Pro. {pick("Pendant la bêta, il est ouvert aux testeurs invités.", "14 jours d'essai gratuit, sans carte bancaire.")}
           </p>
-          <p className="text-[#5a6b85] text-center mt-2 max-w-2xl mx-auto text-sm">
-            Le principe éditorial : la <strong>pyramide inversée</strong> (l'essentiel d'abord, les détails ensuite, le secondaire en dernier), pas une formule imposée. Seule l'accroche doit vraiment tenir avant le « voir plus » : le reste — question, hashtags, émojis, appel à l'action — n'est qu'une option que le texte peut saisir s'il s'y prête, jamais une case à cocher. Zéro hashtag ou zéro émoji obtient déjà la meilleure note si le post n'en a pas besoin.
-          </p>
-          <div className="mt-12 space-y-4">
-            {CRITERIA.map((c) => (
-              <div key={c.label} className="bg-white rounded-3xl border border-white shadow-lg shadow-rose-100/30 p-6">
-                <div className="flex items-center justify-between gap-4 mb-2">
-                  <h3 className="font-bold">{c.label}</h3>
-                  <span className="text-sm font-extrabold text-[#ff5a5f] shrink-0">{c.weight} pts</span>
-                </div>
-                <div className="h-2 bg-gray-100 rounded-full overflow-hidden mb-3">
-                  <div className="h-full rounded-full bg-gradient-to-r from-[#ff5a5f] to-pink-400" style={{ width: `${c.weight}%` }} />
-                </div>
-                <p className="text-sm text-[#5a6b85] leading-relaxed">{c.text}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* Niveaux de score */}
-        <section className="max-w-5xl mx-auto px-6 py-10">
-          <h2 className="text-3xl md:text-4xl font-extrabold text-center mb-10">Lire votre note de forme</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {[
-              { range: "80–100", label: "Bien construit", color: "#16a34a", bg: "bg-green-50" },
-              { range: "60–79", label: "Correct", color: "#ff5a5f", bg: "bg-[#fff1f1]" },
-              { range: "40–59", label: "À renforcer", color: "#f59e0b", bg: "bg-amber-50" },
-              { range: "0–39", label: "À retravailler", color: "#ef4444", bg: "bg-red-50" },
-            ].map((l) => (
-              <div key={l.label} className={`${l.bg} rounded-2xl p-5 text-center`}>
-                <p className="text-2xl font-extrabold" style={{ color: l.color }}>{l.range}</p>
-                <p className="text-sm font-semibold mt-1" style={{ color: l.color }}>{l.label}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* Honnêteté méthodo */}
-        <section className="max-w-3xl mx-auto px-6 py-12">
-          <div className="bg-white rounded-3xl border border-white shadow-lg shadow-sky-100/40 p-7 flex items-start gap-4">
-            <div className="p-3 rounded-2xl bg-sky-50 text-sky-600 shrink-0">
-              <ShieldCheck size={22} />
-            </div>
-            <div>
-              <h3 className="font-bold mb-1.5">Un indicateur de mise en forme, pas une boule de cristal</h3>
-              <p className="text-sm text-[#5a6b85] leading-relaxed">
-                La note reflète le respect de bonnes pratiques de mise en forme — elle ne prédit pas un nombre de vues ou de likes,
-                car la performance réelle dépend aussi de votre réseau, du sujet et du moment. Elle signale les erreurs de mise en forme
-                les plus courantes ; elle ne dit rien du fond ni de l'exactitude des chiffres. La décision finale reste la vôtre.
-              </p>
-            </div>
-          </div>
-        </section>
-
-        {/* CTA final */}
-        <section className="max-w-4xl mx-auto px-6 py-16">
-          <div className="rounded-[2.5rem] bg-gradient-to-br from-[#ff5a5f] to-pink-500 text-white text-center p-12 shadow-2xl shadow-rose-300/50 relative overflow-hidden">
-            <div className="pointer-events-none absolute -top-10 -right-10 w-40 h-40 bg-white/15 rounded-full blur-2xl" />
-            <h2 className="text-3xl md:text-4xl font-extrabold">Vérifiez la forme de votre prochain post</h2>
-            <p className="text-white/85 mt-3">{pick("Accès offert aux testeurs de la bêta fermée, sans carte bancaire.", "14 jours d'essai gratuit, sans carte bancaire.")}</p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-7">
-              <Link href={JOIN_HREF} className="inline-flex items-center gap-2 bg-white text-[#ff5a5f] font-bold px-7 py-3.5 rounded-full hover:bg-rose-50 transition-colors">
-                {pick("Demander une invitation", "Créer mon compte")} <ChevronRight size={17} />
-              </Link>
-              <Link href="/comment-ca-marche" className="inline-flex items-center gap-2 bg-white/15 border border-white/40 text-white font-semibold px-7 py-3.5 rounded-full hover:bg-white/25 transition-colors">
-                Comment ça marche
-              </Link>
-            </div>
-          </div>
-        </section>
-
-        <SiteFooter />
+          <Link href={JOIN_HREF} className="bg-[#C2456F] hover:bg-[#9E3157] text-white font-semibold px-7 py-3.5 rounded-full">{pick("Demander une invitation", "Tester gratuitement")}</Link>
+        </div>
       </div>
-    </div>
+    </Shell>
   );
 }
