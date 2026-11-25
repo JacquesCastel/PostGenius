@@ -72,3 +72,9 @@ test("le lien « À propos » vérifie les champs, pas seulement l'interrupteur 
   assert.match(srv, /if \(process\.env\.SITE_LEGAL === "1"\)/);
   assert.match(srv, /catch \{[\s\S]*À COMPLÉTER/, "en cas d'erreur de lecture, pas de lien");
 });
+
+test("les ouvertures sont lues à chaque requête (connection()), pas figées au build : la page /contact n'a pas d'autre donnée dynamique", () => {
+  assert.match(read("lib/siteNavServer.js"), /import \{ connection \} from "next\/server"/);
+  assert.match(read("lib/siteNavServer.js"), /export async function chargerOuvertures\(\) \{\s*await connection\(\);/);
+  assert.doesNotMatch(read("app/contact/page.js"), /force-dynamic/); // preuve que l'appel doit venir du gabarit
+});
