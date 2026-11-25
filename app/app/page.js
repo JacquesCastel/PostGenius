@@ -19631,6 +19631,9 @@ export default function Home() {
   const [inspiration, setInspiration] = useState(null);
   // Recommandation éditoriale à l'origine de la génération en cours (copilote)
   const [activeReco, setActiveReco] = useState(null);
+  // Pilier éditorial choisi à la main (facultatif). undefined = celui de la proposition « Que publier ? » s'il y en a un ; null = aucun pilier voulu
+  const [manualPillarId, setManualPillarId] = useState(undefined);
+  const [pillarChoices, setPillarChoices] = useState([]);
   // Ouverture du wizard de campagne demandée depuis la sidebar
   // Wizard : étape suivante proposée après chaque action
   // { type: "saved"|"published"|"scheduled", draft?, postId?, when? }
@@ -19731,6 +19734,11 @@ export default function Home() {
   const [linkedinLoaded, setLinkedinLoaded] = useState(false);
 
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
+  // Piliers du compte, pour le sélecteur facultatif de l'écran de création (échec silencieux : le sélecteur n'apparaît pas)
+  useEffect(() => {
+    if (view !== "create" || pillarChoices.length) return;
+    fetch("/api/editorial/pillars").then((r) => r.json()).then((d) => setPillarChoices(d.pillars ?? [])).catch(() => {});
+  }, [view, pillarChoices.length]);
   const activeSource = genMode === "single" && sourceMode !== "idea" ? source : null;
   const canGenerate = (form.theme.trim() || activeSource) && form.expertise.trim();
   // Réglages : repliés sauf si l'expertise manque (indispensable) ; le résumé dit ce qui sera appliqué
@@ -20224,7 +20232,7 @@ export default function Home() {
           imagePrompt: postImage?.prompt ?? null,
           videoUrl: postVideo?.url ?? null,
           youtubeUrl: postYoutube?.url ?? null,
-          pillarId: activeReco?.pillarId ?? null,
+          pillarId: manualPillarId !== undefined ? manualPillarId : activeReco?.pillarId ?? null,
           recoId: activeReco?.id ?? undefined, // la proposition d'origine : le serveur la relie au brouillon créé (traçabilité)
           mentions: resultMentions.filter((m) => r.text.includes(`@${m.name}`)),
           poll: resultPoll,
@@ -20244,6 +20252,7 @@ export default function Home() {
   };
 
   const clearResultArea = () => {
+    setManualPillarId(undefined);
     setPair(null);
     setPairTab(0);
     setResultView(false);
@@ -22802,6 +22811,30 @@ export default function Home() {
                 Le même sujet donne un autre post selon l&apos;humeur. <em>Fierté</em> : « {MOODS.find((m) => m.code === "fierte").example} » <em>Coup de gueule</em> : « {MOODS.find((m) => m.code === "coup-de-gueule").example} »
               </p>
             </div>
+
+            {pillarChoices.length > 0 && (() => {
+              const current = manualPillarId !== undefined ? manualPillarId : activeReco?.pillarId ?? null;
+              return (
+                <div data-testid="pillar-block" className={blockCls}>
+                  <p className={blockLb}>Pilier éditorial <span className="text-gray-400 font-normal">(facultatif : sert à suivre vos résultats par type de contenu)</span></p>
+                  <div className="flex flex-wrap gap-2">
+                    {pillarChoices.map((p) => (
+                      <button
+                        key={p.id}
+                        type="button"
+                        title={p.description || undefined}
+                        data-testid="pillar-chip"
+                        aria-pressed={current === p.id}
+                        onClick={() => setManualPillarId(current === p.id ? null : p.id)}
+                        className={pillCls(current === p.id)}
+                      >
+                        {p.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
 
             <div className={`grid gap-4 items-start ${contexts.length > 0 && linkedin.connected && linkedin.orgConnected && orgs.length > 0 ? "md:grid-cols-2" : ""}`} data-testid="create-who">
             <div className="space-y-4 empty:hidden">
