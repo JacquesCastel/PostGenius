@@ -110,7 +110,7 @@ export default function MethodePage() {
         <section className="mt-14">
           <p className={KICK}>5 · L&apos;accompagnement</p>
           <h2 className={`${H2} mt-2 mb-5`}>{liaisons("Savoir quoi publier, et quand")}</h2>
-          <div className="grid gap-4 md:grid-cols-3">{C.ACCOMPAGNEMENT.map(([t, x]) => <Carte key={t}><h3 className="font-display text-[20px] mb-2">{t}</h3><P>{x}</P></Carte>)}</div>
+          <div className="grid gap-4 md:grid-cols-3">{C.ACCOMPAGNEMENT.map(([t, x]) => <Carte key={t}><h3 className="font-display text-[20px] mb-2">{liaisons(t)}</h3><P>{x}</P></Carte>)}</div>
         </section>
 
         <section className="mt-14">
@@ -118,7 +118,7 @@ export default function MethodePage() {
           <h2 className={`${H2} mt-2 mb-5`}>{liaisons("Une ligne, un rythme, des campagnes")}</h2>
           <div className="grid gap-4 md:grid-cols-3">
             {C.GESTION.map(([t, x, offre]) => (
-              <Carte key={t}><h3 className="font-display text-[20px] mb-2">{t}{offre && <span className="inline-block ml-2 align-middle text-[11px] font-semibold bg-[#F6E3E0] text-[#7A2342] px-2.5 py-0.5 rounded-full font-body-v2">{offre}</span>}</h3><P>{x}</P></Carte>
+              <Carte key={t}><h3 className="font-display text-[20px] mb-2">{liaisons(t, { fin: !offre })}{offre && <span className="inline-block ml-2 align-middle text-[11px] font-semibold bg-[#F6E3E0] text-[#7A2342] px-2.5 py-0.5 rounded-full font-body-v2">{offre}</span>}</h3><P>{x}</P></Carte>
             ))}
           </div>
         </section>
