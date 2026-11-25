@@ -4,7 +4,7 @@ import ContactForm from "@/app/contact/ContactForm";
 import { CONTACT_EMAIL } from "@/lib/contact";
 import { INVITE_ACCESS_DAYS } from "@/lib/invites";
 import { BRAND_NAME } from "@/lib/brand";
-import { liaisons, NB } from "@/lib/typo";
+import { liaisons, liaisonsEm } from "@/lib/typo";
 
 // Page de la bêta fermée : ce que les testeurs reçoivent, ce qu'on attend d'eux, comment demander une invitation.
 // Volontairement hors du plan du site et du pied de page tant que la bêta n'est pas annoncée : on y arrive par un lien.
@@ -53,12 +53,13 @@ const BLOCS = [
 ];
 
 export default function BetaPage() {
+  const titre = liaisonsEm(`Construisons ${BRAND_NAME}`, "ensemble.");
   return (
     <Shell>
       <div className="max-w-[1100px] mx-auto px-4 sm:px-8 pt-8 pb-24">
         <span className="inline-block text-xs font-semibold uppercase tracking-[0.06em] bg-[#F6E3E0] text-[#7A2342] px-3.5 py-1.5 rounded-full">Bêta fermée</span>
         <h1 className="font-display text-[42px] sm:text-[54px] leading-[1.06] tracking-[-0.02em] mt-5 max-w-3xl">
-          {liaisons(`Construisons ${BRAND_NAME}`, { fin: false })}{NB}<em className="text-[#C2456F]">ensemble.</em>
+          {titre[0]}<em className="text-[#C2456F]">{titre[1]}</em>
         </h1>
         <p className="text-[19px] text-[#4A3A50] mt-6 leading-[1.65] max-w-3xl">
           {BRAND_NAME} prépare, programme et mesure vos posts LinkedIn. Avant de l&apos;ouvrir à tous, nous l&apos;ouvrons à un petit groupe de testeurs :

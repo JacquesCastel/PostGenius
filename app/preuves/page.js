@@ -4,7 +4,7 @@ import Shell from "@/components/v2/Shell";
 import { BRAND_NAME } from "@/lib/brand";
 import { preuvesOuvertes } from "@/lib/sitePreuves";
 import { E4 } from "@/lib/e4Page";
-import { liaisons, NB } from "@/lib/typo";
+import { liaisons, liaisonsEm } from "@/lib/typo";
 
 export const dynamic = "force-dynamic"; // l'interrupteur se lit à chaque requête : l'ouverture ne demande pas de nouveau build
 
@@ -22,6 +22,7 @@ const MANIERES = [
 ];
 
 export default function PreuvesPage() {
+  const titre = liaisonsEm("Ce que nous prouvons,", "et comment.");
   if (!preuvesOuvertes()) notFound();
   const moyenneC = E4.conditions.find((c) => c.notre).moyenne, moyenneB = E4.conditions[1].moyenne;
   return (
@@ -29,7 +30,7 @@ export default function PreuvesPage() {
       <div className="max-w-[960px] mx-auto px-4 sm:px-8 pt-8 pb-24">
         <p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-[#C2456F]">Preuves</p>
         <h1 className="font-display text-[40px] sm:text-[56px] leading-[1.06] tracking-[-0.02em] mt-3">
-          {liaisons("Ce que nous prouvons,", { fin: false })} <em className="text-[#C2456F]">et{NB}comment.</em>
+          {titre[0]}<em className="text-[#C2456F]">{titre[1]}</em>
         </h1>
         <p className="text-[19px] sm:text-xl leading-relaxed text-[#4A3A50] mt-6 max-w-[760px]">
           Une preuve, ici, c'est un protocole publié avant le test, des textes complets et des limites écrites. Vous pouvez la vérifier sans nous croire sur parole. Elle porte sur ce que fait l'outil de vos informations.
