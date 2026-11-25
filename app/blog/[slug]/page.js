@@ -6,6 +6,7 @@ import { markdownToHtml } from "@/lib/markdown";
 import Shell from "@/components/v2/Shell";
 import { BRAND_NAME } from "@/lib/brand";
 import { JOIN_HREF, pick } from "@/lib/access";
+import { liaisons } from "@/lib/typo";
 
 export const dynamic = "force-dynamic";
 
@@ -65,7 +66,7 @@ export default async function ArticlePage({ params }) {
         <Link href="/blog" className="text-sm font-semibold text-[#9E3157] hover:underline">
           ← Tous les articles
         </Link>
-        <h1 className="font-display text-[34px] sm:text-[46px] leading-[1.1] tracking-[-0.02em] mt-5">{a.title}</h1>
+        <h1 className="font-display text-[34px] sm:text-[46px] leading-[1.1] tracking-[-0.02em] mt-5">{liaisons(a.title)}</h1>
         {a.publishedAt && <p className="text-sm text-[#6B5A70] mt-4">{fmtDate(a.publishedAt)}</p>}
         {a.coverImage && (
           // eslint-disable-next-line @next/next/no-img-element

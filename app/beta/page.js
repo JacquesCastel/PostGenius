@@ -4,6 +4,7 @@ import ContactForm from "@/app/contact/ContactForm";
 import { CONTACT_EMAIL } from "@/lib/contact";
 import { INVITE_ACCESS_DAYS } from "@/lib/invites";
 import { BRAND_NAME } from "@/lib/brand";
+import { liaisons, liaisonsEm } from "@/lib/typo";
 
 // Page de la bêta fermée : ce que les testeurs reçoivent, ce qu'on attend d'eux, comment demander une invitation.
 // Volontairement hors du plan du site et du pied de page tant que la bêta n'est pas annoncée : on y arrive par un lien.
@@ -52,12 +53,13 @@ const BLOCS = [
 ];
 
 export default function BetaPage() {
+  const titre = liaisonsEm(`Construisons ${BRAND_NAME}`, "ensemble.");
   return (
     <Shell>
       <div className="max-w-[1100px] mx-auto px-4 sm:px-8 pt-8 pb-24">
         <span className="inline-block text-xs font-semibold uppercase tracking-[0.06em] bg-[#F6E3E0] text-[#7A2342] px-3.5 py-1.5 rounded-full">Bêta fermée</span>
         <h1 className="font-display text-[42px] sm:text-[54px] leading-[1.06] tracking-[-0.02em] mt-5 max-w-3xl">
-          Construisons {BRAND_NAME} <em className="text-[#C2456F]">ensemble.</em>
+          {titre[0]}<em className="text-[#C2456F]">{titre[1]}</em>
         </h1>
         <p className="text-[19px] text-[#4A3A50] mt-6 leading-[1.65] max-w-3xl">
           {BRAND_NAME} prépare, programme et mesure vos posts LinkedIn. Avant de l&apos;ouvrir à tous, nous l&apos;ouvrons à un petit groupe de testeurs :
@@ -68,7 +70,7 @@ export default function BetaPage() {
           {BLOCS.map((b) => (
             <section key={b.title} className="bg-white rounded-[28px] border border-[#EFE4E0] p-7">
               <span className="inline-flex w-11 h-11 rounded-full items-center justify-center" style={{ background: b.bg, color: b.fg }}><b.icon size={20} /></span>
-              <h2 className="font-semibold text-xl mt-4">{b.title}</h2>
+              <h2 className="font-semibold text-xl mt-4">{liaisons(b.title)}</h2>
               <ul className="mt-3 space-y-2.5 text-[15px] text-[#4A3A50] leading-relaxed list-disc pl-5">
                 {b.items.map((t) => <li key={t}>{t}</li>)}
               </ul>
@@ -78,7 +80,7 @@ export default function BetaPage() {
 
         <section id="invitation" className="mt-16 grid lg:grid-cols-2 gap-12 items-start">
           <div>
-            <h2 className="font-display text-4xl tracking-[-0.015em]">Demander une invitation</h2>
+            <h2 className="font-display text-4xl tracking-[-0.015em]">{liaisons("Demander une invitation")}</h2>
             <p className="text-[17px] text-[#4A3A50] mt-3 leading-[1.7]">
               Dites-nous qui vous êtes et ce que vous publiez aujourd&apos;hui sur LinkedIn. Nous répondons sous quelques jours.
             </p>
