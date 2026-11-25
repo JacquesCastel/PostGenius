@@ -32,7 +32,7 @@ const NAV_V2 = [
 ];
 
 // variant : "classic" (style actuel) ou "v2" (nouveau style). La logique de session est la même pour les deux.
-export default function SiteHeader({ variant = "classic" } = {}) {
+export default function SiteHeader({ variant = "classic", nav = NAV_V2 } = {}) {
   const [loggedIn, setLoggedIn] = useState(false);
   const [userName, setUserName] = useState("");
   const [goodbye, setGoodbye] = useState(false); // fenêtre d'au revoir après la déconnexion
@@ -86,7 +86,7 @@ export default function SiteHeader({ variant = "classic" } = {}) {
             <BrandName className="font-display text-[26px] font-medium text-[#2E1F33]" />
           </Link>
           <nav className="hidden lg:flex items-center gap-7 text-[15px] font-medium text-[#4A3A50] mx-auto" aria-label="Navigation principale">
-            {NAV_V2.map(([href, label]) => (
+            {nav.map(([href, label]) => (
               <Link key={href} href={href} className="hover:text-[#9E3157] transition-colors">{label}</Link>
             ))}
           </nav>
@@ -106,7 +106,7 @@ export default function SiteHeader({ variant = "classic" } = {}) {
         </div>
         {open && (
           <nav className="lg:hidden mt-3 bg-white rounded-3xl border border-[#EFE4E0] p-2 flex flex-col" data-testid="site-menu" aria-label="Menu">
-            {NAV_V2.map(([href, label]) => (
+            {nav.map(([href, label]) => (
               <Link key={href} href={href} onClick={() => setOpen(false)} className="px-4 py-3 rounded-2xl text-[15px] font-medium text-[#2E1F33] hover:bg-[#F6E3E0]">{label}</Link>
             ))}
             {loggedIn && <Link href="/app" onClick={() => setOpen(false)} className="px-4 py-3 rounded-2xl text-[15px] font-semibold text-[#9E3157] hover:bg-[#F6E3E0]">Tableau de bord</Link>}
