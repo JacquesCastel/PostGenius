@@ -51,8 +51,8 @@ test("un bloc insécable trop long est coupé (il déborderait d'une colonne ét
   assert.ok(long("Ce que vous recevez") <= 18, "Ce que vous recevez");
   assert.ok(long("Le défavorable aussi") <= 18, "Le défavorable aussi");
   assert.ok(long("Construisons LinkeePost ensemble.") <= 18);
-  assert.equal(show(liaisons("Ce que vous recevez")), "Ce~que vous~recevez");
-  assert.equal(show(liaisons("Le défavorable aussi")), "Le défavorable~aussi");
+  assert.equal(show(liaisons("Ce que vous recevez")), "Ce~que~vous recevez");
+  assert.equal(show(liaisons("Le défavorable aussi")), "Le~défavorable aussi");
   // la ponctuation haute n'est jamais séparée, même dans un bloc long
   assert.ok(liaisons("Une phrase très longue avec un dernier mot : vraiment").includes(`mot${NB}:`));
 });
