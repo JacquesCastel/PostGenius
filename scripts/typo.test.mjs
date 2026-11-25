@@ -33,3 +33,14 @@ test("jamais d'espace ordinaire avant : ; ? ! ni après un guillemet ouvrant", (
   assert.doesNotMatch(t, / [:;?!»]/);
   assert.doesNotMatch(t, /« /);
 });
+
+test("les titres du nouveau style passent par liaisons() (pages déjà portées)", async () => {
+  const { readFileSync } = await import("node:fs");
+  const lire = (p) => readFileSync(new URL(`../${p}`, import.meta.url), "utf8");
+  for (const [p, n] of [["app/contact/page.js", 2], ["app/beta/page.js", 3], ["app/blog/page.js", 3], ["app/blog/[slug]/page.js", 1], ["app/preuves/page.js", 5], ["app/preuves/test-e4/page.js", 8]]) {
+    const s = lire(p);
+    assert.match(s, /from "@\/lib\/typo"/, p);
+    assert.ok((s.match(/liaisons\(/g) ?? []).length >= n, `${p} : au moins ${n} titres liés`);
+    assert.doesNotMatch(s, / /, `${p} : pas d'espace insécable invisible dans le source (utiliser {NB})`);
+  }
+});

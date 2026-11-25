@@ -4,6 +4,7 @@ import { memo, MEMO_TTL } from "@/lib/memoCache";
 import Shell from "@/components/v2/Shell";
 import { JOIN_HREF, pick } from "@/lib/access";
 import { BRAND_NAME } from "@/lib/brand";
+import { liaisons } from "@/lib/typo";
 
 // Rendu à la requête : pas de lecture base au build (DB factice en build Docker)
 export const dynamic = "force-dynamic";
@@ -49,7 +50,7 @@ export default async function BlogIndex() {
                   <span className="text-xs font-semibold bg-[#F6E3E0] text-[#7A2342] px-3 py-1 rounded-full">À la une</span>
                   {featured.publishedAt && <span className="text-[13px] text-[#6B5A70]">{fmtDate(featured.publishedAt)}</span>}
                 </div>
-                <h2 className="font-display text-[28px] sm:text-[34px] leading-[1.15]">{featured.title}</h2>
+                <h2 className="font-display text-[28px] sm:text-[34px] leading-[1.15]">{liaisons(featured.title)}</h2>
                 {featured.excerpt && <p className="text-base text-[#4A3A50] leading-relaxed mt-3.5 mb-5">{featured.excerpt}</p>}
                 <span className="font-semibold text-[#9E3157]">Lire l&apos;article →</span>
               </div>
@@ -67,7 +68,7 @@ export default async function BlogIndex() {
                     )}
                     <div className="p-6">
                       {a.publishedAt && <p className="text-xs text-[#6B5A70]">{fmtDate(a.publishedAt)}</p>}
-                      <h2 className="text-[19px] font-semibold leading-snug mt-2">{a.title}</h2>
+                      <h2 className="text-[19px] font-semibold leading-snug mt-2">{liaisons(a.title)}</h2>
                       {a.excerpt && <p className="text-sm text-[#4A3A50] leading-relaxed mt-2.5 line-clamp-3">{a.excerpt}</p>}
                       <span className="text-sm font-semibold text-[#9E3157] mt-3.5 inline-block">Lire →</span>
                     </div>
@@ -80,7 +81,7 @@ export default async function BlogIndex() {
 
         <div className="mt-20 bg-[#F6E3E0] rounded-[36px] p-8 sm:p-12 flex flex-wrap gap-8 items-center justify-between">
           <div className="flex-[1_1_380px] min-w-0">
-            <h2 className="font-display text-[30px] sm:text-[34px] leading-[1.1]">Prêt à passer à l&apos;action sur LinkedIn ?</h2>
+            <h2 className="font-display text-[30px] sm:text-[34px] leading-[1.1]">{liaisons("Prêt à passer à l'action sur LinkedIn ?")}</h2>
             <p className="text-base text-[#4A3A50] mt-2.5 leading-relaxed">{pick("Accès offert aux testeurs invités, sans carte bancaire.", "14 jours d'essai gratuit, sans carte bancaire.")}</p>
           </div>
           <Link href={JOIN_HREF} className="bg-[#C2456F] hover:bg-[#9E3157] text-white font-semibold px-8 py-4 rounded-full transition-colors">{pick("Demander une invitation", "Démarrer l'essai gratuit")}</Link>

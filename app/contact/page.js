@@ -4,6 +4,7 @@ import ContactForm from "./ContactForm";
 import { CONTACT_EMAIL } from "@/lib/contact";
 import { pick } from "@/lib/access";
 import { BRAND_NAME } from "@/lib/brand";
+import { liaisons, NB } from "@/lib/typo";
 
 export const metadata = {
   title: `Contact — ${BRAND_NAME}`,
@@ -26,7 +27,7 @@ export default function ContactPage() {
         <div className="flex-[1_1_420px] min-w-0">
           <p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-[#C2456F]">Contact</p>
           <h1 className="font-display text-[40px] sm:text-[50px] leading-[1.08] tracking-[-0.02em] mt-3">
-            Parlons de votre présence <em className="text-[#C2456F]">LinkedIn.</em>
+            {liaisons("Parlons de votre présence", { fin: false })}{NB}<em className="text-[#C2456F]">LinkedIn.</em>
           </h1>
           <p className="text-lg text-[#4A3A50] mt-5 leading-relaxed">
             Une question sur les offres, une demande de démo, un besoin particulier ou un souci technique ?
@@ -59,7 +60,7 @@ export default function ContactPage() {
         </div>
 
         <div className="flex-[1_1_380px] min-w-0 max-w-[460px] bg-white rounded-[28px] border border-[#EFE4E0] p-7 sm:p-8 shadow-[0_18px_40px_rgba(46,31,51,0.08)]">
-          <h2 className="text-[22px] font-semibold">Envoyez-nous un message</h2>
+          <h2 className="text-[22px] font-semibold">{liaisons("Envoyez-nous un message")}</h2>
           <p className="text-sm text-[#6B5A70] mt-1.5 mb-6">On vous répond à l&apos;adresse indiquée.</p>
           <ContactForm variant="v2" />
         </div>
