@@ -20,11 +20,12 @@ function site(overrides = {}) {
 test("statique : adresse par défaut = site de production, partout ; plus de linkeepost.app par défaut", () => {
   for (const f of ["deploy.sh", "scripts/smoke.sh", "scripts/smoke-preflight.sh"]) {
     const src = fs.readFileSync(f, "utf8");
-    assert.match(src, /https:\/\/postgenius\.network/, `${f} : défaut postgenius.network`);
+    assert.match(src, /https:\/\/vercea\.app/, `${f} : défaut vercea.app`);
+    assert.doesNotMatch(src.replace(/^#.*$/gm, ""), /SMOKE_URL:-https:\/\/postgenius/, `${f} : plus de défaut sur l'ancien domaine (il redirige ses pages en 301)`);
     assert.ok(!/SMOKE_URL:-https:\/\/linkeepost\.app/.test(src), `${f} : ancien défaut`);
   }
   const d = fs.readFileSync("deploy.sh", "utf8");
-  assert.ok(d.includes("SMOKE_URL=\"${SMOKE_URL:-https://postgenius.network}\""), "défaut surchargeable (variable d'environnement ou .env)");
+  assert.ok(d.includes("SMOKE_URL=\"${SMOKE_URL:-https://vercea.app}\""), "défaut surchargeable (variable d'environnement ou .env)");
   assert.ok(d.includes("smoke-preflight.sh") && d.includes("exit 1"), "arrêt si le site ne répond pas");
   assert.ok(d.includes("SKIP_SMOKE"), "possibilité de passer outre, explicite");
   assert.ok(!/désactivé cette fois/.test(d), "plus de désactivation silencieuse du contrôle");

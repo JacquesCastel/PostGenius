@@ -276,7 +276,7 @@ Un seul retour arrière est possible (la version précédente est gardée une se
 | `NEON_API_KEY`, `NEON_PROJECT_ID` | Copie de la base avant chaque changement de schéma. Clé : console.neon.tech → Account settings → API keys. Identifiant du projet : Settings du projet. |
 | `NEON_KEEP_BRANCHES=5` | Garde les 5 dernières copies `avant-deploy-…` et supprime les plus anciennes (jamais une autre branche). |
 | `SMOKE_EMAIL`, `SMOKE_PASSWORD` | Compte de contrôle : un compte ordinaire (jamais administrateur), pour tester la vraie connexion après chaque déploiement. |
-| `SMOKE_URL` | Adresse contrôlée (par défaut `https://postgenius.network`, le site en production). Modifiable ponctuellement (`SMOKE_URL=https://… ./deploy.sh`) ou dans le `.env`. Si le serveur ne joint pas cette adresse, le déploiement **s'arrête avant tout changement** avec un message explicite ; `SKIP_SMOKE=1` permet de déployer quand même (contrôle à la main ensuite). |
+| `SMOKE_URL` | Adresse contrôlée (par défaut `https://vercea.app`, le site en production ; **jamais `postgenius.network` : il redirige désormais ses pages en 301, le contrôle y échouerait**). Modifiable ponctuellement (`SMOKE_URL=https://… ./deploy.sh`) ou dans le `.env`. Si le serveur ne joint pas cette adresse, le déploiement **s'arrête avant tout changement** avec un message explicite ; `SKIP_SMOKE=1` permet de déployer quand même (contrôle à la main ensuite). |
 
 Sans réglage Neon, le déploiement fonctionne mais affiche « SANS-SNAPSHOT » quand le schéma change : le seul filet est alors la sauvegarde
 automatique de Neon.

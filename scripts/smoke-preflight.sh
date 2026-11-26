@@ -2,11 +2,11 @@
 #
 # Avant un déploiement : le site de production répond-il ? Le contrôle après déploiement (scripts/smoke.sh) interroge cette même adresse ;
 # s'il ne peut pas la joindre, il ne peut rien confirmer. On le sait AVANT de toucher à quoi que ce soit, et on s'arrête avec un message clair.
-# Usage : scripts/smoke-preflight.sh [adresse]   (défaut : $SMOKE_URL, sinon https://postgenius.network)
+# Usage : scripts/smoke-preflight.sh [adresse]   (défaut : $SMOKE_URL, sinon https://vercea.app)
 # Code de sortie : 0 si le site répond (HTTP 200 sur /api/health), 1 sinon.
 # Une seule dépendance : curl.
 #
-URL="${1:-${SMOKE_URL:-https://postgenius.network}}"
+URL="${1:-${SMOKE_URL:-https://vercea.app}}"
 URL="${URL%/}"
 code=$(curl -sk --max-time 10 -o /dev/null -w '%{http_code}' "$URL/api/health" 2>/dev/null || true)
 if [ "$code" = "200" ]; then
