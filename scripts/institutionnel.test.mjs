@@ -69,3 +69,12 @@ test("a-propos : aucune promesse de portée ; la réponse chiffrée vient du tes
   assert.match(p, /\{B\.textes\} posts sur 10/);
   assert.match(p, /Nous ne le promettons pas/);
 });
+
+test("pages publiques sans équivalent v2 : /privacy-policy et /securite utilisent le gabarit du nouveau site", () => {
+  for (const f of ["app/privacy-policy/page.js", "app/securite/page.js"]) {
+    const s = read(f);
+    assert.match(s, /import Shell from "@\/components\/v2\/Shell"/, f);
+    assert.doesNotMatch(s, /SiteHeader|SiteFooter/, f);
+  }
+  assert.match(read("app/privacy-policy/page.js"), /alternates: \{ canonical: "\/privacy-policy" \}/);
+});

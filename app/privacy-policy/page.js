@@ -1,6 +1,5 @@
 import Link from "next/link";
-import SiteHeader from "@/components/SiteHeader";
-import SiteFooter from "@/components/SiteFooter";
+import Shell from "@/components/v2/Shell";
 import { getFooterPage } from "@/lib/footer-pages";
 import { BRAND_NAME, BRAND_ANCIEN, BRAND_DOMAINE } from "@/lib/brand";
 
@@ -36,28 +35,26 @@ export default async function PrivacyPolicy() {
   const fr = await getFooterPage("confidentialite");
   const controller = fr?.sections?.[0]?.body;
   return (
-    <div className="bg-gradient-to-b from-rose-50/60 via-white to-white text-[#1b2a4a] min-h-screen flex flex-col">
-      <SiteHeader />
-      <main className="max-w-4xl mx-auto px-6 py-14 flex-1 w-full" lang="en">
-        <Link href="/" className="text-sm text-[#ff5a5f] hover:underline">← Back to home</Link>
-        <h1 className="text-3xl font-bold mt-4 mb-2">Privacy Policy</h1>
-        <p className="text-xs text-gray-400 mb-8">Version française : <Link href="/confidentialite" className="underline">Politique de confidentialité</Link></p>
-        <section className="space-y-6 text-sm leading-relaxed">
+    <Shell>
+      <div className="max-w-[860px] mx-auto px-4 sm:px-8 pt-8 pb-24" lang="en">
+        <p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-[#C2456F] mb-3">Legal</p>
+        <h1 className="font-display text-[34px] sm:text-[48px] leading-[1.08] tracking-[-0.02em]">Privacy Policy</h1>
+        <p className="text-[15px] text-[#6B5A70] mt-3">Version française : <Link href="/confidentialite" className="font-semibold text-[#9E3157] underline">Politique de confidentialité</Link></p>
+        <section className="mt-10 flex flex-col gap-4">
           {controller && (
-            <div>
-              <h2 className="font-semibold text-base mb-2">Data controller and contact</h2>
-              {controller.split("\n").map((line, j) => <p key={j}>{line}</p>)}
+            <div className="bg-white border border-[#EFE4E0] rounded-3xl p-6">
+              <h2 className="font-semibold text-[17px] mb-2">Data controller and contact</h2>
+              {controller.split("\n").map((line, j) => <p key={j} className="text-[15px] leading-relaxed text-[#4A3A50]">{line}</p>)}
             </div>
           )}
           {SECTIONS.map(([heading, body]) => (
-            <div key={heading}>
-              <h2 className="font-semibold text-base mb-2">{heading}</h2>
-              <p>{body}</p>
+            <div key={heading} className="bg-white border border-[#EFE4E0] rounded-3xl p-6">
+              <h2 className="font-semibold text-[17px] mb-2">{heading}</h2>
+              <p className="text-[15px] leading-relaxed text-[#4A3A50]">{body}</p>
             </div>
           ))}
         </section>
-      </main>
-      <SiteFooter />
-    </div>
+      </div>
+    </Shell>
   );
 }
