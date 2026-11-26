@@ -22,7 +22,7 @@ test("/a-propos : fermée sans interrupteur, fermée tant qu'un champ manque, ou
 test("les informations de l'éditeur sont celles qu'il a données ; le reste reste vide tant que personne ne l'écrit", () => {
   assert.deepEqual(A_PROPOS.editeur, { raisonSociale: "Wharf", formeJuridique: "SARL au capital de 10 000 €", villeSiege: "Paris" });
   assert.deepEqual(champsManquants(A_PROPOS), [], "pourquoi + éditeur remplis : la page peut s'ouvrir");
-  assert.match(A_PROPOS.pourquoi, /^l'idée est simple\./);
+  assert.match(A_PROPOS.pourquoi, /^L'idée est simple\. Elle est venue/);
   assert.equal(portraitPresent(A_PROPOS), false, "portrait volontairement absent");
   const demi = { ...A_PROPOS, portrait: { prenomNom: "A B", role: null, presentation: null } };
   assert.deepEqual(champsManquants(demi), ["portrait.role", "portrait.presentation"], "portrait à moitié rempli = page fermée");
