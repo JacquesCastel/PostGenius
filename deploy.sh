@@ -188,6 +188,21 @@ else
   exit 1
 fi
 
+# ── Alerte Caddyfile (information seule : ne bloque jamais un déploiement) ─────
+# Le Caddyfile est monté dans le conteneur comme FICHIER UNIQUE : après un `git pull`, le conteneur garde l'ancienne version
+# (nouvelle inode). `caddy reload` répond alors « config is unchanged » sans rien appliquer, et la nouvelle version ne serait lue
+# qu'au prochain redémarrage de Caddy. On compare donc l'empreinte du fichier de l'hôte et celle vue par le conteneur.
+if [ -n "$(docker compose ps -q caddy 2>/dev/null || true)" ]; then
+  CADDY_HOTE=$(sha256sum "$APP_DIR/Caddyfile" 2>/dev/null | cut -d' ' -f1 || true)
+  CADDY_CONT=$(docker compose exec -T caddy sha256sum /etc/caddy/Caddyfile 2>/dev/null | cut -d' ' -f1 || true)
+  if [ -n "$CADDY_HOTE" ] && [ -n "$CADDY_CONT" ] && [ "$CADDY_HOTE" != "$CADDY_CONT" ]; then
+    echo "    ⚠ Le Caddyfile du dépôt n'est PAS celui que Caddy utilise. Pour l'appliquer (coupure d'une à trois secondes) :"
+    echo "      docker compose run --rm --no-deps -v \"\$PWD/Caddyfile:/etc/caddy/Caddyfile:ro\" caddy caddy validate --config /etc/caddy/Caddyfile"
+    echo "      docker compose up -d --force-recreate caddy"
+    log "alerte : Caddyfile du dépôt différent de celui du conteneur Caddy"
+  fi
+fi
+
 # ── Entretien disque ────────────────────────────────────────────────────────
 docker image prune -f >/dev/null 2>&1 || true
 # Le cache de construction ne sert à rien d'un déploiement à l'autre (l'image ne fait que copier le build) et s'accumulait :

@@ -69,3 +69,15 @@ test("après déploiement : site qui ne répond pas du tout → échec explicite
   assert.equal(r.code, 1); assert.match(r.out, /✗ santé/);
   assert.ok(Date.now() - t0 < 30000);
 });
+
+test("deploy.sh signale un Caddyfile que le conteneur Caddy n'utilise pas, sans jamais bloquer le déploiement", async () => {
+  const { readFileSync } = await import("node:fs");
+  const s = readFileSync(new URL("../deploy.sh", import.meta.url), "utf8");
+  assert.match(s, /Alerte Caddyfile \(information seule/);
+  assert.match(s, /sha256sum "\$APP_DIR\/Caddyfile"[^\n]*\|\| true/);
+  assert.match(s, /docker compose exec -T caddy sha256sum \/etc\/caddy\/Caddyfile[^\n]*\|\| true/);
+  assert.match(s, /docker compose up -d --force-recreate caddy/, "la commande à lancer est affichée");
+  const alerte = s.slice(s.indexOf("# ── Alerte Caddyfile"), s.indexOf("# ── Entretien disque"));
+  assert.doesNotMatch(alerte, /\bexit\b/, "l'alerte ne fait jamais échouer le déploiement");
+  assert.ok(s.indexOf("# ── Alerte Caddyfile") > s.indexOf("7/7  contrôle automatique"), "après le contrôle du site, jamais avant");
+});
