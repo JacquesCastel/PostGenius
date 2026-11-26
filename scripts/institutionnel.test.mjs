@@ -19,10 +19,12 @@ test("/a-propos : fermée sans interrupteur, fermée tant qu'un champ manque, ou
   assert.ok(champsManquants({ ...complet, editeur: { ...complet.editeur, formeJuridique: null } }).includes("editeur.formeJuridique"));
 });
 
-test("les informations de l'éditeur ne sont pas inventées : tant que personne ne les donne, elles sont toutes vides", () => {
+test("les informations de l'éditeur sont celles qu'il a données ; le reste reste vide tant que personne ne l'écrit", () => {
+  assert.deepEqual(A_PROPOS.editeur, { raisonSociale: "Wharf", formeJuridique: "SARL au capital de 10 000 €", villeSiege: "Paris" });
   const m = champsManquants(A_PROPOS);
-  assert.ok(m.length >= 8, `champs manquants : ${m.join(", ")}`);
-  assert.equal(aProposOuvert({ SITE_APROPOS: "1" }, m), false);
+  assert.deepEqual(m, ["pourquoi", "portrait.prenomNom", "portrait.role", "portrait.presentation", "engagementCorrection"].filter((c) => m.includes(c)), "seuls ces champs peuvent manquer");
+  // tant qu'un champ manque, la page reste fermée même interrupteur posé
+  if (m.length) assert.equal(aProposOuvert({ SITE_APROPOS: "1" }, m), false);
 });
 
 test("/legal : fermée si un texte contient « À COMPLÉTER », même interrupteur posé", () => {
