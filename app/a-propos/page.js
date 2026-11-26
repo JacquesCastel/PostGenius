@@ -6,6 +6,7 @@ import { CONTACT_EMAIL } from "@/lib/contact";
 import { A_PROPOS, champsManquants, portraitPresent } from "@/lib/aPropos";
 import { aProposOuvert } from "@/lib/siteInstitutionnel";
 import { preuvesOuvertes } from "@/lib/sitePreuves";
+import { produitOuvert } from "@/lib/siteProduit";
 import { E4 } from "@/lib/e4Page";
 import { liaisons, liaisonsEm } from "@/lib/typo";
 
@@ -53,7 +54,7 @@ export default function AProposPage() {
           <div className="flex-[1_1_320px] min-w-0"><Kick>Pourquoi</Kick><h2 className="font-display text-[30px] sm:text-[38px] leading-[1.1] tracking-[-0.015em]">{liaisons("Nés d'un constat, pas d'une promesse.")}</h2></div>
           <div className="flex-[2_1_480px] min-w-0 text-[17px] leading-[1.75] text-[#4A3A50] flex flex-col gap-4">
             <p>{d.pourquoi}</p>
-            <p>Notre parti pris : le produit signale les chiffres absents de vos documents avant publication, et nous publions ce que nous mesurons, avec ses limites.</p>
+            <p>Notre parti pris : le produit signale les chiffres absents de vos documents avant publication, et nous publions ce que nous mesurons, avec ses limites.{produitOuvert() && <> <Link href="/produit/methode" className="font-semibold text-[#9E3157] underline">Comment l&apos;outil fonctionne, étape par étape</Link>.</>}</p>
           </div>
         </section>
 

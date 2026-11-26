@@ -44,7 +44,8 @@ test("cartes de preuve : seulement si la preuve est publiée ; chiffres lus dans
 test("liens vers les pages Produit seulement si elles sont ouvertes ; /scoring existe", () => {
   const h = read("components/home/HomeV2.js");
   assert.match(h, /produitOuvert\(\)\s*\?/);
-  assert.equal((h.match(/href="\/produit/g) ?? []).length, 1, "un seul lien vers les pages Produit, dans la fonction conditionnelle");
+  assert.equal((h.match(/href="\/produit/g) ?? []).length, 2, "deux liens vers les pages Produit (vérification, méthode), tous deux conditionnels");
+  assert.match(h, /\{produitOuvert\(\) && <p className="mt-8"><Link href="\/produit\/methode"/);
   assert.match(h, /produitOuvert\(\)\s*\?\s*<Link href="\/produit\/verification"/);
   assert.match(h, /href="\/scoring"/);
 });
