@@ -2,6 +2,12 @@
 
 **Statut : plan, rien n'est exécuté.** Je ne peux ni acheter un domaine, ni toucher au serveur : les étapes marquées « Jacques » sont à faire de votre côté. Les maquettes restent la priorité du site ; ce document ne change aucun code.
 
+## 0 bis. Constat du 26 novembre 2026 (relevé sur le serveur)
+- `postgenius.network` répond 200, sans redirection : **c'est le domaine de production actuel**, adresse du serveur `46.225.15.150`.
+- Le `Caddyfile` en cours dans le conteneur sert `postgenius.network` ; celui du dépôt (modifié le 2 novembre) le redirigeait vers `linkeepost.app`. Caddy ne relit pas le fichier tout seul : la panne se serait produite au prochain redémarrage de Caddy (redémarrage du serveur compris).
+- `linkeepost.app` **ne pointe pas vers ce serveur** (`217.70.184.38`, registraire Gandi) ; ses e-mails passent aussi par Gandi (`spool.mail.gandi.net`). Aucun certificat HTTPS n'est possible pour lui ici.
+- **Correction** (PR `Caddyfile`) : `postgenius.network` servi directement, `vercea.app` servi en parallèle, aucun bloc `linkeepost.app`. Le test `scripts/caddyfile.test.mjs` interdit désormais une redirection vers un domaine non servi.
+
 ## 0. À vérifier d'abord : un risque d'indisponibilité qui existe déjà
 Le `Caddyfile` du dépôt redirige **`postgenius.network` vers `linkeepost.app`** en 301 (voir aussi `DEPLOY.md`, ligne 19). Or, le 10 novembre, `linkeepost.app` ne pointait pas vers votre serveur et le site répondait sur `postgenius.network`. Deux explications possibles :
 - le serveur n'a pas rechargé ce `Caddyfile` (il tourne avec une ancienne version) : **au prochain redémarrage ou rechargement de Caddy, `postgenius.network` redirigerait vers une adresse qui ne répond pas**, et le site deviendrait inaccessible ;
