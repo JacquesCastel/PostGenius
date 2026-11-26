@@ -7,11 +7,11 @@ export default function JsonLd() {
       type="application/ld+json"
       dangerouslySetInnerHTML={{
         __html: JSON.stringify([
-          { "@context": "https://schema.org", "@type": "Organization", name: "LinkeePost", url: "https://linkeepost.app", logo: "https://linkeepost.app/icon.svg" },
+          { "@context": "https://schema.org", "@type": "Organization", name: "Vercéa", url: "https://linkeepost.app", logo: "https://linkeepost.app/icon.svg" },
           {
             "@context": "https://schema.org",
             "@type": "SoftwareApplication",
-            name: "LinkeePost",
+            name: "Vercéa",
             applicationCategory: "BusinessApplication",
             operatingSystem: "Web",
             inLanguage: "fr",

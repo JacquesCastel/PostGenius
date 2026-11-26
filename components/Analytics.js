@@ -13,7 +13,7 @@ export default function Analytics() {
   const isPrivate = PRIVATE.test(path || "");
   const first = useRef(true); // la première page de la visite porte l'origine (document.referrer) ; les suivantes sont des navigations internes
 
-  // Mesure d'audience faite par LinkeePost (en plus d'Umami) : une page vue par page publique affichée. Rien n'est stocké côté navigateur.
+  // Mesure d'audience faite par Vercéa (en plus d'Umami) : une page vue par page publique affichée. Rien n'est stocké côté navigateur.
   useEffect(() => {
     if (isPrivate) return;
     const internal = !first.current;

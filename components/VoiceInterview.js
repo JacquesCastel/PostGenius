@@ -31,7 +31,7 @@ export default function VoiceInterview({ topic = "", language = "", autoStart = 
   if (!questions) {
     return (
       <div className="space-y-2 mb-3" data-testid="interview-intro">
-        <p className="text-xs text-gray-500">Trois questions, une réponse à la voix pour chacune (30 secondes à 2 minutes). LinkeePost les réunit ensuite en un texte que vous relisez.</p>
+        <p className="text-xs text-gray-500">Trois questions, une réponse à la voix pour chacune (30 secondes à 2 minutes). Vercéa les réunit ensuite en un texte que vous relisez.</p>
         {error && <p className="text-xs text-red-600" data-testid="interview-error">{error}</p>}
         <div className="flex gap-3 items-center">
           <button type="button" onClick={start} disabled={loading} data-testid="interview-start" className="bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white text-sm font-medium px-4 py-2 rounded-lg">{loading ? "Préparation des questions…" : "Commencer l'interview"}</button>

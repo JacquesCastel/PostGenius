@@ -12,7 +12,7 @@ const btn = "text-sm font-bold px-4 py-2.5 rounded-xl disabled:opacity-50";
 function Shell({ children }) {
   return (
     <main className="min-h-screen flex flex-col items-center justify-center px-4 py-10 bg-slate-100" data-testid="oauth-page">
-      <p className="text-xl font-extrabold mb-5 text-[#1b2a4a]">LinkeePost</p>
+      <p className="text-xl font-extrabold mb-5 text-[#1b2a4a]">Vercéa</p>
       {children}
     </main>
   );
@@ -97,7 +97,7 @@ function Authorize() {
   if (ctx.needLogin) return (
     <Shell><div className={card}>
       <h1 className="text-lg font-extrabold" data-testid="oauth-title">Connectez-vous pour autoriser {name}</h1>
-      <p className="text-sm text-gray-700 mt-2">{name} demande l&apos;accès à votre compte LinkeePost. Connectez-vous d&apos;abord.</p>
+      <p className="text-sm text-gray-700 mt-2">{name} demande l&apos;accès à votre compte Vercéa. Connectez-vous d&apos;abord.</p>
       <LoginForm onDone={() => load()} />
     </div></Shell>
   );

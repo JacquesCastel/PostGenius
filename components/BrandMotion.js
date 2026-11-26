@@ -90,7 +90,7 @@ function SceneHook({ lt }) {
         <LpMark size={96} />
       </div>
       <Headline lt={lt - 0.3} size={112} lines={[{ text: "Votre expertise. Vos mots." }, { text: "Vos posts LinkedIn.", accent: true }]} />
-      <div style={{ marginTop: 40, fontSize: 40, color: C.muted, opacity: easeOut(seg(lt, 2.0, 0.6)) }}>Une thématique, une humeur : LinkeePost rédige, programme et mesure.</div>
+      <div style={{ marginTop: 40, fontSize: 40, color: C.muted, opacity: easeOut(seg(lt, 2.0, 0.6)) }}>Une thématique, une humeur : Vercéa rédige, programme et mesure.</div>
     </div>
   );
 }
@@ -379,7 +379,7 @@ export function Stage({ t }) {
       {t > TL[1].from && t < TL[6].from && (
         <div style={{ position: "absolute", left: 120, top: 70, display: "flex", alignItems: "center", gap: 18, opacity: seg(t, TL[1].from, 0.4) * (1 - seg(t, TL[6].from - 0.6, 0.4)) }}>
           <div style={{ width: 62, height: 62, borderRadius: 18, background: C.coral, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center" }}><LpMark size={40} /></div>
-          <span style={{ fontSize: 40, fontWeight: 800, color: C.navy }}>LinkeePost</span>
+          <span style={{ fontSize: 40, fontWeight: 800, color: C.navy }}>Vercéa</span>
         </div>
       )}
 
@@ -491,7 +491,7 @@ export default function BrandMotion({ record = false, className = "" }) {
       className={`relative w-full overflow-hidden ${className}`}
       style={{ aspectRatio: "16 / 9", background: "linear-gradient(180deg, #fff1f2, #fff7ed 45%, #f0f9ff)" }}
       role="group"
-      aria-label="Animation d'environ 40 secondes : vous dictez ou déposez vos sources par thématique, vous choisissez une humeur, LinkeePost rédige un post dans votre voix, le programme et le publie depuis votre tableau de bord, puis transforme les commentaires en leads notés par rapport à votre cible."
+      aria-label="Animation d'environ 40 secondes : vous dictez ou déposez vos sources par thématique, vous choisissez une humeur, Vercéa rédige un post dans votre voix, le programme et le publie depuis votre tableau de bord, puis transforme les commentaires en leads notés par rapport à votre cible."
       data-testid="brand-motion"
     >
       <div style={{ position: "absolute", left: 0, top: 0, width: W, height: H, transform: `scale(${scale})`, transformOrigin: "top left", visibility: scale ? "visible" : "hidden" }} aria-hidden="true">
@@ -522,7 +522,7 @@ export default function BrandMotion({ record = false, className = "" }) {
         </button>
       )}
       <p className="sr-only">
-        Étape 1 : vous parlez ou vous déposez vos documents et liens dans la base d'une thématique. Étape 2 : vous choisissez une humeur et LinkeePost rédige un post dans votre voix, avec les sources utilisées. Étape 3 : le post est programmé et publié depuis votre tableau de bord « Aujourd'hui », avec les idées du copilote. Étape 4 : les commentaires deviennent des contacts notés par l&apos;IA selon votre cible, et vous décidez qui contacter.
+        Étape 1 : vous parlez ou vous déposez vos documents et liens dans la base d'une thématique. Étape 2 : vous choisissez une humeur et Vercéa rédige un post dans votre voix, avec les sources utilisées. Étape 3 : le post est programmé et publié depuis votre tableau de bord « Aujourd'hui », avec les idées du copilote. Étape 4 : les commentaires deviennent des contacts notés par l&apos;IA selon votre cible, et vous décidez qui contacter.
         {pick(" Bêta fermée : accès sur invitation, sans carte bancaire.", " 14 jours d'essai gratuit, sans carte bancaire.")}
       </p>
     </div>

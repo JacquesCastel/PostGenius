@@ -9,9 +9,9 @@ import { JOIN_HREF, pick } from "@/lib/access";
 import { redirigerSiNecessaire } from "@/lib/siteNavServer";
 
 export const metadata = {
-  title: "Comment ça marche — LinkeePost",
+  title: "Comment ça marche — Vercéa",
   description:
-    "De l'inscription à la statistique : vous déposez votre matière et fixez votre voix, LinkeePost rédige à partir de vos faits, puis programme et publie après votre accord.",
+    "De l'inscription à la statistique : vous déposez votre matière et fixez votre voix, Vercéa rédige à partir de vos faits, puis programme et publie après votre accord.",
   alternates: { canonical: "/comment-ca-marche" },
 };
 
@@ -29,7 +29,7 @@ const STEPS = [
   {
     icon: BookOpen,
     title: "Déposez votre matière",
-    text: "Documents, liens, notes, anciens posts : LinkeePost en tire des faits, des cas et du vocabulaire, que vous relisez et validez. C'est cette base qui nourrit vos posts, et chaque post indique les sources qu'il a utilisées.",
+    text: "Documents, liens, notes, anciens posts : Vercéa en tire des faits, des cas et du vocabulaire, que vous relisez et validez. C'est cette base qui nourrit vos posts, et chaque post indique les sources qu'il a utilisées.",
     visual: (
       <div className="rounded-2xl border border-gray-100 p-3 max-w-xs">
         <p className="text-xs font-semibold flex items-center gap-1.5 mb-1.5"><BookOpen size={13} className="text-[#ff5a5f]" /> Guide accessibilité</p>
@@ -124,7 +124,7 @@ export default async function CommentCaMarchePage() {
             De votre matière au post publié, <span className="text-[#ff5a5f]">étape par étape</span>
           </h1>
           <p className="text-lg text-[#5a6b85] mt-4">
-            Vous déposez votre matière et fixez votre voix une fois. LinkeePost rédige à partir de vos faits,
+            Vous déposez votre matière et fixez votre voix une fois. Vercéa rédige à partir de vos faits,
             vous relisez, puis les posts partent à l&apos;heure choisie. Voici le parcours.
           </p>
         </section>

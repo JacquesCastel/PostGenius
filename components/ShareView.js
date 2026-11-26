@@ -4,7 +4,7 @@ import { Share2, ThumbsUp, PenLine, Database, Check, RefreshCw } from "lucide-re
 import ShareHowTo from "@/components/ShareHowTo";
 import { cleanShare, shareKind, MIN_NOTE_CHARS, MIN_SOURCE_CHARS } from "@/lib/shareLink";
 
-// Partager vers LinkeePost : un lien reçu du menu Partager du téléphone ou d'un favori du navigateur. L'outil ne peut pas lire un
+// Partager vers Vercéa : un lien reçu du menu Partager du téléphone ou d'un favori du navigateur. L'outil ne peut pas lire un
 // post LinkedIn : pour un post, on propose d'y répondre par son adresse, ou de coller son texte pour s'en inspirer ou le garder.
 // Une page web publique, elle, est lue par le serveur. Rien n'est enregistré sans un clic.
 
@@ -73,15 +73,15 @@ export default function ShareView({ payload, activeContextId = null, showToast, 
   return (
     <main className="max-w-2xl mx-auto p-6 space-y-4" data-testid="share-view">
       <div className={card}>
-        <p className="text-sm font-semibold flex items-center gap-2"><Share2 size={15} className="text-[#ff5a5f]" /> Partager vers LinkeePost</p>
+        <p className="text-sm font-semibold flex items-center gap-2"><Share2 size={15} className="text-[#ff5a5f]" /> Partager vers Vercéa</p>
         <p className="text-xs text-gray-400 mt-1">Un article, une page web ou un post LinkedIn : choisissez ce que vous voulez en faire. Rien n&apos;est enregistré sans votre clic.</p>
         <label className="block text-xs font-medium text-gray-500 mt-4 mb-1">Adresse</label>
         <input type="url" value={url} onChange={(e) => { setUrl(e.target.value); setAdded(false); }} placeholder="https://…" className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]" data-testid="share-url" />
         {url && (
           <p className="text-xs mt-1.5 text-gray-500" data-testid="share-kind">
-            {kind === "linkedin-post" && "Post LinkedIn reconnu : LinkeePost ne peut pas lire son texte."}
-            {kind === "linkedin" && "Lien LinkedIn (profil, page ou lien court) : LinkeePost ne peut pas le lire. Pour répondre à un post, ouvrez-le et copiez son adresse complète."}
-            {kind === "web" && `Page web (${host}) : LinkeePost peut la lire.`}
+            {kind === "linkedin-post" && "Post LinkedIn reconnu : Vercéa ne peut pas lire son texte."}
+            {kind === "linkedin" && "Lien LinkedIn (profil, page ou lien court) : Vercéa ne peut pas le lire. Pour répondre à un post, ouvrez-le et copiez son adresse complète."}
+            {kind === "web" && `Page web (${host}) : Vercéa peut la lire.`}
             {kind === "none" && "Adresse non reconnue : collez une adresse commençant par https://"}
           </p>
         )}
@@ -110,7 +110,7 @@ export default function ShareView({ payload, activeContextId = null, showToast, 
             </div>
           )}
           <div className="flex items-start justify-between gap-3 flex-wrap">
-            <p className="text-sm text-gray-700 max-w-md"><strong>Écrire un post à partir de ça.</strong> {kind === "web" ? "LinkeePost lit la page puis rédige avec votre voix à partir de ce qu'elle dit ; un contrôle signale, sous le post, les chiffres qui ne figurent pas dans vos informations." : "LinkeePost s'inspire du texte collé pour rédiger avec votre voix : il reformule, il ne recopie pas."}</p>
+            <p className="text-sm text-gray-700 max-w-md"><strong>Écrire un post à partir de ça.</strong> {kind === "web" ? "Vercéa lit la page puis rédige avec votre voix à partir de ce qu'elle dit ; un contrôle signale, sous le post, les chiffres qui ne figurent pas dans vos informations." : "Vercéa s'inspire du texte collé pour rédiger avec votre voix : il reformule, il ne recopie pas."}</p>
             <button type="button" onClick={write} disabled={!canWrite || busy !== null} className={`${btn} bg-[#ff5a5f] hover:bg-[#f63d44] text-white`} data-testid="share-write">
               {busy === "post" ? <RefreshCw size={14} className="animate-spin" /> : <PenLine size={14} />} Écrire un post
             </button>

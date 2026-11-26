@@ -1,4 +1,4 @@
-// Logo LinkeePost : monogramme L + P. Hérite de la couleur (currentColor),
+// Logo Vercéa : monogramme L + P. Hérite de la couleur (currentColor),
 // donc s'utilise en blanc dans la pastille corail comme l'ancienne icône.
 export default function LpMark({ size = 24, className = "" }) {
   return (

@@ -16,7 +16,7 @@ async function handle(req, oneClick) {
   const r = await prisma.user.updateMany({ where: { id: u }, data: { emailOptOut: !resub } });
   if (!r.count) return page("Compte introuvable", "Ce compte n'existe plus.", 404);
   return resub
-    ? page("Vous êtes de nouveau inscrit", "Vous recevrez à nouveau les e-mails d'accompagnement de LinkeePost.")
+    ? page("Vous êtes de nouveau inscrit", "Vous recevrez à nouveau les e-mails d'accompagnement de Vercéa.")
     : page("Vous êtes désinscrit", `Vous ne recevrez plus les e-mails d'accompagnement (accueil, fin d\u2019essai, récapitulatif hebdomadaire). Les e-mails de service restent envoyés : alertes de quota, validations, mot de passe.<br><br><a href="${escHtml(unsubscribeUrl(u))}&resub=1" style="color:#0a66c2">Vous vous êtes trompé ? Se réinscrire</a>`);
 }
 

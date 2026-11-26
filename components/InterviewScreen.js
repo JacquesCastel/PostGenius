@@ -21,7 +21,7 @@ export default function InterviewScreen({ language = "", initialTopic = "", onDo
         <span className="p-2.5 rounded-xl bg-[#fff1f1] text-[#ff5a5f] shrink-0"><Mic size={20} /></span>
         <div>
           <h2 className="text-lg font-bold" data-testid="interview-title">Interview guidée</h2>
-          <p className="text-sm text-gray-500 mt-0.5">Trois questions, une réponse à la voix pour chacune. LinkeePost réunit vos réponses en un texte que vous relisez, puis qui devient la matière d&apos;un post.</p>
+          <p className="text-sm text-gray-500 mt-0.5">Trois questions, une réponse à la voix pour chacune. Vercéa réunit vos réponses en un texte que vous relisez, puis qui devient la matière d&apos;un post.</p>
         </div>
       </div>
       <ol className="space-y-2 text-sm">

@@ -186,11 +186,11 @@ export default function LeadsView({ showToast, initialScope = "main" }) {
     <main className="max-w-3xl mx-auto p-6 space-y-4" data-testid="leads-view">
       <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-xs text-amber-900" data-testid="leads-retention-notice">
         <p className="font-semibold mb-1">Données reçues de LinkedIn : conservation limitée</p>
-        <p>Les règles de LinkedIn n&apos;autorisent à garder le profil d&apos;un commentateur que <strong>24 heures</strong> et son commentaire que <strong>48 heures</strong>. Passé ce délai, LinkeePost les efface automatiquement, avec la note de l&apos;IA, et ne permet pas de les exporter. Les leads que vous saisissez vous-même sont conservés tant que vous le souhaitez.</p>
+        <p>Les règles de LinkedIn n&apos;autorisent à garder le profil d&apos;un commentateur que <strong>24 heures</strong> et son commentaire que <strong>48 heures</strong>. Passé ce délai, Vercéa les efface automatiquement, avec la note de l&apos;IA, et ne permet pas de les exporter. Les leads que vous saisissez vous-même sont conservés tant que vous le souhaitez.</p>
       </div>
       <div className={card}>
         <p className="text-sm font-semibold flex items-center gap-2"><Users size={15} className="text-[#ff5a5f]" /> Base de leads</p>
-        <p className="text-xs text-gray-400 mt-1">Les personnes qui commentent votre page entreprise sont ajoutées ici automatiquement, avec leur commentaire. L&apos;IA les note selon votre client idéal. LinkeePost n&apos;envoie aucun message : le contact reste entre vos mains.</p>
+        <p className="text-xs text-gray-400 mt-1">Les personnes qui commentent votre page entreprise sont ajoutées ici automatiquement, avec leur commentaire. L&apos;IA les note selon votre client idéal. Vercéa n&apos;envoie aucun message : le contact reste entre vos mains.</p>
         {scopes.length > 1 && (
           <div className="flex flex-wrap gap-1.5 mt-4" data-testid="leads-scopes" role="tablist" aria-label="Thématique">
             {scopes.map((s) => (

@@ -334,7 +334,7 @@ function AuthScreen({ onAuth }) {
               </div>
               <div className="bg-amber-50 border border-amber-200 rounded-3xl p-5">
                 <p className="text-xs font-bold uppercase tracking-wider text-amber-800 mb-1.5">Ici, on écrit comme on vit</p>
-                <p className="text-sm text-gray-700 leading-relaxed">Un jour vous célébrez un contrat signé, le lendemain vous râlez parce qu&apos;une facture n&apos;est toujours pas réglée. LinkeePost écrit avec vous dans les deux cas : vous choisissez le sujet, l&apos;humeur du jour, et vous gardez la main.</p>
+                <p className="text-sm text-gray-700 leading-relaxed">Un jour vous célébrez un contrat signé, le lendemain vous râlez parce qu&apos;une facture n&apos;est toujours pas réglée. Vercéa écrit avec vous dans les deux cas : vous choisissez le sujet, l&apos;humeur du jour, et vous gardez la main.</p>
               </div>
             </div>
           </div>
@@ -368,7 +368,7 @@ function AuthScreen({ onAuth }) {
               Créez vos posts et <span className="text-[#ff5a5f]">campagnes LinkedIn</span> avec l'IA
             </h1>
             <p className="text-[#5a6b85] mt-4 leading-relaxed max-w-md">
-              LinkeePost rédige des posts à partir de ce que vous savez, programme vos publications
+              Vercéa rédige des posts à partir de ce que vous savez, programme vos publications
               et suit vos statistiques.
             </p>
 
@@ -464,7 +464,7 @@ function AuthScreen({ onAuth }) {
 
           {closedNotice ? (
             <div className="rounded-2xl bg-amber-50 border border-amber-200 p-4 text-sm text-amber-900" data-testid="signups-closed">
-              <p className="font-semibold">LinkeePost est en bêta fermée</p>
+              <p className="font-semibold">Vercéa est en bêta fermée</p>
               {invite?.invalid && <p className="mt-1">Ce lien d&apos;invitation n&apos;est plus valide (déjà utilisé, révoqué ou expiré).</p>}
               <p className="mt-1">Les inscriptions se font pour l&apos;instant sur invitation. Demandez la vôtre, ou ouvrez le lien reçu par e-mail.</p>
               <a href="/beta#invitation" className="inline-block mt-3 bg-[#ff5a5f] text-white font-semibold px-4 py-2 rounded-full">Demander une invitation</a>
@@ -760,7 +760,7 @@ function EngageView({ linkedin, showToast, onConnect, embedded = false, onSent, 
       <Wrap className={embedded ? "" : "max-w-2xl mx-auto p-6"}>
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center space-y-3">
           <Linkedin size={28} className="mx-auto text-[#0a66c2]" />
-          <p className="text-sm text-gray-600">Connectez votre compte LinkedIn pour réagir et commenter depuis LinkeePost.</p>
+          <p className="text-sm text-gray-600">Connectez votre compte LinkedIn pour réagir et commenter depuis Vercéa.</p>
           <button onClick={onConnect} className="bg-[#0a66c2] hover:bg-[#084d92] text-white text-sm font-medium px-4 py-2 rounded-lg">
             Aller au profil
           </button>
@@ -854,8 +854,8 @@ function EngageView({ linkedin, showToast, onConnect, embedded = false, onSent, 
         </div>
 
         <p className="text-[11px] text-gray-400 border-t border-gray-100 pt-3">
-          Chaque action part immédiatement sur LinkedIn, en votre nom, et ne peut pas être annulée depuis LinkeePost. Plafonds : 15
-          commentaires et 40 réactions par heure, pour éviter que LinkedIn ne signale votre compte. LinkeePost ne peut pas lire le post
+          Chaque action part immédiatement sur LinkedIn, en votre nom, et ne peut pas être annulée depuis Vercéa. Plafonds : 15
+          commentaires et 40 réactions par heure, pour éviter que LinkedIn ne signale votre compte. Vercéa ne peut pas lire le post
           ni ses commentaires : ouvrez-le sur LinkedIn pour savoir à quoi vous répondez.
         </p>
       </div>
@@ -990,7 +990,7 @@ function CommentsPanel({ draft, onClose, showToast, onIntegrate }) {
           {error && errorCode === "read_forbidden" ? (
             <div className="space-y-3" data-testid="comments-forbidden">
               <div className="rounded-xl bg-amber-50 border border-amber-200 p-4 space-y-3">
-                <p className="text-sm font-semibold text-amber-900">LinkedIn ne permet pas à LinkeePost de lire les commentaires d&apos;un profil personnel.</p>
+                <p className="text-sm font-semibold text-amber-900">LinkedIn ne permet pas à Vercéa de lire les commentaires d&apos;un profil personnel.</p>
                 <p className="text-xs text-amber-800">
                   C&apos;est une règle de LinkedIn, réservée à quelques partenaires : elle ne dépend pas de votre compte. Pour un post de <strong>page entreprise</strong>, les commentaires s&apos;affichent ici et vous recevez un e-mail à chaque nouveau commentaire. Pour un post de profil, ouvrez-le sur LinkedIn pour les lire.
                 </p>
@@ -1016,7 +1016,7 @@ function CommentsPanel({ draft, onClose, showToast, onIntegrate }) {
                 )}
               </div>
               <div className="rounded-xl border border-gray-200 p-4 space-y-2.5" data-testid="reply-from-link">
-                <p className="text-sm font-semibold">Répondre à un commentaire depuis LinkeePost</p>
+                <p className="text-sm font-semibold">Répondre à un commentaire depuis Vercéa</p>
                 <ol className="text-xs text-gray-500 list-decimal pl-4 space-y-0.5">
                   <li>Sur LinkedIn, cliquez « … » à côté du commentaire, puis « Copier le lien ».</li>
                   <li>Collez ce lien ci-dessous.</li>
@@ -3044,7 +3044,7 @@ function MentionTool({ draftId, local, text, onInsert, mentions, onMentions, get
           </div>
           {list && list.team?.length > 0 && (
             <div className="space-y-1.5 border-t border-gray-100 pt-3" data-testid="mention-team">
-              <p className="text-[11px] font-medium text-gray-600">Personnes connectées à LinkeePost</p>
+              <p className="text-[11px] font-medium text-gray-600">Personnes connectées à Vercéa</p>
               <p className="text-[11px] text-gray-400">L&apos;équipe et les personnes de vos clients : si LinkedIn n&apos;accepte pas la mention, le post part sans elle (avertissement).</p>
               <div className="flex flex-wrap gap-1.5">
                 {list.team.map((m) => (<button key={m.urn} type="button" onClick={() => pick(m)} className={chip} data-testid="mention-team-pick">@{m.name}</button>))}
@@ -4473,7 +4473,7 @@ function AdminInvitationsCard({ showToast }) {
       <p className="text-xs text-gray-500 mt-0.5">
         {data?.accessDays
           ? `Le testeur reçoit un lien par e-mail et obtient l'offre ${PLANS[data.plan]?.name ?? data.plan} gratuitement pendant ${data.accessDays} jours, sans carte bancaire. Lien valable ${data.linkDays} jours.`
-          : "Invitez une personne à tester LinkeePost."}
+          : "Invitez une personne à tester Vercéa."}
       </p>
       <form onSubmit={invite} className="flex flex-wrap gap-2 mt-3">
         <input
@@ -6072,7 +6072,7 @@ function TechAdminView({ showToast, currentEmail }) {
         ))}
       </div>
 
-      {/* Visites du site (mesure faite par LinkeePost) */}
+      {/* Visites du site (mesure faite par Vercéa) */}
       <section aria-label="Visites du site" data-testid="tech-site" className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <div>
@@ -9439,7 +9439,7 @@ function PaywallScreen({ user, showToast, onLogout }) {
           <div className="bg-[#ff5a5f] text-white p-2 rounded-xl">
             <LpMark size={18} />
           </div>
-          <span className="font-extrabold text-[#1b2a4a]">LinkeePost</span>
+          <span className="font-extrabold text-[#1b2a4a]">Vercéa</span>
         </div>
         <button onClick={onLogout} className="text-sm text-gray-500 hover:text-[#ff5a5f] flex items-center gap-1.5">
           <LogOut size={15} /> Se déconnecter
@@ -9454,7 +9454,7 @@ function PaywallScreen({ user, showToast, onLogout }) {
           <p className="text-[#5a6b85] mt-2 max-w-xl mx-auto" data-testid="paywall-text">
             {user.agencyCollaborator
               ? "L'essai gratuit ou l'abonnement de votre agence est terminé. Prévenez le propriétaire de l'agence : tout reprend, avec vos clients et vos posts, dès que l'abonnement est activé."
-              : "Abonnez-vous pour continuer à utiliser LinkeePost. Vos posts, campagnes et réglages sont conservés — tout reprend dès l'abonnement activé."}
+              : "Abonnez-vous pour continuer à utiliser Vercéa. Vos posts, campagnes et réglages sont conservés — tout reprend dès l'abonnement activé."}
           </p>
         </div>
         {!user.agencyCollaborator && <BillingView user={user} showToast={showToast} />}
@@ -11423,7 +11423,7 @@ function RepurposeView({ profile, linkedin, orgs, canCampaigns, showToast, onGoC
       <main className="max-w-3xl mx-auto p-6" data-testid="repurpose-locked">
         <div className={card}>
           <h2 className="text-xl font-extrabold text-[#1b2a4a] mb-1">Donnez une seconde vie à vos contenus</h2>
-          <p className="text-sm text-[#33415c] leading-relaxed">Un article, une étude de cas, un PDF : LinkeePost en tire les faits, vous propose des angles, écrit une série de posts à partir de ces seuls faits et la programme à votre rythme.</p>
+          <p className="text-sm text-[#33415c] leading-relaxed">Un article, une étude de cas, un PDF : Vercéa en tire les faits, vous propose des angles, écrit une série de posts à partir de ces seuls faits et la programme à votre rythme.</p>
           <p className="text-sm font-semibold text-[#7a4b00] bg-[#fff4d6] rounded-lg px-3 py-2 mt-3">Cet outil est inclus dans les offres Pro et Agence.</p>
           <div className="flex gap-3 mt-4"><button type="button" onClick={() => onGoView?.("billing")} className={btn}>Voir les offres</button><button type="button" onClick={onGoCreate} className={ghost}>Créer un post</button></div>
         </div>
@@ -11492,7 +11492,7 @@ function RepurposeView({ profile, linkedin, orgs, canCampaigns, showToast, onGoC
               <div>
                 <p className="text-[13px] font-semibold text-[#33415c] mb-1">Lien public de la vidéo <span className="font-normal text-[#5a6b85]">(facultatif)</span></p>
                 <input type="url" value={videoUrl} onChange={(e) => setVideoUrl(e.target.value)} placeholder="https://www.youtube.com/watch?v=…" data-testid="repurpose-media-url" className="w-full border border-[#cbd5e1] rounded-xl px-3 py-2 text-sm" />
-                <p className="text-[11px] text-[#5a6b85] mt-1">Il sera mis en lien dans le premier commentaire des posts. LinkeePost n&apos;ouvre pas ce lien : il ne sert que de renvoi.</p>
+                <p className="text-[11px] text-[#5a6b85] mt-1">Il sera mis en lien dans le premier commentaire des posts. Vercéa n&apos;ouvre pas ce lien : il ne sert que de renvoi.</p>
               </div>
             </div>
           )}
@@ -11687,7 +11687,7 @@ function DashToday({ drafts, profile, ns, campaigns, canCampaigns, voiceOk, onGo
   const live = (campaigns ?? []).filter((c) => c.status === "active" && (filter === "all" || (c.contextId ?? "main") === filter)).slice(0, 2);
   const startItems = [
     ...(ns?.steps ?? []).slice(0, 3).map((st) => ({ key: st.id, label: st.title, go: () => goNextStep(st, { onGoCreate, onGoProfileField, onGoView }) })),
-    { key: "share", label: "Partager un lien vers LinkeePost", go: () => onGoView?.("share") },
+    { key: "share", label: "Partager un lien vers Vercéa", go: () => onGoView?.("share") },
   ];
   const card = "bg-white border border-[#e8ecf2] rounded-[18px] px-5 py-4";
   const lb = "block text-xs font-bold tracking-wider uppercase text-[#5a6b85] mb-2";
@@ -12904,7 +12904,7 @@ function StatsView({ linkedin, orgs, profile, drafts, showToast, onConnect }) {
           {pStats.asOf && (
             <p className={`text-[11px] mb-2 ${pStats.stale ? "text-amber-700" : "text-gray-400"}`} data-testid="stats-as-of">
               Mesures du {new Date(pStats.asOf).toLocaleDateString("fr-FR", { day: "numeric", month: "long" })} à {new Date(pStats.asOf).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}.
-              {pStats.stale ? " LinkedIn n'a pas encore renvoyé celles d'aujourd'hui (limite quotidienne) : elles sont relevées une fois par jour." : " LinkeePost relève ces chiffres une fois par jour pour respecter la limite quotidienne de LinkedIn."}
+              {pStats.stale ? " LinkedIn n'a pas encore renvoyé celles d'aujourd'hui (limite quotidienne) : elles sont relevées une fois par jour." : " Vercéa relève ces chiffres une fois par jour pour respecter la limite quotidienne de LinkedIn."}
             </p>
           )}
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
@@ -12934,13 +12934,13 @@ function StatsView({ linkedin, orgs, profile, drafts, showToast, onConnect }) {
           </p>
         )}
         <p className="text-xs text-gray-400 mt-2">
-          Détail par post disponible ci-dessous, dans « Posts publiés & programmés via LinkeePost ».
+          Détail par post disponible ci-dessous, dans « Posts publiés & programmés via Vercéa ».
         </p>
       </section>
 
       <InsightsPanel />
 
-      {/* ── Interactions envoyées depuis LinkeePost : commentaires et réactions ── */}
+      {/* ── Interactions envoyées depuis Vercéa : commentaires et réactions ── */}
       <section>
         <div className="flex items-center justify-between flex-wrap gap-2 mb-3">
           <h3 className="font-semibold text-base flex items-center gap-2">
@@ -13007,16 +13007,16 @@ function StatsView({ linkedin, orgs, profile, drafts, showToast, onConnect }) {
           </p>
         )}
         <p className="text-xs text-gray-400 mt-2">
-          LinkedIn ne permet pas à LinkeePost de relire les commentaires et réactions reçus sur un profil personnel : cette liste
+          LinkedIn ne permet pas à Vercéa de relire les commentaires et réactions reçus sur un profil personnel : cette liste
           reprend ce que vous avez envoyé depuis l&apos;outil. Les chiffres reçus par post sont affichés dans le tableau ci-dessous quand
           LinkedIn les fournit.
         </p>
       </section>
 
-      {/* ── Posts publiés & programmés via LinkeePost (toutes cibles) ── */}
+      {/* ── Posts publiés & programmés via Vercéa (toutes cibles) ── */}
       <section>
         <h3 className="font-semibold text-base mb-3 flex items-center gap-2">
-          <Send size={16} className="text-[#ff5a5f]" /> Posts publiés & programmés via LinkeePost
+          <Send size={16} className="text-[#ff5a5f]" /> Posts publiés & programmés via Vercéa
         </h3>
         {appPosts.length === 0 ? (
           <div className="bg-white rounded-xl border border-dashed border-gray-300 p-8 text-center text-gray-400 text-sm">
@@ -13106,10 +13106,10 @@ function StatsView({ linkedin, orgs, profile, drafts, showToast, onConnect }) {
         </p>
         {social?.unavailable === "denied" && (
           <p className="text-xs text-gray-500 bg-gray-50 border border-gray-100 rounded-lg p-3 mt-2">
-            Les tirets (—) signifient que LinkedIn ne communique pas ce chiffre à LinkeePost pour votre profil personnel : ni les
+            Les tirets (—) signifient que LinkedIn ne communique pas ce chiffre à Vercéa pour votre profil personnel : ni les
             réactions et commentaires reçus, ni les impressions, tant que l&apos;accès aux statistiques du profil n&apos;est pas accordé
             (menu « Connexions », statistiques du profil). Ouvrez le post sur LinkedIn (icône ↗) pour les voir. La colonne « Vos actions »
-            compte ce que vous avez envoyé depuis LinkeePost.
+            compte ce que vous avez envoyé depuis Vercéa.
           </p>
         )}
       </section>
@@ -13791,7 +13791,7 @@ function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast,
         {selfFlow ? (
           <div className={`flex flex-wrap items-center gap-x-3 gap-y-3 mb-5 ${wideStep ? "" : "justify-center"}`} data-testid="wizard-header">
             <div className="w-[38px] h-[38px] rounded-[11px] bg-[#ff5a5f] text-white flex items-center justify-center shrink-0"><LpMark size={20} /></div>
-            <span className="text-xl font-extrabold">LinkeePost</span>
+            <span className="text-xl font-extrabold">Vercéa</span>
             {kind === "where" ? (
               <span className="ml-auto text-sm text-[#5a6b85]" data-testid="wizard-where-count">Étape {pillIdx + 1} sur {pills.length} · Connecter LinkedIn</span>
             ) : (
@@ -13814,7 +13814,7 @@ function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast,
           <div className="bg-[#ff5a5f] text-white p-2.5 rounded-xl">
             <LpMark size={24} />
           </div>
-          <h1 className="font-bold text-xl">LinkeePost</h1>
+          <h1 className="font-bold text-xl">Vercéa</h1>
         </div>
 
         {/* Progression : le nom des étapes, et ce que ça représente */}
@@ -14323,7 +14323,7 @@ function MonthlyReportModal({ client, onClose }) {
           </div>
         )}
 
-        {/* En-tête imprimé : logo de l'agence si renseigné, jamais la marque LinkeePost */}
+        {/* En-tête imprimé : logo de l'agence si renseigné, jamais la marque Vercéa */}
         {brandKit?.logoUrl && (
           <img src={brandKit.logoUrl} alt="" className="hidden print:block h-8 max-w-[160px] object-contain mb-3" />
         )}
@@ -17074,7 +17074,7 @@ function ProfileCompanion({ stage, progress, missing, nextStage, values, onApply
       <div className="flex items-start gap-3">
         {avatar}
         <div className="min-w-0 flex-1">
-          <p className="text-xs font-semibold text-[#c2410c]">Votre compagnon LinkeePost</p>
+          <p className="text-xs font-semibold text-[#c2410c]">Votre compagnon Vercéa</p>
 
           {mode === "idle" && (
             <div>
@@ -17214,7 +17214,7 @@ function ConnectionsView({ linkedin, onDisconnect, instagram, onDisconnectInstag
   };
   return (
     <main className="max-w-3xl mx-auto p-6">
-      <p className="text-sm text-gray-500 mb-2">Les comptes que LinkeePost utilise pour publier vos posts et lire leurs statistiques. La connexion quitte brièvement la page, puis vous y revenez.</p>
+      <p className="text-sm text-gray-500 mb-2">Les comptes que Vercéa utilise pour publier vos posts et lire leurs statistiques. La connexion quitte brièvement la page, puis vous y revenez.</p>
         {clientName && (
           <div className="text-xs text-sky-800 bg-sky-50 border border-sky-200 rounded-xl p-3 mt-3" data-testid="client-connections-note">
             {personalOk ? (
@@ -17380,12 +17380,12 @@ function ConnectionsView({ linkedin, onDisconnect, instagram, onDisconnectInstag
             <div className="p-5 flex items-center justify-between gap-3 flex-wrap" data-testid="linkedin-delete-data">
               <div className="max-w-xl">
                 <p className="text-sm font-medium">Données LinkedIn</p>
-                <p className="text-xs text-gray-400">Déconnecte LinkedIn et efface ce que LinkeePost en conserve{clientName ? " pour ce client" : ""} : connexions, statistiques de posts, interactions et personnes taguées. Vos posts restent.</p>
+                <p className="text-xs text-gray-400">Déconnecte LinkedIn et efface ce que Vercéa en conserve{clientName ? " pour ce client" : ""} : connexions, statistiques de posts, interactions et personnes taguées. Vos posts restent.</p>
               </div>
               <button
                 type="button"
                 onClick={async () => {
-                  if (!window.confirm("Supprimer toutes les données LinkedIn conservées par LinkeePost" + (clientName ? ` pour ${clientName}` : "") + " ? Cette action est définitive : il faudra reconnecter LinkedIn pour publier de nouveau.")) return;
+                  if (!window.confirm("Supprimer toutes les données LinkedIn conservées par Vercéa" + (clientName ? ` pour ${clientName}` : "") + " ? Cette action est définitive : il faudra reconnecter LinkedIn pour publier de nouveau.")) return;
                   try {
                     const res = await fetch("/api/linkedin/delete-data", { method: "POST" });
                     if (!res.ok) throw new Error();
@@ -18097,7 +18097,7 @@ const THEME_COMPLETENESS = [
   { label: "une voix", done: (t) => Boolean(t.hasVoice) },
   { label: "des sources", done: (t) => t.sources > 0 },
 ];
-// Clés personnelles pour brancher un assistant (Claude Code, Cursor…) sur LinkeePost par le protocole MCP (Pro et Agence)
+// Clés personnelles pour brancher un assistant (Claude Code, Cursor…) sur Vercéa par le protocole MCP (Pro et Agence)
 function McpKeysCard({ allowed, showToast }) {
   const [keys, setKeys] = useState(null);
   const [name, setName] = useState("");
@@ -18135,7 +18135,7 @@ function McpKeysCard({ allowed, showToast }) {
   return (
     <div className="bg-white border border-gray-100 rounded-2xl p-5" data-testid="mcp-card">
       <p className="text-xs font-bold tracking-wider uppercase text-[#5a6b85] mb-1">Assistants (MCP)</p>
-      <p className="text-sm text-gray-700 leading-relaxed">Branchez Claude (claude.ai), ChatGPT (Codex), Claude Code, Cursor ou un autre assistant compatible sur votre compte. Dans claude.ai, ajoutez un connecteur personnalisé avec l&apos;adresse <code className="text-xs bg-gray-100 rounded px-1">{origin}/api/mcp</code> : aucune clé n&apos;est nécessaire, vous autorisez dans une fenêtre LinkeePost. Pour ChatGPT (Codex), Claude Code et Cursor, créez une clé personnelle ci-dessous. Il peut lire vos posts, votre planning, vos résultats et les conseils du coach, et créer des <b>brouillons</b> que vous relirez. Il ne programme ni ne publie rien.</p>
+      <p className="text-sm text-gray-700 leading-relaxed">Branchez Claude (claude.ai), ChatGPT (Codex), Claude Code, Cursor ou un autre assistant compatible sur votre compte. Dans claude.ai, ajoutez un connecteur personnalisé avec l&apos;adresse <code className="text-xs bg-gray-100 rounded px-1">{origin}/api/mcp</code> : aucune clé n&apos;est nécessaire, vous autorisez dans une fenêtre Vercéa. Pour ChatGPT (Codex), Claude Code et Cursor, créez une clé personnelle ci-dessous. Il peut lire vos posts, votre planning, vos résultats et les conseils du coach, et créer des <b>brouillons</b> que vous relirez. Il ne programme ni ne publie rien.</p>
       {grants.length > 0 && (
         <div className="mt-3" data-testid="mcp-grants">
           <p className="text-sm font-bold mb-1">Assistants connectés</p>
@@ -18812,14 +18812,14 @@ function ProfileView({ contexts = [], onContextsChanged, moments = [], onMoments
 // ----------------------------------------------------------------
 function TutorialOverlay({ canEvents, onClose }) {
   const steps = [
-    { icon: Sparkles, title: "Votre guide LinkeePost", text: "L'essentiel, dans l'ordre où on s'en sert. Vous pouvez le rouvrir à tout moment avec le bouton « ? » en bas de l'écran." },
+    { icon: Sparkles, title: "Votre guide Vercéa", text: "L'essentiel, dans l'ordre où on s'en sert. Vous pouvez le rouvrir à tout moment avec le bouton « ? » en bas de l'écran." },
     { icon: PenLine, title: "1 · Créez un post", text: "Dans « Créer un post », partez d'une idée, d'un article (son adresse) ou d'un document (PDF, Word). Le copilote rédige avec votre profil, vos sources et vos remarques." },
     { icon: MessageSquare, title: "2 · Améliorez-le en discutant", text: "Dites ce que vous voulez changer : le post est réécrit. Quand une demande revient, le copilote propose de la retenir pour tous vos prochains posts." },
     { icon: Compass, title: "3 · Laissez le copilote proposer", text: "Dans « Copilote IA », il propose quoi publier et pourquoi, selon vos objectifs. Vous discutez avec lui pour affiner une piste, puis vous la transformez en post." },
     { icon: BarChart3, title: "4 · Contrôlez la forme", text: "Chaque post reçoit une note de forme sur 100 avec des conseils concrets (un contrôle de règles, pas une prédiction de performance). Réécrivez l'accroche ou la conclusion : la note se recalcule en direct." },
     { icon: Clock, title: "5 · Programmez et publiez", text: "Choisissez vos jours et votre heure : les posts partent seuls sur LinkedIn, après votre validation si vous le souhaitez. Les campagnes planifient une série d'un coup." },
     ...(canEvents
-      ? [{ icon: MapPin, title: "6 · Couvrez vos événements", text: "Ajoutez vos salons et forums : LinkeePost prépare des posts de présence et vous notifie le jour J pour poster une photo en direct." }]
+      ? [{ icon: MapPin, title: "6 · Couvrez vos événements", text: "Ajoutez vos salons et forums : Vercéa prépare des posts de présence et vous notifie le jour J pour poster une photo en direct." }]
       : []),
     { icon: Check, title: "Vous êtes prêt 🚀", text: "La carte « Prochaine étape » de votre tableau de bord vous guide au fil de l'usage, sans tout vous demander d'un coup." },
   ];
@@ -19313,7 +19313,7 @@ export default function Home() {
   // Lien reçu par e-mail : /app?client=ID&view=engage → ouvre ce client, puis nettoie l'adresse
   // Le paramètre est mémorisé dès le premier affichage : l'adresse est nettoyée plus bas, avant même que l'utilisateur soit identifié
   const [engagePost, setEngagePost] = useState(() => { if (typeof window === "undefined") return ""; const p = new URLSearchParams(window.location.search).get("post") || ""; return /^https:\/\/(www\.)?linkedin\.com\//.test(p) ? p : ""; }); // post à préremplir dans « Interagir »
-  // Lien reçu par « Partager vers LinkeePost » (menu Partager, favori) : retenu dès le premier affichage, car l'adresse est nettoyée plus bas
+  // Lien reçu par « Partager vers Vercéa » (menu Partager, favori) : retenu dès le premier affichage, car l'adresse est nettoyée plus bas
   const [sharePayload, setSharePayload] = useState(() => {
     if (typeof window === "undefined") return null;
     const q = new URLSearchParams(window.location.search);
@@ -19892,7 +19892,7 @@ export default function Home() {
       stats_pending: "LinkedIn n'a pas encore autorisé l'accès aux statistiques du profil personnel — réessayez dans quelques instants.",
       state_mismatch: "Session OAuth expirée — réessayez la connexion",
       target_mismatch: "Le compte géré a changé pendant la connexion : elle a été annulée. Relancez-la depuis le bon client.",
-      not_logged_in: "Connectez-vous d'abord à votre compte LinkeePost",
+      not_logged_in: "Connectez-vous d'abord à votre compte Vercéa",
       error: liMsg ? `Erreur LinkedIn : ${liMsg}` : "Erreur LinkedIn — consultez le terminal du serveur",
       org_error: liMsg ? `Erreur page entreprise : ${liMsg}` : "Erreur LinkedIn (page entreprise) — consultez le terminal du serveur",
       stats_error: liMsg ? `Erreur statistiques : ${liMsg}` : "Erreur LinkedIn (statistiques) — consultez le terminal du serveur",
@@ -19915,7 +19915,7 @@ export default function Home() {
       refused: "Vous avez refusé l'autorisation Instagram",
       state_mismatch: "Session OAuth expirée — réessayez la connexion",
       target_mismatch: "Le compte géré a changé pendant la connexion : elle a été annulée. Relancez-la depuis le bon client.",
-      not_logged_in: "Connectez-vous d'abord à votre compte LinkeePost",
+      not_logged_in: "Connectez-vous d'abord à votre compte Vercéa",
       error: "Erreur Instagram — " + (params.get("msg") || "consultez le terminal du serveur"),
     };
     if (ig) {
@@ -21703,7 +21703,7 @@ export default function Home() {
             <LpMark size={20} />
           </div>
           <div>
-            <p className="font-bold leading-tight">LinkeePost</p>
+            <p className="font-bold leading-tight">Vercéa</p>
             <p className="text-xs text-gray-400">Campagnes LinkedIn</p>
           </div>
         </button>
@@ -21781,7 +21781,7 @@ export default function Home() {
           </button>
           <div className="flex items-center gap-1.5 text-sm font-semibold min-w-0 truncate">
             <button type="button" onClick={goHome} data-testid="app-logo-mobile" aria-label="Retour au tableau de bord" className="shrink-0 p-1 -m-1"><LpMark size={16} /></button>
-            {VIEW_TITLES[view] ?? "LinkeePost"}
+            {VIEW_TITLES[view] ?? "Vercéa"}
           </div>
           <button onClick={logout} className="text-gray-400 p-1.5 ml-auto shrink-0" title="Se déconnecter">
             <LogOut size={15} />
@@ -21794,7 +21794,7 @@ export default function Home() {
             <div className="relative w-72 max-w-[85vw] h-full bg-white shadow-xl overflow-y-auto">
               <div className="flex items-center justify-between px-4 py-4 border-b border-gray-100">
                 <div className="flex items-center gap-2 font-bold">
-                  <LpMark size={18} /> LinkeePost
+                  <LpMark size={18} /> Vercéa
                 </div>
                 <button
                   onClick={() => setMobileMenuOpen(false)}

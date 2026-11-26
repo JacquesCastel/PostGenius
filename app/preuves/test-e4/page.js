@@ -3,7 +3,7 @@ import Link from "next/link";
 import Shell from "@/components/v2/Shell";
 import { BRAND_NAME } from "@/lib/brand";
 import { preuvesOuvertes } from "@/lib/sitePreuves";
-import { E4 } from "@/lib/e4Page";
+import { E4, NOM_DU_TEST } from "@/lib/e4Page";
 import { liaisons, liaisonsEm } from "@/lib/typo";
 
 export const dynamic = "force-dynamic";
@@ -40,6 +40,7 @@ export default function TestE4Page() {
         <h1 className="font-display text-[36px] sm:text-[50px] leading-[1.08] tracking-[-0.02em]">
           {titre[0]}<em className="text-[#C2456F]">{titre[1]}</em>
         </h1>
+        <p className="text-sm text-[#6B5A70] mt-4">Au moment du test, le produit s&apos;appelait {NOM_DU_TEST} ; il s&apos;appelle aujourd&apos;hui {BRAND_NAME}. Le test porte sur le moteur de l&apos;époque, sous son ancien nom.</p>
         <p className="text-[19px] sm:text-xl leading-relaxed text-[#4A3A50] mt-6">
           Nous avons relevé tout fait contrôlable : chiffres, dates, noms propres, études et sources citées, citations. Dix sujets fictifs, une génération par cas, un seul classeur, qui connaît l'outil évalué. Nous sommes juge et partie : c'est pourquoi tout est publié, y compris ce qui ne nous avantage pas.
         </p>
@@ -61,7 +62,7 @@ export default function TestE4Page() {
             ))}
           </div>
           <div className="mt-6 bg-[#FCE6D6] rounded-2xl px-[18px] py-4 text-sm leading-relaxed text-[#6E2E0E]">
-            <strong>Une autre façon de compter, publiée aussi.</strong> Sans les chiffres d'exemple et de conseil (« 5 à 7 situations »), les moyennes deviennent {E4.sansExemples.join(" · ")}. L'écart entre {BRAND_NAME} et le même modèle seul tombe de 2,5 à 1,5 : nos règles écrites à l'avance ne prévoient pas de phrase pour cet écart. La formule dépend donc de la façon de compter.
+            <strong>Une autre façon de compter, publiée aussi.</strong> Sans les chiffres d'exemple et de conseil (« 5 à 7 situations »), les moyennes deviennent {E4.sansExemples.join(" · ")}. L'écart entre {NOM_DU_TEST} et le même modèle seul tombe de 2,5 à 1,5 : nos règles écrites à l'avance ne prévoient pas de phrase pour cet écart. La formule dépend donc de la façon de compter.
           </div>
         </div>
 
@@ -82,17 +83,17 @@ export default function TestE4Page() {
         <Bullets className="text-[17px] leading-[1.65] text-[#4A3A50]" items={[
           "Dans notre test, un modèle généraliste a inventé ou déformé des éléments dans 8 à 10 posts sur 10 quand on lui demandait des chiffres, avec ou sans les faits.",
           `Fournir les faits a réduit l'invention de plus de moitié (de ${A.moyenne} à ${B.moyenne} par post), sans la supprimer.`,
-          `${BRAND_NAME} en a produit très peu. Dans notre test, l'écart avec un modèle appelé directement avec les mêmes faits vient de l'invite de ${BRAND_NAME}, pas du modèle.`,
+          `${NOM_DU_TEST} en a produit très peu. Dans notre test, l'écart avec un modèle appelé directement avec les mêmes faits vient de l'invite de ${NOM_DU_TEST}, pas du modèle.`,
           "Quand on ne demande pas de chiffres, tous les dispositifs restent proches de zéro élément inventé.",
         ]} />
 
         <div className="mt-10 bg-[#FCE6D6] rounded-[28px] p-6 sm:p-9">
           <h2 className="font-display text-[26px] mb-4">{liaisons("Ce qui ne nous avantage pas")}</h2>
           <Bullets className="text-base leading-relaxed text-[#6E2E0E]" items={[
-            `Avec la consigne neutre, ${BRAND_NAME} a produit deux déformations : « seize personnes » pour 17, et « près des trois quarts » pour 71 %.`,
-            `Les textes de ${BRAND_NAME} contiennent moins d'éléments contrôlables que ceux du même modèle seul (33 contre 64) : avoir moins d'éléments non supportés vient en partie de textes moins chiffrés.`,
-            `Sur les trois sujets sans aucun chiffre dans la fiche, ${BRAND_NAME} a produit un élément non supporté dans un cas : deux tournures d'illustration dans un récit (« six mois plus tard »).`,
-            `Les trois éléments non supportés de ${BRAND_NAME} sont ces tournures et un hashtag contenant une année.`,
+            `Avec la consigne neutre, ${NOM_DU_TEST} a produit deux déformations : « seize personnes » pour 17, et « près des trois quarts » pour 71 %.`,
+            `Les textes de ${NOM_DU_TEST} contiennent moins d'éléments contrôlables que ceux du même modèle seul (33 contre 64) : avoir moins d'éléments non supportés vient en partie de textes moins chiffrés.`,
+            `Sur les trois sujets sans aucun chiffre dans la fiche, ${NOM_DU_TEST} a produit un élément non supporté dans un cas : deux tournures d'illustration dans un récit (« six mois plus tard »).`,
+            `Les trois éléments non supportés de ${NOM_DU_TEST} sont ces tournures et un hashtag contenant une année.`,
           ]} />
         </div>
 
@@ -108,7 +109,7 @@ export default function TestE4Page() {
 
         <h2 className={`${H2} mt-14 mb-4`}>{liaisons("Les dispositifs testés")}</h2>
         <div className="flex flex-wrap gap-2.5">
-          {["gpt-5.5-2026-04-23, par l'API (A et B)", "claude-sonnet-4-6, par l'API (D)", `Moteur de ${BRAND_NAME}, profil neutre (C)`].map((t) => (
+          {["gpt-5.5-2026-04-23, par l'API (A et B)", "claude-sonnet-4-6, par l'API (D)", `Moteur de ${NOM_DU_TEST}, profil neutre (C)`].map((t) => (
             <span key={t} className="bg-white border border-[#EFE4E0] text-[#4A3A50] text-sm font-semibold px-4 py-2 rounded-full">{t}</span>
           ))}
         </div>
@@ -117,7 +118,7 @@ export default function TestE4Page() {
         <div className="mt-12 bg-white border border-[#EFE4E0] rounded-[28px] p-6 sm:p-9">
           <h2 className="font-display text-[26px] mb-4">{liaisons("Ce que ce test ne dit pas")}</h2>
           <Bullets className="text-base leading-relaxed text-[#4A3A50]" items={[
-            `Il ne prouve pas que ${BRAND_NAME} n'invente jamais : dix sujets fictifs, une génération par cas.`,
+            `Il ne prouve pas que ${NOM_DU_TEST} n'invente jamais : dix sujets fictifs, une génération par cas.`,
             "Il ne donne ni taux général d'erreur, ni supériorité générale, ni résultat valable pour un autre modèle ou une autre date.",
             "Un seul classeur, qui connaît le dispositif : aucun second classement, aucun désaccord mesuré.",
             "Un élément « inventé » est absent de la fiche et invérifiable en cinq minutes : il n'est pas forcément faux.",

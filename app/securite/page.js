@@ -4,7 +4,7 @@ import SiteFooter from "@/components/SiteFooter";
 import { getFooterPage } from "@/lib/footer-pages";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Sécurité et confidentialité — LinkeePost", description: "Où sont hébergées vos données, comment elles sont protégées, ce que LinkeePost peut et ne peut pas faire avec LinkedIn et avec les assistants IA.", alternates: { canonical: "/securite" } };
+export const metadata = { title: "Sécurité et confidentialité — Vercéa", description: "Où sont hébergées vos données, comment elles sont protégées, ce que Vercéa peut et ne peut pas faire avec LinkedIn et avec les assistants IA.", alternates: { canonical: "/securite" } };
 
 export default async function Securite() {
   const page = await getFooterPage("securite");

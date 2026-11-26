@@ -56,7 +56,7 @@ export default function ResetPassword() {
           <div className="bg-[#ff5a5f] text-white p-2.5 rounded-xl">
             <LpMark size={24} />
           </div>
-          <h1 className="font-bold text-xl">LinkeePost</h1>
+          <h1 className="font-bold text-xl">Vercéa</h1>
         </div>
 
         <div className="bg-white rounded-xl border border-gray-200 p-6">

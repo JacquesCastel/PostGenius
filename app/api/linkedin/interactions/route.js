@@ -3,7 +3,7 @@ import { prisma } from "@/lib/db";
 import { getEffectiveUserId as getUserId } from "@/lib/session";
 import { summarizeInteractions } from "@/lib/interactions";
 
-// GET : résumé des commentaires et réactions envoyés depuis LinkeePost (écran Statistiques)
+// GET : résumé des commentaires et réactions envoyés depuis Vercéa (écran Statistiques)
 export async function GET(req) {
   const userId = await getUserId(req);
   if (!userId) return NextResponse.json({ error: "Non connecté." }, { status: 401 });

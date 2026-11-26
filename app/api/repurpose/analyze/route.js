@@ -47,7 +47,7 @@ export async function POST(req) {
       rightsIn = { rights: body.rights, credit: body.credit };
       media = body.kind === "text" && body.media === true;
       speakers = body.speakers === true;
-      // Lien public de la vidéo (facultatif) : mis en lien dans les posts, jamais lu par LinkeePost
+      // Lien public de la vidéo (facultatif) : mis en lien dans les posts, jamais lu par Vercéa
       if (media && body.videoUrl) { try { const u = new URL(String(body.videoUrl).trim()); if (/^https?:$/.test(u.protocol) && u.href.length <= 500) videoUrl = u.href; } catch {} }
     }
     const content = await readContent(input);

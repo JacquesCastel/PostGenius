@@ -102,7 +102,7 @@ async function restrictedScope(userId, agencyId) {
   return ag?.restrictClients && mem?.role !== "owner" ? { accessAsClient: { some: { memberId: userId } } } : {};
 }
 
-// Personnes déjà connectées à LinkeePost (leur profil LinkedIn est relié) : l'équipe de l'agence et les personnes de ses clients
+// Personnes déjà connectées à Vercéa (leur profil LinkedIn est relié) : l'équipe de l'agence et les personnes de ses clients
 async function connectedPeople(req, userId) {
   const session = await getSessionData(req);
   const real = session?.userId;
@@ -192,7 +192,7 @@ export async function POST(req) {
     return NextResponse.json({ mention: s2 });
   }
   const ref = parseOrgRef(body.input);
-  if (!ref && /linkedin\.com\/(in|pub)\//i.test(String(body.input ?? ""))) return NextResponse.json({ error: "Les personnes ne peuvent pas être mentionnées depuis LinkeePost : seules les pages (linkedin.com/company/…) le peuvent. Taguez la personne à la main après publication." }, { status: 400 });
+  if (!ref && /linkedin\.com\/(in|pub)\//i.test(String(body.input ?? ""))) return NextResponse.json({ error: "Les personnes ne peuvent pas être mentionnées depuis Vercéa : seules les pages (linkedin.com/company/…) le peuvent. Taguez la personne à la main après publication." }, { status: 400 });
   if (!ref) return NextResponse.json({ error: "Collez l'adresse de la page LinkedIn (https://www.linkedin.com/company/…), son nom court ou son identifiant." }, { status: 400 });
   const typedName = String(body.name ?? "").replace(/\s+/g, " ").trim().slice(0, 120);
 

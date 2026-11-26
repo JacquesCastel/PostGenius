@@ -5,7 +5,7 @@ import { getFooterPage } from "@/lib/footer-pages";
 import { redirigerSiNecessaire } from "@/lib/siteNavServer";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Mentions légales — LinkeePost", alternates: { canonical: "/mentions-legales" } };
+export const metadata = { title: "Mentions légales — Vercéa", alternates: { canonical: "/mentions-legales" } };
 
 export default async function MentionsLegales() {
   await redirigerSiNecessaire("/mentions-legales");

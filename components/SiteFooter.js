@@ -45,7 +45,7 @@ export default function SiteFooter({ variant = "classic", colonnes = colonnesPie
               <div className="bg-[#ff5a5f] text-white p-1.5 rounded-lg">
                 <LpMark size={14} />
               </div>
-              <span className="font-bold text-[#1b2a4a]">LinkeePost</span>
+              <span className="font-bold text-[#1b2a4a]">Vercéa</span>
             </div>
             <p className="mt-3 max-w-xs leading-relaxed">Votre expertise, vos mots, vos posts : des publications LinkedIn écrites à partir de ce que vous savez.</p>
           </div>
@@ -74,7 +74,7 @@ export default function SiteFooter({ variant = "classic", colonnes = colonnesPie
         {/* Contenu SEO (petit) */}
         <div className="mt-10 pt-6 border-t border-rose-100/70">
         <p className="text-[11px] leading-relaxed text-gray-400 max-w-4xl">
-          <strong className="font-semibold text-gray-500">LinkeePost</strong> est l'outil tout-en-un pour gérer
+          <strong className="font-semibold text-gray-500">Vercéa</strong> est l'outil tout-en-un pour gérer
           votre présence sur <Link href="/fonctionnalites" className="hover:text-[#ff5a5f] underline">LinkedIn</Link> :
           génération de posts par intelligence artificielle, création de carrousels et de scripts vidéo, campagnes
           éditoriales guidées par l'IA, veille de votre secteur et inspirations, programmation et publication
@@ -87,7 +87,7 @@ export default function SiteFooter({ variant = "classic", colonnes = colonnesPie
           {" "}et nos <Link href="/blog" className="hover:text-[#ff5a5f] underline">conseils pour réussir sur LinkedIn</Link>.
           {pick("Bêta fermée : accès sur invitation.", "Essai gratuit 14 jours, sans carte bancaire.")}
         </p>
-        <p className="text-xs text-[#7c8aa3] mt-6">© {new Date().getFullYear()} LinkeePost</p>
+        <p className="text-xs text-[#7c8aa3] mt-6">© {new Date().getFullYear()} Vercéa</p>
         </div>
       </div>
     </footer>

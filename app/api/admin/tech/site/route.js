@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin";
 
-// Visites du site (mesure faite par LinkeePost) et parcours bêta : pages vues, visiteurs par jour, pages, origines, appareils.
+// Visites du site (mesure faite par Vercéa) et parcours bêta : pages vues, visiteurs par jour, pages, origines, appareils.
 // « Visiteur » = empreinte du jour : un même visiteur revenu un autre jour compte deux fois (c'est le prix de l'absence de suivi).
 const day = (d) => d.toISOString().slice(0, 10);
 

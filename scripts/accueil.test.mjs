@@ -24,7 +24,7 @@ test("la page choisit l'ancienne accueil par défaut ; sa métadonnée aussi", (
 test("l'ancienne accueil est déplacée sans changer de contenu : mêmes données et même rendu (hors données structurées partagées)", () => {
   const s = read("components/home/LegacyHome.js");
   for (const x of ["export default async function Landing()", "await getLanding()", "const FEATURES = [", "const PILLARS = [", "const ORIGIN = [", "<SiteHeader />", "<SiteFooter />", "<JsonLd />"]) assert.ok(s.includes(x), x);
-  assert.match(s, /title: "LinkeePost — Votre expertise, vos mots, vos posts LinkedIn"/);
+  assert.match(s, /title: "Vercéa — Votre expertise, vos mots, vos posts LinkedIn"/);
 });
 
 test("les données structurées sont celles d'avant (organisation et application)", () => {
