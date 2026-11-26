@@ -54,3 +54,8 @@ test("câblage : chaque ancienne page appelle redirigerSiNecessaire avec sa prop
   assert.match(srv, /permanentRedirect\(cible\)/);
   assert.match(srv, /await connection\(\);/, "lecture à chaque requête");
 });
+
+test("le plan du site retire les adresses qui redirigent, et seulement elles", () => {
+  const s = readFileSync(new URL("../app/sitemap.js", import.meta.url), "utf8");
+  assert.match(s, /PAGES\.filter\(\(\[path\]\) => !cibleRedirection\(path, ouvertures\)\)/);
+});
