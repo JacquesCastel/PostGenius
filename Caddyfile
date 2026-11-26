@@ -20,12 +20,12 @@ www.vercea.app {
 # Restent servis directement, sans redirection :
 #   - /api/*  : retours OAuth (LinkedIn, Instagram), webhooks (Stripe), serveur MCP, désinscription : une 301 les casserait ;
 #   - /oauth/* et /.well-known/* : assistants IA déjà branchés sur l'ancienne adresse ;
-#   - /privacy-policy et /privacy : adresse déclarée à LinkedIn, à rediriger seulement après avoir changé cette déclaration ;
 #   - toute requête qui n'est pas un GET ou un HEAD (POST, PUT…).
+# /privacy-policy et /privacy sont redirigées depuis que la déclaration chez LinkedIn (et Meta) pointe vers https://vercea.app/privacy-policy.
 postgenius.network, www.postgenius.network {
 	@pages {
 		method GET HEAD
-		not path /api/* /oauth/* /.well-known/* /privacy-policy /privacy
+		not path /api/* /oauth/* /.well-known/*
 	}
 	redir @pages https://vercea.app{uri} permanent
 	reverse_proxy app:3000
