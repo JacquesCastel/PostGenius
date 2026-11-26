@@ -27,7 +27,6 @@ test("le nom est Vercéa ; l'ancien nom n'est gardé que pour citer le test E4",
 
 test("plus aucune occurrence de « LinkeePost » dans l'application, sauf exceptions voulues", () => {
   const EXCEPTIONS = new Map([
-    ["app/privacy-policy/page.js", "politique en anglais : adresse déclarée à LinkedIn, à renommer avec l'application LinkedIn"],
     ["lib/brand.js", "BRAND_ANCIEN"],
     ["lib/e4Page.js", "nom du produit au moment du test E4"],
     ["lib/gating.js", "fichier gelé de la démo"], ["lib/knowledge.js", "fichier gelé de la démo"], ["lib/demoEditorialCore.mjs", "fichier gelé de la démo"],
@@ -48,7 +47,6 @@ test("les fichiers gelés de la démo ne sont pas touchés (le gel reste conform
 test("domaine affiché : plus d'adresse du site figée sur l'ancien domaine ; les adresses e-mail ne changent pas ici", () => {
   const restes = [];
   for (const f of [...walk("app"), ...walk("components"), ...walk("lib")]) {
-    if (f === "app/privacy-policy/page.js") continue; // texte déclaré à LinkedIn : à changer avec l'application LinkedIn
     read(f).split("\n").forEach((l, i) => { if (/linkeepost\.app/.test(l) && !/contact@linkeepost\.app/.test(l)) restes.push(`${f}:${i + 1}`); });
   }
   assert.deepEqual(restes, [], `adresses restantes : ${restes.join(", ")}`);
@@ -106,4 +104,12 @@ test("pied de page et bandeau des e-mails : domaine public du produit et monogra
       assert.match(h, /href="https:\/\/postgenius\.network\/api\/email\/unsubscribe\?t=1"[^>]*>Ne plus recevoir ces e-mails/, "le lien de désinscription garde l'adresse reçue");
     }
   } finally { if (avant === undefined) delete process.env.APP_URL; else process.env.APP_URL = avant; }
+});
+
+test("la politique de confidentialité (anglais) porte le nouveau nom, cite l'ancien une fois et pointe vers vercea.app ; son adresse ne change pas", () => {
+  const p = read("app/privacy-policy/page.js");
+  assert.match(p, /\$\{BRAND_NAME\} \(https:\/\/\$\{BRAND_DOMAINE\}\), previously named \$\{BRAND_ANCIEN\}/);
+  assert.equal((p.match(/BRAND_ANCIEN/g) ?? []).length, 2, "importé et cité une seule fois");
+  assert.doesNotMatch(p, /LinkeePost|linkeepost/);
+  assert.match(p, /alternates: \{ canonical: "\/privacy-policy" \}/, "l'adresse de la page reste /privacy-policy");
 });
