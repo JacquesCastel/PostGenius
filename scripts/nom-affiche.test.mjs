@@ -45,11 +45,26 @@ test("les fichiers gelés de la démo ne sont pas touchés (le gel reste conform
   assert.match(read("lib/gating.js"), /utiliser LinkeePost\./, "message gelé conservé tel quel");
 });
 
-test("le domaine et les adresses e-mail ne changent pas dans ce lot (domaine : lot séparé)", () => {
-  assert.match(read("lib/contact.js"), /contact@linkeepost\.app/);
-  assert.match(read("lib/authEmails.js"), /https:\/\/linkeepost\.app/);
-  assert.match(read("app/sitemap.js"), /https:\/\/linkeepost\.app/);
-  assert.match(read("components/home/JsonLd.js"), /url: "https:\/\/linkeepost\.app"/);
+test("domaine affiché : plus d'adresse du site figée sur l'ancien domaine ; les adresses e-mail ne changent pas ici", () => {
+  const restes = [];
+  for (const f of [...walk("app"), ...walk("components"), ...walk("lib")]) {
+    if (f === "app/privacy-policy/page.js") continue; // texte déclaré à LinkedIn : à changer avec l'application LinkedIn
+    read(f).split("\n").forEach((l, i) => { if (/linkeepost\.app/.test(l) && !/contact@linkeepost\.app/.test(l)) restes.push(`${f}:${i + 1}`); });
+  }
+  assert.deepEqual(restes, [], `adresses restantes : ${restes.join(", ")}`);
+  assert.match(read("lib/contact.js"), /contact@linkeepost\.app/, "boîte de contact : décision séparée (CONTACT_EMAIL)");
+  assert.match(read("lib/authEmails.js"), /process\.env\.APP_URL \|\| "https:\/\/vercea\.app"/);
+  assert.match(read("app/sitemap.js"), /process\.env\.APP_URL \|\| "https:\/\/vercea\.app"/);
+});
+
+test("les données structurées lisent APP_URL (le domaine réellement servi) ; l'image de partage et l'animation affichent vercea.app", () => {
+  const j = read("components/home/JsonLd.js");
+  assert.match(j, /const site = \(process\.env\.APP_URL \|\| "https:\/\/vercea\.app"\)/);
+  assert.match(j, /url: site/);
+  assert.match(j, /logo: `\$\{site\}\/icon\.svg`/);
+  assert.doesNotMatch(j, /linkeepost/);
+  assert.match(read("app/opengraph-image.js"), />vercea\.app<\/div>/);
+  assert.match(read("components/BrandMotion.js"), />vercea\.app<\/div>/);
 });
 
 test("les User-Agent techniques gardent leur identifiant (des sites peuvent les autoriser)", () => {
