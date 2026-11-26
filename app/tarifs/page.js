@@ -7,6 +7,7 @@ import Shell from "@/components/v2/Shell";
 import PricingCards from "@/components/PricingCards";
 import { JOIN_HREF, pick } from "@/lib/access";
 import { liaisons } from "@/lib/typo";
+import { produitOuvert } from "@/lib/siteProduit";
 
 export const dynamic = "force-dynamic";
 
@@ -95,6 +96,8 @@ export default async function TarifsPage() {
             * « Illimité » s'entend dans le cadre d'un usage individuel raisonnable.
           </p>
         </div>
+
+        {produitOuvert() && <p className="mt-10 text-[17px] text-[#4A3A50]">Avant de choisir : <Link href="/produit/methode" className="font-semibold text-[#9E3157] hover:text-[#7A2342]">comment l&apos;outil fonctionne, étape par étape →</Link></p>}
 
         {/* CTA contact en bas */}
         <div className="mt-16 rounded-[32px] bg-[#F6E3E0] px-6 sm:px-12 py-10 sm:py-12 flex flex-wrap items-center justify-between gap-6">

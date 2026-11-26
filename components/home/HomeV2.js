@@ -81,6 +81,7 @@ export default function HomeV2() {
               </div>
             ))}
           </div>
+          {produitOuvert() && <p className="mt-8"><Link href="/produit/methode" className="font-semibold text-[#9E3157] hover:text-[#7A2342]">Voir le détail, étape par étape →</Link></p>}
         </div>
       </section>
 

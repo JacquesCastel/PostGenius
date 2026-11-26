@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import Shell from "@/components/v2/Shell";
+import SousNavProduit from "@/components/v2/SousNavProduit";
 import { BRAND_NAME } from "@/lib/brand";
 import { produitOuvert } from "@/lib/siteProduit";
 import { preuvesOuvertes } from "@/lib/sitePreuves";
@@ -33,7 +34,7 @@ export default function MethodePage() {
   return (
     <Shell>
       <div className="max-w-[900px] mx-auto px-4 sm:px-8 pt-8 pb-24">
-        <p className="text-sm text-[#6B5A70] mb-5"><Link href="/produit" className="text-[#6B5A70] hover:text-[#7A2342]">Produit</Link> &nbsp;/&nbsp; Comment l&apos;outil fonctionne</p>
+        <SousNavProduit courante="/produit/methode" />
         <h1 className="font-display text-[38px] sm:text-[54px] leading-[1.06] tracking-[-0.02em]">{titre[0]}<em className="text-[#C2456F]">{titre[1]}</em></h1>
         <p className="text-[19px] sm:text-xl leading-relaxed text-[#4A3A50] mt-6">De vos sources à un post relu. Pour chaque étape, nous disons ce que fait l&apos;IA, ce que vérifie un code que l&apos;on peut lire, et ce que vous décidez.</p>
         <div className="mt-6 flex flex-wrap gap-2.5 text-[13px] font-semibold">

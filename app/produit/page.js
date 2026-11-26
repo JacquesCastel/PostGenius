@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import Shell from "@/components/v2/Shell";
+import SousNavProduit from "@/components/v2/SousNavProduit";
 import { BRAND_NAME } from "@/lib/brand";
 import { produitOuvert } from "@/lib/siteProduit";
 import { MOTS } from "@/lib/produitPages";
@@ -63,6 +64,7 @@ export default function ProduitPage() {
   return (
     <Shell>
       <div className="max-w-[1100px] mx-auto px-4 sm:px-8 pt-8 pb-24">
+        <SousNavProduit courante="/produit" />
         <p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-[#C2456F]">Produit</p>
         <h1 className="font-display text-[38px] sm:text-[56px] leading-[1.06] tracking-[-0.02em] mt-3 max-w-[860px]">
           {titre[0]}<em className="text-[#C2456F]">{titre[1]}</em>
@@ -116,7 +118,10 @@ export default function ProduitPage() {
           <p className="text-[15px] leading-relaxed text-[#4A3A50] max-w-[640px]">Où sont vos données, comment elles sont protégées, et ce que nous n&apos;avons pas (pas de certification SOC 2 ni ISO 27001).</p>
           <Link href="/securite" className="font-semibold text-[#9E3157] hover:text-[#7A2342]">Sécurité et confidentialité</Link>
         </div>
-        <p className="mt-6 text-sm"><Link href="/produit/methode" className="font-semibold text-[#9E3157] hover:text-[#7A2342]">Comment l&apos;outil fonctionne, étape par étape →</Link></p>
+        <div className="mt-6 flex flex-wrap items-center justify-between gap-4 bg-[#F6E3E0] rounded-3xl px-7 py-6">
+          <p className="text-[17px] leading-relaxed text-[#4A3A50] max-w-[640px]">Pour chaque étape, ce que fait l&apos;IA, ce que font des règles fixes, et ce que vous décidez.</p>
+          <Link href="/produit/methode" className="bg-[#C2456F] hover:bg-[#9E3157] text-white font-semibold px-6 py-3 rounded-full transition-colors">Comment l&apos;outil fonctionne →</Link>
+        </div>
       </div>
     </Shell>
   );

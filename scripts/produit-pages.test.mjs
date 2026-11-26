@@ -59,3 +59,17 @@ test("les mentions « En test » sont dans un seul endroit, à retirer à l'ouve
   assert.match(M.ETAT_TEST, /comptes sélectionnés/);
   assert.equal(M.CONTROLES_ETAPES.filter((c) => c.test).length + M.CONTROLES_APRES.filter((c) => c.test).length, 2);
 });
+
+test("la méthode est accessible depuis l'accueil, les tarifs, À propos et les trois pages Produit ; liens seulement si /produit est ouvert", () => {
+  const lien = /href="\/produit\/methode"/;
+  assert.match(read("components/home/HomeV2.js"), /\{produitOuvert\(\) && <p className="mt-8"><Link href="\/produit\/methode"/);
+  assert.match(read("app/tarifs/page.js"), /\{produitOuvert\(\) && <p[^>]*>Avant de choisir : <Link href="\/produit\/methode"/);
+  assert.match(read("app/a-propos/page.js"), /\{produitOuvert\(\) && <> <Link href="\/produit\/methode"/);
+  assert.match(read("app/produit/page.js"), lien);
+  const barre = read("components/v2/SousNavProduit.js");
+  for (const h of ["/produit", "/produit/methode", "/produit/verification"]) assert.ok(barre.includes(`"${h}"`), h);
+  assert.match(barre, /aria-current="page"/);
+  for (const [f, cur] of [["app/produit/page.js", "/produit"], ["app/produit/methode/page.js", "/produit/methode"], ["app/produit/verification/page.js", "/produit/verification"]]) {
+    assert.ok(read(f).includes(`<SousNavProduit courante="${cur}" />`), f);
+  }
+});

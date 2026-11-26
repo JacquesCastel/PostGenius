@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import Shell from "@/components/v2/Shell";
+import SousNavProduit from "@/components/v2/SousNavProduit";
 import { BRAND_NAME } from "@/lib/brand";
 import { produitOuvert } from "@/lib/siteProduit";
 import { preuvesOuvertes } from "@/lib/sitePreuves";
@@ -25,7 +26,7 @@ export default function VerificationPage() {
   return (
     <Shell>
       <div className="max-w-[820px] mx-auto px-4 sm:px-8 pt-8 pb-24">
-        <p className="text-sm text-[#6B5A70] mb-5"><Link href="/produit" className="text-[#6B5A70] hover:text-[#7A2342]">Produit</Link> &nbsp;/&nbsp; Chiffres à vérifier</p>
+        <SousNavProduit courante="/produit/verification" />
         <p className="inline-block bg-[#FCE6D6] text-[#8A3B12] text-[13px] font-semibold px-3.5 py-1.5 rounded-full mb-3.5">Contrôle interne · indicatif</p>
         <h1 className="font-display text-[36px] sm:text-[50px] leading-[1.08] tracking-[-0.02em]">{titre[0]}<em className="text-[#C2456F]">{titre[1]}</em></h1>
         <p className="text-[19px] sm:text-xl leading-relaxed text-[#4A3A50] mt-6">
