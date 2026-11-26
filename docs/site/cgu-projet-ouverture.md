@@ -20,7 +20,7 @@ Vercéa est un service en ligne (SaaS) d'aide à la création et à la gestion d
 Le service s'adresse à des **professionnels** (entreprises, indépendants, agences) agissant pour leurs besoins professionnels. Vous déclarez avoir la capacité d'engager la personne pour laquelle vous vous inscrivez. [À VÉRIFIER : traitement des très petites entreprises hors de leur champ d'activité principal, qui bénéficient de certaines règles du droit de la consommation.]
 
 ### 3. Compte et essai gratuit
-L'inscription est libre. L'essai gratuit dure **14 jours**, sans carte bancaire et sans engagement. À la fin de l'essai, l'accès aux fonctionnalités nécessite un abonnement payant ; vos contenus restent consultables [À DÉCIDER : durée de conservation après la fin de l'essai sans abonnement]. Vous êtes responsable de la confidentialité de vos identifiants et de l'activité de votre compte.
+L'inscription est libre. L'essai gratuit dure **14 jours**, sans carte bancaire et sans engagement. À la fin de l'essai, l'accès aux fonctionnalités nécessite un abonnement payant. Vos contenus sont **conservés 30 jours** après la fin de l'essai : si vous vous abonnez dans ce délai, vous les retrouvez ; passé ce délai sans abonnement, ils peuvent être supprimés. Vous êtes responsable de la confidentialité de vos identifiants et de l'activité de votre compte.
 
 ### 4. Offres, prix et TVA
 Les offres (Essentiel, Pro, Agence), leur contenu et leurs prix sont indiqués sur la page [Tarifs](/tarifs), en **euros hors taxes**. La TVA applicable est ajoutée au prix à la facturation. L'éditeur peut modifier ses prix ; la modification ne s'applique qu'à la période de facturation suivante, après information préalable d'au moins **30 jours**.
@@ -62,7 +62,7 @@ Les présentes CGU sont soumises au droit français. En cas de litige, une solut
 1. Remboursement : **option A**, aucun remboursement d'une période entamée (article 8).
 2. Défaut de paiement : accès maintenu **7 jours** (article 9). **Attention : le produit n'applique pas ce délai lui-même.** Il garde l'accès tant que Stripe indique « impayé » (`past_due`). Pour que « 7 jours » soit vrai, régler Stripe : Facturation → Paramètres → Récupération des revenus → Relances : relancer sur 7 jours au plus, puis, si toutes les relances échouent, **annuler l'abonnement**.
 3. Préavis : **30 jours** pour un changement de prix (article 4) et de CGU (article 14).
-4. **Reste à décider** : conservation des contenus après la fin de l'essai sans abonnement (article 3).
+4. Conservation des contenus après la fin de l'essai sans abonnement : **30 jours** (article 3). **Attention : le produit ne supprime rien automatiquement** (aucune tâche de purge). Le texte dit « peuvent être supprimés », ce qui reste vrai ; une suppression effective après 30 jours demanderait une tâche à développer (à décider).
 
 ## Points à faire valider par un juriste
 - Règles applicables aux très petites entreprises (articles 2 et 8).
