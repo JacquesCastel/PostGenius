@@ -5,7 +5,7 @@
 # Usage : sur le serveur,  cd /opt/postgenius && ./deploy.sh
 #   FORCE=1            ne demande pas confirmation s'une publication est proche ou une transcription en cours
 #   ALLOW_DATA_LOSS=1  autorise un changement de schéma qui supprime ou transforme des données (à n'utiliser qu'après avoir lu .schema-diff.sql)
-#   SMOKE_URL=…        adresse contrôlée après déploiement (défaut : https://postgenius.network, le site en production ; peut aussi se définir dans le .env)
+#   SMOKE_URL=…        adresse contrôlée après déploiement (défaut : https://vercea.app, le site en production ; peut aussi se définir dans le .env)
 #   SKIP_SMOKE=1       désactive le contrôle automatique et le retour arrière automatique (à éviter)
 # Retour arrière : ./rollback.sh   (la version précédente est conservée dans .prev/). Journal : deploys.log
 # En cas de défaut de ce script lui-même : ./deploy.legacy.sh (ancienne version).
@@ -108,7 +108,7 @@ export SMOKE_URL="${SMOKE_URL:-$(getenv SMOKE_URL)}" SMOKE_EMAIL="${SMOKE_EMAIL:
 
 # Le contrôle automatique appelle l'adresse publique depuis ce serveur. Si le serveur ne la joint pas, le contrôle ne pourrait rien confirmer : on s'arrête
 # ICI, avant tout changement, avec un message explicite (scripts/smoke-preflight.sh). Pour déployer malgré tout : SKIP_SMOKE=1 (contrôle à la main ensuite).
-SMOKE_URL="${SMOKE_URL:-https://postgenius.network}"
+SMOKE_URL="${SMOKE_URL:-https://vercea.app}"
 export SMOKE_URL
 if [ "${SKIP_SMOKE:-0}" != "1" ]; then
   if ! "$APP_DIR/scripts/smoke-preflight.sh" "$SMOKE_URL"; then
