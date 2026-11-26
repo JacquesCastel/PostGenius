@@ -114,3 +114,9 @@ test("la politique de confidentialité (anglais) porte le nouveau nom, cite l'an
   assert.doesNotMatch(p, /LinkeePost|linkeepost/);
   assert.match(p, /alternates: \{ canonical: "\/privacy-policy" \}/, "l'adresse de la page reste /privacy-policy");
 });
+
+test("les produits créés sur Stripe portent le nom affiché, pas l'ancien (ils figurent sur la page de paiement et les factures)", () => {
+  const s = read("scripts/stripe-setup.mjs");
+  for (const plan of ["Essentiel", "Pro", "Agence"]) assert.ok(s.includes(`name: "Vercéa ${plan}"`), plan);
+  assert.doesNotMatch(s, /LinkeePost/);
+});

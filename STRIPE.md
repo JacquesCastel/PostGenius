@@ -1,4 +1,4 @@
-# Intégration Stripe — LinkeePost
+# Intégration Stripe — Vercéa
 
 Paiement par **abonnement** via **Stripe Checkout** (page hébergée) + **portail client** (gestion/annulation/factures). L'essai 14 jours reste **sans carte** ; le paiement n'est demandé qu'au moment de s'abonner.
 
@@ -10,7 +10,7 @@ STRIPE_SECRET_KEY=sk_test_xxx
 STRIPE_WEBHOOK_SECRET=whsec_xxx
 
 # URL publique de l'app (pour les redirections Checkout/portail)
-APP_URL=https://linkeepost.app
+APP_URL=https://vercea.app
 
 # Price IDs (générés par scripts/stripe-setup.mjs)
 STRIPE_PRICE_ESSENTIEL_MONTH=price_xxx
@@ -44,7 +44,7 @@ Le script crée 3 produits (Essentiel/Pro/Agence) × 2 prix (mensuel/annuel : an
 
 Crée un endpoint dans Stripe → Developers → Webhooks :
 
-- URL : `https://linkeepost.app/api/stripe/webhook`
+- URL : `https://vercea.app/api/stripe/webhook`
 - Événements : `checkout.session.completed`, `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`
 - Copie le **Signing secret** (`whsec_...`) dans `STRIPE_WEBHOOK_SECRET`.
 
@@ -69,6 +69,12 @@ stripe listen --forward-to localhost:3000/api/stripe/webhook
 1. Bascule le dashboard Stripe en **mode Live**, mets les clés `sk_live_...` / `whsec_...` (endpoint live) dans le `.env` de prod.
 2. Relance `node --env-file=.env scripts/stripe-setup.mjs` (en live) et remplace les `STRIPE_PRICE_*`.
 3. Recrée le webhook en mode live avec l'URL de prod.
+4. **Avant le premier encaissement** (liste du 26 novembre 2026) :
+   - Compte Stripe activé : identité de l'éditeur, IBAN, numéro de TVA ; nom commercial « Vercéa » et libellé sur les relevés bancaires.
+   - Les produits créés par `stripe-setup.mjs` s'appellent « Vercéa Essentiel / Pro / Agence » (ils apparaissent sur la page de paiement et les factures). Ne pas réutiliser les produits de test.
+   - Portail client configuré (résiliation, factures, moyens de paiement).
+   - CGU relues : renouvellement automatique, TVA, rétractation, remboursement (administration → pages légales).
+   - Un achat réel de bout en bout avec une carte de l'équipe : abonnement, facture reçue, résiliation, remboursement.
 
 ## Blocage à la fin de l'essai
 

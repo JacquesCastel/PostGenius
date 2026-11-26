@@ -14,9 +14,9 @@ const mode = key.startsWith("sk_live") ? "LIVE" : "TEST";
 
 // Montants en centimes (HT). Annuel = 9 mois (3 mois offerts, 25 %).
 const PLANS = [
-  { id: "essentiel", name: "LinkeePost Essentiel", month: 1900, year: 17100 },
-  { id: "pro", name: "LinkeePost Pro", month: 4900, year: 44100 },
-  { id: "agence", name: "LinkeePost Agence", month: 12900, year: 116100 },
+  { id: "essentiel", name: "Vercéa Essentiel", month: 1900, year: 17100 },
+  { id: "pro", name: "Vercéa Pro", month: 4900, year: 44100 },
+  { id: "agence", name: "Vercéa Agence", month: 12900, year: 116100 },
 ];
 
 console.log(`\n🔧 Création des produits/prix Stripe (${mode})…\n`);
