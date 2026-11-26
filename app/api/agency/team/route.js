@@ -38,7 +38,7 @@ export async function POST(req) {
   // Une relance de la même adresse ne prend pas de place en plus
   const again = await prisma.agencyInvite.count({ where: { agencyId: auth.agencyId, email, acceptedAt: null, revokedAt: null, expiresAt: { gt: new Date() } } });
   if (!again && (await seatsUsed(auth.agencyId)) >= MAX_AGENCY_MEMBERS) {
-    await notifySeatsLimit({ agencyId: auth.agencyId, ownerId: auth.userId }); // prévient l'équipe LinkeePost, une seule fois par agence
+    await notifySeatsLimit({ agencyId: auth.agencyId, ownerId: auth.userId }); // prévient l'équipe Vercéa, une seule fois par agence
     return NextResponse.json({ error: `Votre agence compte déjà ${MAX_AGENCY_MEMBERS} utilisateurs (invitations en attente comprises). Au-delà, écrivez-nous à ${CONTACT_EMAIL}.`, code: "seats_limit" }, { status: 403 });
   }
   const [agency, me] = await Promise.all([

@@ -6,7 +6,7 @@ import { handleMessage } from "@/lib/mcp";
 import { checkFeature } from "@/lib/gating";
 import { rateLimit } from "@/lib/ratelimit";
 
-// Serveur MCP de LinkeePost (transport « HTTP en flux », réponses JSON, sans état). Authentification : « Authorization: Bearer lkp_… »
+// Serveur MCP de Vercéa (transport « HTTP en flux », réponses JSON, sans état). Authentification : « Authorization: Bearer lkp_… »
 // (clé personnelle, voir Mon profil). Réservé aux offres Pro et Agence. Aucune session côté serveur : chaque appel est indépendant.
 
 export const maxDuration = 120;

@@ -10,9 +10,9 @@ import { JOIN_HREF, pick } from "@/lib/access";
 import { redirigerSiNecessaire } from "@/lib/siteNavServer";
 
 export const metadata = {
-  title: "Fonctionnalités — LinkeePost",
+  title: "Fonctionnalités — Vercéa",
   description:
-    "Dictée vocale, base de connaissances, seconde vie d'un contenu (article, document, vidéo), campagnes guidées, coach, accès par assistant IA (Claude, ChatGPT), base de leads, veille, images et vidéos, programmation, statistiques, équipe et clients : toutes les fonctions de LinkeePost.",
+    "Dictée vocale, base de connaissances, seconde vie d'un contenu (article, document, vidéo), campagnes guidées, coach, accès par assistant IA (Claude, ChatGPT), base de leads, veille, images et vidéos, programmation, statistiques, équipe et clients : toutes les fonctions de Vercéa.",
   alternates: { canonical: "/fonctionnalites" },
 };
 
@@ -81,7 +81,7 @@ export default async function FonctionnalitesPage() {
             Tout ce qu'il faut pour piloter votre <span className="text-[#ff5a5f]">LinkedIn</span>
           </h1>
           <p className="text-lg text-[#5a6b85] mt-4 max-w-2xl mx-auto">
-            De la matière que vous déposez aux retours réels de LinkedIn, LinkeePost couvre toute la chaîne :
+            De la matière que vous déposez aux retours réels de LinkedIn, Vercéa couvre toute la chaîne :
             vous relisez et vous validez.
           </p>
           <Link
@@ -146,12 +146,12 @@ export default async function FonctionnalitesPage() {
           reverse
           tag="Votre matière"
           title="Une base de connaissances que le moteur sait résumer"
-          text="Déposez documents, liens et notes : LinkeePost en retient les faits, les cas et les positions, et vos posts sont conçus pour les reprendre fidèlement ; un contrôle signale, sous le post, les chiffres qui ne figurent pas dans vos informations. Le moteur résume ce qu'il a appris de vous ; vous échangez avec lui pour corriger ou préciser, et rien n'est retenu sans votre clic. Un article ou un post vu en ligne s'envoie d'un geste depuis le menu Partager du téléphone (Android) ou un favori du navigateur."
+          text="Déposez documents, liens et notes : Vercéa en retient les faits, les cas et les positions, et vos posts sont conçus pour les reprendre fidèlement ; un contrôle signale, sous le post, les chiffres qui ne figurent pas dans vos informations. Le moteur résume ce qu'il a appris de vous ; vous échangez avec lui pour corriger ou préciser, et rien n'est retenu sans votre clic. Un article ou un post vu en ligne s'envoie d'un geste depuis le menu Partager du téléphone (Android) ou un favori du navigateur."
           points={[
             "Résumé de ce que le moteur a appris : positions, voix, preuves, zones d'ombre",
             "Échange avec le moteur pour affiner : ce qu'il propose de retenir attend votre accord",
             "Les chiffres du post absents de vos informations sont signalés sous le post, avant publication ; les sources utilisées sont indiquées à côté du post",
-            "Partager vers LinkeePost : commenter, écrire un post ou garder un lien dans la base",
+            "Partager vers Vercéa : commenter, écrire un post ou garder un lien dans la base",
             "Dictée vocale : parlez au lieu d'écrire, relisez le texte, gardez-le comme note ou faites-en un post",
           ]}
         >
@@ -178,7 +178,7 @@ export default async function FonctionnalitesPage() {
         {/* Dictée vocale */}
         <Feature
           tag="Dictée vocale · toutes les offres"
-          title="Parlez plutôt qu'écrire : LinkeePost met en forme"
+          title="Parlez plutôt qu'écrire : Vercéa met en forme"
           text="Vous parlez mieux que vous n'écrivez ? Dictez une idée, un retour de rendez-vous ou une conviction, depuis le téléphone, la tablette ou l'ordinateur. Le texte est transcrit, vous le relisez et le corrigez, puis il devient la matière d'un post, une note de votre base de connaissances ou une demande au copilote. L'enregistrement n'est pas conservé : seul le texte que vous gardez l'est."
           points={[
             "Dicter une idée ou une matière dans « Créer un post », en 30 secondes ou en quelques minutes",
@@ -379,7 +379,7 @@ export default async function FonctionnalitesPage() {
           reverse
           tag="Seconde vie d'un contenu · offres Pro et Agence"
           title="Un article, un webinaire, une étude de cas : une série de posts"
-          text="Déposez un contenu qui vous a déjà demandé du travail : LinkeePost en tire les faits, vous propose des angles, puis écrit un post par angle choisi, à partir des seuls faits que vous avez cochés. Vous relisez, puis la série est programmée sur votre rythme de publication."
+          text="Déposez un contenu qui vous a déjà demandé du travail : Vercéa en tire les faits, vous propose des angles, puis écrit un post par angle choisi, à partir des seuls faits que vous avez cochés. Vous relisez, puis la série est programmée sur votre rythme de publication."
           points={[
             "Un lien, un PDF ou un document Word, un texte collé, ou une vidéo ou un enregistrement audio",
             "Les faits utilisables sont listés : le code ne garde un fait que si tous ses chiffres figurent dans le contenu d'origine ; vous cochez, corrigez, ajoutez",
@@ -406,7 +406,7 @@ export default async function FonctionnalitesPage() {
         <Feature
           tag="Veille"
           title="Une veille connectée à votre secteur"
-          text="Branchez vos sources (sites, flux RSS) : LinkeePost surveille l'actualité de votre domaine et vous propose des inspirations. Un article pertinent devient un post — ou une campagne entière."
+          text="Branchez vos sources (sites, flux RSS) : Vercéa surveille l'actualité de votre domaine et vous propose des inspirations. Un article pertinent devient un post — ou une campagne entière."
           points={[
             "Sources RSS de votre secteur, agrégées automatiquement",
             "Inspirations prêtes à transformer en post",
@@ -455,7 +455,7 @@ export default async function FonctionnalitesPage() {
         <Feature
           tag="Vidéo"
           title="Filmez avec un kit de tournage, publiez en un clic"
-          text="Pour chaque post vidéo, LinkeePost prépare un plan de tournage plan par plan : ce que vous dites, ce qu'on voit à l'image, le texte à incruster, et des conseils adaptés au sujet. Lisez votre script face caméra grâce au téléprompteur, puis importez votre vidéo : elle est publiée directement sur LinkedIn avec votre texte."
+          text="Pour chaque post vidéo, Vercéa prépare un plan de tournage plan par plan : ce que vous dites, ce qu'on voit à l'image, le texte à incruster, et des conseils adaptés au sujet. Lisez votre script face caméra grâce au téléprompteur, puis importez votre vidéo : elle est publiée directement sur LinkedIn avec votre texte."
           points={[
             "Plan de tournage et conseils de lumière, cadrage et rythme",
             "Téléprompteur pour lire le script face caméra",
@@ -482,7 +482,7 @@ export default async function FonctionnalitesPage() {
         <Feature
           reverse
           tag="Interactions"
-          title="Commentez et réagissez sans quitter LinkeePost"
+          title="Commentez et réagissez sans quitter Vercéa"
           text="Une présence LinkedIn, ce n'est pas que publier. Depuis l'écran Interagir, commentez et réagissez à n'importe quel post LinkedIn, et gardez un journal de vos interactions. Les compteurs de commentaires et de réactions de vos posts publiés rejoignent vos statistiques."
           points={[
             "Commenter et réagir à n'importe quel post LinkedIn par son lien",
@@ -498,7 +498,7 @@ export default async function FonctionnalitesPage() {
             </div>
             <div className="space-y-2">
               <div className="rounded-xl bg-gray-50 border border-gray-100 p-3 text-xs text-[#5a6b85]">Merci pour ce retour d&apos;expérience, très parlant !</div>
-              <div className="text-xs text-gray-400">Envoyé via LinkeePost · journalisé</div>
+              <div className="text-xs text-gray-400">Envoyé via Vercéa · journalisé</div>
             </div>
           </Card>
         </Feature>
@@ -507,7 +507,7 @@ export default async function FonctionnalitesPage() {
         <Feature
           tag="Leads et matching · alimentation automatique : offres Pro et Agence"
           title="Vos commentateurs deviennent des leads, comparés à votre client idéal"
-          text="Chaque commentaire lu sur votre page entreprise ajoute son auteur à votre base de leads, avec son commentaire et le lien du post. Dès la création du compte, une étape « Leads » vous demande votre cible et ce qu'est un bon lead pour vous : c'est la base du matching. L'IA compare chaque personne à cette description (son commentaire, et son nom et son poste repris de LinkedIn), la note (excellent, bon, moyen, faible) et explique pourquoi. Vous suivez ensuite chaque contact. Conformément aux règles de LinkedIn, les données reçues d'un commentateur sont effacées automatiquement (profil après 24 h, commentaire après 48 h). LinkeePost ne contacte personne à votre place, et ne lit que ce que l'API officielle de LinkedIn fournit."
+          text="Chaque commentaire lu sur votre page entreprise ajoute son auteur à votre base de leads, avec son commentaire et le lien du post. Dès la création du compte, une étape « Leads » vous demande votre cible et ce qu'est un bon lead pour vous : c'est la base du matching. L'IA compare chaque personne à cette description (son commentaire, et son nom et son poste repris de LinkedIn), la note (excellent, bon, moyen, faible) et explique pourquoi. Vous suivez ensuite chaque contact. Conformément aux règles de LinkedIn, les données reçues d'un commentateur sont effacées automatiquement (profil après 24 h, commentaire après 48 h). Vercéa ne contacte personne à votre place, et ne lit que ce que l'API officielle de LinkedIn fournit."
           points={[
             "Alimentation automatique à partir des commentaires de la page entreprise (offres Pro et Agence) ; ajout à la main sur toutes les offres",
             "Étape Leads à la création du compte et dans le Profil : cible, fonction, taille d'entreprise, secteur, signaux d'intérêt",
@@ -564,7 +564,7 @@ export default async function FonctionnalitesPage() {
         <Feature
           tag="Mesure"
           title="Des statistiques qui guident vos décisions"
-          text="Suivez l'engagement et la progression de vos campagnes. LinkeePost met en évidence ce qui fonctionne pour que vous reproduisiez vos meilleurs posts — sur votre profil comme sur vos pages entreprise."
+          text="Suivez l'engagement et la progression de vos campagnes. Vercéa met en évidence ce qui fonctionne pour que vous reproduisiez vos meilleurs posts — sur votre profil comme sur vos pages entreprise."
           points={[
             "Commentaires et réactions de chaque post publié",
             "Progression par campagne",
@@ -637,7 +637,7 @@ export default async function FonctionnalitesPage() {
         <Feature
           tag="Assistants IA · offres Pro et Agence"
           title="Parlez de vos posts à Claude, ChatGPT ou Cursor"
-          text="Branchez votre assistant IA sur votre compte LinkeePost : demandez-lui vos derniers posts, vos résultats ou les conseils du coach, et faites-lui préparer des brouillons. Il ne programme ni ne publie rien : vous relisez dans LinkeePost."
+          text="Branchez votre assistant IA sur votre compte Vercéa : demandez-lui vos derniers posts, vos résultats ou les conseils du coach, et faites-lui préparer des brouillons. Il ne programme ni ne publie rien : vous relisez dans Vercéa."
           points={[
             "Claude (claude.ai) : connexion en un clic, sans clé à copier. ChatGPT (Codex), Claude Code et Cursor : clé personnelle",
             "Il lit vos posts, votre planning, vos résultats et les conseils du coach ; il peut créer des brouillons et ajouter des sources si vous l'avez autorisé (décoché par défaut)",
@@ -649,7 +649,7 @@ export default async function FonctionnalitesPage() {
           <Card>
             <p className="text-xs font-semibold flex items-center gap-1.5 mb-3"><Plug size={15} className="text-[#ff5a5f]" /> Dans votre assistant</p>
             <div className="space-y-1.5">
-              <div className="text-xs bg-[#0a66c2] text-white rounded-lg px-2.5 py-1.5 ml-auto w-fit max-w-[85%]">Avec LinkeePost, montre-moi mes 5 derniers posts</div>
+              <div className="text-xs bg-[#0a66c2] text-white rounded-lg px-2.5 py-1.5 ml-auto w-fit max-w-[85%]">Avec Vercéa, montre-moi mes 5 derniers posts</div>
               <div className="text-xs bg-gray-50 border border-gray-100 rounded-lg px-2.5 py-1.5 w-fit max-w-[85%]">Voici vos 5 derniers posts et leurs résultats : le post du 28/10 arrive en tête…</div>
               <div className="text-xs bg-[#0a66c2] text-white rounded-lg px-2.5 py-1.5 ml-auto w-fit max-w-[85%]">Prépare-moi un brouillon sur ce sujet</div>
             </div>
@@ -686,7 +686,7 @@ export default async function FonctionnalitesPage() {
         <Feature
           tag="Événements · offre Agence"
           title="Ne ratez plus aucun salon"
-          text="Ajoutez vos salons et forums : LinkeePost génère et programme des posts de présence autour des dates (« Nous serons au salon X du A au B, venez nous rencontrer ! »), à partir du lien et de l'image de l'événement. Vous pouvez aussi créer l'événement lui-même sur LinkedIn, au nom de votre page. Le jour J, une notification vous rappelle de poster — et de prendre une photo sur place avec votre téléphone."
+          text="Ajoutez vos salons et forums : Vercéa génère et programme des posts de présence autour des dates (« Nous serons au salon X du A au B, venez nous rencontrer ! »), à partir du lien et de l'image de l'événement. Vous pouvez aussi créer l'événement lui-même sur LinkedIn, au nom de votre page. Le jour J, une notification vous rappelle de poster — et de prendre une photo sur place avec votre téléphone."
           points={[
             "Posts de présence générés et programmés automatiquement",
             "Événement créé sur LinkedIn au nom de votre page, modifiable tant qu'il n'a pas commencé",

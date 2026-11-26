@@ -124,11 +124,11 @@ export default function SiteHeader({ variant = "classic", nav = NAV_V2 } = {}) {
   return (
     <header className="max-w-6xl mx-auto px-4 sm:px-6 pt-5">
       <div className="bg-white/80 backdrop-blur rounded-full shadow-lg shadow-rose-100/50 border border-white px-3 sm:px-5 py-2.5 flex items-center justify-between gap-2 sm:gap-4">
-        <Link href={loggedIn ? "/app" : "/"} className="flex items-center gap-2 shrink-0" aria-label={loggedIn ? "LinkeePost : tableau de bord" : "LinkeePost : accueil"}>
+        <Link href={loggedIn ? "/app" : "/"} className="flex items-center gap-2 shrink-0" aria-label={loggedIn ? "Vercéa : tableau de bord" : "Vercéa : accueil"}>
           <div className="bg-[#ff5a5f] text-white p-1.5 rounded-xl shadow-md shadow-rose-300/40">
             <LpMark size={18} />
           </div>
-          <span className="font-extrabold text-[#1b2a4a]">LinkeePost</span>
+          <span className="font-extrabold text-[#1b2a4a]">Vercéa</span>
         </Link>
         <nav className="hidden lg:flex items-center gap-6 text-sm font-medium text-[#5a6b85] mx-auto">
           {NAV.map(([href, label]) => (

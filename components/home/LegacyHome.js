@@ -17,30 +17,30 @@ import JsonLd from "@/components/home/JsonLd";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "LinkeePost — Votre expertise, vos mots, vos posts LinkedIn",
+  title: "Vercéa — Votre expertise, vos mots, vos posts LinkedIn",
   description:
-    "Déposez vos documents, vos liens et vos anciens posts : LinkeePost rédige, programme et publie des posts LinkedIn dans votre voix, à partir de vos propres faits. " + pick("Accès sur invitation pendant la bêta fermée.", "Essai gratuit 14 jours."),
+    "Déposez vos documents, vos liens et vos anciens posts : Vercéa rédige, programme et publie des posts LinkedIn dans votre voix, à partir de vos propres faits. " + pick("Accès sur invitation pendant la bêta fermée.", "Essai gratuit 14 jours."),
   alternates: { canonical: "/" },
 };
 
 const FEATURES = [
-  { icon: BookOpen, title: "Base de connaissances", text: "Déposez documents, liens et notes : LinkeePost en retient les faits et les cas, et vos posts sont conçus pour les reprendre fidèlement ; un contrôle signale, sous le post, les chiffres qui ne figurent pas dans vos informations. Chaque post indique les sources qu'il a utilisées. Le moteur résume ce qu'il a appris et vous pouvez échanger avec lui pour l'affiner ; un lien ou un texte se partage depuis le téléphone ou le navigateur." },
+  { icon: BookOpen, title: "Base de connaissances", text: "Déposez documents, liens et notes : Vercéa en retient les faits et les cas, et vos posts sont conçus pour les reprendre fidèlement ; un contrôle signale, sous le post, les chiffres qui ne figurent pas dans vos informations. Chaque post indique les sources qu'il a utilisées. Le moteur résume ce qu'il a appris et vous pouvez échanger avec lui pour l'affiner ; un lien ou un texte se partage depuis le téléphone ou le navigateur." },
   { icon: Mic, title: "Votre voix", text: "Consignes de style, mots à privilégier, mots à bannir, formulations types, anciens posts comme exemples : le ton et le rythme restent les vôtres, et vos consignes priment sur les règles génériques." },
-  { icon: History, title: "Mémoire éditoriale", text: "LinkeePost sait ce que vous avez déjà publié ou programmé : il assure la continuité sans se répéter, ni reprendre la même accroche." },
+  { icon: History, title: "Mémoire éditoriale", text: "Vercéa sait ce que vous avez déjà publié ou programmé : il assure la continuité sans se répéter, ni reprendre la même accroche." },
   { icon: Megaphone, title: "Campagnes guidées", text: "Un thème, un brief cadré avec l'IA, un post d'exemple à valider — puis une série de posts qui progressent vers votre message clé, planifiée sur vos créneaux." },
   { icon: Layers, title: "Seconde vie d'un contenu", text: "Offres Pro et Agence : un article, un document, une étude de cas ou une vidéo devient une série de posts, écrits à partir des seuls faits que vous avez cochés. Un contenu de tiers est reformulé et sa source citée ; vous relisez avant que la série soit programmée." },
   { icon: Gauge, title: "Le coach", text: "Il compare chacun de vos posts à votre propre médiane : jour, moment de la journée, format, longueur… Chaque conseil indique le nombre de posts et un niveau de confiance, et vous adoptez vos créneaux conseillés d'un clic. Il ne devine pas l'algorithme de LinkedIn : il lit vos chiffres." },
-  { icon: Sparkles, title: "Vos assistants IA", text: "Offres Pro et Agence : branchez Claude, ChatGPT (Codex) ou Cursor sur votre compte pour interroger vos posts et vos résultats, et préparer des brouillons. Aucun outil ne programme ni ne publie : vous relisez dans LinkeePost." },
+  { icon: Sparkles, title: "Vos assistants IA", text: "Offres Pro et Agence : branchez Claude, ChatGPT (Codex) ou Cursor sur votre compte pour interroger vos posts et vos résultats, et préparer des brouillons. Aucun outil ne programme ni ne publie : vous relisez dans Vercéa." },
   { icon: MessageCircle, title: "Copilote éditorial", text: "Un agent avec qui échanger pour savoir quoi publier : il s'appuie sur votre base de connaissances, propose des idées argumentées et apprend de vos choix (Générer / Ignorer)." },
   { icon: Check, title: "Validation avant publication", text: "Chaque post attend votre accord. Offre Agence : le client relit et valide depuis un lien privé, sans compte, et reçoit un rapport mensuel à vos couleurs." },
   { icon: Layers, title: "Carrousels, vidéo, images", text: "Au-delà du texte : carrousels en PDF (ou de vos propres photos), sondages, kit de tournage et téléprompteur pour la vidéo, illustrations générées par IA. Offres Pro et Agence." },
   { icon: Mic, title: "Dictée vocale", text: "Vous préférez parler qu'écrire ? Dictez une idée ou une note depuis le téléphone ou l'ordinateur : le texte est transcrit, vous le relisez (nettoyage des hésitations en option), puis il devient la matière d'un post ou une note de votre base de connaissances. L'enregistrement n'est pas conservé. Inclus dans toutes les offres : 10 minutes par mois (Essentiel), 60 (Pro et Agence, par client)." },
-  { icon: Users, title: "Leads et matching", text: "Offres Pro et Agence : les personnes qui commentent la page entreprise arrivent dans une base de leads, avec leur commentaire (ajout à la main sur toutes les offres). À la création du compte, vous décrivez votre cible et ce qu'est un bon lead : l'IA compare chaque personne à cette description et la note (les données reçues de LinkedIn sont effacées après 24 h et 48 h, comme l'exige LinkedIn) ; vous suivez chaque contact (statut, note, export). LinkeePost n'écrit à personne à votre place." },
+  { icon: Users, title: "Leads et matching", text: "Offres Pro et Agence : les personnes qui commentent la page entreprise arrivent dans une base de leads, avec leur commentaire (ajout à la main sur toutes les offres). À la création du compte, vous décrivez votre cible et ce qu'est un bon lead : l'IA compare chaque personne à cette description et la note (les données reçues de LinkedIn sont effacées après 24 h et 48 h, comme l'exige LinkedIn) ; vous suivez chaque contact (statut, note, export). Vercéa n'écrit à personne à votre place." },
   { icon: BarChart3, title: "Statistiques et suivi", text: "Progression des campagnes, posts publiés et à venir, commentaires, réactions et impressions de vos pages : les retours réels de LinkedIn, pas des estimations." },
 ];
 
 const STEPS = [
-  { n: "1", icon: BookOpen, title: "Déposez votre matière", text: "Documents, liens, anciens posts : LinkeePost en tire des faits et du vocabulaire. Vous validez ce qu'il retient." },
+  { n: "1", icon: BookOpen, title: "Déposez votre matière", text: "Documents, liens, anciens posts : Vercéa en tire des faits et du vocabulaire. Vous validez ce qu'il retient." },
   { n: "2", icon: Mic, title: "Fixez votre voix", text: "Consignes de style, mots à privilégier ou à bannir, humeur, rythme de publication : décrits une fois, appliqués à chaque post." },
   { n: "3", icon: CalendarDays, title: "Générez, validez, publiez", text: "Chaque post attend votre accord, puis part sur LinkedIn à l'heure choisie, image comprise. Suivez les retombées réelles." },
 ];
@@ -48,7 +48,7 @@ const STEPS = [
 const PILLARS = [
   { icon: BookOpen, title: "Votre matière", text: "Vos documents et vos liens deviennent des faits que le post est conçu pour reprendre fidèlement, avec les sources utilisées indiquées." },
   { icon: Mic, title: "Votre voix", text: "Vos mots à privilégier, vos mots à bannir, vos anciens posts comme exemples : vos consignes passent avant tout le reste." },
-  { icon: History, title: "Votre mémoire", text: "LinkeePost sait ce que vous avez déjà publié : il assure la continuité sans se répéter." },
+  { icon: History, title: "Votre mémoire", text: "Vercéa sait ce que vous avez déjà publié : il assure la continuité sans se répéter." },
 ];
 
 const ORIGIN = [
@@ -158,7 +158,7 @@ export default async function Landing() {
           </div>
         </section>
 
-        {/* LinkeePost en 40 secondes : motion design (dictée, post, programmation, entonnoir commentaires → leads) */}
+        {/* Vercéa en 40 secondes : motion design (dictée, post, programmation, entonnoir commentaires → leads) */}
         <section className="max-w-5xl mx-auto px-6 pb-12" aria-labelledby="motion-title">
           <p className="text-center text-sm font-semibold text-[#ff5a5f]">En 40 secondes</p>
           <h2 id="motion-title" className="text-2xl md:text-3xl font-extrabold text-center mt-1 mb-6">De votre idée au premier contact qualifié</h2>
@@ -195,7 +195,7 @@ export default async function Landing() {
           <p className="text-center text-sm font-semibold text-[#ff5a5f]">Ce qui nous distingue</p>
           <h2 className="text-3xl md:text-4xl font-extrabold text-center mt-2">D&apos;où vient chaque post</h2>
           <p className="text-[#5a6b85] text-center mt-3 max-w-2xl mx-auto">
-            Un générateur ordinaire repart de zéro à chaque fois. LinkeePost part de ce que votre entreprise sait déjà, et vous montre les sources qu&apos;il a utilisées.
+            Un générateur ordinaire repart de zéro à chaque fois. Vercéa part de ce que votre entreprise sait déjà, et vous montre les sources qu&apos;il a utilisées.
           </p>
           <div className="grid md:grid-cols-4 gap-4 mt-10">
             {ORIGIN.map((o) => (
@@ -209,7 +209,7 @@ export default async function Landing() {
           <div className="grid md:grid-cols-2 gap-6 mt-10">
             <div className="rounded-3xl bg-white border border-white shadow-lg shadow-rose-100/40 p-6">
               <p className="text-xs font-semibold text-[#ff5a5f] mb-1.5">Indépendants et consultants</p>
-              <p className="text-sm text-[#5a6b85] leading-relaxed">Votre expertise est déjà écrite quelque part : dans vos documents, vos présentations, vos articles. LinkeePost la remet en forme, sans que vous repartiez d&apos;une page blanche.</p>
+              <p className="text-sm text-[#5a6b85] leading-relaxed">Votre expertise est déjà écrite quelque part : dans vos documents, vos présentations, vos articles. Vercéa la remet en forme, sans que vous repartiez d&apos;une page blanche.</p>
             </div>
             <div className="rounded-3xl bg-white border border-white shadow-lg shadow-rose-100/40 p-6">
               <p className="text-xs font-semibold text-[#ff5a5f] mb-1.5">Agences</p>
@@ -221,7 +221,7 @@ export default async function Landing() {
         {/* Fonctionnalités */}
         <section id="fonctionnalites" className="max-w-6xl mx-auto px-6 py-20">
           <BackToTop />
-          <p className="text-center text-sm font-semibold text-[#ff5a5f]">Ce que fait LinkeePost</p>
+          <p className="text-center text-sm font-semibold text-[#ff5a5f]">Ce que fait Vercéa</p>
           <h2 className="text-3xl md:text-4xl font-extrabold text-center mt-2">Tout ce qu'il faut autour du texte</h2>
           <p className="text-[#5a6b85] text-center mt-3 max-w-2xl mx-auto">De la matière au post publié, puis aux retours réels.</p>
           <div className="grid md:grid-cols-3 gap-6 mt-12">
@@ -257,7 +257,7 @@ export default async function Landing() {
                 Un <span className="text-[#ff8a8d]">contrôle de forme</span> avant de publier
               </h2>
               <p className="text-white/80 mt-4 leading-relaxed">
-                LinkeePost vérifie la mise en forme de votre post (accroche, longueur, aération, appel à l&apos;action) avec une grille de règles fixes : le même texte obtient toujours la même note. L&apos;IA y ajoute des conseils de fond.
+                Vercéa vérifie la mise en forme de votre post (accroche, longueur, aération, appel à l&apos;action) avec une grille de règles fixes : le même texte obtient toujours la même note. L&apos;IA y ajoute des conseils de fond.
                 C&apos;est un indicateur de qualité de forme, pas une prévision de vues ou de réactions.
               </p>
               <ul className="mt-5 space-y-2.5">

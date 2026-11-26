@@ -40,7 +40,7 @@ export async function POST(req) {
     ...(primaryColor   !== undefined && { primaryColor }),
     ...(secondaryColor !== undefined && { secondaryColor }),
     ...(accentColor    !== undefined && { accentColor }),
-    // Images : seulement celles de LinkeePost (envoi de fichier) ; une adresse externe est retirée (voir lib/assetUrl.js)
+    // Images : seulement celles de Vercéa (envoi de fichier) ; une adresse externe est retirée (voir lib/assetUrl.js)
     ...(logoUrl        !== undefined && { logoUrl: logoUrl === null || isOwnAsset(logoUrl) ? logoUrl : null }),
     ...(backgroundUrl  !== undefined && { backgroundUrl: backgroundUrl === null || isOwnAsset(backgroundUrl) ? backgroundUrl : null }),
     ...(fontFamily     !== undefined && { fontFamily }),

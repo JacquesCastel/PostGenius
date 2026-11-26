@@ -3,7 +3,7 @@ import { prisma } from "@/lib/db";
 import { getEffectiveUserId as getUserId } from "@/lib/session";
 import { parseMentions } from "@/lib/mentions";
 
-// POST — « Supprimer mes données LinkedIn » : déconnecte LinkedIn et efface ce que LinkeePost en a conservé pour ce compte
+// POST — « Supprimer mes données LinkedIn » : déconnecte LinkedIn et efface ce que Vercéa en a conservé pour ce compte
 // (jetons et identifiants, statistiques de posts, interactions, pages enregistrées pour les mentions, personnes taguées,
 // leads issus des commentaires LinkedIn). Les contacts saisis à la main ne sont pas des données LinkedIn : ils restent.
 // Les posts écrits par l'utilisateur restent : ce sont ses contenus, pas des données LinkedIn. Dans l'espace d'un client

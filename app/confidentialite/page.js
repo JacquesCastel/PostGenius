@@ -5,7 +5,7 @@ import { getFooterPage } from "@/lib/footer-pages";
 import { redirigerSiNecessaire } from "@/lib/siteNavServer";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Politique de confidentialité — LinkeePost", alternates: { canonical: "/confidentialite" } };
+export const metadata = { title: "Politique de confidentialité — Vercéa", alternates: { canonical: "/confidentialite" } };
 
 export default async function Confidentialite() {
   await redirigerSiNecessaire("/confidentialite");

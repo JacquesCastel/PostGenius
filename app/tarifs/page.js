@@ -11,7 +11,7 @@ import { liaisons } from "@/lib/typo";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Tarifs — LinkeePost",
+  title: "Tarifs — Vercéa",
   description:
     "Trois offres pour des posts LinkedIn écrits à partir de votre matière : Essentiel, Pro et Agence. " + pick("Accès sur invitation pendant la bêta fermée.", "14 jours d'essai gratuit, sans carte bancaire."),
   alternates: { canonical: "/tarifs" },

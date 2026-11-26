@@ -7,8 +7,8 @@ import { JOIN_HREF, pick } from "@/lib/access";
 // Prototype isolé : « un même sujet, trois profils, trois prises de parole ». Non indexé, non relié au site : on y arrive par son adresse.
 // Les textes sont des générations réelles du moteur, lues dans content/demo-editoriale.json : aucun appel IA à la visite.
 export const metadata = {
-  title: "Démonstration éditoriale — LinkeePost",
-  description: "Un même sujet, trois profils, trois prises de parole : LinkeePost interprète un sujet à travers l'identité de celui qui parle.",
+  title: "Démonstration éditoriale — Vercéa",
+  description: "Un même sujet, trois profils, trois prises de parole : Vercéa interprète un sujet à travers l'identité de celui qui parle.",
   robots: { index: false, follow: false },
   alternates: { canonical: "/demo-editoriale" },
 };
@@ -23,7 +23,7 @@ export default function DemoEditorialePage() {
         <SiteHeader />
         <main className="flex-1 w-full">
           {demo ? (
-            <DemoEditoriale {...demo} joinHref={JOIN_HREF} joinLabel={pick("Rejoindre la bêta", "Essayer LinkeePost")} />
+            <DemoEditoriale {...demo} joinHref={JOIN_HREF} joinLabel={pick("Rejoindre la bêta", "Essayer Vercéa")} />
           ) : (
             <p className="max-w-3xl mx-auto px-6 py-24 text-center text-[#5a6b85]" data-testid="demo-error">La démonstration est momentanément indisponible. Réessayez dans quelques minutes.</p>
           )}

@@ -102,7 +102,7 @@ export default function ApprovePage({ params }) {
       <div className="w-full max-w-2xl mx-auto space-y-4">
         <div className="flex items-center justify-center gap-2 mb-2">
           <div className="bg-[#ff5a5f] text-white p-2.5 rounded-xl"><LpMark size={24} /></div>
-          <h1 className="font-bold text-xl">LinkeePost</h1>
+          <h1 className="font-bold text-xl">Vercéa</h1>
         </div>
 
         {error ? (

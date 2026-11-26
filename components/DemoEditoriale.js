@@ -47,14 +47,14 @@ function Post({ id, c }) {
       </header>
       {ok ? (
         <>
-          {!c.entry.authentic && <p data-testid={`demo-testchip-${id}`} className="mt-3 self-start text-[11px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-900">Texte de test, pas une génération de LinkeePost</p>}
+          {!c.entry.authentic && <p data-testid={`demo-testchip-${id}`} className="mt-3 self-start text-[11px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-900">Texte de test, pas une génération de Vercéa</p>}
           <p className="mt-4 text-[16px] font-bold leading-snug text-[#1b2a4a]">{first}</p>
           {rest && <p className="mt-3 text-[15px] leading-relaxed whitespace-pre-line text-[#2b3a57]">{rest}</p>}
         </>
       ) : (
         <div className="mt-4 flex-1 rounded-2xl border border-dashed border-[#c9d3e3] bg-[#f8fafc] p-5 text-sm text-[#5a6b85]" data-testid={`demo-empty-${id}`}>
           <p className="font-semibold text-[#1b2a4a]">{c.status === "invalid" ? "Exemple indisponible" : "Prise de parole en préparation"}</p>
-          <p className="mt-1">{c.status === "invalid" ? "Sa vérification d'intégrité a échoué : par prudence, il n'est pas affiché." : "Cette prise de parole sera produite par le moteur de LinkeePost, jamais écrite à la main. Elle n'a pas encore été générée."}</p>
+          <p className="mt-1">{c.status === "invalid" ? "Sa vérification d'intégrité a échoué : par prudence, il n'est pas affiché." : "Cette prise de parole sera produite par le moteur de Vercéa, jamais écrite à la main. Elle n'a pas encore été générée."}</p>
         </div>
       )}
     </article>
@@ -78,14 +78,14 @@ export default function DemoEditoriale({ subject, identities, derived, compariso
 
       {fixture && (
         <div role="alert" data-testid="demo-fixture" className="bg-amber-500 text-white text-sm font-medium text-center px-4 py-2.5">
-          <FlaskConical size={15} className="inline -mt-0.5 mr-1.5" aria-hidden /> Données de test : ces textes ne sont pas des générations de LinkeePost.
+          <FlaskConical size={15} className="inline -mt-0.5 mr-1.5" aria-hidden /> Données de test : ces textes ne sont pas des générations de Vercéa.
         </div>
       )}
 
       <header className="max-w-6xl mx-auto px-5 sm:px-6 pt-10 sm:pt-14">
         <p className="text-xs font-semibold tracking-widest uppercase text-[#ff5a5f]">Démonstration</p>
         <h1 className="text-3xl sm:text-5xl font-extrabold leading-tight mt-2">Une information.<br className="sm:hidden" /> Trois profils. <span className="text-[#ff5a5f]">Trois prises de parole.</span></h1>
-        <p className="text-lg text-[#5a6b85] mt-4 max-w-2xl">Le sujet est identique. Seul change le profil de celui qui parle. Lisez ce que LinkeePost écrit.</p>
+        <p className="text-lg text-[#5a6b85] mt-4 max-w-2xl">Le sujet est identique. Seul change le profil de celui qui parle. Lisez ce que Vercéa écrit.</p>
       </header>
 
       {/* 1. La même information */}
@@ -126,13 +126,13 @@ export default function DemoEditoriale({ subject, identities, derived, compariso
           {companies.map((c) => <Post key={c.id} id={c.id} c={c} />)}
         </div>
         {allAuthentic && (
-          <p className="text-sm text-[#5a6b85] mt-4" data-testid="demo-authentic-line">Textes générés par le moteur de LinkeePost, repris sans modification. Détails de la méthode en bas de page.</p>
+          <p className="text-sm text-[#5a6b85] mt-4" data-testid="demo-authentic-line">Textes générés par le moteur de Vercéa, repris sans modification. Détails de la méthode en bas de page.</p>
         )}
 
         {control && (
           <div className="mt-6 rounded-3xl border border-slate-200 bg-white/80 p-5 sm:p-6" data-testid="demo-control">
             <p className="text-xs font-bold uppercase tracking-wide text-slate-600">Le témoin : la même information, sans aucun profil</p>
-            {!control.entry.authentic && <p className="mt-2 inline-block text-[11px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-900">Texte de test, pas une génération de LinkeePost</p>}
+            {!control.entry.authentic && <p className="mt-2 inline-block text-[11px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-900">Texte de test, pas une génération de Vercéa</p>}
             <p className="mt-3 text-[15px] leading-relaxed whitespace-pre-line max-w-3xl">{control.entry.text}</p>
             <p className="text-sm text-[#5a6b85] mt-3">{control.entry.authentic ? "Même moteur, même information, même consigne de style, mais aucune information sur l'entreprise : voici ce que le moteur écrit quand il ne sait pas qui parle." : "Même information, aucun profil : voici ce que l'on attend d'un témoin."}</p>
           </div>
@@ -181,7 +181,7 @@ export default function DemoEditoriale({ subject, identities, derived, compariso
                 <ul className="mt-2 space-y-2">
                   {authenticList.map((c) => (
                     <li key={c.id}>
-                      <span className="font-semibold">{c.name}.</span> Généré par le moteur de LinkeePost{c.entry.generatedAt ? ` le ${dateFr(c.entry.generatedAt)}` : ""}.
+                      <span className="font-semibold">{c.name}.</span> Généré par le moteur de Vercéa{c.entry.generatedAt ? ` le ${dateFr(c.entry.generatedAt)}` : ""}.
                       {c.entry.selectedFrom ? ` Retenu parmi ${c.entry.selectedFrom} génération${c.entry.selectedFrom > 1 ? "s" : ""} (le choix est humain).` : ""} Empreinte {c.entry.hash} : recalculée à l&apos;identique au chargement de la page, donc le texte affiché est celui qui a été enregistré à la génération.
                     </li>
                   ))}
@@ -201,7 +201,7 @@ export default function DemoEditoriale({ subject, identities, derived, compariso
                 )}
               </div>
             ) : (
-              <p data-testid="demo-noprov" className="rounded-2xl bg-[#f8fafc] border border-dashed border-[#c9d3e3] p-4">{fixture ? "Données de test : aucune information de provenance n'est présentée, car aucun de ces textes n'a été généré par LinkeePost." : "Aucune génération authentique n'est encore publiée : il n'y a donc pas de provenance à présenter."}</p>
+              <p data-testid="demo-noprov" className="rounded-2xl bg-[#f8fafc] border border-dashed border-[#c9d3e3] p-4">{fixture ? "Données de test : aucune information de provenance n'est présentée, car aucun de ces textes n'a été généré par Vercéa." : "Aucune génération authentique n'est encore publiée : il n'y a donc pas de provenance à présenter."}</p>
             )}
 
             {derived && (
@@ -228,7 +228,7 @@ export default function DemoEditoriale({ subject, identities, derived, compariso
       <section className="max-w-6xl mx-auto px-5 sm:px-6 py-12 sm:py-16" aria-labelledby="demo-cta-t">
         <div className="rounded-[2rem] bg-gradient-to-br from-[#ff5a5f] to-pink-500 text-white p-8 sm:p-12 text-center shadow-2xl shadow-rose-300/50">
           <h2 id="demo-cta-t" className="text-2xl sm:text-4xl font-extrabold">Et votre point de vue ?</h2>
-          <p className="text-white/90 mt-3 max-w-xl mx-auto">Donnez votre profil et vos propres contenus à LinkeePost, et lisez ce qu&apos;il écrit pour vous.</p>
+          <p className="text-white/90 mt-3 max-w-xl mx-auto">Donnez votre profil et vos propres contenus à Vercéa, et lisez ce qu&apos;il écrit pour vous.</p>
           <div className="mt-7 flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link href={joinHref} data-testid="demo-cta" className="inline-flex items-center gap-2 bg-white text-[#d63b42] font-bold px-7 py-3.5 rounded-full hover:bg-rose-50 transition-colors">
               {joinLabel} <ChevronRight size={17} aria-hidden />

@@ -5,7 +5,7 @@ import { getFooterPage } from "@/lib/footer-pages";
 import { redirigerSiNecessaire } from "@/lib/siteNavServer";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Conditions générales d'utilisation — LinkeePost", alternates: { canonical: "/cgu" } };
+export const metadata = { title: "Conditions générales d'utilisation — Vercéa", alternates: { canonical: "/cgu" } };
 
 export default async function CGU() {
   await redirigerSiNecessaire("/cgu");
