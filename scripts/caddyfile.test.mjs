@@ -42,10 +42,11 @@ test("l'ancien domaine redirige les PAGES (GET, HEAD) vers vercea.app, et reste 
   assert.match(vieux.corps, /reverse_proxy app:3000/, "tout le reste reste servi directement");
 });
 
-test("jamais de redirection pour les retours OAuth, les webhooks, le serveur MCP, les assistants IA ni la privacy policy", () => {
+test("jamais de redirection pour les retours OAuth, les webhooks, le serveur MCP ni les assistants IA ; la privacy policy est redirigée depuis que LinkedIn pointe vers vercea.app", () => {
   const vieux = B.find((b) => b.hotes.includes("postgenius.network"));
   const exclus = vieux.corps.match(/not path ([^\n]+)/)[1].split(/\s+/);
-  for (const chemin of ["/api/*", "/oauth/*", "/.well-known/*", "/privacy-policy", "/privacy"]) assert.ok(exclus.includes(chemin), `${chemin} doit rester servi sans redirection`);
+  assert.deepEqual(exclus, ["/api/*", "/oauth/*", "/.well-known/*"], "seuls ces chemins restent servis sans redirection");
+  for (const chemin of ["/privacy-policy", "/privacy"]) assert.ok(!exclus.includes(chemin), `${chemin} est redirigée vers vercea.app`);
 });
 
 test("linkeepost.app n'a pas de bloc : son DNS ne pointe pas vers ce serveur (aucun certificat possible)", () => {
