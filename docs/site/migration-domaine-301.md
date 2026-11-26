@@ -33,6 +33,11 @@ dig +short A linkeepost.app; dig +short A postgenius.network; dig +short MX link
 
 **Si `postgenius.network` répond 200 sans redirection alors que le fichier du dépôt dit le contraire :** remplacer le `Caddyfile` par la proposition A de `caddyfile-propositions.md` **avant** tout autre déploiement.
 
+## 0 ter. Bascule faite le 26 novembre 2026
+- `vercea.app` est le domaine du produit : `APP_URL`, adresses de retour LinkedIn, expéditeur `no-reply@vercea.app` (Brevo : DKIM, DMARC), boîte `contact@vercea.app`. Quatre tests fonctionnels passés (connexion, LinkedIn, formulaire de contact, e-mail de test).
+- **301 de domaine** (`Caddyfile`) : `postgenius.network` redirige les **pages** (GET, HEAD) vers le même chemin sur `vercea.app`. **Jamais** : `/api/*` (retours OAuth, webhooks Stripe, MCP, désinscription), `/oauth/*`, `/.well-known/*`, `/privacy-policy`, `/privacy`, ni aucune requête qui n'est pas un GET ou un HEAD.
+- Restent à faire : changer l'adresse du webhook Stripe ; mettre à jour la déclaration de politique de confidentialité chez LinkedIn, puis seulement alors rediriger `/privacy-policy` ; reprendre Instagram (adresse de retour chez Meta).
+
 ## 1. Acheter le domaine (Jacques)
 - **Quoi** : `vercea.app` (34,99 $/an dans votre liste ; vérifier le prix de renouvellement). `vercea.fr` en plus est un bon second choix, utile pour protéger le nom.
 - **Avant de payer** : les registres de marque (INPI, EUIPO, WIPO), le contrôle de `vercea.com` et le test de prononciation ne sont pas faits (`verification-marque-vercea.md`). Un domaine réservé ne protège rien contre une marque antérieure.
