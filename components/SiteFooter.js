@@ -4,10 +4,13 @@ import LpMark from "./LpMark";
 import { pick } from "@/lib/access";
 import BrandMark, { BrandName } from "./v2/BrandMark";
 import { BRAND_NAME } from "@/lib/brand";
-import { colonnesPied } from "@/lib/siteNav";
+import { colonnesPied, TOUT_OUVERT } from "@/lib/siteNav";
 
 // Pied de page public partagé (landing, blog, contact, pages légales)
-export default function SiteFooter({ variant = "classic", colonnes = colonnesPied({}) } = {}) {
+// Sans colonnes fournies : l'ancien pied de page garde les pages historiques ; le pied « v2 » (écran de connexion de l'application, qui ne peut
+// pas lire les interrupteurs du serveur) affiche le nouveau site complet, dont toutes les pages sont ouvertes en production.
+const COLONNES_V2 = colonnesPied(TOUT_OUVERT);
+export default function SiteFooter({ variant = "classic", colonnes = variant === "v2" ? COLONNES_V2 : colonnesPied({}) } = {}) {
   if (variant === "v2") {
     const link = "text-[#6B5A70] hover:text-[#9E3157] transition-colors";
     return (

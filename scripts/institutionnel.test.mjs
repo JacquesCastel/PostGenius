@@ -78,3 +78,22 @@ test("pages publiques sans équivalent v2 : /privacy-policy et /securite utilise
   }
   assert.match(read("app/privacy-policy/page.js"), /alternates: \{ canonical: "\/privacy-policy" \}/);
 });
+
+test("pages de preuve : les liens vers le test, l'annexe et les gists s'ouvrent dans un nouvel onglet, sans fuite du référent", () => {
+  const p = read("app/preuves/page.js"), t = read("app/preuves/test-e4/page.js");
+  const cible = 'target="_blank" rel="noopener noreferrer"';
+  for (const motif of ["<a href={E4.gists.gel} ", '<Link href="/preuves/test-e4" ', "annexe-textes.md`} "]) assert.ok(p.includes(`${motif}${cible}`), motif);
+  assert.ok(t.includes(`<a key={titre} href={href} ${cible}`));
+});
+
+test("écran de connexion et fenêtre d'au revoir : palette du nouveau site, identifiants de test conservés", () => {
+  const page = read("app/app/page.js");
+  const auth = page.slice(page.indexOf("function AuthScreen"), page.indexOf("// Modal de programmation"));
+  assert.match(auth, /<SiteHeader variant="v2" \/>/); assert.match(auth, /<SiteFooter variant="v2" \/>/);
+  assert.doesNotMatch(auth, /#ff5a5f|bg-gradient-to-b from-rose-50|#d63b42|#b3282f/);
+  for (const id of ["auth-email", "auth-password", "auth-submit", "reg-continue"]) assert.ok(auth.includes(id), id);
+  const g = read("components/GoodbyeDialog.js");
+  assert.doesNotMatch(g, /#ff5a5f|from-rose-50|LpMark/);
+  for (const id of ["goodbye", "goodbye-title", "goodbye-home", "goodbye-login"]) assert.ok(g.includes(`"${id}"`), id);
+  assert.ok(g.includes("/app?mode=login"));
+});

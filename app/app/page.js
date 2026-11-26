@@ -275,7 +275,7 @@ function AuthScreen({ onAuth }) {
   // Inscriptions libres fermées (bêta fermée) : ni questions ni formulaire, sauf avec une invitation
   const closedNotice = mode === "register" && signupsClosed && (!invite || invite.invalid);
   if (useQuestions && !closedNotice && regStep === "questions") {
-    const inputCls = "w-full border border-gray-300 rounded-xl px-3.5 py-3 text-base sm:text-[15px] focus:outline-none focus:ring-2 focus:ring-[#ff5a5f] bg-white";
+    const inputCls = "w-full border border-gray-300 rounded-xl px-3.5 py-3 text-base sm:text-[15px] focus:outline-none focus:ring-2 focus:ring-[#C2456F] bg-white";
     const lbl = "block text-[13px] font-semibold text-gray-700 mb-1.5";
     const ex = "text-xs text-gray-500 mt-1.5 leading-snug";
     const ready = answers.name.trim() && answers.fonction.trim();
@@ -287,14 +287,14 @@ function AuthScreen({ onAuth }) {
       ["Votre premier post", "À partir d'une idée à vous, tapée ou dictée. Vous relisez avant toute publication."],
     ];
     return (
-      <div className="min-h-screen flex flex-col bg-gradient-to-b from-rose-50 via-orange-50/40 to-sky-50 text-[#1b2a4a]">
-        <SiteHeader />
+      <div className="min-h-screen flex flex-col bg-[#FCF8F5] text-[#2E1F33]">
+        <SiteHeader variant="v2" />
         <main className="flex-1">
           <div className="w-full max-w-6xl mx-auto grid lg:grid-cols-[1.1fr_1fr] gap-10 lg:gap-16 px-6 py-10 items-start" data-testid="register-questions">
             <form onSubmit={(e) => { e.preventDefault(); if (ready) setRegStep("account"); }} className="max-w-xl">
-              <p className="text-[13px] font-bold text-[#b3282f] tracking-wide uppercase">{invite?.token && !invite.team ? `Invitation · ${invite.accessDays} jours offerts · sans carte bancaire` : `14 jours gratuits · sans carte bancaire${planInfo ? ` · offre ${planLabel(plan)}` : ""}`}</p>
-              <h1 className="text-3xl md:text-4xl font-extrabold leading-tight mt-2">Trois questions pour commencer.</h1>
-              <p className="text-[15px] text-[#5a6b85] mt-2 mb-5 leading-relaxed">Le reste (vos sites, votre voix, vos anciens posts), nous le déduisons ensuite, puis vous vérifiez.</p>
+              <p className="text-[13px] font-bold text-[#9E3157] tracking-wide uppercase">{invite?.token && !invite.team ? `Invitation · ${invite.accessDays} jours offerts · sans carte bancaire` : `14 jours gratuits · sans carte bancaire${planInfo ? ` · offre ${planLabel(plan)}` : ""}`}</p>
+              <h1 className="font-display text-[34px] md:text-[44px] font-medium leading-[1.1] tracking-[-0.02em] mt-2">Trois questions pour commencer.</h1>
+              <p className="text-[15px] text-[#6B5A70] mt-2 mb-5 leading-relaxed">Le reste (vos sites, votre voix, vos anciens posts), nous le déduisons ensuite, puis vous vérifiez.</p>
               <div className="space-y-4">
                 <div>
                   <label className={lbl} htmlFor="reg-name">1. Qui êtes-vous ?</label>
@@ -317,17 +317,17 @@ function AuthScreen({ onAuth }) {
                 </div>
               </div>
               <div className="flex items-center gap-4 mt-6 flex-wrap">
-                <button type="submit" disabled={!ready} data-testid="reg-continue" className="bg-[#d63b42] hover:bg-[#b3282f] disabled:bg-gray-300 text-white font-bold text-base px-7 py-3 rounded-2xl">Continuer</button>
-                <span className="text-[13px] text-[#5a6b85]">E-mail et mot de passe : à l&apos;étape suivante</span>
+                <button type="submit" disabled={!ready} data-testid="reg-continue" className="bg-[#C2456F] hover:bg-[#9E3157] disabled:bg-gray-300 text-white font-bold text-base px-7 py-3 rounded-2xl">Continuer</button>
+                <span className="text-[13px] text-[#6B5A70]">E-mail et mot de passe : à l&apos;étape suivante</span>
               </div>
-              <p className="text-sm text-[#5a6b85] mt-5">Déjà un compte ? <button type="button" onClick={() => { setMode("login"); setError(null); }} className="text-[#b3282f] font-semibold hover:underline" data-testid="reg-to-login">Se connecter</button></p>
+              <p className="text-sm text-[#6B5A70] mt-5">Déjà un compte ? <button type="button" onClick={() => { setMode("login"); setError(null); }} className="text-[#9E3157] font-semibold hover:underline" data-testid="reg-to-login">Se connecter</button></p>
             </form>
             <div className="space-y-4 max-w-lg">
               <div className="bg-white border border-gray-100 rounded-3xl p-5 space-y-3.5 shadow-sm">
                 <p className="text-xs font-bold uppercase tracking-wider text-gray-500">Ce qui vous attend, en 10 minutes</p>
                 {steps.map(([t, d], i) => (
                   <div key={t} className="flex gap-3.5 items-start">
-                    <span className={`w-[30px] h-[30px] rounded-full text-sm font-extrabold flex items-center justify-center shrink-0 ${i === 0 ? "bg-[#d63b42] text-white" : "bg-gray-200 text-gray-600"}`}>{i + 1}</span>
+                    <span className={`w-[30px] h-[30px] rounded-full text-sm font-extrabold flex items-center justify-center shrink-0 ${i === 0 ? "bg-[#C2456F] text-white" : "bg-gray-200 text-gray-600"}`}>{i + 1}</span>
                     <div><p className="text-[15px] font-extrabold">{t}</p><p className="text-[13px] text-gray-500 leading-snug mt-0.5">{d}</p></div>
                   </div>
                 ))}
@@ -339,7 +339,7 @@ function AuthScreen({ onAuth }) {
             </div>
           </div>
         </main>
-        <SiteFooter />
+        <SiteFooter variant="v2" />
       </div>
     );
   }
@@ -358,33 +358,33 @@ function AuthScreen({ onAuth }) {
     : [];
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-b from-rose-50 via-orange-50/40 to-sky-50 text-[#1b2a4a]">
-      <SiteHeader />
+    <div className="min-h-screen flex flex-col bg-[#FCF8F5] text-[#2E1F33]">
+      <SiteHeader variant="v2" />
       <main className="flex-1 flex items-center">
         <div className="w-full max-w-6xl mx-auto grid lg:grid-cols-2 gap-10 lg:gap-16 items-center px-6 py-12">
           {/* Gauche — communication centrée + visuel */}
           <div className={`flex-col items-center text-center ${mode === "register" ? "flex" : "hidden lg:flex"}`}>
-            <h1 className="text-4xl md:text-5xl font-extrabold leading-tight max-w-lg">
-              Créez vos posts et <span className="text-[#ff5a5f]">campagnes LinkedIn</span> avec l'IA
+            <h1 className="font-display text-[38px] md:text-[50px] font-medium leading-[1.08] tracking-[-0.02em] max-w-lg">
+              Créez vos posts et <span className="text-[#C2456F]">campagnes LinkedIn</span> avec l'IA
             </h1>
-            <p className="text-[#5a6b85] mt-4 leading-relaxed max-w-md">
+            <p className="text-[#6B5A70] mt-4 leading-relaxed max-w-md">
               Vercéa rédige des posts à partir de ce que vous savez, programme vos publications
               et suit vos statistiques.
             </p>
 
             {/* Visuel illustratif */}
             <div className="relative mt-12 mb-4 w-full max-w-sm">
-              <div className="pointer-events-none absolute -top-8 -left-8 w-32 h-32 bg-rose-200/50 rounded-full blur-2xl" />
-              <div className="pointer-events-none absolute -bottom-8 -right-8 w-32 h-32 bg-sky-200/50 rounded-full blur-2xl" />
+              <div className="pointer-events-none absolute -top-8 -left-8 w-32 h-32 bg-[#F6E3E0]/70 rounded-full blur-2xl" />
+              <div className="pointer-events-none absolute -bottom-8 -right-8 w-32 h-32 bg-[#DCE9DF]/70 rounded-full blur-2xl" />
 
-              <div className="relative bg-white rounded-3xl shadow-2xl shadow-rose-200/40 border border-white p-5 text-left">
+              <div className="relative bg-white rounded-3xl shadow-2xl shadow-[#2E1F33]/10 border border-white p-5 text-left">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#ff5a5f] to-pink-500" />
+                  <div className="w-10 h-10 rounded-full bg-[#F6E3E0]" />
                   <div>
                     <div className="h-2.5 w-24 bg-gray-200 rounded-full" />
                     <div className="h-2 w-16 bg-gray-100 rounded-full mt-1.5" />
                   </div>
-                  <span className="ml-auto text-[10px] font-semibold text-[#ff5a5f] bg-[#fff1f1] px-2 py-0.5 rounded-full flex items-center gap-1">
+                  <span className="ml-auto text-[10px] font-semibold text-[#C2456F] bg-[#F6E3E0] px-2 py-0.5 rounded-full flex items-center gap-1">
                     <Sparkles size={10} /> IA
                   </span>
                 </div>
@@ -393,7 +393,7 @@ function AuthScreen({ onAuth }) {
                   <div className="h-2 w-11/12 bg-gray-100 rounded-full" />
                   <div className="h-2 w-3/4 bg-gray-100 rounded-full" />
                 </div>
-                <div className="h-24 rounded-2xl mt-4 bg-gradient-to-br from-orange-300 via-[#ff5a5f] to-pink-400" />
+                <div className="h-24 rounded-2xl mt-4 bg-[#F6E3E0]" />
                 <div className="flex items-center gap-4 mt-4 text-gray-300">
                   <ThumbsUp size={16} />
                   <MessageSquare size={16} />
@@ -401,15 +401,15 @@ function AuthScreen({ onAuth }) {
                 </div>
               </div>
 
-              <div className="absolute -top-4 -right-4 bg-white rounded-2xl shadow-xl shadow-rose-200/40 px-3 py-2 flex items-center gap-2">
-                <CalendarDays size={16} className="text-[#ff5a5f]" />
+              <div className="absolute -top-4 -right-4 bg-white rounded-2xl shadow-xl shadow-[#2E1F33]/10 px-3 py-2 flex items-center gap-2">
+                <CalendarDays size={16} className="text-[#C2456F]" />
                 <div className="text-left">
                   <p className="text-[9px] text-gray-400 leading-none">Programmé</p>
                   <p className="text-xs font-bold leading-tight">jeu. 09:00</p>
                 </div>
               </div>
-              <div className="absolute -bottom-4 -left-4 bg-white rounded-2xl shadow-xl shadow-sky-200/40 px-3 py-2 flex items-center gap-2">
-                <BarChart3 size={16} className="text-sky-500" />
+              <div className="absolute -bottom-4 -left-4 bg-white rounded-2xl shadow-xl shadow-[#2E1F33]/10 px-3 py-2 flex items-center gap-2">
+                <BarChart3 size={16} className="text-[#2B5340]" />
                 <div className="text-left">
                   <p className="text-[9px] text-gray-400 leading-none">Engagement</p>
                   <p className="text-xs font-bold leading-tight">+38 %</p>
@@ -418,10 +418,10 @@ function AuthScreen({ onAuth }) {
             </div>
 
             {planInfo ? (
-              <div className="mt-10 rounded-2xl border border-[#ffd5d6] bg-white/70 backdrop-blur p-4 max-w-sm w-full text-left">
+              <div className="mt-10 rounded-2xl border border-[#F6E3E0] bg-white/70 backdrop-blur p-4 max-w-sm w-full text-left">
                 <div className="flex items-start justify-between">
                   <div>
-                    <p className="text-xs font-semibold text-[#ff5a5f] flex items-center gap-1">
+                    <p className="text-xs font-semibold text-[#C2456F] flex items-center gap-1">
                       <Sparkles size={12} /> Votre offre
                     </p>
                     <p className="font-extrabold text-lg leading-tight">{planLabel(plan)}</p>
@@ -431,21 +431,21 @@ function AuthScreen({ onAuth }) {
                     <span className="text-[11px] text-gray-400 block mt-0.5">/mois HT</span>
                   </p>
                 </div>
-                <p className="text-xs text-[#5a6b85] mt-1.5">{pick("Accès sur invitation pendant la bêta, sans carte bancaire.", "14 jours d'essai gratuit, sans carte bancaire.")}</p>
+                <p className="text-xs text-[#6B5A70] mt-1.5">{pick("Accès sur invitation pendant la bêta, sans carte bancaire.", "14 jours d'essai gratuit, sans carte bancaire.")}</p>
               </div>
             ) : (
-              <p className="mt-6 inline-flex items-center gap-1.5 text-sm font-semibold text-[#ff5a5f] bg-[#fff1f1] px-3 py-1.5 rounded-full">
+              <p className="mt-6 inline-flex items-center gap-1.5 text-sm font-semibold text-[#C2456F] bg-[#F6E3E0] px-3 py-1.5 rounded-full">
                 <Sparkles size={13} /> 14 jours d'essai gratuit — sans carte bancaire
               </p>
             )}
           </div>
 
           {/* Droite — formulaire */}
-          <div className="bg-white rounded-3xl border border-white shadow-xl shadow-rose-100/40 p-7 w-full max-w-md lg:justify-self-end">
-            <h2 className="text-xl font-extrabold">
+          <div className="bg-white rounded-3xl border border-white shadow-xl shadow-[#2E1F33]/10 p-7 w-full max-w-md lg:justify-self-end">
+            <h2 className="font-display text-[26px] font-medium">
               {mode === "login" ? "Connexion" : mode === "forgot" ? "Mot de passe oublié" : "Créer votre compte"}
             </h2>
-            <p className="text-sm text-[#5a6b85] mt-1 mb-5">
+            <p className="text-sm text-[#6B5A70] mt-1 mb-5">
               {mode === "login"
                 ? "Content de vous revoir."
                 : mode === "forgot"
@@ -467,13 +467,13 @@ function AuthScreen({ onAuth }) {
               <p className="font-semibold">Vercéa est en bêta fermée</p>
               {invite?.invalid && <p className="mt-1">Ce lien d&apos;invitation n&apos;est plus valide (déjà utilisé, révoqué ou expiré).</p>}
               <p className="mt-1">Les inscriptions se font pour l&apos;instant sur invitation. Demandez la vôtre, ou ouvrez le lien reçu par e-mail.</p>
-              <a href="/beta#invitation" className="inline-block mt-3 bg-[#ff5a5f] text-white font-semibold px-4 py-2 rounded-full">Demander une invitation</a>
+              <a href="/beta#invitation" className="inline-block mt-3 bg-[#C2456F] text-white font-semibold px-4 py-2 rounded-full">Demander une invitation</a>
               <button type="button" onClick={() => { setMode("login"); setError(null); }} className="block mt-3 text-amber-800 underline">J&apos;ai déjà un compte</button>
             </div>
           ) : (<>
           {useQuestions && (
             <p className="text-sm text-gray-600 mb-3" data-testid="reg-recap">
-              <strong>{answers.name}</strong>, {answers.fonction}. <button type="button" onClick={() => setRegStep("questions")} className="text-[#b3282f] font-semibold hover:underline" data-testid="reg-back">Modifier mes réponses</button>
+              <strong>{answers.name}</strong>, {answers.fonction}. <button type="button" onClick={() => setRegStep("questions")} className="text-[#9E3157] font-semibold hover:underline" data-testid="reg-back">Modifier mes réponses</button>
             </p>
           )}
           <form onSubmit={submit} className="space-y-3">
@@ -485,7 +485,7 @@ function AuthScreen({ onAuth }) {
                 placeholder="Votre nom"
                 value={fields.name}
                 onChange={(e) => setFields((f) => ({ ...f, name: e.target.value }))}
-                className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
+                className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#C2456F]"
               />
             )}
             <input
@@ -502,7 +502,7 @@ function AuthScreen({ onAuth }) {
               value={fields.email}
               readOnly={Boolean(invite?.token) && mode === "register"}
               onChange={(e) => setFields((f) => ({ ...f, email: e.target.value }))}
-              className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
+              className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#C2456F]"
             />
             {mode !== "forgot" && (
               <input
@@ -515,7 +515,7 @@ function AuthScreen({ onAuth }) {
                 placeholder={mode === "register" ? "Mot de passe (8 caractères min.)" : "Mot de passe"}
                 value={fields.password}
                 onChange={(e) => setFields((f) => ({ ...f, password: e.target.value }))}
-                className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
+                className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#C2456F]"
               />
             )}
             {error && (
@@ -532,7 +532,7 @@ function AuthScreen({ onAuth }) {
               type="submit"
               disabled={loading}
               data-testid="auth-submit"
-              className="w-full bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white font-semibold py-3 rounded-full flex items-center justify-center gap-2 shadow-lg shadow-rose-300/40 transition-colors"
+              className="w-full bg-[#C2456F] hover:bg-[#9E3157] disabled:bg-gray-300 text-white font-semibold py-3 rounded-full flex items-center justify-center gap-2 shadow-lg shadow-[#2E1F33]/10 transition-colors"
             >
               {loading && <RefreshCw size={16} className="animate-spin" />}
               {mode === "login"
@@ -554,7 +554,7 @@ function AuthScreen({ onAuth }) {
                 setMode("forgot");
                 setError(null);
               }}
-              className="text-sm sm:text-xs text-gray-500 hover:text-[#ff5a5f] mt-3 py-2 block mx-auto"
+              className="text-sm sm:text-xs text-gray-500 hover:text-[#C2456F] mt-3 py-2 block mx-auto"
             >
               Mot de passe oublié ?
             </button>
@@ -566,7 +566,7 @@ function AuthScreen({ onAuth }) {
                 setError(null);
                 setInfo(null);
               }}
-              className="text-sm sm:text-xs text-gray-500 hover:text-[#ff5a5f] mt-3 py-2 block mx-auto"
+              className="text-sm sm:text-xs text-gray-500 hover:text-[#C2456F] mt-3 py-2 block mx-auto"
             >
               ← Retour à la connexion
             </button>
@@ -574,7 +574,7 @@ function AuthScreen({ onAuth }) {
         </div>
       </div>
       </main>
-      <SiteFooter />
+      <SiteFooter variant="v2" />
     </div>
   );
 }

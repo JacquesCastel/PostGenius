@@ -132,7 +132,7 @@ export default function TestE4Page() {
             ["Grilles de classement", "Élément par élément", `${E4.depot}/classement/grille-elements-claude.csv`],
             ["Annexe de textes", `Les ${E4.nbTextes} textes générés`, `${E4.depot}/compte-rendu/annexe-textes.md`],
           ].map(([titre, sous, href]) => (
-            <a key={titre} href={href} className="block bg-white border border-[#EFE4E0] rounded-[20px] px-[22px] py-5 no-underline text-[#2E1F33] hover:border-[#C2456F]">
+            <a key={titre} href={href} target="_blank" rel="noopener noreferrer" className="block bg-white border border-[#EFE4E0] rounded-[20px] px-[22px] py-5 no-underline text-[#2E1F33] hover:border-[#C2456F]">
               <strong className="block text-[15px]">{titre}</strong><span className="text-[13px] text-[#6B5A70]">{sous}</span>
             </a>
           ))}
