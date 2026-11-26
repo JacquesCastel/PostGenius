@@ -1,4 +1,6 @@
-# Avancement du portage des maquettes dans le code (11 novembre 2026)
+# Avancement du portage des maquettes dans le code (mis à jour le 26 novembre 2026)
+
+**Les sept tranches de code sont faites et déployées. Pour ouvrir les pages : voir `ouverture-des-pages.md`.** Les sections ci-dessous gardent l'historique des premières tranches.
 
 Tout est sur la branche `claude/funny-goodall-f2dvgs`, **non déployé**. Le build (`next build`) passe ; contact et bêta ont été vérifiés à l'écran (ordinateur et téléphone) ; le blog n'a pas pu l'être (il lit la base).
 

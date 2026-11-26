@@ -2,11 +2,13 @@ import Link from "next/link";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 import { getFooterPage } from "@/lib/footer-pages";
+import { redirigerSiNecessaire } from "@/lib/siteNavServer";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Mentions légales — LinkeePost", alternates: { canonical: "/mentions-legales" } };
 
 export default async function MentionsLegales() {
+  await redirigerSiNecessaire("/mentions-legales");
   const page = await getFooterPage("mentions-legales");
   return (
     <div className="bg-gradient-to-b from-rose-50/60 via-white to-white text-[#1b2a4a] min-h-screen flex flex-col">

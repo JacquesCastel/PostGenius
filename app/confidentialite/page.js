@@ -2,11 +2,13 @@ import Link from "next/link";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 import { getFooterPage } from "@/lib/footer-pages";
+import { redirigerSiNecessaire } from "@/lib/siteNavServer";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Politique de confidentialité — LinkeePost", alternates: { canonical: "/confidentialite" } };
 
 export default async function Confidentialite() {
+  await redirigerSiNecessaire("/confidentialite");
   const page = await getFooterPage("confidentialite");
   return (
     <div className="bg-gradient-to-b from-rose-50/60 via-white to-white text-[#1b2a4a] min-h-screen flex flex-col">

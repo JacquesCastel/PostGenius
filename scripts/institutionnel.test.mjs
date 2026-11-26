@@ -43,7 +43,9 @@ test("/legal lit les pages existantes (rien de recopié) ; les adresses actuelle
   assert.match(p, /getFooterPage\(cle\)/);
   assert.match(p, /if \(!legalOuvert\(process\.env, textes\)\) notFound\(\);/);
   assert.doesNotMatch(p, /Hetzner|Neon|SIREN|tribunaux/, "aucun texte légal écrit dans la page");
-  for (const f of ["app/mentions-legales/page.js", "app/cgu/page.js", "app/confidentialite/page.js", "app/privacy-policy/page.js"]) assert.doesNotMatch(read(f), /redirect\(|permanentRedirect/, f);
+  // les redirections vers /legal passent toutes par lib/redirections.js (conditionnelles : SITE_REDIRECTIONS=1 et page ouverte) ; la privacy policy n'en a jamais
+  for (const f of ["app/mentions-legales/page.js", "app/cgu/page.js", "app/confidentialite/page.js"]) assert.doesNotMatch(read(f), /redirect\(|permanentRedirect/, f);
+  for (const f of ["app/privacy-policy/page.js", "app/privacy/page.js"]) assert.doesNotMatch(read(f), /redirigerSiNecessaire|permanentRedirect/, f);
   assert.doesNotMatch(read("next.config.mjs"), /legal/, "aucune redirection vers /legal dans la configuration");
 });
 

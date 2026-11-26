@@ -7,6 +7,7 @@ import {
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 import { JOIN_HREF, pick } from "@/lib/access";
+import { redirigerSiNecessaire } from "@/lib/siteNavServer";
 
 export const metadata = {
   title: "Fonctionnalités — LinkeePost",
@@ -63,7 +64,8 @@ function Card({ className = "", children }) {
   );
 }
 
-export default function FonctionnalitesPage() {
+export default async function FonctionnalitesPage() {
+  await redirigerSiNecessaire("/fonctionnalites");
   return (
     <div className="relative overflow-hidden text-[#1b2a4a] bg-gradient-to-b from-rose-50 via-orange-50/40 to-sky-50">
       <div className="pointer-events-none absolute -top-32 -left-32 w-[28rem] h-[28rem] rounded-full bg-rose-200/40 blur-3xl" />
