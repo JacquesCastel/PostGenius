@@ -16,7 +16,16 @@ A    www.linkeepost.app    → IP_SERVEUR
 ```
 
 ### Conserver l'ancien domaine postgenius.network
-Ne pas laisser `postgenius.network` expirer : le `Caddyfile` le redirige en 301 vers `linkeepost.app` (chemin conservé), ce qui préserve les anciens liens et le référencement.
+**État réel au 26 novembre 2026** : le site est servi sur `postgenius.network` et sur `vercea.app` (en parallèle, sans redirection) ; `linkeepost.app` ne pointe pas vers ce serveur (voir `docs/site/migration-domaine-301.md`, section 0 bis). Ne pas laisser expirer `postgenius.network`.
+
+**Appliquer un changement du `Caddyfile`** : le fichier est monté dans le conteneur comme fichier unique, donc un `git pull` ne suffit pas et `caddy reload` répondrait « config is unchanged ». Valider le nouveau fichier dans un conteneur temporaire, puis recréer Caddy :
+```bash
+docker compose run --rm --no-deps -v "$PWD/Caddyfile:/etc/caddy/Caddyfile:ro" caddy caddy validate --config /etc/caddy/Caddyfile
+docker compose up -d --force-recreate caddy
+```
+`deploy.sh` signale la situation (« Le Caddyfile du dépôt n'est PAS celui que Caddy utilise ») sans bloquer le déploiement.
+
+*Ancien texte (obsolète) :* le `Caddyfile` redirigeait `postgenius.network` en 301 vers `linkeepost.app` ; cette redirection n'existe plus.
 - Renouveler le domaine (activer le renouvellement automatique).
 - Garder ses enregistrements `A` (`@` et `www`) vers `IP_SERVEUR`, sinon la redirection ne fonctionne plus.
 - Garder la boîte `contact@postgenius.network`, ou la rediriger vers `contact@linkeepost.app`, pour ne pas perdre les anciens e-mails.
