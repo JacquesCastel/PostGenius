@@ -89,3 +89,21 @@ test("robots.txt est lu à chaque requête : l'adresse du plan du site suit APP_
   assert.match(r, /export const dynamic = "force-dynamic"/);
   assert.match(r, /export default function robots\(\) \{\s*const SITE = \(process\.env\.APP_URL \|\| "https:\/\/vercea\.app"\)/);
 });
+
+test("pied de page et bandeau des e-mails : domaine public du produit et monogramme V, indépendants d'APP_URL", async () => {
+  const { BRAND_DOMAINE } = await import("../lib/brand.js");
+  assert.equal(BRAND_DOMAINE, "vercea.app");
+  const { emailHtml } = await import("../lib/emailLayout.js");
+  const avant = process.env.APP_URL;
+  try {
+    for (const url of ["https://postgenius.network", "https://vercea.app", undefined]) {
+      if (url === undefined) delete process.env.APP_URL; else process.env.APP_URL = url;
+      const h = emailHtml({ title: "T", paragraphs: ["x"], unsubscribeUrl: "https://postgenius.network/api/email/unsubscribe?t=1" });
+      assert.match(h, /Vercéa · <a href="https:\/\/vercea\.app" style="color:#8a97ad">vercea\.app<\/a>/, `pied de page avec APP_URL=${url}`);
+      assert.doesNotMatch(h, /Vercéa · <a[^>]*>postgenius/, "plus l'ancien domaine dans le pied de page");
+      assert.match(h, /line-height:38px">V<\/td>/);
+      assert.doesNotMatch(h, />LP</);
+      assert.match(h, /href="https:\/\/postgenius\.network\/api\/email\/unsubscribe\?t=1"[^>]*>Ne plus recevoir ces e-mails/, "le lien de désinscription garde l'adresse reçue");
+    }
+  } finally { if (avant === undefined) delete process.env.APP_URL; else process.env.APP_URL = avant; }
+});
