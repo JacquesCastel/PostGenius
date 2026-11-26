@@ -44,6 +44,17 @@ test("seuls les comptes qui ont accepté une invitation sont concernés, et ne s
   assert.equal(r.ignores.length, 0);
 });
 
+test("--inclure : un compte précis hors invitations est traité, avec les mêmes exclusions", () => {
+  const sans = c("z", { email: "pers@entreprise.fr" });
+  assert.equal(choisir([sans], ids, { maintenant: NOW }).aMettreAJour.length, 0);
+  assert.equal(choisir([sans], ids, { maintenant: NOW, emailsInclus: [" Pers@Entreprise.fr "] }).aMettreAJour.length, 1, "adresse insensible à la casse et aux espaces");
+  const abonne = c("y", { email: "abo@entreprise.fr", subscriptionStatus: "active" });
+  const r = choisir([abonne], ids, { maintenant: NOW, emailsInclus: ["abo@entreprise.fr"] });
+  assert.equal(r.aMettreAJour.length, 0);
+  assert.equal(r.ignores[0].raison, "abonnement vivant");
+  assert.equal(choisir([c("x", { email: "autre@entreprise.fr" })], ids, { maintenant: NOW, emailsInclus: ["pers@entreprise.fr"] }).aMettreAJour.length, 0, "un autre compte n'est pas touché");
+});
+
 test("le script : simulation par défaut, écriture seulement avec --apply, adresses masquées, durée bornée", () => {
   const s = readFileSync(new URL("../scripts/rouvrir-essai-testeurs.mjs", import.meta.url), "utf8");
   assert.match(s, /const apply = process\.argv\.includes\("--apply"\)/);
