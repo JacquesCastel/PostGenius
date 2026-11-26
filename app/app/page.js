@@ -168,6 +168,28 @@ async function readJson(res) {
   }
 }
 
+// Les cinq étapes du parcours d'inscription : le même panneau « Ce qui vous attend » accompagne les trois questions et chaque étape suivante.
+const PARCOURS_ETAPES = [
+  ["Trois questions", "Qui vous êtes, de quoi vous parlez, qui vous voulez toucher."],
+  ["Vos sites internet", "Un ou plusieurs sites : le copilote les lit, vous confirmez ou corrigez."],
+  ["Voix et analyse", "Cible, anciens posts, documents : le même parcours que pour chaque thématique."],
+  ["Où publier", "Votre profil LinkedIn et, si vous le souhaitez, la page de votre entreprise."],
+  ["Votre premier post", "À partir d'une idée à vous, tapée ou dictée. Vous relisez avant toute publication."],
+];
+function ParcoursApercu({ courant = 0 }) {
+  return (
+    <div className="bg-white border border-[#EFE4E0] rounded-3xl p-5 space-y-3.5 shadow-sm" data-testid="parcours-apercu">
+      <p className="text-xs font-bold uppercase tracking-wider text-[#6B5A70]">Ce qui vous attend, en 10 minutes</p>
+      {PARCOURS_ETAPES.map(([t, d], i) => (
+        <div key={t} className="flex gap-3.5 items-start" aria-current={i === courant ? "step" : undefined}>
+          <span className={`w-[30px] h-[30px] rounded-full text-sm font-extrabold flex items-center justify-center shrink-0 ${i < courant ? "bg-[#2B5340] text-white" : i === courant ? "bg-[#C2456F] text-white" : "bg-gray-200 text-gray-600"}`}>{i < courant ? "✓" : i + 1}</span>
+          <div className={i > courant ? "opacity-70" : ""}><p className="text-[15px] font-extrabold">{t}</p><p className="text-[13px] text-[#6B5A70] leading-snug mt-0.5">{d}</p></div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // ----------------------------------------------------------------
 // Écran de connexion / inscription
 // ----------------------------------------------------------------
@@ -279,13 +301,6 @@ function AuthScreen({ onAuth }) {
     const lbl = "block text-[13px] font-semibold text-gray-700 mb-1.5";
     const ex = "text-xs text-gray-500 mt-1.5 leading-snug";
     const ready = answers.name.trim() && answers.fonction.trim();
-    const steps = [
-      ["Trois questions", "Qui vous êtes, de quoi vous parlez, qui vous voulez toucher."],
-      ["Vos sites internet", "Un ou plusieurs sites : le copilote les lit, vous confirmez ou corrigez."],
-      ["Voix et analyse", "Cible, anciens posts, documents : le même parcours que pour chaque thématique."],
-      ["Où publier", "Votre profil LinkedIn et, si vous le souhaitez, la page de votre entreprise."],
-      ["Votre premier post", "À partir d'une idée à vous, tapée ou dictée. Vous relisez avant toute publication."],
-    ];
     return (
       <div className="min-h-screen flex flex-col bg-[#FCF8F5] text-[#2E1F33]">
         <SiteHeader variant="v2" />
@@ -323,15 +338,7 @@ function AuthScreen({ onAuth }) {
               <p className="text-sm text-[#6B5A70] mt-5">Déjà un compte ? <button type="button" onClick={() => { setMode("login"); setError(null); }} className="text-[#9E3157] font-semibold hover:underline" data-testid="reg-to-login">Se connecter</button></p>
             </form>
             <div className="space-y-4 max-w-lg">
-              <div className="bg-white border border-gray-100 rounded-3xl p-5 space-y-3.5 shadow-sm">
-                <p className="text-xs font-bold uppercase tracking-wider text-gray-500">Ce qui vous attend, en 10 minutes</p>
-                {steps.map(([t, d], i) => (
-                  <div key={t} className="flex gap-3.5 items-start">
-                    <span className={`w-[30px] h-[30px] rounded-full text-sm font-extrabold flex items-center justify-center shrink-0 ${i === 0 ? "bg-[#C2456F] text-white" : "bg-gray-200 text-gray-600"}`}>{i + 1}</span>
-                    <div><p className="text-[15px] font-extrabold">{t}</p><p className="text-[13px] text-gray-500 leading-snug mt-0.5">{d}</p></div>
-                  </div>
-                ))}
-              </div>
+              <ParcoursApercu courant={0} />
               <div className="bg-amber-50 border border-amber-200 rounded-3xl p-5">
                 <p className="text-xs font-bold uppercase tracking-wider text-amber-800 mb-1.5">Ici, on écrit comme on vit</p>
                 <p className="text-sm text-gray-700 leading-relaxed">Un jour vous célébrez un contrat signé, le lendemain vous râlez parce qu&apos;une facture n&apos;est toujours pas réglée. Vercéa écrit avec vous dans les deux cas : vous choisissez le sujet, l&apos;humeur du jour, et vous gardez la main.</p>
@@ -13222,7 +13229,7 @@ function OnboardingFirstPost({ fields, saving, showToast, onFinish, onBack, forC
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 sm:p-6" data-testid="first-post">
-      <p className="text-xs font-medium text-[#ff5a5f] mb-1">Étape {stepNo ?? ONBOARDING_STEPS.length} sur {stepTotal ?? ONBOARDING_STEPS.length}</p>
+      <p className="text-xs font-medium text-[#C2456F] mb-1">Étape {stepNo ?? ONBOARDING_STEPS.length} sur {stepTotal ?? ONBOARDING_STEPS.length}</p>
       <h2 className="font-semibold text-lg">{forClient ? "Son premier post" : "Votre premier post"}</h2>
       <p className="text-sm text-gray-500 mb-4">Voyons le copilote à l&apos;œuvre : choisissez un sujet, il rédige avec tout ce que vous venez de lui dire{forClient ? " sur ce client" : ""}. Rien n&apos;est publié.</p>
 
@@ -13230,7 +13237,7 @@ function OnboardingFirstPost({ fields, saving, showToast, onFinish, onBack, forC
         <div className="space-y-3">
           <div className="flex flex-wrap gap-1.5">
             {ideas.map((idea) => (
-              <button type="button" key={idea} onClick={() => setTheme(idea)} className={`text-xs px-3 py-1.5 rounded-full border ${theme === idea ? "bg-[#fff1f1] text-[#f63d44] border-[#ff5a5f]" : "border-gray-200 text-gray-600 hover:border-gray-300"}`}>
+              <button type="button" key={idea} onClick={() => setTheme(idea)} className={`text-xs px-3 py-1.5 rounded-full border ${theme === idea ? "bg-[#F6E3E0] text-[#9E3157] border-[#C2456F]" : "border-gray-200 text-gray-600 hover:border-gray-300"}`}>
                 {idea}
               </button>
             ))}
@@ -13241,13 +13248,13 @@ function OnboardingFirstPost({ fields, saving, showToast, onFinish, onBack, forC
             value={theme}
             onChange={(e) => setTheme(e.target.value)}
             placeholder="Ou décrivez votre idée : « les 3 erreurs que je vois en communication interne »…"
-            className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
+            className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#C2456F]"
           />
           <button
             type="button"
             onClick={() => call()}
             disabled={!theme.trim() || busy}
-            className="w-full bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white text-sm font-medium py-2.5 rounded-lg flex items-center justify-center gap-2"
+            className="w-full bg-[#C2456F] hover:bg-[#9E3157] disabled:bg-gray-300 text-white text-sm font-medium py-2.5 rounded-lg flex items-center justify-center gap-2"
           >
             {busy ? <RefreshCw size={15} className="animate-spin" /> : <Sparkles size={15} />}
             {busy ? "Le copilote écrit votre post…" : "Écrire mon premier post"}
@@ -13268,7 +13275,7 @@ function OnboardingFirstPost({ fields, saving, showToast, onFinish, onBack, forC
                 <p className="text-xs text-gray-800 mt-0.5">{r.text}</p>
                 {r.state === "open" && (
                   <div className="flex gap-2 mt-1.5">
-                    <button type="button" onClick={() => remember(i)} className="bg-[#ff5a5f] hover:bg-[#f63d44] text-white text-xs font-medium px-3 py-1 rounded-lg">Retenir</button>
+                    <button type="button" onClick={() => remember(i)} className="bg-[#C2456F] hover:bg-[#9E3157] text-white text-xs font-medium px-3 py-1 rounded-lg">Retenir</button>
                     <button type="button" onClick={() => dismiss(i)} className="text-xs text-gray-500 hover:text-gray-800 px-2 py-1">Non merci</button>
                   </div>
                 )}
@@ -13279,7 +13286,7 @@ function OnboardingFirstPost({ fields, saving, showToast, onFinish, onBack, forC
             <p className="text-xs text-gray-500 mb-1.5">Un détail à changer ? Dites-le, le post est réécrit.</p>
             <div className="flex flex-wrap gap-1.5 mb-2">
               {["Plus court", "Moins formel", "Plus percutant"].map((s) => (
-                <button type="button" key={s} onClick={() => call(s)} disabled={busy} className="text-xs bg-gray-100 hover:bg-[#fff1f1] hover:text-[#f63d44] disabled:opacity-50 text-gray-600 px-2.5 py-1 rounded-full">
+                <button type="button" key={s} onClick={() => call(s)} disabled={busy} className="text-xs bg-gray-100 hover:bg-[#F6E3E0] hover:text-[#9E3157] disabled:opacity-50 text-gray-600 px-2.5 py-1 rounded-full">
                   {s}
                 </button>
               ))}
@@ -13291,17 +13298,17 @@ function OnboardingFirstPost({ fields, saving, showToast, onFinish, onBack, forC
               }}
               className="flex gap-2"
             >
-              <input type="text" value={refineText} onChange={(e) => setRefineText(e.target.value)} placeholder="« termine par une question »…" className="flex-1 min-w-0 border border-gray-300 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]" />
+              <input type="text" value={refineText} onChange={(e) => setRefineText(e.target.value)} placeholder="« termine par une question »…" className="flex-1 min-w-0 border border-gray-300 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#C2456F]" />
               <button type="submit" disabled={busy || !refineText.trim()} className="bg-gray-900 hover:bg-gray-700 disabled:bg-gray-300 text-white text-xs px-3 py-1.5 rounded-lg">Envoyer</button>
             </form>
             {busy && (
               <p className="text-xs text-gray-500 flex items-center gap-1.5 mt-2">
-                <RefreshCw size={12} className="animate-spin text-[#ff5a5f]" /> Le copilote retouche votre post…
+                <RefreshCw size={12} className="animate-spin text-[#C2456F]" /> Le copilote retouche votre post…
               </p>
             )}
           </div>
           <div className="flex flex-wrap items-center gap-3 pt-3 border-t border-gray-100">
-            <button type="button" onClick={keepAndFinish} disabled={busy || saving || savingDraft} className="bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white text-sm font-medium px-5 py-2 rounded-lg flex items-center gap-1.5">
+            <button type="button" onClick={keepAndFinish} disabled={busy || saving || savingDraft} className="bg-[#C2456F] hover:bg-[#9E3157] disabled:bg-gray-300 text-white text-sm font-medium px-5 py-2 rounded-lg flex items-center gap-1.5">
               {(saving || savingDraft) && <RefreshCw size={14} className="animate-spin" />}
               Garder ce post et terminer <Check size={15} />
             </button>
@@ -13373,7 +13380,7 @@ function ClientPageStep({ onBack, onNext, onPage }) {
       )}
       <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-100">
         <button type="button" onClick={onBack} className="text-sm text-gray-500 hover:text-gray-700">← Retour</button>
-        <button type="button" onClick={onNext} data-testid="wizard-page-next" className="bg-[#ff5a5f] hover:bg-[#f63d44] text-white text-sm font-medium px-5 py-2 rounded-lg flex items-center gap-1.5">
+        <button type="button" onClick={onNext} data-testid="wizard-page-next" className="bg-[#C2456F] hover:bg-[#9E3157] text-white text-sm font-medium px-5 py-2 rounded-lg flex items-center gap-1.5">
           {state?.orgConnected ? "Continuer" : "Plus tard"} <ChevronRight size={15} />
         </button>
       </div>
@@ -13395,24 +13402,24 @@ function PublishWhereStep({ onBack, onNext, planAllowsOrg = true }) {
   return (
     <div className="space-y-5" data-testid="wizard-where-step">
       <div className="max-w-3xl">
-        <h1 className="text-3xl sm:text-[34px] leading-tight font-extrabold text-[#1b2a4a]">Où voulez-vous publier ?</h1>
-        <p className="text-base text-[#5a6b85] leading-relaxed mt-2">Vous pourrez changer à chaque post. Ici, on connecte simplement ce que vous utilisez.</p>
+        <h1 className="text-3xl sm:text-[34px] leading-tight font-display font-medium text-[#2E1F33]">Où voulez-vous publier ?</h1>
+        <p className="text-base text-[#6B5A70] leading-relaxed mt-2">Vous pourrez changer à chaque post. Ici, on connecte simplement ce que vous utilisez.</p>
       </div>
       {!state ? <p className="text-sm text-gray-400">Vérification…</p> : (
         <div className="grid md:grid-cols-2 gap-5 sm:gap-6">
-          <div className={`bg-white rounded-[20px] p-6 flex flex-col gap-3 ${state.connected ? "border-2 border-[#0a66c2]" : "border border-[#e8ecf2]"}`} data-testid="wizard-where-profile">
+          <div className={`bg-white rounded-[20px] p-6 flex flex-col gap-3 ${state.connected ? "border-2 border-[#0a66c2]" : "border border-[#EFE4E0]"}`} data-testid="wizard-where-profile">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-orange-400 to-[#ff5a5f] text-white flex items-center justify-center font-bold text-lg shrink-0">{(state.name || "Moi").slice(0, 1)}</div>
-              <div className="min-w-0"><p className="text-lg font-extrabold">Mon profil LinkedIn</p>{state.name && <p className="text-[13px] text-[#5a6b85]">{state.name}</p>}</div>
+              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-orange-400 to-[#C2456F] text-white flex items-center justify-center font-bold text-lg shrink-0">{(state.name || "Moi").slice(0, 1)}</div>
+              <div className="min-w-0"><p className="text-lg font-extrabold">Mon profil LinkedIn</p>{state.name && <p className="text-[13px] text-[#6B5A70]">{state.name}</p>}</div>
               {state.connected && <span className="ml-auto text-xs font-bold bg-[#e5f6ea] text-[#14602b] px-2.5 py-1.5 rounded-full">Connecté</span>}
             </div>
             <p className="text-sm text-[#33415c] leading-relaxed">C&apos;est <strong>vous</strong> qui parlez : convictions, retours d&apos;expérience, victoires, coups de gueule. Quelle que soit la thématique.</p>
-            {state.connected ? <p className="text-[13px] text-[#5a6b85]">Toujours inclus.</p> : <a href="/api/linkedin/auth" data-testid="wizard-where-connect-profile" className="inline-flex items-center gap-1.5 self-start mt-auto bg-[#0a66c2] hover:bg-[#004182] text-white text-sm font-bold px-[18px] py-[11px] rounded-xl"><Linkedin size={14} /> Connecter mon profil</a>}
+            {state.connected ? <p className="text-[13px] text-[#6B5A70]">Toujours inclus.</p> : <a href="/api/linkedin/auth" data-testid="wizard-where-connect-profile" className="inline-flex items-center gap-1.5 self-start mt-auto bg-[#0a66c2] hover:bg-[#004182] text-white text-sm font-bold px-[18px] py-[11px] rounded-xl"><Linkedin size={14} /> Connecter mon profil</a>}
           </div>
-          <div className="bg-white border border-[#e8ecf2] rounded-[20px] p-6 flex flex-col gap-3" data-testid="wizard-where-page">
+          <div className="bg-white border border-[#EFE4E0] rounded-[20px] p-6 flex flex-col gap-3" data-testid="wizard-where-page">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-[10px] bg-[#0a66c2] text-white flex items-center justify-center font-extrabold text-base shrink-0">in</div>
-              <div className="min-w-0"><p className="text-lg font-extrabold">La page de mon entreprise</p><p className="text-[13px] text-[#5a6b85]">Facultatif · 1 page incluse en offre Pro</p></div>
+              <div className="min-w-0"><p className="text-lg font-extrabold">La page de mon entreprise</p><p className="text-[13px] text-[#6B5A70]">Facultatif · 1 page incluse en offre Pro</p></div>
               {state.orgConnected && <span className="ml-auto text-xs font-bold bg-[#e5f6ea] text-[#14602b] px-2.5 py-1.5 rounded-full">Connectée</span>}
             </div>
             <p className="text-sm text-[#33415c] leading-relaxed">C&apos;est <strong>la marque</strong> qui parle : actualités, cas clients validés. Les commentaires de la page alimentent aussi votre base de leads.</p>
@@ -13420,28 +13427,28 @@ function PublishWhereStep({ onBack, onNext, planAllowsOrg = true }) {
               ? <p className="text-[13px] text-green-700 font-semibold mt-auto">{state.pages.length ? state.pages.map((x) => x.name).join(", ") : "Page connectée"}</p>
               : planAllowsOrg
               ? <div className="flex items-center gap-3 mt-auto"><a href="/api/linkedin/auth-org" data-testid="wizard-where-connect-page" className="inline-flex items-center gap-1.5 bg-[#0a66c2] hover:bg-[#004182] text-white text-sm font-bold px-[18px] py-[11px] rounded-xl">Connecter ma page</a><button type="button" onClick={onNext} className="text-sm text-[#33415c] hover:text-gray-900">Plus tard</button></div>
-              : <p className="text-[13px] text-[#5a6b85] mt-auto">La publication sur une page entreprise est incluse à partir de l&apos;offre Pro.</p>}
+              : <p className="text-[13px] text-[#6B5A70] mt-auto">La publication sur une page entreprise est incluse à partir de l&apos;offre Pro.</p>}
           </div>
         </div>
       )}
-      <div className="bg-white border border-[#e8ecf2] rounded-[20px] px-6 sm:px-[26px] py-5 flex flex-col lg:flex-row lg:items-center gap-4 lg:gap-7" data-testid="wizard-where-recap">
+      <div className="bg-white border border-[#EFE4E0] rounded-[20px] px-6 sm:px-[26px] py-5 flex flex-col lg:flex-row lg:items-center gap-4 lg:gap-7" data-testid="wizard-where-recap">
         <div className="flex-1">
-          <p className="text-xs font-bold uppercase tracking-wider text-[#5a6b85] mb-1.5">Ce que vous choisirez à chaque post</p>
-          <p className="text-[15px] text-[#1b2a4a] leading-relaxed"><strong>De quoi parler</strong> (une thématique : votre métier, la vie d&apos;entrepreneur, le sport…), <strong>dans quelle humeur</strong> (fier, agacé, inspiré…) et <strong>où publier</strong> (votre profil, la page, ou les deux).</p>
+          <p className="text-xs font-bold uppercase tracking-wider text-[#6B5A70] mb-1.5">Ce que vous choisirez à chaque post</p>
+          <p className="text-[15px] text-[#2E1F33] leading-relaxed"><strong>De quoi parler</strong> (une thématique : votre métier, la vie d&apos;entrepreneur, le sport…), <strong>dans quelle humeur</strong> (fier, agacé, inspiré…) et <strong>où publier</strong> (votre profil, la page, ou les deux).</p>
         </div>
         <div className="flex flex-wrap items-center gap-2.5 text-[13px] font-semibold">
-          <span className={`${chipTone} bg-[#ffe3e4] text-[#a3242a]`}>Thématique</span>
-          <span className="text-[#5a6b85]">+</span>
+          <span className={`${chipTone} bg-[#ffe3e4] text-[#9E3157]`}>Thématique</span>
+          <span className="text-[#6B5A70]">+</span>
           <span className={`${chipTone} bg-[#fff4d6] text-[#7a4b00]`}>Humeur</span>
-          <svg width="22" height="12" viewBox="0 0 22 12" fill="none" stroke="#5a6b85" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M1 6h19M15 1l5 5-5 5" /></svg>
+          <svg width="22" height="12" viewBox="0 0 22 12" fill="none" stroke="#6B5A70" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M1 6h19M15 1l5 5-5 5" /></svg>
           <span className={`${chipTone} bg-[#e8f1fb] text-[#084a8d]`}>Profil</span>
-          <span className="text-[#5a6b85]">ou</span>
+          <span className="text-[#6B5A70]">ou</span>
           <span className={`${chipTone} bg-[#e8f1fb] text-[#084a8d]`}>Page</span>
         </div>
       </div>
       <div className="flex flex-wrap items-center gap-x-[18px] gap-y-3 pt-2">
-        <button type="button" onClick={onNext} data-testid="wizard-where-next" className="bg-[#d63b42] hover:bg-[#c2343a] text-white text-base font-bold px-[26px] py-3.5 rounded-[14px]">Continuer</button>
-        <span className="text-[13px] text-[#5a6b85]">Aucune publication sans votre validation.</span>
+        <button type="button" onClick={onNext} data-testid="wizard-where-next" className="bg-[#C2456F] hover:bg-[#c2343a] text-white text-base font-bold px-[26px] py-3.5 rounded-[14px]">Continuer</button>
+        <span className="text-[13px] text-[#6B5A70]">Aucune publication sans votre validation.</span>
         <button type="button" onClick={onBack} className="text-sm text-[#33415c] hover:text-gray-900 ml-auto">Retour</button>
       </div>
     </div>
@@ -13457,12 +13464,12 @@ function SiteRows({ fields, onChange, testPrefix }) {
     <div>
       {rows.map(([k, label]) => (
         <div key={k} className="flex gap-2.5 items-start py-2 border-t border-[#eef1f6] first:border-t-0 text-[13px] leading-snug" data-testid={`${testPrefix}-row-${k}`}>
-          <b className="w-[88px] sm:w-[110px] shrink-0 text-[#5a6b85] font-semibold">{label}</b>
+          <b className="w-[88px] sm:w-[110px] shrink-0 text-[#6B5A70] font-semibold">{label}</b>
           {editing === k
-            ? <input autoFocus type="text" value={fields[k] ?? ""} onChange={(e) => onChange(k, e.target.value)} onBlur={() => setEditing(null)} onKeyDown={(e) => e.key === "Enter" && setEditing(null)} data-testid={`${testPrefix}-edit-${k}`} className="flex-1 min-w-0 border border-[#cbd5e1] rounded-lg px-2.5 py-1.5 text-[13px] focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]" />
-            : <span className="flex-1 min-w-0 text-[#1b2a4a]">{fields[k]?.trim() || <span className="text-gray-400">À renseigner</span>}</span>}
+            ? <input autoFocus type="text" value={fields[k] ?? ""} onChange={(e) => onChange(k, e.target.value)} onBlur={() => setEditing(null)} onKeyDown={(e) => e.key === "Enter" && setEditing(null)} data-testid={`${testPrefix}-edit-${k}`} className="flex-1 min-w-0 border border-[#cbd5e1] rounded-lg px-2.5 py-1.5 text-[13px] focus:outline-none focus:ring-2 focus:ring-[#C2456F]" />
+            : <span className="flex-1 min-w-0 text-[#2E1F33]">{fields[k]?.trim() || <span className="text-gray-400">À renseigner</span>}</span>}
           <button type="button" onClick={() => setOk((o) => ({ ...o, [k]: true }))} data-testid={`${testPrefix}-juste-${k}`} className={`text-xs font-bold whitespace-nowrap ${ok[k] ? "text-[#16a34a]" : "text-gray-400 hover:text-[#16a34a]"}`}>✓ Juste</button>
-          <button type="button" onClick={() => { setEditing(k); setOk((o) => ({ ...o, [k]: false })); }} data-testid={`${testPrefix}-corriger-${k}`} className="text-xs font-bold whitespace-nowrap text-[#a3242a] hover:underline">✎ Corriger</button>
+          <button type="button" onClick={() => { setEditing(k); setOk((o) => ({ ...o, [k]: false })); }} data-testid={`${testPrefix}-corriger-${k}`} className="text-xs font-bold whitespace-nowrap text-[#9E3157] hover:underline">✎ Corriger</button>
         </div>
       ))}
     </div>
@@ -13475,19 +13482,19 @@ const SITE_BTN = "text-sm font-bold px-4 py-2.5 rounded-xl";
 const siteHost = (u) => String(u ?? "").replace(/^https?:\/\//, "").replace(/\/.*$/, "");
 function SiteReviewCard({ url, review, onChange, onConfirm, onReject, onAgain, busy, prefix }) {
   return (
-    <div className="bg-white rounded-[18px] border-2 border-[#d63b42] px-5 py-4" data-testid={`${prefix}-review`}>
+    <div className="bg-white rounded-[18px] border-2 border-[#C2456F] px-5 py-4" data-testid={`${prefix}-review`}>
       <div className="flex items-center gap-2.5 mb-2 flex-wrap">
         <span className="text-[15px] font-extrabold">{siteHost(url)}</span>
         <span className={`${SITE_TAG} bg-[#e6f6ec] text-[#166534]`}>✓ Analysé</span>
-        <button type="button" onClick={onAgain} className="ml-auto text-[13px] font-bold text-[#a3242a] hover:underline">✨ Analyser à nouveau</button>
+        <button type="button" onClick={onAgain} className="ml-auto text-[13px] font-bold text-[#9E3157] hover:underline">✨ Analyser à nouveau</button>
       </div>
       <SiteRows fields={review} onChange={onChange} testPrefix={prefix} />
       <div className="mt-2.5 px-3.5 py-3 rounded-xl bg-[#fff7ed] border border-[#fde1c0]">
-        <p className="text-sm font-bold text-[#1b2a4a] mb-2">Est-ce bien l&apos;entreprise dont vous voulez parler ?</p>
+        <p className="text-sm font-bold text-[#2E1F33] mb-2">Est-ce bien l&apos;entreprise dont vous voulez parler ?</p>
         <div className="flex gap-2.5 flex-wrap items-center">
-          <button type="button" onClick={onConfirm} disabled={busy} data-testid={`${prefix}-confirm`} className={`${SITE_BTN} bg-[#d63b42] hover:bg-[#c2343a] disabled:bg-gray-300 text-white`}>Oui, créer la thématique « {review.name?.trim() || "…"} »</button>
+          <button type="button" onClick={onConfirm} disabled={busy} data-testid={`${prefix}-confirm`} className={`${SITE_BTN} bg-[#C2456F] hover:bg-[#c2343a] disabled:bg-gray-300 text-white`}>Oui, créer la thématique « {review.name?.trim() || "…"} »</button>
           <button type="button" onClick={onReject} data-testid={`${prefix}-reject`} className={`${SITE_BTN} bg-white text-[#33415c] border border-[#cbd5e1] hover:bg-gray-50`}>Non, ce n&apos;est pas le bon site</button>
-          <span className="text-xs text-[#5a6b85]">Rien n&apos;est enregistré avant votre réponse.</span>
+          <span className="text-xs text-[#6B5A70]">Rien n&apos;est enregistré avant votre réponse.</span>
         </div>
       </div>
     </div>
@@ -13497,24 +13504,24 @@ function SiteReviewCard({ url, review, onChange, onConfirm, onReject, onAgain, b
 // Étape « Vos sites internet » de l'inscription (maquette 1b) : un site par entreprise dont la personne parle sur son LinkedIn
 function OnboardingSitesStep({ main, extras, input, onInput, onAdd, adding, onMainChange, onMainConfirm, onMainReject, onMainAgain, onExtraChange, onExtraConfirm, onExtraReject, onExtraRemove, onExtraAgain, canNext, saving, onNext, onBack, onManual, stepNo, stepTotal, total }) {
   const tag = SITE_TAG;
-  const card = "bg-white border border-[#e8ecf2] rounded-[18px]";
+  const card = "bg-white border border-[#EFE4E0] rounded-[18px]";
   const btn = SITE_BTN;
   const asHost = siteHost;
   return (
     <div className="flex flex-col lg:flex-row gap-6 lg:gap-7 items-start" data-testid="wizard-sites-step">
       <div className="flex-1 min-w-0 w-full flex flex-col gap-3">
         <div>
-          <h1 className="text-3xl leading-tight font-extrabold text-[#1b2a4a] mb-1">Vos sites internet</h1>
-          <p className="text-[15px] text-[#5a6b85] leading-relaxed">Un site par entreprise dont vous parlez sur votre LinkedIn. Le copilote les lit, vous confirmez ou corrigez avant que rien ne soit créé.</p>
+          <h1 className="text-3xl leading-tight font-display font-medium text-[#2E1F33] mb-1">Vos sites internet</h1>
+          <p className="text-[15px] text-[#6B5A70] leading-relaxed">Un site par entreprise dont vous parlez sur votre LinkedIn. Le copilote les lit, vous confirmez ou corrigez avant que rien ne soit créé.</p>
         </div>
         {main.review && <SiteReviewCard url={main.url} review={main.review} onChange={onMainChange} onConfirm={onMainConfirm} onReject={onMainReject} onAgain={onMainAgain} prefix="wizard-main" />}
-        {main.busy && !main.review && <div className={`${card} px-5 py-3 flex items-center gap-3 text-sm text-[#5a6b85]`}><RefreshCw size={14} className="animate-spin" /> Lecture de {asHost(main.url)}…</div>}
+        {main.busy && !main.review && <div className={`${card} px-5 py-3 flex items-center gap-3 text-sm text-[#6B5A70]`}><RefreshCw size={14} className="animate-spin" /> Lecture de {asHost(main.url)}…</div>}
         {main.confirmed && !main.review && (
           <div className={`${card} px-5 py-3 flex items-center gap-3 flex-wrap`} data-testid="wizard-main-confirmed">
             <span className="text-[15px] font-extrabold">{asHost(main.url)}</span>
             <span className={`${tag} bg-[#e6f6ec] text-[#166534]`}>✓ Confirmé</span>
-            <span className="text-[13px] text-[#5a6b85] flex-1 min-w-0">{[main.name, main.target && `cible : ${main.target}`].filter(Boolean).join(" · ")}</span>
-            <button type="button" onClick={onMainAgain} className="text-[13px] font-bold text-[#a3242a] hover:underline">Vérifier</button>
+            <span className="text-[13px] text-[#6B5A70] flex-1 min-w-0">{[main.name, main.target && `cible : ${main.target}`].filter(Boolean).join(" · ")}</span>
+            <button type="button" onClick={onMainAgain} className="text-[13px] font-bold text-[#9E3157] hover:underline">Vérifier</button>
           </div>
         )}
         {main.error && <p className="text-xs text-red-600">{main.error}</p>}
@@ -13524,35 +13531,35 @@ function OnboardingSitesStep({ main, extras, input, onInput, onAdd, adding, onMa
             <div key={x.key} className={`${card} px-5 py-3 flex items-center gap-3 flex-wrap`} data-testid="wizard-extra">
               <span className="text-[15px] font-extrabold">{asHost(x.url)}</span>
               {x.created ? <><span className={`${tag} bg-[#e6f6ec] text-[#166534]`} data-testid="wizard-extra-created">✓ Thématique « {x.created} » créée</span></>
-                : x.busy ? <span className="text-[13px] text-[#5a6b85] flex items-center gap-2"><RefreshCw size={13} className="animate-spin" /> Lecture…</span>
+                : x.busy ? <span className="text-[13px] text-[#6B5A70] flex items-center gap-2"><RefreshCw size={13} className="animate-spin" /> Lecture…</span>
                 : <><span className={`${tag} bg-[#fff4d6] text-[#7a4b00]`}>À confirmer</span>{x.error && <span className="text-xs text-red-600 flex-1">{x.error}</span>}</>}
               <span className="flex-1" />
-              {!x.busy && !x.created && x.error && <button type="button" onClick={() => onExtraAgain(x)} className="text-[13px] font-bold text-[#a3242a] hover:underline">Réessayer</button>}
-              {!x.busy && !x.created && <button type="button" onClick={() => onExtraRemove(x.key)} className="text-[13px] text-[#5a6b85] hover:text-gray-900">Retirer</button>}
+              {!x.busy && !x.created && x.error && <button type="button" onClick={() => onExtraAgain(x)} className="text-[13px] font-bold text-[#9E3157] hover:underline">Réessayer</button>}
+              {!x.busy && !x.created && <button type="button" onClick={() => onExtraRemove(x.key)} className="text-[13px] text-[#6B5A70] hover:text-gray-900">Retirer</button>}
             </div>
           )
         ))}
         {total < 10 && (
           <div className="border border-dashed border-[#cbd5e1] rounded-[14px] px-3 py-2.5 bg-white/70 flex gap-2.5 items-center">
-            <input type="text" value={input} onChange={(e) => onInput(e.target.value)} onKeyDown={(e) => e.key === "Enter" && onAdd()} aria-label="Un site internet" placeholder={total === 0 ? "Votre site : https://" : "Un autre site : https://"} data-testid="wizard-website" className="flex-1 min-w-0 border border-[#cbd5e1] rounded-xl px-3.5 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]" />
-            <button type="button" onClick={onAdd} disabled={adding || !input.trim()} data-testid="wizard-analyze" className={`${btn} bg-[#d63b42] hover:bg-[#c2343a] disabled:bg-gray-300 text-white shrink-0`}>✨ Analyser</button>
+            <input type="text" value={input} onChange={(e) => onInput(e.target.value)} onKeyDown={(e) => e.key === "Enter" && onAdd()} aria-label="Un site internet" placeholder={total === 0 ? "Votre site : https://" : "Un autre site : https://"} data-testid="wizard-website" className="flex-1 min-w-0 border border-[#cbd5e1] rounded-xl px-3.5 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#C2456F]" />
+            <button type="button" onClick={onAdd} disabled={adding || !input.trim()} data-testid="wizard-analyze" className={`${btn} bg-[#C2456F] hover:bg-[#c2343a] disabled:bg-gray-300 text-white shrink-0`}>✨ Analyser</button>
           </div>
         )}
         <div className="flex flex-wrap items-center gap-x-4 gap-y-3 mt-2">
-          <button type="button" onClick={onNext} disabled={!canNext || saving} data-testid="wizard-sites-next" className="bg-[#d63b42] hover:bg-[#c2343a] disabled:bg-gray-300 text-white text-base font-bold px-[26px] py-3 rounded-[14px]">Continuer</button>
+          <button type="button" onClick={onNext} disabled={!canNext || saving} data-testid="wizard-sites-next" className="bg-[#C2456F] hover:bg-[#c2343a] disabled:bg-gray-300 text-white text-base font-bold px-[26px] py-3 rounded-[14px]">Continuer</button>
           <button type="button" onClick={onBack} className="text-sm text-[#33415c] hover:text-gray-900">Retour</button>
-          <button type="button" onClick={onManual} data-testid="wizard-manual" className="text-sm font-semibold text-[#a3242a] hover:underline sm:ml-3">Je n&apos;ai pas de site, je saisis à la main</button>
-          <span className="sm:ml-auto text-[13px] text-[#5a6b85]">{total} site{total > 1 ? "s" : ""} sur 10 · étape {stepNo} sur {stepTotal}</span>
+          <button type="button" onClick={onManual} data-testid="wizard-manual" className="text-sm font-semibold text-[#9E3157] hover:underline sm:ml-3">Je n&apos;ai pas de site, je saisis à la main</button>
+          <span className="sm:ml-auto text-[13px] text-[#6B5A70]">{total} site{total > 1 ? "s" : ""} sur 10 · étape {stepNo} sur {stepTotal}</span>
         </div>
       </div>
       <div className="w-full lg:w-[380px] shrink-0 flex flex-col gap-3.5">
         <div className={`${card} px-5 py-4`}>
-          <p className="text-xs font-bold tracking-wider uppercase text-[#5a6b85] mb-2">Ce qui se passe ensuite</p>
+          <p className="text-xs font-bold tracking-wider uppercase text-[#6B5A70] mb-2">Ce qui se passe ensuite</p>
           <p className="text-[13px] leading-relaxed text-[#33415c] mb-2"><strong>Un site confirmé devient une thématique d&apos;activité,</strong> avec son datalake, sa cible et sa voix. Pour chacune, vous passerez ensuite par les mêmes étapes : cible, voix, analyse.</p>
           <p className="text-[13px] leading-relaxed text-[#33415c]"><strong>Vous publiez sur votre propre compte LinkedIn</strong> pour plusieurs entreprises ? Ajoutez un site par entreprise. Aucune n&apos;est « principale ».</p>
         </div>
         <div className={`${card} px-5 py-4`}>
-          <p className="text-xs font-bold tracking-wider uppercase text-[#5a6b85] mb-2">Vous gardez la main</p>
+          <p className="text-xs font-bold tracking-wider uppercase text-[#6B5A70] mb-2">Vous gardez la main</p>
           <p className="text-[13px] leading-relaxed text-[#33415c]">Chaque ligne se confirme ou se corrige. Un site qui n&apos;est pas le vôtre (un client, un ancien employeur) se refuse en un clic. Vous pourrez ajouter d&apos;autres sites plus tard, depuis « Mes thématiques ».</p>
         </div>
         <div className="bg-[#fff7ed] border border-[#fde1c0] rounded-[18px] px-5 py-4">
@@ -13764,9 +13771,9 @@ function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast,
   const advance = () => save(false); // une étape de questions : on enregistre puis on passe à la suivante
 
   const inputCls =
-    "w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]";
+    "w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#C2456F]";
   const chip = (active) =>
-    `text-xs px-3 py-1.5 rounded-full border ${active ? "bg-[#ff5a5f] text-white border-[#ff5a5f]" : "border-gray-200 text-gray-600 hover:border-gray-300"}`;
+    `text-xs px-3 py-1.5 rounded-full border ${active ? "bg-[#C2456F] text-white border-[#C2456F]" : "border-gray-200 text-gray-600 hover:border-gray-300"}`;
 
   // Parcours de l'inscription (maquettes 1b et 2) : cinq pastilles, la cible et la voix se regroupent en « Voix et analyse »
   const pills = [
@@ -13780,8 +13787,10 @@ function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast,
   const wideStep = selfFlow && ((kind === "company" && !manualSite) || kind === "where");
 
   return (
-    <div className={selfFlow ? "min-h-screen px-4 sm:px-8 lg:px-16 py-6 sm:py-8" : "min-h-screen flex items-start sm:items-center justify-center p-4 sm:p-6"} style={selfFlow ? { background: "linear-gradient(180deg,#fff1f2 0%,#fff7ed 45%,#f0f9ff 100%)" } : undefined}>
-      <div className={selfFlow ? `w-full mx-auto ${wideStep ? "max-w-6xl" : "max-w-xl"}` : "w-full max-w-xl"}>
+    <div className={selfFlow ? "min-h-screen flex flex-col bg-[#FCF8F5] text-[#2E1F33]" : "min-h-screen flex items-start sm:items-center justify-center p-4 sm:p-6"}>
+      {selfFlow && <SiteHeader variant="v2" />}
+      <div className={selfFlow ? `w-full mx-auto flex-1 max-w-6xl px-4 sm:px-8 py-8 ${wideStep ? "" : "lg:grid lg:grid-cols-[minmax(0,36rem)_minmax(0,1fr)] lg:gap-14 lg:items-start"}` : "w-full max-w-xl"}>
+      <div className="min-w-0">
         {forClient && (
           <div className="mb-4 bg-amber-50 border border-amber-200 text-amber-800 rounded-xl px-4 py-2.5 text-sm flex items-center justify-between gap-3 flex-wrap" data-testid="wizard-client-banner">
             <span className="flex items-center gap-2"><Users size={15} /> Vous configurez le compte de <span className="font-semibold">{forClient.companyName || forClient.name}</span></span>
@@ -13789,18 +13798,16 @@ function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast,
           </div>
         )}
         {selfFlow ? (
-          <div className={`flex flex-wrap items-center gap-x-3 gap-y-3 mb-5 ${wideStep ? "" : "justify-center"}`} data-testid="wizard-header">
-            <div className="w-[38px] h-[38px] rounded-[11px] bg-[#ff5a5f] text-white flex items-center justify-center shrink-0"><LpMark size={20} /></div>
-            <span className="text-xl font-extrabold">Vercéa</span>
+          <div className={`flex flex-wrap items-center gap-x-3 gap-y-3 mb-5 ${wideStep ? "" : "lg:hidden"}`} data-testid="wizard-header">
             {kind === "where" ? (
-              <span className="ml-auto text-sm text-[#5a6b85]" data-testid="wizard-where-count">Étape {pillIdx + 1} sur {pills.length} · Connecter LinkedIn</span>
+              <span className="ml-auto text-sm text-[#6B5A70]" data-testid="wizard-where-count">Étape {pillIdx + 1} sur {pills.length} · Connecter LinkedIn</span>
             ) : (
-              <div className="w-full sm:w-auto sm:ml-10 flex flex-wrap gap-x-[18px] gap-y-2" data-testid="wizard-pills">
+              <div className="w-full flex flex-wrap gap-x-[18px] gap-y-2" data-testid="wizard-pills">
                 {pills.map((pl, i) => {
                   const done = i < pillIdx, on = i === pillIdx;
                   return (
-                    <div key={pl.label} className={`flex items-center gap-2 text-[13px] ${on ? "text-[#a3242a] font-bold" : "text-[#5a6b85]"}`} data-testid="wizard-pill" aria-current={on ? "step" : undefined}>
-                      <span className={`w-[22px] h-[22px] rounded-full text-xs font-bold flex items-center justify-center ${done ? "bg-[#16a34a] text-white" : on ? "bg-[#d63b42] text-white" : "bg-[#e2e8f0] text-[#33415c]"}`}>{done ? "✓" : i + 1}</span>
+                    <div key={pl.label} className={`flex items-center gap-2 text-[13px] ${on ? "text-[#9E3157] font-bold" : "text-[#6B5A70]"}`} data-testid="wizard-pill" aria-current={on ? "step" : undefined}>
+                      <span className={`w-[22px] h-[22px] rounded-full text-xs font-bold flex items-center justify-center ${done ? "bg-[#16a34a] text-white" : on ? "bg-[#C2456F] text-white" : "bg-[#e2e8f0] text-[#33415c]"}`}>{done ? "✓" : i + 1}</span>
                       {pl.label}
                     </div>
                   );
@@ -13811,7 +13818,7 @@ function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast,
         ) : (
         <>
         <div className="flex items-center justify-center gap-2 mb-5">
-          <div className="bg-[#ff5a5f] text-white p-2.5 rounded-xl">
+          <div className="bg-[#C2456F] text-white p-2.5 rounded-xl">
             <LpMark size={24} />
           </div>
           <h1 className="font-bold text-xl">Vercéa</h1>
@@ -13822,8 +13829,8 @@ function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast,
           <div className="flex items-start gap-2">
             {flow.map((s, i) => (
               <div key={s.kind} className="flex-1">
-                <div className={`h-1.5 rounded-full ${i <= step ? "bg-[#ff5a5f]" : "bg-gray-200"}`} />
-                <p className={`text-[11px] mt-1.5 ${i === step ? "text-[#ff5a5f] font-semibold" : "text-gray-400"}`}>{s.short}</p>
+                <div className={`h-1.5 rounded-full ${i <= step ? "bg-[#C2456F]" : "bg-gray-200"}`} />
+                <p className={`text-[11px] mt-1.5 ${i === step ? "text-[#C2456F] font-semibold" : "text-gray-400"}`}>{s.short}</p>
               </div>
             ))}
           </div>
@@ -13833,7 +13840,7 @@ function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast,
         </>
         )}
 
-        {isFirstPost && <OnboardingFirstPost forClient={Boolean(forClient)} fields={fields} saving={saving} showToast={showToast} stepNo={step + 1} stepTotal={flow.length} target={pageUrn} onFinish={() => (forClient ? setStep(step + 1) : save(true))} onBack={() => setStep(step - 1)} />}
+        {isFirstPost && <OnboardingFirstPost forClient={Boolean(forClient)} fields={fields} saving={saving} showToast={showToast} stepNo={selfFlow ? pillIdx + 1 : step + 1} stepTotal={selfFlow ? pills.length : flow.length} target={pageUrn} onFinish={() => (forClient ? setStep(step + 1) : save(true))} onBack={() => setStep(step - 1)} />}
 
         {selfFlow && kind === "company" && !manualSite && (
           <OnboardingSitesStep
@@ -13899,7 +13906,7 @@ function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast,
                 data-testid="wizard-person-finish"
                 disabled={saving || person === null || (person === true && (!hasText(fields.personName) || !hasText(fields.expertise)))}
                 onClick={() => save(true, { name: person ? fields.personName.trim() : (fields.companyName || fields.name) })}
-                className="bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white text-sm font-medium px-5 py-2 rounded-lg flex items-center gap-1.5"
+                className="bg-[#C2456F] hover:bg-[#9E3157] disabled:bg-gray-300 text-white text-sm font-medium px-5 py-2 rounded-lg flex items-center gap-1.5"
               >
                 {saving && <RefreshCw size={14} className="animate-spin" />} Terminer <Check size={15} />
               </button>
@@ -13925,8 +13932,8 @@ function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast,
         />
 
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 sm:p-6">
-          <p className="text-xs font-medium text-[#ff5a5f] mb-1">
-            Étape {step + 1} sur {flow.length}
+          <p className="text-xs font-medium text-[#C2456F] mb-1">
+            Étape {selfFlow ? pillIdx + 1 : step + 1} sur {selfFlow ? pills.length : flow.length}
           </p>
           <h2 className="font-semibold text-lg">{flow[step].title}</h2>
           <p className="text-sm text-gray-500 mb-5">{stage.why}</p>
@@ -13952,7 +13959,7 @@ function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast,
                 />
                 <div className="flex flex-wrap gap-1.5 mt-2">
                   {EXPERTISE_SUGGESTIONS.map((s) => (
-                    <button type="button" key={s} onClick={() => set("expertise", s)} className="text-xs bg-gray-100 hover:bg-[#fff1f1] hover:text-[#f63d44] text-gray-600 px-2 py-1 rounded-full">
+                    <button type="button" key={s} onClick={() => set("expertise", s)} className="text-xs bg-gray-100 hover:bg-[#F6E3E0] hover:text-[#9E3157] text-gray-600 px-2 py-1 rounded-full">
                       {s}
                     </button>
                   ))}
@@ -13971,11 +13978,11 @@ function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast,
           {kind === "company" && (
             <div className="space-y-3">
               {forClient ? (
-              <div className="bg-[#fff1f1] rounded-xl p-3" data-testid="wizard-site">
+              <div className="bg-[#F6E3E0] rounded-xl p-3" data-testid="wizard-site">
                   <label className="text-sm font-medium text-gray-700 block mb-1.5">{me("Gagnez du temps : votre site internet", "Gagnez du temps : son site internet")}</label>
                   <div className="flex flex-wrap gap-2">
                     <input type="text" value={fields.website} onChange={(e) => set("website", e.target.value)} placeholder="https://site.fr" className={`flex-1 min-w-0 ${inputCls}`} data-testid="wizard-website" />
-                    <button type="button" onClick={() => analyzeSite()} disabled={analyzing || !hasText(fields.website)} data-testid="wizard-analyze" className="shrink-0 bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white text-sm font-medium px-4 py-2 rounded-lg flex items-center gap-1.5">
+                    <button type="button" onClick={() => analyzeSite()} disabled={analyzing || !hasText(fields.website)} data-testid="wizard-analyze" className="shrink-0 bg-[#C2456F] hover:bg-[#9E3157] disabled:bg-gray-300 text-white text-sm font-medium px-4 py-2 rounded-lg flex items-center gap-1.5">
                       {analyzing ? <RefreshCw size={14} className="animate-spin" /> : <Sparkles size={14} />}
                       {analyzing ? "Analyse…" : analyzed ? "Analyser à nouveau" : "Analyser"}
                     </button>
@@ -13983,7 +13990,7 @@ function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast,
                   <p className="text-[11px] text-gray-500 mt-1.5">Le copilote lit le site et pré-remplit l&apos;activité, la cible, le marché et les thèmes. Vous vérifiez, vous corrigez.</p>
                 </div>
               ) : (
-              <button type="button" onClick={() => setManualSite(false)} data-testid="wizard-back-to-sites" className="text-sm font-semibold text-[#a3242a] hover:underline">← Revenir à la lecture d&apos;un site</button>
+              <button type="button" onClick={() => setManualSite(false)} data-testid="wizard-back-to-sites" className="text-sm font-semibold text-[#9E3157] hover:underline">← Revenir à la lecture d&apos;un site</button>
               )}
               <div>
                 <label className="text-sm font-medium text-gray-700 block mb-1.5">{me("Nom de votre entreprise ou de votre marque", "Nom de son entreprise ou de sa marque")}</label>
@@ -14120,7 +14127,7 @@ function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast,
               type="button"
               onClick={advance}
               disabled={!canNext || saving}
-              className="bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white text-sm font-medium px-5 py-2 rounded-lg flex items-center gap-1.5"
+              className="bg-[#C2456F] hover:bg-[#9E3157] disabled:bg-gray-300 text-white text-sm font-medium px-5 py-2 rounded-lg flex items-center gap-1.5"
             >
               {saving && <RefreshCw size={14} className="animate-spin" />}
               Continuer <ChevronRight size={15} />
@@ -14137,6 +14144,9 @@ function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast,
           </button>
         )}
       </div>
+      {selfFlow && !wideStep && <aside className="hidden lg:block lg:sticky lg:top-6"><ParcoursApercu courant={pillIdx} /></aside>}
+      </div>
+      {selfFlow && <SiteFooter variant="v2" />}
     </div>
   );
 }
