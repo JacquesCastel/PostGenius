@@ -35,7 +35,7 @@ landing=$("${C[@]}" "$URL/" 2>/dev/null || true)
 if [ "${#landing}" -gt "$MIN_LANDING" ]; then ok "page d'accueil servie (${#landing} caractères)"; else ko "page d'accueil vide ou trop courte (${#landing} caractères, minimum $MIN_LANDING)"; fi
 
 # 4. Pages et points d'accès publics
-for path in /tarifs /fonctionnalites /securite /.well-known/oauth-authorization-server; do
+for path in /tarifs /privacy-policy /securite /.well-known/oauth-authorization-server; do
   c=$(code "$URL$path")
   if [ "$c" = "200" ]; then ok "$path : 200"; else ko "$path : code $c"; fi
 done

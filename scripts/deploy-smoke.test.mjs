@@ -82,3 +82,10 @@ test("deploy.sh signale un Caddyfile que le conteneur Caddy n'utilise pas, sans 
   assert.doesNotMatch(alerte, /\bexit\b/, "l'alerte ne fait jamais échouer le déploiement");
   assert.ok(s.indexOf("# ── Alerte Caddyfile") > s.indexOf("7/7  contrôle automatique"), "après le contrôle du site, jamais avant");
 });
+
+test("statique : le contrôle après déploiement ne vise aucune page qui peut rediriger (SITE_REDIRECTIONS) ; il vise /privacy-policy, jamais redirigée", async () => {
+  const { REDIRECTIONS } = await import("../lib/redirections.js");
+  const ligne = fs.readFileSync("scripts/smoke.sh", "utf8").split("\n").find((l) => /^for path in /.test(l));
+  for (const chemin of Object.keys(REDIRECTIONS)) assert.ok(!ligne.includes(`${chemin} `) && !ligne.endsWith(chemin), `${chemin} redirige : ne pas la contrôler en 200`);
+  assert.match(ligne, /\/privacy-policy/);
+});
