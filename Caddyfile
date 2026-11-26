@@ -1,22 +1,32 @@
 # HTTPS automatique (Let's Encrypt).
 #
-# ÉTAT RÉEL DU SERVEUR (relevé le 26 novembre 2026) : le site est servi sur postgenius.network ; linkeepost.app ne pointe PAS vers ce serveur
-# (son DNS est chez le registraire) : aucun certificat n'est possible pour lui ici, donc aucun bloc.
+# Le site est servi sur vercea.app (domaine du produit) ; postgenius.network (ancien domaine de production) redirige les PAGES vers vercea.app.
+# linkeepost.app ne pointe pas vers ce serveur (DNS chez le registraire) : aucun bloc, aucun certificat possible ici.
 # Ce fichier ne doit jamais rediriger un domaine vers un domaine que le serveur ne sert pas (test : scripts/caddyfile.test.mjs).
+#
+# APPLIQUER UN CHANGEMENT : le fichier est monté comme fichier unique, un `git pull` ne suffit pas (voir DEPLOY.md) :
+#   docker compose run --rm --no-deps -v "$PWD/Caddyfile:/etc/caddy/Caddyfile:ro" caddy caddy validate --config /etc/caddy/Caddyfile
+#   docker compose up -d --force-recreate caddy
 
-# Domaine actuel de production
-postgenius.network {
-	reverse_proxy app:3000
-}
-www.postgenius.network {
-	redir https://postgenius.network{uri} permanent
-}
-
-# Nouveau domaine, servi EN PARALLÈLE, sans aucune redirection entre les deux (étape 2 de docs/site/migration-domaine-301.md).
-# Le certificat est obtenu dès que le DNS de vercea.app pointe vers ce serveur ; d'ici là, Caddy réessaie sans gêner les autres domaines.
+# Domaine du produit
 vercea.app {
 	reverse_proxy app:3000
 }
 www.vercea.app {
 	redir https://vercea.app{uri} permanent
+}
+
+# Ancien domaine : 301 vers le même chemin sur vercea.app, POUR LES PAGES SEULEMENT (GET, HEAD).
+# Restent servis directement, sans redirection :
+#   - /api/*  : retours OAuth (LinkedIn, Instagram), webhooks (Stripe), serveur MCP, désinscription : une 301 les casserait ;
+#   - /oauth/* et /.well-known/* : assistants IA déjà branchés sur l'ancienne adresse ;
+#   - /privacy-policy et /privacy : adresse déclarée à LinkedIn, à rediriger seulement après avoir changé cette déclaration ;
+#   - toute requête qui n'est pas un GET ou un HEAD (POST, PUT…).
+postgenius.network, www.postgenius.network {
+	@pages {
+		method GET HEAD
+		not path /api/* /oauth/* /.well-known/* /privacy-policy /privacy
+	}
+	redir @pages https://vercea.app{uri} permanent
+	reverse_proxy app:3000
 }
