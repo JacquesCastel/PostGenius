@@ -3,7 +3,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { pagesOuvertes, navEntete, colonnesPied, pagesPlanDuSite } from "../lib/siteNav.js";
+import { pagesOuvertes, navEntete, colonnesPied, pagesPlanDuSite, TOUT_OUVERT } from "../lib/siteNav.js";
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), "utf8");
 const A_PROPOS_COMPLET = { pourquoi: "x", editeur: { raisonSociale: "x", formeJuridique: "x", villeSiege: "x" }, portrait: { prenomNom: "x", role: "x", presentation: "x" }, engagementCorrection: "x" };
@@ -57,11 +57,13 @@ test("la privacy policy (adresse déclarée à LinkedIn) et la sécurité sont t
 test("câblage : l'ancien style est inchangé ; le gabarit v2 lit les ouvertures à chaque requête", () => {
   const header = read("components/SiteHeader.js"), shell = read("components/v2/Shell.js"), footer = read("components/SiteFooter.js");
   assert.match(header, /nav = NAV_V2/);
+  assert.match(header, /const NAV_V2 = navEntete\(TOUT_OUVERT\)/);
   assert.match(header, /const NAV = \[\s*\["\/fonctionnalites", "Fonctionnalités"\],\s*\["\/comment-ca-marche", "Comment ça marche"\],\s*\["\/scoring", "Contrôle de forme"\],/);
   assert.match(shell, /export default async function Shell/);
   assert.match(shell, /await chargerOuvertures\(\)/);
   assert.match(shell, /navEntete\(ouvertures\)/);
-  assert.match(footer, /colonnes = colonnesPied\(\{\}\)/);
+  assert.match(footer, /colonnes = variant === "v2" \? COLONNES_V2 : colonnesPied\(\{\}\)/);
+  assert.match(footer, /const COLONNES_V2 = colonnesPied\(TOUT_OUVERT\)/);
   assert.match(footer, /<Link href="\/mentions-legales" className="hover:text-\[#ff5a5f\]">Mentions légales<\/Link>/, "pied de page de l'ancien style inchangé");
   assert.match(read("app/sitemap.js"), /const ouvertures = await chargerOuvertures\(\);[\s\S]*pagesPlanDuSite\(ouvertures\)/);
 });
@@ -77,4 +79,9 @@ test("les ouvertures sont lues à chaque requête (connection()), pas figées au
   assert.match(read("lib/siteNavServer.js"), /import \{ connection \} from "next\/server"/);
   assert.match(read("lib/siteNavServer.js"), /export async function chargerOuvertures\(\) \{\s*await connection\(\);/);
   assert.doesNotMatch(read("app/contact/page.js"), /force-dynamic/); // preuve que l'appel doit venir du gabarit
+});
+
+test("repli des composants clients (écran de connexion) : nouveau site complet, ancien pied de page inchangé", () => {
+  assert.deepEqual(liens(navEntete(TOUT_OUVERT)), ["/produit", "/preuves", "/tarifs", "/blog", "/a-propos", "/contact"]);
+  assert.deepEqual(colonnesPied(TOUT_OUVERT).legal.map(([h]) => h), ["/legal", "/securite", "/privacy-policy"]);
 });

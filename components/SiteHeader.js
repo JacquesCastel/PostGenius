@@ -8,6 +8,7 @@ import GoodbyeDialog from "./GoodbyeDialog";
 import { JOIN_HREF, pick } from "@/lib/access";
 import BrandMark, { BrandName } from "./v2/BrandMark";
 import { BRAND_NAME } from "@/lib/brand";
+import { navEntete, TOUT_OUVERT } from "@/lib/siteNav";
 
 // En-tête public partagé (landing, blog, contact, pages légales). Aussi rendu
 // depuis app/app/page.js (client) sur l'écran de connexion/inscription — d'où
@@ -22,14 +23,10 @@ const NAV = [
   ["/contact", "Contact"],
 ];
 
-// Navigation du nouveau style (variante « v2 ») : seulement des pages qui existent. À remplacer par Produit, Preuves, Tarifs, Blog, À propos
-// quand ces pages seront en ligne (docs/site/inventaire-site-public.md).
-const NAV_V2 = [
-  ["/fonctionnalites", "Fonctionnalités"],
-  ["/tarifs", "Tarifs"],
-  ["/blog", "Blog"],
-  ["/contact", "Contact"],
-];
+// Navigation du nouveau style (variante « v2 ») quand l'appelant n'en fournit pas : c'est le cas de l'écran de connexion de l'application
+// (composant client, qui ne peut pas lire les interrupteurs du serveur). Les pages du nouveau site sont toutes ouvertes en production ;
+// les pages publiques, elles, passent la navigation calculée par le gabarit (components/v2/Shell.js).
+const NAV_V2 = navEntete(TOUT_OUVERT);
 
 // variant : "classic" (style actuel) ou "v2" (nouveau style). La logique de session est la même pour les deux.
 export default function SiteHeader({ variant = "classic", nav = NAV_V2 } = {}) {

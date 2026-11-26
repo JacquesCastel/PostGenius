@@ -63,11 +63,11 @@ export default function PreuvesPage() {
               <span className="text-[13px] text-[#6B5A70]">{E4.gel}</span>
             </div>
             <div className="font-mono text-[13px] leading-normal text-[#4A3A50] break-all bg-white border border-[#EFE4E0] rounded-xl px-3.5 py-3">SHA-256 : {E4.empreinte}</div>
-            <a href={E4.gists.gel} className="text-sm font-semibold text-[#9E3157] hover:text-[#7A2342]">Voir la publication datée (gist public) →</a>
+            <a href={E4.gists.gel} target="_blank" rel="noopener noreferrer" className="text-sm font-semibold text-[#9E3157] hover:text-[#7A2342]">Voir la publication datée (gist public) →</a>
           </div>
           <div className="flex flex-wrap gap-4 mt-7">
-            <Link href="/preuves/test-e4" className="bg-[#C2456F] text-white font-semibold text-[15px] px-6 py-3 rounded-full hover:bg-[#9E3157]">Lire le test, ses résultats et ses limites</Link>
-            <a href={`${E4.depot}/compte-rendu/annexe-textes.md`} className="border-[1.5px] border-[#C2456F] text-[#9E3157] font-semibold text-[15px] px-6 py-2.5 rounded-full hover:bg-[#F6E3E0]">Consulter les {E4.nbTextes} textes</a>
+            <Link href="/preuves/test-e4" target="_blank" rel="noopener noreferrer" className="bg-[#C2456F] text-white font-semibold text-[15px] px-6 py-3 rounded-full hover:bg-[#9E3157]">Lire le test, ses résultats et ses limites</Link>
+            <a href={`${E4.depot}/compte-rendu/annexe-textes.md`} target="_blank" rel="noopener noreferrer" className="border-[1.5px] border-[#C2456F] text-[#9E3157] font-semibold text-[15px] px-6 py-2.5 rounded-full hover:bg-[#F6E3E0]">Consulter les {E4.nbTextes} textes</a>
           </div>
         </div>
 
