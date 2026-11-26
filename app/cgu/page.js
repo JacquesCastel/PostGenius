@@ -2,11 +2,13 @@ import Link from "next/link";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 import { getFooterPage } from "@/lib/footer-pages";
+import { redirigerSiNecessaire } from "@/lib/siteNavServer";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Conditions générales d'utilisation — LinkeePost", alternates: { canonical: "/cgu" } };
 
 export default async function CGU() {
+  await redirigerSiNecessaire("/cgu");
   const page = await getFooterPage("cgu");
   return (
     <div className="bg-gradient-to-b from-rose-50/60 via-white to-white text-[#1b2a4a] min-h-screen flex flex-col">
