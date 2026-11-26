@@ -15,7 +15,7 @@ Pour fermer à nouveau : retirer la ligne du `.env`, puis relancer la commande.
 |---|---|---|---|
 | `SITE_PRODUIT=1` | `/produit`, `/produit/methode`, `/produit/verification` | aucune | **ouvert** |
 | `SITE_PREUVES=1` | `/preuves`, `/preuves/test-e4` | décisions sur le compte rendu E4 (voir ci-dessous) | fermé |
-| `SITE_ACCUEIL=1` | nouvelle accueil à la place de l'ancienne | décision sur les blocs retirés (fonctions, offres, FAQ) | fermé |
+| `SITE_ACCUEIL=1` | nouvelle accueil à la place de l'ancienne | décisions du 26 novembre 2026 prises (voir ci-dessous) ; relire hero et « Trois gestes » | fermé |
 | `SITE_APROPOS=1` | `/a-propos` | tous les champs de `lib/aPropos.js` remplis | fermé, champs vides |
 | `SITE_LEGAL=1` | `/legal` | plus aucun « À COMPLÉTER » dans les trois textes légaux (administration) | fermé, champs à compléter |
 | `SITE_REDIRECTIONS=1` | redirections permanentes de l'ancien site (`lib/redirections.js`) | la page de destination est ouverte | fermé |
@@ -31,7 +31,7 @@ Les liens de l'en-tête, du pied de page et du plan du site suivent automatiquem
    - si un texte cite l'étude Vectara ou le cas de la Cour suprême du Nouveau-Mexique : ajouter la mention du protocole.
    Ouvrir `/preuves` fait aussi apparaître la carte de preuve de la nouvelle accueil, le lien « Voir la preuve », le lien du test dans la FAQ de `/a-propos`.
 3. **`SITE_APROPOS`** et **`SITE_LEGAL`**, après avoir donné les informations de l'éditeur (raison sociale, forme juridique, ville du siège, SIREN, adresse, TVA, directeur de la publication ; paragraphe « pourquoi », portrait, engagement de correction).
-4. **`SITE_ACCUEIL`**, après décision sur les blocs de l'ancienne accueil absents de la maquette.
+4. **`SITE_ACCUEIL`**. Décisions du 26 novembre 2026 sur les blocs de l'ancienne accueil absents de la maquette : fonctions et piliers **non repris** (couverts par `/produit` et `/produit/methode`) ; offres : **encart vers `/tarifs`**, sans prix ; FAQ : **5 questions** en dur dans `components/home/HomeV2.js` (`QUESTIONS`). Avertissement : une fois la nouvelle accueil ouverte, le hero et la FAQ saisis en base (`getLanding()`) ne s'affichent plus sur `/`.
 5. **`SITE_REDIRECTIONS`**, en dernier, quand les pages de destination sont ouvertes et relues : `/fonctionnalites` → `/produit`, `/comment-ca-marche` → `/produit/methode`, `/mentions-legales`, `/cgu`, `/confidentialite` → `/legal`. **`/privacy-policy` et `/privacy` ne sont jamais redirigées** (adresse déclarée à LinkedIn).
 
 ## Contrôles après chaque ouverture
