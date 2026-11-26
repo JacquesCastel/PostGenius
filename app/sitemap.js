@@ -5,7 +5,7 @@ import { pagesPlanDuSite } from "@/lib/siteNav";
 
 export const dynamic = "force-dynamic";
 
-const SITE = (process.env.APP_URL || "https://linkeepost.app").replace(/\/$/, "");
+const SITE = (process.env.APP_URL || "https://vercea.app").replace(/\/$/, "");
 
 const PAGES = [
   ["/", 1],

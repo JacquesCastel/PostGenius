@@ -29,7 +29,7 @@ test("l'ancienne accueil est déplacée sans changer de contenu : mêmes donnée
 
 test("les données structurées sont celles d'avant (organisation et application)", () => {
   const j = read("components/home/JsonLd.js");
-  for (const x of ['"@type": "Organization"', '"@type": "SoftwareApplication"', "https://linkeepost.app", 'priceCurrency: "EUR"', 'replace(/</g, "\\\\u003c")']) assert.ok(j.includes(x), x);
+  for (const x of ['"@type": "Organization"', '"@type": "SoftwareApplication"', "process.env.APP_URL", 'priceCurrency: "EUR"', 'replace(/</g, "\\\\u003c")']) assert.ok(j.includes(x), x);
 });
 
 test("cartes de preuve : seulement si la preuve est publiée ; chiffres lus dans lib/e4Page.js, jamais écrits en dur", () => {

@@ -1,7 +1,7 @@
 import "./globals.css";
 import Analytics from "@/components/Analytics";
 
-const SITE = (process.env.APP_URL || "https://linkeepost.app").replace(/\/$/, "");
+const SITE = (process.env.APP_URL || "https://vercea.app").replace(/\/$/, "");
 
 export const metadata = {
   metadataBase: new URL(SITE),

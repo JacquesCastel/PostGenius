@@ -12,7 +12,7 @@ import { BETA, JOIN_HREF, pick } from "@/lib/access";
 import { INVITE_ACCESS_DAYS } from "@/lib/invites";
 import JsonLd from "@/components/home/JsonLd";
 
-// Page vitrine publique — linkeepost.app
+// Page vitrine publique — vercea.app
 // Rendu à la requête : le contenu (offres, hero, FAQ) est éditable depuis l'admin.
 export const dynamic = "force-dynamic";
 
