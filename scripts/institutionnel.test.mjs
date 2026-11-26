@@ -97,3 +97,16 @@ test("écran de connexion et fenêtre d'au revoir : palette du nouveau site, ide
   for (const id of ["goodbye", "goodbye-title", "goodbye-home", "goodbye-login"]) assert.ok(g.includes(`"${id}"`), id);
   assert.ok(g.includes("/app?mode=login"));
 });
+
+test("parcours d'inscription : le même panneau « Ce qui vous attend » et la même mise en page sur les cinq étapes", () => {
+  const page = read("app/app/page.js");
+  assert.match(page, /const PARCOURS_ETAPES = \[/);
+  assert.equal((page.match(/<ParcoursApercu /g) ?? []).length, 2, "écran des trois questions + parcours");
+  const w = page.slice(page.indexOf("function OnboardingWizard"), page.indexOf("// Vue Clients — tableau de bord agence"));
+  assert.match(w, /\{selfFlow && <SiteHeader variant="v2" \/>\}/);
+  assert.match(w, /\{selfFlow && <SiteFooter variant="v2" \/>\}/);
+  assert.match(w, /<ParcoursApercu courant=\{pillIdx\} \/>/);
+  assert.doesNotMatch(w, /linear-gradient\(180deg,#fff1f2|#ff5a5f/);
+  for (const id of ["wizard-header", "wizard-pills", "wizard-pill", "wizard-where-count"]) assert.ok(w.includes(id), id);
+  assert.match(w, /Étape \{selfFlow \? pillIdx \+ 1 : step \+ 1\} sur \{selfFlow \? pills\.length : flow\.length\}/, "le compteur suit les cinq pastilles");
+});
