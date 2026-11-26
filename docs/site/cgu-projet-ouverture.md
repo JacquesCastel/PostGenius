@@ -2,7 +2,7 @@
 
 > **Statut : projet de travail du 26 novembre 2026, rédigé par l'assistant, non validé juridiquement.** Il s'appuie sur les CGU actuelles (`lib/footer-pages.js`) et sur le comportement réel du produit (`lib/plans.js`, `lib/subscriptionChange.js`, webhook Stripe). Les passages entre crochets `[À DÉCIDER]` sont des choix de l'éditeur ; les `[À VÉRIFIER]` sont des points de droit à confirmer. Rien n'est publié : le texte se saisit dans l'administration (pages légales, « CGU »), ce qui n'exige aucun déploiement.
 
-## Ce que ce projet change par rapport au texte actuel
+## Ce que ce projet change par rapport au texte actuel (mis à jour le 26 novembre 2026 avec les décisions 1 à 3)
 1. **Tarifs** : renvoi à `/tarifs` (le texte actuel renvoie à la page d'accueil, qui n'affiche plus les tarifs), prix en euros HT, **TVA** ajoutée, **annuel** mentionné (le texte actuel parle d'un abonnement « mensuel » seulement alors que l'annuel existe).
 2. **Renouvellement automatique** : absent aujourd'hui.
 3. **Changement d'offre** : décrit selon le comportement réel (montée immédiate au prorata, descente en fin de période).
@@ -23,7 +23,7 @@ Le service s'adresse à des **professionnels** (entreprises, indépendants, agen
 L'inscription est libre. L'essai gratuit dure **14 jours**, sans carte bancaire et sans engagement. À la fin de l'essai, l'accès aux fonctionnalités nécessite un abonnement payant ; vos contenus restent consultables [À DÉCIDER : durée de conservation après la fin de l'essai sans abonnement]. Vous êtes responsable de la confidentialité de vos identifiants et de l'activité de votre compte.
 
 ### 4. Offres, prix et TVA
-Les offres (Essentiel, Pro, Agence), leur contenu et leurs prix sont indiqués sur la page [Tarifs](/tarifs), en **euros hors taxes**. La TVA applicable est ajoutée au prix à la facturation. L'éditeur peut modifier ses prix ; la modification ne s'applique qu'à la période de facturation suivante, après information préalable [À DÉCIDER : délai de préavis, par exemple 30 jours].
+Les offres (Essentiel, Pro, Agence), leur contenu et leurs prix sont indiqués sur la page [Tarifs](/tarifs), en **euros hors taxes**. La TVA applicable est ajoutée au prix à la facturation. L'éditeur peut modifier ses prix ; la modification ne s'applique qu'à la période de facturation suivante, après information préalable d'au moins **30 jours**.
 
 ### 5. Abonnement, paiement et renouvellement
 L'abonnement est **mensuel** ou **annuel** au choix. Le paiement est dû **d'avance** pour chaque période, par carte bancaire via notre prestataire de paiement Stripe ; nous ne conservons pas vos coordonnées bancaires. L'abonnement se **renouvelle automatiquement** à chaque échéance, pour une durée identique, jusqu'à résiliation. La facturation annuelle correspond à neuf mois du prix mensuel [À VÉRIFIER : à reformuler si les prix de la page Tarifs changent]. Une facture est mise à disposition pour chaque paiement.
@@ -35,11 +35,10 @@ Le passage à une offre supérieure, ou du mensuel à l'annuel, prend effet **im
 Vous pouvez résilier à tout moment depuis votre espace (portail de facturation). La résiliation prend effet **à la fin de la période déjà payée** : vous gardez l'accès jusque-là, et aucun nouveau paiement n'est prélevé. L'éditeur peut suspendre ou résilier un compte en cas de manquement grave aux présentes CGU, après information, sauf urgence.
 
 ### 8. Remboursement et rétractation
-[À DÉCIDER] Option A, la plus simple : **les sommes versées pour une période entamée ne sont pas remboursées**, sauf obligation légale ou geste commercial de l'éditeur ; l'essai gratuit permet de tester le service avant de payer. Option B : remboursement intégral sur demande dans les 14 jours suivant le premier paiement.
-Le service étant destiné à des professionnels, le droit de rétractation du consommateur ne s'applique pas [À VÉRIFIER : exception éventuelle pour les très petites entreprises, voir article 2].
+**Les sommes versées pour une période entamée ne sont pas remboursées**, sauf obligation légale ou geste commercial de l'éditeur ; l'essai gratuit de 14 jours permet de tester le service avant de payer. Le service étant destiné à des professionnels, le droit de rétractation du consommateur ne s'applique pas [À VÉRIFIER : exception éventuelle pour les très petites entreprises, voir article 2].
 
 ### 9. Défaut de paiement
-Si un paiement échoue, nous vous en informons et retentons le prélèvement. Pendant la période de régularisation, l'accès est maintenu [À DÉCIDER : durée]. À défaut de régularisation, l'abonnement est interrompu et l'accès aux fonctionnalités payantes suspendu.
+Si un paiement échoue, nous vous en informons et retentons le prélèvement. Pendant **7 jours** à compter de l'échec, l'accès est maintenu pour vous laisser régulariser. À défaut de régularisation à l'issue de ce délai, l'abonnement est interrompu et l'accès aux fonctionnalités payantes suspendu.
 
 ### 10. Vos contenus et les contenus générés
 Vous restez titulaire des informations, documents et textes que vous nous fournissez, et vous nous autorisez à les traiter pour fournir le service, comme le décrit la [politique de confidentialité](/legal#confidentialite). Les textes générés sont des **propositions** : vous restez seul responsable de ce que vous publiez sur LinkedIn, de son exactitude et de sa conformité au droit applicable et aux conditions de LinkedIn. Le contrôle des chiffres est **indicatif** : il signale les chiffres absents de vos informations, il ne prouve pas qu'un chiffre est exact. [À VÉRIFIER : titularité des droits sur les contenus générés par IA.]
@@ -54,16 +53,16 @@ Le service est fourni avec une cible de disponibilité élevée, sans garantie d
 Le traitement des données personnelles est décrit dans la [politique de confidentialité](/legal#confidentialite). Les données du compte sont supprimées dans un délai de 30 jours après la clôture du compte, sauf conservation imposée par la loi (par exemple les factures).
 
 ### 14. Modification des CGU
-Nous pouvons modifier les présentes CGU. Pour les abonnés, toute modification substantielle est notifiée [À DÉCIDER : délai, par exemple 30 jours] avant son application ; la poursuite de l'utilisation vaut acceptation, et vous pouvez résilier si elle ne vous convient pas.
+Nous pouvons modifier les présentes CGU. Pour les abonnés, toute modification substantielle est notifiée au moins **30 jours** avant son application ; la poursuite de l'utilisation vaut acceptation, et vous pouvez résilier si elle ne vous convient pas.
 
 ### 15. Droit applicable et litiges
 Les présentes CGU sont soumises au droit français. En cas de litige, une solution amiable sera recherchée en priorité ; à défaut, les tribunaux compétents de **Paris** seront seuls compétents, entre professionnels.
 
-## Décisions attendues de l'éditeur
-1. Remboursement : option A (aucun remboursement d'une période entamée) ou B (14 jours) ?
-2. Durée de maintien de l'accès pendant un défaut de paiement.
-3. Préavis de changement de prix et de modification des CGU.
-4. Conservation des contenus après la fin de l'essai sans abonnement.
+## Décisions de l'éditeur (26 novembre 2026)
+1. Remboursement : **option A**, aucun remboursement d'une période entamée (article 8).
+2. Défaut de paiement : accès maintenu **7 jours** (article 9). **Attention : le produit n'applique pas ce délai lui-même.** Il garde l'accès tant que Stripe indique « impayé » (`past_due`). Pour que « 7 jours » soit vrai, régler Stripe : Facturation → Paramètres → Récupération des revenus → Relances : relancer sur 7 jours au plus, puis, si toutes les relances échouent, **annuler l'abonnement**.
+3. Préavis : **30 jours** pour un changement de prix (article 4) et de CGU (article 14).
+4. **Reste à décider** : conservation des contenus après la fin de l'essai sans abonnement (article 3).
 
 ## Points à faire valider par un juriste
 - Règles applicables aux très petites entreprises (articles 2 et 8).
