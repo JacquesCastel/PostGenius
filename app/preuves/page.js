@@ -55,7 +55,7 @@ export default function PreuvesPage() {
           </div>
           <h3 className="font-display text-[26px] sm:text-[32px] leading-[1.15] mt-4 mb-2.5">{liaisons("Une IA qui écrit votre post LinkedIn invente-t-elle des faits ?")}</h3>
           <p className="text-[17px] leading-[1.7] text-[#4A3A50] mb-4">
-            Nous avons relevé, dans {E4.nbTextes} textes, tout fait contrôlable : chiffres, dates, noms propres, études et sources citées, citations. Dans notre test, un modèle généraliste a inventé ou déformé {moyenneB} éléments par post même avec les faits fournis ; {NOM_DU_TEST}, {moyenneC}. Dix sujets fictifs, un seul classeur.
+            Nous avons relevé, dans {E4.nbTextes} textes, tout fait contrôlable : chiffres, dates, noms propres, études et sources citées, citations. Dans notre test, un modèle généraliste a inventé ou déformé {moyenneB} éléments par post même avec les faits fournis ; {BRAND_NAME}, {moyenneC}. Dix sujets fictifs, un seul classeur. Le test a été réalisé sous l&apos;ancien nom du produit, {NOM_DU_TEST}.
           </p>
           <div className="bg-[#FCF8F5] rounded-[20px] p-5 sm:px-6 flex flex-col gap-3.5">
             <div className="flex flex-wrap gap-4 justify-between items-baseline">

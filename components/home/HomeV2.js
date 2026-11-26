@@ -5,7 +5,7 @@ import { JOIN_HREF, pick } from "@/lib/access";
 import { BRAND_NAME } from "@/lib/brand";
 import { preuvesOuvertes } from "@/lib/sitePreuves";
 import { produitOuvert } from "@/lib/siteProduit";
-import { E4, NOM_DU_TEST } from "@/lib/e4Page";
+import { E4 } from "@/lib/e4Page";
 import { liaisons } from "@/lib/typo";
 
 // Nouvelle accueil (maquette « Accueil »). Les cartes de preuve n'existent que si la preuve est publiée (SITE_PREUVES=1) :
@@ -114,7 +114,7 @@ export default function HomeV2() {
                 <span className="text-xs font-semibold bg-[#F6E3E0] text-[#7A2342] px-3 py-1 rounded-full">Test E4 · résultats du {E4.date}</span>
                 <h3 className="font-display text-[26px] sm:text-[28px] leading-[1.15] mt-4 mb-2.5">{liaisons("Une IA qui écrit votre post invente-t-elle des faits ?")}</h3>
                 <p className="text-base leading-relaxed text-[#4A3A50] mb-5">
-                  Chiffres, dates, noms, sources, citations : dans notre test, un modèle généraliste a inventé ou déformé {B.moyenne} éléments par post même avec les faits fournis ; {NOM_DU_TEST} (aujourd'hui {BRAND_NAME}), {C.moyenne}. Dix sujets fictifs, un seul classeur : protocole figé avant génération, tout publié, y compris ce qui ne nous avantage pas.
+                  Chiffres, dates, noms, sources, citations : dans notre test, un modèle généraliste a inventé ou déformé {B.moyenne} éléments par post même avec les faits fournis ; {BRAND_NAME}, {C.moyenne}. Dix sujets fictifs, un seul classeur : protocole figé avant génération, tout publié, y compris ce qui ne nous avantage pas.
                 </p>
                 <Link href="/preuves/test-e4" className="font-semibold text-[#9E3157] hover:text-[#7A2342]">Lire le test et ses limites →</Link>
               </div>
