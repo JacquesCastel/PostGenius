@@ -63,7 +63,7 @@ test("câblage : l'ancien style est inchangé ; le gabarit v2 lit les ouvertures
   assert.match(shell, /navEntete\(ouvertures\)/);
   assert.match(footer, /colonnes = colonnesPied\(\{\}\)/);
   assert.match(footer, /<Link href="\/mentions-legales" className="hover:text-\[#ff5a5f\]">Mentions légales<\/Link>/, "pied de page de l'ancien style inchangé");
-  assert.match(read("app/sitemap.js"), /pagesPlanDuSite\(await chargerOuvertures\(\)\)/);
+  assert.match(read("app/sitemap.js"), /const ouvertures = await chargerOuvertures\(\);[\s\S]*pagesPlanDuSite\(ouvertures\)/);
 });
 
 test("le lien « À propos » vérifie les champs, pas seulement l'interrupteur ; /legal lit les textes seulement si SITE_LEGAL=1", () => {

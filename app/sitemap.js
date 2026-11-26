@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db";
 import { memo, MEMO_TTL } from "@/lib/memoCache";
 import { chargerOuvertures } from "@/lib/siteNavServer";
 import { pagesPlanDuSite } from "@/lib/siteNav";
+import { cibleRedirection } from "@/lib/redirections";
 
 export const dynamic = "force-dynamic";
 
@@ -26,8 +27,11 @@ const PAGES = [
 export default async function sitemap() {
   // Base indisponible : le plan du site reste valable avec les pages fixes
   const articles = await memo("sitemap:articles", MEMO_TTL, () => prisma.article.findMany({ where: { published: true }, select: { slug: true, updatedAt: true }, orderBy: { publishedAt: "desc" } }), []);
+  const ouvertures = await chargerOuvertures();
+  // Une adresse qui redirige (SITE_REDIRECTIONS=1) n'a pas sa place dans le plan du site : on y met sa destination.
+  const pages = PAGES.filter(([path]) => !cibleRedirection(path, ouvertures));
   return [
-    ...[...PAGES, ...pagesPlanDuSite(await chargerOuvertures())].map(([path, priority]) => ({ url: `${SITE}${path}`, priority })),
+    ...[...pages, ...pagesPlanDuSite(ouvertures)].map(([path, priority]) => ({ url: `${SITE}${path}`, priority })),
     ...articles.map((a) => ({ url: `${SITE}/blog/${a.slug}`, lastModified: a.updatedAt, priority: 0.6 })),
   ];
 }
