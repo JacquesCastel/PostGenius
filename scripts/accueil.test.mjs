@@ -60,3 +60,14 @@ test("les affirmations de l'accroche correspondent aux règles contrôlées par 
   const r = read("lib/consigneRules.js");
   for (const k of ["noEmoji", "maxHashtags", "address", "maxChars"]) assert.ok(r.includes(k), k);
 });
+
+test("nouvelle accueil : encart vers /tarifs sans prix, et courte FAQ sans promesse de résultat (décision du 26 novembre)", () => {
+  const h = read("components/home/HomeV2.js");
+  assert.match(h, /<section id="offres"/);
+  assert.match(h, /href="\/tarifs"/);
+  assert.doesNotMatch(h.split('id="offres"')[1].split("</section>")[0], /\d+\s?€|€\s?\d/, "aucun prix sur l'accueil");
+  const q = [...h.matchAll(/^\s+\["([^"]+\?)", "/gm)].map((m) => m[1]);
+  assert.equal(q.length, 5);
+  assert.match(h, /<section id="faq"/);
+  assert.doesNotMatch(h, /pilote automatique|prédit|garantit/i);
+});

@@ -16,6 +16,16 @@ const ETAPES = [
   ["Relisez, puis décidez", "Les chiffres absents de vos documents sont signalés avant publication. Rien ne remplace votre relecture."],
 ];
 
+// Questions d'accueil : celles qui répondent aux objections les plus courantes. Les réponses reprennent ce que disent déjà
+// /securite, /a-propos et le contrôle de forme : aucune promesse nouvelle. Pas de FAQPage JSON-LD (les textes restent en dur ici).
+const QUESTIONS = [
+  ["Qui écrit réellement les posts ?", "L'IA rédige à partir de ce que vous avez déposé (documents, liens, notes, anciens posts) et de vos consignes de style. Chaque post peut être retouché, validé ou refusé avant publication."],
+  ["Le texte peut-il contenir des chiffres inventés ?", "Cela peut arriver avec n'importe quelle IA. Avant publication, le contrôle signale les chiffres absents de vos informations ; il ne prouve pas qu'un chiffre est juste. Relisez chaque post."],
+  ["Que devient ce que je dépose ?", "Vos documents et vos liens servent à rédiger vos posts : leur contenu est transmis au modèle d'IA uniquement pour cela, et vous pouvez les supprimer à tout moment. L'enregistrement d'une dictée n'est pas conservé, seul le texte que vous gardez l'est."],
+  ["Mes posts seront-ils publiés sans mon accord ?", "Vous décidez : avec la validation activée, chaque post planifié attend votre feu vert."],
+  ["Puis-je résilier à tout moment ?", "Oui, l'abonnement est sans engagement : la résiliation prend effet à la fin de la période en cours."],
+];
+
 function Verification() {
   return produitOuvert()
     ? <Link href="/produit/verification" className="font-semibold text-[#7A2342] hover:underline">Comment ça marche →</Link>
@@ -115,6 +125,29 @@ export default function HomeV2() {
             </div>
           </section>
         )}
+
+        <section id="offres" className="pb-10 pt-6">
+          <div className="bg-white border border-[#EFE4E0] rounded-[28px] px-7 sm:px-10 py-8 flex flex-wrap gap-6 items-center justify-between">
+            <div className="flex-[1_1_380px] min-w-0">
+              <p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-[#C2456F] mb-2">Offres</p>
+              <p className="text-[17px] leading-relaxed text-[#4A3A50]">{pick("Pendant la bêta fermée, l'accès est offert aux testeurs invités. Les offres prévues à l'ouverture publique sont détaillées sur la page des tarifs.", "Les offres sont détaillées sur la page des tarifs, avec un comparatif complet.")}</p>
+            </div>
+            <Link href="/tarifs" className="font-semibold text-[#9E3157] hover:text-[#7A2342]">Voir les offres →</Link>
+          </div>
+        </section>
+
+        <section id="faq" className="pb-16 pt-6 max-w-[820px]">
+          <p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-[#C2456F] mb-3">Questions fréquentes</p>
+          <h2 className="font-display text-[30px] sm:text-[40px] tracking-[-0.015em] mb-7">{liaisons("Avant de vous lancer.")}</h2>
+          <div className="flex flex-col gap-3">
+            {QUESTIONS.map(([q, a]) => (
+              <details key={q} className="bg-white border border-[#EFE4E0] rounded-2xl p-5 group">
+                <summary className="font-semibold text-[16px] cursor-pointer list-none flex items-center justify-between gap-4">{liaisons(q)}<span aria-hidden className="text-[#C2456F] transition-transform group-open:rotate-90">›</span></summary>
+                <p className="text-[15px] leading-relaxed text-[#4A3A50] mt-3">{a}</p>
+              </details>
+            ))}
+          </div>
+        </section>
 
         <section className="pb-24 pt-8">
           <div className="bg-[#F6E3E0] rounded-[36px] px-6 sm:px-14 py-10 sm:py-14 flex flex-wrap gap-8 items-center justify-between">
