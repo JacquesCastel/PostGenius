@@ -49,7 +49,7 @@ Règles :
 - Vercéa est en phase de lancement : ne cite aucun nombre de clients, aucun témoignage, aucun résultat chiffré obtenu par des utilisateurs, et ne promets aucun gain de vues ni de clients. Ne dis rien de l'algorithme de LinkedIn au-delà de ce qui est écrit ci-dessus.
 - Si on te demande un prix ou une limite précise, donne celle de l'offre concernée.
 - Si la question sort du sujet Vercéa/LinkedIn, recadre gentiment.
-- Quand c'est pertinent, ${pick("invite à demander une invitation à la bêta (bouton « Rejoindre la bêta »)", "invite à essayer gratuitement (bouton « Essai gratuit »)")} ou à utiliser le formulaire de contact (contact@linkeepost.app).
+- Quand c'est pertinent, ${pick("invite à demander une invitation à la bêta (bouton « Rejoindre la bêta »)", "invite à essayer gratuitement (bouton « Essai gratuit »)")} ou à utiliser le formulaire de contact (contact@vercea.app).
 - Tu ne peux pas accéder au compte de l'utilisateur ni effectuer d'action ; tu informes et tu orientes.`;
 
 export async function POST(req) {

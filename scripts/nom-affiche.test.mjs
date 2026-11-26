@@ -44,13 +44,14 @@ test("les fichiers gelés de la démo ne sont pas touchés (le gel reste conform
   assert.match(read("lib/gating.js"), /utiliser LinkeePost\./, "message gelé conservé tel quel");
 });
 
-test("domaine affiché : plus d'adresse du site figée sur l'ancien domaine ; les adresses e-mail ne changent pas ici", () => {
+test("domaine affiché : plus aucune adresse linkeepost.app (site ni e-mail) dans le code ; la boîte de contact par défaut est celle du nouveau domaine", () => {
   const restes = [];
   for (const f of [...walk("app"), ...walk("components"), ...walk("lib")]) {
-    read(f).split("\n").forEach((l, i) => { if (/linkeepost\.app/.test(l) && !/contact@linkeepost\.app/.test(l)) restes.push(`${f}:${i + 1}`); });
+    read(f).split("\n").forEach((l, i) => { if (/linkeepost\.app/.test(l)) restes.push(`${f}:${i + 1}`); });
   }
   assert.deepEqual(restes, [], `adresses restantes : ${restes.join(", ")}`);
-  assert.match(read("lib/contact.js"), /contact@linkeepost\.app/, "boîte de contact : décision séparée (CONTACT_EMAIL)");
+  assert.match(read("lib/contact.js"), /process\.env\.CONTACT_EMAIL \|\| BRAND_CONTACT/);
+  assert.match(read("lib/brand.js"), /BRAND_CONTACT = `contact@\$\{BRAND_DOMAINE\}`/);
   assert.match(read("lib/authEmails.js"), /process\.env\.APP_URL \|\| "https:\/\/vercea\.app"/);
   assert.match(read("app/sitemap.js"), /process\.env\.APP_URL \|\| "https:\/\/vercea\.app"/);
 });
