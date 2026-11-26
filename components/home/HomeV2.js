@@ -6,7 +6,7 @@ import { BRAND_NAME } from "@/lib/brand";
 import { preuvesOuvertes } from "@/lib/sitePreuves";
 import { produitOuvert } from "@/lib/siteProduit";
 import { E4, NOM_DU_TEST } from "@/lib/e4Page";
-import { liaisons, liaisonsEm } from "@/lib/typo";
+import { liaisons } from "@/lib/typo";
 
 // Nouvelle accueil (maquette « Accueil »). Les cartes de preuve n'existent que si la preuve est publiée (SITE_PREUVES=1) :
 // aucune carte vers une page fermée, aucun chiffre sans page qui le démontre.
@@ -33,7 +33,9 @@ function Verification() {
 }
 
 export default function HomeV2() {
-  const titre = liaisonsEm("Vos sources, vos consignes, votre voix.", "Ce qui s'en écarte nettement, on le signale.");
+  // Titre en trois lignes fixes (une idée par ligne), puis une promesse en sous-titre, plus petite.
+  const LIGNES = ["Vos sources,", "vos consignes,", "votre voix."];
+  const sousTitre = liaisons("Ce qui s'en écarte nettement, on le signale.");
   const B = E4.conditions.find((c) => c.code === "B");
   const C = E4.conditions.find((c) => c.notre);
   return (
@@ -43,7 +45,8 @@ export default function HomeV2() {
         <section className="pt-8 pb-16 flex flex-wrap gap-12 lg:gap-16 items-center">
           <div className="flex-[1_1_480px] min-w-0">
             <p className="inline-block bg-[#F6E3E0] text-[#7A2342] text-[13px] font-semibold px-3.5 py-1.5 rounded-full mb-4">{pick("Bêta fermée · accès sur invitation", "Essai gratuit, sans carte bancaire")}</p>
-            <h1 className="font-display text-[36px] sm:text-[52px] lg:text-[60px] leading-[1.06] tracking-[-0.02em]">{titre[0]}<em className="text-[#C2456F]">{titre[1]}</em></h1>
+            <h1 className="font-display text-[40px] sm:text-[56px] lg:text-[64px] leading-[1.05] tracking-[-0.02em]">{LIGNES.map((l) => <span key={l} className="block whitespace-nowrap">{l}</span>)}</h1>
+            <p className="font-display italic text-[22px] sm:text-[28px] leading-[1.25] text-[#C2456F] mt-5 max-w-[540px]">{sousTitre}</p>
             <p className="text-[17px] sm:text-[19px] leading-relaxed text-[#4A3A50] mt-6 max-w-[540px]">
               {BRAND_NAME} rédige vos posts LinkedIn à partir de vos documents, de vos notes et de votre voix. Avant publication, il signale les chiffres absents de vos informations et les écarts à vos consignes explicites : émojis, hashtags, tutoiement, longueur. Vous relisez, vous décidez.
             </p>
