@@ -71,3 +71,10 @@ test("nouvelle accueil : encart vers /tarifs sans prix, et courte FAQ sans prome
   assert.match(h, /<section id="faq"/);
   assert.doesNotMatch(h, /pilote automatique|prédit|garantit/i);
 });
+
+test("titre de l'accueil : trois lignes fixes, puis la promesse en sous-titre plus petit", () => {
+  const h = read("components/home/HomeV2.js");
+  assert.match(h, /const LIGNES = \["Vos sources,", "vos consignes,", "votre voix\."\]/);
+  assert.match(h, /className="block whitespace-nowrap"/);
+  assert.match(h, /liaisons\("Ce qui s'en écarte nettement, on le signale\."\)/);
+});
