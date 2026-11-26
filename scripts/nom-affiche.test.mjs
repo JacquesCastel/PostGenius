@@ -70,11 +70,14 @@ test("les User-Agent techniques gardent leur identifiant (des sites peuvent les 
   assert.match(read("lib/veille.js"), /"User-Agent": "LinkeePost\/1\.0/);
 });
 
-test("les pages de preuve citent le test sous son nom de l'époque, avec mention du nouveau", () => {
-  const t = read("app/preuves/test-e4/page.js");
-  assert.match(t, /Au moment du test, le produit s&apos;appelait \{NOM_DU_TEST\} ; il s&apos;appelle aujourd&apos;hui \{BRAND_NAME\}/);
-  assert.doesNotMatch(t.replace(/title: `[^`]*`/, ""), /\$\{BRAND_NAME\} (en a produit|a produit)/);
-  assert.match(read("lib/e4Page.js"), /LinkeePost \(aujourd'hui Vercéa\), avec les faits/);
+test("les pages de preuve parlent du produit sous son nom actuel ; l'ancien nom n'apparaît que dans une note datée (décision du 26 novembre 2026)", () => {
+  const t = read("app/preuves/test-e4/page.js"), p = read("app/preuves/page.js"), h = read("components/home/HomeV2.js");
+  assert.match(t, /Au moment du test, le produit s&apos;appelait \{NOM_DU_TEST\} ; il s&apos;appelle aujourd&apos;hui \{BRAND_NAME\}\. Le test porte sur le moteur de l&apos;époque : le protocole, les gists et l&apos;annexe publiés portent l&apos;ancien nom\./);
+  assert.equal((t.match(/NOM_DU_TEST/g) ?? []).length, 2, "importé et cité une seule fois (la note)");
+  assert.match(p, /Le test a été réalisé sous l&apos;ancien nom du produit, \{NOM_DU_TEST\}\./);
+  assert.equal((p.match(/NOM_DU_TEST/g) ?? []).length, 2, "importé et cité une seule fois (la note)");
+  assert.doesNotMatch(h, /NOM_DU_TEST/, "l'accueil ne cite plus l'ancien nom");
+  assert.match(read("lib/e4Page.js"), /Vercéa \(alors LinkeePost\), avec les faits/);
 });
 
 test("les e-mails et la page de partage utilisent le nouveau nom", () => {
