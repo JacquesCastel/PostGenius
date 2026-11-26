@@ -110,3 +110,9 @@ test("parcours d'inscription : le même panneau « Ce qui vous attend » et la m
   for (const id of ["wizard-header", "wizard-pills", "wizard-pill", "wizard-where-count"]) assert.ok(w.includes(id), id);
   assert.match(w, /Étape \{selfFlow \? pillIdx \+ 1 : step \+ 1\} sur \{selfFlow \? pills\.length : flow\.length\}/, "le compteur suit les cinq pastilles");
 });
+
+test("À propos : le sous-titre « Pourquoi » s'accorde avec l'outil (« Né », pas « Nés »)", () => {
+  const s = read("app/a-propos/page.js");
+  assert.ok(s.includes("Né d'un constat, pas d'une promesse."));
+  assert.ok(!s.includes("Nés d'un constat"));
+});
