@@ -83,3 +83,9 @@ test("les e-mails et la page de partage utilisent le nouveau nom", () => {
   assert.match(read("app/manifest.js"), /name: "Vercéa"/);
   assert.match(read("app/layout.js"), /siteName: "Vercéa"/);
 });
+
+test("robots.txt est lu à chaque requête : l'adresse du plan du site suit APP_URL du serveur, pas celle du build", () => {
+  const r = read("app/robots.js");
+  assert.match(r, /export const dynamic = "force-dynamic"/);
+  assert.match(r, /export default function robots\(\) \{\s*const SITE = \(process\.env\.APP_URL \|\| "https:\/\/vercea\.app"\)/);
+});
