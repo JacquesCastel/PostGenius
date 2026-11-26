@@ -25,7 +25,7 @@ Les liens de l'en-tête, du pied de page et du plan du site suivent automatiquem
 ## Ordre conseillé
 1. **`SITE_PRODUIT`** (fait). Les étiquettes « En test auprès de comptes sélectionnés » (`lib/produitMethode.js`, `ETAT_TEST`) décrivent le compagnon éditorial réservé à des comptes sélectionnés : à retirer quand il s'ouvre à tous.
 2. **`SITE_PREUVES`**, après le compte rendu E4 (`docs/e4-chiffres/compte-rendu/compte-rendu-E4.md`, section « À vérifier avant publication ») :
-   - révoquer les clés de test OpenAI et Anthropic, supprimer le `.env` de test du serveur, le noter au journal (`docs/e4-chiffres/journal-E4.md`) ;
+   - ~~révoquer les clés de test OpenAI et Anthropic, supprimer le `.env` de test du serveur~~ : fait, noté au journal le 26 novembre 2026 ;
    - relire les formules de conclusion : « l'écart vient de l'invite » ne vaut que pour ces dix sujets fictifs, une génération par cas ;
    - le dépôt est public (vérifié le 26/11/2026), donc les liens vers l'annexe et la grille fonctionnent ;
    - si un texte cite l'étude Vectara ou le cas de la Cour suprême du Nouveau-Mexique : ajouter la mention du protocole.
