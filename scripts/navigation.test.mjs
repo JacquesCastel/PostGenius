@@ -28,8 +28,8 @@ test("aucun lien vers une page fermée, quel que soit l'interrupteur isolé", ()
     const o = pagesOuvertes({ env });
     assert.ok(!liens(navEntete(o)).includes(page), page);
   }
-  // /a-propos : interrupteur posé mais champs vides → pas de lien
-  assert.equal(pagesOuvertes({ env: { SITE_APROPOS: "1" } }).apropos, false);
+  // /a-propos : interrupteur posé mais champ obligatoire vide → pas de lien
+  assert.equal(pagesOuvertes({ env: { SITE_APROPOS: "1" }, aPropos: { ...A_PROPOS_COMPLET, pourquoi: null } }).apropos, false);
   // /legal : interrupteur posé mais « À COMPLÉTER » → pas de lien
   assert.equal(pagesOuvertes({ env: { SITE_LEGAL: "1" }, legalTextes: ["[À COMPLÉTER : ville]"] }).legal, false);
   assert.ok(ferme.every((p) => !tousLiens(colonnesPied(pagesOuvertes({ env: {} }))).includes(p)));

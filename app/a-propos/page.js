@@ -3,7 +3,7 @@ import Link from "next/link";
 import Shell from "@/components/v2/Shell";
 import { BRAND_NAME } from "@/lib/brand";
 import { CONTACT_EMAIL } from "@/lib/contact";
-import { A_PROPOS, champsManquants } from "@/lib/aPropos";
+import { A_PROPOS, champsManquants, portraitPresent } from "@/lib/aPropos";
 import { aProposOuvert } from "@/lib/siteInstitutionnel";
 import { preuvesOuvertes } from "@/lib/sitePreuves";
 import { E4 } from "@/lib/e4Page";
@@ -36,7 +36,7 @@ export default function AProposPage() {
     [`${BRAND_NAME} me fera-t-il gagner en portée ?`, "Nous ne le promettons pas. Le contrôle de forme note la mise en forme d'un post à règles fixes ; ce n'est pas une prévision de vues ou de réactions."],
     ["Mes données et mes enregistrements, que deviennent-ils ?",
       <>L&apos;enregistrement d&apos;une dictée n&apos;est pas conservé, seul le texte que vous gardez l&apos;est. Le détail, y compris ce que nous n&apos;avons pas comme certification, est sur la page <Link href="/securite" className="font-semibold text-[#9E3157] underline">Sécurité et confidentialité</Link>.</>],
-    ["Quelque chose ne va pas dans un résultat que vous publiez ?", `Écrivez-nous. ${d.engagementCorrection}`],
+    ["Quelque chose ne va pas dans un résultat que vous publiez ?", `Écrivez-nous.${d.engagementCorrection?.trim() ? ` ${d.engagementCorrection.trim()}` : ""}`],
   ];
   return (
     <Shell>
@@ -71,17 +71,19 @@ export default function AProposPage() {
           </div>
         </section>
 
+        {portraitPresent(d) && (
         <section className="py-6">
-          <div className="bg-white border border-[#EFE4E0] rounded-[32px] p-7 sm:p-10 flex flex-wrap gap-10 items-center">
-            <div className="flex-none w-[150px] h-[190px] rounded-t-[75px] rounded-b-[14px] bg-[#F6E3E0] text-[#7A2342] font-display text-5xl flex items-center justify-center" aria-hidden="true">{d.portrait.prenomNom.trim().split(/\s+/).map((m) => m[0]).slice(0, 2).join("").toUpperCase()}</div>
-            <div className="flex-[1_1_360px] min-w-0">
-              <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[#6B5A70] mb-1.5">Qui est derrière</p>
-              <h2 className="font-display text-[28px] font-medium mb-1">{d.portrait.prenomNom}</h2>
-              <p className="text-[15px] text-[#6B5A70] mb-3.5">{d.portrait.role}</p>
-              <p className="text-base leading-[1.7] text-[#4A3A50]">{d.portrait.presentation}</p>
+            <div className="bg-white border border-[#EFE4E0] rounded-[32px] p-7 sm:p-10 flex flex-wrap gap-10 items-center">
+              <div className="flex-none w-[150px] h-[190px] rounded-t-[75px] rounded-b-[14px] bg-[#F6E3E0] text-[#7A2342] font-display text-5xl flex items-center justify-center" aria-hidden="true">{d.portrait.prenomNom.trim().split(/\s+/).map((m) => m[0]).slice(0, 2).join("").toUpperCase()}</div>
+              <div className="flex-[1_1_360px] min-w-0">
+                <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[#6B5A70] mb-1.5">Qui est derrière</p>
+                <h2 className="font-display text-[28px] font-medium mb-1">{d.portrait.prenomNom}</h2>
+                <p className="text-[15px] text-[#6B5A70] mb-3.5">{d.portrait.role}</p>
+                <p className="text-base leading-[1.7] text-[#4A3A50]">{d.portrait.presentation}</p>
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
+        )}
 
         <section className="py-12 max-w-[820px] mx-auto">
           <Kick>Questions fréquentes</Kick>

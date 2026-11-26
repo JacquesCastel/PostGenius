@@ -4,7 +4,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { aProposOuvert, legalOuvert, textesALegalCompleter, MARQUEUR_A_COMPLETER } from "../lib/siteInstitutionnel.js";
-import { A_PROPOS, champsManquants } from "../lib/aPropos.js";
+import { A_PROPOS, champsManquants, portraitPresent } from "../lib/aPropos.js";
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), "utf8");
 const complet = { pourquoi: "Une histoire vraie.", editeur: { raisonSociale: "X SAS", formeJuridique: "SAS au capital de 1 000 €", villeSiege: "Paris" }, portrait: { prenomNom: "A B", role: "Fondateur", presentation: "Je…" }, engagementCorrection: "Toute correction est publiée avec sa date." };
@@ -21,10 +21,15 @@ test("/a-propos : fermée sans interrupteur, fermée tant qu'un champ manque, ou
 
 test("les informations de l'éditeur sont celles qu'il a données ; le reste reste vide tant que personne ne l'écrit", () => {
   assert.deepEqual(A_PROPOS.editeur, { raisonSociale: "Wharf", formeJuridique: "SARL au capital de 10 000 €", villeSiege: "Paris" });
-  const m = champsManquants(A_PROPOS);
-  assert.deepEqual(m, ["pourquoi", "portrait.prenomNom", "portrait.role", "portrait.presentation", "engagementCorrection"].filter((c) => m.includes(c)), "seuls ces champs peuvent manquer");
+  assert.deepEqual(champsManquants(A_PROPOS), [], "pourquoi + éditeur remplis : la page peut s'ouvrir");
+  assert.match(A_PROPOS.pourquoi, /^l'idée est simple\./);
+  assert.equal(portraitPresent(A_PROPOS), false, "portrait volontairement absent");
+  const demi = { ...A_PROPOS, portrait: { prenomNom: "A B", role: null, presentation: null } };
+  assert.deepEqual(champsManquants(demi), ["portrait.role", "portrait.presentation"], "portrait à moitié rempli = page fermée");
   // tant qu'un champ manque, la page reste fermée même interrupteur posé
-  if (m.length) assert.equal(aProposOuvert({ SITE_APROPOS: "1" }, m), false);
+  assert.equal(aProposOuvert({ SITE_APROPOS: "1" }, champsManquants(demi)), false);
+  assert.equal(aProposOuvert({ SITE_APROPOS: "1" }, champsManquants(A_PROPOS)), true);
+  assert.equal(aProposOuvert({}, champsManquants(A_PROPOS)), false, "sans interrupteur : fermée");
 });
 
 test("/legal : fermée si un texte contient « À COMPLÉTER », même interrupteur posé", () => {
