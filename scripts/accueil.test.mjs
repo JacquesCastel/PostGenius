@@ -87,3 +87,11 @@ test("accueil : « Trois gestes… » et « Ce que nous avons mesuré… » sur 
   assert.doesNotMatch(h, /max-w-\[(640|700)px\]">\{liaisons\("(Trois gestes|Ce que nous avons mesuré)/, "plus de largeur qui force le retour à la ligne");
   assert.match(h, />Comment ça se passe&nbsp;\?<\/p>/);
 });
+
+test("le bouton d'en-tête s'appelle « Commencer » à l'ouverture publique (« Rejoindre la bêta » tant que la bêta est fermée) ; sous 380 px, le mot court « Essai » évite que l'en-tête déborde", () => {
+  const h = readFileSync(new URL("../components/SiteHeader.js", import.meta.url), "utf8");
+  assert.equal((h.match(/min-\[380px\]:hidden">\{pick\("Bêta", "Essai"\)\}/g) ?? []).length, 2);
+  assert.equal((h.match(/min-\[380px\]:inline sm:hidden">\{pick\("Bêta", "Commencer"\)\}/g) ?? []).length, 2);
+  assert.equal((h.match(/hidden sm:inline">\{pick\("Rejoindre la bêta", "Commencer"\)\}/g) ?? []).length, 2);
+  assert.doesNotMatch(h, /"Essai gratuit"\)\}/);
+});
