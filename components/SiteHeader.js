@@ -89,7 +89,7 @@ export default function SiteHeader({ variant = "classic", nav = NAV_V2 } = {}) {
           </nav>
           <div className="flex items-center gap-2 shrink-0">
             <Link href={loggedIn ? "/app" : JOIN_HREF} data-testid="site-cta" className={cta}>
-              {loggedIn ? <><span className="sm:hidden">Mon espace</span><span className="hidden sm:inline">Tableau de bord</span></> : <><span className="sm:hidden">{pick("Bêta", "Essai")}</span><span className="hidden sm:inline">{pick("Rejoindre la bêta", "Essai gratuit")}</span></>}
+              {loggedIn ? <><span className="sm:hidden">Mon espace</span><span className="hidden sm:inline">Tableau de bord</span></> : <><span className="min-[380px]:hidden">{pick("Bêta", "Essai")}</span><span className="hidden min-[380px]:inline sm:hidden">{pick("Bêta", "Commencer")}</span><span className="hidden sm:inline">{pick("Rejoindre la bêta", "Commencer")}</span></>}
             </Link>
             {loggedIn ? (
               <button onClick={logout} title="Se déconnecter" aria-label="Se déconnecter" className={`hidden sm:flex ${ring}`}><LogOut size={17} /></button>
@@ -138,7 +138,7 @@ export default function SiteHeader({ variant = "classic", nav = NAV_V2 } = {}) {
             data-testid="site-cta"
             className="bg-[#ff5a5f] hover:bg-[#f63d44] text-white text-sm font-semibold px-3.5 sm:px-5 py-2 rounded-full shadow-md shadow-rose-300/40 transition-colors whitespace-nowrap"
           >
-            {loggedIn ? <><span className="sm:hidden">Mon espace</span><span className="hidden sm:inline">Tableau de bord</span></> : <><span className="sm:hidden">{pick("Bêta", "Essai")}</span><span className="hidden sm:inline">{pick("Rejoindre la bêta", "Essai gratuit")}</span></>}
+            {loggedIn ? <><span className="sm:hidden">Mon espace</span><span className="hidden sm:inline">Tableau de bord</span></> : <><span className="min-[380px]:hidden">{pick("Bêta", "Essai")}</span><span className="hidden min-[380px]:inline sm:hidden">{pick("Bêta", "Commencer")}</span><span className="hidden sm:inline">{pick("Rejoindre la bêta", "Commencer")}</span></>}
           </Link>
           {loggedIn ? (
             <button
