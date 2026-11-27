@@ -42,6 +42,11 @@ test("le script : simulation par défaut, sauvegarde avant d'écrire, aucune éc
   assert.match(s, /const apply = process\.argv\.includes\("--apply"\)/);
   assert.match(s, /if \(!apply\) \{ console\.log\("Rien n'a été modifié/);
   assert.ok(s.indexOf("fs.writeFileSync(fichier") < s.indexOf("prisma.article.update"), "la sauvegarde précède l'écriture");
+  assert.match(s, /ARRÊT : sauvegarde impossible/, "sans sauvegarde possible, le script s'arrête sans rien modifier");
+  assert.ok(s.indexOf("ARRÊT : sauvegarde impossible") < s.indexOf("prisma.article.update"));
+  assert.match(s, /const exporter = process\.argv\.includes\("--exporter"\)/);
+  assert.match(s, /const sauvegardeExterne = process\.argv\.includes\("--sauvegarde-externe"\)/);
+  assert.ok(s.indexOf("if (exporter)") < s.indexOf("console.log(`${apply ?"), "--exporter n'écrit que le JSON : avant tout affichage");
   assert.match(s, /data: \{ title: p\.titre, excerpt: p\.excerpt, content: p\.content \}/);
   assert.doesNotMatch(s, /slug:\s*[a-z.]*renommer|data:\s*\{[^}]*slug/, "le slug n'est jamais modifié");
 });
