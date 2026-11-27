@@ -24025,9 +24025,9 @@ export default function Home() {
                         </span>
                       </div>
                       <p className={`text-[11px] text-gray-400 px-1 -mt-2 mb-3 ${v2List ? "hidden" : ""}`}>{col.hint}</p>
-                      <div className={v2List ? "space-y-4" : "space-y-3 max-h-[68vh] overflow-y-auto pr-1"}>
+                      <div className={v2List ? "grid grid-cols-1 md:grid-cols-2 gap-4 items-start" : "space-y-3 max-h-[68vh] overflow-y-auto pr-1"}>
                         {items.length === 0 && (
-                          <p className="text-xs text-gray-400 text-center py-8">Aucun post</p>
+                          <p className="text-xs text-gray-400 text-center py-8 md:col-span-2">Aucun post</p>
                         )}
                         {items.map((p) => (
                           <div
