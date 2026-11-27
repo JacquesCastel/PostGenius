@@ -22015,7 +22015,7 @@ export default function Home() {
 
         {/* Barre supérieure */}
         <header className="px-6 pt-6 pb-1 flex items-center justify-between flex-wrap gap-3 max-w-5xl mx-auto">
-          <div className={v2Shell && (view === "dashboard" || view === "write") ? "hidden" : ""}>
+          <div className={v2Shell && (view === "dashboard" || view === "write" || view === "create") ? "hidden" : ""}>
             <h1 className="text-xl font-bold">{VIEW_TITLES[view]}</h1>
             <p className="text-xs text-gray-400">{agencyHome ? `Agence · ${user.name || ""}` : clientMode ? `Client : ${impersonating.companyName || impersonating.name}` : `Bonjour ${user.name || ""} 👋`}</p>
           </div>
@@ -22795,7 +22795,7 @@ export default function Home() {
         </main>
       ) : view === "create" ? (
         <main className={`max-w-6xl mx-auto p-6 grid gap-6 ${isTopic ? "md:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]" : "md:grid-cols-2"}`}>
-          {v2Shell && <CreateStepsV2 step={nextStep && !result && !seriesResult && !loading ? 4 : 1} className="md:col-span-2" />}
+          {v2Shell && <CreateStepsV2 step={nextStep && !result && !seriesResult && !loading ? 4 : 1} title={isTopic || (nextStep && !result && !seriesResult && !loading) ? null : <>Les réglages <em className="text-[#C2456F]">du post.</em></>} className="md:col-span-2" />}
           {isTopic && !v2Shell && (
             <p className="md:col-span-2 text-lg font-semibold text-[#1b2a4a] leading-snug -mb-1" data-testid="create-intro">
               {contexts.length > 0 || (linkedin.connected && linkedin.orgConnected && orgs.length > 0)
@@ -22822,7 +22822,7 @@ export default function Home() {
 
             <div className={stepCls("topic")}>
             <div className={blockCls} data-testid="create-block-topic">
-            <p className={blockLb}>{blockNum(1)}De quoi voulez-vous parler aujourd&apos;hui ?</p>
+            <p className={`${blockLb} ${v2Shell ? "app-lb" : ""}`}>{v2Shell ? "Votre idée, en quelques mots" : <>{blockNum(1)}De quoi voulez-vous parler aujourd&apos;hui ?</>}</p>
             {genMode === "series" && (
               <div>
                 <label className="text-sm font-medium text-gray-700 block mb-2">
@@ -22946,14 +22946,14 @@ export default function Home() {
                   />
                   {genMode === "single" && !source && sourceMode === "idea" && (
                     <div className="flex flex-wrap items-center gap-2 mt-3" data-testid="news-starters">
-                      <span className="text-xs text-slate-500">Actualité du moment :</span>
-                      {NEWS_STARTERS.map((n) => (
+                      <span className="text-xs text-slate-500">{v2Shell ? "ou partez d'un temps fort :" : "Actualité du moment :"}</span>
+                      {(v2Shell ? NEWS_STARTERS.slice(0, 3) : NEWS_STARTERS).map((n) => (
                         <button key={n.code} type="button" data-testid="news-starter" onClick={() => setForm((f) => ({ ...f, theme: n.theme, mood: n.mood }))} className={pillCls(form.theme === n.theme)}>
                           {n.label}
                         </button>
                       ))}
                       {voiceOk && (
-                        <button type="button" data-testid="news-dictate" onClick={() => { setSourceMode("voice"); setSource(null); setSourceError(null); }} className="text-sm font-semibold px-3 py-1.5 rounded-full border border-[#d63b42] text-[#a3242a] bg-white hover:bg-[#fff8f8] inline-flex items-center gap-1.5"><Mic size={13} /> Dicter</button>
+                        <button type="button" data-testid="news-dictate" onClick={() => { setSourceMode("voice"); setSource(null); setSourceError(null); }} className={`text-sm font-semibold px-3 py-1.5 rounded-full border border-[#d63b42] text-[#a3242a] bg-white hover:bg-[#fff8f8] inline-flex items-center gap-1.5 ${v2Shell ? "order-first" : ""}`}><Mic size={13} /> Dicter</button>
                       )}
                     </div>
                   )}
@@ -22990,7 +22990,12 @@ export default function Home() {
                   </button>
                 </div>
               )}
-              <div className="flex flex-wrap items-center gap-1.5 mt-4 pt-3 border-t border-slate-100" data-testid="create-modes">
+              {v2Shell && genMode === "single" && (
+                <button type="button" onClick={() => setV2Open((o) => ({ ...o, modes: !o.modes }))} aria-expanded={Boolean(v2Open.modes)} data-testid="create-modes-toggle" className="mt-4 text-sm font-semibold text-[#9e3157] hover:underline">
+                  {v2Open.modes ? "Replier" : "Partir d'un article, d'un document ou d'une série"}
+                </button>
+              )}
+              <div className={`flex flex-wrap items-center gap-1.5 mt-4 pt-3 border-t border-slate-100 ${v2Shell && genMode === "single" && !v2Open.modes ? "hidden" : ""}`} data-testid="create-modes">
                 <span className="text-xs text-slate-500 mr-1">Partir de :</span>
                 {[["idea", "Mon idée"], ["link", "Un article"], ["file", "Un document"]].map(([id, text]) => (
                   <button key={id} type="button" aria-pressed={genMode === "single" && sourceMode === id} onClick={() => { setGenMode("single"); setSourceMode(id); setSource(null); setSourceError(null); }} className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${genMode === "single" && sourceMode === id ? "bg-slate-100 border-slate-400 text-slate-800" : "border-slate-200 text-slate-500 hover:border-slate-400"}`}>{text}</button>
@@ -23275,22 +23280,22 @@ export default function Home() {
 
             <div className={isTopic ? "pt-1 space-y-2" : "sticky bottom-2 z-10 -mx-1 px-1 pt-2 bg-gradient-to-t from-white via-white to-transparent md:static md:bg-none md:p-0 md:m-0 space-y-2"}>
               {curStep.id === "topic" ? (
-                <div className="space-y-2">
+                <div className={v2Shell ? "flex flex-wrap items-center gap-x-6 gap-y-3" : "space-y-2"}>
                   <button
                     type="button"
                     onClick={handleGenerate}
                     disabled={!canGenerate || loading}
                     data-testid="create-generate"
-                    className="w-full bg-[#d63b42] hover:bg-[#c2343a] disabled:bg-gray-300 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2"
+                    className={v2Shell ? "bg-[#c2456f] hover:bg-[#9e3157] disabled:bg-gray-300 text-white font-semibold text-[17px] px-9 py-4 rounded-full flex items-center justify-center gap-2" : "w-full bg-[#d63b42] hover:bg-[#c2343a] disabled:bg-gray-300 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2"}
                   >
                     {loading ? <RefreshCw size={18} className="animate-spin" /> : <Sparkles size={18} />}
                     {loading ? "Génération en cours…" : genMode === "series" ? `Générer la série (${seriesCount} posts)` : source ? "Écrire le post à partir de cette source" : "Générer mon post"}
                   </button>
-                  <p className="text-xs text-gray-500 text-center" data-testid="create-datalake-line">
+                  <p className={`text-xs text-gray-500 ${v2Shell ? "basis-full order-last" : "text-center"}`} data-testid="create-datalake-line">
                     Le copilote pioche dans le datalake de « {themeOptions.find((o) => (o.id ?? null) === (activeContextId ?? null))?.name ?? "Mon activité"} ».
                   </p>
-                  <button type="button" onClick={() => setCreateStep(createSteps[1].id)} disabled={!hasTopic} data-testid="create-next" className="w-full text-xs text-[#0a66c2] hover:underline disabled:text-gray-400 disabled:no-underline py-1">
-                    Réglages avancés : public, forme, longueur →
+                  <button type="button" onClick={() => setCreateStep(createSteps[1].id)} disabled={!hasTopic} data-testid="create-next" className={v2Shell ? "text-sm font-semibold text-[#9e3157] hover:underline disabled:text-gray-400 disabled:no-underline py-1" : "w-full text-xs text-[#0a66c2] hover:underline disabled:text-gray-400 disabled:no-underline py-1"}>
+                    {v2Shell ? "Plus d'options : public, forme, longueur, langue" : "Réglages avancés : public, forme, longueur →"}
                   </button>
                 </div>
               ) : curStep.id === "go" ? (

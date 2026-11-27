@@ -28,21 +28,31 @@ export function NavIconV2({ name, compact = false }) {
   );
 }
 
-// Indicateur des quatre étapes de la création d'un post : Idée, Relecture, Moment, Terminé
-export function CreateStepsV2({ step, className = "" }) {
+// Création d'un post : repère, titre de l'étape et indicateur des quatre étapes (Idée, Relecture, Moment, Terminé)
+const CREATE_TITLES = {
+  1: <>De quoi voulez-vous <em className="text-[#C2456F]">parler ?</em></>,
+  2: <>Relisez, <em className="text-[#C2456F]">ajustez.</em></>,
+  3: <>Quand <em className="text-[#C2456F]">publier ?</em></>,
+  4: <>C'est <em className="text-[#C2456F]">fait.</em></>,
+};
+export function CreateStepsV2({ step, title = null, className = "" }) {
   const labels = ["Idée", "Relecture", "Moment", "Terminé"];
   return (
-    <ol className={`app-steps ${className}`} aria-label="Étapes de la création d'un post" data-testid="create-steps">
-      {labels.map((l, i) => {
-        const n = i + 1;
-        const state = n < step ? "done" : n === step ? "on" : "";
-        return (
-          <li key={l} className={`app-step ${state}`} aria-current={n === step ? "step" : undefined}>
-            <i>{n < step ? "✓" : n}</i>{l}
-          </li>
-        );
-      })}
-    </ol>
+    <div className={className} data-testid="create-head">
+      <p className="text-xs font-semibold tracking-[0.08em] uppercase text-[#C2456F] mb-2">Écrire · Un post</p>
+      <h1 className="font-display text-[2.25rem] leading-[1.1]">{title ?? CREATE_TITLES[step]}</h1>
+      <ol className="app-steps mt-4" aria-label="Étapes de la création d'un post" data-testid="create-steps">
+        {labels.map((l, k) => {
+          const n = k + 1;
+          const state = n < step ? "done" : n === step ? "on" : "";
+          return (
+            <li key={l} className={`app-step ${state}`} aria-current={n === step ? "step" : undefined}>
+              <i>{n < step ? "✓" : n}</i>{l}
+            </li>
+          );
+        })}
+      </ol>
+    </div>
   );
 }
 
