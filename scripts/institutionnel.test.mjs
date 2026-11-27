@@ -141,3 +141,14 @@ test("parcours d'inscription : la même interface sur les cinq étapes (contenu 
   assert.match(page, /function OnboardingSitesAside\(\)/);
   assert.match(page, /onClick=\{start\} className="bg-\[#C2456F\] hover:bg-\[#9E3157\]/);
 });
+
+test("parcours : le compagnon est dans la palette du site ; la carte « Ce que vous choisirez à chaque post » est empilée (elle ne se laisse plus écraser par le panneau de droite)", () => {
+  const page = read("app/app/page.js");
+  assert.match(page, /rounded-\[20px\] px-6 sm:px-\[26px\] py-5 flex flex-col gap-4" data-testid="wizard-where-recap"/);
+  const a = page.indexOf("function ProfileCompanion(");
+  const comp = page.slice(a, page.indexOf("\nfunction ", a + 10));
+  assert.doesNotMatch(comp, /#ff5a5f|#f63d44|#c2410c|from-orange-400|#ffd9c7/);
+  assert.match(comp, /onClick=\{onGoNext\} className="bg-\[#C2456F\] hover:bg-\[#9E3157\]/);
+  const next = page.slice(page.indexOf("function NextStepCard("), page.indexOf("\nfunction ", page.indexOf("function NextStepCard(") + 10));
+  assert.match(next, /from-orange-400 to-\[#ff5a5f\]/, "la carte du tableau de bord n'est pas touchée");
+});
