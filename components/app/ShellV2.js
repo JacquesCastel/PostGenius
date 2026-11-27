@@ -9,6 +9,43 @@ import "@fontsource/dm-sans/400.css";
 import "@fontsource/dm-sans/500.css";
 import "@fontsource/dm-sans/600.css";
 
+// Pictos du menu : ceux des maquettes (tracés identiques), dans une pastille pastel
+const ICON_PATHS = {
+  sun: <><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" /></>,
+  pen: <path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />,
+  doc: <><rect x="4" y="3" width="16" height="18" rx="3" /><path d="M8 8h8M8 12h8M8 16h5" /></>,
+  bar: <path d="M4 20h16M7 16v-5M12 16V6M17 16v-8" />,
+  users: <><circle cx="9" cy="8" r="3.5" /><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6 6 0 0 1 3.5 6" /></>,
+  spark: <path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8Z" />,
+};
+const ICON_TINTS = { sun: ["#FCE6D6", "#8A3B12"], pen: ["#F6E3E0", "#7A2342"], doc: ["#DCE9DF", "#2B5340"], bar: ["#FCE6D6", "#8A3B12"], users: ["#FCE6D6", "#8A3B12"], spark: ["#F6E3E0", "#7A2342"] };
+export function NavIconV2({ name }) {
+  const [bg, fg] = ICON_TINTS[name] ?? ICON_TINTS.sun;
+  return (
+    <span className="app-nav-ico" style={{ background: bg, color: fg }} aria-hidden="true">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">{ICON_PATHS[name]}</svg>
+    </span>
+  );
+}
+
+// Indicateur des quatre étapes de la création d'un post : Idée, Relecture, Moment, Terminé
+export function CreateStepsV2({ step, className = "" }) {
+  const labels = ["Idée", "Relecture", "Moment", "Terminé"];
+  return (
+    <ol className={`app-steps ${className}`} aria-label="Étapes de la création d'un post" data-testid="create-steps">
+      {labels.map((l, i) => {
+        const n = i + 1;
+        const state = n < step ? "done" : n === step ? "on" : "";
+        return (
+          <li key={l} className={`app-step ${state}`} aria-current={n === step ? "step" : undefined}>
+            <i>{n < step ? "✓" : n}</i>{l}
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
+
 // Onglets de chaque section : [vue, libellé]. L'ordre est celui de la maquette.
 export const SECTION_TABS = {
   write: [["create", "Un post"], ["campaigns", "Campagnes"], ["share", "À partir d'un lien"], ["events", "Événements"]],

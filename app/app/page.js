@@ -19,7 +19,7 @@ import {
   AlignLeft, AlignCenter, AlignRight, Move, Server, Clapperboard, Link2, Tags
 } from "lucide-react";
 import { appV2Active } from "@/lib/appV2";
-import { AvatarMenuV2, SectionTabsV2, WriteHubV2, BrandV2, SPACE_ITEMS, ADMIN_ITEMS } from "@/components/app/ShellV2";
+import { AvatarMenuV2, SectionTabsV2, WriteHubV2, BrandV2, NavIconV2, CreateStepsV2, SPACE_ITEMS, ADMIN_ITEMS } from "@/components/app/ShellV2";
 import { yearlyPrice, ANNUAL_OFFER, PLANS, PLAN_IDS, planLabel, planAllows, planOf, trialDaysLeft, accessState, changeKind, lostFeatures, gainedFeatures, planWith } from "@/lib/plans";
 import { COMPARE, unlockedBy } from "@/lib/planFeatures";
 import { nextSteps, snoozeUntil } from "@/lib/nextSteps";
@@ -21132,12 +21132,12 @@ export default function Home() {
   // Nouveau menu (maquettes « Application ») : réservé au compte d'un utilisateur ; l'administrateur technique, l'agence et l'espace client gardent leurs menus.
   const v2Shell = appV2Active({ mode: appV2Env, isAdmin: user.isAdmin, pref: appV2Pref }) && !user.isSuperAdmin && !agencyHome && !clientMode;
   const NAV_V2 = [
-    { id: "dashboard", label: "Aujourd'hui", icon: LayoutDashboard },
-    { id: "write", label: "Écrire", icon: PenLine, match: ["write", "create", "campaigns", "share", "events", "repurpose", "interview"] },
-    { id: "history", label: "Mes posts", icon: History, badge: drafts.filter((d) => d.status === "à valider").length || null, match: ["history", "engage"] },
-    { id: "stats", label: "Mes résultats", icon: BarChart3, match: ["stats", "leads"] },
-    ...(user.plan === "agence" ? [{ id: "clients", label: "Mes clients", icon: Users }] : []),
-    { id: "copilot", label: "Mon copilote", icon: Compass },
+    { id: "dashboard", label: "Aujourd'hui", icon: LayoutDashboard, pico: "sun" },
+    { id: "write", label: "Écrire", icon: PenLine, pico: "pen", match: ["write", "create", "campaigns", "share", "events", "repurpose", "interview"] },
+    { id: "history", label: "Mes posts", icon: History, pico: "doc", badge: drafts.filter((d) => d.status === "à valider").length || null, match: ["history", "engage"] },
+    { id: "stats", label: "Mes résultats", icon: BarChart3, pico: "bar", match: ["stats", "leads"] },
+    ...(user.plan === "agence" ? [{ id: "clients", label: "Mes clients", icon: Users, pico: "users" }] : []),
+    { id: "copilot", label: "Mon copilote", icon: Compass, pico: "spark" },
     // Mon espace : menu de la photo sur ordinateur, liste du menu burger sur téléphone
     ...SPACE_ITEMS.map((i) => ({ id: i.id, label: i.label, icon: UserRound, group: "Mon espace", mobileOnly: true })),
     ...(user.isAdmin ? ADMIN_ITEMS.map((i) => ({ id: i.id, label: i.label, icon: ShieldCheck, group: "Administration", mobileOnly: true })) : []),
@@ -21297,7 +21297,7 @@ export default function Home() {
     if (v2Shell) {
       return (
         <button key={item.id} onClick={() => onNav(item)} aria-current={isActive(item) ? "page" : undefined} data-testid={`nav-${item.id}`} className={`app-nav ${isActive(item) ? "app-nav-on" : ""}`}>
-          <item.icon size={18} />
+          {item.pico ? <NavIconV2 name={item.pico} /> : <item.icon size={18} />}
           <span className="flex-1 text-left">{item.label}</span>
           {item.badge ? <span className="app-nav-badge">{item.badge}</span> : null}
         </button>
@@ -22195,6 +22195,7 @@ export default function Home() {
         />
       ) : view === "create" && showResultPage ? (
         <main className="max-w-6xl mx-auto p-6 space-y-5">
+            {v2Shell && <CreateStepsV2 step={scheduleDraft && scheduleFromCreate ? 3 : 2} />}
             {/* Barre d'actions — en haut à droite dès la génération */}
           {result && (
               <div className="sticky top-4 z-30 bg-white/95 backdrop-blur rounded-xl border border-[#ffd5d6] ring-1 ring-[#ffe0e0] shadow-md p-3 flex items-center justify-between flex-wrap gap-2">
@@ -22706,6 +22707,7 @@ export default function Home() {
         </main>
       ) : view === "create" ? (
         <main className={`max-w-6xl mx-auto p-6 grid gap-6 ${isTopic ? "md:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]" : "md:grid-cols-2"}`}>
+          {v2Shell && <CreateStepsV2 step={nextStep && !result && !seriesResult && !loading ? 4 : 1} className="md:col-span-2" />}
           {isTopic && (
             <p className="md:col-span-2 text-lg font-semibold text-[#1b2a4a] leading-snug -mb-1" data-testid="create-intro">
               {contexts.length > 0 || (linkedin.connected && linkedin.orgConnected && orgs.length > 0)

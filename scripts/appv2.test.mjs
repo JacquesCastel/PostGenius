@@ -76,3 +76,15 @@ test("tranche 2 : logo Vercéa et photo LinkedIn dans la nouvelle application", 
   assert.match(shell, /data-testid="avatar-photo"/);
   assert.match(shell, /onError=\{\(\) => setBroken\(true\)\}/); // photo cassée : on retombe sur l'initiale
 });
+
+test("pictos du menu : ceux des maquettes, un par entrée", () => {
+  for (const k of ["sun", "pen", "doc", "bar", "spark"]) assert.ok(page.includes(`pico: "${k}"`), k);
+  assert.match(shell, /export function NavIconV2/);
+  assert.ok(shell.includes('M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8Z'), "étoile du copilote");
+});
+
+test("création d'un post : les quatre étapes sont indiquées (idée, relecture, moment, terminé)", () => {
+  assert.match(shell, /\["Idée", "Relecture", "Moment", "Terminé"\]/);
+  assert.match(page, /<CreateStepsV2 step=\{scheduleDraft && scheduleFromCreate \? 3 : 2\}/);
+  assert.match(page, /<CreateStepsV2 step=\{nextStep && !result && !seriesResult && !loading \? 4 : 1\}/);
+});
