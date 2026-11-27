@@ -29,8 +29,10 @@ export default async function LegalPage() {
   return (
     <Shell>
       <div className="w-full max-w-[1200px] mx-auto px-4 sm:px-8 pt-8 pb-24">
-        <p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-[#C2456F] mb-3">Informations légales</p>
+        <div className="entete-centre">
+<p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-[#C2456F] mb-3">Informations légales</p>
         <h1 className="font-display text-[34px] sm:text-[48px] leading-[1.08] tracking-[-0.02em] max-w-[860px]">{titre[0]}<em className="text-[#C2456F]">{titre[1]}</em></h1>
+</div>
 
         <div className="mt-10 flex flex-wrap gap-10 items-start">
           <nav aria-label="Sommaire" className="flex-[0_0_240px] md:sticky md:top-6 bg-white border border-[#EFE4E0] rounded-3xl p-5 flex flex-col gap-2 text-[15px]">
