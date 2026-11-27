@@ -125,3 +125,8 @@ html {
 .app-v2 [class*="border-[#cbd5e1]"], .app-v2 [class*="border-[#e2e8f0]"], .app-v2 [class*="border-[#e8ecf2]"] { border-color: rgba(168, 134, 146, 0.3); }
 .app-v2 [class*="bg-[#e5454a]"] { background-color: #c2456f; }
 .app-v2 [class*="accent-[#ff5a5f]"] { accent-color: #c2456f; }
+/* Création d'un post : étiquette de l'idée, champs creusés, note de ton */
+.app-v2 .app-lb { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: #6b5a70; }
+.app-v2 :is(input, textarea, select)[class*="border-slate-"] { border-color: transparent; background-color: rgba(255, 255, 255, 0.55); box-shadow: var(--v2-sunk); }
+.app-v2 [class*="bg-[#fff7ed]"] { background-color: #fce6d6; }
+.app-v2 [class*="border-[#fde1c0]"] { border-color: #f0d4be; }

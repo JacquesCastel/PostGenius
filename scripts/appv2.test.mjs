@@ -166,6 +166,20 @@ test("Écrire : titre et quatre cartes de la maquette, puis « Reprendre » (bro
   assert.ok(shell.includes("Par où voulez-vous"));
   for (const cta of ["Écrire un post →", "Planifier une campagne →", "Choisir un contenu →", "Préparer un événement →"]) assert.ok(shell.includes(cta), cta);
   assert.ok(shell.includes('data-testid="write-resume"'));
-  assert.ok(page.includes('view === "dashboard" || view === "write") ? "hidden"'));
+  assert.ok(page.includes('view === "dashboard" || view === "write" || view === "create") ? "hidden"'));
   assert.ok(page.includes('setListCol("brouillon")'));
+});
+
+test("Créer un post : calé sur la maquette (titre, idée, temps forts, générer, plus d'options) sans retirer de mode", () => {
+  assert.ok(shell.includes("Écrire · Un post"));
+  assert.ok(shell.includes("De quoi voulez-vous"));
+  assert.ok(page.includes('"Votre idée, en quelques mots"'));
+  assert.ok(page.includes("ou partez d'un temps fort :"));
+  assert.ok(page.includes("Plus d'options : public, forme, longueur, langue"));
+  // les modes article / document / série restent atteignables (repliés)
+  assert.ok(page.includes('data-testid="create-modes-toggle"'));
+  assert.ok(page.includes('data-testid="create-modes"'));
+  assert.ok(page.includes('data-testid="mode-series"'));
+  // l'ancien libellé et le bouton pleine largeur restent pour l'ancienne application
+  assert.ok(page.includes("Réglages avancés : public, forme, longueur →"));
 });
