@@ -10,7 +10,7 @@ export const PAGES_PRODUIT = [
 
 export default function SousNavProduit({ courante }) {
   return (
-    <nav aria-label="Pages Produit" className="mb-8 flex flex-wrap gap-2 text-[14px] font-semibold" data-testid="sous-nav-produit">
+    <nav aria-label="Pages Produit" className="mb-8 flex flex-wrap justify-center gap-2 text-[14px] font-semibold" data-testid="sous-nav-produit">
       {PAGES_PRODUIT.map(([href, label]) => href === courante
         ? <span key={href} aria-current="page" className="px-4 py-2 rounded-full bg-[#2E1F33] text-white">{label}</span>
         : <Link key={href} href={href} className="px-4 py-2 rounded-full bg-white border border-[#EFE4E0] text-[#6B5A70] hover:border-[#C2456F] hover:text-[#9E3157] transition-colors">{label}</Link>)}

@@ -44,14 +44,14 @@ export default function ScoringPage() {
   return (
     <Shell>
       <div className="w-full max-w-[1200px] mx-auto px-4 sm:px-8 pt-8 pb-24">
-        <span className="inline-block text-xs font-semibold uppercase tracking-[0.06em] bg-[#DCE9DF] text-[#2B5340] px-3.5 py-1.5 rounded-full">Contrôle de forme · offres Pro et Agence</span>
+        <div className="text-center"><span className="inline-block text-xs font-semibold uppercase tracking-[0.06em] bg-[#DCE9DF] text-[#2B5340] px-3.5 py-1.5 rounded-full">Contrôle de forme · offres Pro et Agence</span></div>
 
-        <div className="mt-8 flex flex-wrap gap-10 lg:gap-14 items-center">
-          <div className="flex-[1_1_420px] min-w-0">
+        <div className="mt-8 flex flex-col items-center gap-10">
+          <div className="min-w-0 entete-centre">
             <h1 className="font-display text-[38px] sm:text-[54px] leading-[1.06] tracking-[-0.02em]">{titre[0]}<em className="text-[#C2456F]">{titre[1]}</em></h1>
             <p className="text-[19px] leading-relaxed text-[#4A3A50] mt-6 max-w-[560px]">Sept critères à règles fixes : le même texte obtient toujours la même note. Elle dit si un post est bien construit, jamais combien de vues ou de réactions il aura.</p>
           </div>
-          <div className="flex-[1_1_400px] min-w-0 bg-white border border-[#EFE4E0] rounded-[28px] p-6 sm:p-8 shadow-[0_18px_40px_rgba(46,31,51,0.08)]" data-testid="scoring-exemple">
+          <div className="w-full max-w-[640px] min-w-0 bg-white border border-[#EFE4E0] rounded-[28px] p-6 sm:p-8 shadow-[0_18px_40px_rgba(46,31,51,0.08)]" data-testid="scoring-exemple">
             <div className="flex justify-between items-center gap-3">
               <span className="text-xs font-semibold uppercase tracking-[0.06em] text-[#6B5A70]">Note de forme</span>
               <span className="text-xs font-semibold bg-[#F6E3E0] text-[#7A2342] px-3 py-1 rounded-full">Exemple de mise en forme · fictif</span>
