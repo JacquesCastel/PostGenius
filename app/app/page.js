@@ -19,7 +19,7 @@ import {
   AlignLeft, AlignCenter, AlignRight, Move, Server, Clapperboard, Link2, Tags
 } from "lucide-react";
 import { appV2Active } from "@/lib/appV2";
-import { AvatarMenuV2, SectionTabsV2, WriteHubV2, BrandV2, NavIconV2, BottomBarV2, CreateStepsV2, CreateChoicesV2, SPACE_ITEMS, ADMIN_ITEMS } from "@/components/app/ShellV2";
+import { AvatarMenuV2, SectionTabsV2, WriteHubV2, BrandV2, NavIconV2, BottomBarV2, PostsToolbarV2, ProfileCompletenessV2, CreateStepsV2, CreateChoicesV2, SPACE_ITEMS, ADMIN_ITEMS } from "@/components/app/ShellV2";
 import { yearlyPrice, ANNUAL_OFFER, PLANS, PLAN_IDS, planLabel, planAllows, planOf, trialDaysLeft, accessState, changeKind, lostFeatures, gainedFeatures, planWith } from "@/lib/plans";
 import { COMPARE, unlockedBy } from "@/lib/planFeatures";
 import { nextSteps, snoozeUntil } from "@/lib/nextSteps";
@@ -12550,7 +12550,7 @@ function InsightsPanel() {
   );
 }
 
-function StatsView({ linkedin, orgs, profile, drafts, showToast, onConnect }) {
+function StatsView({ v2 = false, linkedin, orgs, profile, drafts, showToast, onConnect }) {
   const [org, setOrg] = useState(orgs[0]?.urn ?? "");
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -12677,8 +12677,32 @@ function StatsView({ linkedin, orgs, profile, drafts, showToast, onConnect }) {
       ]
     : [];
 
+  // Nouvelle application : les quatre chiffres du mois, en haut (posts publiés, impressions, réactions mesurées par LinkedIn, contrôle de forme moyen)
+  const monthAgo = Date.now() - 30 * 86400000;
+  const pubMonth = (drafts ?? []).filter((d) => d.status === "publié" && new Date(d.publishedAt ?? d.createdAt).getTime() >= monthAgo);
+  const measured = pubMonth.map((d) => statsByDraftId[d.id]).filter(Boolean);
+  const sumStat = (...keys) => measured.reduce((acc, st) => acc + keys.reduce((a, k) => a + (st[k] ?? 0), 0), 0);
+  const formScores = (drafts ?? []).filter((d) => d.text && d.text.trim()).map((d) => scorePost({ text: d.text, type: d.type }).score);
+  const formAvg = formScores.length ? Math.round(formScores.reduce((a, b) => a + b, 0) / formScores.length) : null;
   return (
     <main className="max-w-5xl mx-auto p-6 space-y-8">
+
+      {v2 && (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-5" data-testid="results-kpis">
+          {[
+            ["Posts publiés", String(pubMonth.length), "sur 30 jours", "#9e3157"],
+            ["Impressions", measured.length ? sumStat("impressionCount").toLocaleString("fr-FR") : "–", measured.length ? "mesurées par LinkedIn" : "pas encore mesurées", "#2b5340"],
+            ["Réactions", measured.length ? sumStat("likeCount", "commentCount", "shareCount").toLocaleString("fr-FR") : "–", "likes, commentaires, partages", "#8a3b12"],
+            ["Contrôle de forme", formAvg == null ? "–" : `${formAvg} / 100`, "indicateur, pas une prévision", "#7a2342"],
+          ].map(([label, value, sub, color]) => (
+            <section key={label} className="app-card px-5 py-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">{label}</p>
+              <p className="font-display text-4xl leading-tight mt-1" style={{ color }}>{value}</p>
+              <p className="text-xs text-gray-500">{sub}</p>
+            </section>
+          ))}
+        </div>
+      )}
 
       {/* En-tête */}
       <div className="flex items-center justify-between flex-wrap gap-3">
@@ -19607,6 +19631,10 @@ export default function Home() {
   const [dragOverCol, setDragOverCol] = useState(null); // colonne kanban survolée pendant un drag
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false); // menu burger (navigation mobile)
   // Nouvelle application : interrupteur APP_V2 (annoncé par /api/status) et choix mémorisé d'un administrateur (?nouvelle-app=1 / 0)
+  const [postsMode, setPostsModeState] = useState("list"); // Mes posts : list | calendar | board
+  const [listCol, setListCol] = useState(null); // Mes posts, onglet d'état en mode liste
+  const setPostsMode = (m) => { setPostsModeState(m); try { localStorage.setItem("vercea-posts-mode", m); } catch {} };
+  useEffect(() => { try { const m = localStorage.getItem("vercea-posts-mode"); if (m === "list" || m === "calendar" || m === "board") setPostsModeState(m); } catch {} }, []);
   const [v2Open, setV2Open] = useState({}); // création d'un post : choix du copilote dépliés (mood, theme, where)
   const [appV2Env, setAppV2Env] = useState("off");
   const [appV2Pref, setAppV2Pref] = useState(null);
@@ -21358,6 +21386,10 @@ export default function Home() {
   );
   const campaignOptions = [...new Map(postsForTarget.filter((d) => d.campaignId && d.campaign?.name).map((d) => [d.campaignId, d.campaign.name])).entries()];
   const filtersActive = postCampaign !== "all" || postCompany !== "all" || Boolean(normSearch);
+  // Mes posts (nouvelle application) : onglets d'état en mode liste ; sans choix, le premier état qui a des posts
+  const v2ColIds = ["erreur", "à valider", "programmé", "publié", "brouillon"].filter((id) => id !== "erreur" || visiblePosts.some((d) => d.status === "erreur"));
+  const effCol = v2ColIds.includes(listCol) ? listCol : v2ColIds.find((id) => visiblePosts.some((d) => d.status === id)) ?? "à valider";
+  const v2List = v2Shell && postsMode === "list";
   const toReview = visiblePosts
     .filter((d) => d.status === "à valider")
     .sort((a, b) => new Date(a.scheduledAt ?? 0) - new Date(b.scheduledAt ?? 0));
@@ -23661,7 +23693,7 @@ export default function Home() {
       ) : view === "engage" ? (
         <EngageView linkedin={linkedin} showToast={showToast} onConnect={() => setView("connections")} initialPost={engagePost} initialComment={engageComment} initialQuote={engageQuote} onPostUsed={() => { setEngagePost(""); setEngageComment(""); setEngageQuote(""); }} />
       ) : view === "stats" ? (
-        <StatsView linkedin={linkedin} orgs={orgs} profile={profile} drafts={drafts} showToast={showToast} onConnect={() => setView("connections")} />
+        <StatsView v2={v2Shell} linkedin={linkedin} orgs={orgs} profile={profile} drafts={drafts} showToast={showToast} onConnect={() => setView("connections")} />
       ) : view === "copilot" ? (
         <CopilotView profile={profile} onProfileSaved={setProfile} showToast={showToast} onGoDashboard={() => setView("dashboard")} onGenerateFromReco={generateFromReco} onGoProfileField={goToProfileField} onGoCreate={() => setView("create")} onGoView={setView} clientSpace={clientSpace} />
       ) : view === "billing" ? (
@@ -23687,6 +23719,8 @@ export default function Home() {
           onOpenLeads={(id) => { chooseContext(id); setView("leads"); }}
         />
       ) : view === "profile" ? (
+        <>
+        {v2Shell && <ProfileCompletenessV2 profile={profile} />}
         <ProfilePage
           key={profile?.email ?? "profile"}
           user={user}
@@ -23718,6 +23752,7 @@ export default function Home() {
             }));
           }}
         />
+        </>
       ) : view === "connections" ? (
         <ConnectionsView clientName={clientSpace ? impersonating.companyName || impersonating.name : null} clientId={clientSpace ? impersonating.id : null} personalOk={personalOk} linkedin={linkedin} onDisconnect={disconnect} instagram={instagram} onDisconnectInstagram={disconnectInstagram} canOrgPublish={plan.orgPublish} />
       ) : ["clients", "queue", "followup", "team", "planning"].includes(view) ? (
@@ -23784,6 +23819,16 @@ export default function Home() {
               </div>
             );
           })()}
+
+          {v2Shell && postsForTarget.length > 0 && (
+            <PostsToolbarV2
+              mode={postsMode}
+              onMode={setPostsMode}
+              active={effCol}
+              onTab={setListCol}
+              tabs={v2ColIds.map((id) => ({ id, title: POST_COLUMNS.find((c) => c.id === id).title, count: visiblePosts.filter((d) => d.status === id).length }))}
+            />
+          )}
 
           {/* Recherche et filtre par campagne */}
           {postsForTarget.length > 0 && (
@@ -23868,9 +23913,11 @@ export default function Home() {
           )}
 
           {/* Calendrier mensuel des programmations — au-dessus du kanban */}
+          {(!v2Shell || postsMode === "calendar") && (
           <div className="mb-6">
             <CalendarMonth drafts={visiblePosts} onReschedule={rescheduleDraft} />
           </div>
+          )}
 
           {postsForTarget.length > 0 && visiblePosts.length === 0 ? (
             <div className="bg-white rounded-2xl border border-dashed border-gray-200 p-10 text-center text-gray-400 max-w-xl mx-auto">
@@ -23913,10 +23960,10 @@ export default function Home() {
                 )}
               </div>
             )
-          ) : (
+          ) : v2Shell && postsMode === "calendar" ? null : (
             <>
               {/* Bascule mobile : une seule colonne visible à la fois, sur petit écran */}
-              <div className="md:hidden flex gap-1.5 overflow-x-auto pb-3 -mx-1 px-1">
+              <div className={`${v2List ? "hidden" : "md:hidden"} flex gap-1.5 overflow-x-auto pb-3 -mx-1 px-1`}>
                 {POST_COLUMNS
                   .filter((col) => col.id !== "erreur" || visiblePosts.some((d) => d.status === "erreur"))
                   .map((col) => {
@@ -23938,9 +23985,10 @@ export default function Home() {
                   })}
               </div>
 
-              <div className="flex flex-col gap-4 md:flex-row md:overflow-x-auto md:items-start pb-4">
+              <div className={`flex flex-col gap-4 pb-4 ${v2List ? "max-w-3xl" : "md:flex-row md:overflow-x-auto md:items-start"}`}>
               {POST_COLUMNS
                 .filter((col) => col.id !== "erreur" || visiblePosts.some((d) => d.status === "erreur"))
+                .filter((col) => !v2List || col.id === effCol)
                 .map((col) => {
                   const items = visiblePosts.filter((d) => d.status === col.id);
                   const droppable = col.id !== "erreur";
@@ -23965,8 +24013,8 @@ export default function Home() {
                             }
                           : undefined
                       }
-                      className={`${col.id === mobileCol ? "block" : "hidden md:block"} w-full md:w-80 md:shrink-0 rounded-2xl p-3 transition-colors ${
-                        dragOverCol === col.id ? "bg-[#ffe0e0] ring-2 ring-[#ff8a8d]" : "bg-gray-200/50"
+                      className={`${v2List || col.id === mobileCol ? "block" : "hidden md:block"} w-full ${v2List ? "" : "md:w-80 md:shrink-0"} rounded-2xl p-3 transition-colors ${
+                        dragOverCol === col.id ? "bg-[#ffe0e0] ring-2 ring-[#ff8a8d]" : v2List ? "" : "bg-gray-200/50"
                       }`}
                     >
                       <div className="flex items-center gap-2 px-1 mb-3">

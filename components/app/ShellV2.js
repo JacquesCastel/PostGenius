@@ -79,6 +79,56 @@ export function BottomBarV2({ items, isActive, onGo }) {
   );
 }
 
+// Mes posts : Liste (onglets par état) / Calendrier / Tableau (colonnes, glisser-déposer)
+export function PostsToolbarV2({ mode, onMode, tabs, active, onTab }) {
+  return (
+    <div className="mb-5 space-y-3" data-testid="posts-toolbar">
+      <div className="flex flex-wrap items-center gap-3">
+        <div role="group" aria-label="Affichage des posts" className="flex gap-2">
+          {[["list", "Liste"], ["calendar", "Calendrier"], ["board", "Tableau"]].map(([k, l]) => (
+            <button key={k} type="button" aria-pressed={mode === k} onClick={() => onMode(k)} data-testid={`posts-mode-${k}`} className={`app-tab ${mode === k ? "app-tab-on" : ""}`}>{l}</button>
+          ))}
+        </div>
+      </div>
+      {mode === "list" && (
+        <div role="tablist" aria-label="État des posts" className="flex flex-wrap gap-2">
+          {tabs.map((t) => (
+            <button key={t.id} type="button" role="tab" aria-selected={active === t.id} onClick={() => onTab(t.id)} data-testid={`posts-tab-${t.id}`} className={`app-tab ${active === t.id ? "app-tab-on" : ""}`}>
+              {t.title} <span className="text-xs font-medium text-gray-500">{t.count}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Mon profil : complétude, avec ce qui manque encore
+const PROFILE_FIELDS = [["companyName", "le nom de votre activité"], ["businessDescription", "ce que vous faites"], ["targetAudience", "votre audience"], ["editorialLine", "votre ligne éditoriale"], ["expertise", "votre expertise"], ["publishDays", "vos jours de publication"]];
+export function profileCompleteness(profile) {
+  const missing = PROFILE_FIELDS.filter(([k]) => !String(profile?.[k] ?? "").trim()).map(([, l]) => l);
+  return { percent: Math.round(((PROFILE_FIELDS.length - missing.length) / PROFILE_FIELDS.length) * 100), missing };
+}
+export function ProfileCompletenessV2({ profile }) {
+  const { percent, missing } = profileCompleteness(profile);
+  return (
+    <section className="app-card max-w-5xl mx-auto mt-5 px-6 py-5 flex flex-wrap items-center gap-6" data-testid="profile-completeness" style={{ width: "calc(100% - 3rem)" }}>
+      <div className="min-w-[10rem]">
+        <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Votre profil est complet à</p>
+        <p className="font-display text-4xl leading-tight text-[#9E3157]">{percent} %</p>
+      </div>
+      <div className="flex-1 min-w-[14rem]">
+        <div className="h-3 rounded-full" style={{ boxShadow: "inset 3px 3px 7px var(--v2-d), inset -3px -3px 7px var(--v2-l)" }}>
+          <div className="h-3 rounded-full bg-[#C2456F]" style={{ width: `${percent}%` }} />
+        </div>
+        <p className="text-sm text-gray-600 mt-3">
+          {missing.length ? <>Plus il est complet, plus les posts vous ressemblent. Il manque : {missing.join(", ")}.</> : "Rien ne manque : vos posts s'appuient sur un profil complet."}
+        </p>
+      </div>
+    </section>
+  );
+}
+
 // Onglets de chaque section : [vue, libellé]. L'ordre est celui de la maquette.
 export const SECTION_TABS = {
   write: [["create", "Un post"], ["campaigns", "Campagnes"], ["share", "À partir d'un lien"], ["events", "Événements"]],

@@ -120,3 +120,25 @@ test("couleurs : l'aperçu LinkedIn garde les couleurs de LinkedIn, le reste sui
   assert.ok(css.includes('.app-v2 [class*="text-[#1b2a4a]"]'));
   assert.ok(css.includes("accent-color: #c2456f"));
 });
+
+test("Mes posts : liste à onglets d'état, calendrier et tableau (glisser-déposer conservé)", () => {
+  assert.match(shell, /export function PostsToolbarV2/);
+  for (const k of ["list", "calendar", "board"]) assert.ok(shell.includes(`["${k}", "`), k);
+  assert.match(page, /const v2List = v2Shell && postsMode === "list"/);
+  assert.match(page, /\.filter\(\(col\) => !v2List \|\| col\.id === effCol\)/);
+  // le tableau et son glisser-déposer existent toujours, ainsi que le calendrier de l'ancienne application
+  assert.ok(page.includes("handleKanbanDrop(col.id"));
+  assert.match(page, /\(!v2Shell \|\| postsMode === "calendar"\)/);
+});
+
+test("Mes résultats : quatre chiffres en haut dans la nouvelle application, l'écran Statistiques reste dessous", () => {
+  assert.ok(page.includes('data-testid="results-kpis"'));
+  for (const l of ["Posts publiés", "Impressions", "Réactions", "Contrôle de forme"]) assert.ok(page.includes(`["${l}"`), l);
+  assert.ok(page.includes('<h2 className="font-semibold text-lg">Statistiques</h2>'));
+});
+
+test("Mon profil : barre de complétude et ce qui manque, au-dessus du profil existant", () => {
+  assert.match(shell, /export function ProfileCompletenessV2/);
+  assert.ok(page.includes("{v2Shell && <ProfileCompletenessV2 profile={profile} />}"));
+  assert.ok(page.includes("<ProfilePage"));
+});
