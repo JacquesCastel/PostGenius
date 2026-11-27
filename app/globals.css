@@ -34,3 +34,47 @@ html {
 .prose-v2 strong { color: #2e1f33; }
 .prose-v2 blockquote { margin: 1.75rem 0; padding: 0.25rem 0 0.25rem 1.5rem; border-left: 4px solid #f6e3e0; font-family: "Fraunces", Georgia, serif; font-style: italic; font-size: 1.5rem; line-height: 1.4; color: #7a2342; }
 .prose-v2 code { background: #f6e3e0; border-radius: 6px; padding: 0 6px; font-size: 0.9em; color: #7a2342; }
+
+/* ── Nouvelle application (APP_V2) : charte Vercéa, relief doux « à plat » ──────────────────────────
+   Tout est limité à .app-v2 (posée sur la racine de l'application seulement quand le nouveau menu est actif).
+   L'ombre porte la structure ; le texte, les états et les erreurs gardent des couleurs à plat et contrastées. */
+.app-v2 {
+  --v2-bg: #fbf7f4; --v2-d: rgba(168, 134, 146, 0.32); --v2-l: rgba(255, 255, 255, 0.95);
+  --v2-raise: 9px 9px 20px var(--v2-d), -9px -9px 20px var(--v2-l);
+  --v2-raise-sm: 5px 5px 12px var(--v2-d), -5px -5px 12px var(--v2-l);
+  --v2-sunk: inset 4px 4px 9px var(--v2-d), inset -4px -4px 9px var(--v2-l);
+  font-family: "DM Sans", system-ui, sans-serif; color: #2e1f33;
+  background: radial-gradient(circle at 96% 0%, rgba(246, 227, 224, 0.95), transparent 34%), radial-gradient(circle at 30% 105%, rgba(220, 233, 223, 0.85), transparent 36%), radial-gradient(circle at 100% 70%, rgba(252, 230, 214, 0.7), transparent 30%), var(--v2-bg);
+}
+.app-v2 h1, .app-v2 h2 { font-family: "Fraunces", Georgia, serif; font-weight: 400; letter-spacing: -0.015em; }
+/* Barre latérale */
+.app-v2 > aside { background: transparent; border-right: 0; box-shadow: 10px 0 26px -8px var(--v2-d); }
+.app-v2 .app-nav { width: 100%; display: flex; align-items: center; gap: 0.75rem; padding: 0.7rem 1rem; border-radius: 18px; font-size: 0.9375rem; font-weight: 500; color: #4a3a50; transition: box-shadow .15s, color .15s; }
+.app-v2 .app-nav:hover { color: #2e1f33; box-shadow: var(--v2-raise-sm); }
+.app-v2 .app-nav-on, .app-v2 .app-nav-on:hover { color: #9e3157; font-weight: 600; box-shadow: var(--v2-sunk); }
+.app-v2 .app-nav-badge { font-size: 0.75rem; font-weight: 600; background: #c2456f; color: #fff; border-radius: 999px; padding: 0.1rem 0.55rem; }
+/* Onglets, cartes, menu de la photo */
+.app-v2 .app-tab { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.6rem 1.1rem; border-radius: 999px; font-size: 0.875rem; font-weight: 600; color: #4a3a50; background: var(--v2-bg); box-shadow: var(--v2-raise-sm); }
+.app-v2 .app-tab-on { color: #9e3157; box-shadow: var(--v2-sunk); }
+.app-v2 .app-card { background: var(--v2-bg); border-radius: 30px; box-shadow: var(--v2-raise); transition: box-shadow .15s; }
+.app-v2 .app-card-main { outline: 2px solid #c2456f; }
+.app-v2 .app-card:hover { box-shadow: 12px 12px 24px var(--v2-d), -12px -12px 24px var(--v2-l); }
+.app-v2 .app-avatar { background: var(--v2-bg); box-shadow: var(--v2-raise-sm); }
+.app-v2 .app-pop { background: var(--v2-bg); border-radius: 24px; box-shadow: 14px 14px 32px var(--v2-d), -10px -10px 24px var(--v2-l); }
+.app-v2 .app-menuitem:hover { box-shadow: var(--v2-sunk); color: #9e3157; }
+/* Le reste de l'application : mêmes couleurs, mêmes volumes (sans toucher aux fonctions) */
+.app-v2 [class*="bg-[#ff5a5f]"] { background-color: #c2456f; }
+.app-v2 [class*="hover:bg-[#f63d44]"]:hover { background-color: #9e3157; }
+.app-v2 button[class*="bg-[#ff5a5f]"], .app-v2 a[class*="bg-[#ff5a5f]"] { box-shadow: 5px 5px 12px rgba(194, 69, 111, 0.28), -4px -4px 10px var(--v2-l); }
+.app-v2 [class*="text-[#ff5a5f]"], .app-v2 [class*="text-[#f63d44]"] { color: #9e3157; }
+.app-v2 [class*="border-[#ff5a5f]"] { border-color: #c2456f; }
+.app-v2 [class*="bg-[#fff1f1]"], .app-v2 [class*="bg-[#ffe0e0]"], .app-v2 [class*="bg-[#ffe3e4]"] { background-color: #f6e3e0; }
+.app-v2 [class*="border-[#f3a3a6]"], .app-v2 [class*="ring-[#ff5a5f]"] { border-color: #e7b3bf; }
+.app-v2 [class*="focus:ring-[#ff5a5f]"]:focus { --tw-ring-color: #c2456f; }
+.app-v2 .bg-white.rounded-2xl, .app-v2 .bg-white.rounded-3xl { background-color: var(--v2-bg); border-color: transparent; box-shadow: var(--v2-raise); }
+.app-v2 .bg-white.rounded-xl:not(input):not(textarea):not(select):not(button) { background-color: var(--v2-bg); border-color: transparent; box-shadow: var(--v2-raise-sm); }
+.app-v2 .bg-slate-50, .app-v2 .bg-gray-50 { background-color: rgba(168, 134, 146, 0.08); }
+.app-v2 :is(input, textarea, select)[class*="border-gray-"] { border-color: transparent; background-color: rgba(255, 255, 255, 0.55); box-shadow: var(--v2-sunk); }
+@media (max-width: 767px) {
+  .app-v2 .bg-white.rounded-2xl, .app-v2 .bg-white.rounded-3xl { box-shadow: 6px 6px 14px var(--v2-d), -6px -6px 14px var(--v2-l); }
+}

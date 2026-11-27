@@ -18,6 +18,8 @@ import {
   Compass, Lightbulb, EyeOff, TrendingUp, TrendingDown, Plus, Globe, ChevronUp, Menu,
   AlignLeft, AlignCenter, AlignRight, Move, Server, Clapperboard, Link2, Tags
 } from "lucide-react";
+import { appV2Active } from "@/lib/appV2";
+import { AvatarMenuV2, SectionTabsV2, WriteHubV2, SPACE_ITEMS, ADMIN_ITEMS } from "@/components/app/ShellV2";
 import { yearlyPrice, ANNUAL_OFFER, PLANS, PLAN_IDS, planLabel, planAllows, planOf, trialDaysLeft, accessState, changeKind, lostFeatures, gainedFeatures, planWith } from "@/lib/plans";
 import { COMPARE, unlockedBy } from "@/lib/planFeatures";
 import { nextSteps, snoozeUntil } from "@/lib/nextSteps";
@@ -14382,7 +14384,7 @@ const FEATURE_LABELS = {
   orgStats: "Les statistiques de page",
 };
 
-const DEEP_LINK_VIEWS = ["dashboard", "create", "history", "campaigns", "connections", "profile", "themes", "stats", "copilot", "events", "engage", "brand-kit", "billing", "clients", "queue", "followup", "team", "planning", "messages", "datalake", "share", "leads", "interview", "repurpose"];
+const DEEP_LINK_VIEWS = ["dashboard", "write", "create", "history", "campaigns", "connections", "profile", "themes", "stats", "copilot", "events", "engage", "brand-kit", "billing", "clients", "queue", "followup", "team", "planning", "messages", "datalake", "share", "leads", "interview", "repurpose"];
 
 function ClientTableRow({ client, team = [], restrict = false, onManage, onViewDrafts, onDelete, deleting, onShowReport, onApproval, onQuota }) {
   const [open, setOpen] = useState(false);
@@ -19567,6 +19569,17 @@ export default function Home() {
   const [scheduleStatus, setScheduleStatus] = useState("programmé"); // statut après la modal de date
   const [dragOverCol, setDragOverCol] = useState(null); // colonne kanban survolée pendant un drag
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false); // menu burger (navigation mobile)
+  // Nouvelle application : interrupteur APP_V2 (annoncé par /api/status) et choix mémorisé d'un administrateur (?nouvelle-app=1 / 0)
+  const [appV2Env, setAppV2Env] = useState("off");
+  const [appV2Pref, setAppV2Pref] = useState(null);
+  useEffect(() => {
+    fetch("/api/status", { cache: "no-store" }).then((r) => r.json()).then((d) => setAppV2Env(d.appV2 ?? "off")).catch(() => {});
+    try {
+      const q = new URLSearchParams(window.location.search).get("nouvelle-app");
+      if (q === "1" || q === "0") localStorage.setItem("vercea-app-v2", q);
+      setAppV2Pref(localStorage.getItem("vercea-app-v2"));
+    } catch {}
+  }, []);
   const [mobileCol, setMobileCol] = useState("brouillon"); // colonne affichée sur mobile (bascule)
   // Mes posts : recherche, filtre par campagne, relecture en série et validation groupée
   const [postSearch, setPostSearch] = useState("");
@@ -21079,7 +21092,22 @@ export default function Home() {
   // les outils d'administration, jamais la création de posts ni la facturation.
   // Menu regroupé : `group` donne l'intitulé de la section (la première entrée d'un groupe l'affiche).
   // « Créer une campagne » n'a plus d'entrée : le bouton « Nouvelle campagne » est dans Campagnes.
-  const NAV = user.isSuperAdmin
+  // Nouveau menu (maquettes « Application ») : réservé au compte d'un utilisateur ; l'administrateur technique, l'agence et l'espace client gardent leurs menus.
+  const v2Shell = appV2Active({ mode: appV2Env, isAdmin: user.isAdmin, pref: appV2Pref }) && !user.isSuperAdmin && !agencyHome && !clientMode;
+  const NAV_V2 = [
+    { id: "dashboard", label: "Aujourd'hui", icon: LayoutDashboard },
+    { id: "write", label: "Écrire", icon: PenLine, match: ["write", "create", "campaigns", "share", "events", "repurpose", "interview"] },
+    { id: "history", label: "Mes posts", icon: History, badge: drafts.filter((d) => d.status === "à valider").length || null, match: ["history", "engage"] },
+    { id: "stats", label: "Mes résultats", icon: BarChart3, match: ["stats", "leads"] },
+    ...(user.plan === "agence" ? [{ id: "clients", label: "Mes clients", icon: Users }] : []),
+    { id: "copilot", label: "Mon copilote", icon: Compass },
+    // Mon espace : menu de la photo sur ordinateur, liste du menu burger sur téléphone
+    ...SPACE_ITEMS.map((i) => ({ id: i.id, label: i.label, icon: UserRound, group: "Mon espace", mobileOnly: true })),
+    ...(user.isAdmin ? ADMIN_ITEMS.map((i) => ({ id: i.id, label: i.label, icon: ShieldCheck, group: "Administration", mobileOnly: true })) : []),
+  ];
+  const NAV = v2Shell
+    ? NAV_V2
+    : user.isSuperAdmin
     ? [
         { id: "admin", label: "Administration", icon: ShieldCheck },
         { id: "content", label: "Contenu du site", icon: PenLine },
@@ -21171,7 +21199,8 @@ export default function Home() {
     </p>
   );
   const VIEW_TITLES = {
-    dashboard: "Tableau de bord",
+    dashboard: v2Shell ? "Aujourd'hui" : "Tableau de bord",
+    write: "Écrire",
     repurpose: "Seconde vie d'un contenu",
     create: "Créer un post",
     history: "Mes posts",
@@ -21224,8 +21253,19 @@ export default function Home() {
   const onNav = (item) =>
     isLocked(item) ? setUpgrade({ feature: item.featureLabel, requires: item.requires }) : handleNav(item);
 
+  const isActive = (item) => (item.match ?? [item.id]).includes(view);
+  const desktopEntries = () => (v2Shell ? navEntries().filter((e) => !e.mobileOnly && e.header !== "Mon espace" && e.header !== "Administration") : navEntries());
   const navBtn = (item) => {
     const locked = isLocked(item);
+    if (v2Shell) {
+      return (
+        <button key={item.id} onClick={() => onNav(item)} aria-current={isActive(item) ? "page" : undefined} data-testid={`nav-${item.id}`} className={`app-nav ${isActive(item) ? "app-nav-on" : ""}`}>
+          <item.icon size={18} />
+          <span className="flex-1 text-left">{item.label}</span>
+          {item.badge ? <span className="app-nav-badge">{item.badge}</span> : null}
+        </button>
+      );
+    }
     return (
       <button
         key={item.id}
@@ -21314,7 +21354,7 @@ export default function Home() {
   // casserait position: sticky (barre latérale, barres d'actions).
   return (
     <EntreprisesCtx.Provider value={{ contexts, moments, activeContextId, activeContext, chooseContext }}>
-    <div className="min-h-screen flex overflow-x-clip">
+    <div className={`min-h-screen flex overflow-x-clip ${v2Shell ? "app-v2" : ""}`}>
       <MaintenanceBanner />
       {/* Tutoriel de première connexion */}
       {showTutorial && <TutorialOverlay canEvents={planAllows(user, "events")} onClose={closeTutorial} />}
@@ -21719,7 +21759,7 @@ export default function Home() {
             <p className="text-xs text-gray-400">Campagnes LinkedIn</p>
           </div>
         </button>
-        <nav className="flex-1 px-3 space-y-0.5 mt-1 overflow-y-auto">{navEntries().map((e) => (e.header ? navHeader(e.header) : navBtn(e)))}</nav>
+        <nav className="flex-1 px-3 space-y-0.5 mt-1 overflow-y-auto">{desktopEntries().map((e) => (e.header ? navHeader(e.header) : navBtn(e)))}</nav>
         <div className="px-3 mt-2">
           {user.isSuperAdmin ? (
             <div className="rounded-2xl bg-gray-50 p-3">
@@ -21730,7 +21770,7 @@ export default function Home() {
                 Compte d'administration — hors offres, sans accès aux outils de création.
               </p>
             </div>
-          ) : clientMode || agencyCollab ? null : (
+          ) : clientMode || agencyCollab || v2Shell ? null : (
             <div className="rounded-2xl bg-[#fff1f1] p-3">
               <p className="text-[11px] text-gray-500">Votre offre</p>
               <p className="font-bold text-[#ff5a5f] flex items-center gap-1.5">
@@ -21764,7 +21804,7 @@ export default function Home() {
             </div>
           )}
         </div>
-        <div className="px-3 pb-5 pt-3 border-t border-gray-100 mx-3 mb-1">
+        {!v2Shell && <div className="px-3 pb-5 pt-3 border-t border-gray-100 mx-3 mb-1">
           <div className="flex items-center gap-2.5 px-2">
             <div className="w-9 h-9 rounded-full bg-[#ffe0e0] text-[#f63d44] flex items-center justify-center text-sm font-bold shrink-0">
               {(user.name || user.email).slice(0, 1).toUpperCase()}
@@ -21777,7 +21817,7 @@ export default function Home() {
               <LogOut size={16} />
             </button>
           </div>
-        </div>
+        </div>}
       </aside>
 
       {/* Contenu */}
@@ -21828,13 +21868,13 @@ export default function Home() {
                         setMobileMenuOpen(false);
                       }}
                       className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium flex items-center gap-2.5 ${
-                        view === item.id ? "bg-[#ff5a5f] text-white" : locked ? "text-gray-300" : "text-gray-600 hover:bg-gray-50"
+                        isActive(item) ? "bg-[#ff5a5f] text-white" : locked ? "text-gray-300" : "text-gray-600 hover:bg-gray-50"
                       }`}
                     >
                       <item.icon size={16} />
                       <span className="flex-1 truncate">{item.label}</span>
                       {item.badge ? (
-                        <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${view === item.id ? "bg-white/25" : "bg-gray-100 text-gray-500"}`}>
+                        <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${isActive(item) ? "bg-white/25" : "bg-gray-100 text-gray-500"}`}>
                           {item.badge}
                         </span>
                       ) : null}
@@ -21907,8 +21947,30 @@ export default function Home() {
               <Linkedin size={16} /> Connecter LinkedIn
             </a>
           )}
+          {v2Shell && (
+            <AvatarMenuV2
+              user={user}
+              planName={plan.name}
+              planId={plan.id}
+              trialDays={user.trialEndsAt && accessState(user) !== "active" ? trialDaysLeft(user) : null}
+              postsThisMonth={postsThisMonth}
+              postsLimit={postsLimit}
+              postsReached={postsReached}
+              space={SPACE_ITEMS}
+              admin={user.isAdmin ? ADMIN_ITEMS : []}
+              onGo={(id) => setView(id)}
+              onLogout={logout}
+            />
+          )}
           </div>
         </header>
+        {v2Shell && view !== "write" && (
+          <SectionTabsV2
+            view={view}
+            onGo={(id) => onNav({ id, requires: id === "campaigns" || id === "events" ? id : undefined, featureLabel: id === "campaigns" ? "Les campagnes" : id === "events" ? "Le module Événements" : undefined })}
+            isLocked={(id) => (id === "campaigns" || id === "events") && !planAllows(user, id)}
+          />
+        )}
 
       {toast && (
         <div className="fixed top-4 right-4 bg-gray-900 text-white px-4 py-2 rounded-lg text-sm shadow-lg z-50">
@@ -22038,7 +22100,12 @@ export default function Home() {
       {clientMode && clientTool === "approval" && <ApprovalLinkDialog client={impersonating} showToast={showToast} onClose={() => setClientTool(null)} />}
       {clientMode && clientTool === "report" && <MonthlyReportModal client={impersonating} onClose={() => setClientTool(null)} />}
 
-      {view === "dashboard" ? (
+      {view === "write" ? (
+        <WriteHubV2
+          onGo={(id) => onNav({ id, requires: id === "campaigns" || id === "events" ? id : undefined, featureLabel: id === "campaigns" ? "Les campagnes" : id === "events" ? "Le module Événements" : undefined })}
+          isLocked={(id) => (id === "campaigns" || id === "events") && !planAllows(user, id)}
+        />
+      ) : view === "dashboard" ? (
         <DashboardView
           drafts={drafts}
           canVeille={planAllows(user, "veille")}
