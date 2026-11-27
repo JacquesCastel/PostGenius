@@ -3,7 +3,7 @@
 # ANCIENNE VERSION de deploy.sh, conservée en SECOURS : si le nouveau deploy.sh a un défaut, lancer ./deploy.legacy.sh à la place
 # (même résultat, sans retour arrière automatique, sans garde-fou de schéma, sans contrôle après déploiement).
 #
-# Déploiement LinkeePost (serveur Hetzner /opt/postgenius)
+# Déploiement Vercéa (serveur Hetzner /opt/postgenius)
 #
 # POURQUOI CE SCRIPT : sur ce serveur, `next build` lancé par `docker build`
 # (ou directement sur le volume monté) prérend les grandes pages À VIDE,
@@ -105,6 +105,6 @@ docker image prune -f >/dev/null 2>&1 || true
 docker builder prune -af >/dev/null 2>&1 || true
 echo "    disque : $(df -h / | awk 'NR==2{print $3" utilisés sur "$2" ("$5")"}')"
 echo -n "    titre servi en prod : "
-curl -skL https://linkeepost.app | grep -o '<title>[^<]*' || true
+curl -skL https://vercea.app | grep -o '<title>[^<]*' || true
 echo
 echo "==> Terminé."
