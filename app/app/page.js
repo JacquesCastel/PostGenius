@@ -10125,11 +10125,46 @@ function RecoCarousel({ recos, onGenerate, onIgnore, actingId, showFilters = tru
 
 // Tableau de bord : « Que publier aujourd'hui ? » = le prompt d'échange avec le copilote, puis le
 // slider de propositions. Filtres, réglages et suivi restent dans l'espace Copilote IA.
-function RecoToday({ onGenerate, onGoCopilot, onGoVoice, showToast, profile, onProfileSaved }) {
+function RecoToday({ v2 = false, onGenerate, onGoCopilot, onGoVoice, showToast, profile, onProfileSaved }) {
   const [voiceOk, setVoiceOk] = useState(false);
   useEffect(() => { setVoiceOk(canRecordVoice()); }, []);
   const { recos, loading, refreshing, error, actingId, load, respond, updateReco, highlightId } = useRecommendations(showToast);
   const sel = useRecoSelection(recos);
+  // Nouvelle application : trois idées en liste (thématique, titre, angle, « Écrire »). Le copilote complet (échange, filtres, toutes les propositions) est dans « Mon copilote ».
+  if (v2) {
+    return (
+      <section className="app-card px-6 py-5" data-testid="reco-compact">
+        <div className="flex items-baseline gap-3 flex-wrap">
+          <span className="text-xs font-semibold tracking-wide uppercase text-[#6b5a70]"><span className="inline-block w-2 h-2 rounded-full bg-[#c2456f] mr-2 align-middle" />Idées du copilote</span>
+          <button type="button" onClick={() => load(true)} disabled={refreshing || loading} className="ml-auto text-sm font-semibold text-[#9e3157] hover:underline disabled:opacity-50">{refreshing ? "Recherche…" : "D'autres idées"}</button>
+        </div>
+        {loading ? (
+          <p className="text-sm text-gray-500 py-6">Analyse de votre stratégie éditoriale…</p>
+        ) : error ? (
+          <p className="text-sm text-amber-800 py-4">{error}</p>
+        ) : !recos?.length ? (
+          <p className="text-sm text-gray-500 py-4">Aucune idée pour l&apos;instant. <button type="button" onClick={() => load(true)} className="font-semibold text-[#9e3157] hover:underline">Réessayer</button></p>
+        ) : (
+          <div className="mt-2">
+            {recos.slice(0, 3).map((r, i) => (
+              <div key={r.id} data-testid="reco-row" className={`flex items-start gap-3 py-4 ${i ? "border-t border-[#a88692]/20" : ""}`}>
+                {r.pillar?.name ? <span className="shrink-0 text-xs font-semibold px-2.5 py-0.5 rounded-full bg-[#F6E3E0] text-[#7A2342] max-w-[9rem] truncate">{r.pillar.name}</span> : null}
+                <div className="flex-1 min-w-0 text-[15px] leading-snug">
+                  <p className="font-semibold">{r.topic}</p>
+                  {r.angle ? <p className="text-[13px] text-gray-500 mt-1 line-clamp-2">{r.angle}</p> : null}
+                </div>
+                <button type="button" disabled={actingId === r.id} onClick={() => { respond(r, "générée"); onGenerate(r); }} className="shrink-0 text-sm font-semibold text-[#9e3157] hover:underline disabled:opacity-50">Écrire</button>
+              </div>
+            ))}
+          </div>
+        )}
+        <div className="flex items-center gap-4 flex-wrap pt-2">
+          {voiceOk && onGoVoice && <button type="button" onClick={() => onGoVoice("free")} data-testid="today-dictate" className="text-sm font-semibold text-[#9e3157] hover:underline">Dicter une idée</button>}
+          <button type="button" onClick={onGoCopilot} className="text-sm font-semibold text-[#9e3157] hover:underline">Discuter avec mon copilote →</button>
+        </div>
+      </section>
+    );
+  }
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-2 flex-wrap">
@@ -11587,7 +11622,7 @@ const ISO_DAY = { lun: 1, mar: 2, mer: 3, jeu: 4, ven: 5, sam: 6, dim: 7 };
 const DAY_FULL = ["", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"];
 const isoDay = (d) => ((d.getDay() + 6) % 7) + 1;
 const sameDayStr = (a, b) => a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
-function DashToday({ v2 = false, drafts, profile, ns, campaigns, canCampaigns, voiceOk, onGoCreate, onGoHistory, onGoView, onGoVoice, onOpenMonth, ideas, onGoProfileField, linkedin, orgs, tab, onTab, onProfileSaved, showToast }) {
+function DashToday({ v2 = false, firstName = "", drafts, profile, ns, campaigns, canCampaigns, voiceOk, onGoCreate, onGoHistory, onGoView, onGoVoice, onOpenMonth, ideas, onGoProfileField, linkedin, orgs, tab, onTab, onProfileSaved, showToast }) {
   const { contexts } = useContext(EntreprisesCtx);
   const [filter, setFilter] = useState("all");
   const [openPost, setOpenPost] = useState(null); // « Les 7 prochains jours » : détail d'un post
@@ -11645,8 +11680,8 @@ function DashToday({ v2 = false, drafts, profile, ns, campaigns, canCampaigns, v
   const weekBlock = (
       <div className="bg-white border border-[#e8ecf2] rounded-[18px] p-4" data-testid="dash-week">
         <div className="flex items-baseline gap-3 mb-2.5 flex-wrap">
-          <span className="text-xs font-bold tracking-wider uppercase text-[#5a6b85]">Les 7 prochains jours</span>
-          <button type="button" onClick={onOpenMonth} data-testid="dash-open-month" className="ml-auto text-[13px] font-semibold text-[#0a66c2] hover:underline">Voir le mois</button>
+          <span className="text-xs font-bold tracking-wider uppercase text-[#5a6b85]">{v2 ? "Cette semaine" : "Les 7 prochains jours"}</span>
+          <button type="button" onClick={v2 ? () => { onTab("planning"); onOpenMonth(); } : onOpenMonth} data-testid="dash-open-month" className="ml-auto text-[13px] font-semibold text-[#0a66c2] hover:underline">{v2 ? "Voir le calendrier" : "Voir le mois"}</button>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
           {days.map((day, i) => {
@@ -11662,7 +11697,7 @@ function DashToday({ v2 = false, drafts, profile, ns, campaigns, canCampaigns, v
                     <span className="font-medium">{kind === "va" ? "À valider" : kind === "pu" ? "Publié" : "Programmé"} · {at.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }).replace(":", " h ")}</span>
                   </button>
                 ))}
-                {evs.length === 0 && <button type="button" onClick={onGoCreate} className="text-[11px] text-slate-400 border border-dashed border-slate-300 rounded-lg px-1.5 py-1 hover:text-[#a3242a] hover:border-[#f3a3a6]">Rien de prévu</button>}
+                {evs.length === 0 && <button type="button" onClick={onGoCreate} className={`text-[11px] text-slate-400 rounded-lg px-1.5 py-1 hover:text-[#a3242a] ${v2 ? "text-center" : "border border-dashed border-slate-300 hover:border-[#f3a3a6]"}`}>Rien de prévu</button>}
               </div>
             );
           })}
@@ -11683,10 +11718,20 @@ function DashToday({ v2 = false, drafts, profile, ns, campaigns, canCampaigns, v
   return (
     <div className="space-y-4" data-testid="dash-today">
       <div className="flex items-center gap-4 flex-wrap">
+        {v2 ? (
+          <div className="flex-1 min-w-[16rem]">
+            <p className="text-xs font-semibold tracking-[0.08em] uppercase text-[#c2456f] mb-2" data-testid="dash-date">{now.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}</p>
+            <h1 className="font-display text-[2.25rem] leading-[1.1]" data-testid="dash-greeting">
+              {firstName ? `Bonjour ${firstName}. ` : "Bonjour. "}
+              <em className="text-[#c2456f]">{todoItems.length === 0 ? "Rien d'urgent aujourd'hui." : todoItems.length === 1 ? "Une chose pour aujourd'hui." : `${["", "", "Deux", "Trois"][todoItems.length] ?? todoItems.length} choses pour aujourd'hui.`}</em>
+            </h1>
+          </div>
+        ) : (
         <div className="flex-1 min-w-[14rem]">
           <p className="text-lg font-extrabold" data-testid="dash-date">{cap(now.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" }))}</p>
           <p className="text-sm text-[#5a6b85] mt-0.5">Voici ce qui compte aujourd&apos;hui.</p>
         </div>
+        )}
         {themes.length > 0 && (
           <div className="flex flex-wrap gap-1.5" data-testid="dash-filter" role="group" aria-label="Thématique">
             {[{ id: "all", name: "Toutes" }, ...themes].map((t) => (
@@ -11723,7 +11768,7 @@ function DashToday({ v2 = false, drafts, profile, ns, campaigns, canCampaigns, v
       </div>
       )}
 
-      <div className={card} data-testid="dash-repurpose">
+      {!v2 && (<div className={card} data-testid="dash-repurpose">
         <div className="flex items-center gap-3 flex-wrap">
           <div className="flex-1 min-w-[16rem]">
             <span className={lb}>Seconde vie d&apos;un contenu{!canCampaigns && <span className="ml-2 normal-case tracking-normal text-[11px] font-bold text-[#7a4b00] bg-[#fff4d6] rounded-full px-2 py-0.5">Pro et Agence</span>}</span>
@@ -11731,25 +11776,16 @@ function DashToday({ v2 = false, drafts, profile, ns, campaigns, canCampaigns, v
           </div>
           <button type="button" onClick={() => onGoView?.("repurpose")} data-testid="dash-repurpose-go" className="text-sm font-bold text-[#a3242a] bg-white border border-[#f3a3a6] hover:bg-[#fff8f8] px-4 py-2.5 rounded-xl">Donner une seconde vie à un contenu</button>
         </div>
-      </div>
+      </div>)}
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
+      {!v2 && (<div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
         {kpi("À valider", toValidate.length, v2 ? "#9e3157" : "#6b21a8", "Ils ne partent pas sans vous", () => onTab("today"))}
         {kpi("Programmés cette semaine", scheduledWeek.length, v2 ? "#8a3b12" : "#7a4b00", next ? `Prochain : ${fmtDateTime(next.scheduledAt)}` : "Rien de programmé", () => onTab("planning"))}
         {kpi("Publiés ce mois-ci", publishedMonth.length, v2 ? "#2b5340" : "#166534", profile?.postsPerWeek ? `Rythme visé : ${profile.postsPerWeek} par semaine` : "Sur LinkedIn", () => onTab("results"))}
         {kpi("Brouillons", brouillons.length, v2 ? "#7a2342" : "#084a8d", brouillons.length ? "À publier ou programmer" : "Aucun en attente", onGoHistory)}
-      </div>
+      </div>)}
 
-      {v2 ? (
-        <div className="flex flex-wrap gap-2 pt-1" role="tablist" aria-label="Sections d'aujourd'hui" data-testid="dash-tabs">
-          {tabs.map(([id, label, badge]) => (
-            <button key={id} type="button" role="tab" id={`dash-tab-${id}`} aria-selected={tab === id} aria-controls={`dash-panel-${id}`} onClick={() => onTab(id)} data-testid={`dash-tab-${id}`} className={`app-tab ${tab === id ? "app-tab-on" : ""}`}>
-              {label}
-              {badge > 0 && <span className="app-nav-badge" data-testid={`dash-tab-${id}-badge`} aria-label={`${badge} à traiter`}>{badge}</span>}
-            </button>
-          ))}
-        </div>
-      ) : (
+      {v2 ? null : (
       <div className="grid grid-cols-3 gap-2 sm:gap-3 pt-1" role="tablist" aria-label="Sections du tableau de bord" data-testid="dash-tabs">
         {tabs.map(([id, label, badge, Icon, sub]) => {
           const on = tab === id;
@@ -11824,8 +11860,9 @@ function DashToday({ v2 = false, drafts, profile, ns, campaigns, canCampaigns, v
 
       {tab === "planning" && (
       <div className="space-y-4" role="tabpanel" id="dash-panel-planning" aria-labelledby="dash-tab-planning" data-testid="dash-panel-planning">
+      {v2 && <button type="button" onClick={() => onTab("today")} data-testid="dash-back-today" className="text-sm font-semibold text-[#9e3157] hover:underline">← Retour à aujourd&apos;hui</button>}
       <DashSlots coach={coach} profile={profile} onProfileSaved={onProfileSaved} showToast={showToast} />
-      {weekBlock}
+      {!v2 && weekBlock}
 
       </div>
       )}
@@ -11847,10 +11884,11 @@ function DashToday({ v2 = false, drafts, profile, ns, campaigns, canCampaigns, v
         </div>
       )}
       {v2 && weekBlock}
+      <div className={v2 ? "grid lg:grid-cols-[1.35fr_1fr] gap-6 items-start" : "space-y-4"}>
       <div className="min-w-0" data-testid="dash-ideas">{ideas}</div>
 
-      <div className="grid md:grid-cols-2 md:[&>*:only-child]:col-span-2 gap-3.5 items-start">
-        <div className="contents">
+      <div className={v2 ? "flex flex-col gap-6 min-w-0" : "grid md:grid-cols-2 md:[&>*:only-child]:col-span-2 gap-3.5 items-start"}>
+        <div className={v2 ? "flex flex-col gap-6" : "contents"}>
           {canCampaigns && (
             <div className={card} data-testid="dash-campaigns">
               <span className={lb}>Campagnes en cours</span>
@@ -11879,12 +11917,13 @@ function DashToday({ v2 = false, drafts, profile, ns, campaigns, canCampaigns, v
         </div>
       </div>
       </div>
+      </div>
       )}
     </div>
   );
 }
 
-function DashboardView({ v2 = false, drafts, canVeille = true, canEvents = false, canScore = true, canCampaigns = true, postsLimit = null, onGoCreate, onGoHistory, onGoEvents, onGoProfile, onGoProfileField, onGoView, onGoCopilot, onApprove, onReschedule, profile, linkedin, orgs, onPlanned, onProfileSaved, showToast, onInspire, onGenerateFromReco, onGoVoice }) {
+function DashboardView({ v2 = false, firstName = "", drafts, canVeille = true, canEvents = false, canScore = true, canCampaigns = true, postsLimit = null, onGoCreate, onGoHistory, onGoEvents, onGoProfile, onGoProfileField, onGoView, onGoCopilot, onApprove, onReschedule, profile, linkedin, orgs, onPlanned, onProfileSaved, showToast, onInspire, onGenerateFromReco, onGoVoice }) {
   const ns = useNextSteps(profile);
   const [periodDays, setPeriodDays] = useState(7);
   const [planTarget, setPlanTarget] = useState("person");
@@ -11898,7 +11937,7 @@ function DashboardView({ v2 = false, drafts, canVeille = true, canEvents = false
     try {
       const q = new URLSearchParams(window.location.search).get("tab");
       const v = ["today", "planning", "results"].includes(q) ? q : window.localStorage.getItem("lp_dash_tab");
-      if (["today", "planning", "results"].includes(v)) setTabState(v);
+      if (["today", "planning", "results"].includes(v)) setTabState(v2 && v === "results" ? "today" : v);
     } catch {}
   }, []);
   const setTab = (v) => { setTabState(v); try { window.localStorage.setItem("lp_dash_tab", v); } catch {} };
@@ -12036,6 +12075,7 @@ function DashboardView({ v2 = false, drafts, canVeille = true, canEvents = false
       <ThemesNewsBanner profile={profile} onOpen={() => onGoView?.("themes")} />
       <DashToday
         v2={v2}
+        firstName={firstName}
         drafts={drafts}
         linkedin={linkedin}
         orgs={orgs}
@@ -12054,7 +12094,7 @@ function DashboardView({ v2 = false, drafts, canVeille = true, canEvents = false
         onProfileSaved={onProfileSaved}
         showToast={showToast}
         onOpenMonth={() => { setMonthOpen(true); setTimeout(() => document.getElementById("dash-month")?.scrollIntoView({ behavior: "smooth", block: "start" }), 80); }}
-        ideas={<RecoToday onGenerate={onGenerateFromReco} onGoCopilot={onGoCopilot} onGoVoice={onGoVoice} showToast={showToast} profile={profile} onProfileSaved={onProfileSaved} />}
+        ideas={<RecoToday v2={v2} onGenerate={onGenerateFromReco} onGoCopilot={onGoCopilot} onGoVoice={onGoVoice} showToast={showToast} profile={profile} onProfileSaved={onProfileSaved} />}
       />
 
       {tab === "planning" && (<>
@@ -21975,11 +22015,11 @@ export default function Home() {
 
         {/* Barre supérieure */}
         <header className="px-6 pt-6 pb-1 flex items-center justify-between flex-wrap gap-3 max-w-5xl mx-auto">
-          <div>
+          <div className={v2Shell && view === "dashboard" ? "hidden" : ""}>
             <h1 className="text-xl font-bold">{VIEW_TITLES[view]}</h1>
             <p className="text-xs text-gray-400">{agencyHome ? `Agence · ${user.name || ""}` : clientMode ? `Client : ${impersonating.companyName || impersonating.name}` : `Bonjour ${user.name || ""} 👋`}</p>
           </div>
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-2 flex-wrap ml-auto">
           {agencyHome && !user.isSuperAdmin && <NotificationBell onOpenView={setView} onOpenClient={(cid, v, post, comment) => { if (post) setEngagePost(post); if (comment) setEngageComment(comment); if (cid) openClientSpace(cid, v); else setView(v); }} />}
           {contexts.length > 0 && !user.isSuperAdmin && ["dashboard", "create", "campaigns", "brand-kit", "datalake"].includes(view) && (
             <label className="flex items-center gap-1.5 text-xs text-gray-500" data-testid="global-context">
@@ -21990,7 +22030,7 @@ export default function Home() {
               </select>
             </label>
           )}
-          {user.isSuperAdmin || agencyHome ? null : linkedin.connected ? (
+          {user.isSuperAdmin || agencyHome || (v2Shell && linkedin.connected && linkedin.orgConnected) ? null : linkedin.connected ? (
             <div className="flex items-center gap-2 text-sm flex-wrap">
               <span className="flex items-center gap-1.5 bg-green-50 text-green-700 px-3 py-1.5 rounded-full text-xs font-medium">
                 <span className="w-2 h-2 bg-green-500 rounded-full" />
@@ -22184,6 +22224,7 @@ export default function Home() {
       ) : view === "dashboard" ? (
         <DashboardView
           v2={v2Shell}
+          firstName={String(user.name || "").trim().split(/\s+/)[0] || ""}
           drafts={drafts}
           canVeille={planAllows(user, "veille")}
           canEvents={planAllows(user, "events")}

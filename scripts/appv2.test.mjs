@@ -148,3 +148,16 @@ test("Mes posts en liste : même largeur que l'en-tête, deux colonnes de cartes
   assert.ok(page.includes('v2List ? "grid grid-cols-1 md:grid-cols-2 gap-4 items-start" : "space-y-3 max-h-[68vh] overflow-y-auto pr-1"'));
   assert.ok(page.includes('${v2List ? "hidden" : ""}'));
 });
+
+test("Aujourd'hui : calé sur la maquette (salutation, choses à faire, semaine, idées et campagne en deux colonnes)", () => {
+  assert.ok(page.includes('data-testid="dash-greeting"'));
+  assert.ok(page.includes('"Rien d\'urgent aujourd\'hui."'));
+  assert.ok(page.includes('lg:grid-cols-[1.35fr_1fr]'));
+  assert.ok(page.includes('data-testid="reco-compact"'));
+  assert.ok(page.includes('"Voir le calendrier"'));
+  // l'ancien tableau de bord garde ses blocs : seconde vie, compteurs, grands onglets
+  for (const id of ["dash-repurpose", "dash-kpi", 'aria-label="Sections du tableau de bord"']) assert.ok(page.includes(id), id);
+  // ... et rien n'est perdu : seconde vie dans Écrire, planning derrière « Voir le calendrier »
+  assert.ok(shell.includes('data-testid="write-repurpose"'));
+  assert.ok(page.includes('data-testid="dash-back-today"'));
+});

@@ -191,6 +191,7 @@ export function WriteHubV2({ onGo, isLocked }) {
           </button>
         ))}
       </div>
+      <p className="text-sm text-gray-600">Un article, un webinaire, une étude de cas ? <button type="button" onClick={() => onGo("repurpose")} data-testid="write-repurpose" className="font-semibold text-[#9E3157] hover:underline">Donnez-lui une seconde vie</button> : une série de posts écrits à partir de ses seuls faits.</p>
     </div>
   );
 }
