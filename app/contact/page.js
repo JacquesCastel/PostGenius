@@ -24,8 +24,8 @@ export default function ContactPage() {
   const titre = liaisonsEm("Parlons de votre présence", "LinkedIn.");
   return (
     <Shell>
-      <div className="w-full max-w-[1200px] mx-auto px-4 sm:px-8 pt-8 pb-24 flex flex-wrap gap-12 lg:gap-16 items-start">
-        <div className="flex-[1_1_420px] min-w-0">
+      <div className="w-full max-w-[1200px] mx-auto px-4 sm:px-8 pt-8 pb-24">
+        <div className="entete-centre">
           <p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-[#C2456F]">Contact</p>
           <h1 className="font-display text-[40px] sm:text-[50px] leading-[1.08] tracking-[-0.02em] mt-3">
             {titre[0]}<em className="text-[#C2456F]">{titre[1]}</em>
@@ -37,7 +37,9 @@ export default function ContactPage() {
           <p className="text-base text-[#4A3A50] mt-4 leading-relaxed">
             {pick(`${BRAND_NAME} est en bêta fermée : pour y participer, demandez une invitation sur la page de la bêta. Le formulaire est là pour tout le reste.`, `Pas besoin d'attendre pour tester ${BRAND_NAME} — l'essai est gratuit pendant 14 jours, sans carte bancaire. Le formulaire est là pour tout le reste.`)}
           </p>
-
+        </div>
+        <div className="mt-12 flex flex-wrap gap-12 lg:gap-16 items-start">
+        <div className="flex-[1_1_420px] min-w-0">
           <ul className="mt-9 space-y-5">
             {POINTS.map((p) => (
               <li key={p.title} className="flex items-start gap-4">
@@ -64,6 +66,7 @@ export default function ContactPage() {
           <h2 className="text-[22px] font-semibold">{liaisons("Envoyez-nous un message")}</h2>
           <p className="text-sm text-[#6B5A70] mt-1.5 mb-6">On vous répond à l&apos;adresse indiquée.</p>
           <ContactForm variant="v2" />
+        </div>
         </div>
       </div>
     </Shell>

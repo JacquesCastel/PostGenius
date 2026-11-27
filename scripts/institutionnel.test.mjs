@@ -178,3 +178,15 @@ test("une seule largeur de page (1200 px, alignée sur le menu), texte calé à 
   assert.match(read("app/globals.css"), /:where\(\.page-v2\) :where\(p, li\) \{ max-width: 46rem; \}/);
   assert.match(read("components/v2/Shell.js"), /flex-1 w-full page-v2/);
 });
+
+test("pages hors produit : l'en-tête (kicker, titre, accroche, introduction) est centré ; les pages produit restent calées à gauche", () => {
+  for (const f of ["app/preuves/page.js", "app/preuves/test-e4/page.js", "app/a-propos/page.js", "app/blog/page.js", "app/contact/page.js", "app/beta/page.js", "app/legal/page.js", "app/securite/page.js", "app/privacy-policy/page.js"]) {
+    assert.match(read(f), /className="[^"]*entete-centre/, f);
+  }
+  for (const f of ["app/produit/page.js", "app/produit/methode/page.js", "app/produit/verification/page.js"]) assert.doesNotMatch(read(f), /entete-centre/, `${f} : reste à gauche`);
+  assert.match(read("app/globals.css"), /\.entete-centre \{ text-align: center; \}/);
+  assert.match(read("app/globals.css"), /\.entete-centre > :where\(p, h1, h2\) \{ margin-left: auto; margin-right: auto; \}/);
+  // contact : l'en-tête est au-dessus des deux colonnes
+  const c = read("app/contact/page.js");
+  assert.ok(c.indexOf('className="entete-centre"') < c.indexOf('<ul className="mt-9 space-y-5">'));
+});

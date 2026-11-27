@@ -57,7 +57,8 @@ export default function BetaPage() {
   return (
     <Shell>
       <div className="w-full max-w-[1200px] mx-auto px-4 sm:px-8 pt-8 pb-24">
-        <span className="inline-block text-xs font-semibold uppercase tracking-[0.06em] bg-[#F6E3E0] text-[#7A2342] px-3.5 py-1.5 rounded-full">Bêta fermée</span>
+        <div className="entete-centre">
+<span className="inline-block text-xs font-semibold uppercase tracking-[0.06em] bg-[#F6E3E0] text-[#7A2342] px-3.5 py-1.5 rounded-full">Bêta fermée</span>
         <h1 className="font-display text-[42px] sm:text-[54px] leading-[1.06] tracking-[-0.02em] mt-5 max-w-3xl">
           {titre[0]}<em className="text-[#C2456F]">{titre[1]}</em>
         </h1>
@@ -65,6 +66,7 @@ export default function BetaPage() {
           {BRAND_NAME} prépare, programme et mesure vos posts LinkedIn. Avant de l&apos;ouvrir à tous, nous l&apos;ouvrons à un petit groupe de testeurs :
           dirigeants et indépendants, consultants, petites agences. Les places sont limitées.
         </p>
+</div>
 
         <div className="grid md:grid-cols-3 gap-5 mt-12">
           {BLOCS.map((b) => (

@@ -9,8 +9,10 @@ export default async function Securite() {
   return (
     <Shell>
       <div className="w-full max-w-[1200px] mx-auto px-4 sm:px-8 pt-8 pb-24">
-        <p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-[#C2456F] mb-3">Sécurité</p>
+        <div className="entete-centre">
+<p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-[#C2456F] mb-3">Sécurité</p>
         <h1 className="font-display text-[34px] sm:text-[48px] leading-[1.08] tracking-[-0.02em]">{page.title}</h1>
+</div>
         <section className="mt-10 flex flex-col gap-4">
           {page.sections.map((s, i) => (
             <div key={i} className="bg-white border border-[#EFE4E0] rounded-3xl p-6">

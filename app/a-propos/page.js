@@ -43,7 +43,7 @@ export default function AProposPage() {
     <Shell>
       <div className="w-full max-w-[1200px] mx-auto px-4 sm:px-8 pt-8 pb-24">
         <section className="flex flex-wrap gap-12 items-center pb-12">
-          <div className="flex-[1_1_520px] min-w-0">
+          <div className="flex-[1_1_520px] min-w-0 entete-centre">
             <Kick>À propos</Kick>
             <h1 className="font-display text-[38px] sm:text-[54px] leading-[1.06] tracking-[-0.02em]">{titre[0]}<em className="text-[#C2456F]">{titre[1]}</em></h1>
             <p className="text-[19px] leading-relaxed text-[#4A3A50] mt-6 max-w-[560px]">Nous avons commencé par une question simple : quand une IA écrit un post, y glisse-t-elle des chiffres que personne ne lui a donnés ? Nous l&apos;avons mesuré, et c&apos;est de là que vient le produit.</p>

@@ -28,13 +28,15 @@ export default function PreuvesPage() {
   return (
     <Shell>
       <div className="w-full max-w-[1200px] mx-auto px-4 sm:px-8 pt-8 pb-24">
-        <p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-[#C2456F]">Preuves</p>
+        <div className="entete-centre">
+<p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-[#C2456F]">Preuves</p>
         <h1 className="font-display text-[40px] sm:text-[56px] leading-[1.06] tracking-[-0.02em] mt-3">
           {titre[0]}<em className="text-[#C2456F]">{titre[1]}</em>
         </h1>
         <p className="text-[19px] sm:text-xl leading-relaxed text-[#4A3A50] mt-6 max-w-[760px]">
           Une preuve, ici, c'est un protocole publié avant le test, des textes complets et des limites écrites. Vous pouvez la vérifier sans nous croire sur parole. Elle porte sur ce que fait l'outil de vos informations.
         </p>
+</div>
 
         <h2 className="font-display text-[28px] sm:text-[32px] tracking-[-0.01em] mt-14 mb-5">{liaisons("Notre manière de prouver")}</h2>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

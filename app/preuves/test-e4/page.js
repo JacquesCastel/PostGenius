@@ -35,7 +35,8 @@ export default function TestE4Page() {
   return (
     <Shell>
       <div className="w-full max-w-[1200px] mx-auto px-4 sm:px-8 pt-8 pb-24">
-        <p className="text-sm text-[#6B5A70] mb-5"><Link href="/preuves" className="text-[#6B5A70] hover:text-[#7A2342]">Preuves</Link> &nbsp;/&nbsp; Test E4</p>
+        <div className="entete-centre">
+<p className="text-sm text-[#6B5A70] mb-5"><Link href="/preuves" className="text-[#6B5A70] hover:text-[#7A2342]">Preuves</Link> &nbsp;/&nbsp; Test E4</p>
         <p className="inline-block bg-[#F6E3E0] text-[#7A2342] text-[13px] font-semibold px-3.5 py-1.5 rounded-full mb-3.5">Résultats du {E4.date} · test non scientifique</p>
         <h1 className="font-display text-[36px] sm:text-[50px] leading-[1.08] tracking-[-0.02em]">
           {titre[0]}<em className="text-[#C2456F]">{titre[1]}</em>
@@ -44,6 +45,7 @@ export default function TestE4Page() {
         <p className="text-[19px] sm:text-xl leading-relaxed text-[#4A3A50] mt-6">
           Nous avons relevé tout fait contrôlable : chiffres, dates, noms propres, études et sources citées, citations. Dix sujets fictifs, une génération par cas, un seul classeur, qui connaît l'outil évalué. Nous sommes juge et partie : c'est pourquoi tout est publié, y compris ce qui ne nous avantage pas.
         </p>
+</div>
 
         <div className="mt-10 bg-white border border-[#EFE4E0] rounded-[28px] p-6 sm:p-9" data-testid="e4-chart">
           <p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-[#6B5A70] mb-1.5">Éléments inventés ou déformés, en moyenne par post</p>
