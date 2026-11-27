@@ -79,9 +79,10 @@ html {
   .app-v2 .bg-white.rounded-2xl, .app-v2 .bg-white.rounded-3xl { box-shadow: 6px 6px 14px var(--v2-d), -6px -6px 14px var(--v2-l); }
 }
 /* Bleus et rouges de l'ancienne charte : mêmes boutons et liens, en framboise */
-.app-v2 [class*="text-[#0a66c2]"], .app-v2 [class*="text-[#084d92]"] { color: #9e3157; }
-.app-v2 [class*="border-[#0a66c2]"] { border-color: #c2456f; }
-.app-v2 [class*="bg-[#0a66c2]"] { background-color: #c2456f; }
+/* L'aperçu LinkedIn garde les couleurs de LinkedIn (bleu des hashtags, pastille de page) */
+.app-v2 [class*="text-[#0a66c2]"]:not([data-testid="li-preview"] *), .app-v2 [class*="text-[#084d92]"]:not([data-testid="li-preview"] *) { color: #9e3157; }
+.app-v2 [class*="border-[#0a66c2]"]:not([data-testid="li-preview"] *) { border-color: #c2456f; }
+.app-v2 [class*="bg-[#0a66c2]"]:not([data-testid="li-preview"] *) { background-color: #c2456f; }
 .app-v2 [class*="hover:bg-[#084d92]"]:hover, .app-v2 [class*="hover:bg-[#004182]"]:hover, .app-v2 [class*="hover:bg-[#084a8d]"]:hover { background-color: #9e3157; }
 .app-v2 [class*="bg-[#d63b42]"], .app-v2 [class*="bg-[#d12d33]"] { background-color: #c2456f; }
 .app-v2 [class*="hover:bg-[#c2343a]"]:hover { background-color: #9e3157; }
@@ -111,3 +112,16 @@ html {
 .app-v2 .app-bottombar { position: fixed; left: 12px; right: 12px; bottom: calc(14px + env(safe-area-inset-bottom, 0px)); z-index: 45; display: flex; align-items: center; justify-content: space-around; padding: 6px 4px; border-radius: 26px; background: var(--v2-bg); box-shadow: 6px 6px 16px var(--v2-d), -6px -6px 16px var(--v2-l); }
 .app-v2 .app-bb { display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 0; flex: 1; padding: 6px 2px; border-radius: 18px; font-size: 0.6875rem; font-weight: 600; color: #4a3a50; }
 .app-v2 .app-bb-on { color: #9e3157; box-shadow: var(--v2-sunk); }
+
+/* Encres, gris et fonds bleutés de l'ancienne charte → prune et tons chauds (hors aperçu LinkedIn) */
+.app-v2 [class*="text-[#1b2a4a]"]:not([data-testid="li-preview"] *) { color: #2e1f33; }
+.app-v2 [class*="text-[#33415c]"]:not([data-testid="li-preview"] *) { color: #4a3a50; }
+.app-v2 [class*="text-[#5a6b85]"]:not([data-testid="li-preview"] *) { color: #6b5a70; }
+.app-v2 [class*="bg-[#1b2a4a]"]:not([data-testid="li-preview"] *) { background-color: #2e1f33; }
+.app-v2 [class*="bg-[#e8f1fb]"], .app-v2 [class*="bg-[#f4f8fd]"] { background-color: #f6e3e0; }
+.app-v2 .bg-sky-50, .app-v2 [class*="border-[#d6e6f7]"] { background-color: #fbefee; border-color: #f0c9d3; }
+.app-v2 [class*="bg-[#fff8f8]"] { background-color: #fbefee; }
+.app-v2 [class*="border-[#ffd5d6]"] { border-color: #f0c9d3; }
+.app-v2 [class*="border-[#cbd5e1]"], .app-v2 [class*="border-[#e2e8f0]"], .app-v2 [class*="border-[#e8ecf2]"] { border-color: rgba(168, 134, 146, 0.3); }
+.app-v2 [class*="bg-[#e5454a]"] { background-color: #c2456f; }
+.app-v2 [class*="accent-[#ff5a5f]"] { accent-color: #c2456f; }
