@@ -176,10 +176,10 @@ const PARCOURS_ETAPES = [
   ["Où publier", "Votre profil LinkedIn et, si vous le souhaitez, la page de votre entreprise."],
   ["Votre premier post", "À partir d'une idée à vous, tapée ou dictée. Vous relisez avant toute publication."],
 ];
-function ParcoursApercu({ courant = 0 }) {
+function ParcoursApercu({ courant = 0, titre = "Ce qui vous attend, en 10 minutes" }) {
   return (
     <div className="bg-white border border-[#EFE4E0] rounded-3xl p-5 space-y-3.5 shadow-sm" data-testid="parcours-apercu">
-      <p className="text-xs font-bold uppercase tracking-wider text-[#6B5A70]">Ce qui vous attend, en 10 minutes</p>
+      <p className="text-xs font-bold uppercase tracking-wider text-[#6B5A70]">{titre}</p>
       {PARCOURS_ETAPES.map(([t, d], i) => (
         <div key={t} className="flex gap-3.5 items-start" aria-current={i === courant ? "step" : undefined}>
           <span className={`w-[30px] h-[30px] rounded-full text-sm font-extrabold flex items-center justify-center shrink-0 ${i < courant ? "bg-[#2B5340] text-white" : i === courant ? "bg-[#C2456F] text-white" : "bg-gray-200 text-gray-600"}`}>{i < courant ? "✓" : i + 1}</span>
@@ -13590,6 +13590,55 @@ function OnboardingSitesStep({ main, extras, input, onInput, onAdd, adding, onMa
   );
 }
 
+// Dernier écran du parcours d'inscription : ce que le compte a retenu, l'essai, et la porte vers le tableau de bord.
+// Même mise en page que les autres étapes (contenu à gauche, panneau « Ce qui vous attend » à droite, toutes les étapes cochées).
+function OnboardingRecap({ fields, user, linkedinConnected, pageConnected, onDone }) {
+  const texte = (v, max = 160) => { const t = String(v ?? "").replace(/\s+/g, " ").trim(); return t.length > max ? `${t.slice(0, max - 1)}…` : t; };
+  const fin = user?.trialEndsAt ? new Date(user.trialEndsAt) : null;
+  const finTexte = fin && !Number.isNaN(fin.getTime()) ? fin.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" }) : null;
+  const lignes = [
+    ["Vous", [texte(fields.name), texte(fields.expertise || fields.headline)].filter(Boolean).join(" · ")],
+    ["Votre entreprise", [texte(fields.companyName), texte(fields.website)].filter(Boolean).join(" · ")],
+    ["Votre activité", texte(fields.businessDescription)],
+    ["Votre cible", texte(fields.targetAudience)],
+    ["Un bon lead pour vous", texte(fields.leadIcp)],
+    ["Vos thématiques", texte(fields.themes)],
+    ["Votre voix", [texte(fields.tone), texte(fields.styleNotes, 120)].filter(Boolean).join(" · ")],
+    ["LinkedIn", [linkedinConnected ? "Profil connecté" : "Profil à connecter plus tard", pageConnected ? "Page connectée" : null].filter(Boolean).join(" · ")],
+  ].filter(([, v]) => v);
+  return (
+    <div className="min-h-screen flex flex-col bg-[#FCF8F5] text-[#2E1F33]" data-testid="wizard-recap">
+      <SiteHeader variant="v2" />
+      <div className="w-full mx-auto flex-1 px-4 sm:px-8 lg:px-10 py-6 sm:py-8 max-w-6xl lg:grid lg:grid-cols-[minmax(0,1fr)_26rem] lg:gap-12 lg:items-start">
+        <div className="min-w-0">
+          <div className="bg-white rounded-2xl border border-[#EFE4E0] shadow-sm p-5 sm:p-7">
+            <p className="text-xs font-medium text-[#C2456F] mb-1">Dernière étape</p>
+            <h1 className="font-display text-[30px] sm:text-[36px] leading-[1.1] font-medium tracking-[-0.015em]">Votre compte est prêt.</h1>
+            <p className="text-[15px] text-[#6B5A70] leading-relaxed mt-2">Voici ce que nous avons retenu de vos réponses. Vous pourrez tout modifier à tout moment, dans « Profil ».</p>
+            <dl className="mt-5 divide-y divide-[#EFE4E0] border-y border-[#EFE4E0]" data-testid="wizard-recap-list">
+              {lignes.map(([k, v]) => (
+                <div key={k} className="flex flex-col sm:flex-row gap-1 sm:gap-6 py-3">
+                  <dt className="sm:w-44 shrink-0 text-xs font-bold uppercase tracking-wider text-[#6B5A70] pt-0.5">{k}</dt>
+                  <dd className="text-[15px] leading-relaxed text-[#2E1F33] min-w-0 break-words">{v}</dd>
+                </div>
+              ))}
+            </dl>
+            <div className="mt-5 rounded-2xl bg-[#DCE9DF] px-5 py-4 text-[15px] leading-relaxed text-[#1F4030]" data-testid="wizard-recap-trial">
+              <strong>Votre essai gratuit{finTexte ? ` court jusqu'au ${finTexte}` : " est ouvert"}.</strong> Aucune carte bancaire n&apos;est demandée, et rien n&apos;est publié sans votre validation.
+            </div>
+            <div className="mt-6 flex flex-wrap items-center gap-4">
+              <button type="button" onClick={onDone} data-testid="wizard-recap-done" className="bg-[#C2456F] hover:bg-[#9E3157] text-white font-semibold text-base px-7 py-3 rounded-2xl">Ouvrir mon tableau de bord</button>
+            </div>
+          </div>
+        </div>
+        <aside className="hidden lg:flex lg:flex-col lg:gap-4 lg:sticky lg:top-6">
+          <ParcoursApercu courant={5} titre="Votre parcours" />
+        </aside>
+      </div>
+    </div>
+  );
+}
+
 function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast, forClient = null, onExit }) {
   // Agence : on configure le compte d'un client. Mêmes étapes, formulées à la troisième personne.
   const me = (self, client) => (forClient ? client : self);
@@ -13609,6 +13658,7 @@ function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast,
     if (stepKey) { try { sessionStorage.setItem(stepKey, String(typeof v === "function" ? v(step) : v)); } catch {} }
   };
   const [pageUrn, setPageUrn] = useState(null); // page LinkedIn du client (publication du premier post)
+  const [recap, setRecap] = useState(null); // profil enregistré à la fin d'une inscription libre : l'écran de fin s'affiche avant le tableau de bord
   const [person, setPerson] = useState(null); // null = pas encore répondu | false = la page suffit | true = une personne à gérer
   const [saving, setSaving] = useState(false);
   const [fields, setFields] = useState({
@@ -13779,7 +13829,7 @@ function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast,
       if (!res.ok) throw new Error(data.error || "Erreur");
       if (finish) {
         if (stepKey) { try { sessionStorage.removeItem(stepKey); } catch {} }
-        onDone(data.profile);
+        if (selfFlow) setRecap(data.profile); else onDone(data.profile);
       }
       else setStep((s) => Math.min(last, s + 1));
     } catch (e) {
@@ -13804,6 +13854,8 @@ function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast,
     { label: "Premier post", kinds: ["firstpost"] },
   ];
   const pillIdx = Math.max(0, pills.findIndex((pl) => pl.kinds.includes(kind)));
+
+  if (selfFlow && recap) return <OnboardingRecap fields={fields} user={user} linkedinConnected={linkedinConnected} pageConnected={Boolean(pageUrn)} onDone={() => onDone(recap)} />;
 
   return (
     <div className={selfFlow ? "min-h-screen flex flex-col bg-[#FCF8F5] text-[#2E1F33]" : "min-h-screen flex items-start sm:items-center justify-center p-4 sm:p-6"}>
