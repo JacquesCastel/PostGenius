@@ -381,9 +381,19 @@ function AuthScreen({ onAuth }) {
   return (
     <div className="min-h-screen flex flex-col bg-[#FCF8F5] text-[#2E1F33]">
       {mode === "register" ? <div className="w-full max-w-6xl mx-auto px-6 pt-6"><EnteteParcours lien /></div> : <SiteHeader variant="v2" />}
-      <main className="flex-1 flex items-center">
-        <div className="w-full max-w-6xl mx-auto grid lg:grid-cols-2 gap-10 lg:gap-16 items-center px-6 py-12">
-          {/* Gauche — communication centrée + visuel */}
+      <main className={`flex-1 flex ${mode === "register" ? "items-start" : "items-center"}`}>
+        <div className={`w-full max-w-6xl mx-auto grid gap-10 lg:gap-16 px-6 ${mode === "register" ? "lg:grid-cols-[1.1fr_1fr] items-start py-8" : "lg:grid-cols-2 items-center py-12"}`}>
+          {/* Inscription : l'écran suit celui des trois questions (maquette 1) : le formulaire à gauche, le même panneau à droite, aucune page de vente */}
+          {mode === "register" && (
+            <div className="space-y-4 max-w-lg lg:order-2" data-testid="register-account-aside">
+              <ParcoursApercu courant={0.5} />
+              <div className="bg-amber-50 border border-amber-200 rounded-3xl p-5">
+                <p className="text-xs font-bold uppercase tracking-wider text-amber-800 mb-1.5">Ici, on écrit comme on vit</p>
+                <p className="text-sm text-gray-700 leading-relaxed">Un jour vous célébrez un contrat signé, le lendemain vous râlez parce qu&apos;une facture n&apos;est toujours pas réglée. Vercéa écrit avec vous dans les deux cas : vous choisissez le sujet, l&apos;humeur du jour, et vous gardez la main.</p>
+              </div>
+            </div>
+          )}
+          {mode !== "register" && (
           <div className={`flex-col items-center text-center ${mode === "register" ? "flex" : "hidden lg:flex"}`}>
             <h1 className="font-display text-[38px] md:text-[50px] font-medium leading-[1.08] tracking-[-0.02em] max-w-lg">
               Créez vos posts et <span className="text-[#C2456F]">campagnes LinkedIn</span> avec l'IA
@@ -461,8 +471,9 @@ function AuthScreen({ onAuth }) {
             )}
           </div>
 
+          )}
           {/* Droite — formulaire */}
-          <div className="bg-white rounded-3xl border border-white shadow-xl shadow-[#2E1F33]/10 p-7 w-full max-w-md lg:justify-self-end">
+          <div className={`bg-white rounded-3xl border border-white shadow-xl shadow-[#2E1F33]/10 p-7 w-full ${mode === "register" ? "max-w-xl lg:order-1" : "max-w-md lg:justify-self-end"}`}>
             <h2 className="font-display text-[26px] font-medium">
               {mode === "login" ? "Connexion" : mode === "forgot" ? "Mot de passe oublié" : "Créer votre compte"}
             </h2>
