@@ -1,4 +1,4 @@
-# LinkeePost — Générateur de posts LinkedIn (SaaS)
+# Vercéa — Générateur de posts LinkedIn (SaaS)
 
 Application Next.js multi-clients : comptes utilisateurs (email + mot de passe), génération de posts avec l'API Claude, publication sur profil personnel et pages entreprise via l'API LinkedIn.
 
@@ -28,7 +28,7 @@ connection string dans `DATABASE_URL`. En dev, utilisez une branche Neon dédié
 ## 3. App LinkedIn n°1 — profil personnel
 
 1. Aller sur https://www.linkedin.com/developers/apps → **Create app**
-2. Renseigner le nom (ex : LinkeePost), associer une **Page LinkedIn** et un logo
+2. Renseigner le nom (ex : Vercéa), associer une **Page LinkedIn** et un logo
 3. Onglet **Products** : demander l'accès à
    - **Share on LinkedIn** (publication, scope `w_member_social`)
    - **Sign In with LinkedIn using OpenID Connect** (identité, scopes `openid profile`)
@@ -92,12 +92,12 @@ Prérequis sur le serveur : Docker + Docker Compose, un domaine pointant vers l'
 1. **Base** : sur Neon, utiliser la branche principale pour la prod. Lancer une fois depuis votre machine :
    `DATABASE_URL="<url neon prod>" npx prisma db push`
 2. **LinkedIn** : dans les deux apps LinkedIn (onglet Auth), ajouter les redirect URIs de prod :
-   `https://linkeepost.app/api/linkedin/callback` et `.../callback-org`
+   `https://vercea.app/api/linkedin/callback` et `.../callback-org`
 3. **Serveur** :
    ```bash
    git clone <votre-repo> && cd postgenius
    cp .env.example .env   # remplir avec les valeurs de PROD
-   # APP_URL=https://linkeepost.app, redirect URIs de prod,
+   # APP_URL=https://vercea.app, redirect URIs de prod,
    # AUTH_SECRET et TOKEN_ENCRYPTION_KEY générés (openssl rand -hex 32), SMTP réel
    nano Caddyfile          # remplacer par votre domaine
    docker compose up -d --build

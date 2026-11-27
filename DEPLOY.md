@@ -1,9 +1,9 @@
-# Bascule en production — linkeepost.app (Hetzner, DNS chez Gandi)
+# Mise en production — vercea.app (Hetzner, DNS chez Gandi)
 
 Runbook complet. Temps estimé : ~45 min (hors propagation DNS).
 
 ## 0. Prérequis
-- Domaine **linkeepost.app** acheté, accès à la zone DNS
+- Domaine **vercea.app** acheté, accès à la zone DNS
 - Serveur Hetzner (Ubuntu/Debian) accessible en SSH, IP notée ci-après `IP_SERVEUR`
   - **IP du serveur : `46.225.15.150`** → `ssh root@46.225.15.150`
 - Le projet fonctionne en local
@@ -11,12 +11,12 @@ Runbook complet. Temps estimé : ~45 min (hors propagation DNS).
 ## 1. DNS (à faire en premier — propagation 5 min à quelques heures)
 Dans la zone DNS du domaine :
 ```
-A    linkeepost.app        → IP_SERVEUR
-A    www.linkeepost.app    → IP_SERVEUR
+A    vercea.app        → IP_SERVEUR
+A    www.vercea.app    → IP_SERVEUR
 ```
 
 ### Conserver l'ancien domaine postgenius.network
-**État réel au 26 novembre 2026** : le site est servi sur `postgenius.network` et sur `vercea.app` (en parallèle, sans redirection) ; `linkeepost.app` ne pointe pas vers ce serveur (voir `docs/site/migration-domaine-301.md`, section 0 bis). Ne pas laisser expirer `postgenius.network`.
+**État au 27 novembre 2026** : le site est servi sur `vercea.app` (domaine du produit). `postgenius.network` et `www.postgenius.network` redirigent les **pages** en 301 vers le même chemin sur `vercea.app` ; restent servis directement `/api/*` (retours OAuth, webhooks, MCP, désinscription), `/oauth/*`, `/.well-known/*` et toute requête qui n'est pas un GET ou un HEAD. `vercea.app` ne pointe pas vers ce serveur (DNS chez le registraire). Voir `docs/site/migration-domaine-301.md` et le `Caddyfile`.
 
 **Appliquer un changement du `Caddyfile`** : le fichier est monté dans le conteneur comme fichier unique, donc un `git pull` ne suffit pas et `caddy reload` répondrait « config is unchanged ». Valider le nouveau fichier dans un conteneur temporaire, puis recréer Caddy :
 ```bash
@@ -25,21 +25,21 @@ docker compose up -d --force-recreate caddy
 ```
 `deploy.sh` signale la situation (« Le Caddyfile du dépôt n'est PAS celui que Caddy utilise ») sans bloquer le déploiement.
 
-*Ancien texte (obsolète) :* le `Caddyfile` redirigeait `postgenius.network` en 301 vers `linkeepost.app` ; cette redirection n'existe plus.
-- Renouveler le domaine (activer le renouvellement automatique).
+À garder pour ne pas casser les 301 :
+- Ne pas laisser expirer `postgenius.network` (renouvellement automatique) ; garder les 301 au moins un an.
 - Garder ses enregistrements `A` (`@` et `www`) vers `IP_SERVEUR`, sinon la redirection ne fonctionne plus.
-- Garder la boîte `contact@postgenius.network`, ou la rediriger vers `contact@linkeepost.app`, pour ne pas perdre les anciens e-mails.
-- Garder l'ancienne redirect URI LinkedIn et l'ancien webhook Stripe pendant la transition, puis les retirer une fois les nouveaux confirmés.
+- Garder la boîte `contact@postgenius.network`, ou la rediriger vers `contact@vercea.app`, pour ne pas perdre les anciens e-mails.
+- Les anciennes redirect URIs LinkedIn et l'ancien webhook Stripe peuvent être retirés une fois les nouveaux confirmés.
 
 ## 2. LinkedIn — redirect URIs de production
 Sur https://www.linkedin.com/developers/apps, app principale → onglet **Auth** → ajouter :
 ```
-https://linkeepost.app/api/linkedin/callback
+https://vercea.app/api/linkedin/callback
 ```
 (garder aussi l'URL localhost pour continuer à développer).
 Quand la 2e app (Community Management) sera active, y ajouter de même :
 ```
-https://linkeepost.app/api/linkedin/callback-org
+https://vercea.app/api/linkedin/callback-org
 ```
 
 ## 3. Préparer le serveur (une seule fois)
@@ -73,9 +73,9 @@ cd /opt/postgenius && nano .env
 ```
 Partir du .env local en changeant UNIQUEMENT ces lignes :
 ```
-APP_URL=https://linkeepost.app
-LINKEDIN_REDIRECT_URI=https://linkeepost.app/api/linkedin/callback
-LINKEDIN_ORG_REDIRECT_URI=https://linkeepost.app/api/linkedin/callback-org
+APP_URL=https://vercea.app
+LINKEDIN_REDIRECT_URI=https://vercea.app/api/linkedin/callback
+LINKEDIN_ORG_REDIRECT_URI=https://vercea.app/api/linkedin/callback-org
 ```
 ⚠️ GARDER les mêmes `AUTH_SECRET`, `TOKEN_ENCRYPTION_KEY` et `DATABASE_URL`
 qu'en local : la base Neon actuelle devient la base de PRODUCTION (vos comptes
@@ -90,7 +90,7 @@ docker compose logs -f app          # vérifier : "scheduler ... démarré", pas
 Caddy obtient le certificat HTTPS automatiquement dès que le DNS pointe.
 
 ## 7. Vérifications de mise en service
-1. https://linkeepost.app s'ouvre en HTTPS → écran de connexion
+1. https://vercea.app s'ouvre en HTTPS → écran de connexion
 2. Connexion avec votre compte → l'entrée Administration est visible
 3. Profil → Connecter LinkedIn → OAuth OK (sinon : vérifier l'URI ajoutée à l'étape 2)
 4. Générer un post → publier → vérifier sur LinkedIn
@@ -120,7 +120,7 @@ Caddy obtient le certificat HTTPS automatiquement dès que le DNS pointe.
   inclut un garde-fou qui annule le déploiement si la landing ressort vide.
 - **Vérifier qu'un déploiement a pris effet** :
   ```bash
-  curl -s https://linkeepost.app | grep -o '<title>[^<]*'
+  curl -s https://vercea.app | grep -o '<title>[^<]*'
   ```
 - **Sauvegardes** : la base est sauvegardée par Neon (snapshots). Le dossier
   `/opt/postgenius/data` (images, logos, fonds, médiathèque) est sauvegardé par
@@ -162,7 +162,7 @@ Caddy obtient le certificat HTTPS automatiquement dès que le DNS pointe.
   avant de restaurer comme ci-dessus.
 
 ## Dépannage rapide
-- Certificat HTTPS absent → DNS pas encore propagé (`dig linkeepost.app`)
+- Certificat HTTPS absent → DNS pas encore propagé (`dig vercea.app`)
 - OAuth LinkedIn "Bummer" → redirect URI manquante ou différente dans l'app LinkedIn
 - 502 → `docker compose logs app` (souvent variable .env manquante)
 - **Le site sert une ancienne version malgré les rebuilds** (vécu !) :
@@ -219,21 +219,21 @@ Le script n'est chargé que sur les pages publiques (jamais dans `/app`, `/valid
 Sans les deux variables `UMAMI_*` du `.env`, rien n'est chargé.
 
 **Option A : Umami Cloud** (le plus simple, aucun serveur à gérer)
-1. Créer un compte sur https://cloud.umami.is, puis ajouter le site `linkeepost.app`.
+1. Créer un compte sur https://cloud.umami.is, puis ajouter le site `vercea.app`.
 2. Dans `.env` : `UMAMI_SCRIPT_URL=https://cloud.umami.is/script.js` et `UMAMI_WEBSITE_ID=` (l'identifiant du site, un UUID).
 3. `./deploy.sh`.
 
 **Option B : auto-hébergé** (les données restent chez vous)
-1. Créer un enregistrement DNS `stats.linkeepost.app` vers le serveur (même adresse que `linkeepost.app`).
+1. Créer un enregistrement DNS `stats.vercea.app` vers le serveur (même adresse que `vercea.app`).
 2. Dans `.env` : `COMPOSE_PROFILES=stats`, `UMAMI_DB_PASSWORD=` (mot de passe long), `UMAMI_APP_SECRET=` (`openssl rand -hex 32`).
 3. Ajouter dans le `Caddyfile` :
    ```
-   stats.linkeepost.app {
+   stats.vercea.app {
    	reverse_proxy umami:3000
    }
    ```
-4. `./deploy.sh`, puis ouvrir `https://stats.linkeepost.app` (identifiants initiaux `admin` / `umami` : **à changer immédiatement**).
-5. Ajouter le site `linkeepost.app`, puis dans `.env` : `UMAMI_SCRIPT_URL=https://stats.linkeepost.app/script.js` et `UMAMI_WEBSITE_ID=` (l'UUID du site). `./deploy.sh`.
+4. `./deploy.sh`, puis ouvrir `https://stats.vercea.app` (identifiants initiaux `admin` / `umami` : **à changer immédiatement**).
+5. Ajouter le site `vercea.app`, puis dans `.env` : `UMAMI_SCRIPT_URL=https://stats.vercea.app/script.js` et `UMAMI_WEBSITE_ID=` (l'UUID du site). `./deploy.sh`.
 
 Vérifier : ouvrir le site en navigation privée, puis voir la visite apparaître dans Umami (« Temps réel »). Les visites de `/app` n'y figurent pas.
 La politique de confidentialité (anglais dans le code, français dans l'Administration) mentionne cette mesure.
@@ -283,7 +283,7 @@ automatique de Neon.
 
 ### Surveillance extérieure (à créer une fois, gratuit)
 
-Sur https://uptimerobot.com (ou équivalent) : un moniteur « mot-clé » sur `https://linkeepost.app/api/health`, qui cherche `"ok":true`, toutes les
+Sur https://uptimerobot.com (ou équivalent) : un moniteur « mot-clé » sur `https://vercea.app/api/health`, qui cherche `"ok":true`, toutes les
 5 minutes, avec alerte par e-mail (et notification sur téléphone). `/api/health` répond 200 si l'application tourne ET joint la base, 503 sinon.
 Un second moniteur sur la page d'accueil. C'est ce qui vous prévient si le serveur lui-même s'arrête.
 
@@ -306,7 +306,7 @@ Administration → **Technique** : santé (base, planificateur, disque, sauvegar
 - **Journal d'activité** (`ActivityEvent`) : connexions, jour actif, coach, séries Seconde vie, usage des assistants, connexions d'assistants. Il ne se reconstitue pas après coup. Conservé 13 mois.
 - **Pas encore dans l'écran :** déployer, revenir en arrière et sauvegarder depuis le navigateur (étape suivante : file d'ordres exécutée par le serveur hôte).
 
-## 14. Mesure d'audience du site (faite par LinkeePost)
+## 14. Mesure d'audience du site (faite par Vercéa)
 
 Technique → **Visites du site** : visiteurs par jour, pages vues, pages les plus vues, origines (LinkedIn, accès direct, moteurs de recherche, autres sites), appareils, parcours bêta (visiteurs → page `/beta` → demandes d'invitation → comptes créés).
 

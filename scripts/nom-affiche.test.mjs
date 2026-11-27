@@ -130,3 +130,9 @@ test("les notifications du navigateur portent le nom actuel (titre par défaut e
   assert.match(sw, /data\.title \|\| "Vercéa"/);
   assert.match(sw, /data\.tag \|\| "vercea"/);
 });
+
+test("la documentation de déploiement décrit le domaine actuel : plus de linkeepost.app dans DEPLOY.md, README.md, STRIPE.md ni deploy.legacy.sh", () => {
+  for (const f of ["DEPLOY.md", "README.md", "STRIPE.md", "deploy.legacy.sh"]) assert.doesNotMatch(read(f), /linkeepost\.app/i, f);
+  assert.match(read("DEPLOY.md"), /^# Mise en production — vercea\.app/);
+  assert.match(read("DEPLOY.md"), /\*\*État au 27 novembre 2026\*\*/);
+});
