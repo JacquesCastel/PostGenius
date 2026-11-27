@@ -60,7 +60,7 @@ Les présentes CGU sont soumises au droit français. En cas de litige, une solut
 
 ## Décisions de l'éditeur (26 novembre 2026)
 1. Remboursement : **option A**, aucun remboursement d'une période entamée (article 8).
-2. Défaut de paiement : accès maintenu **7 jours** (article 9). **Attention : le produit n'applique pas ce délai lui-même.** Il garde l'accès tant que Stripe indique « impayé » (`past_due`). Pour que « 7 jours » soit vrai, régler Stripe : Facturation → Paramètres → Récupération des revenus → Relances : relancer sur 7 jours au plus, puis, si toutes les relances échouent, **annuler l'abonnement**.
+2. Défaut de paiement : accès maintenu **7 jours** (article 9). **Attention : le produit n'applique pas ce délai lui-même.** Il garde l'accès tant que Stripe indique « impayé » (`past_due`). Pour que « 7 jours » soit vrai, Stripe est réglé depuis le 27 novembre 2026 (voir `STRIPE.md`) : Smart Retries, 8 tentatives sur 1 semaine, puis **annulation de l'abonnement**.
 3. Préavis : **30 jours** pour un changement de prix (article 4) et de CGU (article 14).
 4. Conservation des contenus après la fin de l'essai sans abonnement : **30 jours** (article 3). **Attention : le produit ne supprime rien automatiquement** (aucune tâche de purge). Le texte dit « peuvent être supprimés », ce qui reste vrai ; une suppression effective après 30 jours demanderait une tâche à développer (à décider).
 
