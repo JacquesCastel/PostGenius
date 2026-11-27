@@ -367,7 +367,7 @@ function AuthScreen({ onAuth }) {
     <div className="min-h-screen flex flex-col bg-[#FCF8F5] text-[#2E1F33]">
       <SiteHeader variant="v2" />
       <main className={`flex-1 flex ${mode === "register" ? "items-start" : "items-center"}`}>
-        <div className={`w-full max-w-6xl mx-auto grid gap-10 lg:gap-16 px-6 ${mode === "register" ? "lg:grid-cols-[1.1fr_1fr] items-start py-8" : "lg:grid-cols-2 items-center py-12"}`}>
+        <div className={`w-full max-w-6xl mx-auto grid gap-10 lg:gap-16 px-6 ${mode === "register" ? "lg:grid-cols-[1.1fr_1fr] items-start py-8" : "justify-items-center items-start py-12 sm:py-16"}`}>
           {/* Inscription : l'écran suit celui des trois questions (maquette 1) : le formulaire à gauche, le même panneau à droite, aucune page de vente */}
           {mode === "register" && (
             <div className="space-y-4 max-w-lg lg:order-2" data-testid="register-account-aside">
@@ -378,91 +378,12 @@ function AuthScreen({ onAuth }) {
               </div>
             </div>
           )}
-          {mode !== "register" && (
-          <div className={`flex-col items-center text-center ${mode === "register" ? "flex" : "hidden lg:flex"}`}>
-            <h1 className="font-display text-[38px] md:text-[50px] font-medium leading-[1.08] tracking-[-0.02em] max-w-lg">
-              Créez vos posts et <span className="text-[#C2456F]">campagnes LinkedIn</span> avec l'IA
-            </h1>
-            <p className="text-[#6B5A70] mt-4 leading-relaxed max-w-md">
-              Vercéa rédige des posts à partir de ce que vous savez, programme vos publications
-              et suit vos statistiques.
-            </p>
-
-            {/* Visuel illustratif */}
-            <div className="relative mt-12 mb-4 w-full max-w-sm">
-              <div className="pointer-events-none absolute -top-8 -left-8 w-32 h-32 bg-[#F6E3E0]/70 rounded-full blur-2xl" />
-              <div className="pointer-events-none absolute -bottom-8 -right-8 w-32 h-32 bg-[#DCE9DF]/70 rounded-full blur-2xl" />
-
-              <div className="relative bg-white rounded-3xl shadow-2xl shadow-[#2E1F33]/10 border border-white p-5 text-left">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-[#F6E3E0]" />
-                  <div>
-                    <div className="h-2.5 w-24 bg-gray-200 rounded-full" />
-                    <div className="h-2 w-16 bg-gray-100 rounded-full mt-1.5" />
-                  </div>
-                  <span className="ml-auto text-[10px] font-semibold text-[#C2456F] bg-[#F6E3E0] px-2 py-0.5 rounded-full flex items-center gap-1">
-                    <Sparkles size={10} /> IA
-                  </span>
-                </div>
-                <div className="space-y-2 mt-4">
-                  <div className="h-2 w-full bg-gray-100 rounded-full" />
-                  <div className="h-2 w-11/12 bg-gray-100 rounded-full" />
-                  <div className="h-2 w-3/4 bg-gray-100 rounded-full" />
-                </div>
-                <div className="h-24 rounded-2xl mt-4 bg-[#F6E3E0]" />
-                <div className="flex items-center gap-4 mt-4 text-gray-300">
-                  <ThumbsUp size={16} />
-                  <MessageSquare size={16} />
-                  <Share2 size={16} />
-                </div>
-              </div>
-
-              <div className="absolute -top-4 -right-4 bg-white rounded-2xl shadow-xl shadow-[#2E1F33]/10 px-3 py-2 flex items-center gap-2">
-                <CalendarDays size={16} className="text-[#C2456F]" />
-                <div className="text-left">
-                  <p className="text-[9px] text-gray-400 leading-none">Programmé</p>
-                  <p className="text-xs font-bold leading-tight">jeu. 09:00</p>
-                </div>
-              </div>
-              <div className="absolute -bottom-4 -left-4 bg-white rounded-2xl shadow-xl shadow-[#2E1F33]/10 px-3 py-2 flex items-center gap-2">
-                <BarChart3 size={16} className="text-[#2B5340]" />
-                <div className="text-left">
-                  <p className="text-[9px] text-gray-400 leading-none">Engagement</p>
-                  <p className="text-xs font-bold leading-tight">+38 %</p>
-                </div>
-              </div>
-            </div>
-
-            {planInfo ? (
-              <div className="mt-10 rounded-2xl border border-[#F6E3E0] bg-white/70 backdrop-blur p-4 max-w-sm w-full text-left">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-xs font-semibold text-[#C2456F] flex items-center gap-1">
-                      <Sparkles size={12} /> Votre offre
-                    </p>
-                    <p className="font-extrabold text-lg leading-tight">{planLabel(plan)}</p>
-                  </div>
-                  <p className="text-right leading-none">
-                    <span className="text-2xl font-extrabold">{planInfo.price} €</span>
-                    <span className="text-[11px] text-gray-400 block mt-0.5">/mois HT</span>
-                  </p>
-                </div>
-                <p className="text-xs text-[#6B5A70] mt-1.5">{pick("Accès sur invitation pendant la bêta, sans carte bancaire.", "14 jours d'essai gratuit, sans carte bancaire.")}</p>
-              </div>
-            ) : (
-              <p className="mt-6 inline-flex items-center gap-1.5 text-sm font-semibold text-[#C2456F] bg-[#F6E3E0] px-3 py-1.5 rounded-full">
-                <Sparkles size={13} /> 14 jours d'essai gratuit — sans carte bancaire
-              </p>
-            )}
-          </div>
-
-          )}
           {/* Droite — formulaire */}
-          <div className={`bg-white rounded-3xl border border-white shadow-xl shadow-[#2E1F33]/10 p-7 w-full ${mode === "register" ? "max-w-xl lg:order-1" : "max-w-md lg:justify-self-end"}`}>
-            <h2 className="font-display text-[26px] font-medium">
+          <div className={`bg-white rounded-3xl border border-white shadow-xl shadow-[#2E1F33]/10 p-7 w-full ${mode === "register" ? "max-w-xl lg:order-1" : "max-w-md"}`}>
+            <h2 className={`font-display text-[26px] font-medium ${mode === "register" ? "" : "text-center"}`}>
               {mode === "login" ? "Connexion" : mode === "forgot" ? "Mot de passe oublié" : "Créer votre compte"}
             </h2>
-            <p className="text-sm text-[#6B5A70] mt-1 mb-5">
+            <p className={`text-sm text-[#6B5A70] mt-1 mb-5 ${mode === "register" ? "" : "text-center"}`}>
               {mode === "login"
                 ? "Content de vous revoir."
                 : mode === "forgot"
@@ -578,6 +499,9 @@ function AuthScreen({ onAuth }) {
             >
               Mot de passe oublié ?
             </button>
+          )}
+          {mode === "login" && (
+            <p className="text-sm text-[#6B5A70] text-center mt-2" data-testid="auth-to-register-wrap">Pas encore de compte ? <button type="button" onClick={() => { setMode("register"); setError(null); }} className="text-[#9E3157] font-semibold hover:underline" data-testid="auth-to-register">Commencer</button></p>
           )}
           {mode === "forgot" && (
             <button
