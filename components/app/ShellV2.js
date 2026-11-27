@@ -75,9 +75,33 @@ export function WriteHubV2({ onGo, isLocked }) {
   );
 }
 
+// Photo LinkedIn quand elle existe (et se charge), sinon l'initiale
+function Avatar({ name, photoUrl }) {
+  const [broken, setBroken] = useState(false);
+  if (photoUrl && !broken) {
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img src={photoUrl} alt="" referrerPolicy="no-referrer" onError={() => setBroken(true)} className="w-10 h-10 rounded-full object-cover shrink-0" data-testid="avatar-photo" />;
+  }
+  return (
+    <span className="w-10 h-10 rounded-full text-white flex items-center justify-center font-semibold shrink-0 bg-gradient-to-br from-[#C2456F] to-[#E8895F]">
+      {name.slice(0, 1).toUpperCase()}
+    </span>
+  );
+}
+
+// Logo Vercéa de la nouvelle application (même pastille que le site)
+export function BrandV2() {
+  return (
+    <span className="flex items-center gap-2.5">
+      <svg width="36" height="36" viewBox="0 0 40 40" role="img" aria-label="Vercéa"><circle cx="20" cy="20" r="20" fill="#F6E3E0" /><path d="M11 14 L20 28 L29 14" stroke="#C2456F" strokeWidth="3.2" fill="none" strokeLinecap="round" strokeLinejoin="round" /><circle cx="29" cy="12" r="2.6" fill="#2E1F33" /></svg>
+      <span className="font-display text-2xl leading-none">Verc<span className="text-[#C2456F]">é</span>a</span>
+    </span>
+  );
+}
+
 // Photo / initiale en haut à droite : ouvre « Mon espace » (profil, thématiques, sources, connexions, charte, abonnement),
 // l'offre et le compteur de posts du mois, l'administration pour les administrateurs, et la déconnexion.
-export function AvatarMenuV2({ user, planName, planId, trialDays, postsThisMonth, postsLimit, postsReached, space, admin, onGo, onLogout }) {
+export function AvatarMenuV2({ user, photoUrl, planName, planId, trialDays, postsThisMonth, postsLimit, postsReached, space, admin, onGo, onLogout }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
   useEffect(() => {
@@ -106,9 +130,7 @@ export function AvatarMenuV2({ user, planName, planId, trialDays, postsThisMonth
           <span className="block text-sm font-semibold truncate max-w-[10rem]">{name}</span>
           <span className="block text-xs text-gray-500">{sub}</span>
         </span>
-        <span className="w-10 h-10 rounded-full text-white flex items-center justify-center font-semibold shrink-0 bg-gradient-to-br from-[#C2456F] to-[#E8895F]">
-          {name.slice(0, 1).toUpperCase()}
-        </span>
+        <Avatar name={name} photoUrl={photoUrl} />
         <ChevronDown size={16} className="text-gray-400 mr-1" />
       </button>
       {open && (

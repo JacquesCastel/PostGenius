@@ -57,3 +57,22 @@ test("l'ancien menu reste le défaut et le menu administrateur / agence / client
 test("les identifiants de test du menu sont conservés", () => {
   assert.ok(page.includes('data-testid="app-logo"'));
 });
+
+test("tranche 2 : Aujourd'hui en liste de choses à faire, onglets discrets, ancien tableau de bord intact hors interrupteur", () => {
+  assert.match(page, /v2 && todoItems\.length > 0/);
+  assert.ok(page.includes('data-testid="dash-todo"'));
+  assert.ok(page.includes('{v2 && weekBlock}'));
+  // l'ancien bandeau et les grands onglets existent toujours pour l'ancienne application
+  assert.ok(page.includes('data-testid="dash-hero"'));
+  assert.ok(page.includes('aria-label="Sections du tableau de bord"'));
+  // aucune fonction retirée : planning et résultats restent des onglets
+  for (const t of ['"today"', '"planning"', '"results"']) assert.ok(page.includes(t));
+});
+
+test("tranche 2 : logo Vercéa et photo LinkedIn dans la nouvelle application", () => {
+  assert.match(page, /v2Shell \? <BrandV2 \/>/);
+  assert.match(page, /photoUrl=\{linkedin\?\.picture/);
+  assert.match(shell, /export function BrandV2/);
+  assert.match(shell, /data-testid="avatar-photo"/);
+  assert.match(shell, /onError=\{\(\) => setBroken\(true\)\}/); // photo cassée : on retombe sur l'initiale
+});

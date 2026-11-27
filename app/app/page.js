@@ -19,7 +19,7 @@ import {
   AlignLeft, AlignCenter, AlignRight, Move, Server, Clapperboard, Link2, Tags
 } from "lucide-react";
 import { appV2Active } from "@/lib/appV2";
-import { AvatarMenuV2, SectionTabsV2, WriteHubV2, SPACE_ITEMS, ADMIN_ITEMS } from "@/components/app/ShellV2";
+import { AvatarMenuV2, SectionTabsV2, WriteHubV2, BrandV2, SPACE_ITEMS, ADMIN_ITEMS } from "@/components/app/ShellV2";
 import { yearlyPrice, ANNUAL_OFFER, PLANS, PLAN_IDS, planLabel, planAllows, planOf, trialDaysLeft, accessState, changeKind, lostFeatures, gainedFeatures, planWith } from "@/lib/plans";
 import { COMPARE, unlockedBy } from "@/lib/planFeatures";
 import { nextSteps, snoozeUntil } from "@/lib/nextSteps";
@@ -11587,7 +11587,7 @@ const ISO_DAY = { lun: 1, mar: 2, mer: 3, jeu: 4, ven: 5, sam: 6, dim: 7 };
 const DAY_FULL = ["", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"];
 const isoDay = (d) => ((d.getDay() + 6) % 7) + 1;
 const sameDayStr = (a, b) => a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
-function DashToday({ drafts, profile, ns, campaigns, canCampaigns, voiceOk, onGoCreate, onGoHistory, onGoView, onGoVoice, onOpenMonth, ideas, onGoProfileField, linkedin, orgs, tab, onTab, onProfileSaved, showToast }) {
+function DashToday({ v2 = false, drafts, profile, ns, campaigns, canCampaigns, voiceOk, onGoCreate, onGoHistory, onGoView, onGoVoice, onOpenMonth, ideas, onGoProfileField, linkedin, orgs, tab, onTab, onProfileSaved, showToast }) {
   const { contexts } = useContext(EntreprisesCtx);
   const [filter, setFilter] = useState("all");
   const [openPost, setOpenPost] = useState(null); // « Les 7 prochains jours » : détail d'un post
@@ -11636,6 +11636,39 @@ function DashToday({ drafts, profile, ns, campaigns, canCampaigns, voiceOk, onGo
     ...(ns?.steps ?? []).slice(0, 3).map((st) => ({ key: st.id, label: st.title, go: () => goNextStep(st, { onGoCreate, onGoProfileField, onGoView }) })),
     { key: "share", label: "Partager un lien vers Vercéa", go: () => onGoView?.("share") },
   ];
+  // Nouvelle application : « les choses pour aujourd'hui », dans l'ordre d'urgence ; sans rien d'urgent, on garde l'invitation habituelle
+  const todoItems = [
+    ...errors.slice(0, 1).map((d) => ({ key: `e-${d.id}`, title: `Une publication a échoué : « ${d.theme || "Post"} »`, text: d.publishError || "Voyez le détail dans Mes posts.", label: "Voir l'échec", go: onGoHistory, primary: true })),
+    ...(toValidate.length ? [{ key: "va", title: toValidate.length > 1 ? `${toValidate.length} posts attendent votre accord` : `Relire et valider « ${toValidate[0].theme || "Post"} »`, text: `« ${toValidate[0].theme || "Post"} » part ${fmtDateTime(toValidate[0].scheduledAt)} si vous le validez. Rien ne part sans vous.`, label: toValidate.length > 1 ? "Relire et valider" : "Relire le post", go: onGoHistory, primary: errors.length === 0 }] : []),
+    ...(emptyName ? [{ key: "empty", title: `${cap(emptyName)} est encore vide`, text: `Vous publiez d'habitude le ${emptyName === "aujourd'hui" ? DAY_FULL[isoDay(now)] : emptyName} : une idée vous attend plus bas, ou dictez la vôtre.`, label: `Écrire pour ${emptyName}`, go: onGoCreate, primary: errors.length === 0 && toValidate.length === 0 }] : []),
+  ];
+  const weekBlock = (
+      <div className="bg-white border border-[#e8ecf2] rounded-[18px] p-4" data-testid="dash-week">
+        <div className="flex items-baseline gap-3 mb-2.5 flex-wrap">
+          <span className="text-xs font-bold tracking-wider uppercase text-[#5a6b85]">Les 7 prochains jours</span>
+          <button type="button" onClick={onOpenMonth} data-testid="dash-open-month" className="ml-auto text-[13px] font-semibold text-[#0a66c2] hover:underline">Voir le mois</button>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
+          {days.map((day, i) => {
+            const evs = eventsOf(day).sort((a, b) => a.at - b.at);
+            const today = i === 0;
+            return (
+              <div key={i} data-testid="dash-day" className={`rounded-xl p-2 min-h-[110px] flex flex-col gap-1.5 min-w-0 ${today ? "border-2 border-[#d63b42] bg-[#fff8f8]" : "border border-[#eef1f6] bg-[#f8fafc]"}`}>
+                <span className={`text-[11px] font-bold uppercase tracking-wider ${today ? "text-[#a3242a]" : "text-[#5a6b85]"}`}>{today ? "Aujourd'hui" : cap(day.toLocaleDateString("fr-FR", { weekday: "short" }).replace(".", ""))} {day.getDate()}</span>
+                {coach?.slots?.days?.includes(isoDay(day)) && <span className="text-[10px] font-bold text-[#a3242a]" data-testid="dash-day-strong" title="Jour qui porte le mieux chez vous, d'après le coach">★ jour fort</span>}
+                {evs.map(({ d, kind, at }) => (
+                  <button type="button" key={d.id} onClick={() => setOpenPost({ d, kind })} data-testid="dash-day-post" className={`text-left w-full text-[11px] font-semibold rounded-lg px-1.5 py-1 leading-snug hover:ring-2 hover:ring-[#f3a3a6] ${kind === "va" ? "bg-[#f3e8ff] text-[#6b21a8]" : kind === "pu" ? "bg-[#e6f6ec] text-[#166534]" : "bg-[#fff4d6] text-[#7a4b00]"}`} title={d.theme}>
+                    <span className="block truncate">{d.theme || "Post"}</span>
+                    <span className="font-medium">{kind === "va" ? "À valider" : kind === "pu" ? "Publié" : "Programmé"} · {at.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }).replace(":", " h ")}</span>
+                  </button>
+                ))}
+                {evs.length === 0 && <button type="button" onClick={onGoCreate} className="text-[11px] text-slate-400 border border-dashed border-slate-300 rounded-lg px-1.5 py-1 hover:text-[#a3242a] hover:border-[#f3a3a6]">Rien de prévu</button>}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+  );
   const card = "bg-white border border-[#e8ecf2] rounded-[18px] px-5 py-4";
   const lb = "block text-xs font-bold tracking-wider uppercase text-[#5a6b85] mb-2";
   const kpi = (label, n, color, sub, go) => (
@@ -11663,6 +11696,20 @@ function DashToday({ drafts, profile, ns, campaigns, canCampaigns, voiceOk, onGo
         )}
       </div>
 
+      {v2 && todoItems.length > 0 ? (
+        <section className="app-card px-6 py-3" data-testid="dash-todo" aria-label="À faire aujourd'hui">
+          {todoItems.map((it, i) => (
+            <div key={it.key} className={`flex flex-wrap items-center gap-4 py-4 ${i ? "border-t border-[#a88692]/20" : ""}`}>
+              <span className="shrink-0 w-10 h-10 rounded-full flex items-center justify-center font-semibold" style={{ background: ["#FCE6D6", "#F6E3E0", "#DCE9DF"][i % 3], color: ["#8A3B12", "#7A2342", "#2B5340"][i % 3] }}>{i + 1}</span>
+              <div className="flex-1 min-w-[14rem]">
+                <p className="font-semibold text-base">{it.title}</p>
+                <p className="text-sm text-gray-600 mt-0.5">{it.text}</p>
+              </div>
+              <button type="button" onClick={it.go} data-testid={i === 0 ? "dash-hero-primary" : undefined} className={it.primary ? "bg-[#c2456f] hover:bg-[#9e3157] text-white text-sm font-semibold px-5 py-2.5 rounded-full" : "app-tab"}>{it.label}</button>
+            </div>
+          ))}
+        </section>
+      ) : (
       <div className="rounded-[20px] border border-[#fde1c0] px-6 py-5 flex flex-col md:flex-row gap-5 md:items-center" style={{ background: "linear-gradient(135deg,#fff1f2,#fff7ed)" }} data-testid="dash-hero">
         <div className="flex-1 min-w-0">
           <span className="block text-xs font-bold tracking-wider uppercase text-[#a3242a] mb-1.5">Le copilote vous suggère</span>
@@ -11674,6 +11721,7 @@ function DashToday({ drafts, profile, ns, campaigns, canCampaigns, voiceOk, onGo
           {second && <button type="button" onClick={second.go} data-testid="dash-hero-second" className="bg-white text-[#a3242a] border border-[#f3a3a6] hover:bg-[#fff8f8] text-sm font-bold px-4 py-2.5 rounded-xl text-center">{second.label}</button>}
         </div>
       </div>
+      )}
 
       <div className={card} data-testid="dash-repurpose">
         <div className="flex items-center gap-3 flex-wrap">
@@ -11686,12 +11734,22 @@ function DashToday({ drafts, profile, ns, campaigns, canCampaigns, voiceOk, onGo
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
-        {kpi("À valider", toValidate.length, "#6b21a8", "Ils ne partent pas sans vous", () => onTab("today"))}
-        {kpi("Programmés cette semaine", scheduledWeek.length, "#7a4b00", next ? `Prochain : ${fmtDateTime(next.scheduledAt)}` : "Rien de programmé", () => onTab("planning"))}
-        {kpi("Publiés ce mois-ci", publishedMonth.length, "#166534", profile?.postsPerWeek ? `Rythme visé : ${profile.postsPerWeek} par semaine` : "Sur LinkedIn", () => onTab("results"))}
-        {kpi("Brouillons", brouillons.length, "#084a8d", brouillons.length ? "À publier ou programmer" : "Aucun en attente", onGoHistory)}
+        {kpi("À valider", toValidate.length, v2 ? "#9e3157" : "#6b21a8", "Ils ne partent pas sans vous", () => onTab("today"))}
+        {kpi("Programmés cette semaine", scheduledWeek.length, v2 ? "#8a3b12" : "#7a4b00", next ? `Prochain : ${fmtDateTime(next.scheduledAt)}` : "Rien de programmé", () => onTab("planning"))}
+        {kpi("Publiés ce mois-ci", publishedMonth.length, v2 ? "#2b5340" : "#166534", profile?.postsPerWeek ? `Rythme visé : ${profile.postsPerWeek} par semaine` : "Sur LinkedIn", () => onTab("results"))}
+        {kpi("Brouillons", brouillons.length, v2 ? "#7a2342" : "#084a8d", brouillons.length ? "À publier ou programmer" : "Aucun en attente", onGoHistory)}
       </div>
 
+      {v2 ? (
+        <div className="flex flex-wrap gap-2 pt-1" role="tablist" aria-label="Sections d'aujourd'hui" data-testid="dash-tabs">
+          {tabs.map(([id, label, badge]) => (
+            <button key={id} type="button" role="tab" id={`dash-tab-${id}`} aria-selected={tab === id} aria-controls={`dash-panel-${id}`} onClick={() => onTab(id)} data-testid={`dash-tab-${id}`} className={`app-tab ${tab === id ? "app-tab-on" : ""}`}>
+              {label}
+              {badge > 0 && <span className="app-nav-badge" data-testid={`dash-tab-${id}-badge`} aria-label={`${badge} à traiter`}>{badge}</span>}
+            </button>
+          ))}
+        </div>
+      ) : (
       <div className="grid grid-cols-3 gap-2 sm:gap-3 pt-1" role="tablist" aria-label="Sections du tableau de bord" data-testid="dash-tabs">
         {tabs.map(([id, label, badge, Icon, sub]) => {
           const on = tab === id;
@@ -11709,6 +11767,7 @@ function DashToday({ drafts, profile, ns, campaigns, canCampaigns, voiceOk, onGo
           );
         })}
       </div>
+      )}
 
       {openPost && (() => {
         const { d, kind } = openPost;
@@ -11766,31 +11825,7 @@ function DashToday({ drafts, profile, ns, campaigns, canCampaigns, voiceOk, onGo
       {tab === "planning" && (
       <div className="space-y-4" role="tabpanel" id="dash-panel-planning" aria-labelledby="dash-tab-planning" data-testid="dash-panel-planning">
       <DashSlots coach={coach} profile={profile} onProfileSaved={onProfileSaved} showToast={showToast} />
-      <div className="bg-white border border-[#e8ecf2] rounded-[18px] p-4" data-testid="dash-week">
-        <div className="flex items-baseline gap-3 mb-2.5 flex-wrap">
-          <span className="text-xs font-bold tracking-wider uppercase text-[#5a6b85]">Les 7 prochains jours</span>
-          <button type="button" onClick={onOpenMonth} data-testid="dash-open-month" className="ml-auto text-[13px] font-semibold text-[#0a66c2] hover:underline">Voir le mois</button>
-        </div>
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
-          {days.map((day, i) => {
-            const evs = eventsOf(day).sort((a, b) => a.at - b.at);
-            const today = i === 0;
-            return (
-              <div key={i} data-testid="dash-day" className={`rounded-xl p-2 min-h-[110px] flex flex-col gap-1.5 min-w-0 ${today ? "border-2 border-[#d63b42] bg-[#fff8f8]" : "border border-[#eef1f6] bg-[#f8fafc]"}`}>
-                <span className={`text-[11px] font-bold uppercase tracking-wider ${today ? "text-[#a3242a]" : "text-[#5a6b85]"}`}>{today ? "Aujourd'hui" : cap(day.toLocaleDateString("fr-FR", { weekday: "short" }).replace(".", ""))} {day.getDate()}</span>
-                {coach?.slots?.days?.includes(isoDay(day)) && <span className="text-[10px] font-bold text-[#a3242a]" data-testid="dash-day-strong" title="Jour qui porte le mieux chez vous, d'après le coach">★ jour fort</span>}
-                {evs.map(({ d, kind, at }) => (
-                  <button type="button" key={d.id} onClick={() => setOpenPost({ d, kind })} data-testid="dash-day-post" className={`text-left w-full text-[11px] font-semibold rounded-lg px-1.5 py-1 leading-snug hover:ring-2 hover:ring-[#f3a3a6] ${kind === "va" ? "bg-[#f3e8ff] text-[#6b21a8]" : kind === "pu" ? "bg-[#e6f6ec] text-[#166534]" : "bg-[#fff4d6] text-[#7a4b00]"}`} title={d.theme}>
-                    <span className="block truncate">{d.theme || "Post"}</span>
-                    <span className="font-medium">{kind === "va" ? "À valider" : kind === "pu" ? "Publié" : "Programmé"} · {at.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }).replace(":", " h ")}</span>
-                  </button>
-                ))}
-                {evs.length === 0 && <button type="button" onClick={onGoCreate} className="text-[11px] text-slate-400 border border-dashed border-slate-300 rounded-lg px-1.5 py-1 hover:text-[#a3242a] hover:border-[#f3a3a6]">Rien de prévu</button>}
-              </div>
-            );
-          })}
-        </div>
-      </div>
+      {weekBlock}
 
       </div>
       )}
@@ -11811,6 +11846,7 @@ function DashToday({ drafts, profile, ns, campaigns, canCampaigns, voiceOk, onGo
           <button type="button" onClick={onGoHistory} className="text-[13px] font-semibold text-[#0a66c2] hover:underline mt-2">Tout voir dans Mes posts</button>
         </div>
       )}
+      {v2 && weekBlock}
       <div className="min-w-0" data-testid="dash-ideas">{ideas}</div>
 
       <div className="grid md:grid-cols-2 md:[&>*:only-child]:col-span-2 gap-3.5 items-start">
@@ -11848,7 +11884,7 @@ function DashToday({ drafts, profile, ns, campaigns, canCampaigns, voiceOk, onGo
   );
 }
 
-function DashboardView({ drafts, canVeille = true, canEvents = false, canScore = true, canCampaigns = true, postsLimit = null, onGoCreate, onGoHistory, onGoEvents, onGoProfile, onGoProfileField, onGoView, onGoCopilot, onApprove, onReschedule, profile, linkedin, orgs, onPlanned, onProfileSaved, showToast, onInspire, onGenerateFromReco, onGoVoice }) {
+function DashboardView({ v2 = false, drafts, canVeille = true, canEvents = false, canScore = true, canCampaigns = true, postsLimit = null, onGoCreate, onGoHistory, onGoEvents, onGoProfile, onGoProfileField, onGoView, onGoCopilot, onApprove, onReschedule, profile, linkedin, orgs, onPlanned, onProfileSaved, showToast, onInspire, onGenerateFromReco, onGoVoice }) {
   const ns = useNextSteps(profile);
   const [periodDays, setPeriodDays] = useState(7);
   const [planTarget, setPlanTarget] = useState("person");
@@ -11999,6 +12035,7 @@ function DashboardView({ drafts, canVeille = true, canEvents = false, canScore =
       {deleting && <CampaignDeleteDialog campaign={deleting} onClose={() => setDeleting(null)} onDone={campaignGone} showToast={showToast} />}
       <ThemesNewsBanner profile={profile} onOpen={() => onGoView?.("themes")} />
       <DashToday
+        v2={v2}
         drafts={drafts}
         linkedin={linkedin}
         orgs={orgs}
@@ -21751,6 +21788,7 @@ export default function Home() {
       {/* Sidebar */}
       <aside className="w-60 bg-white h-screen sticky top-0 hidden md:flex flex-col shrink-0 border-r border-gray-100">
         <button type="button" onClick={goHome} data-testid="app-logo" aria-label="Retour au tableau de bord" className="flex items-center gap-2.5 px-5 py-6 text-left w-full">
+          {v2Shell ? <BrandV2 /> : (<>
           <div className="bg-[#ff5a5f] text-white p-2 rounded-xl shadow-md shadow-[#ffd5d6]">
             <LpMark size={20} />
           </div>
@@ -21758,6 +21796,7 @@ export default function Home() {
             <p className="font-bold leading-tight">Vercéa</p>
             <p className="text-xs text-gray-400">Campagnes LinkedIn</p>
           </div>
+          </>)}
         </button>
         <nav className="flex-1 px-3 space-y-0.5 mt-1 overflow-y-auto">{desktopEntries().map((e) => (e.header ? navHeader(e.header) : navBtn(e)))}</nav>
         <div className="px-3 mt-2">
@@ -21950,6 +21989,7 @@ export default function Home() {
           {v2Shell && (
             <AvatarMenuV2
               user={user}
+              photoUrl={linkedin?.picture || ""}
               planName={plan.name}
               planId={plan.id}
               trialDays={user.trialEndsAt && accessState(user) !== "active" ? trialDaysLeft(user) : null}
@@ -22107,6 +22147,7 @@ export default function Home() {
         />
       ) : view === "dashboard" ? (
         <DashboardView
+          v2={v2Shell}
           drafts={drafts}
           canVeille={planAllows(user, "veille")}
           canEvents={planAllows(user, "events")}
