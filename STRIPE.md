@@ -73,7 +73,7 @@ stripe listen --forward-to localhost:3000/api/stripe/webhook
    - Compte Stripe activé : identité de l'éditeur, IBAN, numéro de TVA ; nom commercial « Vercéa » et libellé sur les relevés bancaires.
    - Les produits créés par `stripe-setup.mjs` s'appellent « Vercéa Essentiel / Pro / Agence » (ils apparaissent sur la page de paiement et les factures). Ne pas réutiliser les produits de test.
    - Portail client configuré (résiliation, factures, moyens de paiement).
-   - Relances des paiements échoués : sur 7 jours au plus, puis annulation de l'abonnement (les CGU promettent 7 jours d'accès pendant la régularisation ; le produit garde l'accès tant que Stripe indique « impayé »).
+   - **Fait le 27 novembre 2026** — relances des paiements échoués (Facturation, « Gérer les échecs de paiement ») : Smart Retries, **8 tentatives sur 1 semaine** ; première tentative de renouvellement qui échoue : « laisser l'abonnement en retard de paiement » ; échec de toutes les tentatives : « annuler l'abonnement » ; facture : « laisser en retard de paiement ». Les CGU promettent 7 jours d'accès pendant la régularisation ; le produit garde l'accès tant que Stripe indique « en retard de paiement » (`past_due`) et n'applique aucun délai lui-même : ce réglage Stripe EST le délai. Un changement de ce calendrier change la promesse des CGU.
    - CGU relues : renouvellement automatique, TVA, rétractation, remboursement (administration → pages légales).
    - Un achat réel de bout en bout avec une carte de l'équipe : abonnement, facture reçue, résiliation, remboursement.
 
