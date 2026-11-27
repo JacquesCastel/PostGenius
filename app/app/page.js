@@ -50,6 +50,7 @@ import "@fontsource/raleway/400.css";
 import "@fontsource/raleway/700.css";
 import SiteFooter from "@/components/SiteFooter";
 import LpMark from "@/components/LpMark";
+import BrandMark, { BrandName } from "@/components/v2/BrandMark";
 import MonthlyReportBody from "@/components/MonthlyReportBody";
 import ShootingKit from "@/components/ShootingKit";
 import { LANGUAGES, normalizeLanguage } from "@/lib/languages";
@@ -166,6 +167,17 @@ async function readJson(res) {
       `Erreur serveur (${res.status}). Consultez le terminal de "npm run dev" — base initialisée ? (npx prisma db push)`
     );
   }
+}
+
+// En-tête du parcours d'inscription (maquettes 1, 1b et 2) : le logo et le nom, rien d'autre. Ni menu ni pied de page du site : on reste dans le parcours.
+function EnteteParcours({ lien = false, children = null }) {
+  const marque = <><BrandMark size={38} /><BrandName className="font-display text-[24px] font-medium" /></>;
+  return (
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-3" data-testid="funnel-header">
+      {lien ? <a href="/" className="flex items-center gap-3" aria-label="Vercéa, retour au site">{marque}</a> : <span className="flex items-center gap-3">{marque}</span>}
+      {children}
+    </div>
+  );
 }
 
 // Les cinq étapes du parcours d'inscription : le même panneau « Ce qui vous attend » accompagne les trois questions et chaque étape suivante.
@@ -303,9 +315,13 @@ function AuthScreen({ onAuth }) {
     const ready = answers.name.trim() && answers.fonction.trim();
     return (
       <div className="min-h-screen flex flex-col bg-[#FCF8F5] text-[#2E1F33]">
-        <SiteHeader variant="v2" />
+        <div className="w-full max-w-6xl mx-auto px-6 pt-6">
+          <EnteteParcours lien>
+            <span className="ml-auto text-sm text-[#6B5A70]">Déjà un compte ? <button type="button" onClick={() => { setMode("login"); setError(null); }} className="text-[#9E3157] font-semibold hover:underline" data-testid="reg-to-login">Se connecter</button></span>
+          </EnteteParcours>
+        </div>
         <main className="flex-1">
-          <div className="w-full max-w-6xl mx-auto grid lg:grid-cols-[1.1fr_1fr] gap-10 lg:gap-16 px-6 py-10 items-start" data-testid="register-questions">
+          <div className="w-full max-w-6xl mx-auto grid lg:grid-cols-[1.1fr_1fr] gap-10 lg:gap-16 px-6 py-8 items-start" data-testid="register-questions">
             <form onSubmit={(e) => { e.preventDefault(); if (ready) setRegStep("account"); }} className="max-w-xl">
               <p className="text-[13px] font-bold text-[#9E3157] tracking-wide uppercase">{invite?.token && !invite.team ? `Invitation · ${invite.accessDays} jours offerts · sans carte bancaire` : `14 jours gratuits · sans carte bancaire${planInfo ? ` · offre ${planLabel(plan)}` : ""}`}</p>
               <h1 className="font-display text-[34px] md:text-[44px] font-medium leading-[1.1] tracking-[-0.02em] mt-2">Trois questions pour commencer.</h1>
@@ -335,7 +351,6 @@ function AuthScreen({ onAuth }) {
                 <button type="submit" disabled={!ready} data-testid="reg-continue" className="bg-[#C2456F] hover:bg-[#9E3157] disabled:bg-gray-300 text-white font-bold text-base px-7 py-3 rounded-2xl">Continuer</button>
                 <span className="text-[13px] text-[#6B5A70]">E-mail et mot de passe : à l&apos;étape suivante</span>
               </div>
-              <p className="text-sm text-[#6B5A70] mt-5">Déjà un compte ? <button type="button" onClick={() => { setMode("login"); setError(null); }} className="text-[#9E3157] font-semibold hover:underline" data-testid="reg-to-login">Se connecter</button></p>
             </form>
             <div className="space-y-4 max-w-lg">
               <ParcoursApercu courant={0} />
@@ -346,7 +361,6 @@ function AuthScreen({ onAuth }) {
             </div>
           </div>
         </main>
-        <SiteFooter variant="v2" />
       </div>
     );
   }
@@ -366,7 +380,7 @@ function AuthScreen({ onAuth }) {
 
   return (
     <div className="min-h-screen flex flex-col bg-[#FCF8F5] text-[#2E1F33]">
-      <SiteHeader variant="v2" />
+      {mode === "register" ? <div className="w-full max-w-6xl mx-auto px-6 pt-6"><EnteteParcours lien /></div> : <SiteHeader variant="v2" />}
       <main className="flex-1 flex items-center">
         <div className="w-full max-w-6xl mx-auto grid lg:grid-cols-2 gap-10 lg:gap-16 items-center px-6 py-12">
           {/* Gauche — communication centrée + visuel */}
@@ -535,6 +549,9 @@ function AuthScreen({ onAuth }) {
                 <Check size={14} /> {info}
               </p>
             )}
+            {mode === "register" && (
+              <p className="text-xs text-[#6B5A70] leading-relaxed" data-testid="auth-cgu">En créant votre compte, vous acceptez les <a href="/legal#cgu" target="_blank" rel="noopener noreferrer" className="underline text-[#9E3157]">conditions générales</a> et la <a href="/legal#confidentialite" target="_blank" rel="noopener noreferrer" className="underline text-[#9E3157]">politique de confidentialité</a>.</p>
+            )}
             <button
               type="submit"
               disabled={loading}
@@ -581,7 +598,7 @@ function AuthScreen({ onAuth }) {
         </div>
       </div>
       </main>
-      <SiteFooter variant="v2" />
+      {mode !== "register" && <SiteFooter variant="v2" />}
     </div>
   );
 }
@@ -13788,8 +13805,7 @@ function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast,
 
   return (
     <div className={selfFlow ? "min-h-screen flex flex-col bg-[#FCF8F5] text-[#2E1F33]" : "min-h-screen flex items-start sm:items-center justify-center p-4 sm:p-6"}>
-      {selfFlow && <SiteHeader variant="v2" />}
-      <div className={selfFlow ? `w-full mx-auto flex-1 max-w-6xl px-4 sm:px-8 py-8 ${wideStep ? "" : "lg:grid lg:grid-cols-[minmax(0,36rem)_minmax(0,1fr)] lg:gap-14 lg:items-start"}` : "w-full max-w-xl"}>
+      <div className={selfFlow ? `w-full mx-auto flex-1 px-4 sm:px-8 lg:px-16 py-6 sm:py-8 ${wideStep ? "max-w-6xl" : "max-w-xl"}` : "w-full max-w-xl"}>
       <div className="min-w-0">
         {forClient && (
           <div className="mb-4 bg-amber-50 border border-amber-200 text-amber-800 rounded-xl px-4 py-2.5 text-sm flex items-center justify-between gap-3 flex-wrap" data-testid="wizard-client-banner">
@@ -13798,11 +13814,11 @@ function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast,
           </div>
         )}
         {selfFlow ? (
-          <div className={`flex flex-wrap items-center gap-x-3 gap-y-3 mb-5 ${wideStep ? "" : "lg:hidden"}`} data-testid="wizard-header">
+          <div className="mb-5" data-testid="wizard-header"><EnteteParcours>
             {kind === "where" ? (
               <span className="ml-auto text-sm text-[#6B5A70]" data-testid="wizard-where-count">Étape {pillIdx + 1} sur {pills.length} · Connecter LinkedIn</span>
             ) : (
-              <div className="w-full flex flex-wrap gap-x-[18px] gap-y-2" data-testid="wizard-pills">
+              <div className="w-full sm:w-auto sm:ml-10 flex flex-wrap gap-x-[18px] gap-y-2" data-testid="wizard-pills">
                 {pills.map((pl, i) => {
                   const done = i < pillIdx, on = i === pillIdx;
                   return (
@@ -13814,7 +13830,7 @@ function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast,
                 })}
               </div>
             )}
-          </div>
+          </EnteteParcours></div>
         ) : (
         <>
         <div className="flex items-center justify-center gap-2 mb-5">
@@ -14144,9 +14160,7 @@ function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast,
           </button>
         )}
       </div>
-      {selfFlow && !wideStep && <aside className="hidden lg:block lg:sticky lg:top-6"><ParcoursApercu courant={pillIdx} /></aside>}
       </div>
-      {selfFlow && <SiteFooter variant="v2" />}
     </div>
   );
 }

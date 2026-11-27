@@ -98,21 +98,25 @@ test("écran de connexion et fenêtre d'au revoir : palette du nouveau site, ide
   assert.ok(g.includes("/app?mode=login"));
 });
 
-test("parcours d'inscription : le même panneau « Ce qui vous attend » et la même mise en page sur les cinq étapes", () => {
+test("parcours d'inscription (maquettes 1, 1b, 2) : en-tête concentré (logo, nom, pastilles), ni menu ni pied de page du site, panneau seulement sur l'écran des trois questions", () => {
   const page = read("app/app/page.js");
-  assert.match(page, /const PARCOURS_ETAPES = \[/);
-  assert.equal((page.match(/<ParcoursApercu /g) ?? []).length, 2, "écran des trois questions + parcours");
+  assert.match(page, /function EnteteParcours\(/);
+  assert.equal((page.match(/<ParcoursApercu /g) ?? []).length, 1, "le panneau n'est que sur l'écran des trois questions");
   const w = page.slice(page.indexOf("function OnboardingWizard"), page.indexOf("// Vue Clients — tableau de bord agence"));
-  assert.match(w, /\{selfFlow && <SiteHeader variant="v2" \/>\}/);
-  assert.match(w, /\{selfFlow && <SiteFooter variant="v2" \/>\}/);
-  assert.match(w, /<ParcoursApercu courant=\{pillIdx\} \/>/);
-  assert.doesNotMatch(w, /linear-gradient\(180deg,#fff1f2|#ff5a5f/);
+  assert.doesNotMatch(w, /<SiteHeader|<SiteFooter|ParcoursApercu|linear-gradient\(180deg,#fff1f2|#ff5a5f/);
+  assert.match(w, /<EnteteParcours>/);
   for (const id of ["wizard-header", "wizard-pills", "wizard-pill", "wizard-where-count"]) assert.ok(w.includes(id), id);
   assert.match(w, /Étape \{selfFlow \? pillIdx \+ 1 : step \+ 1\} sur \{selfFlow \? pills\.length : flow\.length\}/, "le compteur suit les cinq pastilles");
+  const q = page.slice(page.indexOf("data-testid=\"register-questions\"") - 900, page.indexOf("data-testid=\"register-questions\""));
+  assert.match(q, /<EnteteParcours lien>/);
+  assert.doesNotMatch(q, /<SiteHeader/);
+  assert.ok(page.includes('data-testid="reg-to-login"'));
+  assert.equal((page.match(/data-testid="reg-to-login"/g) ?? []).length, 1);
 });
 
-test("À propos : le sous-titre « Pourquoi » s'accorde avec l'outil (« Né », pas « Nés »)", () => {
-  const s = read("app/a-propos/page.js");
-  assert.ok(s.includes("Né d'un constat, pas d'une promesse."));
-  assert.ok(!s.includes("Nés d'un constat"));
+test("inscription : l'acceptation des CGU et de la politique de confidentialité est rappelée à la création du compte", () => {
+  const page = read("app/app/page.js");
+  assert.match(page, /data-testid="auth-cgu"/);
+  assert.match(page, /href="\/legal#cgu"[^>]*target="_blank"/);
+  assert.match(page, /href="\/legal#confidentialite"[^>]*target="_blank"/);
 });
