@@ -78,3 +78,22 @@ html {
 @media (max-width: 767px) {
   .app-v2 .bg-white.rounded-2xl, .app-v2 .bg-white.rounded-3xl { box-shadow: 6px 6px 14px var(--v2-d), -6px -6px 14px var(--v2-l); }
 }
+/* Bleus et rouges de l'ancienne charte : mêmes boutons et liens, en framboise */
+.app-v2 [class*="text-[#0a66c2]"], .app-v2 [class*="text-[#084d92]"] { color: #9e3157; }
+.app-v2 [class*="border-[#0a66c2]"] { border-color: #c2456f; }
+.app-v2 [class*="bg-[#0a66c2]"] { background-color: #c2456f; }
+.app-v2 [class*="hover:bg-[#084d92]"]:hover, .app-v2 [class*="hover:bg-[#004182]"]:hover, .app-v2 [class*="hover:bg-[#084a8d]"]:hover { background-color: #9e3157; }
+.app-v2 [class*="bg-[#d63b42]"], .app-v2 [class*="bg-[#d12d33]"] { background-color: #c2456f; }
+.app-v2 [class*="hover:bg-[#c2343a]"]:hover { background-color: #9e3157; }
+.app-v2 [class*="text-[#d63b42]"], .app-v2 [class*="text-[#a3242a]"] { color: #7a2342; }
+.app-v2 [class*="border-[#d63b42]"] { border-color: #c2456f; }
+.app-v2 [class*="border-[#f3a3a6]"] { border-color: #e7b3bf; }
+.app-v2 [class*="bg-[#f3e8ff]"] { background-color: #fce6d6; }
+.app-v2 [class*="text-[#6b21a8]"] { color: #6e2e0e; }
+.app-v2 [class*="bg-[#fff4d6]"] { background-color: #fce6d6; }
+.app-v2 [class*="text-[#7a4b00]"] { color: #6e2e0e; }
+.app-v2 [class*="bg-[#e6f6ec]"] { background-color: #dce9df; }
+.app-v2 [class*="text-[#166534]"] { color: #1f4030; }
+.app-v2 [class*="border-[#e8ecf2]"], .app-v2 [class*="border-[#eef1f6]"] { border-color: transparent; }
+.app-v2 [class*="bg-white"][class*="border-[#e8ecf2]"] { background-color: var(--v2-bg); box-shadow: var(--v2-raise); }
+.app-v2 [class*="bg-[#f8fafc]"] { background-color: rgba(168, 134, 146, 0.08); }
