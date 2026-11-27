@@ -169,17 +169,21 @@ export function SectionTabsV2({ view, onGo, isLocked }) {
   );
 }
 
-// « Écrire » : quatre façons de commencer, qui mènent aux vues existantes
-export function WriteHubV2({ onGo, isLocked }) {
+// « Écrire » : quatre façons de commencer, qui mènent aux vues existantes, puis « Reprendre » (brouillons en cours)
+export function WriteHubV2({ onGo, isLocked, resume = [], onResume }) {
   const cards = [
-    { id: "create", title: "Un post", text: "Une idée, tapée ou dictée. Le copilote choisit la thématique et l'humeur, vous modifiez si besoin.", cta: "Écrire un post", main: true },
-    { id: "campaigns", title: "Une campagne", text: "Une série de posts sur un thème, avec un plan que vous validez avant la rédaction." },
-    { id: "share", title: "À partir d'un contenu", text: "Un lien, un document, une dictée, une vidéo ou un audio : on en tire des posts." },
-    { id: "events", title: "Un événement", text: "Avant, pendant, après : les posts d'un salon ou d'une conférence, au jour J." },
+    { id: "create", title: "Un post", text: "Une idée, tapée ou dictée. Le copilote choisit la thématique et l'humeur, vous modifiez si besoin.", cta: "Écrire un post →", main: true },
+    { id: "campaigns", title: "Une campagne", text: "Une série de posts sur un thème, avec un plan que vous validez avant la rédaction.", cta: "Planifier une campagne →" },
+    { id: "share", title: "À partir d'un contenu", text: "Un lien, un document, une dictée, une vidéo ou un audio : on en tire des posts.", cta: "Choisir un contenu →" },
+    { id: "events", title: "Un événement", text: "Avant, pendant, après : les posts d'un salon ou d'une conférence, au jour J.", cta: "Préparer un événement →" },
   ];
   return (
-    <div className="max-w-5xl mx-auto px-6 py-6 space-y-6" data-testid="write-hub">
-      <p className="text-base text-gray-600 max-w-xl">Quatre façons de démarrer. Elles mènent au même endroit : un texte à relire, avec ses sources.</p>
+    <div className="max-w-5xl mx-auto px-6 py-6 space-y-7" data-testid="write-hub">
+      <div>
+        <p className="text-xs font-semibold tracking-[0.08em] uppercase text-[#C2456F] mb-2">Écrire</p>
+        <h1 className="font-display text-[2.25rem] leading-[1.1]">Par où voulez-vous <em className="text-[#C2456F]">commencer ?</em></h1>
+        <p className="text-lg text-gray-600 mt-3 max-w-xl leading-relaxed">Quatre façons de démarrer. Elles mènent au même endroit : un texte à relire, avec ses sources.</p>
+      </div>
       <div className="grid sm:grid-cols-2 gap-6">
         {cards.map((c) => (
           <button key={c.id} type="button" onClick={() => onGo(c.id)} data-testid={`write-${c.id}`} className={`app-card text-left p-6 flex flex-col gap-2 ${c.main ? "app-card-main" : ""}`}>
@@ -187,10 +191,28 @@ export function WriteHubV2({ onGo, isLocked }) {
             {isLocked?.(c.id) && <span className="self-start text-xs font-semibold px-2.5 py-0.5 rounded-full bg-[#FCE6D6] text-[#6E2E0E]">Offre supérieure</span>}
             <span className="font-display text-2xl">{c.title}</span>
             <span className="text-sm text-gray-600 leading-relaxed">{c.text}</span>
-            <span className="mt-auto pt-2 text-sm font-semibold text-[#9E3157]">{c.cta ?? `${c.title} →`}</span>
+            <span className="mt-auto pt-2 text-sm font-semibold text-[#9E3157]">{c.cta}</span>
           </button>
         ))}
       </div>
+      {resume.length > 0 && (
+        <section className="app-card px-6 py-3" data-testid="write-resume">
+          <div className="flex items-baseline gap-3 pt-3 pb-1 flex-wrap">
+            <span className="text-xs font-semibold uppercase tracking-wide text-gray-500"><span className="inline-block w-2 h-2 rounded-full bg-[#C2456F] mr-2 align-middle" />Reprendre</span>
+            <button type="button" onClick={() => onResume(null)} data-testid="write-resume-all" className="ml-auto text-sm font-semibold text-[#9E3157] hover:underline">Tous les brouillons</button>
+          </div>
+          {resume.map((r, i) => (
+            <div key={r.id} className={`flex flex-wrap items-center gap-3 py-4 ${i ? "border-t border-[#a88692]/20" : ""}`}>
+              {r.tag ? <span className="shrink-0 text-xs font-semibold px-2.5 py-0.5 rounded-full bg-[#F6E3E0] text-[#7A2342]">{r.tag}</span> : null}
+              <div className="flex-1 min-w-[14rem] text-[15px]">
+                <p className="font-semibold">{r.title}</p>
+                <p className="text-[13px] text-gray-500">{r.meta}</p>
+              </div>
+              <button type="button" onClick={() => onResume(r)} data-testid="write-resume-item" className="text-sm font-semibold text-[#9E3157] hover:underline">Reprendre</button>
+            </div>
+          ))}
+        </section>
+      )}
       <p className="text-sm text-gray-600">Un article, un webinaire, une étude de cas ? <button type="button" onClick={() => onGo("repurpose")} data-testid="write-repurpose" className="font-semibold text-[#9E3157] hover:underline">Donnez-lui une seconde vie</button> : une série de posts écrits à partir de ses seuls faits.</p>
     </div>
   );

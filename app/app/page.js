@@ -22015,7 +22015,7 @@ export default function Home() {
 
         {/* Barre supérieure */}
         <header className="px-6 pt-6 pb-1 flex items-center justify-between flex-wrap gap-3 max-w-5xl mx-auto">
-          <div className={v2Shell && view === "dashboard" ? "hidden" : ""}>
+          <div className={v2Shell && (view === "dashboard" || view === "write") ? "hidden" : ""}>
             <h1 className="text-xl font-bold">{VIEW_TITLES[view]}</h1>
             <p className="text-xs text-gray-400">{agencyHome ? `Agence · ${user.name || ""}` : clientMode ? `Client : ${impersonating.companyName || impersonating.name}` : `Bonjour ${user.name || ""} 👋`}</p>
           </div>
@@ -22218,6 +22218,17 @@ export default function Home() {
 
       {view === "write" ? (
         <WriteHubV2
+          resume={drafts
+            .filter((d) => d.status === "brouillon")
+            .sort((a, b) => new Date(b.updatedAt ?? b.createdAt) - new Date(a.updatedAt ?? a.createdAt))
+            .slice(0, 3)
+            .map((d) => ({
+              id: d.id,
+              title: (d.theme || String(d.text ?? "").split("\n")[0] || "Brouillon").slice(0, 90),
+              meta: `Brouillon · modifié ${fmtDateTime(d.updatedAt ?? d.createdAt)}`,
+              tag: d.contextId ? contexts.find((c) => c.id === d.contextId)?.name : null,
+            }))}
+          onResume={() => { setPostsMode("list"); setListCol("brouillon"); setView("history"); }}
           onGo={(id) => onNav({ id, requires: id === "campaigns" || id === "events" ? id : undefined, featureLabel: id === "campaigns" ? "Les campagnes" : id === "events" ? "Le module Événements" : undefined })}
           isLocked={(id) => (id === "campaigns" || id === "events") && !planAllows(user, id)}
         />
