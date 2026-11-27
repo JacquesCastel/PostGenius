@@ -346,6 +346,7 @@ function AuthScreen({ onAuth }) {
             </div>
           </div>
         </main>
+        <SiteFooter variant="v2" />
       </div>
     );
   }
@@ -518,7 +519,7 @@ function AuthScreen({ onAuth }) {
         </div>
       </div>
       </main>
-      {mode !== "register" && <SiteFooter variant="v2" />}
+      <SiteFooter variant="v2" />
     </div>
   );
 }
@@ -13559,6 +13560,7 @@ function OnboardingRecap({ fields, user, linkedinConnected, pageConnected, onDon
           <ParcoursApercu courant={5} titre="Votre parcours" />
         </aside>
       </div>
+      <SiteFooter variant="v2" />
     </div>
   );
 }
@@ -14146,6 +14148,7 @@ function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast,
         </aside>
       )}
       </div>
+      {selfFlow && <SiteFooter variant="v2" />}
     </div>
   );
 }
