@@ -46,6 +46,24 @@ export function CreateStepsV2({ step, className = "" }) {
   );
 }
 
+// « Le copilote a choisi pour vous » : thématique, humeur, où publier, chacun modifiable (« Changer » déplie le choix d'origine)
+export function CreateChoicesV2({ rows, open, onToggle }) {
+  const shown = rows.filter((r) => r.show);
+  if (!shown.length) return null;
+  return (
+    <section className="app-card md:col-span-2 px-6 py-3" data-testid="create-choices" aria-label="Les choix du copilote">
+      <p className="pt-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Le copilote a choisi pour vous <span className="normal-case tracking-normal font-normal">· changez ce qui ne convient pas</span></p>
+      {shown.map((r, i) => (
+        <div key={r.key} className={`flex flex-wrap items-center gap-3 py-3.5 ${i ? "border-t border-[#a88692]/20" : ""}`}>
+          <span className="w-28 shrink-0 text-xs font-semibold uppercase tracking-wide text-gray-500">{r.label}</span>
+          <span className="flex-1 min-w-[12rem] text-[15px] font-semibold">{r.value}{r.hint ? <span className="font-normal text-gray-500"> · {r.hint}</span> : null}</span>
+          <button type="button" onClick={() => onToggle(r.key)} aria-expanded={Boolean(open[r.key])} data-testid={`create-change-${r.key}`} className="text-sm font-semibold text-[#9E3157] hover:underline">{open[r.key] ? "Replier" : "Changer"}</button>
+        </div>
+      ))}
+    </section>
+  );
+}
+
 // Onglets de chaque section : [vue, libellé]. L'ordre est celui de la maquette.
 export const SECTION_TABS = {
   write: [["create", "Un post"], ["campaigns", "Campagnes"], ["share", "À partir d'un lien"], ["events", "Événements"]],

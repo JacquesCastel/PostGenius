@@ -19,7 +19,7 @@ import {
   AlignLeft, AlignCenter, AlignRight, Move, Server, Clapperboard, Link2, Tags
 } from "lucide-react";
 import { appV2Active } from "@/lib/appV2";
-import { AvatarMenuV2, SectionTabsV2, WriteHubV2, BrandV2, NavIconV2, CreateStepsV2, SPACE_ITEMS, ADMIN_ITEMS } from "@/components/app/ShellV2";
+import { AvatarMenuV2, SectionTabsV2, WriteHubV2, BrandV2, NavIconV2, CreateStepsV2, CreateChoicesV2, SPACE_ITEMS, ADMIN_ITEMS } from "@/components/app/ShellV2";
 import { yearlyPrice, ANNUAL_OFFER, PLANS, PLAN_IDS, planLabel, planAllows, planOf, trialDaysLeft, accessState, changeKind, lostFeatures, gainedFeatures, planWith } from "@/lib/plans";
 import { COMPARE, unlockedBy } from "@/lib/planFeatures";
 import { nextSteps, snoozeUntil } from "@/lib/nextSteps";
@@ -19607,6 +19607,7 @@ export default function Home() {
   const [dragOverCol, setDragOverCol] = useState(null); // colonne kanban survolée pendant un drag
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false); // menu burger (navigation mobile)
   // Nouvelle application : interrupteur APP_V2 (annoncé par /api/status) et choix mémorisé d'un administrateur (?nouvelle-app=1 / 0)
+  const [v2Open, setV2Open] = useState({}); // création d'un post : choix du copilote dépliés (mood, theme, where)
   const [appV2Env, setAppV2Env] = useState("off");
   const [appV2Pref, setAppV2Pref] = useState(null);
   useEffect(() => {
@@ -22708,7 +22709,7 @@ export default function Home() {
       ) : view === "create" ? (
         <main className={`max-w-6xl mx-auto p-6 grid gap-6 ${isTopic ? "md:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]" : "md:grid-cols-2"}`}>
           {v2Shell && <CreateStepsV2 step={nextStep && !result && !seriesResult && !loading ? 4 : 1} className="md:col-span-2" />}
-          {isTopic && (
+          {isTopic && !v2Shell && (
             <p className="md:col-span-2 text-lg font-semibold text-[#1b2a4a] leading-snug -mb-1" data-testid="create-intro">
               {contexts.length > 0 || (linkedin.connected && linkedin.orgConnected && orgs.length > 0)
                 ? `${contexts.length > 0 && linkedin.connected && linkedin.orgConnected && orgs.length > 0 ? "Quatre" : "Trois"} choix, dans l'ordre où vous y pensez : de quoi parler, dans quelle humeur${contexts.length > 0 ? ", sous quelle thématique" : ""}${linkedin.connected && linkedin.orgConnected && orgs.length > 0 ? ", et où publier" : ""}.`
@@ -22913,7 +22914,18 @@ export default function Home() {
             </div>
             </div>
 
-            <div data-testid="mood-block" className={blockCls}>
+            {v2Shell && isTopic && genMode === "single" && (
+              <CreateChoicesV2
+                open={v2Open}
+                onToggle={(k) => setV2Open((o) => ({ ...o, [k]: !o[k] }))}
+                rows={[
+                  { key: "theme", label: "Thématique", show: contexts.length > 0, value: themeOptions.find((o) => (activeContextId ?? null) === o.id)?.name ?? "Mon activité", hint: themeOptions.find((o) => (activeContextId ?? null) === o.id)?.voice ? `voix : ${String(themeOptions.find((o) => (activeContextId ?? null) === o.id).voice).slice(0, 40)}` : "" },
+                  { key: "mood", label: "Humeur", show: true, value: MOOD_CHOICES.find((m) => m.code === form.mood)?.label ?? "Au choix du copilote", hint: "le même sujet donne un autre post selon l'humeur" },
+                  { key: "where", label: "Où publier", show: linkedin.connected && linkedin.orgConnected && orgs.length > 0, value: pairActive ? "Profil et page, deux versions" : isOrgUrn(target) ? `Sur la page ${orgs.find((o) => o.urn === target)?.name ?? ""}` : "Sur mon profil", hint: pairActive || isOrgUrn(target) ? "" : linkedin.name || "" },
+                ]}
+              />
+            )}
+            <div data-testid="mood-block" className={`${blockCls} ${v2Shell && isTopic && genMode === "single" && !v2Open.mood ? "hidden" : ""}`}>
               <p className={blockLb}>{blockNum(2)}Dans quelle humeur ?</p>
               <div className="flex flex-wrap gap-2">
                 {MOOD_CHOICES.map((m) => (
@@ -22937,7 +22949,7 @@ export default function Home() {
             {pillarChoices.length > 0 && (() => {
               const current = manualPillarId !== undefined ? manualPillarId : activeReco?.pillarId ?? null;
               return (
-                <div data-testid="pillar-block" className={blockCls}>
+                <div data-testid="pillar-block" className={`${blockCls} ${v2Shell && isTopic && genMode === "single" && !v2Open.theme ? "hidden" : ""}`}>
                   <p className={blockLb}>Pilier éditorial <span className="text-gray-400 font-normal">(facultatif : sert à suivre vos résultats par type de contenu)</span></p>
                   <div className="flex flex-wrap gap-2">
                     {pillarChoices.map((p) => (
@@ -22961,7 +22973,7 @@ export default function Home() {
             <div className={`grid gap-4 items-start ${contexts.length > 0 && linkedin.connected && linkedin.orgConnected && orgs.length > 0 ? "md:grid-cols-2" : ""}`} data-testid="create-who">
             <div className="space-y-4 empty:hidden">
             {contexts.length > 0 && (
-              <div data-testid="context-picker" className={blockCls}>
+              <div data-testid="context-picker" className={`${blockCls} ${v2Shell && isTopic && genMode === "single" && !v2Open.theme ? "hidden" : ""}`}>
                 <label className={blockLb}>{blockNum(3)}Sous quelle thématique ?</label>
                 <div className="grid gap-2">
                   {themeOptions.map((o, i) => {
@@ -22983,7 +22995,7 @@ export default function Home() {
               const avail = moments.filter((m) => (m.contextId ?? null) === (activeContextId ?? null) && (m.state === "active" || m.state === "upcoming"));
               if (!avail.length) return null;
               return (
-                <div data-testid="moment-picker" className={blockCls}>
+                <div data-testid="moment-picker" className={`${blockCls} ${v2Shell && isTopic && genMode === "single" && !v2Open.theme ? "hidden" : ""}`}>
                   <label className={blockLb}>Un temps fort en cours ?</label>
                   <div className="flex flex-wrap gap-1.5">
                     {[{ id: null, name: "Aucun" }, ...avail].map((m) => (
@@ -22997,7 +23009,7 @@ export default function Home() {
             </div>
             {/* Où publier : la voix du post en dépend (profil « je », page « nous ») */}
             {linkedin.connected && linkedin.orgConnected && orgs.length > 0 && (
-              <div data-testid="publish-as" className={blockCls}>
+              <div data-testid="publish-as" className={`${blockCls} ${v2Shell && isTopic && genMode === "single" && !v2Open.where ? "hidden" : ""}`}>
                 <label className={blockLb}>{blockNum(contexts.length > 0 ? 4 : 3)}Où publier ?</label>
                 <div className="grid gap-2">
                   {[

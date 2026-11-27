@@ -88,3 +88,16 @@ test("création d'un post : les quatre étapes sont indiquées (idée, relecture
   assert.match(page, /<CreateStepsV2 step=\{scheduleDraft && scheduleFromCreate \? 3 : 2\}/);
   assert.match(page, /<CreateStepsV2 step=\{nextStep && !result && !seriesResult && !loading \? 4 : 1\}/);
 });
+
+test("création : les choix du copilote sont résumés et dépliables, sans retirer aucun bloc", () => {
+  assert.match(shell, /export function CreateChoicesV2/);
+  assert.ok(shell.includes("Le copilote a choisi pour vous"));
+  // les blocs d'origine restent dans la page, seulement masqués tant qu'on ne clique pas sur « Changer »
+  for (const id of ["mood-block", "context-picker", "moment-picker", "publish-as", "pillar-block"]) {
+    assert.ok(page.includes(`data-testid="${id}"`), id);
+  }
+  assert.match(page, /v2Shell && isTopic && genMode === "single" && !v2Open\.mood \? "hidden"/);
+  assert.match(page, /!v2Open\.where \? "hidden"/);
+  // l'ancienne phrase d'introduction reste pour l'ancienne application
+  assert.match(page, /isTopic && !v2Shell && \(/);
+});
