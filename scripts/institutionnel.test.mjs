@@ -101,7 +101,7 @@ test("écran de connexion et fenêtre d'au revoir : palette du nouveau site, ide
 test("parcours d'inscription : le menu du site reste en haut sur tous les écrans ; la mise en page est celle de la maquette (panneau avant le parcours, pastilles pendant)", () => {
   const page = read("app/app/page.js");
   assert.doesNotMatch(page, /EnteteParcours/, "plus d'en-tête sans menu");
-  assert.equal((page.match(/<ParcoursApercu /g) ?? []).length, 3, "le même panneau sur les trois écrans : questions, compte, parcours");
+  assert.equal((page.match(/<ParcoursApercu /g) ?? []).length, 4, "le même panneau sur tous les écrans : questions, compte, parcours, fin");
   const q = page.slice(page.indexOf("data-testid=\"register-questions\"") - 500, page.indexOf("data-testid=\"register-questions\""));
   assert.match(q, /<SiteHeader variant="v2" \/>/);
   const a = page.slice(page.indexOf("function AuthScreen"), page.indexOf("// Modal de programmation"));
@@ -126,7 +126,7 @@ test("inscription, étape e-mail et mot de passe : même mise en page que les tr
   const a = page.slice(page.indexOf("function AuthScreen"), page.indexOf("// Modal de programmation"));
   assert.match(a, /\{mode === "register" && \(\s*<div className="space-y-4 max-w-lg lg:order-2" data-testid="register-account-aside">\s*<ParcoursApercu courant=\{0\.5\} \/>/);
   assert.match(a, /\{mode !== "register" && \(\s*<div className=\{`flex-col items-center text-center/, "la page de vente n'existe plus qu'en connexion et mot de passe oublié");
-  assert.equal((page.match(/<ParcoursApercu /g) ?? []).length, 3, "écran des trois questions + étape du compte + parcours");
+  assert.equal((page.match(/<ParcoursApercu /g) ?? []).length, 4, "écran des trois questions + étape du compte + parcours + fin");
   assert.match(a, /lg:order-1/);
 });
 
@@ -151,4 +151,19 @@ test("parcours : le compagnon est dans la palette du site ; la carte « Ce que v
   assert.match(comp, /onClick=\{onGoNext\} className="bg-\[#C2456F\] hover:bg-\[#9E3157\]/);
   const next = page.slice(page.indexOf("function NextStepCard("), page.indexOf("\nfunction ", page.indexOf("function NextStepCard(") + 10));
   assert.match(next, /from-orange-400 to-\[#ff5a5f\]/, "la carte du tableau de bord n'est pas touchée");
+});
+
+test("fin du parcours : un écran récapitule les données d'inscription avant le tableau de bord (inscription libre seulement)", () => {
+  const page = read("app/app/page.js");
+  const r = page.slice(page.indexOf("function OnboardingRecap("), page.indexOf("function OnboardingWizard("));
+  assert.match(r, /Votre compte est prêt\./);
+  assert.match(r, /<ParcoursApercu courant=\{5\} titre="Votre parcours" \/>/, "toutes les étapes cochées");
+  assert.match(r, /<SiteHeader variant="v2" \/>/);
+  for (const id of ["wizard-recap", "wizard-recap-list", "wizard-recap-trial", "wizard-recap-done"]) assert.ok(r.includes(id), id);
+  for (const k of ["fields.name", "fields.companyName", "fields.targetAudience", "fields.leadIcp", "fields.themes", "fields.tone", "linkedinConnected"]) assert.ok(r.includes(k), k);
+  assert.doesNotMatch(r, /password|motDePasse/i, "aucun mot de passe dans le récapitulatif");
+  const w = page.slice(page.indexOf("function OnboardingWizard("), page.indexOf("// Vue Clients — tableau de bord agence"));
+  assert.match(w, /if \(selfFlow\) setRecap\(data\.profile\); else onDone\(data\.profile\);/, "l'agence garde sa sortie directe");
+  assert.match(w, /if \(selfFlow && recap\) return <OnboardingRecap /);
+  assert.match(w, /onDone=\{\(\) => onDone\(recap\)\}/);
 });
