@@ -13444,7 +13444,7 @@ function PublishWhereStep({ onBack, onNext, planAllowsOrg = true }) {
           </div>
         </div>
       )}
-      <div className="bg-white border border-[#EFE4E0] rounded-[20px] px-6 sm:px-[26px] py-5 flex flex-col lg:flex-row lg:items-center gap-4 lg:gap-7" data-testid="wizard-where-recap">
+      <div className="bg-white border border-[#EFE4E0] rounded-[20px] px-6 sm:px-[26px] py-5 flex flex-col gap-4" data-testid="wizard-where-recap">
         <div className="flex-1">
           <p className="text-xs font-bold uppercase tracking-wider text-[#6B5A70] mb-1.5">Ce que vous choisirez à chaque post</p>
           <p className="text-[15px] text-[#2E1F33] leading-relaxed"><strong>De quoi parler</strong> (une thématique : votre métier, la vie d&apos;entrepreneur, le sport…), <strong>dans quelle humeur</strong> (fier, agacé, inspiré…) et <strong>où publier</strong> (votre profil, la page, ou les deux).</p>
@@ -17089,7 +17089,7 @@ function ProfileCompanion({ stage, progress, missing, nextStage, values, onApply
   const applyAll = (mi) => messages[mi].proposals.forEach((p, pi) => !p.applied && apply(mi, pi));
 
   const avatar = (
-    <span className="w-8 h-8 rounded-full bg-gradient-to-br from-orange-400 to-[#ff5a5f] text-white flex items-center justify-center shrink-0">
+    <span className="w-8 h-8 rounded-full bg-gradient-to-br from-[#C2456F] to-[#9E3157] text-white flex items-center justify-center shrink-0">
       <Sparkles size={15} />
     </span>
   );
@@ -17103,11 +17103,11 @@ function ProfileCompanion({ stage, progress, missing, nextStage, values, onApply
   }
 
   return (
-    <div className="bg-gradient-to-br from-[#fff7f1] to-white border border-[#ffd9c7] rounded-2xl p-4 mb-5">
+    <div className="bg-gradient-to-br from-[#FCF1EE] to-white border border-[#F3D9D3] rounded-2xl p-4 mb-5">
       <div className="flex items-start gap-3">
         {avatar}
         <div className="min-w-0 flex-1">
-          <p className="text-xs font-semibold text-[#c2410c]">Votre compagnon Vercéa</p>
+          <p className="text-xs font-semibold text-[#9E3157]">Votre compagnon Vercéa</p>
 
           {mode === "idle" && (
             <div>
@@ -17125,7 +17125,7 @@ function ProfileCompanion({ stage, progress, missing, nextStage, values, onApply
               <div className="flex flex-wrap gap-2 mt-3">
                 {progress.status === "done" ? (
                   nextStage && (
-                    <button type="button" onClick={onGoNext} className="bg-[#ff5a5f] hover:bg-[#f63d44] text-white text-xs font-medium px-3.5 py-2 rounded-lg flex items-center gap-1.5">
+                    <button type="button" onClick={onGoNext} className="bg-[#C2456F] hover:bg-[#9E3157] text-white text-xs font-medium px-3.5 py-2 rounded-lg flex items-center gap-1.5">
                       Passer à l&apos;étape suivante <ChevronRight size={13} />
                     </button>
                   )
@@ -17190,7 +17190,7 @@ function ProfileCompanion({ stage, progress, missing, nextStage, values, onApply
               {progress.status === "done" && (
                 <div className="mt-3 rounded-xl bg-green-50 border border-green-200 p-2.5 flex items-center justify-between gap-2 flex-wrap">
                   <p className="text-xs text-green-800 flex items-center gap-1.5"><Check size={13} /> Étape complète. Enregistrez pour la conserver.</p>
-                  <button type="button" onClick={onSaveNext} disabled={saving} className="bg-[#ff5a5f] hover:bg-[#f63d44] disabled:bg-gray-300 text-white text-xs font-medium px-3 py-1.5 rounded-lg">
+                  <button type="button" onClick={onSaveNext} disabled={saving} className="bg-[#C2456F] hover:bg-[#9E3157] disabled:bg-gray-300 text-white text-xs font-medium px-3 py-1.5 rounded-lg">
                     {nextStage ? "Enregistrer et continuer" : "Enregistrer"}
                   </button>
                 </div>
@@ -17205,7 +17205,7 @@ function ProfileCompanion({ stage, progress, missing, nextStage, values, onApply
                   onKeyDown={(e) => e.key === "Enter" && send()}
                   placeholder="Votre réponse…"
                   maxLength={600}
-                  className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#ff5a5f]"
+                  className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#C2456F]"
                 />
                 <button type="button" onClick={send} disabled={sending || !input.trim()} aria-label="Envoyer" className="bg-[#0a66c2] hover:bg-[#004182] disabled:opacity-50 text-white px-3 py-2 rounded-lg shrink-0">
                   {sending ? <RefreshCw size={13} className="animate-spin" /> : <Send size={13} />}
