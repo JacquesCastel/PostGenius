@@ -33,7 +33,7 @@ export default async function TarifsPage() {
   return (
     <Shell>
       <div className="w-full max-w-[1200px] mx-auto px-4 sm:px-8 pt-8 pb-24">
-        <div className="text-center">
+        <div className="entete-centre">
           <p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-[#C2456F]">Tarifs</p>
           <h1 className="font-display text-[38px] sm:text-[54px] leading-[1.06] tracking-[-0.02em] mt-3">{liaisons("Une offre pour chaque ambition")}</h1>
           <p className="text-[19px] leading-relaxed text-[#4A3A50] mt-5 max-w-2xl mx-auto">

@@ -64,7 +64,8 @@ export default function ProduitPage() {
   return (
     <Shell>
       <div className="w-full max-w-[1200px] mx-auto px-4 sm:px-8 pt-8 pb-24">
-        <SousNavProduit courante="/produit" />
+        <div className="entete-centre">
+<SousNavProduit courante="/produit" />
         <p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-[#C2456F]">Produit</p>
         <h1 className="font-display text-[38px] sm:text-[56px] leading-[1.06] tracking-[-0.02em] mt-3 max-w-[860px]">
           {titre[0]}<em className="text-[#C2456F]">{titre[1]}</em>
@@ -72,6 +73,7 @@ export default function ProduitPage() {
         <p className="text-[19px] sm:text-xl leading-relaxed text-[#4A3A50] mt-6 max-w-[720px]">
           Vous déposez la matière, {BRAND_NAME} rédige, contrôle et planifie. Vous relisez et vous validez : rien ne part sans votre accord si vous le souhaitez.
         </p>
+</div>
 
         <ol className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {ETAPES.map(([nom, texte], i) => (

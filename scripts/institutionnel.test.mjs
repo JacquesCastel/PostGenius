@@ -179,14 +179,18 @@ test("une seule largeur de page (1200 px, alignée sur le menu), texte calé à 
   assert.match(read("components/v2/Shell.js"), /flex-1 w-full page-v2/);
 });
 
-test("pages hors produit : l'en-tête (kicker, titre, accroche, introduction) est centré ; les pages produit restent calées à gauche", () => {
-  for (const f of ["app/preuves/page.js", "app/preuves/test-e4/page.js", "app/a-propos/page.js", "app/blog/page.js", "app/contact/page.js", "app/beta/page.js", "app/legal/page.js", "app/securite/page.js", "app/privacy-policy/page.js"]) {
-    assert.match(read(f), /className="[^"]*entete-centre/, f);
+test("toutes les pages du nouveau site : l'en-tête (kicker, titre, accroche, introduction) est centré, produit compris ; le contenu en dessous reste calé à gauche", () => {
+  for (const f of ["app/preuves/page.js", "app/preuves/test-e4/page.js", "app/a-propos/page.js", "app/blog/page.js", "app/contact/page.js", "app/beta/page.js", "app/legal/page.js", "app/securite/page.js", "app/privacy-policy/page.js",
+    "app/tarifs/page.js", "app/produit/page.js", "app/produit/methode/page.js", "app/produit/verification/page.js", "app/scoring/page.js"]) {
+    assert.match(read(f), /className="[^"]*entete-centre|<div className="text-center"><span/, f);
   }
-  for (const f of ["app/produit/page.js", "app/produit/methode/page.js", "app/produit/verification/page.js"]) assert.doesNotMatch(read(f), /entete-centre/, `${f} : reste à gauche`);
+  assert.doesNotMatch(read("app/tarifs/page.js"), /<div className="text-center">/, "tarifs : classe commune, pas un texte centré que la mesure de lecture décalait");
+  assert.match(read("components/v2/SousNavProduit.js"), /flex flex-wrap justify-center gap-2/, "la sous-navigation produit est centrée");
+  assert.match(read("app/produit/methode/page.js"), /mt-6 flex flex-wrap justify-center gap-2\.5/);
   assert.match(read("app/globals.css"), /\.entete-centre \{ text-align: center; \}/);
   assert.match(read("app/globals.css"), /\.entete-centre > :where\(p, h1, h2\) \{ margin-left: auto; margin-right: auto; \}/);
-  // contact : l'en-tête est au-dessus des deux colonnes
   const c = read("app/contact/page.js");
   assert.ok(c.indexOf('className="entete-centre"') < c.indexOf('<ul className="mt-9 space-y-5">'));
+  const sc = read("app/scoring/page.js");
+  assert.match(sc, /mt-8 flex flex-col items-center gap-10/, "scoring : texte centré, carte d'exemple dessous");
 });

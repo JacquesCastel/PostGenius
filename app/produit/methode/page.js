@@ -34,14 +34,16 @@ export default function MethodePage() {
   return (
     <Shell>
       <div className="w-full max-w-[1200px] mx-auto px-4 sm:px-8 pt-8 pb-24">
-        <SousNavProduit courante="/produit/methode" />
+        <div className="entete-centre">
+<SousNavProduit courante="/produit/methode" />
         <h1 className="font-display text-[38px] sm:text-[54px] leading-[1.06] tracking-[-0.02em]">{titre[0]}<em className="text-[#C2456F]">{titre[1]}</em></h1>
         <p className="text-[19px] sm:text-xl leading-relaxed text-[#4A3A50] mt-6">De vos sources à un post relu. Pour chaque étape, nous disons ce que fait l&apos;IA, ce que vérifie un code que l&apos;on peut lire, et ce que vous décidez.</p>
-        <div className="mt-6 flex flex-wrap gap-2.5 text-[13px] font-semibold">
+        <div className="mt-6 flex flex-wrap justify-center gap-2.5 text-[13px] font-semibold">
           <span className="px-3.5 py-1.5 rounded-full bg-[#F6E3E0] text-[#7A2342]">IA : propose, rédige</span>
           <span className="px-3.5 py-1.5 rounded-full bg-[#DCE9DF] text-[#2B5340]">Code : règles fixes, toujours le même résultat</span>
           <span className="px-3.5 py-1.5 rounded-full bg-[#FCE6D6] text-[#8A3B12]">Vous : décidez</span>
         </div>
+</div>
 
         <section className="mt-14">
           <p className={KICK}>1 · Votre matière</p>

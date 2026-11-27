@@ -26,12 +26,14 @@ export default function VerificationPage() {
   return (
     <Shell>
       <div className="w-full max-w-[1200px] mx-auto px-4 sm:px-8 pt-8 pb-24">
-        <SousNavProduit courante="/produit/verification" />
+        <div className="entete-centre">
+<SousNavProduit courante="/produit/verification" />
         <p className="inline-block bg-[#FCE6D6] text-[#8A3B12] text-[13px] font-semibold px-3.5 py-1.5 rounded-full mb-3.5">Contrôle interne · indicatif</p>
         <h1 className="font-display text-[36px] sm:text-[50px] leading-[1.08] tracking-[-0.02em]">{titre[0]}<em className="text-[#C2456F]">{titre[1]}</em></h1>
         <p className="text-[19px] sm:text-xl leading-relaxed text-[#4A3A50] mt-6">
           Le contrôle repère un nombre qui ne figure dans aucune des informations données à la rédaction. Il ne dit pas si ce nombre est faux : il vous demande de le regarder.
         </p>
+</div>
 
         <div className="mt-10 bg-white border border-[#EFE4E0] rounded-[28px] p-6 sm:p-9" data-testid="verification-exemple">
           <div className="flex justify-between items-center mb-4">
