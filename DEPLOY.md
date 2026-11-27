@@ -314,3 +314,13 @@ Technique → **Visites du site** : visiteurs par jour, pages vues, pages les pl
 - **Aucune donnée personnelle :** le visiteur est une empreinte qui change chaque jour (adresse et navigateur mélangés à un sel du jour, jamais conservés) : impossible de le suivre d'un jour à l'autre. Un même visiteur revenu un autre jour compte donc deux fois.
 - **Non comptés :** robots, « Ne pas me suivre » (DNT) et Global Privacy Control, personnes connectées, pages privées.
 - **Réglage :** `SITE_STATS_DISABLED=1` coupe la collecte. Umami reste chargé en parallèle (`UMAMI_DISABLED=1` pour le couper : mettre alors à jour la politique de confidentialité et la page Sécurité).
+
+## Nouvelle application (APP_V2)
+
+Menu à cinq entrées (Aujourd'hui, Écrire, Mes posts, Mes résultats, Mon copilote ; « Mes clients » en offre Agence), « Mon espace » sous la photo, charte Vercéa. Lue à chaque requête, comme les interrupteurs SITE_*.
+
+- `APP_V2` absent : ancienne application pour tout le monde. Un administrateur peut essayer la nouvelle avec `/app?nouvelle-app=1` (retour : `/app?nouvelle-app=0`) ; le choix reste dans son navigateur.
+- `APP_V2=admin` : la nouvelle application s'affiche pour les administrateurs seulement.
+- `APP_V2=1` : pour tout le monde.
+
+L'administrateur technique, l'espace agence et l'espace client gardent leurs menus actuels.
