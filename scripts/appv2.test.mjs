@@ -101,3 +101,15 @@ test("création : les choix du copilote sont résumés et dépliables, sans reti
   // l'ancienne phrase d'introduction reste pour l'ancienne application
   assert.match(page, /isTopic && !v2Shell && \(/);
 });
+
+test("téléphone : barre du bas à cinq icônes, mêmes entrées que le menu, bouton d'aide remonté", () => {
+  assert.match(shell, /export function BottomBarV2/);
+  assert.match(page, /<BottomBarV2 items=\{NAV_V2\.filter\(\(i\) => !i\.mobileOnly\)\}/);
+  assert.ok(page.includes('v2Shell ? "pb-24 md:pb-0"'), "le contenu ne passe pas sous la barre");
+  assert.ok(page.includes('bottom-24 md:bottom-5'), "le bouton « ? » ne passe pas sous la barre");
+});
+
+test("titres de la nouvelle application : Mes sources, Réponses à traiter, Mes résultats, Mon copilote", () => {
+  for (const t of ['"Mes sources"', '"Réponses à traiter"', '"Mes résultats"', '"Mon copilote"']) assert.ok(page.includes(t), t);
+  assert.ok(page.includes('"Datalake éditorial"'), "ancien titre conservé");
+});

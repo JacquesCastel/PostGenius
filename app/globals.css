@@ -106,3 +106,8 @@ html {
 .app-v2 .app-step.done i { background: #dce9df; color: #1f4030; }
 .app-v2 .app-step.on { color: #9e3157; box-shadow: var(--v2-sunk); }
 .app-v2 .app-step.on i { background: #c2456f; color: #fff; }
+/* Téléphone : barre du bas à cinq icônes */
+.app-v2 .app-nav-ico-sm { width: 18px; height: 18px; padding: 6px; border-radius: 12px; }
+.app-v2 .app-bottombar { position: fixed; left: 12px; right: 12px; bottom: calc(14px + env(safe-area-inset-bottom, 0px)); z-index: 45; display: flex; align-items: center; justify-content: space-around; padding: 6px 4px; border-radius: 26px; background: var(--v2-bg); box-shadow: 6px 6px 16px var(--v2-d), -6px -6px 16px var(--v2-l); }
+.app-v2 .app-bb { display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 0; flex: 1; padding: 6px 2px; border-radius: 18px; font-size: 0.6875rem; font-weight: 600; color: #4a3a50; }
+.app-v2 .app-bb-on { color: #9e3157; box-shadow: var(--v2-sunk); }

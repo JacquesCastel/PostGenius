@@ -19,7 +19,7 @@ import {
   AlignLeft, AlignCenter, AlignRight, Move, Server, Clapperboard, Link2, Tags
 } from "lucide-react";
 import { appV2Active } from "@/lib/appV2";
-import { AvatarMenuV2, SectionTabsV2, WriteHubV2, BrandV2, NavIconV2, CreateStepsV2, CreateChoicesV2, SPACE_ITEMS, ADMIN_ITEMS } from "@/components/app/ShellV2";
+import { AvatarMenuV2, SectionTabsV2, WriteHubV2, BrandV2, NavIconV2, BottomBarV2, CreateStepsV2, CreateChoicesV2, SPACE_ITEMS, ADMIN_ITEMS } from "@/components/app/ShellV2";
 import { yearlyPrice, ANNUAL_OFFER, PLANS, PLAN_IDS, planLabel, planAllows, planOf, trialDaysLeft, accessState, changeKind, lostFeatures, gainedFeatures, planWith } from "@/lib/plans";
 import { COMPARE, unlockedBy } from "@/lib/planFeatures";
 import { nextSteps, snoozeUntil } from "@/lib/nextSteps";
@@ -21242,12 +21242,13 @@ export default function Home() {
     repurpose: "Seconde vie d'un contenu",
     create: "Créer un post",
     history: "Mes posts",
-    engage: "Interagir sur LinkedIn",
+    engage: v2Shell ? "Réponses à traiter" : "Interagir sur LinkedIn",
     campaigns: "Campagnes",
-    datalake: "Datalake éditorial",
+    datalake: v2Shell ? "Mes sources" : "Datalake éditorial",
     interview: "Interview guidée",
     events: "Événements",
-    stats: "Statistiques",
+    stats: v2Shell ? "Mes résultats" : "Statistiques",
+    ...(v2Shell ? { copilot: "Mon copilote", leads: "Leads" } : {}),
     billing: "Abonnement",
     profile: "Mon profil",
     themes: "Mes thématiques",
@@ -21402,7 +21403,7 @@ export default function Home() {
         onClick={() => setShowTutorial(true)}
         title="Revoir le tutoriel"
         aria-label="Revoir le tutoriel"
-        className="fixed bottom-5 left-5 z-40 w-11 h-11 rounded-full bg-white border border-gray-200 shadow-lg text-[#ff5a5f] hover:bg-[#fff1f1] font-extrabold text-lg flex items-center justify-center"
+        className={`fixed ${v2Shell ? "bottom-24 md:bottom-5" : "bottom-5"} left-5 z-40 w-11 h-11 rounded-full bg-white border border-gray-200 shadow-lg text-[#ff5a5f] hover:bg-[#fff1f1] font-extrabold text-lg flex items-center justify-center`}
       >
         ?
       </button>
@@ -21860,8 +21861,10 @@ export default function Home() {
         </div>}
       </aside>
 
+      {v2Shell && <BottomBarV2 items={NAV_V2.filter((i) => !i.mobileOnly)} isActive={isActive} onGo={onNav} />}
+
       {/* Contenu */}
-      <div className="flex-1 min-w-0">
+      <div className={`flex-1 min-w-0 ${v2Shell ? "pb-24 md:pb-0" : ""}`}>
         {/* Navigation mobile : menu burger */}
         <div className="md:hidden bg-white border-b border-gray-100 px-3 py-2 flex items-center gap-2">
           <button
