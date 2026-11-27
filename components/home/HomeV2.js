@@ -70,8 +70,8 @@ export default function HomeV2() {
 
       <section className="bg-white border-y border-[#EFE4E0]">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-8 py-16">
-          <p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-[#C2456F] mb-3">Comment ça se passe</p>
-          <h2 className="font-display text-[30px] sm:text-[40px] tracking-[-0.015em] mb-10 max-w-[640px]">{liaisons("Trois gestes, et c'est vous qui gardez la main.")}</h2>
+          <p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-[#C2456F] mb-3">Comment ça se passe&nbsp;?</p>
+          <h2 className="font-display text-[26px] sm:text-[32px] lg:text-[38px] tracking-[-0.015em] mb-10 lg:whitespace-nowrap" data-testid="accueil-gestes-titre">{liaisons("Trois gestes, et c'est vous qui gardez la main.")}</h2>
           <div className="grid gap-6 md:grid-cols-3">
             {ETAPES.map(([nom, texte], i) => (
               <div key={nom} className="bg-[#FCF8F5] rounded-3xl p-7">
@@ -108,7 +108,7 @@ export default function HomeV2() {
         {preuvesOuvertes() && (
           <section id="preuves" className="pt-14 pb-20">
             <p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-[#C2456F] mb-3">Preuves</p>
-            <h2 className="font-display text-[30px] sm:text-[40px] tracking-[-0.015em] mb-9 max-w-[700px]">{liaisons("Ce que nous avons mesuré, et rien de plus.")}</h2>
+            <h2 className="font-display text-[26px] sm:text-[32px] lg:text-[38px] tracking-[-0.015em] mb-9 lg:whitespace-nowrap" data-testid="accueil-mesure-titre">{liaisons("Ce que nous avons mesuré, et rien de plus.")}</h2>
             <div className="flex flex-wrap gap-7 items-stretch">
               <div className="flex-[2_1_560px] bg-white border border-[#EFE4E0] rounded-[28px] p-7 sm:p-9">
                 <span className="text-xs font-semibold bg-[#F6E3E0] text-[#7A2342] px-3 py-1 rounded-full">Test E4 · résultats du {E4.date}</span>
