@@ -79,3 +79,11 @@ test("titre de l'accueil : trois lignes fixes, puis la promesse en sous-titre pl
   assert.match(h, /className="block whitespace-nowrap"/);
   assert.match(h, /liaisons\("Ce qui s'en écarte nettement, on le signale\."\)/);
 });
+
+test("accueil : « Trois gestes… » et « Ce que nous avons mesuré… » sur une seule ligne dès la tablette ; « Comment ça se passe ? » avec son point d'interrogation (espace insécable)", () => {
+  const h = read("components/home/HomeV2.js");
+  assert.match(h, /lg:whitespace-nowrap" data-testid="accueil-gestes-titre">\{liaisons\("Trois gestes, et c'est vous qui gardez la main\."\)\}/);
+  assert.match(h, /lg:whitespace-nowrap" data-testid="accueil-mesure-titre">\{liaisons\("Ce que nous avons mesuré, et rien de plus\."\)\}/);
+  assert.doesNotMatch(h, /max-w-\[(640|700)px\]">\{liaisons\("(Trois gestes|Ce que nous avons mesuré)/, "plus de largeur qui force le retour à la ligne");
+  assert.match(h, />Comment ça se passe&nbsp;\?<\/p>/);
+});
