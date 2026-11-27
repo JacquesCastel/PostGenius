@@ -143,8 +143,8 @@ test("Mon profil : barre de complétude et ce qui manque, au-dessus du profil ex
   assert.ok(page.includes("<ProfilePage"));
 });
 
-test("Mes posts en liste : même largeur que l'en-tête, une seule colonne sans défilement interne ni titre de colonne", () => {
+test("Mes posts en liste : même largeur que l'en-tête, deux colonnes de cartes (une sur petit écran) sans défilement interne ni titre de colonne", () => {
   assert.ok(page.includes('<main className={`p-6 ${v2Shell ? "max-w-5xl mx-auto" : ""}`}>'));
-  assert.ok(page.includes('v2List ? "space-y-4" : "space-y-3 max-h-[68vh] overflow-y-auto pr-1"'));
+  assert.ok(page.includes('v2List ? "grid grid-cols-1 md:grid-cols-2 gap-4 items-start" : "space-y-3 max-h-[68vh] overflow-y-auto pr-1"'));
   assert.ok(page.includes('${v2List ? "hidden" : ""}'));
 });
