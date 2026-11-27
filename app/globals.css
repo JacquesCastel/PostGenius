@@ -97,3 +97,12 @@ html {
 .app-v2 [class*="border-[#e8ecf2]"], .app-v2 [class*="border-[#eef1f6]"] { border-color: transparent; }
 .app-v2 [class*="bg-white"][class*="border-[#e8ecf2]"] { background-color: var(--v2-bg); box-shadow: var(--v2-raise); }
 .app-v2 [class*="bg-[#f8fafc]"] { background-color: rgba(168, 134, 146, 0.08); }
+/* Pictos du menu : pastille pastel autour du tracé des maquettes */
+.app-v2 .app-nav-ico { box-sizing: content-box; display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; padding: 7px; border-radius: 14px; flex-shrink: 0; }
+/* Création d'un post : indicateur d'étapes */
+.app-v2 .app-steps { display: flex; flex-wrap: wrap; gap: 0.5rem; list-style: none; margin: 0; padding: 0; }
+.app-v2 .app-step { display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.8125rem; font-weight: 600; color: #6b5a70; padding: 0.4rem 0.9rem 0.4rem 0.5rem; border-radius: 999px; }
+.app-v2 .app-step i { font-style: normal; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; background: #ede4e0; color: #4a3a50; }
+.app-v2 .app-step.done i { background: #dce9df; color: #1f4030; }
+.app-v2 .app-step.on { color: #9e3157; box-shadow: var(--v2-sunk); }
+.app-v2 .app-step.on i { background: #c2456f; color: #fff; }
