@@ -125,7 +125,7 @@ test("inscription, étape e-mail et mot de passe : même mise en page que les tr
   const page = read("app/app/page.js");
   const a = page.slice(page.indexOf("function AuthScreen"), page.indexOf("// Modal de programmation"));
   assert.match(a, /\{mode === "register" && \(\s*<div className="space-y-4 max-w-lg lg:order-2" data-testid="register-account-aside">\s*<ParcoursApercu courant=\{0\.5\} \/>/);
-  assert.match(a, /\{mode !== "register" && \(\s*<div className=\{`flex-col items-center text-center/, "la page de vente n'existe plus qu'en connexion et mot de passe oublié");
+  assert.doesNotMatch(a, /Créez vos posts et/, "plus de page de vente nulle part dans l'écran de connexion et d'inscription");
   assert.equal((page.match(/<ParcoursApercu /g) ?? []).length, 4, "écran des trois questions + étape du compte + parcours + fin");
   assert.match(a, /lg:order-1/);
 });
@@ -193,4 +193,15 @@ test("toutes les pages du nouveau site : l'en-tête (kicker, titre, accroche, in
   assert.ok(c.indexOf('className="entete-centre"') < c.indexOf('<ul className="mt-9 space-y-5">'));
   const sc = read("app/scoring/page.js");
   assert.match(sc, /mt-8 flex flex-col items-center gap-10/, "scoring : texte centré, carte d'exemple dessous");
+});
+
+test("connexion et mot de passe oublié : une carte centrée, sans page de vente ni chiffre inventé ; lien vers l'inscription", () => {
+  const page = read("app/app/page.js");
+  const a = page.slice(page.indexOf("function AuthScreen"), page.indexOf("// Modal de programmation"));
+  assert.doesNotMatch(a, /Engagement|\+38|avec l'IA<\/h1>|Créez vos posts/, "ni maquette de post, ni engagement chiffré, ni titre de vente");
+  assert.match(a, /justify-items-center items-start py-12 sm:py-16/);
+  assert.match(a, /mode === "register" \? "max-w-xl lg:order-1" : "max-w-md"/);
+  assert.match(a, /font-display text-\[26px\] font-medium \$\{mode === "register" \? "" : "text-center"\}/);
+  assert.match(a, /data-testid="auth-to-register"/);
+  for (const id of ["auth-email", "auth-password", "auth-submit"]) assert.ok(a.includes(id), id);
 });
