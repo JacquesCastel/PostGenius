@@ -98,19 +98,19 @@ test("écran de connexion et fenêtre d'au revoir : palette du nouveau site, ide
   assert.ok(g.includes("/app?mode=login"));
 });
 
-test("parcours d'inscription (maquettes 1, 1b, 2) : en-tête concentré (logo, nom, pastilles), ni menu ni pied de page du site, panneau seulement avant le parcours (trois questions, compte)", () => {
+test("parcours d'inscription : le menu du site reste en haut sur tous les écrans ; la mise en page est celle de la maquette (panneau avant le parcours, pastilles pendant)", () => {
   const page = read("app/app/page.js");
-  assert.match(page, /function EnteteParcours\(/);
+  assert.doesNotMatch(page, /EnteteParcours/, "plus d'en-tête sans menu");
   assert.equal((page.match(/<ParcoursApercu /g) ?? []).length, 2, "le panneau n'est que sur les deux écrans qui précèdent le parcours (trois questions, compte)");
+  const q = page.slice(page.indexOf("data-testid=\"register-questions\"") - 500, page.indexOf("data-testid=\"register-questions\""));
+  assert.match(q, /<SiteHeader variant="v2" \/>/);
+  const a = page.slice(page.indexOf("function AuthScreen"), page.indexOf("// Modal de programmation"));
+  assert.match(a, /<SiteHeader variant="v2" \/>\n      <main className=\{`flex-1 flex/, "écran du compte : le menu du site");
   const w = page.slice(page.indexOf("function OnboardingWizard"), page.indexOf("// Vue Clients — tableau de bord agence"));
-  assert.doesNotMatch(w, /<SiteHeader|<SiteFooter|ParcoursApercu|linear-gradient\(180deg,#fff1f2|#ff5a5f/);
-  assert.match(w, /<EnteteParcours>/);
+  assert.match(w, /\{selfFlow && <SiteHeader variant="v2" \/>\}/);
+  assert.doesNotMatch(w, /<SiteFooter|ParcoursApercu|linear-gradient\(180deg,#fff1f2|#ff5a5f/);
   for (const id of ["wizard-header", "wizard-pills", "wizard-pill", "wizard-where-count"]) assert.ok(w.includes(id), id);
   assert.match(w, /Étape \{selfFlow \? pillIdx \+ 1 : step \+ 1\} sur \{selfFlow \? pills\.length : flow\.length\}/, "le compteur suit les cinq pastilles");
-  const q = page.slice(page.indexOf("data-testid=\"register-questions\"") - 900, page.indexOf("data-testid=\"register-questions\""));
-  assert.match(q, /<EnteteParcours lien>/);
-  assert.doesNotMatch(q, /<SiteHeader/);
-  assert.ok(page.includes('data-testid="reg-to-login"'));
   assert.equal((page.match(/data-testid="reg-to-login"/g) ?? []).length, 1);
 });
 
