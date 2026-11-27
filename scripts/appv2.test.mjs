@@ -113,3 +113,10 @@ test("titres de la nouvelle application : Mes sources, Réponses à traiter, Mes
   for (const t of ['"Mes sources"', '"Réponses à traiter"', '"Mes résultats"', '"Mon copilote"']) assert.ok(page.includes(t), t);
   assert.ok(page.includes('"Datalake éditorial"'), "ancien titre conservé");
 });
+
+test("couleurs : l'aperçu LinkedIn garde les couleurs de LinkedIn, le reste suit la charte", () => {
+  const css = readFileSync(new URL("../app/globals.css", import.meta.url), "utf8");
+  assert.ok(css.includes('.app-v2 [class*="text-[#0a66c2]"]:not([data-testid="li-preview"] *)'));
+  assert.ok(css.includes('.app-v2 [class*="text-[#1b2a4a]"]'));
+  assert.ok(css.includes("accent-color: #c2456f"));
+});
