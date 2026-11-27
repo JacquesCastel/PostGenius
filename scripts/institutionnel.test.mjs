@@ -167,3 +167,14 @@ test("fin du parcours : un écran récapitule les données d'inscription avant l
   assert.match(w, /if \(selfFlow && recap\) return <OnboardingRecap /);
   assert.match(w, /onDone=\{\(\) => onDone\(recap\)\}/);
 });
+
+test("une seule largeur de page (1200 px, alignée sur le menu), texte calé à gauche, sur toutes les pages du nouveau site ; mesure de lecture dans les paragraphes", () => {
+  const pages = ["app/produit/page.js", "app/produit/methode/page.js", "app/produit/verification/page.js", "app/preuves/page.js", "app/preuves/test-e4/page.js",
+    "app/securite/page.js", "app/privacy-policy/page.js", "app/legal/page.js", "app/tarifs/page.js", "app/contact/page.js", "app/beta/page.js", "app/scoring/page.js", "app/blog/page.js", "app/a-propos/page.js"];
+  for (const f of pages) assert.match(read(f), /<div className="w-full max-w-\[1200px\] mx-auto px-4 sm:px-8 pt-8 pb-24/, f);
+  for (const f of pages) assert.doesNotMatch(read(f), /<div className="max-w-\[(820|860|900|960|1100)px\] mx-auto px-4 sm:px-8 pt-8 pb-24/, `${f} : plus de largeur propre`);
+  assert.doesNotMatch(read("app/a-propos/page.js"), /py-12 max-w-\[820px\] mx-auto/, "colonne de lecture calée à gauche");
+  assert.match(read("components/SiteHeader.js"), /<header className="w-full max-w-\[1200px\] mx-auto px-4 sm:px-8/, "le menu a la même largeur : le logo et le titre partent du même bord");
+  assert.match(read("app/globals.css"), /:where\(\.page-v2\) :where\(p, li\) \{ max-width: 46rem; \}/);
+  assert.match(read("components/v2/Shell.js"), /flex-1 w-full page-v2/);
+});

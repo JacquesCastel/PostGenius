@@ -36,7 +36,7 @@ export default async function PrivacyPolicy() {
   const controller = fr?.sections?.[0]?.body;
   return (
     <Shell>
-      <div className="max-w-[860px] mx-auto px-4 sm:px-8 pt-8 pb-24" lang="en">
+      <div className="w-full max-w-[1200px] mx-auto px-4 sm:px-8 pt-8 pb-24" lang="en">
         <p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-[#C2456F] mb-3">Legal</p>
         <h1 className="font-display text-[34px] sm:text-[48px] leading-[1.08] tracking-[-0.02em]">Privacy Policy</h1>
         <p className="text-[15px] text-[#6B5A70] mt-3">Version française : <Link href="/confidentialite" className="font-semibold text-[#9E3157] underline">Politique de confidentialité</Link></p>

@@ -25,7 +25,7 @@ export default function VerificationPage() {
   const titre = liaisonsEm("Un chiffre absent de vos informations est", "signalé avant publication.");
   return (
     <Shell>
-      <div className="max-w-[820px] mx-auto px-4 sm:px-8 pt-8 pb-24">
+      <div className="w-full max-w-[1200px] mx-auto px-4 sm:px-8 pt-8 pb-24">
         <SousNavProduit courante="/produit/verification" />
         <p className="inline-block bg-[#FCE6D6] text-[#8A3B12] text-[13px] font-semibold px-3.5 py-1.5 rounded-full mb-3.5">Contrôle interne · indicatif</p>
         <h1 className="font-display text-[36px] sm:text-[50px] leading-[1.08] tracking-[-0.02em]">{titre[0]}<em className="text-[#C2456F]">{titre[1]}</em></h1>

@@ -27,7 +27,7 @@ export default function PreuvesPage() {
   const moyenneC = E4.conditions.find((c) => c.notre).moyenne, moyenneB = E4.conditions[1].moyenne;
   return (
     <Shell>
-      <div className="max-w-[960px] mx-auto px-4 sm:px-8 pt-8 pb-24">
+      <div className="w-full max-w-[1200px] mx-auto px-4 sm:px-8 pt-8 pb-24">
         <p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-[#C2456F]">Preuves</p>
         <h1 className="font-display text-[40px] sm:text-[56px] leading-[1.06] tracking-[-0.02em] mt-3">
           {titre[0]}<em className="text-[#C2456F]">{titre[1]}</em>

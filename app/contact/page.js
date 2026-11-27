@@ -24,7 +24,7 @@ export default function ContactPage() {
   const titre = liaisonsEm("Parlons de votre présence", "LinkedIn.");
   return (
     <Shell>
-      <div className="max-w-[1100px] mx-auto px-4 sm:px-8 pt-8 pb-24 flex flex-wrap gap-12 lg:gap-16 items-start">
+      <div className="w-full max-w-[1200px] mx-auto px-4 sm:px-8 pt-8 pb-24 flex flex-wrap gap-12 lg:gap-16 items-start">
         <div className="flex-[1_1_420px] min-w-0">
           <p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-[#C2456F]">Contact</p>
           <h1 className="font-display text-[40px] sm:text-[50px] leading-[1.08] tracking-[-0.02em] mt-3">

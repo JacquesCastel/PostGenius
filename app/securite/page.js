@@ -8,7 +8,7 @@ export default async function Securite() {
   const page = await getFooterPage("securite");
   return (
     <Shell>
-      <div className="max-w-[860px] mx-auto px-4 sm:px-8 pt-8 pb-24">
+      <div className="w-full max-w-[1200px] mx-auto px-4 sm:px-8 pt-8 pb-24">
         <p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-[#C2456F] mb-3">Sécurité</p>
         <h1 className="font-display text-[34px] sm:text-[48px] leading-[1.08] tracking-[-0.02em]">{page.title}</h1>
         <section className="mt-10 flex flex-col gap-4">

@@ -43,7 +43,7 @@ export default function ScoringPage() {
   const titre = liaisonsEm("Une note de mise en forme,", "pas une prédiction.");
   return (
     <Shell>
-      <div className="max-w-[1100px] mx-auto px-4 sm:px-8 pt-8 pb-24">
+      <div className="w-full max-w-[1200px] mx-auto px-4 sm:px-8 pt-8 pb-24">
         <span className="inline-block text-xs font-semibold uppercase tracking-[0.06em] bg-[#DCE9DF] text-[#2B5340] px-3.5 py-1.5 rounded-full">Contrôle de forme · offres Pro et Agence</span>
 
         <div className="mt-8 flex flex-wrap gap-10 lg:gap-14 items-center">
