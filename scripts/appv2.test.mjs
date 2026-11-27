@@ -161,3 +161,11 @@ test("Aujourd'hui : calé sur la maquette (salutation, choses à faire, semaine,
   assert.ok(shell.includes('data-testid="write-repurpose"'));
   assert.ok(page.includes('data-testid="dash-back-today"'));
 });
+
+test("Écrire : titre et quatre cartes de la maquette, puis « Reprendre » (brouillons)", () => {
+  assert.ok(shell.includes("Par où voulez-vous"));
+  for (const cta of ["Écrire un post →", "Planifier une campagne →", "Choisir un contenu →", "Préparer un événement →"]) assert.ok(shell.includes(cta), cta);
+  assert.ok(shell.includes('data-testid="write-resume"'));
+  assert.ok(page.includes('view === "dashboard" || view === "write") ? "hidden"'));
+  assert.ok(page.includes('setListCol("brouillon")'));
+});
