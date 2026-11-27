@@ -98,10 +98,10 @@ test("écran de connexion et fenêtre d'au revoir : palette du nouveau site, ide
   assert.ok(g.includes("/app?mode=login"));
 });
 
-test("parcours d'inscription (maquettes 1, 1b, 2) : en-tête concentré (logo, nom, pastilles), ni menu ni pied de page du site, panneau seulement sur l'écran des trois questions", () => {
+test("parcours d'inscription (maquettes 1, 1b, 2) : en-tête concentré (logo, nom, pastilles), ni menu ni pied de page du site, panneau seulement avant le parcours (trois questions, compte)", () => {
   const page = read("app/app/page.js");
   assert.match(page, /function EnteteParcours\(/);
-  assert.equal((page.match(/<ParcoursApercu /g) ?? []).length, 1, "le panneau n'est que sur l'écran des trois questions");
+  assert.equal((page.match(/<ParcoursApercu /g) ?? []).length, 2, "le panneau n'est que sur les deux écrans qui précèdent le parcours (trois questions, compte)");
   const w = page.slice(page.indexOf("function OnboardingWizard"), page.indexOf("// Vue Clients — tableau de bord agence"));
   assert.doesNotMatch(w, /<SiteHeader|<SiteFooter|ParcoursApercu|linear-gradient\(180deg,#fff1f2|#ff5a5f/);
   assert.match(w, /<EnteteParcours>/);
@@ -119,4 +119,13 @@ test("inscription : l'acceptation des CGU et de la politique de confidentialité
   assert.match(page, /data-testid="auth-cgu"/);
   assert.match(page, /href="\/legal#cgu"[^>]*target="_blank"/);
   assert.match(page, /href="\/legal#confidentialite"[^>]*target="_blank"/);
+});
+
+test("inscription, étape e-mail et mot de passe : même mise en page que les trois questions (formulaire à gauche, panneau à droite), sans page de vente", () => {
+  const page = read("app/app/page.js");
+  const a = page.slice(page.indexOf("function AuthScreen"), page.indexOf("// Modal de programmation"));
+  assert.match(a, /\{mode === "register" && \(\s*<div className="space-y-4 max-w-lg lg:order-2" data-testid="register-account-aside">\s*<ParcoursApercu courant=\{0\.5\} \/>/);
+  assert.match(a, /\{mode !== "register" && \(\s*<div className=\{`flex-col items-center text-center/, "la page de vente n'existe plus qu'en connexion et mot de passe oublié");
+  assert.equal((page.match(/<ParcoursApercu /g) ?? []).length, 2, "écran des trois questions + étape du compte");
+  assert.match(a, /lg:order-1/);
 });
