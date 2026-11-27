@@ -101,14 +101,14 @@ test("écran de connexion et fenêtre d'au revoir : palette du nouveau site, ide
 test("parcours d'inscription : le menu du site reste en haut sur tous les écrans ; la mise en page est celle de la maquette (panneau avant le parcours, pastilles pendant)", () => {
   const page = read("app/app/page.js");
   assert.doesNotMatch(page, /EnteteParcours/, "plus d'en-tête sans menu");
-  assert.equal((page.match(/<ParcoursApercu /g) ?? []).length, 2, "le panneau n'est que sur les deux écrans qui précèdent le parcours (trois questions, compte)");
+  assert.equal((page.match(/<ParcoursApercu /g) ?? []).length, 3, "le même panneau sur les trois écrans : questions, compte, parcours");
   const q = page.slice(page.indexOf("data-testid=\"register-questions\"") - 500, page.indexOf("data-testid=\"register-questions\""));
   assert.match(q, /<SiteHeader variant="v2" \/>/);
   const a = page.slice(page.indexOf("function AuthScreen"), page.indexOf("// Modal de programmation"));
   assert.match(a, /<SiteHeader variant="v2" \/>\n      <main className=\{`flex-1 flex/, "écran du compte : le menu du site");
   const w = page.slice(page.indexOf("function OnboardingWizard"), page.indexOf("// Vue Clients — tableau de bord agence"));
   assert.match(w, /\{selfFlow && <SiteHeader variant="v2" \/>\}/);
-  assert.doesNotMatch(w, /<SiteFooter|ParcoursApercu|linear-gradient\(180deg,#fff1f2|#ff5a5f/);
+  assert.doesNotMatch(w, /<SiteFooter|linear-gradient\(180deg,#fff1f2|#ff5a5f/);
   for (const id of ["wizard-header", "wizard-pills", "wizard-pill", "wizard-where-count"]) assert.ok(w.includes(id), id);
   assert.match(w, /Étape \{selfFlow \? pillIdx \+ 1 : step \+ 1\} sur \{selfFlow \? pills\.length : flow\.length\}/, "le compteur suit les cinq pastilles");
   assert.equal((page.match(/data-testid="reg-to-login"/g) ?? []).length, 1);
@@ -126,6 +126,18 @@ test("inscription, étape e-mail et mot de passe : même mise en page que les tr
   const a = page.slice(page.indexOf("function AuthScreen"), page.indexOf("// Modal de programmation"));
   assert.match(a, /\{mode === "register" && \(\s*<div className="space-y-4 max-w-lg lg:order-2" data-testid="register-account-aside">\s*<ParcoursApercu courant=\{0\.5\} \/>/);
   assert.match(a, /\{mode !== "register" && \(\s*<div className=\{`flex-col items-center text-center/, "la page de vente n'existe plus qu'en connexion et mot de passe oublié");
-  assert.equal((page.match(/<ParcoursApercu /g) ?? []).length, 2, "écran des trois questions + étape du compte");
+  assert.equal((page.match(/<ParcoursApercu /g) ?? []).length, 3, "écran des trois questions + étape du compte + parcours");
   assert.match(a, /lg:order-1/);
+});
+
+test("parcours d'inscription : la même interface sur les cinq étapes (contenu à gauche, panneau « Ce qui vous attend » à droite avec l'étape en cours) ; les explications de « Vos sites » sont sous le panneau", () => {
+  const page = read("app/app/page.js");
+  const w = page.slice(page.indexOf("function OnboardingWizard"), page.indexOf("// Vue Clients — tableau de bord agence"));
+  assert.match(w, /lg:grid-cols-\[minmax\(0,1fr\)_26rem\]/);
+  assert.match(w, /<aside className="hidden lg:flex lg:flex-col lg:gap-4 lg:sticky lg:top-6" data-testid="wizard-aside">\s*<ParcoursApercu courant=\{pillIdx\} \/>\s*\{kind === "company" && !manualSite && <OnboardingSitesAside \/>\}/);
+  assert.match(w, /data-testid="wizard-header">/);
+  assert.match(w, /lg:hidden" data-testid="wizard-header"/, "les pastilles ne servent que sur téléphone et tablette");
+  assert.doesNotMatch(page.slice(page.indexOf("function OnboardingSitesStep"), page.indexOf("// Vue Clients — tableau de bord agence")), /lg:w-\[380px\]/, "plus de colonne latérale propre à l'étape");
+  assert.match(page, /function OnboardingSitesAside\(\)/);
+  assert.match(page, /onClick=\{start\} className="bg-\[#C2456F\] hover:bg-\[#9E3157\]/);
 });

@@ -13514,6 +13514,27 @@ function SiteReviewCard({ url, review, onChange, onConfirm, onReject, onAgain, b
   );
 }
 
+// Colonne de droite de l'étape « Vos sites » : ce qui se passe ensuite, sous le panneau « Ce qui vous attend » du parcours
+function OnboardingSitesAside() {
+  const card = "bg-white border border-[#EFE4E0] rounded-[18px]";
+  return (
+      <div className="flex flex-col gap-3.5" data-testid="wizard-sites-aside">
+      <div className={`${card} px-5 py-4`}>
+        <p className="text-xs font-bold tracking-wider uppercase text-[#6B5A70] mb-2">Ce qui se passe ensuite</p>
+        <p className="text-[13px] leading-relaxed text-[#33415c] mb-2"><strong>Un site confirmé devient une thématique d&apos;activité,</strong> avec son datalake, sa cible et sa voix. Pour chacune, vous passerez ensuite par les mêmes étapes : cible, voix, analyse.</p>
+        <p className="text-[13px] leading-relaxed text-[#33415c]"><strong>Vous publiez sur votre propre compte LinkedIn</strong> pour plusieurs entreprises ? Ajoutez un site par entreprise. Aucune n&apos;est « principale ».</p>
+      </div>
+      <div className={`${card} px-5 py-4`}>
+        <p className="text-xs font-bold tracking-wider uppercase text-[#6B5A70] mb-2">Vous gardez la main</p>
+        <p className="text-[13px] leading-relaxed text-[#33415c]">Chaque ligne se confirme ou se corrige. Un site qui n&apos;est pas le vôtre (un client, un ancien employeur) se refuse en un clic. Vous pourrez ajouter d&apos;autres sites plus tard, depuis « Mes thématiques ».</p>
+      </div>
+      <div className="bg-[#fff7ed] border border-[#fde1c0] rounded-[18px] px-5 py-4">
+        <p className="text-[13px] leading-relaxed text-[#7a4b00]"><strong>Pas de site ?</strong> Une thématique personnelle (le running, la vie d&apos;indépendante) n&apos;en a pas besoin : elle se construit avec vos mots, vos posts et vos dictées.</p>
+      </div>
+    </div>
+  );
+}
+
 // Étape « Vos sites internet » de l'inscription (maquette 1b) : un site par entreprise dont la personne parle sur son LinkedIn
 function OnboardingSitesStep({ main, extras, input, onInput, onAdd, adding, onMainChange, onMainConfirm, onMainReject, onMainAgain, onExtraChange, onExtraConfirm, onExtraReject, onExtraRemove, onExtraAgain, canNext, saving, onNext, onBack, onManual, stepNo, stepTotal, total }) {
   const tag = SITE_TAG;
@@ -13563,20 +13584,6 @@ function OnboardingSitesStep({ main, extras, input, onInput, onAdd, adding, onMa
           <button type="button" onClick={onBack} className="text-sm text-[#33415c] hover:text-gray-900">Retour</button>
           <button type="button" onClick={onManual} data-testid="wizard-manual" className="text-sm font-semibold text-[#9E3157] hover:underline sm:ml-3">Je n&apos;ai pas de site, je saisis à la main</button>
           <span className="sm:ml-auto text-[13px] text-[#6B5A70]">{total} site{total > 1 ? "s" : ""} sur 10 · étape {stepNo} sur {stepTotal}</span>
-        </div>
-      </div>
-      <div className="w-full lg:w-[380px] shrink-0 flex flex-col gap-3.5">
-        <div className={`${card} px-5 py-4`}>
-          <p className="text-xs font-bold tracking-wider uppercase text-[#6B5A70] mb-2">Ce qui se passe ensuite</p>
-          <p className="text-[13px] leading-relaxed text-[#33415c] mb-2"><strong>Un site confirmé devient une thématique d&apos;activité,</strong> avec son datalake, sa cible et sa voix. Pour chacune, vous passerez ensuite par les mêmes étapes : cible, voix, analyse.</p>
-          <p className="text-[13px] leading-relaxed text-[#33415c]"><strong>Vous publiez sur votre propre compte LinkedIn</strong> pour plusieurs entreprises ? Ajoutez un site par entreprise. Aucune n&apos;est « principale ».</p>
-        </div>
-        <div className={`${card} px-5 py-4`}>
-          <p className="text-xs font-bold tracking-wider uppercase text-[#6B5A70] mb-2">Vous gardez la main</p>
-          <p className="text-[13px] leading-relaxed text-[#33415c]">Chaque ligne se confirme ou se corrige. Un site qui n&apos;est pas le vôtre (un client, un ancien employeur) se refuse en un clic. Vous pourrez ajouter d&apos;autres sites plus tard, depuis « Mes thématiques ».</p>
-        </div>
-        <div className="bg-[#fff7ed] border border-[#fde1c0] rounded-[18px] px-5 py-4">
-          <p className="text-[13px] leading-relaxed text-[#7a4b00]"><strong>Pas de site ?</strong> Une thématique personnelle (le running, la vie d&apos;indépendante) n&apos;en a pas besoin : elle se construit avec vos mots, vos posts et vos dictées.</p>
         </div>
       </div>
     </div>
@@ -13797,12 +13804,11 @@ function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast,
     { label: "Premier post", kinds: ["firstpost"] },
   ];
   const pillIdx = Math.max(0, pills.findIndex((pl) => pl.kinds.includes(kind)));
-  const wideStep = selfFlow && ((kind === "company" && !manualSite) || kind === "where");
 
   return (
     <div className={selfFlow ? "min-h-screen flex flex-col bg-[#FCF8F5] text-[#2E1F33]" : "min-h-screen flex items-start sm:items-center justify-center p-4 sm:p-6"}>
       {selfFlow && <SiteHeader variant="v2" />}
-      <div className={selfFlow ? `w-full mx-auto flex-1 px-4 sm:px-8 lg:px-16 py-6 sm:py-8 ${wideStep ? "max-w-6xl" : "max-w-xl"}` : "w-full max-w-xl"}>
+      <div className={selfFlow ? "w-full mx-auto flex-1 px-4 sm:px-8 lg:px-10 py-6 sm:py-8 max-w-6xl lg:grid lg:grid-cols-[minmax(0,1fr)_26rem] lg:gap-12 lg:items-start" : "w-full max-w-xl"}>
       <div className="min-w-0">
         {forClient && (
           <div className="mb-4 bg-amber-50 border border-amber-200 text-amber-800 rounded-xl px-4 py-2.5 text-sm flex items-center justify-between gap-3 flex-wrap" data-testid="wizard-client-banner">
@@ -13811,7 +13817,7 @@ function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast,
           </div>
         )}
         {selfFlow ? (
-          <div className="mb-5 flex flex-wrap items-center gap-x-3 gap-y-3" data-testid="wizard-header">
+          <div className="mb-5 flex flex-wrap items-center gap-x-3 gap-y-3 lg:hidden" data-testid="wizard-header">
             {kind === "where" ? (
               <span className="text-sm text-[#6B5A70]" data-testid="wizard-where-count">Étape {pillIdx + 1} sur {pills.length} · Connecter LinkedIn</span>
             ) : (
@@ -14157,6 +14163,12 @@ function OnboardingWizard({ user, profile, linkedinConnected, onDone, showToast,
           </button>
         )}
       </div>
+      {selfFlow && (
+        <aside className="hidden lg:flex lg:flex-col lg:gap-4 lg:sticky lg:top-6" data-testid="wizard-aside">
+          <ParcoursApercu courant={pillIdx} />
+          {kind === "company" && !manualSite && <OnboardingSitesAside />}
+        </aside>
+      )}
       </div>
     </div>
   );
@@ -17119,7 +17131,7 @@ function ProfileCompanion({ stage, progress, missing, nextStage, values, onApply
                   )
                 ) : (
                   <>
-                    <button type="button" onClick={start} className="bg-[#ff5a5f] hover:bg-[#f63d44] text-white text-xs font-medium px-3.5 py-2 rounded-lg flex items-center gap-1.5">
+                    <button type="button" onClick={start} className="bg-[#C2456F] hover:bg-[#9E3157] text-white text-xs font-medium px-3.5 py-2 rounded-lg flex items-center gap-1.5">
                       <MessageSquare size={13} /> Oui, posez-moi vos questions
                     </button>
                     <button type="button" onClick={() => setMode("hidden")} className="text-xs border border-gray-200 bg-white hover:border-gray-300 text-gray-600 px-3.5 py-2 rounded-lg">
