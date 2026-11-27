@@ -123,3 +123,10 @@ test("les produits créés sur Stripe portent le nom affiché, pas l'ancien (ils
   for (const plan of ["Essentiel", "Pro", "Agence"]) assert.ok(s.includes(`name: "Vercéa ${plan}"`), plan);
   assert.doesNotMatch(s, /LinkeePost/);
 });
+
+test("les notifications du navigateur portent le nom actuel (titre par défaut et regroupement)", () => {
+  const sw = read("public/sw.js");
+  assert.doesNotMatch(sw, /linkeepost/i);
+  assert.match(sw, /data\.title \|\| "Vercéa"/);
+  assert.match(sw, /data\.tag \|\| "vercea"/);
+});
