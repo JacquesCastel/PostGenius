@@ -108,7 +108,7 @@ test("parcours d'inscription : le menu du site reste en haut sur tous les écran
   assert.match(a, /<SiteHeader variant="v2" \/>\n      <main className=\{`flex-1 flex/, "écran du compte : le menu du site");
   const w = page.slice(page.indexOf("function OnboardingWizard"), page.indexOf("// Vue Clients — tableau de bord agence"));
   assert.match(w, /\{selfFlow && <SiteHeader variant="v2" \/>\}/);
-  assert.doesNotMatch(w, /<SiteFooter|linear-gradient\(180deg,#fff1f2|#ff5a5f/);
+  assert.doesNotMatch(w, /linear-gradient\(180deg,#fff1f2|#ff5a5f/);
   for (const id of ["wizard-header", "wizard-pills", "wizard-pill", "wizard-where-count"]) assert.ok(w.includes(id), id);
   assert.match(w, /Étape \{selfFlow \? pillIdx \+ 1 : step \+ 1\} sur \{selfFlow \? pills\.length : flow\.length\}/, "le compteur suit les cinq pastilles");
   assert.equal((page.match(/data-testid="reg-to-login"/g) ?? []).length, 1);
@@ -204,4 +204,16 @@ test("connexion et mot de passe oublié : une carte centrée, sans page de vente
   assert.match(a, /font-display text-\[26px\] font-medium \$\{mode === "register" \? "" : "text-center"\}/);
   assert.match(a, /data-testid="auth-to-register"/);
   for (const id of ["auth-email", "auth-password", "auth-submit"]) assert.ok(a.includes(id), id);
+});
+
+test("le pied de page du site est présent sur TOUS les écrans de l'inscription : trois questions, compte, connexion, étapes 2 à 5 et écran de fin", () => {
+  const page = read("app/app/page.js");
+  const auth = page.slice(page.indexOf("function AuthScreen"), page.indexOf("// Modal de programmation"));
+  assert.equal((auth.match(/<SiteHeader variant="v2" \/>/g) ?? []).length, 2, "deux écrans dans AuthScreen : trois questions, et compte/connexion");
+  assert.equal((auth.match(/<SiteFooter variant="v2" \/>/g) ?? []).length, 2, "…chacun avec son pied de page");
+  assert.doesNotMatch(auth, /mode !== "register" && <SiteFooter/, "le pied de page n'est plus retiré pour l'inscription");
+  const w = page.slice(page.indexOf("function OnboardingWizard("), page.indexOf("// Vue Clients — tableau de bord agence"));
+  assert.match(w, /\{selfFlow && <SiteFooter variant="v2" \/>\}/, "étapes 2 à 5");
+  const r = page.slice(page.indexOf("function OnboardingRecap("), page.indexOf("function OnboardingWizard("));
+  assert.match(r, /<SiteFooter variant="v2" \/>/, "écran de fin");
 });
