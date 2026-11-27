@@ -1,4 +1,4 @@
-// Service worker LinkeePost — notifications Web Push (rappels jour-J événement)
+// Service worker Vercéa — notifications Web Push (rappels jour-J événement)
 
 self.addEventListener("install", () => self.skipWaiting());
 self.addEventListener("activate", (event) => event.waitUntil(self.clients.claim()));
@@ -10,13 +10,13 @@ self.addEventListener("push", (event) => {
   } catch (e) {
     data = {};
   }
-  const title = data.title || "LinkeePost";
+  const title = data.title || "Vercéa";
   event.waitUntil(
     self.registration.showNotification(title, {
       body: data.body || "",
       icon: "/icon.svg",
       badge: "/icon.svg",
-      tag: data.tag || "linkeepost",
+      tag: data.tag || "vercea",
       data: { url: data.url || "/app" },
     })
   );
