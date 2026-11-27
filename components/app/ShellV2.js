@@ -19,10 +19,10 @@ const ICON_PATHS = {
   spark: <path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8Z" />,
 };
 const ICON_TINTS = { sun: ["#FCE6D6", "#8A3B12"], pen: ["#F6E3E0", "#7A2342"], doc: ["#DCE9DF", "#2B5340"], bar: ["#FCE6D6", "#8A3B12"], users: ["#FCE6D6", "#8A3B12"], spark: ["#F6E3E0", "#7A2342"] };
-export function NavIconV2({ name }) {
+export function NavIconV2({ name, compact = false }) {
   const [bg, fg] = ICON_TINTS[name] ?? ICON_TINTS.sun;
   return (
-    <span className="app-nav-ico" style={{ background: bg, color: fg }} aria-hidden="true">
+    <span className={compact ? "app-nav-ico app-nav-ico-sm" : "app-nav-ico"} style={{ background: bg, color: fg }} aria-hidden="true">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">{ICON_PATHS[name]}</svg>
     </span>
   );
@@ -61,6 +61,21 @@ export function CreateChoicesV2({ rows, open, onToggle }) {
         </div>
       ))}
     </section>
+  );
+}
+
+// Téléphone : barre de cinq icônes en bas de l'écran (les mêmes entrées que le menu, libellés courts)
+const SHORT = { dashboard: "Aujourd'hui", write: "Écrire", history: "Posts", stats: "Résultats", clients: "Clients", copilot: "Copilote" };
+export function BottomBarV2({ items, isActive, onGo }) {
+  return (
+    <nav className="app-bottombar md:hidden" aria-label="Navigation de l'application" data-testid="bottom-bar">
+      {items.map((it) => (
+        <button key={it.id} type="button" onClick={() => onGo(it)} aria-current={isActive(it) ? "page" : undefined} data-testid={`tab-bar-${it.id}`} className={`app-bb ${isActive(it) ? "app-bb-on" : ""}`}>
+          {it.pico ? <NavIconV2 name={it.pico} compact /> : null}
+          <span>{SHORT[it.id] ?? it.label}</span>
+        </button>
+      ))}
+    </nav>
   );
 }
 
