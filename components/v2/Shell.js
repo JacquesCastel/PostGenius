@@ -15,7 +15,7 @@ export default async function Shell({ children, mainClassName = "" }) {
   return (
     <div className="min-h-screen flex flex-col bg-[#FCF8F5] text-[#2E1F33] font-body-v2 antialiased">
       <SiteHeader variant="v2" nav={navEntete(ouvertures)} />
-      <main className={`flex-1 w-full ${mainClassName}`}>{children}</main>
+      <main className={`flex-1 w-full page-v2 ${mainClassName}`}>{children}</main>
       <SiteFooter variant="v2" colonnes={colonnesPied(ouvertures)} />
     </div>
   );

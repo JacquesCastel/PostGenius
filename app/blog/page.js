@@ -29,7 +29,7 @@ export default async function BlogIndex() {
 
   return (
     <Shell>
-      <div className="max-w-[1200px] mx-auto px-4 sm:px-8 pt-8 pb-24">
+      <div className="w-full max-w-[1200px] mx-auto px-4 sm:px-8 pt-8 pb-24">
         <p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-[#C2456F]">Blog</p>
         <h1 className="font-display text-[40px] sm:text-[56px] leading-[1.06] tracking-[-0.02em] mt-3">Le blog</h1>
         <p className="text-[19px] text-[#4A3A50] mt-5 max-w-2xl leading-relaxed">Conseils et stratégies pour réussir sur LinkedIn : contenu, campagnes, régularité et engagement.</p>

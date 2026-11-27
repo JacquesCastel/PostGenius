@@ -33,7 +33,7 @@ export default function MethodePage() {
   const titre = liaisonsEm("Qui fait quoi,", "à chaque étape.");
   return (
     <Shell>
-      <div className="max-w-[900px] mx-auto px-4 sm:px-8 pt-8 pb-24">
+      <div className="w-full max-w-[1200px] mx-auto px-4 sm:px-8 pt-8 pb-24">
         <SousNavProduit courante="/produit/methode" />
         <h1 className="font-display text-[38px] sm:text-[54px] leading-[1.06] tracking-[-0.02em]">{titre[0]}<em className="text-[#C2456F]">{titre[1]}</em></h1>
         <p className="text-[19px] sm:text-xl leading-relaxed text-[#4A3A50] mt-6">De vos sources à un post relu. Pour chaque étape, nous disons ce que fait l&apos;IA, ce que vérifie un code que l&apos;on peut lire, et ce que vous décidez.</p>

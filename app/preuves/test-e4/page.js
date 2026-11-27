@@ -34,7 +34,7 @@ export default function TestE4Page() {
   const [A, B, D, C] = E4.conditions;
   return (
     <Shell>
-      <div className="max-w-[820px] mx-auto px-4 sm:px-8 pt-8 pb-24">
+      <div className="w-full max-w-[1200px] mx-auto px-4 sm:px-8 pt-8 pb-24">
         <p className="text-sm text-[#6B5A70] mb-5"><Link href="/preuves" className="text-[#6B5A70] hover:text-[#7A2342]">Preuves</Link> &nbsp;/&nbsp; Test E4</p>
         <p className="inline-block bg-[#F6E3E0] text-[#7A2342] text-[13px] font-semibold px-3.5 py-1.5 rounded-full mb-3.5">Résultats du {E4.date} · test non scientifique</p>
         <h1 className="font-display text-[36px] sm:text-[50px] leading-[1.08] tracking-[-0.02em]">

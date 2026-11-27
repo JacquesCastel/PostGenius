@@ -41,7 +41,7 @@ export default function AProposPage() {
   ];
   return (
     <Shell>
-      <div className="max-w-[1200px] mx-auto px-4 sm:px-8 pt-8 pb-24">
+      <div className="w-full max-w-[1200px] mx-auto px-4 sm:px-8 pt-8 pb-24">
         <section className="flex flex-wrap gap-12 items-center pb-12">
           <div className="flex-[1_1_520px] min-w-0">
             <Kick>À propos</Kick>
@@ -86,7 +86,7 @@ export default function AProposPage() {
           </section>
         )}
 
-        <section className="py-12 max-w-[820px] mx-auto">
+        <section className="py-12 max-w-[820px]">
           <Kick>Questions fréquentes</Kick>
           <h2 className="font-display text-[30px] sm:text-[38px] tracking-[-0.015em] mb-7">{liaisons("Les questions qu'on nous pose vraiment.")}</h2>
           <div className="flex flex-col gap-3">

@@ -63,7 +63,7 @@ export default function ProduitPage() {
   const titre = liaisonsEm("De vos sources à un post relu,", "étape par étape.");
   return (
     <Shell>
-      <div className="max-w-[1100px] mx-auto px-4 sm:px-8 pt-8 pb-24">
+      <div className="w-full max-w-[1200px] mx-auto px-4 sm:px-8 pt-8 pb-24">
         <SousNavProduit courante="/produit" />
         <p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-[#C2456F]">Produit</p>
         <h1 className="font-display text-[38px] sm:text-[56px] leading-[1.06] tracking-[-0.02em] mt-3 max-w-[860px]">

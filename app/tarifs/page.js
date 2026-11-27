@@ -32,7 +32,7 @@ export default async function TarifsPage() {
   // Nouveau style (v2) : mêmes offres, mêmes prix, mêmes textes et même comparatif ; seule la mise en forme change.
   return (
     <Shell>
-      <div className="max-w-[1100px] mx-auto px-4 sm:px-8 pt-8 pb-24">
+      <div className="w-full max-w-[1200px] mx-auto px-4 sm:px-8 pt-8 pb-24">
         <div className="text-center">
           <p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-[#C2456F]">Tarifs</p>
           <h1 className="font-display text-[38px] sm:text-[54px] leading-[1.06] tracking-[-0.02em] mt-3">{liaisons("Une offre pour chaque ambition")}</h1>
