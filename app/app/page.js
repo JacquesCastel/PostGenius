@@ -23776,7 +23776,7 @@ export default function Home() {
           }}
         />
       ) : (
-        <main className="p-6">
+        <main className={`p-6 ${v2Shell ? "max-w-5xl mx-auto" : ""}`}>
           {/* Barre d'options — le profil sélectionné filtre aussi la liste ci-dessous
               (ce select fixe aussi le compte utilisé par les actions rapides "Publier") */}
           <div className="flex items-center justify-end mb-4 flex-wrap gap-3">
@@ -23985,7 +23985,7 @@ export default function Home() {
                   })}
               </div>
 
-              <div className={`flex flex-col gap-4 pb-4 ${v2List ? "max-w-3xl" : "md:flex-row md:overflow-x-auto md:items-start"}`}>
+              <div className={`flex flex-col gap-4 pb-4 ${v2List ? "w-full" : "md:flex-row md:overflow-x-auto md:items-start"}`}>
               {POST_COLUMNS
                 .filter((col) => col.id !== "erreur" || visiblePosts.some((d) => d.status === "erreur"))
                 .filter((col) => !v2List || col.id === effCol)
@@ -24017,15 +24017,15 @@ export default function Home() {
                         dragOverCol === col.id ? "bg-[#ffe0e0] ring-2 ring-[#ff8a8d]" : v2List ? "" : "bg-gray-200/50"
                       }`}
                     >
-                      <div className="flex items-center gap-2 px-1 mb-3">
+                      <div className={`flex items-center gap-2 px-1 mb-3 ${v2List ? "hidden" : ""}`}>
                         <span className={`w-2.5 h-2.5 rounded-full ${col.dot}`} />
                         <p className="text-sm font-semibold">{col.title}</p>
                         <span className="text-xs font-medium text-gray-400 bg-white px-2 py-0.5 rounded-full ml-auto">
                           {items.length}
                         </span>
                       </div>
-                      <p className="text-[11px] text-gray-400 px-1 -mt-2 mb-3">{col.hint}</p>
-                      <div className="space-y-3 max-h-[68vh] overflow-y-auto pr-1">
+                      <p className={`text-[11px] text-gray-400 px-1 -mt-2 mb-3 ${v2List ? "hidden" : ""}`}>{col.hint}</p>
+                      <div className={v2List ? "space-y-4" : "space-y-3 max-h-[68vh] overflow-y-auto pr-1"}>
                         {items.length === 0 && (
                           <p className="text-xs text-gray-400 text-center py-8">Aucun post</p>
                         )}
